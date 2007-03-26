@@ -51,7 +51,7 @@ import java.util.Map;
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent {
   protected final Project myProject;
-  protected Runnable myTreeChangeListener;
+  private Runnable myTreeChangeListener;
   protected JTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   protected AbstractTreeBuilder myTreeBuilder;
@@ -119,15 +119,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     TreeUtil.selectPath(myTree, treePath);
   }
-  public void expand(final Object element){
-    myTreeBuilder.buildNodeForElement(element);
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    if (node == null) {
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
-  }
+
   public void dispose() {
     if (myTreeBuilder != null) {
       Disposer.dispose(myTreeBuilder);
@@ -267,15 +259,15 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (Object element : getSelectedElements()) {
       final PsiElement psiElement = getPSIElement(element);
-      if ( psiElement != null ) {
-        psiElements.add (psiElement);
+      if (psiElement != null) {
+        psiElements.add(psiElement);
       }
     }
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
   @Nullable
-  public static PsiElement getPSIElement(@Nullable final Object element) {
+  private static PsiElement getPSIElement(@Nullable final Object element) {
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;
       if (psiElement.isValid()) {
@@ -308,7 +300,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   @Nullable
-  public Object getElement(@Nullable final TreeNode treeNode) {
+  private Object getElement(@Nullable final TreeNode treeNode) {
     if (treeNode instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeNode;
       return exhumeElementFromNode(node);
@@ -316,7 +308,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return null;
   }
 
-  public TreeNode[] getSelectedTreeNodes(){
+  private TreeNode[] getSelectedTreeNodes(){
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
     final List<TreeNode> result = new ArrayList<TreeNode>();
@@ -424,7 +416,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public static final DataFlavor[] FLAVORS;
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
-  final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
+  private final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
 
   static {
     DataFlavor[] flavors;

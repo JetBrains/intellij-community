@@ -54,6 +54,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -159,6 +160,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
+      @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();
       }
@@ -167,6 +169,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree, myProject));
   }
 
+  @NotNull
   private PsiElement[] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null){

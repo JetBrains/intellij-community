@@ -201,8 +201,10 @@ public class PeerFactoryImpl extends PeerFactory {
 
     public CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, final PsiElementSelector dataSelector) {
       return new CopyPasteManagerEx.CopyPasteDelegator(project, keyReceiver) {
+        @NotNull
         protected PsiElement[] getSelectedElements() {
-          return dataSelector.getSelectedElements();
+          PsiElement[] elements = dataSelector.getSelectedElements();
+          return elements == null ? PsiElement.EMPTY_ARRAY : elements;
         }
       };
     }

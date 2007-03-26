@@ -153,6 +153,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     });
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
+      @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();
       }
@@ -186,10 +187,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myListName = name;
   }
 
+  @NotNull
   private PsiElement[] getSelectedPsiElements() {
     final Object[] elements = getSelectedNodeElements();
     if (elements == null) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
     ArrayList<PsiElement> result = new ArrayList<PsiElement>();
     for (Object element : elements) {
@@ -203,7 +205,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     }
-    return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {

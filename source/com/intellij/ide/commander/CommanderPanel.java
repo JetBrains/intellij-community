@@ -13,6 +13,7 @@ import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.*;
@@ -35,12 +36,14 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -80,6 +83,7 @@ public class CommanderPanel extends JPanel {
 
     if (commander != null) {
       myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myList) {
+        @NotNull
         protected PsiElement[] getSelectedElements() {
           return CommanderPanel.this.getSelectedElements();
         }
@@ -348,7 +352,7 @@ public class CommanderPanel extends JPanel {
   }
 
   private PsiElement[] getSelectedElements() {
-    if (myBuilder == null) return null;
+    if (myBuilder == null) return PsiElement.EMPTY_ARRAY;
     final int[] indices = myList.getSelectedIndices();
 
     final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
@@ -362,7 +366,7 @@ public class CommanderPanel extends JPanel {
     return elements.toArray(new PsiElement[elements.size()]);
   }
 
-  private Object getValueAtIndex(AbstractTreeNode node) {
+  private static Object getValueAtIndex(AbstractTreeNode node) {
     if (node == null) return null;
     Object value = node.getValue();
     if (value instanceof TreeElement){
@@ -500,7 +504,7 @@ public class CommanderPanel extends JPanel {
     if (elements == null || elements.length == 0) {
       return null;
     }
-    final java.util.List<PsiElement> validElements = new ArrayList<PsiElement>(elements.length);
+    final List<PsiElement> validElements = new ArrayList<PsiElement>(elements.length);
     for (final PsiElement element : elements) {
       if (element.isValid()) {
         validElements.add(element);
@@ -593,7 +597,7 @@ public class CommanderPanel extends JPanel {
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return com.intellij.ide.util.PackageUtil.getOrChooseDirectory(this);
+      return PackageUtil.getOrChooseDirectory(this);
     }
   }
 }

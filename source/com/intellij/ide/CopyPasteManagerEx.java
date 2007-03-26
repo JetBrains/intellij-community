@@ -22,6 +22,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.UIHelper;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
 
-  private ArrayList<Transferable> myDatas;
+  private final ArrayList<Transferable> myDatas;
   private MyData myRecentData;
 
 //  private static long ourWastedMemory = 0;
@@ -187,9 +188,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public abstract static class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
-    private Project myProject;
-    private JComponent myKeyReceiver;
-    private MyEditable myEditable;
+    private final Project myProject;
+    private final JComponent myKeyReceiver;
+    private final MyEditable myEditable;
 
     public CopyPasteDelegator(Project project, JComponent keyReceiver) {
       myProject = project;
@@ -197,16 +198,14 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       myEditable = new MyEditable();
     }
 
+    @NotNull
     protected abstract PsiElement[] getSelectedElements();
 
-    protected final PsiElement[] getValidSelectedElements() {
+    @NotNull protected final PsiElement[] getValidSelectedElements() {
       PsiElement[] selectedElements = getSelectedElements();
-      if (selectedElements == null){
-        return null;
-      }
       for (PsiElement element : selectedElements) {
         if (!element.isValid()) {
-          return null;
+          return PsiElement.EMPTY_ARRAY;
         }
       }
       return selectedElements;
@@ -231,24 +230,18 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     private class MyEditable implements CutProvider, CopyProvider, PasteProvider {
       public void performCopy(DataContext dataContext) {
         PsiElement[] elements = getValidSelectedElements();
-        if (elements == null) {
-          return;
-        }
         ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, true);
         updateView();
       }
 
       public boolean isCopyEnabled(DataContext dataContext) {
         PsiElement[] elements = getValidSelectedElements();
-        return elements != null && CopyHandler.canCopy(elements);
+        return CopyHandler.canCopy(elements);
       }
 
       public void performCut(DataContext dataContext) {
         PsiElement[] elements = getValidSelectedElements();
-        if (elements == null) {
-          return;
-        }
-        if ( MoveHandler.adjustForMove(myProject, elements, null) == null ) {
+        if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
           return;
         }
         // 'elements' passed instead of result of 'adjustForMove' because otherwise ProjectView would
@@ -259,7 +252,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       public boolean isCutEnabled(DataContext dataContext) {
         final PsiElement[] elements = getValidSelectedElements();
-        return elements != null && elements.length != 0 && MoveHandler.canMove(elements, null);
+        return elements.length != 0 && MoveHandler.canMove(elements, null);
       }
 
       public void performPaste(DataContext dataContext) {

@@ -407,9 +407,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myPanel) {
+      @NotNull
       protected PsiElement[] getSelectedElements() {
         final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? null : viewPane.getSelectedPSIElements();
+        return viewPane == null ? PsiElement.EMPTY_ARRAY : viewPane.getSelectedPSIElements();
       }
     };
 

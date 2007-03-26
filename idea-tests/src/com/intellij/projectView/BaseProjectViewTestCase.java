@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -60,7 +61,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
       @NonNls
       public String getComponentName() {
-        return null;
+        return "comp name";
       }
 
       protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
@@ -97,8 +98,9 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return null;
       }
 
+      @NotNull
       public String getId() {
-        return null;
+        return "";
       }
 
       public String getTitle() {

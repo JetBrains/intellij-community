@@ -94,7 +94,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private JPanel myScrollablePanel = new JPanel(new GridBagLayout());
   private int myPreferredWidth;
   private NavBarModel myModel;
-  protected Project myProject;
+  private Project myProject;
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
   private MyProblemListener myProblemListener = new MyProblemListener();
   private MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
@@ -103,10 +103,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private IdeView myIdeView = new MyIdeView();
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator =
     new CopyPasteManagerEx.CopyPasteDelegator(myProject, NavBarPanel.this) {
-      @Nullable
+
+      @NotNull
       protected PsiElement[] getSelectedElements() {
         final PsiElement element = getSelectedElement(PsiElement.class);
-        return element == null ? null : new PsiElement[]{element};
+        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
       }
     };
   private LightweightHint myHint = null;
@@ -258,7 +259,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
   }
 
-  protected void shiftFocus(int direction) {
+  private void shiftFocus(int direction) {
     clearBorder();
     myModel.setSelectedIndex(myModel.getIndexByMode(myModel.getSelectedIndex() + direction));
     paintBorder();
@@ -276,7 +277,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   @Nullable
-  public MyCompositeLabel getItem(int index) {
+  private MyCompositeLabel getItem(int index) {
     if (index != -1 && index < myList.size()) {
       return myList.get(index);
     }
@@ -286,7 +287,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   /**
    * to be invoked by alarm
    */
-  protected void updateList() {
+  private void updateList() {
     final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
     if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent)) {
@@ -378,7 +379,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private static boolean isInsideIcon(final Point point, final Object object) {
-    //noinspection ConstantConditions
     final int height = NavBarModel.getIcon(object).getIconHeight();
     return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height / 2 + 4;
   }
@@ -828,7 +828,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   // ------ popup NavBar ----------
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
     updateList();
-    if (myModel.size() == 0) return;
+    if (myModel.isEmpty()) return;
     myHint = new LightweightHint(this);
     myHint.setForceLightweightPopup(true);
     registerKeyboardAction(new AbstractAction() {
