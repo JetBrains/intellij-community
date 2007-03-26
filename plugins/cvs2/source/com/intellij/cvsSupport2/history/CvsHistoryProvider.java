@@ -121,6 +121,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     myProject = project;
   }
 
+  public boolean isDateOmittable() {
+    return false;
+  }
+
   public ColumnInfo[] getRevisionColumns() {
     return new ColumnInfo[]{
       STATE, TAG, BRANCHES

@@ -19,8 +19,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
@@ -232,7 +232,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static DualViewColumnInfo[] createColumnList(VcsHistoryProvider provider) {
     ColumnInfo[] additionalColunms = provider.getRevisionColumns();
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
-    columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
+    if( provider.isDateOmittable() )
+      columns.addAll(Arrays.asList(REVISION, AUTHOR));
+    else
+      columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
+
     columns.addAll(wrapAdditionalColumns(additionalColunms));
     columns.add(MESSAGE);
     return columns.toArray(new DualViewColumnInfo[columns.size()]);

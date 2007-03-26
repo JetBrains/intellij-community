@@ -22,15 +22,22 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-
 public interface VcsHistoryProvider {
 
   ColumnInfo[] getRevisionColumns();
 
   AnAction[] getAdditionalActions(final FileHistoryPanel panel);
 
+  /**
+   * Returns whether the history provider submits the custom-formatted date
+   * and the standard "Date" column must be omitted to get rid of confusion.
+   * @return true if history provider submits the custom-formatted date.
+   */
+  boolean isDateOmittable();
+
   @Nullable
-  @NonNls String getHelpId();
+  @NonNls
+  String getHelpId();
 
   /**
    * Returns the history session for the specified file path.
