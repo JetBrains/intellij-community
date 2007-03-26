@@ -5,6 +5,7 @@ import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ThreadSafeLocalVcs;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -115,6 +116,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public boolean isEnabled() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     return System.getProperty("newlocalvcs.enabled") != null;
   }
 
