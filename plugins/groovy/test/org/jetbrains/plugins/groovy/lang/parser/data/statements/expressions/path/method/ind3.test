@@ -1,0 +1,35 @@
+A.foo(1,2){it*it}[1,2]
+-----
+Groovy script
+  Property by index
+    Method call
+      Reference expression
+        PsiElement(identifier)('A')
+      PsiElement(.)('.')
+      Property selector
+        PsiElement(identifier)('foo')
+      PsiElement(()('(')
+      Arguments
+        Literal
+          PsiElement(number)('1')
+        PsiElement(,)(',')
+        Literal
+          PsiElement(number)('2')
+      PsiElement())(')')
+      Closable block
+        PsiElement({)('{')
+        Multiplicative expression
+          Reference expression
+            PsiElement(identifier)('it')
+          PsiElement(*)('*')
+          Reference expression
+            PsiElement(identifier)('it')
+        PsiElement(})('}')
+    PsiElement([)('[')
+    Arguments
+      Literal
+        PsiElement(number)('1')
+      PsiElement(,)(',')
+      Literal
+        PsiElement(number)('2')
+    PsiElement(])(']')

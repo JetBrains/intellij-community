@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
@@ -61,8 +62,9 @@ public class PathExpression implements GroovyElementTypes {
       // TODO Add type arguments parsing
       res = namePartParse(builder);
       if (!res.equals(WRONGWAY)) {
-        // If method call
-        if (mLPAREN.equals(builder.getTokenType())) {
+        // If method call or appended block
+        if (mLPAREN.equals(builder.getTokenType()) ||
+                mLCURLY.equals(builder.getTokenType())) {
           pathElementParse(builder, marker);
         } else {
           PsiBuilder.Marker newMarker = marker.precede();
@@ -75,16 +77,26 @@ public class PathExpression implements GroovyElementTypes {
       }
     } else if (mLPAREN.equals(builder.getTokenType())) {
       methodCallArgsParse(builder);
+      if (mLCURLY.equals(builder.getTokenType())) {
+        pathElementParse(builder, marker);
+      } else {
+        PsiBuilder.Marker newMarker = marker.precede();
+        marker.done(PATH_METHOD_CALL);
+        pathElementParse(builder, newMarker);
+      }
+    } else if (mLCURLY.equals(builder.getTokenType())) {
+      appendedBlockParse(builder);
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(PATH_METHOD_CALL);
       pathElementParse(builder, newMarker);
+    } else if (mLBRACK.equals(builder.getTokenType())) {
+      indexPropertyArgsParse(builder);
+      PsiBuilder.Marker newMarker = marker.precede();
+      marker.done(PATH_INDEX_PROPERTY);
+      pathElementParse(builder, newMarker);
     } else {
-
-      // TODO add other cases
       marker.drop();
-
     }
-
     return PATH_EXPRESSION;
   }
 
@@ -122,6 +134,25 @@ public class PathExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
+  private static GroovyElementType indexPropertyArgsParse(PsiBuilder builder) {
+    if (ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
+      ParserUtils.getToken(builder, mNLS);
+      if (ParserUtils.getToken(builder, mRBRACK)) {
+        return PATH_INDEX_PROPERTY;
+      }
+      ArgumentList.parse(builder);
+      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+    }
+    return PATH_INDEX_PROPERTY;
+  }
+
+  /**
+   * 
+   *
+   * @param builder
+   * @return
+   */
   private static GroovyElementType methodCallArgsParse(PsiBuilder builder) {
     if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       ParserUtils.getToken(builder, mNLS);
@@ -133,6 +164,16 @@ public class PathExpression implements GroovyElementTypes {
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     }
     return PATH_METHOD_CALL;
+  }
+
+  /**
+   * Appended closure argument parsing
+   *
+   * @param builder
+   * @return
+   */
+  private static GroovyElementType appendedBlockParse(PsiBuilder builder) {
+    return OpenOrClosableBlock.parseClosableBlock(builder);
   }
 
 

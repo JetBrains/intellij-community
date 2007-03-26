@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.Iconable;
@@ -9,5 +9,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrPropertySelectior extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrOpenBlock extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
 }

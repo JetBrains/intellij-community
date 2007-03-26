@@ -1,0 +1,21 @@
+foo{println it
+3
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('foo')
+    Closable block
+      PsiElement({)('{')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('it')
+      PsiElement(new line)('\n')
+      Literal
+        PsiElement(number)('3')
+      PsiErrorElement:'}' expected
+        <empty list>

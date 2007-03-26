@@ -1,0 +1,12 @@
+counter['name'
+-----
+Groovy script
+  Property by index
+    Reference expression
+      PsiElement(identifier)('counter')
+    PsiElement([)('[')
+    Arguments
+      Literal
+        PsiElement(string)(''name'')
+    PsiErrorElement:']' expected
+      <empty list>

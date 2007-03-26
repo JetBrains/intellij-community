@@ -31,6 +31,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Statements
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
+  GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
   GroovyElementType BLOCK_BODY = new GroovyElementType("Closable block");
 
   // Import elements
@@ -63,6 +64,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PATH_EXPRESSION = new GroovyElementType("Path expression");
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
   GroovyElementType PATH_METHOD_CALL= new GroovyElementType("Method call");
+  GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
 
   // Arguments
   GroovyElementType ARGUMENTS= new GroovyElementType("Arguments");

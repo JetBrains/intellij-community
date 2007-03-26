@@ -13,10 +13,59 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class OpenOrClosableBlock implements GroovyElementTypes {
 
+  /**
+   * Parses blocks of both types
+   *
+   * @param builder
+   * @return
+   */
   public static GroovyElementType parse(PsiBuilder builder) {
-
     PsiBuilder.Marker marker = builder.mark();
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      marker.drop();
+      return WRONGWAY;
+    }
+    ParserUtils.getToken(builder, mNLS);
+    GroovyElementType result = closableBlockParamsOpt(builder);
+    parseBlockBody(builder);
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    if (!result.equals(WRONGWAY)) {
+      marker.done(CLOSABLE_BLOCK);
+      return CLOSABLE_BLOCK;
+    } else {
+      marker.done(OPEN_BLOCK);
+      return OPEN_BLOCK;
+    }
+  }
 
+  /**
+   * Parses only OPEN blocks
+   *
+   * @param builder
+   * @return
+   */
+  public static GroovyElementType parseOpenBlock(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      marker.drop();
+      return WRONGWAY;
+    }
+    ParserUtils.getToken(builder, mNLS);
+    parseBlockBody(builder);
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    marker.done(OPEN_BLOCK);
+    return OPEN_BLOCK;
+  }
+
+
+  /**
+   * Parses CLOSABLE blocks
+   *
+   * @param builder
+   * @return
+   */
+  public static GroovyElementType parseClosableBlock(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       return WRONGWAY;
@@ -28,6 +77,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     marker.done(CLOSABLE_BLOCK);
     return CLOSABLE_BLOCK;
   }
+
 
   private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder) {
     // TODO implement me!
@@ -51,6 +101,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     return BLOCK_BODY;
   }
 
+  /**
+   * Rolls marker forward after possible errors
+   *
+   * @param builder
+   */
   private static void cleanAfterError(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();

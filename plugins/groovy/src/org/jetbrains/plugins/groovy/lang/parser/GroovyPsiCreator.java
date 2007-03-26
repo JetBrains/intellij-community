@@ -13,12 +13,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrMethodBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
@@ -38,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportState
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrArrayTypeElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrBuiltInTypeImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -101,8 +104,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceMemberImpl(node);
     if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
     if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
-    if (elem.equals(METHOD_DEFINITION)) return new GrMethodDefinitionImpl(node);
-    if (elem.equals(CONSTRUCTOR_DEFINITION)) return new GrConstructorDefinitionImpl(node);
 
     //parameters
     if (elem.equals(PARAMETERS_LIST)) return new GrParameterListImpl(node);
@@ -140,6 +141,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
     if (elem.equals(PATH_PROPERTY_REFERENCE)) return new GrPropertySelectionImpl(node);
     if (elem.equals(PATH_METHOD_CALL)) return new GrMethodCallImpl(node);
+    if (elem.equals(PATH_INDEX_PROPERTY)) return new GrIndexPropertyImpl(node);
 
     // Arguments
     if (elem.equals(ARGUMENTS)) return new GrArgumentsImpl(node);
