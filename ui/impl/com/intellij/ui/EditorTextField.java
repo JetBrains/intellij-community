@@ -197,7 +197,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
           public void run() {
             myDocument.replaceString(0, myDocument.getTextLength(), text);
             if (myEditor != null) {
-              myEditor.getCaretModel().moveToOffset(myDocument.getTextLength());
+              final CaretModel caretModel = myEditor.getCaretModel();
+              if (caretModel.getOffset() >= myDocument.getTextLength()) {
+                caretModel.moveToOffset(myDocument.getTextLength());
+              }
             }
           }
         }, null, null);
