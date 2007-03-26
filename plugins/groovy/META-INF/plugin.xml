@@ -11,19 +11,22 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
+<!--
     <component>
       <implementation-class>org.codehaus.groovy.intellij.EditorAPIFactory</implementation-class>
     </component>
+-->
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.components.GroovyScriptTemplate</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.sdk.GroovySdkType</implementation-class>
     </component>
+<!--
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.configuration.GroovyConfigurationType
-      </implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.configuration.GroovyConfigurationType</implementation-class>
     </component>
+-->
   </application-components>
 
 </idea-plugin>
