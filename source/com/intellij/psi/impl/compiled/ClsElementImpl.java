@@ -29,8 +29,12 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
   }
 
   public PsiFile getContainingFile() {
-    if (!isValid()) throw new PsiInvalidElementAccessException(this);
-    return getParent().getContainingFile();
+    PsiElement parent = getParent();
+    if (parent == null) {
+      if (!isValid()) throw new PsiInvalidElementAccessException(this);
+      return null;
+    }
+    return parent.getContainingFile();
   }
 
   public final boolean isWritable() {

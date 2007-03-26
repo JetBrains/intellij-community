@@ -54,9 +54,9 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
   }
 
   public PsiFile getContainingFile() {
-    if (!isValid())
-      throw new PsiInvalidElementAccessException(this);
-    return SharedImplUtil.getContainingFile(this);
+    PsiFile file = SharedImplUtil.getContainingFile(this);
+    if (file == null || !file.isValid()) throw new PsiInvalidElementAccessException(this);
+    return file;
   }
 
   public PsiElement findElementAt(int offset) {
