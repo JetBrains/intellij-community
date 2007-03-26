@@ -1235,14 +1235,14 @@
     </group>
 
     <group id="Debugger.ContentPopup">
-      <action id="Debugger.MaximizeContent" class="com.intellij.debugger.ui.content.MaximizeContentAction"/>
-      <action id="Debugger.HideContent" class="com.intellij.debugger.ui.content.HideContentAction"/>
-      <action id="Debugger.DetachContent" class="com.intellij.debugger.ui.content.DetachContentAction"/>
+      <action id="Debugger.MaximizeContent" class="com.intellij.debugger.ui.content.actions.MaximizeContentAction"/>
+      <action id="Debugger.HideContent" class="com.intellij.debugger.ui.content.actions.HideContentAction"/>
+      <action id="Debugger.DetachContent" class="com.intellij.debugger.ui.content.actions.DetachContentAction"/>
       <separator/>
-      <action id="Debugger.RestoreContent" class="com.intellij.debugger.ui.content.RestoreContentAction"/>
+      <action id="Debugger.RestoreContent" class="com.intellij.debugger.ui.content.actions.RestoreContentAction"/>
       <separator/>
-      <action id="Debugger.NextContent" class="com.intellij.debugger.ui.content.SelectNextContentAction"/>
-      <action id="Debugger.PreviousContent" class="com.intellij.debugger.ui.content.SelectPreviousContentAction"/>
+      <action id="Debugger.NextContent" class="com.intellij.debugger.ui.content.actions.SelectNextContentAction"/>
+      <action id="Debugger.PreviousContent" class="com.intellij.debugger.ui.content.actions.SelectPreviousContentAction"/>
     </group>
 
 

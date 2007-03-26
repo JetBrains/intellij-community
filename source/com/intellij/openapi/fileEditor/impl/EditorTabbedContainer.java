@@ -175,7 +175,9 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         else {
           if (myLastClickedIndex == -1) {
             // push forward events outside thw tab bounds
-            super.processMouseEvent(e);
+            if (getRootPane() != null) {
+              super.processMouseEvent(e);
+            }
           }
         }
       }
