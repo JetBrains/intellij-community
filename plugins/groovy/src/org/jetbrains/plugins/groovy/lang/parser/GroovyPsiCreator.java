@@ -104,6 +104,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
     if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBodyImplType(node);
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
+    if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(CONSTRUCTOR_BODY)) return new GrConstructorBodyImpl(node);
     if (elem.equals(METHOD_BODY)) return new GrMethodBodyImpl(node);
 
