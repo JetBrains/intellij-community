@@ -68,7 +68,6 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     }
 
     public void readSettings(Element element) throws InvalidDataException{
-        System.out.println("read settings");
         super.readSettings(element);
         parseQuestionString();
     }
