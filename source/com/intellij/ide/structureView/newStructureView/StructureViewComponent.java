@@ -132,8 +132,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     installTree();
 
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, getTree()) {
+      @NotNull
       protected PsiElement[] getSelectedElements() {
-        return StructureViewComponent.this.getSelectedPsiElements();
+        return getSelectedPsiElements();
       }
     };
   }
@@ -156,9 +157,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return filterPsiElements(getSelectedElements());
   }
 
+  @NotNull
   private static PsiElement[] filterPsiElements(Object[] selectedElements) {
     if (selectedElements == null) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
 
