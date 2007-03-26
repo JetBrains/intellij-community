@@ -164,6 +164,7 @@ public abstract class MappedBufferWrapper {
   }
 
   public static boolean clean(final Object buffer) {
+    if (buffer == null) return true;
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
         try {
