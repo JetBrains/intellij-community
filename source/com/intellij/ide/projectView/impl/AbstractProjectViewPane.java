@@ -104,7 +104,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public JComponent getComponentToFocus() {
     return myTree;
   }
-  public void expand(final Object[] path, final boolean requestFocus){
+  public void expand(@Nullable final Object[] path, final boolean requestFocus){
     if (myTreeBuilder == null || path == null) return;
     myTreeBuilder.buildNodeForPath(path);
 

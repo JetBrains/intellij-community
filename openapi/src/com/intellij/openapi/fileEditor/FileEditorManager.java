@@ -35,7 +35,7 @@ public abstract class FileEditorManager {
    *
    * @return array of opened editors
    */
-  @NotNull public abstract FileEditor[] openFile(VirtualFile file, boolean focusEditor);
+  @NotNull public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
   /**
    * Closes all editors opened for the file.

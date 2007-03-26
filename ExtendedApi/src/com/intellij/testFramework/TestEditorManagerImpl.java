@@ -235,7 +235,7 @@ import java.util.Map;
   public void projectOpened() {
   }
 
-  public void closeFile(VirtualFile file) {
+  public void closeFile(@NotNull VirtualFile file) {
     Editor editor = myVirtualFile2Editor.get(file);
     if (editor != null){
       EditorFactory.getInstance().releaseEditor(editor);
