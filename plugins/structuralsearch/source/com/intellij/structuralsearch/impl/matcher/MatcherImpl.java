@@ -274,10 +274,9 @@ public class MatcherImpl {
           // We search from content roots even for java files due to jsps
           final VirtualFile[] contentRoots = instance.getContentRoots();
           List<VirtualFile> result = new ArrayList<VirtualFile>(contentRoots.length);
-          for(VirtualFile file:contentRoots) result.add(file);
+          result.addAll(Arrays.asList(contentRoots));
 
           if (scope.isSearchInLibraries()) {
-
             for(VirtualFile file: instance.getRootFiles(ProjectRootType.SOURCE)) {
               if (projectFileIndex.isInLibrarySource(file)) {
                 result.add(file);
@@ -291,8 +290,7 @@ public class MatcherImpl {
       HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
       final VirtualFileFilter filter = new VirtualFileFilter() {
         public boolean accept(VirtualFile file) {
-          if(!file.isDirectory()) return scope.contains(file);
-          return true;
+          return file.isDirectory() || scope.contains(file);
         }
       };
 
@@ -436,7 +434,7 @@ public class MatcherImpl {
 
     private void executeNext() {
       while(!suspended && !ended) {
-        if (tasks.size() == 0) {
+        if (tasks.isEmpty()) {
           ended = true;
           break;
         }
@@ -448,7 +446,7 @@ public class MatcherImpl {
       if (ended) clearSchedule();
     }
 
-    void init() {
+    private void init() {
       ended = false;
       suspended = false;
       PsiManager.getInstance(project).startBatchFilesProcessingMode();
@@ -456,9 +454,7 @@ public class MatcherImpl {
 
     private void clearSchedule() {
       if (tasks != null) {
-        if (tasks.size()!=0) tasks.clear();
         taskQueueEndAction.run();
-
         PsiManager.getInstance(project).finishBatchFilesProcessingMode();
         tasks = null;
       }
