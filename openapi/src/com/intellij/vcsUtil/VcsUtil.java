@@ -96,23 +96,13 @@ public class VcsUtil
     markAsUpToDate(project, true, canonicalPath);
   }
 
-  public static void refreshVirtualFileSynchronously( final VirtualFile file )
+  public static void refreshFiles( HashSet<FilePath> paths )
   {
-    final Application app = ApplicationManager.getApplication();
-    final Runnable action = new Runnable() { public void run() { file.refresh( false, file.isDirectory() ); } };
-      
-    if( app.isDispatchThread() )
-      app.runWriteAction( action );
-    else
-      app.invokeAndWait( new Runnable() { public void run() { app.runWriteAction( action ); } } , ModalityState.defaultModalityState() );
-  }
-  /**
-   * Call "fileDirty" in the read action.
-   */
-  public static void markFileAsDirty( final Project project, final FilePath path )
-  {
-    final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance( project );
-    ApplicationManager.getApplication().runReadAction( new Runnable() { public void run() { mgr.fileDirty( path ); } } );
+    for( FilePath path : paths )
+    {
+      VirtualFile vFile = path.getVirtualFile();
+      vFile.refresh( true, vFile.isDirectory() );
+    }
   }
 
   public static String getCanonicalPath(File file) {
