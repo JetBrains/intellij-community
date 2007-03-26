@@ -105,6 +105,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
     myComponentTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myComponentTree.setEditor(activeFormEditor);
+    myComponentTree.setFormEditor(newEditor);
     myPropertyInspector.setEditor(activeFormEditor);
     if (activeFormEditor == null) {
       myToolWindow.setAvailable(false, null);

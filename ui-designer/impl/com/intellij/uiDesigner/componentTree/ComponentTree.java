@@ -23,6 +23,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
@@ -67,6 +68,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private Map<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>> myHighlightAttributes;
 
   private GuiEditor myEditor;
+  private UIFormEditor myFormEditor;
   private QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
@@ -233,6 +235,10 @@ public final class ComponentTree extends Tree implements DataProvider {
       return ourHelpID;
     }
 
+    if (DataConstants.FILE_EDITOR.equals(dataId)) {
+      return myFormEditor;
+    }
+
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
       return null;
     }
@@ -353,6 +359,10 @@ public final class ComponentTree extends Tree implements DataProvider {
       myDropTargetComponent = dropTargetComponent;
       repaint();
     }
+  }
+
+  public void setFormEditor(final UIFormEditor formEditor) {
+    myFormEditor = formEditor;
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
