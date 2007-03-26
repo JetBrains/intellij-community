@@ -58,7 +58,7 @@ public interface IntentionAction {
    * @param file the file open in the editor.
    * @return true if the intention is available, false otherwise.
    */
-  boolean isAvailable(Project project, Editor editor, PsiFile file);
+  boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file);
 
   /**
    * Called when user invokes intention. This method is called inside command.
@@ -69,7 +69,7 @@ public interface IntentionAction {
    * @param editor the editor in which the intention is invoked.
    * @param file the file open in the editor.
    */
-  void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException;
+  void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException;
 
   /**
    * Indicate whether this action should be invoked inside write action.

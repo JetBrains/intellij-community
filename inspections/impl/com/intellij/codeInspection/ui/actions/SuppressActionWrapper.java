@@ -13,10 +13,7 @@ import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionDocTagFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressWarningsAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -61,7 +58,7 @@ class SuppressActionWrapper extends AnAction {
                                   final boolean classToSuppress) {
     super(text);
     myProject = project;
-    myManager = (InspectionManagerEx)InspectionManagerEx.getInstance(myProject);
+    myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     myNodesToSuppress = nodesToSuppress;
     myTool = tool;
     myID = HighlightDisplayKey.find(tool.getShortName()).getID();
@@ -97,7 +94,6 @@ class SuppressActionWrapper extends AnAction {
   }
 
   private boolean suppress(final PsiElement element, final IntentionAction action) {
-    final boolean[] needToRefresh = new boolean[]{true};
     final PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -120,7 +116,7 @@ class SuppressActionWrapper extends AnAction {
         }
       }
     });
-    return needToRefresh[0];
+    return true;
   }
 
   public void update(final AnActionEvent e) {
@@ -149,12 +145,12 @@ class SuppressActionWrapper extends AnAction {
     RefElement refElement;
     CommonProblemDescriptor descriptor;
     if (node instanceof RefElementNode) {
-      final RefElementNode elementNode = ((RefElementNode)node);
+      final RefElementNode elementNode = (RefElementNode)node;
       refElement = elementNode.getElement();
       descriptor = elementNode.getProblem();
     }
     else {
-      final ProblemDescriptionNode descriptionNode = ((ProblemDescriptionNode)node);
+      final ProblemDescriptionNode descriptionNode = (ProblemDescriptionNode)node;
       refElement = (RefElement)descriptionNode.getElement();
       descriptor = descriptionNode.getDescriptor();
     }

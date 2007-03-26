@@ -84,7 +84,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
   @NonNls private static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
-  public I18nizeQuickFixDialog(Project project,
+  public I18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
                                @Nullable final PsiLiteralExpression literalExpression,
                                String defaultPropertyValue,

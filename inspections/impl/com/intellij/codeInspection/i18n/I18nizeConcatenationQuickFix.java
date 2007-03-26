@@ -27,7 +27,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
   }
 
-  public I18nizeQuickFixDialog createDialog(PsiFile psiFile, Editor editor, Project project) {
+  public I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
     PsiLiteralExpression literalExpression = ConcatenationToMessageFormatAction.getContainingLiteral(concatenation);
     if (literalExpression == null) return null;

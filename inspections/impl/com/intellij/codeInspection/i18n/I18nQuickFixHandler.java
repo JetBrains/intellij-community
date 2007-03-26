@@ -23,5 +23,5 @@ public interface I18nQuickFixHandler {
                           String value,
                           String i18nizedText) throws IncorrectOperationException;
 
-  I18nizeQuickFixDialog createDialog(PsiFile psiFile, Editor editor, Project project);
+  I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile);
 }

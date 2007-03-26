@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -17,7 +18,7 @@ import java.util.*;
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 
-  public static void showErrorMessage(String title, String message, String helpId, Project project) {
+  public static void showErrorMessage(String title, String message, String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
@@ -28,28 +29,28 @@ public class CommonRefactoringUtil {
     return "<b><code>" + text + "</code></b>";
   }
 
-  public static boolean checkReadOnlyStatus(Project project, PsiElement element) {
+  public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
 
-  public static boolean checkReadOnlyStatus(Project project, PsiElement... elements) {
+  public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement... elements) {
     return checkReadOnlyStatus(Arrays.asList(elements), project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, true);
   }
 
-  public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
+  public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, String messagePrefix) {
     return element.isWritable() ||
            checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false, true);
   }
 
-  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element) {
-    return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, false);
+  public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
+    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, false);
   }
-  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element, boolean notifyOnFail) {
-    return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, notifyOnFail);
+  public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
+    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, notifyOnFail);
   }
 
-  private static boolean checkReadOnlyStatus(Collection<? extends PsiElement> elements,
-                                             Project project,
+  private static boolean checkReadOnlyStatus(@NotNull Collection<? extends PsiElement> elements,
+                                             @NotNull Project project,
                                              final String messagePrefix,
                                              boolean recursively,
                                              final boolean notifyOnFail) {

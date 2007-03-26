@@ -46,11 +46,11 @@ public class CreatePropertyFix implements IntentionAction {
     return NAME;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myElement.isValid();
   }
 
-  public void invoke(final Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     PsiLiteralExpression literalExpression = myElement instanceof PsiLiteralExpression ? (PsiLiteralExpression)myElement : null;
     final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, file, literalExpression, "", false, false) {
       protected void init() {

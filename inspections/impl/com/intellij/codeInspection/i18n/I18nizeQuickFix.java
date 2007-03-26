@@ -90,7 +90,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     }
   }
 
-  public I18nizeQuickFixDialog createDialog(PsiFile psiFile, Editor editor, Project project) {
+  public I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     final PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(psiFile, editor);
     return createDialog(project, psiFile, literalExpression);
   }

@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -37,7 +38,7 @@ class InlineLocalHandler {
   /**
    * should be called in AtomicAction
    */
-  public static void invoke(final Project project, final Editor editor, final PsiLocalVariable local, PsiReferenceExpression refExpr) {
+  public static void invoke(@NotNull final Project project, final Editor editor, final PsiLocalVariable local, PsiReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
