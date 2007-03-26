@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 /**
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
@@ -257,15 +258,18 @@ public class DefaultJDOMExternalizer {
           }
         }
         else if (JDOMExternalizable.class.isAssignableFrom(type)) {
-          JDOMExternalizable object = null;
+          final List children = e.getChildren("value");
+          if (children.size() > 0) {
+            // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
+            JDOMExternalizable object = null;
+            for (final Object o1 : children) {
+              Element el = (Element)o1;
+              object = (JDOMExternalizable)type.newInstance();
+              object.readExternal(el);
+            }
 
-          for (final Object o1 : e.getChildren("value")) {
-            Element el = (Element)o1;
-            object = (JDOMExternalizable)type.newInstance();
-            object.readExternal(el);
+            field.set(data, object);
           }
-
-          field.set(data, object);
         }
         else {
           throw new InvalidDataException("wrong type: " + type);
