@@ -248,7 +248,7 @@ public class CopyReferenceAction extends AnAction {
     RangeMarker rangeMarker = document.createRangeMarker(endOffset, endOffset);
     elementAtCaret = file.findElementAt(offset);
 
-    if (elementAtCaret != null) {
+    if (elementAtCaret != null && elementAtCaret.isValid()) {
       shortenReference(elementAtCaret);
     }
     CodeInsightUtil.forcePsiPostprocessAndRestoreElement(file);
@@ -342,7 +342,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   @Nullable
-  public static String elementToFqn(final PsiElement element) {
+  private static String elementToFqn(final PsiElement element) {
     final String fqn;
     if (element instanceof PsiClass) {
       fqn = ((PsiClass)element).getQualifiedName();
@@ -397,7 +397,9 @@ public class CopyReferenceAction extends AnAction {
     if (element != null) {
       return element;
     }
-    element = aClass.findMethodsByName(memberName, false)[0];
+    PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
+    if (methods.length == 0) return null;
+    element = methods[0];
     return element;
   }
 }
