@@ -17,17 +17,17 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.ui.ColoredTableCellRenderer;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -40,8 +40,8 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import javax.swing.table.TableCellRenderer;
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -199,6 +199,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new ShowAllSubmittedFilesAction()};
+  }
+
+  public boolean isDateOmittable() {
+    return false;
   }
 
   private class MyLogEntryHandler implements ISVNLogEntryHandler {
