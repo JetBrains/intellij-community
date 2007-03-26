@@ -73,6 +73,9 @@ public final class GlassLayer extends JComponent implements DataProvider{
 
   protected void processKeyEvent(final KeyEvent e){
     myEditor.myProcessor.processKeyEvent(e);
+    if (!e.isConsumed()) {
+      super.processKeyEvent(e);
+    }
   }
 
   protected void processMouseEvent(final MouseEvent e){

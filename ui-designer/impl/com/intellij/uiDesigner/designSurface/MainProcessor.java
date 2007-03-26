@@ -62,6 +62,7 @@ public final class MainProcessor extends EventProcessor{
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
                                          component.getDefaultInplaceEditorBounds(), new InplaceContext(false, e.getKeyChar()));
+        e.consume();
       }
     }
   }

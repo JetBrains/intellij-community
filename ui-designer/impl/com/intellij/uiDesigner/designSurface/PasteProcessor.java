@@ -77,9 +77,11 @@ public class PasteProcessor extends EventProcessor {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         doPaste(myLastLocation);
+        e.consume();
       }
       else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         endPaste();
+        e.consume();
       }
       else {
         myLastLocation = moveDropLocation(myEditor, myLastLocation, myPastedComponentList, e);

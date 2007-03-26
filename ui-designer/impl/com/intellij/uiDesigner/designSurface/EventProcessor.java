@@ -60,6 +60,7 @@ public abstract class EventProcessor {
     ComponentDropLocation.Direction dir = directionFromKey(e.getKeyCode());
     boolean moveToLast = isMoveToLast(e.getKeyCode());
     if (dir != null && location != null) {
+      e.consume();
       ComponentDropLocation adjacentLocation;
       if (moveToLast) {
         adjacentLocation = location.getAdjacentLocation(dir);
