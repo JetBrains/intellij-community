@@ -47,12 +47,14 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -408,6 +410,22 @@ public class VcsUtil
       {
         public void run() { Messages.showMessageDialog( project, message, title, Messages.getErrorIcon()); }
       });
+  }
+
+  /**
+   * Shows message in the status bar.
+   * @param project Current project component
+   * @param message information message
+   */
+  public static void showStatusMessage(final Project project, final String message)
+  {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (project.isOpen()) {
+          WindowManager.getInstance().getStatusBar( project ).setInfo( message );
+        }
+      }
+    });
   }
 
   /**
