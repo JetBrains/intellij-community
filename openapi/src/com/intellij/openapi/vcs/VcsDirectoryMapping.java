@@ -17,6 +17,8 @@
 
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
@@ -27,11 +29,12 @@ public class VcsDirectoryMapping {
   public VcsDirectoryMapping() {
   }
 
-  public VcsDirectoryMapping(final String directory, final String vcs) {
+  public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
     myDirectory = directory;
     myVcs = vcs;
   }
 
+  @NotNull
   public String getDirectory() {
     return myDirectory;
   }
@@ -44,7 +47,7 @@ public class VcsDirectoryMapping {
     myVcs = vcs;
   }
 
-  public void setDirectory(final String directory) {
+  public void setDirectory(@NotNull final String directory) {
     myDirectory = directory;
   }
 
