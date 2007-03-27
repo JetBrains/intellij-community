@@ -84,15 +84,7 @@ public class NavBarModel {
 
   protected boolean updateModel(DataContext dataContext) {
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_FILE);
-    if (psiElement instanceof PsiJavaFile) {
-      final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
-      if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
-        final PsiClass[] psiClasses = psiJavaFile.getClasses();
-        if (psiClasses.length == 1) {
-          psiElement = psiClasses[0];
-        }
-      }
-    }
+    psiElement = normalize(psiElement);
     if (psiElement != null && psiElement.isValid()) {
       return updateModel(psiElement);
     }
@@ -282,7 +274,7 @@ public class NavBarModel {
     return null;
   }
 
-  private String wrapPresentation(String result, Window window) {
+  private static String wrapPresentation(String result, Window window) {
     if (result != null) {
       boolean trancated = false;
       if (window != null) {
@@ -355,9 +347,22 @@ public class NavBarModel {
           final VirtualFile virtualFile = PsiUtil.getVirtualFile(child);
           if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
         }
-        result.add(child);
+        result.add(normalize(child));
       }
     }
+  }
+
+  private static PsiElement normalize(PsiElement child) {
+    if (child instanceof PsiJavaFile) {
+      final PsiJavaFile psiJavaFile = (PsiJavaFile)child;
+      if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
+        final PsiClass[] psiClasses = psiJavaFile.getClasses();
+        if (psiClasses.length == 1) {
+          child = psiClasses[0];
+        }
+      }
+    }
+    return child;
   }
 
   List<Object> calcElementChildren(final Object object) {
