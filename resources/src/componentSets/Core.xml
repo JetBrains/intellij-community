@@ -241,6 +241,12 @@
       <interface-class>com.intellij.util.LogicalRootsManager</interface-class>
       <implementation-class>com.intellij.util.LogicalRootsManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.projectImport.eclipse.config.EclipseProjectResolver</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
     <!--
     <component>
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>
@@ -264,6 +270,10 @@
     <component>
       <interface-class>com.intellij.javaee.model.annotations.JamModuleManager</interface-class>
       <implementation-class>com.intellij.javaee.model.annotations.JamModuleManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.projectImport.eclipse.config.EclipseModuleResolver</implementation-class>
       <skipForDummyProject/>
     </component>
   </module-components>

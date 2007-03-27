@@ -166,7 +166,7 @@ abstract public class ClasspathStorage implements StateStorage {
   }
 
   @Nullable
-  private static String getStorageRoot(final Module module, final Module moduleBeingLoaded ) {
+  public static String getStorageRoot(final Module module, final Module moduleBeingLoaded ) {
     if ( module == moduleBeingLoaded ) {
       return getStorageRootFromOptions(module);
     } else {
@@ -175,7 +175,7 @@ abstract public class ClasspathStorage implements StateStorage {
     }
   }
 
-  protected static Map<String, String> getStorageRootMap(final Project project, final Module moduleBeingLoaded) {
+  public static Map<String, String> getStorageRootMap(final Project project, final Module moduleBeingLoaded) {
     final Map<String, String> map = new HashMap<String, String>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
       final String storageRoot = getStorageRoot(aModule, moduleBeingLoaded);
