@@ -81,7 +81,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
         return false;
       }
 
-      if (eachParent.getBounds().contains(point)) {
+      if (eachParent.getBounds().contains(point) || !eachParent.canClose()) {
         return false;
       }
 

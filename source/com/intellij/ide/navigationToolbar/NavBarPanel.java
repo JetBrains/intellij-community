@@ -46,10 +46,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -63,8 +60,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.PopupOwner;
-import com.intellij.ui.popup.list.DottedBorder;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.DottedBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -206,9 +203,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        clearBorder();
-        final int selectedIndex = -1;
-        myModel.setSelectedIndex(selectedIndex);
+        myModel.setSelectedIndex(-1);
         ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
@@ -239,18 +234,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void selectLast() {
     if (myModel.getSelectedIndex() == -1 && !myModel.isEmpty()) {
       myModel.setSelectedIndex(myModel.size() - 1);
-      paintBorder();
       myList.get(myModel.getSelectedIndex()).requestFocusInWindow();
     }
   }
 
   public void select() {
     if (!myList.isEmpty()) {
-      clearBorder();
       myModel.setSelectedIndex(myList.size() - 1);
       paintComponent();
       scrollSelectionToVisible(1);
-      paintBorder();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           requestFocusInWindow();
@@ -260,9 +252,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void shiftFocus(int direction) {
-    clearBorder();
     myModel.setSelectedIndex(myModel.getIndexByMode(myModel.getSelectedIndex() + direction));
-    paintBorder();
     scrollSelectionToVisible(direction);
   }
 
@@ -274,9 +264,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       if (firstIndex == myFirstIndex) break; //to be sure not to hang
     }
     setSize(getPreferredSize());  //not to miss right button && font corrections
+    repaint();
   }
 
-  @Nullable
   private MyCompositeLabel getItem(int index) {
     if (index != -1 && index < myList.size()) {
       return myList.get(index);
@@ -306,48 +296,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myModel.setSelectedIndex(selectedIndex1);
       myList.clear();
       for (int index = 0; index < myModel.size(); index++) {
-        final int idx = index;
         final Object object = myModel.get(index);
         final boolean hasChildren = myModel.hasChildren(object);
         final Icon icon = NavBarModel.getIcon(object);
-        final MyCompositeLabel label = new MyCompositeLabel(hasChildren ? wrapIcon(icon, idx, Color.gray) : icon,
+        final MyCompositeLabel label = new MyCompositeLabel(index,
+                                                            hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
                                                             myModel.getPresentableText(object, getWindow()),
                                                             myModel.getTextAttributes(object, false));
-        ListenerUtil.addMouseListener(label, new MouseAdapter() {
-          public void mouseExited(MouseEvent e) {
-            if (!hasChildren) return;
-            label.getLabel().setIcon(wrapIcon(icon, idx, Color.gray));
-          }
 
-          public void mouseClicked(MouseEvent e) {
-            if (hasChildren) {
-              if (isInsideIcon(e.getPoint(), object)) {
-                label.getLabel().setIcon(wrapIcon(icon, idx, Color.black));
-              }
-              if (myModel.getSelectedIndex() == idx && myNodePopup != null) {
-                cancelPopup();
-                return;
-              }
-              ctrlClick(idx);
-            }
-            clearBorder();
-            myModel.setSelectedIndex(idx);
-            paintBorder();
-          }
-        });
-        ListenerUtil.addMouseMotionListener(label, new MouseMotionAdapter() {
-          public void mouseMoved(MouseEvent e) {
-            if (!hasChildren) return;
-            if (isInsideIcon(e.getPoint(), object)) {
-              label.getLabel().setIcon(wrapIcon(icon, idx, Color.black));
-            }
-            else {
-              label.getLabel().setIcon(wrapIcon(icon, idx, Color.gray));
-            }
-          }
-        });
+        installActions(index, hasChildren, icon, label);
         myList.add(label);
-        installActions(index);
       }
       paintComponent();
     }
@@ -378,10 +336,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     return layeredIcon;
   }
 
-  private static boolean isInsideIcon(final Point point, final Object object) {
-    final int height = NavBarModel.getIcon(object).getIconHeight();
-    return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height / 2 + 4;
-  }
+
 
   private void paintComponent() {
     myPreferredWidth = 0;
@@ -390,7 +345,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     final MyCompositeLabel toBeContLabel = getDotsLabel();
-    clearBorder(toBeContLabel.getColoredComponent());
     final int additionalWidth = toBeContLabel.getPreferredSize().width;
     final Window window = SwingUtilities.getWindowAncestor(this);
     final int availableWidth = window != null ? window.getWidth() - 2 * LEFT_ICON.getIconWidth() - 2 * additionalWidth : 0;
@@ -399,7 +353,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
       if (myFirstIndex > 0) {
         final MyCompositeLabel preList = getDotsLabel();
-        clearBorder(preList.getColoredComponent());
         myScrollablePanel.add(preList, gc);
         myPreferredWidth += additionalWidth;
       }
@@ -430,8 +383,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
       gc.weightx = 0;
       gc.fill = GridBagConstraints.NONE;
-      final MyCompositeLabel preselected = myList.get(myModel.size() - 1);
-      installDottedBorder(preselected.getColoredComponent());
       for (int i = myModel.size() - 1; i >= 0; i--) {
         final MyCompositeLabel linkLabel = myList.get(i);
         final int labelWidth = linkLabel.getPreferredSize().width;
@@ -455,46 +406,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     repaint();
   }
 
-  private static MyCompositeLabel getDotsLabel() {
-    return new MyCompositeLabel(null, "...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
-
-  //-------------- borders -----------------------------
-
-  private void paintBorder() {
-    final MyCompositeLabel focusedLabel = myList.get(myModel.getSelectedIndex());
-    final Object o = myModel.getSelectedValue();
-    final Icon icon = NavBarModel.getIcon(o);
-    focusedLabel.getLabel().setIcon(myModel.hasChildren(o) ? wrapIcon(icon, myModel.getSelectedIndex(), Color.gray) : icon);
-    final SimpleColoredComponent simpleColoredComponent = focusedLabel.getColoredComponent();
-    simpleColoredComponent.clear();
-    simpleColoredComponent.append(myModel.getPresentableText(o, getWindow()), myModel.getTextAttributes(o, true));
-    simpleColoredComponent.setBackground(UIUtil.getListSelectionBackground());
-    simpleColoredComponent.setForeground(UIUtil.getListSelectionForeground());
-    installDottedBorder(simpleColoredComponent);
-  }
-
-  private static void installDottedBorder(SimpleColoredComponent label) {
-    label.setBorder(new DottedBorder(new Insets(0, 0, 0, 1), UIUtil.getListForeground()));
-  }
-
-  private void clearBorder() {
-    if (myModel.isEmpty()) return;
-    final int index = myModel.getSelectedIndex() != -1 ? myModel.getSelectedIndex() : myModel.size() - 1;
-    final MyCompositeLabel focusLostLabel = myList.get(index);
-    final Object o = myModel.get(index);
-    final Icon icon = NavBarModel.getIcon(o);
-    focusLostLabel.getLabel().setIcon(myModel.hasChildren(o) ? wrapIcon(icon, index, Color.gray) : icon);
-    final SimpleColoredComponent simpleColoredComponent = focusLostLabel.getColoredComponent();
-    simpleColoredComponent.clear();
-    simpleColoredComponent.append(myModel.getPresentableText(o, getWindow()), myModel.getTextAttributes(o, false));
-    simpleColoredComponent.setBackground(UIUtil.getListBackground());
-    simpleColoredComponent.setForeground(UIUtil.getListForeground());
-    clearBorder(simpleColoredComponent);
-  }
-
-  private static void clearBorder(SimpleColoredComponent label) {
-    label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 1));
+  private MyCompositeLabel getDotsLabel() {
+    return new MyCompositeLabel(-1, null, "...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   private Window getWindow() {
@@ -502,69 +415,65 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   // ------ NavBar actions -------------------------
-  private void installActions(final int index) {
-    final MyCompositeLabel component = myList.get(index);
-    addMouseListener(component, new Condition<MouseEvent>() {
-      public boolean value(final MouseEvent e) {
-        return !e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2;
-      }
-    }, new Runnable() {
-      public void run() {
-        doubleClick(index);
-      }
-    }, index);
-
-    addMouseListener(component, new Condition<MouseEvent>() {
-      public boolean value(final MouseEvent e) {
-        // You cannot distinguish between 3rd mouse button released with Meta down or not. See SunBug: 4029159
-        if (e.getID() != MouseEvent.MOUSE_PRESSED && SystemInfo.isMac) return false;
-
-        final int ex = e.getModifiersEx();
-        return !e.isConsumed() && !e.isPopupTrigger() &&
-               (ex & (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)) != 0;
-      }
-    }, new Runnable() {
-      public void run() {
-        ctrlClick(index);
-      }
-    }, index);
-
-    addMouseListener(component, new Condition<MouseEvent>() {
-      public boolean value(final MouseEvent e) {
-        return !e.isConsumed() && e.isPopupTrigger();
-      }
-    }, new Runnable() {
-      public void run() {
-        rightClick(index);
-      }
-    }, index);
-  }
-
-  private void addMouseListener(final MyCompositeLabel component, final Condition<MouseEvent> condition, final Runnable handler, final int index) {
+  private void installActions(final int index, final boolean hasChildren, final Icon icon, final MyCompositeLabel component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        onClick(e);
-      }
-
-      public void mousePressed(MouseEvent e) {
-        onClick(e);
-      }
-
-      public void mouseReleased(MouseEvent e) {
-        onClick(e);
-      }
-
-      private void onClick(MouseEvent e) {
-        if (condition.value(e)) {
-          clearBorder();
+        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
           myModel.setSelectedIndex(index);
-          paintBorder();
-          myList.get(myModel.getSelectedIndex()).requestFocusInWindow();
-          handler.run();
+          getItem(index).requestFocusInWindow();
+          doubleClick(index);
           e.consume();
         }
       }
     });
+
+    ListenerUtil.addMouseListener(component, new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (!e.isConsumed() && e.isPopupTrigger()) {
+          myModel.setSelectedIndex(index);
+          getItem(index).requestFocusInWindow();
+          rightClick(index);
+          e.consume();
+        }
+      }
+    });
+
+    ListenerUtil.addMouseListener(component, new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 1) {
+          ctrlClick(index);
+          myModel.setSelectedIndex(index);
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              requestFocusInWindow();
+            }
+          });
+          e.consume();
+        }
+      }
+
+      public void mouseExited(final MouseEvent e) {
+        if (!hasChildren) return;
+        component.getLabel().setIcon(wrapIcon(icon, index, Color.gray));
+      }
+    });
+
+    ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
+      public void mouseMoved(MouseEvent e) {
+        if (!hasChildren) return;
+        if (isInsideIcon(e.getPoint(), icon)) {
+          component.getLabel().setIcon(wrapIcon(icon, index, Color.black));
+        }
+        else {
+          component.getLabel().setIcon(wrapIcon(icon, index, Color.gray));
+        }
+      }
+    });
+  }
+
+  private static boolean isInsideIcon(final Point point, final Icon icon) {
+    final int height = icon.getIconHeight();
+    return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height / 2 + 4;
   }
 
   private void doubleClick(final int index) {
@@ -587,10 +496,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void ctrlClick(final int index) {
-    if (myNodePopup != null && myNodePopup.isVisible() && myModel.getSelectedIndex() == index) {
+    if (myNodePopup != null && myNodePopup.isVisible()) {
       cancelPopup();
-      return;
+      if (myModel.getSelectedIndex() == index) {
+        return;
+      }
     }
+
     final Object object = myModel.getElement(index);
     final List<Object> objects = myModel.calcElementChildren(object);
     if (!objects.isEmpty()) {
@@ -598,25 +510,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       Icon[] icons = new Icon[objects.size()];
       for (int i = 0; i < objects.size(); i++) {
         siblings[i] = objects.get(i);
-        if (siblings[i] instanceof Module) {
-          icons[i] = ((Module)siblings[i]).getModuleType().getNodeIcon(false);
-        }
-        else if (siblings[i] instanceof PsiElement) {
-          icons[i] = ((PsiElement)siblings[i]).getIcon(Iconable.ICON_FLAG_OPEN);
-        }
+        icons[i] = NavBarModel.getIcon(siblings[i]);
       }
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
         public boolean isSelectable(Object value) { return true; }
-        public void canceled() {
-          super.canceled();
-          repaint(); //update +
-        }
-        @NotNull
-        public String getTextFor(Object value) {
-          final String presentableText = myModel.getPresentableText(value, getWindow());
-          return presentableText != null ? presentableText : "";
-        }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
           if (selectedValue instanceof PsiFile) {
             final Navigatable navigatable = (Navigatable)selectedValue;
@@ -630,25 +528,40 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           }
           return PopupStep.FINAL_CHOICE;
         }
+        public void canceled() {
+          super.canceled();
+          getItem(index).getLabel().setIcon(wrapIcon(NavBarModel.getIcon(object), index, Color.gray));
+        }
       };
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       myNodePopup = new ListPopupImpl(step) {
-        protected ListCellRenderer getListElementRenderer() {
-          return new MySiblingsListCellRenderer();
+        protected ListCellRenderer getListElementRenderer() { return new MySiblingsListCellRenderer();}
+        public boolean isCancelOnClickOutside() { return false;}
+        public boolean canClose() {
+          final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+          return focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent);
         }
       };
       myNodePopup.registerAction("left", KeyEvent.VK_LEFT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           myNodePopup.goBack();
           shiftFocus(-1);
-          click();
+          SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+              restorePopup();
+            }
+          });
         }
       });
       myNodePopup.registerAction("right", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           myNodePopup.goBack();
           shiftFocus(1);
-          click();
+          SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+              restorePopup();
+            }
+          });
         }
       });
       myNodePopup.showUnderneathOf(getItem(index).getColoredComponent());
@@ -670,7 +583,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     validate(); //calc bounds
-    click();
+    restorePopup();
   }
 
   private void rightClick(final int index) {
@@ -683,10 +596,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
   }
 
-  private void click() {
-    cancelPopup();
+  private void restorePopup() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        cancelPopup();
         ctrlClick(myModel.getSelectedIndex());
       }
     });
@@ -829,7 +742,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
     updateList();
     if (myModel.isEmpty()) return;
-    myHint = new LightweightHint(this);
+    myHint = new LightweightHint(this) {
+      public void hide() {
+        super.hide();
+        cancelPopup();
+      }
+    };
     myHint.setForceLightweightPopup(true);
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -860,13 +778,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
   }
 
-  protected static class MyCompositeLabel extends JPanel {
-
+  protected class MyCompositeLabel extends JPanel {
     private JLabel myLabel;
     private SimpleColoredComponent myColoredComponent;
 
-    public MyCompositeLabel(final Icon icon, final String presentableText, final SimpleTextAttributes textAttributes) {
+    private final String myText;
+    private final SimpleTextAttributes myAttributes;
+    private final int myIndex;
+
+    public MyCompositeLabel(final int idx, final Icon icon, final String presentableText, final SimpleTextAttributes textAttributes) {
       super(new GridBagLayout());
+      myIndex = idx;
+      myText = presentableText;
+      myAttributes = textAttributes;
       final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                            GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0);
       setFont(UIUtil.getLabelFont());
@@ -875,9 +799,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myLabel.setOpaque(false);
       add(myLabel, gc);
 
-      gc.insets.left = 1;
-      myColoredComponent = new SimpleColoredComponent();
-      clearBorder(myColoredComponent);
+      myColoredComponent = new SimpleColoredComponent() {
+        {
+          setPaintFocusBorder(true);
+          setFocusBorderAroundIcon(true);
+        }
+      };
+      myColoredComponent.setIpad(new Insets(0, -1, 0, -1));
       myColoredComponent.append(presentableText, textAttributes);
       myColoredComponent.setOpaque(true);
       add(myColoredComponent, gc);
@@ -891,6 +819,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       return myColoredComponent;
     }
 
+    protected void paintComponent(final Graphics g) {
+      super.paintComponent(g);
+      myColoredComponent.clear();
+      final boolean selected = myModel.getSelectedIndex() == myIndex;
+      final Color fg = selected
+                       ? UIUtil.getListSelectionForeground() : myModel.getSelectedIndex() < myIndex ? UIUtil.getInactiveTextColor() : myAttributes.getFgColor();
+      final Color bg = selected ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
+      myColoredComponent.append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
+      if (selected || (myModel.getSelectedIndex() == -1 && myIndex == myModel.size() - 1)) {
+        myColoredComponent.setBorder(new DottedBorder(new Insets(0, 0, 0, 0), UIUtil.getListForeground()));
+      } else {
+        myColoredComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+      }
+    }
   }
 
   private final class MyTimerListener implements TimerListener {
