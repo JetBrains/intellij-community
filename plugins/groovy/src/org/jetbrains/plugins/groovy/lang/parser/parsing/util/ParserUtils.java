@@ -46,7 +46,12 @@ public abstract class ParserUtils {
    * @return true if element parsed
    */
   public static boolean getToken(PsiBuilder builder, IElementType elem) {
-    return getToken(builder, elem, null);
+    if (elem.equals(builder.getTokenType())) {
+      builder.advanceLexer();
+      return true;
+    }
+
+    return false;
   }
 
   /**

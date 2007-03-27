@@ -7,8 +7,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -39,7 +39,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       NlsWarn.parse(builder);
 
-      OpenBlock.parse(builder);
+      OpenOrClosableBlock.parseOpenBlock(builder);
 
       varMarker.drop();
 //      vdMarker.done(METHOD_DEFINITION);

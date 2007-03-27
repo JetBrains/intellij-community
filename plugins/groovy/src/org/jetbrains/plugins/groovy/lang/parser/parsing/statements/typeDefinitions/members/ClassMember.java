@@ -5,11 +5,11 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -65,7 +65,7 @@ public class ClassMember implements GroovyElementTypes {
 
     //static compound statement
     if (ParserUtils.getToken(builder, kSTATIC)) {
-      if (!WRONGWAY.equals(OpenBlock.parse(builder))) {
+      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         return STATIC_COMPOUND_STATEMENT;
       } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
@@ -73,7 +73,7 @@ public class ClassMember implements GroovyElementTypes {
       }
     }
 
-    if (!WRONGWAY.equals(OpenBlock.parse(builder))) {
+    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       return COMPOUND_STATEMENT;
     }
 

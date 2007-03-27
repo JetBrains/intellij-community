@@ -18,8 +18,7 @@ public class ExpressionStatement implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     GroovyElementType result = AssignmentExpression.parse(builder);
-    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
-            !mLBRACK.equals(builder.getTokenType())) {
+    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
       GroovyElementType res = CommandArguments.parse(builder);
       if (!res.equals(WRONGWAY)) {
         marker.done(EXPRESSION_STATEMENT);

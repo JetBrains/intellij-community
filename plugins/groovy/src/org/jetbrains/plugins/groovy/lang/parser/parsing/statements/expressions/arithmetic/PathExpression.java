@@ -89,7 +89,9 @@ public class PathExpression implements GroovyElementTypes {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(PATH_METHOD_CALL);
       pathElementParse(builder, newMarker);
-    } else if (mLBRACK.equals(builder.getTokenType())) {
+    } else if (mLBRACK.equals(builder.getTokenType()) &&
+            !ParserUtils.lookAhead(builder, mLBRACK, mCOLON) && 
+            !ParserUtils.lookAhead(builder, mLBRACK, mNLS, mCOLON)) {
       indexPropertyArgsParse(builder);
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(PATH_INDEX_PROPERTY);
@@ -140,7 +142,7 @@ public class PathExpression implements GroovyElementTypes {
       if (ParserUtils.getToken(builder, mRBRACK)) {
         return PATH_INDEX_PROPERTY;
       }
-      ArgumentList.parse(builder);
+      ArgumentList.parse(builder, mRBRACK);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }
@@ -159,7 +161,7 @@ public class PathExpression implements GroovyElementTypes {
       if (ParserUtils.getToken(builder, mRPAREN)) {
         return PATH_METHOD_CALL;
       }
-      ArgumentList.parse(builder);
+      ArgumentList.parse(builder, mRPAREN);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     }
