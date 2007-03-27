@@ -111,9 +111,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
             buffer.append(',');
             buffer.append(methodNamePatterns.get(0));
             for (int i = 1; i < size; i++) {
+                buffer.append(',');
                 buffer.append(classNames.get(i));
                 buffer.append(',');
-                buffer.append(methodNamePatterns.get(0));
+                buffer.append(methodNamePatterns.get(i));
             }
         }
         callCheckString = buffer.toString();
