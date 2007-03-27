@@ -152,7 +152,8 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
 
   private void insertNode(final DefaultMutableTreeNode nodeToInsert, DefaultMutableTreeNode rootNode) {
     final Enumeration enumeration = rootNode.children();
-    final int index = Collections.binarySearch(Collections.list(enumeration), nodeToInsert, new Comparator<DefaultMutableTreeNode>() {
+    ArrayList children = Collections.list(enumeration);
+    final int index = Collections.binarySearch(children, nodeToInsert, new Comparator<DefaultMutableTreeNode>() {
       public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
         final Object o1 = node1.getUserObject();
         final Object o2 = node2.getUserObject();
@@ -167,7 +168,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       }
     });
     final int insertionPoint = -(index+1);
-    LOG.assertTrue(0 <= insertionPoint && insertionPoint <= rootNode.getChildCount());
+    LOG.assertTrue(0 <= insertionPoint && insertionPoint <= rootNode.getChildCount(), "insertionPoint = "+insertionPoint+"; children="+children+"; node="+nodeToInsert);
     rootNode.insert(nodeToInsert, insertionPoint);
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(rootNode);
   }
