@@ -1,0 +1,32 @@
+[id1:3, #: 2, id2: 4 ]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    Arguments
+      Composite argument
+        Argument label
+          PsiElement(identifier)('id1')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('3')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(wrong token)('#')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('2')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Composite argument
+        Argument label
+          PsiElement(identifier)('id2')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('4')
+    PsiWhiteSpace(' ')
+    PsiElement(])(']')

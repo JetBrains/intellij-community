@@ -1,0 +1,21 @@
+i = [1,2,3]
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('i')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      Arguments
+        Literal
+          PsiElement(number)('1')
+        PsiElement(,)(',')
+        Literal
+          PsiElement(number)('2')
+        PsiElement(,)(',')
+        Literal
+          PsiElement(number)('3')
+      PsiElement(])(']')

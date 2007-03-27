@@ -1,0 +1,20 @@
+[a:1,b:]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    Arguments
+      Composite argument
+        Argument label
+          PsiElement(identifier)('a')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('1')
+      PsiElement(,)(',')
+      Composite argument
+        Argument label
+          PsiElement(identifier)('b')
+        PsiElement(:)(':')
+        PsiErrorElement:Expression expected
+          <empty list>
+    PsiElement(])(']')

@@ -1,0 +1,30 @@
+[a:1, "b":2, 'c': 4]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    Arguments
+      Composite argument
+        Argument label
+          PsiElement(identifier)('a')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('1')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Composite argument
+        Argument label
+          PsiElement(Gstring)('"b"')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('2')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Composite argument
+        Argument label
+          PsiElement(string)(''c'')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('4')
+    PsiElement(])(']')

@@ -1,0 +1,28 @@
+[a:1, *:2, *myList ]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    Arguments
+      Composite argument
+        Argument label
+          PsiElement(identifier)('a')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('1')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Composite argument
+        Argument label
+          PsiElement(*)('*')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(number)('2')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Composite argument
+        PsiElement(*)('*')
+        Reference expression
+          PsiElement(identifier)('myList')
+    PsiWhiteSpace(' ')
+    PsiElement(])(']')

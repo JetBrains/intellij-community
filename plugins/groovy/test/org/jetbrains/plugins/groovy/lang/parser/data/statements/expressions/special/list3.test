@@ -1,0 +1,25 @@
+["abc", , 3, 4+8]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    Arguments
+      Literal
+        PsiElement(Gstring)('"abc"')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('3')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Additive expression
+        Literal
+          PsiElement(number)('4')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(number)('8')
+    PsiElement(])(']')
