@@ -307,6 +307,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
     Map<String, Set<String>> problems = null;
     for (OrderEntry entry : entries) {
+      if (myDisposed) return;
       if (!entry.isValid()){
         if (problems == null) {
           problems = new HashMap<String, Set<String>>();
@@ -671,6 +672,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
       public void run() {
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
+            if (myDisposed) return;
             dispose();
             reset();
           }
@@ -702,6 +704,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   }
 
   public void disposeUIResources() {
+    myDisposed = true;
     myAutoScrollHandler.cancelAllRequests();
     myUpdateDependenciesAlarm.cancelAllRequests();
     myUpdateDependenciesAlarm.addRequest(new Runnable(){
@@ -716,7 +719,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   }
 
   private void dispose() {
-    myDisposed = true;
     myJdksTreeModel.removeListener(myListener);
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
@@ -917,12 +919,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
           if (moduleEditor != null) {
             final OrderEntry[] entries = moduleEditor.getModifiableRootModel().getOrderEntries();
             for (OrderEntry entry : entries) {
+              if (myDisposed) return;
               if (condition.value(entry)) {
                 result.add(module.getName());
                 break;
               }
             }
-
           }
         }
       }
