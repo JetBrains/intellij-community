@@ -65,6 +65,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
       return component.getClientProperty(INTRO_PREFIX + getName());
     }
     try {
+      myReadMethod.setAccessible(true);
       return myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
     }
     catch (Exception e) {
@@ -84,6 +85,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
       component.putClientProperty(INTRO_PREFIX + getName(), value);
     }
     else {
+      myWriteMethod.setAccessible(true);
       myWriteMethod.invoke(component.getDelegee(), value);
     }
   }
