@@ -60,21 +60,25 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public VirtualFile getVirtualFile() {
-    return getValue().getVirtualFile();
+    PsiDirectory directory = getValue();
+    if (directory == null) return null;
+    return directory.getVirtualFile();
   }
 
   public boolean canRepresent(final Object element) {
-    if (super.canRepresent(element)) return true;               
-    if (getValue() == null) return false;
+    if (super.canRepresent(element)) return true;
+    PsiDirectory directory = getValue();
+    if (directory == null) return false;
     if (element instanceof PackageElement) {
       final PackageElement packageElement = (PackageElement)element;
-      return Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue());
+      return Arrays.asList(packageElement.getPackage().getDirectories()).contains(directory);
     }
     return false;
   }
 
   public boolean canNavigate() {
-    return PackageUtil.isSourceOrTestRoot(getVirtualFile(), getProject());
+    VirtualFile virtualFile = getVirtualFile();
+    return virtualFile != null && PackageUtil.isSourceOrTestRoot(virtualFile, getProject());
   }
 
   public boolean canNavigateToSource() {
