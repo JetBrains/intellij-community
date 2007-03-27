@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
@@ -31,9 +32,9 @@ public class ArgumentList implements GroovyElementTypes {
       return ARGUMENTS;
     }
 
-    GroovyElementType result = argumentParse(builder);
+    GroovyElementType result = argumentParse(builder, closingBrace);
     if (result.equals(WRONGWAY)) {
-      if (!closingBrace.equals(builder.getTokenType())){
+      if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       if (!mCOMMA.equals(builder.getTokenType()) &&
@@ -45,8 +46,8 @@ public class ArgumentList implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       ParserUtils.getToken(builder, mNLS);
-      if (argumentParse(builder).equals(WRONGWAY)) {
-        if (!closingBrace.equals(builder.getTokenType())){
+      if (argumentParse(builder, closingBrace).equals(WRONGWAY)) {
+        if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         if (!mCOMMA.equals(builder.getTokenType()) &&
@@ -61,52 +62,90 @@ public class ArgumentList implements GroovyElementTypes {
     return ARGUMENTS;
   }
 
-
-  private static GroovyElementType argumentParse(PsiBuilder builder) {
-    // TODO implement all variants!
-    return ExpressionStatement.argParse(builder);
-  }
-
   /**
-   * Checks for atgument label
+   * Parses argument, possible with label
    *
    * @param builder
    * @return
-   * @param dropMarker True if must drop this marker, false for rollback
    */
-  public static boolean argumentLabelStartCheck(PsiBuilder builder, boolean dropMarker) {
+  private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace) {
+
+    PsiBuilder.Marker argMarker = builder.mark();
+    boolean labeled = argumentLabelStartCheck(builder);
+    boolean expansed = ParserUtils.getToken(builder, mSTAR);
+    if (labeled) {
+      ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
+    }
+    GroovyElementType result = StrictContextExpression.parse(builder);
+
+    // If expression is wrong...
+    if (labeled && result.equals(WRONGWAY)){
+      builder.error(GroovyBundle.message("expression.expected"));
+    }
+    while (!builder.eof() && labeled && result.equals(WRONGWAY) &&
+            !mCOMMA.equals(builder.getTokenType()) &&
+            !closingBrace.equals(builder.getTokenType())) {
+      builder.error(GroovyBundle.message("expression.expected"));
+      builder.advanceLexer();
+      result = StrictContextExpression.parse(builder);
+    }
+
+    if (labeled || expansed) {
+      argMarker.done(ARGUMENT);
+    } else {
+      argMarker.drop();
+    }
+
+    if (labeled || !result.equals(WRONGWAY)) {
+      return ARGUMENT;
+    } else {
+      return WRONGWAY;
+    }
+  }
+
+  /**
+   * Checks for argument label. In case when it is so, a caret will not be restored at
+   * initial position
+   *
+   * @param builder
+   * @return
+   */
+  public static boolean argumentLabelStartCheck(PsiBuilder builder) {
 
     //TODO add cale with LPAREN token
-
-    if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
+    PsiBuilder.Marker marker = builder.mark();
+    if (ParserUtils.lookAhead(builder, mSTAR, mCOLON)) {
+      builder.advanceLexer();
+      marker.done(ARGUMENT_LABEL);
+      return true;
+    } else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
             TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType()) ||
             mNUM_INT.equals(builder.getTokenType()) ||
             mSTRING_LITERAL.equals(builder.getTokenType()) ||
             mGSTRING_LITERAL.equals(builder.getTokenType())
             ) {
-      PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
-      boolean itIs = mCOLON.equals(builder.getTokenType());
-      if (dropMarker) {
-        marker.drop();
+      boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
+      if (isArgumentLabel) {
+        marker.done(ARGUMENT_LABEL);
       } else {
         marker.rollbackTo();
       }
-      return itIs;
+      return isArgumentLabel;
     } else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
-      PsiBuilder.Marker marker = builder.mark();
       StringConstructorExpression.parse(builder);
-      boolean itIs = mCOLON.equals(builder.getTokenType());
-      if (dropMarker) {
-        marker.drop();
+      boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
+      if (isArgumentLabel) {
+        marker.done(ARGUMENT_LABEL);
       } else {
         marker.rollbackTo();
       }
-      return itIs;
+      return isArgumentLabel;
+    } else {
+      marker.drop();
+      return false;
     }
 
-
-    return false;
   }
 
 }

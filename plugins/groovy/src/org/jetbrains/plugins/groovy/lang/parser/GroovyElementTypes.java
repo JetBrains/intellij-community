@@ -66,7 +66,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
 
   // Arguments
-  GroovyElementType ARGUMENTS= new GroovyElementType("Arguments");
+  GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
+  GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
+  GroovyElementType ARGUMENT_LABEL= new GroovyElementType("Argument label");
 
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
@@ -74,8 +76,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 
   // Lists & maps
-  GroovyElementType LIST = new GroovyElementType("List");
-  GroovyElementType MAP = new GroovyElementType("Map");
+  GroovyElementType LIST_OR_MAP = new GroovyElementType("Generalized list");
 
   // Type Elements
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");

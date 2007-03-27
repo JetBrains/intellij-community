@@ -5,13 +5,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrMapImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrMethodBodyImpl;
@@ -66,8 +67,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
 
     //Lists, mapetc...
-    if (elem.equals(LIST)) return new GrListImpl(node);
-    if (elem.equals(MAP)) return new GrMapImpl(node);
+    if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
 //    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
     if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
@@ -160,6 +160,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     // Arguments
     if (elem.equals(ARGUMENTS)) return new GrArgumentsImpl(node);
+    if (elem.equals(ARGUMENT)) return new GrArgumentImpl(node);
+    if (elem.equals(ARGUMENT_LABEL)) return new GrArgumentLabelImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
