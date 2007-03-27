@@ -1,0 +1,16 @@
+(a+b).toString
+-----
+Groovy script
+  Property selection
+    Parenthesized expression
+      PsiElement(()('(')
+      Additive expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(+)('+')
+        Reference expression
+          PsiElement(identifier)('b')
+      PsiElement())(')')
+    PsiElement(.)('.')
+    Property selector
+      PsiElement(identifier)('toString')

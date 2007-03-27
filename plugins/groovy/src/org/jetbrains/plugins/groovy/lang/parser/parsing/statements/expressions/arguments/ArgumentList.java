@@ -4,6 +4,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -79,7 +80,7 @@ public class ArgumentList implements GroovyElementTypes {
     GroovyElementType result = StrictContextExpression.parse(builder);
 
     // If expression is wrong...
-    if (labeled && result.equals(WRONGWAY)){
+    if (labeled && result.equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     while (!builder.eof() && labeled && result.equals(WRONGWAY) &&
@@ -112,7 +113,6 @@ public class ArgumentList implements GroovyElementTypes {
    */
   public static boolean argumentLabelStartCheck(PsiBuilder builder) {
 
-    //TODO add cale with LPAREN token
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.lookAhead(builder, mSTAR, mCOLON)) {
       builder.advanceLexer();
@@ -132,8 +132,9 @@ public class ArgumentList implements GroovyElementTypes {
         marker.rollbackTo();
       }
       return isArgumentLabel;
-    } else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
-      StringConstructorExpression.parse(builder);
+    } else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType()) ||
+            mLPAREN.equals(builder.getTokenType())) {
+      PrimaryExpression.parse(builder);
       boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
       if (isArgumentLabel) {
         marker.done(ARGUMENT_LABEL);

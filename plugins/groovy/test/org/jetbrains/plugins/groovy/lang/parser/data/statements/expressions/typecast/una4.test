@@ -1,10 +1,10 @@
 (double [][] 3
 -----
 Groovy script
-  Typecast expression
+  Parenthesized expression
     PsiElement(()('(')
-    Array type
-      Array type
+    Property by index
+      Property by index
         Built in type
           PsiElement(double)('double')
         PsiWhiteSpace(' ')
@@ -15,5 +15,4 @@ Groovy script
     PsiErrorElement:')' expected
       <empty list>
     PsiWhiteSpace(' ')
-    Literal
-      PsiElement(number)('3')
+    PsiElement(number)('3')

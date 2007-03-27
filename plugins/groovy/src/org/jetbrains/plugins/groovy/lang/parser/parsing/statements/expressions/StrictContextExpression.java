@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 public class StrictContextExpression implements GroovyElementTypes {
     public static GroovyElementType parse(PsiBuilder builder) {
       // TODO implement all cases
-
       return ExpressionStatement.argParse(builder);
     }
 }

@@ -20,7 +20,12 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, mLPAREN)) {
       if (!parseTypeCast(builder).equals(WRONGWAY)) {
         result = UnaryExpression.parse(builder);
-        marker.done(CAST_EXPRESSION);
+        if (!result.equals(WRONGWAY)) {
+          marker.done(CAST_EXPRESSION);
+        } else {
+          marker.drop();
+          result = PostfixExpression.parse(builder);
+        }
       } else {
         marker.drop();
         result = PostfixExpression.parse(builder);
@@ -34,10 +39,20 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
   private static GroovyElementType parseTypeCast(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"));
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
-      TypeSpec.parse(builder);
-      ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
+    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
+      marker.rollbackTo();
+      return WRONGWAY;
+    }
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
+            mIDENT.equals(builder.getTokenType())) {
+      if (TypeSpec.parseStrict(builder).equals(WRONGWAY)) {
+        marker.rollbackTo();
+        return WRONGWAY;
+      }
+      if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
+        marker.rollbackTo();
+        return WRONGWAY;
+      }
       marker.drop();
       return TYPE_CAST;
     } else {

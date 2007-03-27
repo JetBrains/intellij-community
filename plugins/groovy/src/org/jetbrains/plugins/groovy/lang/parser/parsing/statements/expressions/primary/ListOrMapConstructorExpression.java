@@ -31,8 +31,5 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
 
     marker.done(LIST_OR_MAP);
     return LIST_OR_MAP;
-
   }
-
-
 }

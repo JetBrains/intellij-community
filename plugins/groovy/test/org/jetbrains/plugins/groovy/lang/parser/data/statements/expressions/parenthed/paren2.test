@@ -1,0 +1,22 @@
+println ([1,2,3])
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Arguments
+      Generalized list
+        PsiElement([)('[')
+        Arguments
+          Literal
+            PsiElement(number)('1')
+          PsiElement(,)(',')
+          Literal
+            PsiElement(number)('2')
+          PsiElement(,)(',')
+          Literal
+            PsiElement(number)('3')
+        PsiElement(])(']')
+    PsiElement())(')')

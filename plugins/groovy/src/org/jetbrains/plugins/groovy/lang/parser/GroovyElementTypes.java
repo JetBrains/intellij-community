@@ -64,6 +64,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
   GroovyElementType PATH_METHOD_CALL= new GroovyElementType("Method call");
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
+  GroovyElementType PARENTHSIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
 
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
