@@ -52,7 +52,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public boolean revert() {
-    return FileReverter.revert(myIdeaGateway, myFile, getLeftEntry());
+    return FileReverter.revert(myIdeaGateway, myFile, getLeftLabel());
   }
 
   private class NotSavedLabel extends Label {

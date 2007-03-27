@@ -9,8 +9,6 @@ import com.intellij.mock.MockEditorFactory;
 import com.intellij.mock.MockFileTypeManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.Date;
@@ -139,26 +137,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
     assertEquals(left, dm.getLeftDiffContent(tm, ef).getText());
     assertEquals(right, dm.getRightDiffContent(tm, ef).getText());
-  }
-
-  @Test
-  public void testRevertion() throws Exception {
-    vcs.createFile("file", b("old"), 1L);
-    vcs.changeFileContent("file", b("new"), -1);
-
-    VirtualFile f = createMock(VirtualFile.class);
-    expect(f.contentsToByteArray()).andReturn(b("new"));
-    expect(f.getPath()).andStubReturn("file");
-    expect(f.getName()).andStubReturn("file");
-    expect(f.getTimeStamp()).andStubReturn(2L);
-    f.setBinaryContent(aryEq(b("old")), eq(-1L), eq(1L));
-    replay(f);
-
-    m = new FileHistoryDialogModel(f, vcs, new TestIdeaGateway());
-    m.selectLabels(1, 1);
-
-    m.revert();
-    verify(f);
   }
 
   private void initModelFor(String path) {

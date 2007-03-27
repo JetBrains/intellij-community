@@ -44,7 +44,7 @@ public class BasicsTest extends IntegrationTestCase {
       }
     }, "name", null);
 
-    assertEquals(1, getVcs().getLabelsFor(f[0].getPath()).size());
+    assertEquals(1, getVcsLabelsFor(f[0]).size());
   }
 
   public void testActions() throws Exception {
@@ -65,7 +65,7 @@ public class BasicsTest extends IntegrationTestCase {
     a.finish();
     assertEquals(2, getVcsContentOf(f)[0]);
 
-    List<Label> l = getVcs().getLabelsFor(f.getPath());
+    List<Label> l = getVcsLabelsFor(f);
     assertEquals("label", l.get(0).getName());
     assertNull(l.get(1).getName());
   }

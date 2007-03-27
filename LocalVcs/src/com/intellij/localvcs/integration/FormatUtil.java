@@ -1,4 +1,4 @@
-package com.intellij.localvcs.integration.ui.models;
+package com.intellij.localvcs.integration;
 
 import java.text.DateFormat;
 import java.util.Date;

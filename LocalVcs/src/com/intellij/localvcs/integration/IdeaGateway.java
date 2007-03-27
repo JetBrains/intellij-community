@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -12,7 +13,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public class IdeaGateway {
@@ -38,17 +42,27 @@ public class IdeaGateway {
     return myFileFilter;
   }
 
-  public <T> T runWriteAction(final Callable<T> c) {
+  public <T> T performCommandInsideWriteAction(final String name, final Callable<T> c) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<T>() {
       public T compute() {
+        return performCommand(name, c);
+      }
+    });
+  }
+
+  private <T> T performCommand(String name, final Callable<T> c) {
+    final List<T> result = new ArrayList<T>();
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
         try {
-          return c.call();
+          result.add(c.call());
         }
         catch (Exception e) {
           throw new RuntimeException(e);
         }
       }
-    });
+    }, name, null);
+    return result.get(0);
   }
 
   public boolean ensureFilesAreWritable(VirtualFile... ff) {
@@ -56,21 +70,36 @@ public class IdeaGateway {
     return !h.ensureFilesWritable(ff).hasReadonlyFiles();
   }
 
+  public VirtualFile getOrCreateDirectory(String path) {
+    File f = new File(path);
+    if (!f.exists()) f.mkdirs();
+
+    getFileSystem().refresh(false);
+    return getFileSystem().findFileByPath(path);
+  }
+
   public byte[] getPhysicalContent(VirtualFile f) throws IOException {
-    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
+    return getFileSystem().physicalContentsToByteArray(f);
   }
 
   public byte[] getDocumentByteContent(VirtualFile f) {
     // todo review charset conversion
-    FileDocumentManager dm = FileDocumentManager.getInstance();
-    return dm.getDocument(f).getText().getBytes();
+    return getDocManager().getDocument(f).getText().getBytes();
   }
 
   public Document[] getUnsavedDocuments() {
-    return FileDocumentManager.getInstance().getUnsavedDocuments();
+    return getDocManager().getUnsavedDocuments();
   }
 
   public VirtualFile getDocumentFile(Document d) {
-    return FileDocumentManager.getInstance().getFile(d);
+    return getDocManager().getFile(d);
+  }
+
+  private LocalFileSystem getFileSystem() {
+    return LocalFileSystem.getInstance();
+  }
+
+  private FileDocumentManager getDocManager() {
+    return FileDocumentManager.getInstance();
   }
 }

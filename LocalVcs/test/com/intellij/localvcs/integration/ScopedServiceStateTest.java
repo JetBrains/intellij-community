@@ -10,7 +10,7 @@ import org.junit.Test;
 public class ScopedServiceStateTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
-  ScopedServiceState s;
+  ChangeSetServiceState s;
 
   @Test
   @Ignore
@@ -110,7 +110,7 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   private void initState() {
-    s = new ScopedServiceState("name", new ServiceStateHolder(), vcs, gw) {
+    s = new ChangeSetServiceState("name", new ServiceStateHolder(), vcs, gw) {
     };
   }
 }

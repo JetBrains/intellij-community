@@ -2,6 +2,8 @@ package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.Clock;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.Label;
+import com.intellij.localvcs.Paths;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -15,6 +17,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public abstract class IntegrationTestCase extends IdeaTestCase {
@@ -25,6 +28,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   public void setUp() throws Exception {
     super.setUp();
     Clock.useRealClock();
+    Paths.useSystemCaseSensitivity();
     runWriteAction(new Runnable() {
       public void run() {
         root = addContentRoot();
@@ -34,6 +38,8 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    Clock.useRealClock();
+    Paths.useSystemCaseSensitivity();
     super.tearDown();
   }
 
@@ -101,7 +107,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
-  protected void changeContentExternally(String path, String content) throws IOException {
+  protected void changeFileExternally(String path, String content) throws IOException {
     File f = new File(path);
     FileWriter w = new FileWriter(f);
     w.write(content);
@@ -115,8 +121,12 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     d.setText(t);
   }
 
-  protected byte[] getVcsContentOf(VirtualFile f) {
-    return getVcs().getEntry(f.getPath()).getContent().getBytes();
+  protected LocalVcsComponent getVcsComponent() {
+    return (LocalVcsComponent)LocalVcsComponent.getInstance(myProject);
+  }
+
+  protected ILocalVcs getVcs() {
+    return LocalVcsComponent.getLocalVcsFor(myProject);
   }
 
   protected boolean hasVcsEntry(VirtualFile f) {
@@ -127,12 +137,12 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     return getVcs().hasEntry(path);
   }
 
-  protected ILocalVcs getVcs() {
-    return LocalVcsComponent.getLocalVcsFor(myProject);
+  protected byte[] getVcsContentOf(VirtualFile f) {
+    return getVcs().getEntry(f.getPath()).getContent().getBytes();
   }
 
-  protected LocalVcsComponent getVcsComponent() {
-    return (LocalVcsComponent)LocalVcsComponent.getInstance(myProject);
+  protected List<Label> getVcsLabelsFor(VirtualFile f) {
+    return getVcs().getLabelsFor(f.getPath());
   }
 
   protected VirtualFile addContentRoot() {

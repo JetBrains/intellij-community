@@ -5,7 +5,11 @@ import com.intellij.openapi.util.text.StringUtil;
 
 public class Paths {
   private static final char DELIM = '/';
-  private static boolean myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
+  private static boolean myIsCaseSensitive;
+
+  static {
+    useSystemCaseSensitivity();
+  }
 
   public static String getNameOf(String path) {
     int i = path.lastIndexOf(DELIM);
@@ -50,5 +54,9 @@ public class Paths {
 
   public static boolean isCaseSensitive() {
     return myIsCaseSensitive;
+  }
+
+  public static void useSystemCaseSensitivity() {
+    myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
   }
 }

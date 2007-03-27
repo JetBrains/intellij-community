@@ -131,7 +131,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private void registerChangeSet(String label) {
-    //if(myPendingChanges.isEmpty()) return;
+    if (myPendingChanges.isEmpty()) return;
 
     ChangeSet cs = new ChangeSet(getCurrentTimestamp(), label, myPendingChanges);
     myChangeList.addChangeSet(cs);
@@ -140,6 +140,10 @@ public class LocalVcs implements ILocalVcs {
 
   private void clearPendingChanges() {
     myPendingChanges = new ArrayList<Change>();
+  }
+
+  protected ChangeList getChangeList() {
+    return myChangeList;
   }
 
   protected Boolean isClean() {

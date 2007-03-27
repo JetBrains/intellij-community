@@ -51,6 +51,20 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testIgnoringEmptyChangeSets() {
+    vcs.beginChangeSet();
+    vcs.createDirectory("dir");
+    vcs.endChangeSet(null);
+
+    assertEquals(1, vcs.getChangeList().getChangeSets().size());
+
+    vcs.beginChangeSet();
+    vcs.endChangeSet(null);
+
+    assertEquals(1, vcs.getChangeList().getChangeSets().size());
+  }
+
+  @Test
   public void testNamedAndUnnamedLables() {
     vcs.beginChangeSet();
     vcs.createFile("file", null, -1);

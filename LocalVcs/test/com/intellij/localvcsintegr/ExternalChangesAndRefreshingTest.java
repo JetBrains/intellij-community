@@ -29,29 +29,45 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(path1));
     assertFalse(hasVcsEntry(path2));
 
-    forceRefreshVFS(async);
+    refreshVFS(async);
 
     assertTrue(hasVcsEntry(path1));
     assertTrue(hasVcsEntry(path2));
 
-    assertEquals(2, getVcs().getLabelsFor(root.getPath()).size());
+    assertEquals(2, getVcsLabelsFor(root).size());
   }
 
-  private void forceRefreshVFS(boolean async) {
-    LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-
-    fs.startAsynchronousTasksMonitoring();
-
-    VirtualFileManager.getInstance().refresh(async);
-
-    fs.waitForAsynchronousTasksCompletion();
-    UIUtil.dispatchAllInvocationEvents();
-  }
-
-  public void testRefreshInsideCommand() {
+  public void testRefreshDuringCommand() {
+    // shouldn't throw
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        forceRefreshVFS(false);
+        refreshVFS();
+      }
+    }, "", null);
+  }
+
+  public void testCommandDuringRefresh() throws Exception {
+    createFileExternally("f.java");
+
+    VirtualFileListener l = new VirtualFileAdapter() {
+      @Override
+      public void fileCreated(VirtualFileEvent e) {
+        executeSomeCommand();
+      }
+    };
+
+    // shouldn't throw
+    addFileListenerDuring(l, new Callable() {
+      public Object call() throws Exception {
+        refreshVFS();
+        return null;
+      }
+    });
+  }
+
+  private void executeSomeCommand() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
       }
     }, "", null);
   }
@@ -65,8 +81,8 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     ContentChangesListener l = new ContentChangesListener(f);
     addFileListenerDuring(l, new Callable() {
       public Object call() throws Exception {
-        changeContentExternally(f.getPath(), "after");
-        forceRefreshVFS(false);
+        changeFileExternally(f.getPath(), "after");
+        refreshVFS();
         return null;
       }
     });
@@ -77,12 +93,12 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void performAllPendingJobs() {
-    forceRefreshVFS(false);
+    refreshVFS();
   }
 
   public void testFileCreationDuringRefresh() throws Exception {
     final String path = createFileExternally("f.java");
-    changeContentExternally(path, "content");
+    changeFileExternally(path, "content");
 
     final String[] content = new String[1];
     VirtualFileListener l = new VirtualFileAdapter() {
@@ -100,7 +116,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     addFileListenerDuring(l, new Callable() {
       public Object call() throws Exception {
-        forceRefreshVFS(false);
+        refreshVFS();
         return null;
       }
     });
@@ -124,7 +140,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     dir.delete(null);
 
     createDirectoryExternally("EXCLUDED");
-    forceRefreshVFS(false);
+    refreshVFS();
 
     assertFalse(hasVcsEntry(p));
   }
@@ -136,8 +152,23 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(path));
 
     new File(path).delete();
-    forceRefreshVFS(false);
+    refreshVFS();
 
     assertFalse(hasVcsEntry(path));
+  }
+
+  private void refreshVFS() {
+    refreshVFS(false);
+  }
+
+  private void refreshVFS(boolean async) {
+    LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+
+    fs.startAsynchronousTasksMonitoring();
+
+    VirtualFileManager.getInstance().refresh(async);
+
+    fs.waitForAsynchronousTasksCompletion();
+    UIUtil.dispatchAllInvocationEvents();
   }
 }

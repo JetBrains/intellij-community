@@ -2,10 +2,10 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Label;
+import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
-import com.intellij.localvcs.integration.ui.models.FormatUtil;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;

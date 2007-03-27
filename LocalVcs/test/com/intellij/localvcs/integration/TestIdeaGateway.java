@@ -27,7 +27,7 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   @Override
-  public <T> T runWriteAction(Callable<T> c) {
+  public <T> T performCommandInsideWriteAction(String name, Callable<T> c) {
     try {
       return c.call();
     }
