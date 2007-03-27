@@ -57,7 +57,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  private static GroovyElementType parenthesizedExprParse(PsiBuilder builder){
+  public static GroovyElementType parenthesizedExprParse(PsiBuilder builder){
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
     StrictContextExpression.parse(builder);
