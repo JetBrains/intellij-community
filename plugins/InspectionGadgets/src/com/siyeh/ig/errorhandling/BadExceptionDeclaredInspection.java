@@ -36,12 +36,12 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public String exceptionsString =
-      "java.lang.Throwable" + "," +
-      "java.lang.Exception" + "," +
-      "java.lang.Error" + "," +
-      "java.lang.RuntimeException" + "," +
-      "java.lang.NullPointerException" + "," +
-      "java.lang.ClassCastException" + "," +
+      "java.lang.Throwable" + ',' +
+      "java.lang.Exception" + ',' +
+      "java.lang.Error" + ',' +
+      "java.lang.RuntimeException" + ',' +
+      "java.lang.NullPointerException" + ',' +
+      "java.lang.ClassCastException" + ',' +
       "java.lang.ArrayIndexOutOfBoundsException";
 
     /** @noinspection PublicField*/
