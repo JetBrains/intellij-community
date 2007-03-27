@@ -76,10 +76,6 @@ public class NavBarModel {
     return myModel.isEmpty();
   }
 
-  public int getIndexOf(Object object) {
-    return myModel.indexOf(object);
-  }
-
   public int getIndexByMode(int index) {
     if (index < 0) return myModel.size() + index;
     if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
@@ -120,10 +116,9 @@ public class NavBarModel {
       oldModel.add(getElement(i));
     }
     removeAllElements();
-    final Project project = psiElement.getProject();
-    addElement(project);
+    addElement(myProject);
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     Module module = ModuleUtil.findModuleForPsiElement(psiElement);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
     if (module != null) {
@@ -158,7 +153,7 @@ public class NavBarModel {
       if (rootElement instanceof Module) {
         final Module module = (Module)rootElement;
         removeAllElements();
-        addElement(module.getProject());
+        addElement(myProject);
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         addElement(module);
         traverseToRoot((PsiElement)object, new HashSet<VirtualFile>(Arrays.asList(moduleRootManager.getContentRoots())));
@@ -169,7 +164,7 @@ public class NavBarModel {
     }
     else if (object instanceof Module) {
       removeAllElements();
-      addElement(((Module)object).getProject());
+      addElement(myProject);
       addElement(object);
     }
   }
