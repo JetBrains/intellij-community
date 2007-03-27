@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -60,8 +61,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.PopupOwner;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.DottedBorder;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -428,7 +429,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
+        if (SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      public void mousePressed(final MouseEvent e) {
+        if (!SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      private void click(final MouseEvent e) {
         if (!e.isConsumed() && e.isPopupTrigger()) {
           myModel.setSelectedIndex(index);
           getItem(index).requestFocusInWindow();
@@ -439,7 +452,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
+        if (SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      public void mousePressed(final MouseEvent e) {
+        if (!SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      private void click(final MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 1) {
           ctrlClick(index);
           myModel.setSelectedIndex(index);
