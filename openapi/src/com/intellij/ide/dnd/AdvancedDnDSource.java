@@ -18,21 +18,10 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
 
 /**
  * @author spleaner
  */
-public interface AdvancedDnDSource extends DnDSource, Disposable {
+public interface AdvancedDnDSource extends DnDSource, DnDAware, Disposable {
 
-  void processMouseEvent(final MouseEvent e);
-
-  boolean isOverSelection(final Point point);
-
-  @NotNull
-  JComponent getComponent();
 }

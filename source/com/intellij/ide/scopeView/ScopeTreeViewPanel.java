@@ -6,6 +6,7 @@ import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -75,7 +76,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private IdeView myIdeView = new  MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
-  private Tree myTree = new Tree();
+  private DnDAwareTree myTree = new DnDAwareTree();
   private final Project myProject;
   private TreeModelBuilder myBuilder;
 
@@ -635,7 +636,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
   }
 
-  public JTree getTree() {
+  public DnDAwareTree getTree() {
     return myTree;
   }
 

@@ -35,7 +35,7 @@ public class DnDEnabler implements Activatable, Disposable {
   private AWTEventListener myAwtListener = new MyAwtListener();
   private List<EventListener[]> myMouseListeners;
   //private List<MouseListener> myMousePreprocessors = new ArrayList<MouseListener>();
-  private AdvancedDnDSource myDnDSource;
+  private DnDAware myDnDSource;
   private MouseListener myOriginalDragGestureRecognizer;
 
   private PropertyChangeListener myPropertyChangeListener = new PropertyChangeListener() {
@@ -47,7 +47,7 @@ public class DnDEnabler implements Activatable, Disposable {
     }
   };
 
-  public DnDEnabler(@NotNull final AdvancedDnDSource source) {
+  public DnDEnabler(@NotNull final DnDAware source, Disposable parent) {
     myDnDSource = source;
     final Component component = source.getComponent();
 
@@ -55,7 +55,7 @@ public class DnDEnabler implements Activatable, Disposable {
 
     final UiNotifyConnector connector = new UiNotifyConnector(component, this);// todo: disposable???
     Disposer.register(this, connector);
-    Disposer.register(source, this);
+    Disposer.register(parent, this);
 
     onSetUI();
   }

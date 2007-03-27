@@ -2,6 +2,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.util.ui.Tree;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -12,7 +13,7 @@ import javax.swing.tree.TreeModel;
  * Date: Sep 17, 2003
  * Time: 7:44:22 PM
  */
-public abstract class ProjectViewTree extends Tree {
+public abstract class ProjectViewTree extends DnDAwareTree {
   protected ProjectViewTree(TreeModel newModel) {
     super(newModel);
     setCellRenderer(new NodeRenderer());

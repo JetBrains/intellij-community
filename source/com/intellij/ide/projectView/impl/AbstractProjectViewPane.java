@@ -5,6 +5,9 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.dnd.DnDEnabler;
+import com.intellij.ide.dnd.AdvancedDnDSource;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
@@ -24,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -37,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -52,7 +58,7 @@ import java.util.Map;
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent {
   protected final Project myProject;
   private Runnable myTreeChangeListener;
-  protected JTree myTree;
+  protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   protected AbstractTreeBuilder myTreeBuilder;
   // subId->Tree state; key may be null
@@ -451,6 +457,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         }
       },
       myTree, myProject, FLAVORS[0]));
+
+      myTree.enableDnd(myProject);
     }
   }
 

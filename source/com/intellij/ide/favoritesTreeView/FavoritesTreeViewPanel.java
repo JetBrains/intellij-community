@@ -1,6 +1,7 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.*;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -59,7 +60,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   protected Project myProject;
   private final String myHelpId;
-  protected Tree myTree;
+  protected DnDAwareTree myTree;
 
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
@@ -77,7 +78,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new Tree(treeModel) {
+    myTree = new DnDAwareTree(treeModel) {
       public void setRowHeight(int i) {
         super.setRowHeight(0);
       }
@@ -175,7 +176,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myBuilder = null;
   }
 
-  public Tree getTree() {
+  public DnDAwareTree getTree() {
     return myTree;
   }
 

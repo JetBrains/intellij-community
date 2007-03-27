@@ -32,7 +32,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Tree extends JTree implements Autoscroll {
+public class Tree extends JTree implements Autoscroll  {
 
   public Tree() {
     patchTree();

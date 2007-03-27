@@ -68,7 +68,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       final JComponent c = source.getComponent();
       registerSource(source, c);
 
-      final DnDEnabler enabler = new DnDEnabler(source);
+      final DnDEnabler enabler = new DnDEnabler(source, source);
       c.putClientProperty(DnDEnabler.KEY, enabler);
     }
   }
