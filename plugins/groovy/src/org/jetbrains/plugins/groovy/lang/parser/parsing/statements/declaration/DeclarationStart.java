@@ -3,14 +3,14 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.identifier.UpperCaseIdent;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.auxilary.BalancedTokens;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.BuiltInType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.QualifiedTypeName;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -31,9 +31,9 @@ public class DeclarationStart implements GroovyElementTypes {
     //def
     if (ParserUtils.getToken(builder, kDEF)) return parseNextTokenInDeclaration(builder);
 
-    //Modifier
-    elementType = Modifier.parse(builder);
-    if (!tWRONG_SET.contains(elementType)) {
+    //Modifiers
+    elementType = Modifiers.parse(builder);
+    if (!WRONGWAY.equals(elementType)) {
       return parseNextTokenInDeclaration(builder);
     }
 
@@ -43,7 +43,7 @@ public class DeclarationStart implements GroovyElementTypes {
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
-    if (!tWRONG_SET.contains(UpperCaseIdent.parse(builder)) || !tWRONG_SET.contains(BuiltInType.parse(builder)) || !tWRONG_SET.contains(QualifiedTypeName.parse(builder))) {
+    if (!WRONGWAY.equals(UpperCaseIdent.parse(builder)) || !WRONGWAY.equals(BuiltInType.parse(builder)) || !WRONGWAY.equals(QualifiedTypeName.parse(builder))) {
 
       IElementType balancedTokens;
 
@@ -52,7 +52,7 @@ public class DeclarationStart implements GroovyElementTypes {
         if (!BALANCED_TOKENS.equals(balancedTokens)) {
           return false;
         }
-      } while (!tWRONG_SET.contains(balancedTokens));
+      } while (!WRONGWAY.equals(balancedTokens));
 
       //IDENT
       return ParserUtils.getToken(builder, mIDENT);
@@ -63,9 +63,12 @@ public class DeclarationStart implements GroovyElementTypes {
     }
   }
   private static boolean parseNextTokenInDeclaration(PsiBuilder builder) {
-    return ParserUtils.getToken(builder, mIDENT) ||
-          ParserUtils.validateToken(builder, TokenSets.BUILT_IN_TYPE) ||
-          ParserUtils.getToken(builder, mSTRING_LITERAL);
+    return ParserUtils.lookAhead(builder, mIDENT) ||
+        TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
+        TokenSets.MODIFIERS.contains(builder.getTokenType()) ||
+          ParserUtils.lookAhead(builder, kDEF) ||
+          ParserUtils.lookAhead(builder, mAT) ||
+          ParserUtils.lookAhead(builder, mSTRING_LITERAL);
   }
 
   private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder) {
@@ -76,7 +79,7 @@ public class DeclarationStart implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(BalancedTokens.parse(builder))) {
+    if (WRONGWAY.equals(BalancedTokens.parse(builder))) {
       btm.rollbackTo();
       return WRONGWAY;
     }

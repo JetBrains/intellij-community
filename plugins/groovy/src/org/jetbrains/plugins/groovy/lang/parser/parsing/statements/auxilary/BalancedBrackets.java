@@ -38,7 +38,7 @@ public class BalancedBrackets implements GroovyElementTypes {
 
     balancedTokens = BalancedTokens.parse(builder);
 
-    if (tWRONG_SET.contains(balancedTokens)) {
+    if (WRONGWAY.equals(balancedTokens)) {
       bbm.rollbackTo();
       return WRONGWAY;
     }

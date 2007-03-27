@@ -1,0 +1,19 @@
+protected int a, b = 5
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(protected)('protected')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(int)('int')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(number)('5')

@@ -23,13 +23,13 @@ public class InterfaceMember implements GroovyElementTypes {
     if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
-      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
+      if (WRONGWAY.equals(ModifiersOptional.parse(builder))) {
         ifMarker.rollbackTo();
         return WRONGWAY;
       }
 
       IElementType typeDef = TypeDefinitionInternal.parse(builder);
-      if (tWRONG_SET.contains(typeDef)) {
+      if (WRONGWAY.equals(typeDef)) {
         ifMarker.rollbackTo();
         return WRONGWAY;
       }

@@ -22,7 +22,7 @@ public class ImplementsClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (tWRONG_SET.contains(ClassOrInterfaceType.parse(builder))) {
+    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
       isMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -32,7 +32,7 @@ public class ImplementsClause implements GroovyElementTypes {
 
       ParserUtils.getToken(builder, mCOMMA);
 
-      if (tWRONG_SET.contains(ClassOrInterfaceType.parse(builder))) {
+      if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
         isMarker.rollbackTo();
         return WRONGWAY;
       }

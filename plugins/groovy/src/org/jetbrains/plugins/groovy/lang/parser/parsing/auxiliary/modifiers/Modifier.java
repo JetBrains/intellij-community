@@ -2,10 +2,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -29,12 +27,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 public class Modifier implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    if (ParserUtils.validateToken(builder, TokenSets.MODIFIERS)) {
+    if (TokenSets.MODIFIERS.contains(builder.getTokenType())) {
       builder.advanceLexer();
-      return MODIFIER;
-    } else {
-//      builder.error(GroovyBundle.message("modifier.expected"));
-      return WRONGWAY;
+      return MODIFIERS;
     }
+    return WRONGWAY;
   }
 }

@@ -25,7 +25,7 @@ public class InterfaceBlock implements GroovyElementTypes {
 
     IElementType sep = Separators.parse(builder);
 
-    while(!tWRONG_SET.contains(sep)){
+    while(!WRONGWAY.equals(sep)){
       InterfaceMember.parse(builder);
 
       sep = Separators.parse(builder);

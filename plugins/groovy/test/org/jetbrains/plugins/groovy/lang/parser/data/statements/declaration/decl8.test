@@ -1,0 +1,22 @@
+protected String a = a += 2
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(protected)('protected')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Assignment expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(+=)('+=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('2')

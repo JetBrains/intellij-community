@@ -25,12 +25,12 @@ public class EnumDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(ImplementsClause.parse(builder))) {
+    if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
 //      edMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(EnumBlock.parse(builder))) {
+    if (WRONGWAY.equals(EnumBlock.parse(builder))) {
 //      edMarker.rollbackTo();
       return WRONGWAY;
     }

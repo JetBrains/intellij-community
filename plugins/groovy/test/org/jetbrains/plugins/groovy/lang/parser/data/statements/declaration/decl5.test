@@ -1,0 +1,21 @@
+private def String a, b = "bar"
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(private)('private')
+      PsiWhiteSpace(' ')
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Gstring)('"bar"')

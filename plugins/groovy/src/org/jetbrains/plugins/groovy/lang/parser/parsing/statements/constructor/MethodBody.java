@@ -24,12 +24,12 @@ public class MethodBody implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!tWRONG_SET.contains(ExplicitConstructorStatement.parse(builder))) {
+    if (!WRONGWAY.equals(ExplicitConstructorStatement.parse(builder))) {
 
       builder.error(GroovyBundle.message("constructor.expected"));
       //explicit constructor invocation
-      if (!tWRONG_SET.contains(Separators.parse(builder))) {
-        if (tWRONG_SET.contains(OpenOrClosableBlock.parseBlockBody(builder))) {
+      if (!WRONGWAY.equals(Separators.parse(builder))) {
+        if (WRONGWAY.equals(OpenOrClosableBlock.parseBlockBody(builder))) {
           cbMarker.rollbackTo();
           return WRONGWAY;
         }
@@ -40,7 +40,7 @@ public class MethodBody implements GroovyElementTypes {
 
     } else {
       //just list block statements
-      if (tWRONG_SET.contains(OpenOrClosableBlock.parseBlockBody(builder))) {
+      if (WRONGWAY.equals(OpenOrClosableBlock.parseBlockBody(builder))) {
         cbMarker.rollbackTo();
         return WRONGWAY;
       }

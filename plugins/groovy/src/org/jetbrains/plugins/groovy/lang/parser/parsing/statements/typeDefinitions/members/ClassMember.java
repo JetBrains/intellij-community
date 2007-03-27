@@ -24,17 +24,23 @@ public class ClassMember implements GroovyElementTypes {
     if (ConstructorStart.parse(builder)) {
       constructorStartMarker.rollbackTo();
 
-      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
+      PsiBuilder.Marker cmMarker = builder.mark();
+
+      if (WRONGWAY.equals(ModifiersOptional.parse(builder))) {
+        cmMarker.drop();
         return WRONGWAY;
       }
 
-      if (tWRONG_SET.contains(MethodDefinition.parse(builder))) {
+      IElementType methodDef = MethodDefinition.parse(builder);
+      if (WRONGWAY.equals(methodDef)) {
+        cmMarker.drop();
         return WRONGWAY;
       }
 
-      return METHOD_DEFINITION;
+      cmMarker.done(methodDef);
+      return methodDef;
     }
-    constructorStartMarker.drop();
+    constructorStartMarker.rollbackTo();
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
@@ -42,7 +48,7 @@ public class ClassMember implements GroovyElementTypes {
       declMarker.rollbackTo();
       return Declaration.parse(builder);
     }
-    declMarker.drop();
+    declMarker.rollbackTo();
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
@@ -50,16 +56,16 @@ public class ClassMember implements GroovyElementTypes {
       typeDeclStartMarker.rollbackTo();
 
       IElementType typeDef = TypeDefinition.parse(builder);
-      if (tWRONG_SET.contains(typeDef)) {
+      if (WRONGWAY.equals(typeDef)) {
         return WRONGWAY;
       }
       return typeDef;
     }
-    typeDeclStartMarker.drop();
+    typeDeclStartMarker.rollbackTo();
 
     //static compound statement
     if (ParserUtils.getToken(builder, kSTATIC)) {
-      if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
+      if (!WRONGWAY.equals(OpenBlock.parse(builder))) {
         return STATIC_COMPOUND_STATEMENT;
       } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
@@ -67,11 +73,10 @@ public class ClassMember implements GroovyElementTypes {
       }
     }
 
-    if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
+    if (!WRONGWAY.equals(OpenBlock.parse(builder))) {
       return COMPOUND_STATEMENT;
     }
 
     return WRONGWAY;
-
   }
 }

@@ -15,7 +15,7 @@ public class BalancedTokens implements GroovyElementTypes {
     IElementType balancedToken;
     do {
       balancedToken = BalancedBrackets.parse(builder);
-    } while(!tWRONG_SET.contains(balancedToken));
+    } while(!WRONGWAY.equals(balancedToken));
 
     return BALANCED_TOKENS;
   }

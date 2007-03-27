@@ -1,5 +1,5 @@
 class a {
-  static interface a {}
+  private interface a {}
 }
 -----
 Groovy script
@@ -12,9 +12,10 @@ Groovy script
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
-      PsiElement(static)('static')
-      PsiWhiteSpace(' ')
       Interface definition
+        Modifiers
+          PsiElement(private)('private')
+        PsiWhiteSpace(' ')
         PsiElement(interface)('interface')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')

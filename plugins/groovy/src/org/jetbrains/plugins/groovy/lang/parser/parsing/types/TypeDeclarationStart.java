@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class TypeDeclarationStart implements GroovyElementTypes {
   public static boolean  parse(PsiBuilder builder) {
-    if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
+    if (WRONGWAY.equals(ModifiersOptional.parse(builder))) {
       return false;
     }
 

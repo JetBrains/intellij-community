@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
@@ -70,7 +69,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(LIST)) return new GrListImpl(node);
     if (elem.equals(MAP)) return new GrMapImpl(node);
 
-    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
+//    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
     if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
 
     // Imports
@@ -87,6 +86,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
+    if (elem.equals(VARIABLE_DEFINITION)) return new GrVariableDefinitionsImpl(node);
+
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);

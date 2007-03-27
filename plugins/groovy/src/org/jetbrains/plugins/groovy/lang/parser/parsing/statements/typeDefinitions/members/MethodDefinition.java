@@ -16,22 +16,16 @@ import com.intellij.lang.PsiBuilder;
  */
 public class MethodDefinition implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker constrMarker = builder.mark();
-
     if (!ParserUtils.getToken(builder, mIDENT)) {
-      constrMarker.rollbackTo();
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mLPAREN)) {
-      constrMarker.rollbackTo();
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
-    if (ParserUtils.lookAhead(builder, kFINAL) || ParserUtils.lookAhead(builder, kDEF) || ParserUtils.lookAhead(builder, mAT)) {
-      ParameterDeclarationList.parse(builder);
-    }
+    ParameterDeclarationList.parse(builder);
 
     if (!ParserUtils.getToken(builder, mRPAREN)) {
       ParserUtils.waitNextRCurly(builder);
@@ -46,13 +40,10 @@ public class MethodDefinition implements GroovyElementTypes {
     IElementType methodBody = MethodBody.parse(builder);
 
     if (METHOD_BODY.equals(methodBody)) {
-      constrMarker.done(METHOD_DEFINITION);
       return METHOD_DEFINITION;
     } else if (CONSTRUCTOR_BODY.equals(methodBody)) {
-      constrMarker.done(CONSTRUCTOR_DEFINITION);
       return CONSTRUCTOR_DEFINITION;
     } else {
-      constrMarker.rollbackTo();
       return WRONGWAY;
     }
   }

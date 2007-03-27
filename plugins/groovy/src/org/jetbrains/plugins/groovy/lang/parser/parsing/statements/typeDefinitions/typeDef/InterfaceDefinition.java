@@ -26,11 +26,11 @@ public class InterfaceDefinition implements GroovyElementTypes {
 
     TypeParameters.parse(builder);
 
-    if (tWRONG_SET.contains(InterfaceExtends.parse(builder))) {
+    if (WRONGWAY.equals(InterfaceExtends.parse(builder))) {
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(InterfaceBlock.parse(builder))) {
+    if (WRONGWAY.equals(InterfaceBlock.parse(builder))) {
       return WRONGWAY;
     }
 

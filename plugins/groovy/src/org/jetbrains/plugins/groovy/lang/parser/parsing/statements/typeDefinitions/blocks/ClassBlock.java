@@ -27,7 +27,7 @@ public class ClassBlock implements GroovyElementTypes {
 
     IElementType sep = Separators.parse(builder);
 
-    while (!tWRONG_SET.contains(sep)) {
+    while (!WRONGWAY.equals(sep)) {
       ClassMember.parse(builder);
 
       sep = Separators.parse(builder);

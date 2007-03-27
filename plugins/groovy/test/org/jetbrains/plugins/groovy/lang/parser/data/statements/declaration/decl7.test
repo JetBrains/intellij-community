@@ -1,0 +1,26 @@
+static private def String a, b, c = "foo"
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(static)('static')
+      PsiWhiteSpace(' ')
+      PsiElement(private)('private')
+      PsiWhiteSpace(' ')
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Gstring)('"foo"')

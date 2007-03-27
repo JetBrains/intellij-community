@@ -20,28 +20,59 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 
 public class Declaration implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
+    PsiBuilder.Marker declmMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
 
-    if (!tWRONG_SET.contains(modifiers)) {
-      TypeSpec.parse(builder);
+    if (!WRONGWAY.equals(modifiers)) {
 
-      if (tWRONG_SET.contains(VariableDefinitions.parse(builder))) {
-        builder.error(GroovyBundle.message("variable.definitions.expected"));
-        return WRONGWAY;
+      PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
+
+      if (WRONGWAY.equals(TypeSpec.parse(builder))) { //if type wasn't recognized trying poarse VaribleDeclaration
+        checkMarker.rollbackTo();
+
+        GroovyElementType varDecl = VariableDefinitions.parse(builder);
+        if (WRONGWAY.equals(varDecl)) {
+          builder.error(GroovyBundle.message("variable.definitions.expected"));
+          return WRONGWAY;
+        } else {
+          declmMarker.done(varDecl);
+          return varDecl;
+        }
+
+      } else {  //type was recognezed
+        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder);
+        if (WRONGWAY.equals(varDeclarationTop)) {
+          checkMarker.rollbackTo();
+
+          GroovyElementType varDecl = VariableDefinitions.parse(builder);
+          if (WRONGWAY.equals(varDecl)) {
+            builder.error(GroovyBundle.message("variable.definitions.expected"));
+            return WRONGWAY;
+          } else {
+            declmMarker.done(varDecl);
+            return varDecl;
+          }
+        } else {
+          checkMarker.drop();
+          declmMarker.done(varDeclarationTop);
+          return varDeclarationTop;
+        }
       }
     } else {
-      if (tWRONG_SET.contains(TypeSpec.parse(builder))) {
+      if (WRONGWAY.equals(TypeSpec.parse(builder))) {
         builder.error(GroovyBundle.message("type.specification.expected"));
         return WRONGWAY;
       }
 
-      if (tWRONG_SET.contains(VariableDefinitions.parse(builder))) {
+      GroovyElementType varDef = VariableDefinitions.parse(builder);
+      if (WRONGWAY.equals(varDef)) {
         builder.error(GroovyBundle.message("variable.definitions.expected"));
         return WRONGWAY;
       }
-    }
 
-    return DECLARATION;
+      declmMarker.done(varDef);
+      return varDef;
+    }
   }
 }

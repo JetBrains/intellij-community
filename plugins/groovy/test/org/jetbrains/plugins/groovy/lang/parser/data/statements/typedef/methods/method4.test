@@ -1,5 +1,5 @@
 class a {
-  static def a () {}
+  def a ()
 }
 -----
 Groovy script
@@ -12,19 +12,13 @@ Groovy script
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
-      Method
-        Modifiers
-          PsiElement(static)('static')
-          PsiWhiteSpace(' ')
-          PsiElement(def)('def')
-        PsiWhiteSpace(' ')
+      Modifiers
+        PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'}' expected
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         PsiElement())(')')
-        PsiWhiteSpace(' ')
-        Method body
-          PsiElement({)('{')
-          PsiElement(})('}')
-      PsiElement(new line)('\n')
+        PsiElement(new line)('\n')
       PsiElement(})('}')

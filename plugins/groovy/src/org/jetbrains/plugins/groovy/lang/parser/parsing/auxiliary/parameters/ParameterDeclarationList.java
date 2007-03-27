@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters;
 
+import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -12,14 +11,14 @@ import com.intellij.lang.PsiBuilder;
  */
 public class ParameterDeclarationList implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    if (!ParserUtils.lookAhead(builder, kFINAL) && !ParserUtils.lookAhead(builder, kDEF) && !ParserUtils.lookAhead(builder, mAT)) {
-      builder.error(GroovyBundle.message("final.def.or.annotation.definition.expected"));
-      return WRONGWAY;
-    }
+//    if (!ParserUtils.lookAhead(builder, kFINAL) && !ParserUtils.lookAhead(builder, kDEF) && !ParserUtils.lookAhead(builder, mAT)) {
+//      builder.error(GroovyBundle.message("final.def.or.annotation.definition.expected"));
+//      return WRONGWAY;
+//    }
 
     PsiBuilder.Marker pdlMarker = builder.mark();
 
-    if (tWRONG_SET.contains(ParameterDeclaration.parse(builder))) {
+    if (WRONGWAY.equals(ParameterDeclaration.parse(builder))) {
       pdlMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -27,7 +26,7 @@ public class ParameterDeclarationList implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (tWRONG_SET.contains(ParameterDeclaration.parse(builder))) {
+      if (WRONGWAY.equals(ParameterDeclaration.parse(builder))) {
         pdlMarker.rollbackTo();
         return WRONGWAY;
       }

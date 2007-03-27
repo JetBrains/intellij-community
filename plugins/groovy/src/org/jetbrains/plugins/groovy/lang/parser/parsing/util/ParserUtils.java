@@ -79,23 +79,6 @@ public abstract class ParserUtils {
 
 
   /**
-   * method for construction like
-   * <BNF>
-   * token?
-   * </BNF>
-   * parsing
-   * <p/>
-   * if token matches with one from suitable tokens returrn true
-   *
-   * @param builder current builder
-   * @param tokens  -   suitable token set
-   * @return true if element parsed
-   */
-  public static boolean validateToken(PsiBuilder builder, TokenSet tokens) {
-    return tokens.contains(builder.getTokenType());
-  }
-
-  /**
    * Checks, that following element sequence is like given
    *
    * @param builder Given PsiBuilder

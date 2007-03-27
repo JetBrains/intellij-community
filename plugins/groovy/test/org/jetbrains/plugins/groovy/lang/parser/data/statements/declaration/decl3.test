@@ -1,0 +1,13 @@
+static b = null
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(null)('null')

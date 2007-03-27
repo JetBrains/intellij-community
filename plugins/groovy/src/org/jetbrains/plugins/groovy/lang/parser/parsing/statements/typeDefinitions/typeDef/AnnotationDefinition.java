@@ -29,7 +29,7 @@ public class AnnotationDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(AnnotationBlock.parse(builder))) {
+    if (WRONGWAY.equals(AnnotationBlock.parse(builder))) {
 //      adMarker.rollbackTo();
       return WRONGWAY;
     }

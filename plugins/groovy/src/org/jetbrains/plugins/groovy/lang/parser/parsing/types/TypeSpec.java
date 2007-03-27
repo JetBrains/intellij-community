@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -17,6 +17,11 @@ public class TypeSpec implements GroovyElementTypes {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
     }
+
+    if (ParserUtils.lookAhead(builder, mIDENT)){
+      return parseClassOrInterfaceType(builder);
+    }
+
     return WRONGWAY;
   }
 
@@ -54,6 +59,27 @@ public class TypeSpec implements GroovyElementTypes {
     } else {
       newMarker.drop();
     }
+  }
+
+  /*
+   * Class or interface type
+   * @param builder
+   */
+
+  private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder) {
+    PsiBuilder.Marker arrMarker = builder.mark();
+
+    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+      arrMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    if (mLBRACK.equals(builder.getTokenType())) {
+      declarationBracketsParse(builder, arrMarker);
+    } else {
+      arrMarker.drop();
+    }
+    return TYPE_SPECIFICATION;
   }
 
 
