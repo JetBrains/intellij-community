@@ -8,6 +8,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -21,7 +22,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   private final DomFixedChildDescription myChildDescription;
 
   public ChildGenericValueColumnInfo(final String name,
-                                     final DomFixedChildDescription description,
+                                     @NotNull final DomFixedChildDescription description,
                                      final TableCellRenderer renderer,
                                      final TableCellEditor editor) {
     super(name, renderer);
