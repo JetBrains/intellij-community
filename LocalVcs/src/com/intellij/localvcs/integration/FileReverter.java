@@ -28,42 +28,66 @@ public class FileReverter {
   private boolean revert() {
     return myGateway.performCommandInsideWriteAction(formatCommandName(), new Callable<Boolean>() {
       public Boolean call() throws Exception {
-        if (!myGateway.ensureFilesAreWritable(myFile)) return false;
-        doRevert();
-        return true;
+        return doRevert();
       }
     });
   }
 
-  private void doRevert() throws IOException {
-    // what if file already exists
+  private boolean doRevert() throws IOException {
+    if (!userAgreeWithPreconditions()) return false;
+
+    removeInterferedFile();
     revertMovement();
-    revertChanges();
+    reventRename();
+    revertContent();
+
+    return true;
+  }
+
+  private boolean userAgreeWithPreconditions() {
+    if (!myGateway.ensureFilesAreWritable(myFile)) return false;
+    if (!userAllowedInterferedFileDeletion()) return false;
+    return true;
+  }
+
+  private boolean userAllowedInterferedFileDeletion() {
+    if (findInterferedFile() == null) return true;
+    return myGateway.askForProceed("There is file that prevents revertion.\nDo you want to delete that file and proceed?");
+  }
+
+  private void removeInterferedFile() throws IOException {
+    VirtualFile f = findInterferedFile();
+    if (f != null) f.delete(null);
+  }
+
+  private VirtualFile findInterferedFile() {
+    VirtualFile f = myGateway.findVirtualFile(myEntry.getPath());
+    if (f == myFile) return null;
+    return f;
   }
 
   private void revertMovement() throws IOException {
-    String parentPath = getEntry().getParent().getPath();
+    String parentPath = myEntry.getParent().getPath();
 
     if (!Paths.equals(parentPath, myFile.getParent().getPath())) {
-      VirtualFile parent = myGateway.getOrCreateDirectory(parentPath);
+      VirtualFile parent = myGateway.findOrCreateDirectory(parentPath);
       myFile.move(null, parent);
     }
   }
 
-  private void revertChanges() throws IOException {
-    if (!myFile.getName().equals(getEntry().getName())) {
-      myFile.rename(null, getEntry().getName());
+  private void reventRename() throws IOException {
+    if (!myFile.getName().equals(myEntry.getName())) {
+      myFile.rename(null, myEntry.getName());
     }
-    if (myFile.getTimeStamp() != getEntry().getTimestamp()) {
-      myFile.setBinaryContent(getEntry().getContent().getBytes(), -1, getEntry().getTimestamp());
+  }
+
+  private void revertContent() throws IOException {
+    if (myFile.getTimeStamp() != myEntry.getTimestamp()) {
+      myFile.setBinaryContent(myEntry.getContent().getBytes(), -1, myEntry.getTimestamp());
     }
   }
 
   private String formatCommandName() {
     return "Reverted to " + FormatUtil.formatTimestamp(myLabel.getTimestamp());
-  }
-
-  private Entry getEntry() {
-    return myEntry;
   }
 }

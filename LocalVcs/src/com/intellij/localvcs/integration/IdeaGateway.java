@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -42,6 +43,11 @@ public class IdeaGateway {
     return myFileFilter;
   }
 
+  public boolean askForProceed(String s) {
+    int result = Messages.showYesNoDialog(myProject, s, "Confirmation", Messages.getWarningIcon());
+    return result == 0 ? true : false;
+  }
+
   public <T> T performCommandInsideWriteAction(final String name, final Callable<T> c) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<T>() {
       public T compute() {
@@ -70,7 +76,11 @@ public class IdeaGateway {
     return !h.ensureFilesWritable(ff).hasReadonlyFiles();
   }
 
-  public VirtualFile getOrCreateDirectory(String path) {
+  public VirtualFile findVirtualFile(String path) {
+    return getFileSystem().findFileByPath(path);
+  }
+
+  public VirtualFile findOrCreateDirectory(String path) {
     File f = new File(path);
     if (!f.exists()) f.mkdirs();
 
