@@ -271,6 +271,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
               }
             }
           }
+          else {
+            // need to repaint button group bracket
+            myEditor.repaintLayeredPane();
+          }
         }
 
         // Notify ComponentTree that selected component changed
