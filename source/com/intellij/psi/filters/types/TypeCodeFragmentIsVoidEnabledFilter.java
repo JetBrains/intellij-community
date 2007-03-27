@@ -7,6 +7,7 @@ package com.intellij.psi.filters.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ReflectionCache;
 
 /**
  * @author dsl
@@ -19,6 +20,6 @@ public class TypeCodeFragmentIsVoidEnabledFilter implements ElementFilter {
 
 
   public boolean isClassAcceptable(Class hintClass) {
-    return hintClass.isAssignableFrom(PsiTypeCodeFragment.class);
+    return ReflectionCache.isAssignable(hintClass, PsiTypeCodeFragment.class);
   }
 }

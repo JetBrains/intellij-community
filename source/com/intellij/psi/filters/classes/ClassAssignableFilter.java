@@ -1,14 +1,12 @@
 package com.intellij.psi.filters.classes;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,9 +24,8 @@ public abstract class ClassAssignableFilter implements ElementFilter{
   public abstract String toString();
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiClass.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }
-
 
   protected PsiClass getPsiClass(PsiManager manager, GlobalSearchScope scope){
     if(myClass != null){
@@ -41,13 +38,4 @@ public abstract class ClassAssignableFilter implements ElementFilter{
     return (PsiClass) myCachedClass.get();
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    myClassName = element.getTextTrim();
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
 }

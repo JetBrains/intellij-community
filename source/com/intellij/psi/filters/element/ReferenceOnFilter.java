@@ -5,6 +5,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PositionElementFilter;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,15 +20,13 @@ public class ReferenceOnFilter extends PositionElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiJavaCodeReferenceElement.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiJavaCodeReferenceElement.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     PsiElement parent = ((PsiElement) element).getParent();
-    if(parent instanceof PsiJavaCodeReferenceElement){
-      return getFilter().isAcceptable((((PsiJavaReference)parent).advancedResolve(true)).getElement(), context);
-    }
-    return false;
+    return parent instanceof PsiJavaCodeReferenceElement &&
+           getFilter().isAcceptable(((PsiJavaReference)parent).advancedResolve(true).getElement(), context);
   }
 }

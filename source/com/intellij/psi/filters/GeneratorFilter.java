@@ -1,11 +1,9 @@
 package com.intellij.psi.filters;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +38,7 @@ public class GeneratorFilter implements ElementFilter{
     return (ElementFilter) myCachedFilter.get();
   }
 
-  protected ElementFilter getFilter(PsiElement context){
+  private ElementFilter getFilter(PsiElement context){
     ElementFilter filter = (ElementFilter)myCachedFilter.get();
     if(myCachedElement.get() != context || filter == null){
       filter = generateFilter(context);
@@ -59,11 +57,11 @@ public class GeneratorFilter implements ElementFilter{
     return false;
   }
 
-  protected ElementFilter generateFilter(PsiElement context){
+  private ElementFilter generateFilter(PsiElement context){
     try{
       final ElementFilter elementFilter = (ElementFilter) myFilterClass.newInstance();
       final Object[] initArgument = myGetter.get(context, null);
-      if(InitializableFilter.class.isAssignableFrom(myFilterClass) && initArgument != null){
+      if(ReflectionCache.isAssignable(InitializableFilter.class, myFilterClass) && initArgument != null){
         ((InitializableFilter)elementFilter).init(initArgument);
         return elementFilter;
       }
@@ -80,13 +78,4 @@ public class GeneratorFilter implements ElementFilter{
     return null;
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    throw new InvalidDataException("Not implemented yet!");
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
 }

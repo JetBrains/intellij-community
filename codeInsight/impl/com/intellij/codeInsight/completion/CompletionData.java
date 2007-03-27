@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ReflectionCache;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class CompletionData {
       return true;
 
     for (final Class myFinalScope : myFinalScopes) {
-      if (myFinalScope.isAssignableFrom(scopeClass)) {
+      if (ReflectionCache.isAssignable(myFinalScope, scopeClass)) {
         return true;
       }
     }

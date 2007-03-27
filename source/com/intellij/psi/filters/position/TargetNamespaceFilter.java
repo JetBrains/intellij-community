@@ -4,6 +4,7 @@ import com.intellij.psi.filters.TextFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +23,7 @@ public class TargetNamespaceFilter extends TextFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return XmlTag.class.isAssignableFrom(hintClass) || XmlDocument.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(XmlTag.class, hintClass) || ReflectionCache.isAssignable(XmlDocument.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){

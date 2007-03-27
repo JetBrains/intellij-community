@@ -70,22 +70,6 @@ public class TextFilter implements ElementFilter, InitializableFilter{
     return false;
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    final StringTokenizer tok = new StringTokenizer(element.getTextTrim(), "|");
-    int i = 0;
-
-    myValue = new String[tok.countTokens()];
-    while(tok.hasMoreTokens()){
-      myValue[i++] = tok.nextToken().trim();
-    }
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
   public String toString(){
     String ret = "(";
     for(int i = 0; i < myValue.length; i++){

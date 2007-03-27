@@ -1,13 +1,11 @@
 package com.intellij.psi.filters.element;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.filters.ElementFilter;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,21 +18,17 @@ public class PackageEqualsFilter
   implements ElementFilter{
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiClass.class.isAssignableFrom(hintClass)
-      || PsiPackage.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiClass.class, hintClass) || ReflectionCache.isAssignable(PsiPackage.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     final String elementPackName = getPackageName((PsiElement) element);
     final String contextPackName = getPackageName(context);
-    if(elementPackName != null && contextPackName != null){
-      return elementPackName.equals(contextPackName);
-    }
-    return false;
+    return elementPackName != null && contextPackName != null && elementPackName.equals(contextPackName);
   }
 
-  protected String getPackageName(PsiElement element){
+  protected static String getPackageName(PsiElement element){
     if(element instanceof PsiPackage){
       return ((PsiPackage)element).getQualifiedName();
     }
@@ -42,16 +36,6 @@ public class PackageEqualsFilter
       return ((PsiJavaFile)element.getContainingFile()).getPackageName();
     }
     return null;
-  }
-
-
-  public void readExternal(Element element)
-    throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
   }
 
 

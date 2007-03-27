@@ -1,11 +1,9 @@
 package com.intellij.psi.filters.classes;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,30 +12,13 @@ import org.jdom.Element;
  * Time: 21:00:45
  * To change this template use Options | File Templates.
  */
-public class InterfaceFilter
-  implements ElementFilter{
-
-  protected boolean isClassAcceptable(PsiClass aClass){
-    return aClass.isInterface();
-  }
-  public void readExternal(Element element)
-    throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
+public class InterfaceFilter implements ElementFilter{
   public boolean isClassAcceptable(Class hintClass){
-    return PsiClass.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof PsiClass){
-      return ((PsiClass)element).isInterface();
-    }
-    return false;
+    return element instanceof PsiClass && ((PsiClass)element).isInterface();
   }
 
   public String toString(){

@@ -24,15 +24,6 @@ public class ConstructorFilter extends ClassFilter {
     }
     return false;
   }
-  public void readExternal(Element element)
-    throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
   public String toString(){
     return "constructor";
   }

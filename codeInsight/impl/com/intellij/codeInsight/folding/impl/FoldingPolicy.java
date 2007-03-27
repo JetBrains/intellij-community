@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.util.ReflectionCache;
 
 import java.util.*;
 
@@ -343,7 +344,7 @@ class FoldingPolicy {
     int index = 0;
 
     for (PsiElement child : children) {
-      if (hisClass.isAssignableFrom(child.getClass())) {
+      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
 
@@ -509,7 +510,7 @@ class FoldingPolicy {
     PsiElement[] children = parent.getChildren();
 
     for (PsiElement child : children) {
-      if (hisClass.isAssignableFrom(child.getClass())) {
+      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
 

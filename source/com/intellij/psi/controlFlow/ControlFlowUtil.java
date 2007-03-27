@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 
@@ -321,7 +322,7 @@ public class ControlFlowUtil {
         exitStatements.add(statement);
       } else {
         for (Class aClassesFilter : classesFilter) {
-          if (aClassesFilter.isAssignableFrom(statement.getClass())) {
+          if (ReflectionCache.isAssignable(aClassesFilter, statement.getClass())) {
             exitStatements.add(statement);
             break;
           }
@@ -1065,9 +1066,6 @@ public class ControlFlowUtil {
       return original == null ? list : original;
     }
 
-    public CopyOnWriteList(List<VariableInfo> original) {
-      this.original = original;
-    }
     public CopyOnWriteList() {
       list = new LinkedList<VariableInfo>();
     }
@@ -1094,10 +1092,6 @@ public class ControlFlowUtil {
     public VariableInfo(PsiVariable variable, PsiElement expression) {
       this.variable = variable;
       this.expression = expression;
-    }
-
-    public VariableInfo(VariableInfo variableInfo) {
-      this(variableInfo.variable, variableInfo.expression);
     }
 
     public boolean equals(Object o) {

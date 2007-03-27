@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class SimpleProviderBinding implements ProviderBinding {
   private boolean isAcceptable(PsiElement position, ElementFilter filter){
     if(position == null) return false;
 
-    if (myScope.isAssignableFrom(position.getClass())) {
+    if (ReflectionCache.isAssignable(myScope, position.getClass())) {
       return filter == null || filter.isAcceptable(position, position);
     }
 

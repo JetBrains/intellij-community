@@ -78,12 +78,6 @@ public class AssignableToFilter implements InitializableFilter{
     else return false;
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException{
-  }
-
   public String toString(){
     if(myType != null)
       return "assignable-to(" + myType + ")";

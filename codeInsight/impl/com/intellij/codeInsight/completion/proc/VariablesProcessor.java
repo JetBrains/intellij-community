@@ -13,6 +13,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.util.ReflectionCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class VariablesProcessor
   }
 
   public boolean shouldProcess(Class elementClass) {
-    return PsiVariable.class.isAssignableFrom(elementClass);
+    return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
   }
 
   /** Always return true since we wanna get all vars in scope */

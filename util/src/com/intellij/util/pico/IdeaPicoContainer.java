@@ -1,5 +1,6 @@
 package com.intellij.util.pico;
 
+import com.intellij.util.ReflectionCache;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 import org.picocontainer.monitors.DefaultComponentMonitor;
@@ -56,7 +57,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
         AssignableToComponentAdapter assignableToComponentAdapter = (AssignableToComponentAdapter)componentAdapter;
         if (assignableToComponentAdapter.isAssignableTo(componentType)) result.add(assignableToComponentAdapter);
       }
-      else if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
+      else if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         result.add(componentAdapter);
       }
     }

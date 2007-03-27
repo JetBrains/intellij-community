@@ -1,11 +1,9 @@
 package com.intellij.psi.filters.types;
 
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiArrayType;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,6 +18,6 @@ public class ArrayTypeFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiArrayType.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiArrayType.class, hintClass);
   }
 }

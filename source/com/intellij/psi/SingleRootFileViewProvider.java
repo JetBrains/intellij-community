@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -394,7 +395,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
-    if (!lang.isAssignableFrom(getBaseLanguage().getClass())) return null;
+    if (!ReflectionCache.isAssignable(lang, getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
 
@@ -471,9 +472,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class PsiFileContent implements Content {
-    private PsiFileImpl myFile;
+    private final PsiFileImpl myFile;
     private CharSequence myContent = null;
-    private long myModificationStamp;
+    private final long myModificationStamp;
 
     public PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
       myFile = file;

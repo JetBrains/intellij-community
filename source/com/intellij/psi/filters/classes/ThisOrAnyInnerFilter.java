@@ -3,6 +3,7 @@ package com.intellij.psi.filters.classes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,7 +18,7 @@ public class ThisOrAnyInnerFilter extends OrFilter{
   }
 
   public boolean isClassAcceptable(Class aClass){
-    return PsiClass.class.isAssignableFrom(aClass);
+    return ReflectionCache.isAssignable(PsiClass.class, aClass);
   }
 
   public String toString(){

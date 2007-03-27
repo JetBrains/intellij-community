@@ -2,13 +2,11 @@ package com.intellij.psi.filters.types;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -21,17 +19,15 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ReturnTypeFilter implements ElementFilter{
   private ElementFilter myFilter;
-  private static final @NonNls String PLACEHOLDER = "xxx";
+  @NonNls private static final String PLACEHOLDER = "xxx";
 
   public ReturnTypeFilter(ElementFilter filter){
     myFilter = filter;
   }
   public boolean isClassAcceptable(Class hintClass){
-    return PsiVariable.class.isAssignableFrom(hintClass)
-           || PsiMethod.class.isAssignableFrom(hintClass)
-           || PsiExpression.class.isAssignableFrom(hintClass)
-           || Template.class.isAssignableFrom(hintClass)
-           || CandidateInfo.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiVariable.class, hintClass) || ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
+           ReflectionCache.isAssignable(PsiExpression.class, hintClass) || ReflectionCache.isAssignable(Template.class, hintClass) ||
+           ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
 
   }
 
@@ -40,7 +36,7 @@ public class ReturnTypeFilter implements ElementFilter{
     if(element instanceof TemplateImpl){
       final TemplateImpl template = (TemplateImpl) element;
       String text = template.getTemplateText();
-      StringBuffer resultingText = new StringBuffer(text);
+      StringBuilder resultingText = new StringBuilder(text);
 
       int segmentsCount = template.getSegmentsCount();
 
@@ -70,11 +66,4 @@ public class ReturnTypeFilter implements ElementFilter{
     return myFilter.isAcceptable(element, context);
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
-    //myFilter.readExternal(element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException{
-    //myFilter.writeExternal(element);
-  }
 }

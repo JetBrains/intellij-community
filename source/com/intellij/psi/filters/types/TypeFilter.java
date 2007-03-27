@@ -3,6 +3,7 @@ package com.intellij.psi.filters.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,17 +13,17 @@ import com.intellij.psi.filters.ElementFilter;
  * To change this template use Options | File Templates.
  */
 public class TypeFilter implements ElementFilter{
-  private Object myType;
+  private final Object myType;
 
   public TypeFilter(Object type){
     myType = type;
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    return ((PsiType)element).equals(myType);
+    return element.equals(myType);
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiType.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiType.class, hintClass);
   }
 }

@@ -18,10 +18,6 @@ public class StartElementFilter extends PositionElementFilter{
     return FilterUtil.getPreviousElement((PsiElement) element, false) == null;
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-  }
-
   public String toString(){
     return "start";
   }

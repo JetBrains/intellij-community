@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -79,7 +80,7 @@ public class CompletionVariant {
   public boolean isScopeClassFinal(Class scopeClass){
     for (final Object myScopeClass : myScopeClasses) {
       Scope scope = (Scope)myScopeClass;
-      if (scope.myClass.isAssignableFrom(scopeClass) && scope.myIsFinalScope) {
+      if (ReflectionCache.isAssignable(scope.myClass, scopeClass) && scope.myIsFinalScope) {
         return true;
       }
     }
@@ -91,7 +92,7 @@ public class CompletionVariant {
 
     for (final Object myScopeClass : myScopeClasses) {
       final Class aClass = ((Scope)myScopeClass).myClass;
-      if (aClass.isAssignableFrom(scopeClass)) {
+      if (ReflectionCache.isAssignable(aClass, scopeClass)) {
         ret = true;
         break;
       }
@@ -100,7 +101,7 @@ public class CompletionVariant {
     if(ret){
       for (final Object myScopeClassException : myScopeClassExceptions) {
         final Class aClass = (Class)myScopeClassException;
-        if (aClass.isAssignableFrom(scopeClass)) {
+        if (ReflectionCache.isAssignable(aClass, scopeClass)) {
           ret = false;
           break;
         }

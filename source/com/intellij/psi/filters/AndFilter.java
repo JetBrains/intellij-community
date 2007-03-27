@@ -1,8 +1,6 @@
 package com.intellij.psi.filters;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
-import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,7 +14,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class AndFilter implements ElementFilter{
-  private List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
+  private final List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
 
   public AndFilter(ElementFilter filter1, ElementFilter filter2){
     this(new ElementFilter[]{filter1, filter2});
@@ -28,17 +26,12 @@ public class AndFilter implements ElementFilter{
     }
   }
 
-  public void addFilter(ElementFilter filter){
+  private void addFilter(ElementFilter filter){
     myFilters.add(filter);
   }
 
-  public List getFilters(){
-    return myFilters;
-  }
-
   public boolean isAcceptable(Object element, PsiElement context){
-    for (Object myFilter : myFilters) {
-      final ElementFilter elementFilter = (ElementFilter)myFilter;
+    for (ElementFilter elementFilter : myFilters) {
       if (!elementFilter.isAcceptable(element, context)) {
         return false;
       }
@@ -54,11 +47,6 @@ public class AndFilter implements ElementFilter{
       }
     }
     return true;
-  }
-
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    myFilters = FilterUtil.readFilterGroup(element);
   }
 
   public String toString(){

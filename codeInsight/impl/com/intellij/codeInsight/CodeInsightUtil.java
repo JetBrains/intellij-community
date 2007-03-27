@@ -37,6 +37,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,9 @@ public class CodeInsightUtil {
     }
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-    final T element = klass.isAssignableFrom(commonParent.getClass()) ? (T)commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
+    final T element =
+      ReflectionCache.isAssignable(klass, commonParent.getClass())
+      ? (T)commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
     if (element == null || element.getTextRange().getStartOffset() != startOffset || element.getTextRange().getEndOffset() != endOffset) {
       return null;
     }

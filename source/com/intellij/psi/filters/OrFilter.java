@@ -1,8 +1,6 @@
 package com.intellij.psi.filters;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
-import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,9 +14,8 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 
-public class OrFilter
- implements ElementFilter{
-  private List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
+public class OrFilter implements ElementFilter{
+  private final List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
 
   public OrFilter(){}
 
@@ -32,15 +29,13 @@ public class OrFilter
     myFilters.add(filter);
   }
 
-  public List getFilters(){
+  protected List getFilters(){
     return myFilters;
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    if(myFilters.isEmpty())
-      return true;
-    for (Object filter : myFilters) {
-      final ElementFilter elementFilter = (ElementFilter)filter;
+    if (myFilters.isEmpty()) return true;
+    for (ElementFilter elementFilter : myFilters) {
       if (elementFilter.isAcceptable(element, context)) {
         return true;
       }
@@ -49,20 +44,13 @@ public class OrFilter
   }
 
   public boolean isClassAcceptable(Class elementClass){
-    if(myFilters.isEmpty())
-      return true;
-    for (Object myFilter : myFilters) {
-      final ElementFilter elementFilter = (ElementFilter)myFilter;
+    if (myFilters.isEmpty()) return true;
+    for (ElementFilter elementFilter : myFilters) {
       if (elementFilter.isClassAcceptable(elementClass)) {
         return true;
       }
     }
     return false;
-  }
-
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    myFilters = FilterUtil.readFilterGroup(element);
   }
 
   public String toString(){

@@ -3,6 +3,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ReflectionCache;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
@@ -36,9 +38,8 @@ public abstract class ComponentTreeWatcher {
     if (object == null) {
       return true;
     }
-    for (int i = 0; i < myControlsToIgnore.length; i++) {
-      Class aClass = myControlsToIgnore[i];
-      if (aClass.isAssignableFrom(object.getClass())) {
+    for (Class aClass : myControlsToIgnore) {
+      if (ReflectionCache.isAssignable(aClass, object.getClass())) {
         return true;
       }
     }
@@ -51,7 +52,7 @@ public abstract class ComponentTreeWatcher {
     }
 
     if (parentComponent instanceof Container) {
-      Container container = ((Container)parentComponent);
+      Container container = (Container)parentComponent;
       for (int i = 0; i < container.getComponentCount(); i++) {
         register(container.getComponent(i));
       }
@@ -66,7 +67,7 @@ public abstract class ComponentTreeWatcher {
   private void unregister(Component component) {
 
     if (component instanceof Container) {
-      Container container = ((Container)component);
+      Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         unregister(container.getComponent(i));
       }

@@ -1,14 +1,12 @@
 package com.intellij.psi.filters.types;
 
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +23,7 @@ public class TypeClassFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return PsiType.class.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(PsiType.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
@@ -40,9 +38,4 @@ public class TypeClassFilter implements ElementFilter{
     return false;
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException{
-  }
 }

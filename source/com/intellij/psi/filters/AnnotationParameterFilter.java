@@ -7,6 +7,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -47,6 +48,6 @@ public class AnnotationParameterFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass) {
-    return myClass.isAssignableFrom(hintClass);
+    return ReflectionCache.isAssignable(myClass, hintClass);
   }
 }

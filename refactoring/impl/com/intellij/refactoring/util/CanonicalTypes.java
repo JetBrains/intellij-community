@@ -5,19 +5,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Collection;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
 public class CanonicalTypes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.CanonicalTypes");
-  public static abstract class Type {
+  public abstract static class Type {
     public abstract PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
 
     @NonNls
@@ -131,12 +130,12 @@ public class CanonicalTypes {
   }
 
 
-  private static class Class extends Type {
+  private static class ClassType extends Type {
     private final String myOriginalText;
     private String myClassQName;
     private Map<String,Type> mySubstitutor;
 
-    private Class(String originalText, String classQName, Map<String, Type> substitutor) {
+    private ClassType(String originalText, String classQName, Map<String, Type> substitutor) {
       myOriginalText = originalText;
       myClassQName = classQName;
       mySubstitutor = substitutor;
@@ -224,7 +223,7 @@ public class CanonicalTypes {
         }
         final String qualifiedName = aClass.getQualifiedName();
         LOG.assertTrue(aClass.getName() != null);
-        return new Class(originalText, qualifiedName != null ? qualifiedName : aClass.getName(), substMap);
+        return new ClassType(originalText, qualifiedName != null ? qualifiedName : aClass.getName(), substMap);
       }
     }
   }

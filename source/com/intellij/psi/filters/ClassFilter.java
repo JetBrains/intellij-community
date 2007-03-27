@@ -1,11 +1,9 @@
 package com.intellij.psi.filters;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import org.jdom.Element;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -16,11 +14,11 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class ClassFilter implements ElementFilter{
-  private Class myFilter;
-  private boolean myAcceptableFlag = true;
+  private final Class myFilter;
+  private final boolean myAcceptableFlag;
 
-  public ClassFilter(Class filter){
-    myFilter = filter;
+  public ClassFilter(Class filter) {
+    this(filter, true);
   }
 
   public ClassFilter(Class filter, boolean acceptableFlag){
@@ -28,24 +26,16 @@ public class ClassFilter implements ElementFilter{
     myAcceptableFlag = acceptableFlag;
   }
 
-
-  public void setClassFilter(Class filter){
-    myFilter = filter;
-  }
-
-  public Class getClassFilter(){
-    return myFilter;
-  }
-
   public boolean isClassAcceptable(Class hintClass){
     return myAcceptableFlag ? filterMatches(hintClass) : !filterMatches(hintClass);
   }
 
   private boolean filterMatches(final Class hintClass) {
+    if (ReflectionCache.isAssignable(myFilter,hintClass)) return true;
     if (hintClass == PsiClass.class) { // hack for JSP completion
-      return myFilter.isAssignableFrom(hintClass) || myFilter.isAssignableFrom(JspClassLevelDeclarationStatement.class);
+      return ReflectionCache.isAssignable(myFilter,JspClassLevelDeclarationStatement.class);
     }
-    return myFilter.isAssignableFrom(hintClass);
+    return false;
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
@@ -55,23 +45,8 @@ public class ClassFilter implements ElementFilter{
     return myAcceptableFlag ? filterMatches(element.getClass()) : !filterMatches(element.getClass());
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    final String className = element.getTextTrim();
-    try{
-      myFilter = Class.forName(className);
-    }
-    catch(Exception e){
-      throw new InvalidDataException("Invalid class name in class filter");
-    }
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
-  public @NonNls String toString(){
+  @NonNls
+  public String toString(){
     return "class(" + myFilter.getName() + ")";
   }
 }

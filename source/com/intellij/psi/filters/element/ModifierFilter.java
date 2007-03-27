@@ -74,21 +74,6 @@ public class ModifierFilter extends ClassFilter{
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
-    for (final Object o : element.getChildren(MODIFIER_TAG, FilterUtil.FILTER_NS)) {
-      final Element modifierElement = (Element)o;
-      final String attribute = modifierElement.getAttribute(IS_SET_ATT).getValue();
-      myModifierRestrictions.add(
-        new ModifierRestriction(modifierElement.getTextTrim(),
-                                Boolean.valueOf(attribute)));
-    }
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
   public String toString(){
     @NonNls String ret = "modifiers(";
     Iterator iter = myModifierRestrictions.iterator();

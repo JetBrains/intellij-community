@@ -94,12 +94,6 @@ public class AssignableFromFilter implements ElementFilter{
     return type.isAssignableFrom(typeByElement);
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException{
-  }
-
   public String toString(){
     return "assignable-from(" + (myType != null ? myType : myClassName) + ")";
   }

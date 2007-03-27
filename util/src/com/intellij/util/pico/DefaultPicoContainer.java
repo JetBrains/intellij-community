@@ -10,6 +10,7 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.ReflectionCache;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 import org.picocontainer.monitors.DefaultComponentMonitor;
@@ -230,9 +231,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
         for (Iterator iterator = getComponentAdapters().iterator(); iterator.hasNext();) {
             ComponentAdapter componentAdapter = (ComponentAdapter) iterator.next();
 
-            if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
-                found.add(componentAdapter);
-            }
+          if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+            found.add(componentAdapter);
+          }
         }
         return found;
     }
@@ -331,14 +332,14 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
         Map adapterToInstanceMap = new HashMap();
         for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext();) {
             ComponentAdapter componentAdapter = (ComponentAdapter) iterator.next();
-            if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
-                Object componentInstance = getInstance(componentAdapter);
-                adapterToInstanceMap.put(componentAdapter, componentInstance);
+          if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+            Object componentInstance = getInstance(componentAdapter);
+            adapterToInstanceMap.put(componentAdapter, componentInstance);
 
-                // This is to ensure all are added. (Indirect dependencies will be added
-                // from InstantiatingComponentAdapter).
-                addOrderedComponentAdapter(componentAdapter);
-            }
+            // This is to ensure all are added. (Indirect dependencies will be added
+            // from InstantiatingComponentAdapter).
+            addOrderedComponentAdapter(componentAdapter);
+          }
         }
         List result = new ArrayList();
         for (Iterator iterator = orderedComponentAdapters.iterator(); iterator.hasNext();) {
