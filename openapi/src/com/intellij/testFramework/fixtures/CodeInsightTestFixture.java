@@ -60,6 +60,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   String getTempDirPath();
 
+  TempDirTestFixture getTempDirFixture();
+
   /**
    * Enables inspections for highlighting tests.
    * Should be called BEFORE {@link #setUp()}.

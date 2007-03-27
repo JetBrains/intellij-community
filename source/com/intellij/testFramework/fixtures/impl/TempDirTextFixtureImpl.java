@@ -66,8 +66,8 @@ public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFi
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          final VirtualFile file = LocalFileSystem.getInstance()
-            .refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/') + "/" + path);
+          final String fullPath = myTempDir.getCanonicalPath().replace(File.separatorChar, '/') + "/" + path;
+          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
           result.set(file);
         }
         catch (IOException e) {

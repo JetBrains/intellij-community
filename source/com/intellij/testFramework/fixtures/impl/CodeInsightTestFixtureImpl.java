@@ -74,7 +74,7 @@ import java.util.*;
  */
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
 
-  @NonNls protected static final String PROFILE = "Configurable";
+  @NonNls private static final String PROFILE = "Configurable";
 
   private PsiManagerImpl myPsiManager;
   private PsiFile myFile;
@@ -85,7 +85,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
-  protected final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
+  private final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
   private final IdeaProjectTestFixture myProjectFixture;
   @NonNls private static final String XXX = "XXX";
 
@@ -99,6 +99,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public String getTempDirPath() {
     return myTempDirFixture.getTempDirPath();
+  }
+
+  public TempDirTestFixture getTempDirFixture() {
+    return myTempDirFixture;
   }
 
   public void enableInspections(LocalInspectionTool... inspections) {
@@ -297,7 +301,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  protected void enableInspectionTool(LocalInspectionTool tool){
+  private void enableInspectionTool(LocalInspectionTool tool){
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
@@ -354,7 +358,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  protected int configureByFiles(@NonNls String... filePaths) throws IOException {
+  private int configureByFiles(@NonNls String... filePaths) throws IOException {
     myFile = null;
     myEditor = null;
     int offset = -1;
@@ -405,7 +409,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
-  protected Editor createEditor(VirtualFile file) {
+  private Editor createEditor(VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
     if (file.getFileType().isBinary()) {
