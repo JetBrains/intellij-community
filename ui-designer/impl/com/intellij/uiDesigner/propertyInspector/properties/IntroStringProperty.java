@@ -57,7 +57,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
   public PropertyEditor<StringDescriptor> getEditor() {
     if (myEditor == null) {
-      myEditor = new StringEditor(myProject);
+      myEditor = new StringEditor(myProject, this);
     }
     return myEditor;
   }

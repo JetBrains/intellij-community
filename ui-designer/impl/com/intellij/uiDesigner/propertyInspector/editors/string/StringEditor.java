@@ -14,9 +14,11 @@ import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -31,14 +33,21 @@ import java.awt.event.ActionListener;
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor");
 
+  @Nullable private IntroStringProperty myProperty;
   private final TextFieldWithBrowseButton myTfWithButton;
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
   private Project myProject;
+  private RadComponent myComponent;
   private boolean myTextFieldModified = false;
 
-  public StringEditor(Project project){
+  public StringEditor(Project project) {
+    this(project, null);
+  }
+
+  public StringEditor(Project project, final IntroStringProperty property) {
     myProject = project;
+    myProperty = property;
     myTfWithButton = new TextFieldWithBrowseButton(new MyActionListener());
     myTfWithButton.getTextField().setBorder(null);
 
@@ -105,6 +114,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   public JComponent getComponent(final RadComponent component, final StringDescriptor value, final InplaceContext inplaceContext) {
+    myComponent = component;
     setValue(value);
 
     myTfWithButton.getTextField().setBorder(null);
@@ -171,6 +181,10 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
             }
             setValue(descriptor);
             fireValueCommitted(true, false);
+            if (myProperty != null) {
+              myProperty.refreshValue(myComponent);
+            }
+            guiEditor.refreshAndSave(false);
           }
         }, UIDesignerBundle.message("command.edit.string.property"), null); 
     }
