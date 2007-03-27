@@ -211,7 +211,14 @@ public class RedundantThrows extends GlobalInspectionTool {
 
     private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
       try {
-        final PsiMethod psiMethod = (PsiMethod)(element == null ? refMethod.getElement() : element);
+        @Nullable final PsiMethod psiMethod;
+        if (element == null) {
+          LOG.assertTrue(refMethod != null);
+          psiMethod = (PsiMethod)refMethod.getElement();
+        } else {
+          psiMethod = (PsiMethod)element;
+        }
+        if (psiMethod == null) return; //invalid refMethod
         final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
         final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
