@@ -1,0 +1,35 @@
+A.foo(###, 3+2, ##, 5)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('A')
+    PsiElement(.)('.')
+    Property selector
+      PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Arguments
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiElement(wrong token)('#')
+      PsiElement(wrong token)('#')
+      PsiElement(wrong token)('#')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Additive expression
+        Literal
+          PsiElement(number)('3')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(number)('2')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(wrong token)('#')
+      PsiElement(wrong token)('#')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('5')
+    PsiElement())(')')

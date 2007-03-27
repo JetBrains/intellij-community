@@ -1,0 +1,14 @@
+foo(
+,
+)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    PsiElement(new line)('\n')
+    Arguments
+      PsiElement(,)(',')
+    PsiElement(new line)('\n')
+    PsiElement())(')')

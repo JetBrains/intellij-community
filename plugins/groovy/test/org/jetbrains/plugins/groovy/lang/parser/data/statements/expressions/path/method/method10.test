@@ -1,0 +1,23 @@
+A.foo(1,,,,,5)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('A')
+    PsiElement(.)('.')
+    Property selector
+      PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Arguments
+      Literal
+        PsiElement(number)('1')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiElement(,)(',')
+      PsiElement(,)(',')
+      PsiElement(,)(',')
+      PsiElement(,)(',')
+      Literal
+        PsiElement(number)('5')
+    PsiElement())(')')

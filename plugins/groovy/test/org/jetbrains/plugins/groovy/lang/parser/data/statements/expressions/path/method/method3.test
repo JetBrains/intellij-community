@@ -1,0 +1,35 @@
+C.
+foo1(a+b).
+foo2(a-b)
+-----
+Groovy script
+  Method call
+    Method call
+      Reference expression
+        PsiElement(identifier)('C')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      Property selector
+        PsiElement(identifier)('foo1')
+      PsiElement(()('(')
+      Arguments
+        Additive expression
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiElement(+)('+')
+          Reference expression
+            PsiElement(identifier)('b')
+      PsiElement())(')')
+    PsiElement(.)('.')
+    PsiElement(new line)('\n')
+    Property selector
+      PsiElement(identifier)('foo2')
+    PsiElement(()('(')
+    Arguments
+      Additive expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(-)('-')
+        Reference expression
+          PsiElement(identifier)('b')
+    PsiElement())(')')

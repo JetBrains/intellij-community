@@ -1,0 +1,25 @@
+println A.foo(5)(6)
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Method call
+        Method call
+          Reference expression
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          Property selector
+            PsiElement(identifier)('foo')
+          PsiElement(()('(')
+          Arguments
+            Literal
+              PsiElement(number)('5')
+          PsiElement())(')')
+        PsiElement(()('(')
+        Arguments
+          Literal
+            PsiElement(number)('6')
+        PsiElement())(')')
