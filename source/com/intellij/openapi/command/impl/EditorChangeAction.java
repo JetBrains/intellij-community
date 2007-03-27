@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 class EditorChangeAction implements UndoableAction {
   private final DocumentEx myDocument; // DocumentEx or WeakReference<DocumentEx> or null
@@ -100,6 +101,7 @@ class EditorChangeAction implements UndoableAction {
     return (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
   }
 
+  @NonNls
   public String toString() {
     return "editor change: '"+myOldString+"' to '"+myNewString+"'";
   }

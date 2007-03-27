@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -506,7 +507,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   }
 
-  public void markDocumentForUndo(PsiFile file) {
+  public void markDocumentForUndo(final PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
@@ -520,6 +521,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
 
       public boolean isComplex() { return false; }
+
+      @NonNls
+      public String toString() {
+        return "markDocumentForUndo: " + file;
+      }
     });
   }
 

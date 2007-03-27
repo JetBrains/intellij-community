@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -211,5 +212,14 @@ class UndoableGroup {
 
   public boolean isTransparentsOnly() {
     return myTransparentsOnly;
+  }
+
+  public String toString() {
+    @NonNls StringBuilder result = new StringBuilder("UndoableGroup{ ");
+    for(UndoableAction action: myActions) {
+      result.append(action).append(" ");
+    }
+    result.append("}");
+    return result.toString();
   }
 }

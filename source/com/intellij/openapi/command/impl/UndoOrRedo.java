@@ -211,7 +211,8 @@ abstract class UndoOrRedo {
 
   private boolean containsAnotherChanges(Set<DocumentReference> affected) {
     boolean otherDocsHaveSomethingOnTheirStacks = false;
-    for (LinkedList<UndoableGroup> linkedList : getStacks()) {
+    final Collection<LinkedList<UndoableGroup>> stacks = getStacks();
+    for (LinkedList<UndoableGroup> linkedList : stacks) {
       if (linkedList.isEmpty()) continue;
       final UndoableGroup last = linkedList.getLast();
       if (!last.equals(myUndoableGroup)) {
