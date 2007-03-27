@@ -268,6 +268,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     repaint();
   }
 
+  @Nullable
   private MyCompositeLabel getItem(int index) {
     if (index != -1 && index < myList.size()) {
       return myList.get(index);
@@ -421,7 +422,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
           myModel.setSelectedIndex(index);
-          getItem(index).requestFocusInWindow();
+          requestFocusInWindow();
           doubleClick(index);
           e.consume();
         }
@@ -444,7 +445,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       private void click(final MouseEvent e) {
         if (!e.isConsumed() && e.isPopupTrigger()) {
           myModel.setSelectedIndex(index);
-          getItem(index).requestFocusInWindow();
+          requestFocusInWindow();
           rightClick(index);
           e.consume();
         }
@@ -531,12 +532,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final Object object = myModel.getElement(index);
     final List<Object> objects = myModel.calcElementChildren(object);
     if (!objects.isEmpty()) {
-      Object[] siblings = new Object[objects.size()];
-      Icon[] icons = new Icon[objects.size()];
+      final Object[] siblings = new Object[objects.size()];
+      final Icon[] icons = new Icon[objects.size()];
       for (int i = 0; i < objects.size(); i++) {
         siblings[i] = objects.get(i);
         icons[i] = NavBarModel.getIcon(siblings[i]);
       }
+      final NavBarPanel.MyCompositeLabel item = getItem(index);
+      LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
         public boolean isSelectable(Object value) { return true; }
@@ -555,7 +558,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         }
         public void canceled() {
           super.canceled();
-          getItem(index).getLabel().setIcon(wrapIcon(NavBarModel.getIcon(object), index, Color.gray));
+          item.getLabel().setIcon(wrapIcon(NavBarModel.getIcon(object), index, Color.gray));
         }
       };
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
@@ -589,7 +592,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           });
         }
       });
-      myNodePopup.showUnderneathOf(getItem(index).getColoredComponent());
+      myNodePopup.showUnderneathOf(item.getColoredComponent());
     }
     repaint();
   }
