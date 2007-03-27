@@ -67,4 +67,9 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nc\\u0063c");
     assertEquals("b\nccc", propertiesFile.getProperties().get(0).getUnescapedValue());
   }
+
+  public void testUnescapedLineBreak() {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\\n\t  c");
+    assertEquals("bc", propertiesFile.getProperties().get(0).getUnescapedValue());
+  }
 }

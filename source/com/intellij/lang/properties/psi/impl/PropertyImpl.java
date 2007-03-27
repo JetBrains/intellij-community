@@ -135,7 +135,14 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
                     }
                 }
                 out.append((char) value);
-            } else {
+            }
+            else if (aChar == '\n') {
+              // escaped linebreak: skip whitespace in the beginning of next line
+              while(off < len && (s.charAt(off) == ' ' || s.charAt(off) == '\t')) {
+                off++;
+              }
+            }
+            else {
                 if (aChar == 't') aChar = '\t';
                 else if (aChar == 'r') aChar = '\r';
                 else if (aChar == 'n') aChar = '\n';
