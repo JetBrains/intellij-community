@@ -48,6 +48,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -124,8 +126,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
       collectHighlights(elementSet, highlights);
 
+      boolean doubleCheckUsages = false;
+      if (PsiUtil.isInJspFile(myFile)) {
+        final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
+        doubleCheckUsages = includingFiles.length > 1 || includingFiles.length == 1 && includingFiles[0] != myFile;
+      }
+
       List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
       for (PsiNamedElement unusedDcl : unusedDcls) {
+        if (doubleCheckUsages) {
+          if (ReferencesSearch.search(unusedDcl).findFirst() != null) continue;
+        }
+        
         String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
         if (dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
         String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
@@ -190,6 +202,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     boolean unusedImportEnabled = profile.isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME));
     LocalInspectionToolWrapper unusedSymbolTool = (LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME);
     final UnusedSymbolLocalInspection unusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
+
+    if (unusedImportEnabled && PsiUtil.isInJspFile(myFile)) {
+      final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
+      unusedImportEnabled = includingFiles.length == 0 || includingFiles.length == 1 && includingFiles[0] == myFile;
+    }
 
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
@@ -287,6 +304,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
+
     return false;
   }
 
