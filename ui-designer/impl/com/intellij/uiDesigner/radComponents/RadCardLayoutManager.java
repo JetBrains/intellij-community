@@ -232,6 +232,17 @@ public class RadCardLayoutManager extends RadLayoutManager {
           throw new Exception(UIDesignerBundle.message("error.card.already.exists", value));
         }
         component.setCustomLayoutConstraints(value);
+        // update constraints in CardLayout
+        final JComponent parent = component.getParent().getDelegee();
+        for(int i=0; i<parent.getComponentCount(); i++) {
+          if (parent.getComponent(i) == component.getDelegee()) {
+            parent.remove(i);
+            parent.add(component.getDelegee(), value, i);
+            CardLayout layout = (CardLayout) parent.getLayout();
+            layout.show(parent, value);
+            break;
+          }
+        }
       }
     }
 
