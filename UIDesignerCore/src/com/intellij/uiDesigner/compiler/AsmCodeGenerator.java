@@ -244,6 +244,10 @@ public class AsmCodeGenerator {
       }
     }
 
+    public String getClassName() {
+      return myClassName;
+    }
+
     public MethodVisitor visitMethod(final int access,
                                      final String name,
                                      final String desc,

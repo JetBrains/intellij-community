@@ -4,12 +4,17 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author yole
@@ -23,13 +28,13 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private static final Method myLoadButtonTextMethod = new Method(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, Type.VOID_TYPE,
                                                                  new Type[] { Type.getType(AbstractButton.class), Type.getType(String.class) } );
 
-  private boolean myNeedLoadLabelText;
-  private boolean myNeedLoadButtonText;
+  private Set myClassesRequiringLoadLabelText = new HashSet();
+  private Set myClassesRequiringLoadButtonText = new HashSet();
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
-  public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
-    myNeedLoadLabelText = false;
-    myNeedLoadButtonText = false;
+  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final ClassLoader loader) {
+    myClassesRequiringLoadLabelText.remove(name);
+    myClassesRequiringLoadButtonText.remove(name);
     try {
       Class c = loader.loadClass(AbstractButton.class.getName());
       if (c.getMethod("getDisplayedMnemonicIndex", new Class[0]) != null) {
@@ -86,11 +91,11 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
       else {
         Method method;
         if (AbstractButton.class.isAssignableFrom(componentClass)) {
-          myNeedLoadButtonText = true;
+          myClassesRequiringLoadButtonText.add(formClassName);
           method = myLoadButtonTextMethod;
         }
         else {
-          myNeedLoadLabelText = true;
+          myClassesRequiringLoadLabelText.add(formClassName);
           method = myLoadLabelTextMethod;
         }
 
@@ -124,11 +129,13 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   }
 
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
-    if (myNeedLoadLabelText) {
+    if (myClassesRequiringLoadLabelText.contains(visitor.getClassName())) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");
+      myClassesRequiringLoadLabelText.remove(visitor.getClassName());
     }
-    if (myNeedLoadButtonText) {
+    if (myClassesRequiringLoadButtonText.contains(visitor.getClassName())) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, "javax/swing/AbstractButton", "setMnemonic");
+      myClassesRequiringLoadButtonText.remove(visitor.getClassName());
     }
   }
 

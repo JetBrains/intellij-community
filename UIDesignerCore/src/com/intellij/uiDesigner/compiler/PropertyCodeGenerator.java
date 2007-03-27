@@ -1,9 +1,8 @@
 package com.intellij.uiDesigner.compiler;
 
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.ClassVisitor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import org.objectweb.asm.commons.GeneratorAdapter;
 
 /**
  * @author yole
@@ -18,7 +17,7 @@ public abstract class PropertyCodeGenerator {
     return false;
   }
 
-  public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
+  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final ClassLoader loader) {
   }
 
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
