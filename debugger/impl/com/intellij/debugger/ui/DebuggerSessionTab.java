@@ -35,10 +35,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
@@ -290,17 +287,15 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   }
 
   public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
+    final Ref<Content> content = new Ref<Content>();
+
     final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
       public boolean isActive() {
-        final Content selectedContent = myViewsContentManager.getSelectedContent();
-        if (selectedContent == null) {
-          return false;
-        }
-        return selectedContent.getComponent() == this;
+        return myViewsContentManager.isSelected(content.get());
       }
     };
     log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
-    addAdditionalTabComponent(log);
+    content.set(addLogComponent(log));
     final ContentManagerAdapter l = new ContentManagerAdapter() {
       public void selectionChanged(final ContentManagerEvent event) {
         log.activate();
@@ -488,6 +483,10 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   }
 
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
+    addLogComponent(tabComponent);
+  }
+
+  private Content addLogComponent(final AdditionalTabComponent tabComponent) {
     Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, CONSOLE_CONTENT, tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
@@ -497,6 +496,8 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
         removeAdditionalTabComponent(tabComponent);
       }
     });
+
+    return logContent;
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {

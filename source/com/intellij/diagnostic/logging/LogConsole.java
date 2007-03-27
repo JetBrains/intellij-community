@@ -56,6 +56,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   private String myTitle = null;
   private Project myProject;
   private String myPath;
+  private boolean myWasInitialized;
 
   public LogConsole(Project project, File file, boolean skipContents, String title) {
     super(new BorderLayout());
@@ -136,9 +137,11 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   }
 
   public JComponent getComponent() {
-    removeAll();
-    add(myConsole.getComponent(), BorderLayout.CENTER);
-    add(createToolbar(), BorderLayout.NORTH);
+    if (!myWasInitialized) {
+      myWasInitialized = true;
+      add(myConsole.getComponent(), BorderLayout.CENTER);
+      add(createToolbar(), BorderLayout.NORTH);
+    }
     return this;
   }
 

@@ -849,22 +849,22 @@
       <keyboard-shortcut first-keystroke="control DELETE"/>
     </action>
     <action id="Debugger.PreviousContent">
-      <keyboard-shortcut first-keystroke="alt shift LEFT" />
+      <keyboard-shortcut first-keystroke="control alt LEFT" />
     </action>
     <action id="Debugger.NextContent">
-      <keyboard-shortcut first-keystroke="alt shift RIGHT" />
+      <keyboard-shortcut first-keystroke="control alt RIGHT" />
     </action>
     <action id="Debugger.MaximizeContent">
-      <keyboard-shortcut first-keystroke="alt shift UP" />
+      <keyboard-shortcut first-keystroke="control alt UP" />
     </action>
     <action id="Debugger.RestoreContent">
-      <keyboard-shortcut first-keystroke="alt shift DOWN" />
+      <keyboard-shortcut first-keystroke="control alt DOWN" />
     </action>
     <action id="Debugger.HideContent">
-      <keyboard-shortcut first-keystroke="alt shift BACK_SPACE" />
+      <keyboard-shortcut first-keystroke="control alt BACK_SPACE" />
     </action>
     <action id="Debugger.DetachContent">
-      <keyboard-shortcut first-keystroke="alt shift ENTER" />
+      <keyboard-shortcut first-keystroke="control alt ENTER" />
     </action>
   </keymap>
 

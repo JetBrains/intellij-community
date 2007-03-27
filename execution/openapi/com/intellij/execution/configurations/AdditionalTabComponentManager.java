@@ -23,6 +23,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.ui.content.Content;
 
 public interface AdditionalTabComponentManager {
   void addAdditionalTabComponent(AdditionalTabComponent component);
