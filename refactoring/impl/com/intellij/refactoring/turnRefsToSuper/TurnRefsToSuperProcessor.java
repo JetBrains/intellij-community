@@ -5,20 +5,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Collection;
+import java.util.Collections;
 
 public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
@@ -42,7 +43,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
-  void setClasses(final PsiClass aClass, final PsiClass aSuper) {
+  private void setClasses(final PsiClass aClass, final PsiClass aSuper) {
     myClass = aClass;
     mySuper = aSuper;
   }
@@ -116,5 +117,10 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
   public boolean isReplaceInstanceOf() {
     return myReplaceInstanceOf;
+  }
+
+  @NotNull
+  protected Collection<? extends PsiElement> getElementsToWrite(final UsageViewDescriptor descriptor) {
+    return Collections.emptyList(); // neither myClass nor mySuper are subject to change, it's just references that are going to change
   }
 }

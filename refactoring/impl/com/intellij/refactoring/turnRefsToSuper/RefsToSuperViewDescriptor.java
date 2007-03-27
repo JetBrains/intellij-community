@@ -30,7 +30,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
                                             myClass.getName(), mySuper.getName()));
     buffer.append(" ");

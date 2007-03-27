@@ -4,6 +4,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
+import org.jetbrains.annotations.NonNls;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {
 
@@ -103,7 +104,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("A", "B", false);
   }
 
-  private void doTest(final String className, final String superClassName, final boolean replaceInstanceOf) throws Exception {
+  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
@@ -115,7 +116,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     return "/refactoring/turnRefsToSuper/";
   }
 
-  private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) throws Exception {
+  private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
     final PsiClass aClass = myPsiManager.findClass(className);
     assertNotNull("Class " + className + " not found", aClass);
     PsiClass superClass = myPsiManager.findClass(superClassName);

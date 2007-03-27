@@ -1,6 +1,5 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -19,6 +18,7 @@ import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -144,7 +144,8 @@ public abstract class BaseRefactoringProcessor {
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
-    if (!myIsPreviewUsages && !ensureFilesWritable(usages, descriptor)) return;
+
+    if (!ensureElementsWritable(usages, descriptor)) return;
 
     if (isPreviewUsages(usages)) {
       final PsiElement[] elements = descriptor.getElements();
@@ -176,14 +177,22 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private static boolean ensureFilesWritable(UsageInfo[] usages, final UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = new THashSet<PsiElement>();
-    for (UsageInfo usage : usages) {
-      PsiElement element = usage.getElement();
-      if (element != null) elements.add(element);
+  private boolean ensureElementsWritable(final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
+    if (!myIsPreviewUsages) {
+      Set<PsiElement> elements = new THashSet<PsiElement>();
+      for (UsageInfo usage : usages) {
+        PsiElement element = usage.getElement();
+        if (element != null) elements.add(element);
+      }
+      elements.addAll(getElementsToWrite(descriptor));
+      if (!ensureFilesWritable(myProject, elements)) return false;
     }
-    elements.addAll(Arrays.asList(descriptor.getElements()));
-    return CodeInsightUtil.preparePsiElementsForWrite(elements);
+    return true;
+  }
+
+  private static boolean ensureFilesWritable(final Project project, Collection<? extends PsiElement> elements) {
+    PsiElement[] psiElements = elements.toArray(new PsiElement[elements.size()]);
+    return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
   }
 
   void execute(final UsageInfo[] usages) {
@@ -315,7 +324,8 @@ public abstract class BaseRefactoringProcessor {
       int count = usages.length;
       if (count > 0) {
         WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
-      } else {
+      }
+      else {
         if (!isPreviewUsages(usages)) {
           WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
         }
@@ -400,10 +410,13 @@ public abstract class BaseRefactoringProcessor {
     prepareTestRun();
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(findUsages());
     preprocessUsages(refUsages);
-    RefactoringListenerManagerImpl listenerManager =
-        (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
-    myTransaction = listenerManager.startTransaction();
+
     final UsageInfo[] usages = refUsages.get();
+    UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
+    if (!ensureElementsWritable(usages, descriptor)) return;
+
+    RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
+    myTransaction = listenerManager.startTransaction();
     Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
     performRefactoring(usages);
     removeRedundantImports(touchedJavaFiles);
@@ -422,4 +435,8 @@ public abstract class BaseRefactoringProcessor {
     return true;
   }
 
+  @NotNull
+  protected Collection<? extends PsiElement> getElementsToWrite(UsageViewDescriptor descriptor) {
+    return Arrays.asList(descriptor.getElements());
+  }
 }
