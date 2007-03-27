@@ -209,6 +209,11 @@ class MoveDropTargetListener implements DropTargetListener {
       }
       return psiElements.toArray(new PsiElement[psiElements.size()]);
     }
+
+    protected boolean fromSameProject(final PsiElement[] sourceElements, final PsiElement targetElement) {
+      return targetElement != null && sourceElements.length > 0 && sourceElements[0] != null &&
+             targetElement.getProject() == sourceElements[0].getProject();
+    }
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {
@@ -217,7 +222,8 @@ class MoveDropTargetListener implements DropTargetListener {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
       return sourceElements.length == 0 ||
-             ((targetNode == null || targetElement != null) && MoveHandler.canMove(sourceElements, targetElement));
+             ((targetNode == null || targetElement != null) &&
+              fromSameProject(sourceElements, targetElement) && MoveHandler.canMove(sourceElements, targetElement));
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
@@ -254,7 +260,8 @@ class MoveDropTargetListener implements DropTargetListener {
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
-      return ( targetElement instanceof PsiPackage || targetElement instanceof PsiDirectory ) && CopyHandler.canCopy(sourceElements);
+      return ( targetElement instanceof PsiPackage || targetElement instanceof PsiDirectory ) &&
+             fromSameProject(sourceElements, targetElement) && CopyHandler.canCopy(sourceElements);
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
