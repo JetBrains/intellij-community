@@ -49,7 +49,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private volatile PsiClass[] myCachedClasses = null;
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
-  private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
+  @NonNls private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
   private LanguageLevel myLanguageLevel;
 
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {

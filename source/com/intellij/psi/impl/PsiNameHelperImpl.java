@@ -6,7 +6,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 
@@ -14,6 +13,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
   private final PsiManager myManager;
   private Lexer myLexer;
   private LanguageLevel myLastLanguageLevel = LanguageLevel.JDK_1_3;
+  private final Object LOCK = new Object();
 
   public PsiNameHelperImpl(PsiManager manager) {
     myManager = manager;
@@ -32,7 +32,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (text == null) return false;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
       myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
@@ -44,7 +44,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
   public boolean isIdentifier(String text, LanguageLevel languageLevel) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       updateLexer(languageLevel);
       myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
@@ -56,7 +56,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
   public boolean isKeyword(String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
       myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() == null || !JavaTokenType.KEYWORD_BIT_SET.contains(myLexer.getTokenType())) return false;

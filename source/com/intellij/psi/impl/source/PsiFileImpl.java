@@ -4,14 +4,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
@@ -20,6 +18,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +39,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   private IElementType myElementType;
   protected IElementType myContentElementType;
 
-  public PsiFile myOriginalFile = null;
+  protected PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
   private FileViewProvider myViewProvider;
 
@@ -84,8 +83,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public long getRepositoryId() {
+    long id = super.getRepositoryId();
+    if (id != -2) return id;
     synchronized (PsiLock.LOCK) {
-      long id = super.getRepositoryId();
+      id = super.getRepositoryId();
       if (id == -2) {
         RepositoryManager repositoryManager = getRepositoryManager();
         if (repositoryManager != null) {
@@ -200,15 +201,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return treeElement;
   }
 
-  public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
-    return null;
-  }
-
-  public void setIsValidExplicitly(boolean b) {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
-    myExplicitlySetAsValid = b;
-  }
-
   public void unloadContent() {
     LOG.assertTrue(getTreeElement() != null);
     clearCaches();
@@ -302,11 +294,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
-  }
-
-  @Nullable
-  public PsiDirectory getParentDirectory() {
-    return getContainingDirectory();
   }
 
   public PsiFile getContainingFile() {

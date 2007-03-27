@@ -191,7 +191,7 @@ public interface PsiJavaParserFacade {
   PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   @NotNull
-  PsiFile createFileFromText(@NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text);
+  PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text);
 
   @NotNull
   PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,

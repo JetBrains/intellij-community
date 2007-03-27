@@ -19,12 +19,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +39,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor");
 
   protected final Project myProject;
-  protected final Module myModule;
+  private final Module myModule;
 
   private PsiDirectory myDirectory;
   private PsiFile myFile;
@@ -106,6 +108,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return list.toArray(new PsiFile[list.size()]);
   }
 
+  @NotNull
   protected abstract Runnable preprocessFile(PsiFile file) throws IncorrectOperationException;
 
   public void run() {
@@ -128,11 +131,9 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private void runProcessFile(final PsiFile file) {
     if (!file.isWritable()){
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(PsiDocumentManager.getInstance(myProject).getDocument(file),
-                                                                     myProject)) {
-      Messages.showMessageDialog(
-        myProject,
-        CodeInsightBundle.message("error.dialog.readonly.file.message"),
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, myProject)) {
+        Messages.showMessageDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.file.message"),
         CodeInsightBundle.message("error.dialog.readonly.file.title"),
         Messages.getErrorIcon()
       );

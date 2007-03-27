@@ -8,6 +8,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
@@ -33,6 +34,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, COMMAND_NAME, postRunnable);
   }
 
+  @NotNull
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
     final ImportOptimizer optimizer = file.getLanguage().getImportOptimizer();
     return optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();

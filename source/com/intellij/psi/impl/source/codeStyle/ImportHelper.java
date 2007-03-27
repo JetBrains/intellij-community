@@ -35,7 +35,7 @@ public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
 
   private CodeStyleSettings mySettings;
-  private static final @NonNls String JAVA_LANG_PACKAGE = "java.lang";
+  @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public ImportHelper(CodeStyleSettings settings){
     mySettings = settings;
@@ -90,15 +90,14 @@ public class ImportHelper{
     }
 
     final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
-    class MyVisitorProcedure implements TObjectIntProcedure {
-      boolean myIsVisitingPackages;
+    class MyVisitorProcedure implements TObjectIntProcedure<String> {
+      private final boolean myIsVisitingPackages;
 
       public MyVisitorProcedure(boolean isVisitingPackages) {
         myIsVisitingPackages = isVisitingPackages;
       }
 
-      public boolean execute(Object a, int count) {
-        String packageOrClassName = (String)a;
+      public boolean execute(final String packageOrClassName, final int count) {
         if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages)){
           classesOrPackagesToImportOnDemand.add(packageOrClassName);
         }
@@ -195,7 +194,7 @@ public class ImportHelper{
                                             final Set<String> packagesOrClassesToImportOnDemand,
                                             final Set<String> namesToUseSingle, Set<String> namesToImportStaticly) {
     final Set<String> importedPackagesOrClasses = new THashSet<String>();
-    final @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuilder buffer = new StringBuilder();
     for (String name : names) {
       String packageOrClassName = getPackageOrClassName(name);
       final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
@@ -236,7 +235,7 @@ public class ImportHelper{
 
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
     if (conflictSingleRef != null){
-      return conflictSingleRef.getQualifiedName().equals(className);
+      return className.equals(conflictSingleRef.getQualifiedName());
     }
 
     PsiClass curRefClass = helper.resolveReferencedClass(shortName, file);
@@ -436,10 +435,10 @@ public class ImportHelper{
         }
 
         if (lastStrict != null){
-          return (SourceTreeToPsiMap.psiElementToTree(lastStrict)).getTreeNext();
+          return SourceTreeToPsiMap.psiElementToTree(lastStrict).getTreeNext();
         }
         if (last != null){
-          return (SourceTreeToPsiMap.psiElementToTree(last)).getTreeNext();
+          return SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
         }
       }
       return null;
@@ -509,9 +508,9 @@ public class ImportHelper{
   }
 
   public int findEntryIndex(PsiImportStatementBase statement){
-    String packageName;
     PsiJavaCodeReferenceElement ref = statement.getImportReference();
     if (ref == null) return -1;
+    String packageName;
     if (statement.isOnDemand()){
       packageName = ref.getCanonicalText();
     }
@@ -562,10 +561,10 @@ public class ImportHelper{
       for(final PsiReference reference : child.getReferences()){
         if (!(reference instanceof PsiJavaReference)) continue;
         final PsiJavaReference javaReference = (PsiJavaReference)reference;
-        PsiJavaCodeReferenceElement referenceElement = null;
         if (javaReference instanceof GenericReference){
           if(((GenericReference)javaReference).getContextReference() != null) continue;
         }
+        PsiJavaCodeReferenceElement referenceElement = null;
         if (reference instanceof PsiJavaCodeReferenceElement) {
           referenceElement = (PsiJavaCodeReferenceElement)child;
           if (referenceElement.getQualifier() != null) {

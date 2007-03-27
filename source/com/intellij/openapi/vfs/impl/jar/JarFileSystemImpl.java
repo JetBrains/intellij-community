@@ -100,8 +100,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   boolean isValid(JarFileInfo info) {
+    String path = info.getFile().getPath();
     synchronized (LOCK) {
-      String path = info.getFile().getPath();
       JarFileInfo info1 = myPathToFileInfoMap.get(path);
       return info1 == info;
     }

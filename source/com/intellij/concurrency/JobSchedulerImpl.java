@@ -15,15 +15,15 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @NonNls
 public class JobSchedulerImpl extends JobScheduler {
-  public final static int CORES_COUNT = Runtime.getRuntime().availableProcessors();
+  public static final int CORES_COUNT = Runtime.getRuntime().availableProcessors();
   @NonNls private static final String THREADS_NAME = "JobScheduler pool";
-  private final static ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
+  private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     public Thread newThread(final Runnable r) {
       return new Thread(r, THREADS_NAME);
     }
   };
 
-  private final static Lock ourSuspensionLock = new ReentrantLock();
+  private static final Lock ourSuspensionLock = new ReentrantLock();
 
   private static final PriorityBlockingQueue<Runnable> ourQueue = new PriorityBlockingQueue<Runnable>() {
     public Runnable poll() {

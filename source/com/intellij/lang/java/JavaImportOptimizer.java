@@ -15,6 +15,7 @@ import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -22,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 public class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
 
+  @NotNull
   public Runnable processFile(final PsiFile file) {
     if (file instanceof PsiJavaFile) {
       Project project = file.getProject();

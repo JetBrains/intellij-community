@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeProcessor");
@@ -38,6 +39,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, COMMAND_NAME, postRunnable);
   }
 
+  @NotNull
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
     return new Runnable() {
       public void run() {

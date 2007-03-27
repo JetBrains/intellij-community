@@ -114,11 +114,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
-    return getContainingDirectory();
-  }
-
   public PsiFile getContainingFile() {
     if (!isValid()) throw new PsiInvalidElementAccessException(this);
     return this;
