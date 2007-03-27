@@ -180,8 +180,9 @@ public class HighlightInfo {
                        HighlightSeverity severity,
                        boolean afterEndOfLine,
                        Boolean needsUpdateOnTyping) {
-    LOG.assertTrue(startOffset >= 0);
-    LOG.assertTrue(startOffset <= endOffset);
+    if (startOffset < 0 || startOffset > endOffset) {
+      LOG.error("Incorrect highlightInfo bounds. description="+description+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
+    }
     forcedTextAttributes = textAttributes;
     this.type = type;
     this.startOffset = startOffset;
@@ -264,6 +265,7 @@ public class HighlightInfo {
       return myDisplayName;
     }
 
+    @NonNls
     public String toString() {
       return "descriptor: " + getAction().getText();
     }
