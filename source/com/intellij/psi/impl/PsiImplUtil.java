@@ -1,5 +1,6 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -8,9 +9,9 @@ import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -19,7 +20,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,44 +185,6 @@ public class PsiImplUtil {
     return null;
   }
 
-public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final PsiExpression expression) {
-  if (type instanceof PsiCapturedWildcardType) {
-    return normalizeWildcardTypeByPosition(((PsiCapturedWildcardType)type).getWildcard(), expression);
-  }
-  if (type instanceof PsiWildcardType) {
-    final PsiWildcardType wildcardType = (PsiWildcardType)type;
-    PsiExpression toplevel = expression;
-    while(toplevel.getParent() instanceof PsiArrayAccessExpression &&
-           ((PsiArrayAccessExpression)toplevel.getParent()).getArrayExpression() == toplevel) {
-      toplevel = (PsiExpression)toplevel.getParent();
-    }
-    if (PsiUtil.isAccessedForWriting(toplevel)) {
-      return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType);
-    }
-    else {
-      if (wildcardType.isExtends()) {
-        return wildcardType.getBound();
-      }
-      else {
-        return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
-      }
-    }
-  }
-  else if (type instanceof PsiArrayType) {
-    final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    final PsiType normalizedComponentType = normalizeWildcardTypeByPosition(componentType, expression);
-    if (normalizedComponentType != componentType) {
-      return normalizedComponentType.createArrayType();
-    }
-    else {
-      return type;
-    }
-  }
-  else {
-    return type;
-  }
-}
-
   @Nullable
   public static ASTNode findDocComment(final CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
@@ -238,5 +200,45 @@ public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final 
     else {
       return null;
     }
+  }
+
+  public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final PsiExpression expression) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return normalizeWildcardTypeByPosition(((PsiCapturedWildcardType)type).getWildcard(), expression);
+    }
+
+    PsiExpression toplevel = expression;
+    while (toplevel.getParent() instanceof PsiArrayAccessExpression &&
+           ((PsiArrayAccessExpression)toplevel.getParent()).getArrayExpression() == toplevel) {
+      toplevel = (PsiExpression)toplevel.getParent();
+    }
+    
+    if (type instanceof PsiWildcardType) {
+      final PsiWildcardType wildcardType = (PsiWildcardType)type;
+
+      if (PsiUtil.isAccessedForWriting(toplevel)) {
+        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType);
+      }
+      else {
+        if (wildcardType.isExtends()) {
+          return wildcardType.getBound();
+        }
+        else {
+          return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+        }
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      final PsiType componentType = ((PsiArrayType)type).getComponentType();
+      final PsiType normalizedComponentType = normalizeWildcardTypeByPosition(componentType, expression);
+      if (normalizedComponentType != componentType) {
+        return normalizedComponentType.createArrayType();
+      }
+    }
+    else if (type instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
+      return PsiUtil.captureToplevelWildcards(type);
+    }
+
+    return type;
   }
 }

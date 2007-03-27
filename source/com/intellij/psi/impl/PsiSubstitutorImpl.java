@@ -85,17 +85,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
           return null;
         }
         else if (newBound instanceof PsiWildcardType) {
-          final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
-          if (newBoundBound != null) {
-            return PsiWildcardType.changeBound(wildcardType, newBoundBound);
+          if (((PsiWildcardType)newBound).isExtends() == wildcardType.isExtends()) {
+            final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
+            if (newBoundBound != null) {
+              return PsiWildcardType.changeBound(wildcardType, newBoundBound);
+            }
           }
-          else {
-            return PsiWildcardType.createUnbounded(wildcardType.getManager());
-          }
+          return PsiWildcardType.createUnbounded(wildcardType.getManager());
         }
-        else {
-          return PsiWildcardType.changeBound(wildcardType, newBound);
-        }
+
+        return PsiWildcardType.changeBound(wildcardType, newBound);
       }
     }
 
@@ -210,6 +209,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+    if (substituted instanceof PsiCapturedWildcardType) {
+      substituted = ((PsiCapturedWildcardType)substituted).getWildcard();
+    }
+
     if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
       PsiType originalBound = ((PsiWildcardType)substituted).getBound();
       PsiManager manager = typeParameter.getManager();

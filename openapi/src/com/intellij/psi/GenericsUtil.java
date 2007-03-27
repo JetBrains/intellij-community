@@ -206,6 +206,7 @@ public class GenericsUtil {
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return true;
+      substituted = PsiUtil.captureToplevelWildcards(substituted);
 
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {

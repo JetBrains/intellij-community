@@ -37,6 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Map;
 
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -1004,6 +1006,36 @@ public final class PsiUtil {
     }
 
     return containingFile.getVirtualFile();
+  }
+
+  public static PsiType captureToplevelWildcards(final PsiType type) {
+    if (type instanceof PsiClassType) {
+      Map<PsiTypeParameter, PsiType> substitutionMap = null;
+      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      final PsiClass aClass = result.getElement();
+      if (aClass != null) {
+        Iterator<PsiTypeParameter> iterator = typeParametersIterator(aClass);
+        final PsiSubstitutor substitutor = result.getSubstitutor();
+        while(iterator.hasNext()) {
+          final PsiTypeParameter typeParameter = iterator.next();
+          final PsiType substituted = substitutor.substitute(typeParameter);
+          if (substituted instanceof PsiWildcardType) {
+            if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+            substitutionMap.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted));
+          }
+        }
+
+        if (substitutionMap != null) {
+          final PsiElementFactory factory = aClass.getManager().getElementFactory();
+          final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
+          return factory.createType(aClass, newSubstitutor);
+        }
+      }
+    } else if (type instanceof PsiArrayType) {
+      return captureToplevelWildcards(((PsiArrayType)type).getComponentType()).createArrayType();
+    }
+
+    return type;
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {

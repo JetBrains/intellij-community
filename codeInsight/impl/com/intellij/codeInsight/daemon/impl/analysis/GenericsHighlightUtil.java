@@ -48,6 +48,7 @@ public class GenericsHighlightUtil {
     for (PsiTypeParameter typeParameter : typeParameters) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return null;
+      substituted = PsiUtil.captureToplevelWildcards(substituted);
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substituteAndCapture(type);
