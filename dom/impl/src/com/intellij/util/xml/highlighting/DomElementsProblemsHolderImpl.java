@@ -82,6 +82,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   public final void addProblem(final DomElementProblemDescriptor descriptor, final Class<? extends DomElementsInspection> inspection) {
     ContainerUtil.getOrCreate(ContainerUtil.getOrCreate(myCachedErrors, descriptor.getDomElement(), CONCURRENT_HASH_MAP_FACTORY), inspection,
                               SMART_LIST_FACTORY).add(descriptor);
+    myCachedChildrenErrors.clear();
   }
 
   @NotNull

@@ -15,6 +15,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,14 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     super(project, file);
     myComponentFactory = component;
     myName = name;
+    
+    DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      public void highlightingFinished(@NotNull DomFileElement element) {
+        if (isInitialised() && getComponent().isShowing() && element.isValid()) {
+          updateHighlighting();
+        }
+      }
+    }, this);
   }
 
   public void updateHighlighting() {

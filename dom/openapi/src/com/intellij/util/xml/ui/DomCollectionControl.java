@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomCollectionControl<T extends DomElement> extends DomUIControl {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
   private DomTableView myCollectionPanel;
 
@@ -338,6 +338,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
       component = (JComponent)parent;
     }
     return (DomEditorManager)component;
+  }
+
+  public void updateHighlighting() {
+    if (myCollectionPanel != null) {
+      myCollectionPanel.revalidate();
+      myCollectionPanel.repaint();
+    }
   }
 
   public class ControlAddAction extends DefaultAddAction<T> {

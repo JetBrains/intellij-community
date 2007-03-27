@@ -49,15 +49,21 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myCellValueDomElement);
     final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(myCellValueDomElement);
-    final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING));
+    final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
     warningProblems.removeAll(errorProblems);
 
     final boolean hasErrors = errorProblems.size() > 0;
     if (hasErrors) {
       component.setForeground(Color.RED);
+      if (component instanceof JComponent) {
+        ((JComponent)component).setToolTipText(TooltipUtils.getTooltipText(errorProblems));
+      }
     }
     else {
       component.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+      if (component instanceof JComponent) {
+        ((JComponent)component).setToolTipText(null);
+      }
     }
 
     // highlight empty cell with errors
@@ -72,32 +78,35 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final List<DomElementProblemDescriptor> errorDescriptors =
       annotationsManager.getCachedProblemHolder(myRowDomElement).getProblems(myRowDomElement, true, true);
 
-    if (table.getModel().getColumnCount() - 1 == column && errorDescriptors.size() > 0) {
-      final JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(component, BorderLayout.CENTER);
+    if (table.getModel().getColumnCount() - 1 == column) {
+      if (errorDescriptors.size() > 0) {
+        final JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(component, BorderLayout.CENTER);
 
-      wrapper.setBackground(component.getBackground());
+        wrapper.setBackground(component.getBackground());
 
-      final JLabel errorLabel = new JLabel(getErrorIcon());
+        final JLabel errorLabel = new JLabel(getErrorIcon());
 
-      wrapper.setToolTipText(TooltipUtils.getTooltipText(errorDescriptors));
+        wrapper.setToolTipText(TooltipUtils.getTooltipText(errorDescriptors));
 
-      wrapper.add(errorLabel, BorderLayout.EAST);
+        wrapper.add(errorLabel, BorderLayout.EAST);
 
-      if (component instanceof JComponent) {
-        wrapper.setBorder(((JComponent)component).getBorder());
-        ((JComponent)component).setBorder(BorderFactory.createEmptyBorder());
+        if (component instanceof JComponent) {
+          final JComponent jComponent = (JComponent)component;
+          wrapper.setBorder(jComponent.getBorder());
+          jComponent.setBorder(BorderFactory.createEmptyBorder());
+          jComponent.setToolTipText(TooltipUtils.getTooltipText(errorDescriptors));
+        }
+
+        return wrapper;
+      } else {
+        if (component instanceof JComponent) {
+          ((JComponent)component).setToolTipText(null);
+        }
       }
-
-
-      return wrapper;
     }
-    else {
-      if (component instanceof JComponent) {
-        ((JComponent)component).setToolTipText(errorDescriptors.size() > 0 ? TooltipUtils.getTooltipText(errorDescriptors) : null);
-      }
-      return component;
-    }
+
+    return component;
   }
 
   private static Icon getErrorIcon() {
