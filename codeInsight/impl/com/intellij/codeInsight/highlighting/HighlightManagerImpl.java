@@ -160,7 +160,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       Project project = element.getProject();
       // each reference can reside in its own injected editor
       Editor textEditor = InjectedLanguageUtil.openEditorFor(containingFile, project);
-      addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
+      if (textEditor != null) {
+        addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
+      }
     }
     editor.getCaretModel().moveToOffset(oldOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

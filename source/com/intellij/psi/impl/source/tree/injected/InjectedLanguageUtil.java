@@ -497,6 +497,9 @@ public class InjectedLanguageUtil {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     // may return editor injected in current selection in the host editor, not for the file passed as argument
     VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
     if (virtualFile instanceof VirtualFileDelegate) {
       virtualFile = ((VirtualFileDelegate)virtualFile).getDelegate();
     }
