@@ -205,7 +205,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         }
 
         if (outputDirectory != null && !"".equals(outputDirectory)) {
-            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, '\"' + outputDirectory + '\"');
+            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, outputDirectory);
         }
 
         // Always include the source paths - just makes things easier :)
@@ -217,7 +217,6 @@ public class TestNGRunnableState extends JavaCommandLineState
 
         if (sources.length > 0) {
             StringBuffer sb = new StringBuffer();
-            sb.append('\"');
 
             for (int i = 0; i < sources.length; i++) {
                 VirtualFile source = sources[i];
@@ -227,8 +226,7 @@ public class TestNGRunnableState extends JavaCommandLineState
                 }
 
             }
-            
-            sb.append('\"');
+
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
         }
 
