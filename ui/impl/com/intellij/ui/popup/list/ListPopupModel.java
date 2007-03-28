@@ -46,14 +46,14 @@ class ListPopupModel extends AbstractListModel {
   private void addToFiltered(Object each) {
     myFilteredList.add(each);
     String filterString = myFilter.getSpeedSearch().getFilter().toUpperCase();
-    String candidateString = each.toString().toUpperCase();
+    String candidateString = myStep.getTextFor(each).toUpperCase();
     int index = myFilteredList.size() - 1;
 
-    if (filterString.equals(candidateString)) {
+    if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
       myFullMatchIndex = index;
     }
 
-    if (candidateString.startsWith(filterString)) {
+    if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
       myStartsWithIndex = index;
     }
   }
