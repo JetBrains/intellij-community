@@ -844,7 +844,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
             if(!isIndexVarOnlyUsedAsListIndex(variable, indexVariable, body)) {
                 return false;
             }
-            return !VariableAccessUtils.variableIsAssigned(variable, body);
+            return body != null &&
+                    !VariableAccessUtils.variableIsAssigned(variable, body);
         } else if(resolved instanceof PsiMethod) {
             return isIndexVarOnlyUsedAsListIndex(null, indexVariable, body);
         } else {
