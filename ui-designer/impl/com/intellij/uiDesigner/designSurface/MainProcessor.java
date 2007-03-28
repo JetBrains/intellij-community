@@ -54,7 +54,7 @@ public final class MainProcessor extends EventProcessor{
     if (myCurrentProcessor != null) {
       myCurrentProcessor.processKeyEvent(e);
     }
-    else if (e.getID() == KeyEvent.KEY_PRESSED && Character.isLetterOrDigit(e.getKeyChar()) &&
+    else if (e.getID() == KeyEvent.KEY_TYPED && Character.isLetterOrDigit(e.getKeyChar()) &&
       (e.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)) == 0) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
       if (selection.size() > 0) {

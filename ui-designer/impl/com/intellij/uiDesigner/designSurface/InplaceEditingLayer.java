@@ -241,6 +241,7 @@ public final class InplaceEditingLayer extends JComponent{
 
       myInplaceComponent = null;
       myInplaceEditorComponent = null;
+      myInplaceComponent = null;
 
       // 3. Let AWT work
       disableEvents(MouseEvent.MOUSE_EVENT_MASK);
@@ -271,6 +272,7 @@ public final class InplaceEditingLayer extends JComponent{
 
       myInplaceComponent = null;
       myInplaceEditorComponent = null;
+      myInplaceComponent = null;
 
       // 2. Let AWT work
       disableEvents(MouseEvent.MOUSE_EVENT_MASK);
