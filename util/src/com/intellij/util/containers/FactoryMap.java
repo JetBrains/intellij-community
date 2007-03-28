@@ -16,9 +16,11 @@
 package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -31,8 +33,10 @@ public abstract class FactoryMap<T,V> {
     return new THashMap<T, V>();
   }
 
+  @Nullable
   protected abstract V create(T key);
   
+  @Nullable
   public final V get(T key) {
     V v = myMap.get(getKey(key));
     if (v == null) {
