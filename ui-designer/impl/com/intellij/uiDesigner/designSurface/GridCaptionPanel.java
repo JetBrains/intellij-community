@@ -87,6 +87,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public RadContainer getSelectedContainer() {
+    // when the selected component changes, and we have focus, PropertyInspector asks us about our container and selection.
+    // PropertyInspector's selection changed listener can be called before our own listener, so we need to update ourselves
+    // so that we don't return stale and invalid data.
+    checkSelectionChanged();
     return mySelectedContainer;
   }
 
@@ -217,12 +221,17 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public void selectedComponentChanged(GuiEditor source) {
+    checkSelectionChanged();
+    repaint();
+  }
+
+  private void checkSelectionChanged() {
     RadContainer container = getSelectedGridContainer();
     if (container != mySelectedContainer) {
       mySelectedContainer = container;
       mySelectionModel.clearSelection();
+      repaint();
     }
-    repaint();
   }
 
   @Nullable public Object getData(String dataId) {
