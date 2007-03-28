@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,18 @@ public class InitializationUtils{
 
     private InitializationUtils(){
         super();
+    }
+
+    public static boolean methodAssignsVariableOrFails(
+            @Nullable PsiMethod method, @NotNull PsiVariable variable) {
+        if (method == null) {
+            return false;
+        }
+        final PsiCodeBlock body = method.getBody();
+        if (body == null) {
+            return false;
+        }
+        return blockAssignsVariableOrFails(body, variable);
     }
 
     public static boolean blockAssignsVariableOrFails(

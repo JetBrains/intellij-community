@@ -94,8 +94,8 @@ public class ReadObjectInitializationInspection extends BaseInspection {
                 field.getInitializer() != null) {
                 return true;
             }
-            final PsiCodeBlock body = method.getBody();
-            return InitializationUtils.blockAssignsVariableOrFails(body, field);
+            return InitializationUtils.methodAssignsVariableOrFails(method,
+                    field);
         }
     }
 }

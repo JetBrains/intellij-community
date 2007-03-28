@@ -115,9 +115,8 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
                 return;
             }
             for(final PsiMethod constructor : constructors){
-                final PsiCodeBlock body = constructor.getBody();
-                if(!InitializationUtils.blockAssignsVariableOrFails(body,
-                        field)) {
+                if(!InitializationUtils.methodAssignsVariableOrFails(
+                        constructor, field)) {
                     registerFieldError(field, Boolean.FALSE);
                     return;
                 }
@@ -127,11 +126,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
         private void checkInitializationInSetup(PsiField field,
                                                 PsiClass aClass) {
             final PsiMethod setupMethod = getSetupMethod(aClass);
-            if (setupMethod == null) {
-                return;
-            }
-            final PsiCodeBlock body = setupMethod.getBody();
-            if (InitializationUtils.blockAssignsVariableOrFails(body,
+            if (InitializationUtils.methodAssignsVariableOrFails(setupMethod,
                     field)) {
                 return;
             }
