@@ -293,10 +293,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   public void setValueAt(final Object aValue, final int row, final int column) {
+    final Property property = myProperties.get(row);
     super.setValueAt(aValue, row, column);
     // We need to repaint whole inspector because change of one property
     // might causes change of another property.
-    if (myProperties.get(row).needRefreshPropertyList()) {
+    if (property.needRefreshPropertyList()) {
       synchWithTree(true);
     }
     repaint();
