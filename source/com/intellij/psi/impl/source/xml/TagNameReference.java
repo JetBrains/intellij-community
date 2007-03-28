@@ -45,8 +45,15 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     myNameElement = nameElement;
   }
 
-  public XmlTag getElement() {
-    return PsiTreeUtil.getParentOfType(myNameElement.getPsi(), XmlTag.class);
+  public PsiElement getElement() {
+    final XmlTag tag = PsiTreeUtil.getParentOfType(myNameElement.getPsi(), XmlTag.class);
+    return tag != null ? tag:myNameElement.getPsi();
+  }
+
+  private XmlTag getTagElement() {
+    final PsiElement element = getElement();
+    if(element == myNameElement.getPsi()) return null;
+    return (XmlTag)element;
   }
 
   public TextRange getRangeInElement() {
@@ -59,7 +66,9 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
       return new TextRange(parentOffset, parentOffset + nameElement.getTextLength());
     } else {
-      final XmlTag element = getElement();
+      final PsiElement element = getElement();
+      if (element == myNameElement) return new TextRange(0,myNameElement.getTextLength());
+
       final int elementLength = element.getTextLength();
       int diffFromEnd = 0;
 
@@ -77,8 +86,8 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public PsiElement resolve() {
-    final XmlTag tag = getElement();
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    final XmlTag tag = getTagElement();
+    final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor():null;
 
     if (descriptor != null){
       return descriptor instanceof AnyXmlElementDescriptor ? tag : descriptor.getDeclaration();
@@ -91,7 +100,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final XmlTag element = getElement();
+    final XmlTag element = getTagElement();
     if (element == null) return null;
 
     if ((newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
@@ -129,7 +138,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){
-        getElement().setName(metaData.getName(getElement()));
+        getTagElement().setName(metaData.getName(getElement()));
       }
     } else if (PsiUtil.isInJspFile(element) && element instanceof PsiFile) {
       // implicit reference to tag file
@@ -145,7 +154,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
   public Object[] getVariants(){
     final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
-    final XmlTag element = getElement();
+    final PsiElement element = getElement();
     if (element instanceof JspDirective) return EMPTY_ARRAY;
 
     if(!myStartTagFlag){
@@ -174,10 +183,19 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
           }
         }
       }
-      if(fromJspTree == null || fromJspTree.getName().length() == 0) return new Object[]{element.getName()};
-      return new Object[]{element.getName(), fromJspTree.getName()};
+
+      final boolean jspTreeSuggestionIsNotValid = fromJspTree == null || fromJspTree.getName().length() == 0;
+
+      if (element instanceof XmlTag) {
+        final XmlTag tag = (XmlTag)element;
+
+        if(jspTreeSuggestionIsNotValid) return new Object[]{tag.getName()};
+        return new Object[]{tag.getName(), fromJspTree.getName()};
+      } else {
+        return jspTreeSuggestionIsNotValid ? EMPTY_ARRAY : new Object[] { fromJspTree.getName() };
+      }
     }
-    return getTagNameVariants(element, variants);
+    return getTagNameVariants((XmlTag)element, variants);
   }
 
   public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
