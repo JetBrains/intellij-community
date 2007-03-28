@@ -646,15 +646,45 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
     FormLayout formLayout = (FormLayout) container.getLayout();
     final ConstantSize updatedSize = getUpdatedSize(container, isRow, cell, newSize);
+    FormSpec newSpec;
     if (isRow) {
       RowSpec rowSpec = formLayout.getRowSpec(cell+1);
-      RowSpec newSpec = new RowSpec(rowSpec.getDefaultAlignment(), updatedSize, rowSpec.getResizeWeight());
-      formLayout.setRowSpec(cell+1, newSpec);
+      newSpec = new RowSpec(rowSpec.getDefaultAlignment(), updatedSize, rowSpec.getResizeWeight());
     }
     else {
       ColumnSpec colSpec = formLayout.getColumnSpec(cell+1);
-      ColumnSpec newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), updatedSize, colSpec.getResizeWeight());
-      formLayout.setColumnSpec(cell+1, newSpec);
+      newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), updatedSize, colSpec.getResizeWeight());
+    }
+    setSpec(formLayout, newSpec, cell+1, isRow);
+    resizeSameGroupCells(cell, formLayout, newSpec, isRow);
+  }
+
+  // Explicitly resize all cells in the group to desired size to make sure that the resize operation is effective (IDEADEV-10202) 
+  private static void resizeSameGroupCells(final int cell, final FormLayout formLayout, final FormSpec newSpec, final boolean isRow) {
+    int[][] groups = isRow ? formLayout.getRowGroups() : formLayout.getColumnGroups();
+    for(int[] group: groups) {
+      boolean foundGroup = false;
+      for(int groupCell: group) {
+        if (groupCell == cell+1) {
+          foundGroup = true;
+          break;
+        }
+      }
+      if (foundGroup) {
+        for(int groupCell: group) {
+          setSpec(formLayout, newSpec, groupCell, isRow);
+        }
+        break;
+      }
+    }
+  }
+
+  private static void setSpec(final FormLayout formLayout, final FormSpec newSpec, final int cell, boolean isRow) {
+    if (isRow) {
+      formLayout.setRowSpec(cell, (RowSpec) newSpec);
+    }
+    else {
+      formLayout.setColumnSpec(cell, (ColumnSpec) newSpec);
     }
   }
 
