@@ -313,10 +313,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public AntTypeDefinition[] getBaseTypeDefinitions() {
     synchronized (PsiLock.LOCK) {
-      final int defCount = myTypeDefinitions.size();
-      if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
+      if (myTypeDefinitionArray == null || myTypeDefinitions == null || myTypeDefinitionArray.length != myTypeDefinitions.size()) {
         getBaseTypeDefinition(null);
-        myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[defCount]);
+        myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
       }
       return myTypeDefinitionArray;
     }
