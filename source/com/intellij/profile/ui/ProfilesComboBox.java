@@ -16,7 +16,6 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -24,7 +23,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * User: anna
@@ -42,8 +40,8 @@ public class ProfilesComboBox extends JComboBox {
     myUpdateCallback = updateCallback;
   }
 
-  public void createProfilesCombo(final Profile selectedProfile, final ProfileManager profileManager) {
-    reloadProfiles(selectedProfile, profileManager);
+  public void createProfilesCombo(final Profile selectedProfile, final Set<Profile> availableProfiles, final ProfileManager profileManager) {
+    reloadProfiles(profileManager, availableProfiles, selectedProfile);
 
     setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -109,19 +107,6 @@ public class ProfilesComboBox extends JComboBox {
     }
   }
 
-
-  private void reloadProfiles(Profile selectedProfile, ProfileManager profileManager) {
-    Set<Profile> availableProfiles = new TreeSet<Profile>(profileManager.getProfiles().values());
-    if (profileManager instanceof ProjectProfileManager) {
-      availableProfiles.add(((InspectionProjectProfileManager)profileManager).getProjectProfileImpl());
-      availableProfiles.addAll(InspectionProfileManager.getInstance().getProfiles().values());
-    }
-    Set<Profile> preparedProfiles = new TreeSet<Profile>();
-    for (Profile profile : availableProfiles) {
-      preparedProfiles.add(((InspectionProfileImpl)profile).getModifiableModel());
-    }
-    reloadProfiles(profileManager, preparedProfiles, selectedProfile);
-  }
 
   public void reloadProfiles(final ProfileManager profileManager, final Set<Profile> availableProfiles, final Profile selectedProfile) {
     reloadProfiles(profileManager, true, availableProfiles, selectedProfile);
