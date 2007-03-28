@@ -27,11 +27,12 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
   }
 
   /**
-   * Strict parsing. In case of any convergence returns wrongway
+   * Strict parsing. In case of any convergence returns WRONGWAY
    *
    * @param builder
    * @return
    */
+  // TODO Implement it, please in accordance with javadoc above 
   public static GroovyElementType parseStrict(PsiBuilder builder){
     PsiBuilder.Marker citMarker = builder.mark();
     if (!ParserUtils.getToken(builder, mIDENT)){
