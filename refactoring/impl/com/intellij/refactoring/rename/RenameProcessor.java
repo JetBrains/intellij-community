@@ -482,9 +482,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (Pair<String, RefactoringElementListener> pair : listenersForPackages) {
-      final PsiPackage aPackage = psiManager.findPackage(pair.getFirst());
-      LOG.assertTrue(aPackage != null);
-      pair.getSecond().elementRenamed(aPackage);
+      String qualifiedName = pair.getFirst();
+      RefactoringElementListener listener = pair.getSecond();
+      final PsiPackage aPackage = psiManager.findPackage(qualifiedName);
+      if (aPackage == null) {
+        LOG.error("Package cannot be found: "+qualifiedName+"; listener="+listener);
+      }
+      listener.elementRenamed(aPackage);
     }
 
     List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
