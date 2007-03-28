@@ -78,8 +78,10 @@ public class IfStatementWithIdenticalBranchesInspection
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
                 final PsiElement parent = statement.getParent();
-                parent.addRangeBefore(statements[0],
-                        statements[statements.length -1], statement);
+                if (statements.length > 0) {
+                    parent.addRangeBefore(statements[0],
+                            statements[statements.length -1], statement);
+                }
                 statement.delete();
             } else {
                 final String bodyText = thenBranch.getText();
@@ -156,7 +158,7 @@ public class IfStatementWithIdenticalBranchesInspection
                             PsiStatement.class);
             while (nextStatement == null) {
                 //noinspection AssignmentToMethodParameter
-                statement = PsiTreeUtil.getParentOfType(statement, 
+                statement = PsiTreeUtil.getParentOfType(statement,
                         PsiStatement.class);
                 if (statement == null) {
                     return null;
