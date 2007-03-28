@@ -562,6 +562,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   public int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
     int result = 1;
     FormLayout formLayout = (FormLayout) grid.getLayout();
+    adjustDeletedCellOrigins(grid, cellIndex, isRow);
     if (isRow) {
       int[][] groupIndices = formLayout.getRowGroups();
       groupIndices = removeDeletedCell(groupIndices, cellIndex+1);
@@ -593,6 +594,25 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       }
     }
     return result;
+  }
+
+  private void adjustDeletedCellOrigins(final RadContainer grid, final int cellIndex, final boolean isRow) {
+    int gapCellDelta = isGapCell(grid, isRow, cellIndex+1) ? 2 : 1;
+    for(RadComponent component: grid.getComponents()) {
+      // ensure that we don't have component origins in the deleted cells
+      final GridConstraints gc = component.getConstraints();
+      if (gc.getCell(isRow) == cellIndex) {
+        final int span = gc.getSpan(isRow);
+        if (span > gapCellDelta) {
+          gc.setCell(isRow, cellIndex+gapCellDelta);
+          gc.setSpan(isRow, span -gapCellDelta);
+          updateConstraints(component);
+        }
+        else {
+          throw new IllegalArgumentException("Attempt to delete grid row/column which contains origins of 1-span components");
+        }
+      }
+    }
   }
 
   private static int[][] removeDeletedCell(final int[][] groupIndices, final int deletedIndex) {
