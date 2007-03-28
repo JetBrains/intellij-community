@@ -216,20 +216,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     super.load();
     try {
       final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-      assert stateStorage instanceof FileBasedStorage;
-      FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
+      if  (stateStorage instanceof FileBasedStorage) {
+        FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
+        Document doc = fileBasedStorage.getDocument();
+        final Element element = doc.getRootElement();
+        final List attributes = element.getAttributes();
+        for (Object attribute : attributes) {
+          Attribute attr = (Attribute)attribute;
+          final String optionName = attr.getName();
+          final @NonNls String optionValue = attr.getValue();
 
-      Document doc = fileBasedStorage.getDocument();
-      final Element element = doc.getRootElement();
-
-      final List attributes = element.getAttributes();
-      for (Object attribute : attributes) {
-        Attribute attr = (Attribute)attribute;
-        final String optionName = attr.getName();
-        final @NonNls String optionValue = attr.getValue();
-
-        if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
-          setSavePathsRelative(true);
+          if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
+            setSavePathsRelative(true);
+          }
         }
       }
     }
