@@ -39,7 +39,14 @@ public abstract class TokenSets implements GroovyTokenTypes {
           kFALSE,
           kNULL,
           mSTRING_LITERAL,
-          mGSTRING_LITERAL
+          mGSTRING_LITERAL,
+          mREGEX_LITERAL
+  );
+
+    public static final TokenSet WRONG_CONSTANTS = TokenSet.create(
+          mWRONG_GSTRING_LITERAL,
+          mWRONG_STRING_LITERAL,
+          mWRONG_REGEX_LITERAL
   );
 
   public static final TokenSet BUILT_IN_TYPE = TokenSet.create(

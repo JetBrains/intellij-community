@@ -1,35 +1,34 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilder.*;
 
 /**
  * @author Ilya.Sergey
  */
-public class StringConstructorExpression implements GroovyElementTypes {
+public class RegexConstructorExpression implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 
-    Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mGSTRING_SINGLE_BEGIN)) {
-      GroovyElementType result = stringConstructorValuePart(builder);
+    PsiBuilder.Marker sMarker = builder.mark();
+    if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
+      GroovyElementType result = regexConstructorValuePart(builder);
       if (result.equals(WRONGWAY)) {
         builder.error(GroovyBundle.message("identifier.or.block.expected"));
-        sMarker.done(GSTRING);
-        return GSTRING;
+        sMarker.done(REGEX);
+        return REGEX;
       } else {
-        while (ParserUtils.getToken(builder, mGSTRING_SINGLE_CONTENT) && !result.equals(WRONGWAY)) {
-          result = stringConstructorValuePart(builder);
+        while (ParserUtils.getToken(builder, mREGEX_CONTENT) && !result.equals(WRONGWAY)) {
+          result = regexConstructorValuePart(builder);
         }
-        ParserUtils.getToken(builder, mGSTRING_SINGLE_END, GroovyBundle.message("string.end.expected"));
-        sMarker.done(GSTRING);
-        return GSTRING;
+        ParserUtils.getToken(builder, mREGEX_END, GroovyBundle.message("regex.end.expected"));
+        sMarker.done(REGEX);
+        return REGEX;
       }
     } else {
       sMarker.drop();
@@ -43,8 +42,8 @@ public class StringConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static GroovyElementType stringConstructorValuePart(PsiBuilder builder) {
-    ParserUtils.getToken(builder, mSTAR);
+  private static GroovyElementType regexConstructorValuePart(PsiBuilder builder) {
+    //ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder);
       return PATH_EXPRESSION;

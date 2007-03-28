@@ -39,6 +39,10 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.mWRONG_STRING_LITERAL
   );
 
+  static final TokenSet tWRONG_REGEX = TokenSet.create(
+          GroovyTokenTypes.mWRONG_REGEX_LITERAL
+  );
+
   static final TokenSet tSTRINGS = TokenSet.create(
           GroovyTokenTypes.mSTRING_LITERAL,
 
@@ -49,7 +53,12 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   );
 
   static final TokenSet tREGEXP = TokenSet.create(
-          GroovyTokenTypes.mREGEXP_LITERAL
+          GroovyTokenTypes.mREGEX_LITERAL,
+
+          GroovyTokenTypes.mREGEX_BEGIN,
+          GroovyTokenTypes.mREGEX_CONTENT,
+          GroovyTokenTypes.mREGEX_END
+
   );
 
   static final TokenSet tBRACES = TokenSet.create(
@@ -173,6 +182,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
     fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
+    fillMap(ATTRIBUTES, tWRONG_REGEX, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
   }
 

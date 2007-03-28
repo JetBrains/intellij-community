@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.RegexConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -115,12 +116,17 @@ public class PathExpression implements GroovyElementTypes {
       return PATH_PROPERTY;
     }
     if (mSTRING_LITERAL.equals(builder.getTokenType()) ||
-            mGSTRING_LITERAL.equals(builder.getTokenType())) {
+            mGSTRING_LITERAL.equals(builder.getTokenType()) ||
+            mREGEX_LITERAL.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
       return PATH_PROPERTY;
     }
     if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
       StringConstructorExpression.parse(builder);
+      return PATH_PROPERTY;
+    }
+    if (mREGEX_BEGIN.equals(builder.getTokenType())) {
+      RegexConstructorExpression.parse(builder);
       return PATH_PROPERTY;
     }
     if (TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType())) {

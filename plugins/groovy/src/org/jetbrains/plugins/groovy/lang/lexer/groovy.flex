@@ -100,6 +100,17 @@ mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | \\ \" | \\ \' | \\ \\ | \\ "$"
 | "\\" [4..7] ([0..7])?
 | "\\" {mONE_NL}
 
+/// Regexes ////////////////////////////////////////////////////////////////
+
+mREGEX_BEGIN = "/""$"
+   |  "/" ([^"/""$"] | {mSTRING_ESC})? {mREGEX_CONTENT}"$"
+mREGEX_CONTENT = ({mSTRING_ESC}
+   | [^"/"\r\n"$"])*
+
+mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT} "/"
+
+////////////////////////////////////////////////////////////////////////////
+
 mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | "\""
     | [^\'\r\n]
@@ -117,12 +128,11 @@ mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
 
 
 // Single-double-quoted GStrings
-mGSTRING_SINGLE_BEGIN = \""$" 
+mGSTRING_SINGLE_BEGIN = \""$"
     |  \" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}"$"
 mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
     | [^\"\r\n"$"]
     | "\'" )*
-mGSTRING_SINGLE_CTOR_END = {mGSTRING_SINGLE_CONTENT}  \"
 
 // Triple-double-quoted GStrings
 mGSTRING_TRIPLE_BEGIN = \"\"\""$"
@@ -163,6 +173,12 @@ mGSTRING_LITERAL = \"\"
 %xstate GSTRING_STAR_TRIPLE
 %xstate WRONG_STRING
 %state IN_INNER_BLOCK
+
+%xstate WAIT_FOR_REGEX
+%xstate IN_REGEX_DOLLAR
+%xstate IN_REGEX
+%xstate IN_REGEX_IDENT
+%xstate IN_REGEX_DOT
 
 %%
 // Star meeting in Gstring
@@ -237,6 +253,7 @@ mGSTRING_LITERAL = \"\"
                                                IElementType br = blockStack.pop();
                                                if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
                                                if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
+                                               if (br.equals(mDIV)) yybegin(IN_REGEX);
                                              }
                                              return mRCURLY; }
 }
@@ -287,6 +304,84 @@ mGSTRING_LITERAL = \"\"
                                              return mWRONG_GSTRING_LITERAL; }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////  regexes //////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+<WAIT_FOR_REGEX> {
+
+{mWS}                                     {  return(mWS);  }
+
+{mSL_COMMENT}                             {  return mSL_COMMENT; }
+{mML_COMMENT}                             {  return mML_COMMENT; }
+
+{mREGEX_LITERAL}                          {  if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return(mREGEX_LITERAL);  }
+
+{mREGEX_BEGIN}                            {  yybegin(IN_REGEX_DOLLAR);
+                                             gStringStack.push(mDIV);       // For regexes
+                                             return(mREGEX_BEGIN); }
+
+"/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT}      {  return mWRONG_REGEX_LITERAL; }
+
+[^]                                       {  yypushback(yytext().length());
+                                             if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                          }
+}
+
+<IN_REGEX_IDENT>{
+  {mIDENT}                                {  yybegin(IN_REGEX_DOT);
+                                             return mIDENT;  }
+  [^]                                     {  yypushback(yytext().length());
+                                             yybegin(IN_REGEX);  }
+}
+<IN_REGEX_DOT>{
+  "."                                     {  yybegin(IN_REGEX_IDENT);
+                                             return mDOT;  }
+  [^"."]                                  {  yypushback(yytext().length());
+                                             yybegin(IN_REGEX);  }
+}
+
+<IN_REGEX_DOLLAR> {
+
+  {mIDENT}                                {  yybegin(IN_REGEX_DOT);
+                                             return mIDENT; }
+  "{"                                     {  blockStack.push(mDIV);
+                                             yybegin(IN_INNER_BLOCK);
+                                             return mLCURLY; }
+  [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
+                                             yybegin(YYINITIAL);
+                                             return mWRONG_REGEX_LITERAL;  }
+  {mNLS}                                  {  yybegin(YYINITIAL);
+                                             clearStacks();
+                                             return mNLS;}
+}
+
+<IN_REGEX> {
+  {mREGEX_CONTENT}"$"                     {  yybegin(IN_REGEX_DOLLAR);
+                                             return mREGEX_CONTENT; }
+  {mREGEX_CONTENT}"/"                     {  gStringStack.pop();
+                                             if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mREGEX_END; }
+  {mREGEX_CONTENT}                        {  gStringStack.clear();
+                                             yybegin(YYINITIAL);
+                                             return mWRONG_REGEX_LITERAL; }
+  {mNLS}                                  {  clearStacks();
+                                             yybegin(YYINITIAL);
+                                             return mNLS; }
+}
+
 <YYINITIAL> {
 
 "}"                                       {  return(mRCURLY);  }
@@ -298,7 +393,8 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mWS}                                     {  return mWS; }
-{mNLS}                                    {  return mNLS; }
+{mNLS}                                    {  yybegin(WAIT_FOR_REGEX);
+                                             return mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
@@ -340,65 +436,121 @@ mGSTRING_LITERAL = \"\"
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-"?"                                       {  return(mQUESTION);  }
-"/"                                       {  return(mDIV);  }
-"/="                                      {  return(mDIV_ASSIGN);  }
-"("                                       {  return(mLPAREN);  }
+"?"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mQUESTION);  }
+"/"                                       {  return(mDIV); }
+"/="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mDIV_ASSIGN);  }
+"("                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLPAREN);  }
 ")"                                       {  return(mRPAREN);  }
-"["                                       {  return(mLBRACK);  }
+"["                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLBRACK);  }
 "]"                                       {  return(mRBRACK);  }
-"{"                                       {  return(mLCURLY);  }
-":"                                       {  return(mCOLON);  }
-","                                       {  return(mCOMMA);  }
-"."                                       {  return(mDOT);  }
-"="                                       {  return(mASSIGN);  }
-"<=>"                                     {  return(mCOMPARE_TO);  }
-"=="                                      {  return(mEQUAL);  }
-"!"                                       {  return(mLNOT);  }
-"~"                                       {  return(mBNOT);  }
-"!="                                      {  return(mNOT_EQUAL);  }
-"+"                                       {  return(mPLUS);  }
-"+="                                      {  return(mPLUS_ASSIGN);  }
-"++"                                      {  return(mINC);  }
-"-"                                       {  return(mMINUS);  }
-"-="                                      {  return(mMINUS_ASSIGN);  }
-"--"                                      {  return(mDEC);  }
-"*"                                       {  return(mSTAR);  }
-"*="                                      {  return(mSTAR_ASSIGN);  }
-"%"                                       {  return(mMOD);  }
-"%="                                      {  return(mMOD_ASSIGN);  }
-">>"                                      {  return(mSR);  }
-">>="                                     {  return(mSR_ASSIGN);  }
-">>>"                                     {  return(mBSR);  }
-">>>="                                    {  return(mBSR_ASSIGN);  }
-">="                                      {  return(mGE);  }
-">"                                       {  return(mGT);  }
-"<<"                                      {  return(mSL);  }
-"<<="                                     {  return(mSL_ASSIGN);  }
-"<="                                      {  return(mLE);  }
-"<"                                       {  return(mLT);  }
-"^"                                       {  return(mBXOR);  }
-"^="                                      {  return(mBXOR_ASSIGN);  }
-"|"                                       {  return(mBOR);  }
-"|="                                      {  return(mBOR_ASSIGN);  }
-"||"                                      {  return(mLOR);  }
-"&"                                       {  return(mBAND);  }
-"&="                                      {  return(mBAND_ASSIGN);  }
-"&&"                                      {  return(mLAND);  }
-";"                                       {  return(mSEMI);  }
-"$"                                       {  return(mDOLLAR);  }
-".."                                      {  return(mRANGE_INCLUSIVE);  }
-"..<"                                     {  return(mRANGE_EXCLUSIVE);  }
-"..."                                     {  return(mTRIPLE_DOT);  }
-"*."                                      {  return(mSPREAD_DOT);  }
-"?."                                      {  return(mOPTIONAL_DOT);  }
-".&"                                      {  return(mMEMBER_POINTER);  }
-"=~"                                      {  return(mREGEX_FIND);  }
-"==~"                                     {  return(mREGEX_MATCH);  }
-"**"                                      {  return(mSTAR_STAR);  }
-"**="                                     {  return(mSTAR_STAR_ASSIGN);  }
-"->"                                      {  return(mCLOSABLE_BLOCK_OP);  }
-"@"                                       {  return(mAT);  }
+"{"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLCURLY);  }
+":"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mCOLON);  }
+","                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mCOMMA);  }
+"."                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mDOT);  }
+"="                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mASSIGN);  }
+"<=>"                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mCOMPARE_TO);  }
+"=="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mEQUAL);  }
+"!"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLNOT);  }
+"~"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBNOT);  }
+"!="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mNOT_EQUAL);  }
+"+"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mPLUS);  }
+"+="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mPLUS_ASSIGN);  }
+"++"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mINC);  }
+"-"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mMINUS);  }
+"-="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mMINUS_ASSIGN);  }
+"--"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mDEC);  }
+"*"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSTAR);  }
+"*="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSTAR_ASSIGN);  }
+"%"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mMOD);  }
+"%="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mMOD_ASSIGN);  }
+">>"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSR);  }
+">>="                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSR_ASSIGN);  }
+">>>"                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBSR);  }
+">>>="                                    {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBSR_ASSIGN);  }
+">="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mGE);  }
+">"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mGT);  }
+"<<"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSL);  }
+"<<="                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSL_ASSIGN);  }
+"<="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLE);  }
+"<"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLT);  }
+"^"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBXOR);  }
+"^="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBXOR_ASSIGN);  }
+"|"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBOR);  }
+"|="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBOR_ASSIGN);  }
+"||"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLOR);  }
+"&"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBAND);  }
+"&="                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mBAND_ASSIGN);  }
+"&&"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mLAND);  }
+";"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSEMI);  }
+"$"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mDOLLAR);  }
+".."                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mRANGE_INCLUSIVE);  }
+"..<"                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mRANGE_EXCLUSIVE);  }
+"..."                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mTRIPLE_DOT);  }
+"*."                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSPREAD_DOT);  }
+"?."                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mOPTIONAL_DOT);  }
+".&"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mMEMBER_POINTER);  }
+"=~"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mREGEX_FIND);  }
+"==~"                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mREGEX_MATCH);  }
+"**"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSTAR_STAR);  }
+"**="                                     {  yybegin(WAIT_FOR_REGEX);
+                                             return(mSTAR_STAR_ASSIGN);  }
+"->"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mCLOSABLE_BLOCK_OP);  }
+"@"                                       {  yybegin(WAIT_FOR_REGEX);
+                                             return(mAT);  }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@ import com.intellij.lang.PsiBuilder;
  */
 public class PrimaryExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder){
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
@@ -28,27 +28,38 @@ public class PrimaryExpression implements GroovyElementTypes {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
       return PRIMARY_EXPRESSION;
     }
-    if (mIDENT.equals(builder.getTokenType())){
+    if (mIDENT.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
       return PRIMARY_EXPRESSION;
     }
-    if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())){
+    if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
       StringConstructorExpression.parse(builder);
       return PRIMARY_EXPRESSION;
     }
-    if (mLBRACK.equals(builder.getTokenType())){
+    if (mREGEX_BEGIN.equals(builder.getTokenType())) {
+      RegexConstructorExpression.parse(builder);
+      return PRIMARY_EXPRESSION;
+    }
+    if (mLBRACK.equals(builder.getTokenType())) {
       ListOrMapConstructorExpression.parse(builder);
       return PRIMARY_EXPRESSION;
     }
-    if (mLPAREN.equals(builder.getTokenType())){
+    if (mLPAREN.equals(builder.getTokenType())) {
       return parenthesizedExprParse(builder);
     }
-    if (mLCURLY.equals(builder.getTokenType())){
+    if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseClosableBlock(builder);
       return PRIMARY_EXPRESSION;
     }
-    if (TokenSets.CONSTANTS.contains(builder.getTokenType())){
+    if (TokenSets.CONSTANTS.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, LITERAL);
+      return PRIMARY_EXPRESSION;
+    }
+    if (TokenSets.WRONG_CONSTANTS.contains(builder.getTokenType())) {
+      PsiBuilder.Marker marker = builder.mark();
+      builder.advanceLexer();
+      builder.error(GroovyBundle.message("wrong.string"));
+      marker.done(LITERAL);
       return PRIMARY_EXPRESSION;
     }
 
@@ -57,14 +68,14 @@ public class PrimaryExpression implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  public static GroovyElementType parenthesizedExprParse(PsiBuilder builder){
+  public static GroovyElementType parenthesizedExprParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
     StrictContextExpression.parse(builder);
-    if(!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))){
+    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       builder.error(GroovyBundle.message("rparen.expected"));
       while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mSEMI.equals(builder.getTokenType())
-              && !mRPAREN.equals(builder.getTokenType())){
+              && !mRPAREN.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("rparen.expected"));
         builder.advanceLexer();
       }

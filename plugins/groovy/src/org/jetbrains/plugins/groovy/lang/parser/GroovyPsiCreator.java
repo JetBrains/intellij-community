@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
@@ -150,6 +151,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeElementImpl(node);
     if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);
+    if (elem.equals(REGEX)) return new GrRegexImpl(node);
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
     if (elem.equals(PARENTHSIZED_EXPRESSION)) return new GrParenthesizedExprImpl(node);
 

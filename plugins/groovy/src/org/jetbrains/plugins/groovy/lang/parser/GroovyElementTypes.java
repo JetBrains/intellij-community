@@ -85,6 +85,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
+  GroovyElementType REGEX = new GroovyElementType("Regular expression");
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration");
 
