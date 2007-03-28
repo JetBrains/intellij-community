@@ -18,8 +18,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
-import com.intellij.util.xml.impl.GenericValueReferenceProvider;
 import com.intellij.util.xml.impl.GenericDomValueReference;
+import com.intellij.util.xml.impl.GenericValueReferenceProvider;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
@@ -51,16 +51,16 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     final Required required = element.getAnnotation(Required.class);
     if (required != null) {
       final XmlElement xmlElement = element.getXmlElement();
-      if (required.value()) {
-        if (xmlElement == null) {
+      if (xmlElement == null) {
+        if (required.value()) {
           if (element instanceof GenericAttributeValue) {
             return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", element.getXmlElementName())));
           }
           return Arrays.asList(holder.createProblem(element, IdeBundle.message("child.tag.0.should.be.defined", element.getXmlElementName())));
         }
-        if (element instanceof GenericDomValue) {
-          return ContainerUtil.createMaybeSingletonList(checkRequiredGenericValue((GenericDomValue)element, required, holder));
-        }
+      }
+      else if (element instanceof GenericDomValue) {
+        return ContainerUtil.createMaybeSingletonList(checkRequiredGenericValue((GenericDomValue)element, required, holder));
       }
     }
     if (element.getXmlElement() != null) {
@@ -203,7 +203,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (resolve != null && resolve.soft()) return true;
 
     final Convert convert = value.getAnnotation(Convert.class);
-    if (convert != null && convert.soft()) return true; 
+    if (convert != null && convert.soft()) return true;
 
     final Referencing referencing = value.getAnnotation(Referencing.class);
     if (referencing != null && referencing.soft()) return true;
