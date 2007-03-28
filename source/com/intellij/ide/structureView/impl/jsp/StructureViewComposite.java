@@ -83,4 +83,9 @@ public class StructureViewComposite implements StructureView {
       descriptor.structureView.storeState();
     }
   }
+
+  @NotNull
+  public StructureViewDescriptor[] getStructureViews() {
+    return myStructureViews;
+  }
 }

@@ -14,7 +14,9 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ReflectionCache;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,7 +30,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   public boolean AUTOSCROLL_MODE = true;
   public boolean AUTOSCROLL_FROM_SOURCE = false;
 
-  public String ACTIVE_ACTIONS = "";
+  private String ACTIVE_ACTIONS = "";
 
   private Project myProject;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
@@ -74,6 +76,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @NotNull
   public String getComponentName() {
     return "StructureViewFactory";
   }
@@ -93,7 +96,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
       for (Class<? extends PsiElement> registeregType : myExtensions.keySet()) {
-        if (registeregType.isAssignableFrom(type)) {
+        if (ReflectionCache.isAssignable(registeregType, type)) {
           final Collection<StructureViewExtension> extensions = myExtensions.get(registeregType);
           for (StructureViewExtension extension : extensions) {
             myImplExtensions.put(type, extension);

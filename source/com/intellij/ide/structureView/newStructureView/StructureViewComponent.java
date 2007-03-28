@@ -120,10 +120,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject);
 
     JComponent toolbarComponent =
-    ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR,
-                                                    createActionGroup(),
-                                                    true)
-      .getComponent();
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
     add(toolbarComponent, BorderLayout.NORTH);
 
     installTree();

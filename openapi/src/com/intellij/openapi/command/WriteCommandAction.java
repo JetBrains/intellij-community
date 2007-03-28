@@ -128,7 +128,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   /**
    * WriteCommandAction without result
    */
-  public static abstract class Simple extends WriteCommandAction {
+  public abstract static class Simple extends WriteCommandAction {
     protected Simple(final Project project, PsiFile... files) {
       super(project, files);
     }
