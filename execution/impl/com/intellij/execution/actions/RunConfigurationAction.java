@@ -137,8 +137,11 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final RunManager runManager = RunManager.getInstance(getProject(e));
-      runManager.makeStable(runManager.getTempConfiguration());
+      final Project project = getProject(e);
+      if (project != null) {
+        final RunManager runManager = RunManager.getInstance(project);
+        runManager.makeStable(runManager.getTempConfiguration());
+      }
     }
 
     public void update(final AnActionEvent e) {
