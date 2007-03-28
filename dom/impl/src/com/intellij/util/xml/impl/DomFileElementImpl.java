@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -131,7 +132,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final Class<T> myRootElementClass;
   private final EvaluatedXmlName myRootTagName;
   private final DomManagerImpl myManager;
-  private DomRootInvocationHandler myRootHandler;
+  private WeakReference<DomRootInvocationHandler> myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
   private long myModificationCount;
   private boolean myInvalidated;
@@ -266,32 +267,29 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   protected final DomRootInvocationHandler getRootHandler() {
     r.lock();
-    try {
-      if (myRootHandler == null) {
-        r.unlock();
-        final XmlTag tag = getRootTag(); // do not take root tag under our lock to prevent dead lock with PsiLock
-        w.lock();
-        try {
-          if (myRootHandler == null) {
-            myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
-          }
-        }
-        finally{
-          r.lock();
-          w.unlock();
+    if (myRootHandler == null || myRootHandler.get() == null) {
+      r.unlock();
+      final XmlTag tag = getRootTag(); // do not take root tag under our lock to prevent dead lock with PsiLock
+      w.lock();
+      try {
+        if (myRootHandler == null || myRootHandler.get() == null) {
+          myRootHandler = new WeakReference<DomRootInvocationHandler>(new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName));
         }
       }
-      return myRootHandler;
+      finally{
+        w.unlock();
+        r.lock();
+      }
     }
-    finally {
-      r.unlock();
-    }
+    final DomRootInvocationHandler rootHandler = myRootHandler.get();
+    r.unlock();
+    return rootHandler;
   }
 
   protected final void resetRoot(boolean invalidate) {
     myInvalidated = invalidate;
-    if (myRootHandler != null) {
-      myRootHandler.detach(true);
+    if (myRootHandler != null && myRootHandler.get() != null) {
+      myRootHandler.get().detach(true);
       myRootHandler = null;
     }
   }
