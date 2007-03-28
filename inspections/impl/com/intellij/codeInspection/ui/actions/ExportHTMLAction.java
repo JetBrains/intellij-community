@@ -40,6 +40,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -127,13 +128,11 @@ public class ExportHTMLAction extends AnAction {
     try {
       new File(outputDirectoryName).mkdirs();
       final InspectionTreeNode root = myView.getTree().getRoot();
-      final Enumeration children = root.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode node = (InspectionTreeNode)children.nextElement();
-        if (node instanceof InspectionGroupNode) {
-          final Enumeration groupChildren = node.children();
-          while (groupChildren.hasMoreElements()) {
-            InspectionNode toolNode = (InspectionNode)groupChildren.nextElement();
+      final IOException[] ex = new IOException[1];
+      TreeUtil.traverse(root, new TreeUtil.Traverse() {
+        public boolean accept(final Object node) {
+          if (node instanceof InspectionNode) {
+            InspectionNode toolNode = (InspectionNode)node;
             Element problems = new Element(PROBLEMS);
             final InspectionTool tool = toolNode.getTool();
             final Set<InspectionTool> tools = getWorkedTools(toolNode);
@@ -141,12 +140,20 @@ public class ExportHTMLAction extends AnAction {
               inspectionTool.exportResults(problems);
             }
             PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
-            JDOMUtil.writeDocument(new Document(problems),
-                                   outputDirectoryName + File.separator + tool.getShortName() + XmlFileType.DOT_DEFAULT_EXTENSION,
-                                   CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-
+            try {
+              JDOMUtil.writeDocument(new Document(problems),
+                                     outputDirectoryName + File.separator + tool.getShortName() + XmlFileType.DOT_DEFAULT_EXTENSION,
+                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+            }
+            catch (IOException e) {
+              ex[0] = e;
+            }
           }
+          return true;
         }
+      });
+      if (ex[0] != null) {
+        throw ex[0];
       }
       final Element element = new Element(InspectionApplication.INSPECTIONS_NODE);
       final String profileName = myView.getCurrentProfileName();
