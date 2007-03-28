@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
@@ -381,6 +383,12 @@ public class XmlCompletionData extends CompletionData {
           final HashSet<String> variants = new HashSet<String>();
           XmlUtil.collectEnumerationValues(simpleContent, variants);
           if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
+        }
+
+        for (final PsiReference reference : tag.getReferences()) {
+          if (!(reference instanceof TagNameReference)) {
+            return ArrayUtil.EMPTY_OBJECT_ARRAY;
+          }
         }
       }
 
