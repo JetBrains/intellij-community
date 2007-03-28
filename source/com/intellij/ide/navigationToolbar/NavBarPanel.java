@@ -544,7 +544,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         public boolean isSpeedSearchEnabled() { return true; }
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-          if (selectedValue instanceof PsiFile) {
+          if (selectedValue instanceof PsiFile || selectedValue instanceof PsiClass) {
             final Navigatable navigatable = (Navigatable)selectedValue;
             if (navigatable.canNavigate()) {
               navigatable.navigate(true);
