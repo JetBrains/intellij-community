@@ -24,12 +24,12 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   private boolean hasModifiedUnsavedContent() {
-    byte[] current = stantartizeLineSeparators(getCurrentContent());
-    byte[] vcs = stantartizeLineSeparators(getVcsContent());
+    byte[] current = stantardizeLineSeparators(getCurrentContent());
+    byte[] vcs = stantardizeLineSeparators(getVcsContent());
     return Arrays.equals(current, vcs);
   }
 
-  private byte[] stantartizeLineSeparators(Content current) {
+  private byte[] stantardizeLineSeparators(Content current) {
     String s = new String(current.getBytes());
     return StringUtil.convertLineSeparators(s).getBytes();
   }
@@ -52,7 +52,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public boolean revert() {
-    return FileReverter.revert(myIdeaGateway, myFile, getLeftLabel());
+    return FileReverter.revert(myIdeaGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
   }
 
   private class NotSavedLabel extends Label {
