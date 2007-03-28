@@ -10,11 +10,11 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.VariablesPanel;
+import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
+import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
@@ -22,7 +22,10 @@ import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
@@ -46,10 +49,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -252,7 +253,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
 
     if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
-      initAdditionalTabs();
+      myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
     }
 
     if(myToolBarPanel != null) {
@@ -272,24 +273,10 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     group.add(ActionManager.getInstance().getAction(actionId));
   }
 
-  private void initAdditionalTabs() {
-    RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
-    for (LogFileOptions logFile : logFiles) {
-      if (logFile.isEnabled()) {
-        final Set<String> paths = logFile.getPaths();
-        for (String path : paths) {
-          addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName(), (RunConfigurationBase)myConfiguration);
-        }
-      }
-    }
-    base.createAdditionalTabComponents(this, myRunContentDescriptor.getProcessHandler());
-  }
-
-  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
+  public void addLogConsole(final String name, final String path, final long skippedContent) {
     final Ref<Content> content = new Ref<Content>();
 
-    final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
+    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name){
       public boolean isActive() {
         return myViewsContentManager.isSelected(content.get());
       }

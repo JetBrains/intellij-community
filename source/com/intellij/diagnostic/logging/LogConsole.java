@@ -39,7 +39,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
-  private final boolean mySkipContents;
+  private final long mySkippedContents;
 
   private StringBuffer myOriginalDocument = null;
 
@@ -58,9 +58,9 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   private String myPath;
   private boolean myWasInitialized;
 
-  public LogConsole(Project project, File file, boolean skipContents, String title) {
+  public LogConsole(Project project, File file, long skippedContents, String title) {
     super(new BorderLayout());
-    mySkipContents = skipContents;
+    mySkippedContents = skippedContents;
     myTitle = title;
     myProject = project;
     myPath = file.getAbsolutePath();
@@ -325,13 +325,13 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
       try {
         try {
           myFileStream = new BufferedReader(new FileReader(file));
+          myFileStream.skip(mySkippedContents);
         }
         catch (FileNotFoundException e) {
           FileUtil.createParentDirs(file);
           if (!file.createNewFile()) return;
           myFileStream = new BufferedReader(new FileReader(file));
         }
-        if (mySkipContents) myFileStream.skip(file.length());
       }
       catch (Throwable e) {
         myFileStream = null;

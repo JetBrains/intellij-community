@@ -2,6 +2,7 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.io.File;
 
 /**
  * User: anna
@@ -36,7 +38,7 @@ public class LogFilesManager {
           Set<String> newFiles = logFile.getPaths();
           for (String file : newFiles) {
             if (!oldFiles.contains(file)){
-              myManager.addLogConsole(file, logFile.isSkipContent(), project, logFile.getName(), myLogFileToConfiguration.get(logFile));
+              myManager.addLogConsole(logFile.getName(), file, 0);
             }
           }
           for (String oldFile : oldFiles) {
@@ -72,5 +74,18 @@ public class LogFilesManager {
       myUpdateAlarm.cancelAllRequests();
       myUpdateAlarm = null;
     }
+  }
+
+  public void initLogConsoles(RunConfigurationBase base, ProcessHandler startedProcess) {
+    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
+    for (LogFileOptions logFile : logFiles) {
+      if (logFile.isEnabled()) {
+        final Set<String> paths = logFile.getPaths();
+        for (String path : paths) {
+          myManager.addLogConsole(logFile.getName(), path, logFile.isSkipContent() ? new File(path).length() : 0);
+        }
+      }
+    }
+    base.createAdditionalTabComponents(myManager, startedProcess);
   }
 }

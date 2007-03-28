@@ -10,7 +10,10 @@ import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
@@ -29,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * @author dyoma
@@ -111,7 +113,7 @@ public class RunContentBuilder implements LogConsoleManager {
             myComponent = console.getComponent();
           }
           if (myRunProfile instanceof RunConfigurationBase){            
-            initAdditionalTabs();
+            myManager.initLogConsoles((RunConfigurationBase)myRunProfile, myExecutionResult.getProcessHandler());
           }
         }
       }
@@ -124,22 +126,8 @@ public class RunContentBuilder implements LogConsoleManager {
     return contentDescriptor;
   }
 
-  private void initAdditionalTabs() {
-    RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
-    for (LogFileOptions logFile : logFiles) {
-      if (logFile.isEnabled()) {
-        final Set<String> paths = logFile.getPaths();
-        for (String path : paths) {
-          addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName(), (RunConfigurationBase)myRunProfile);
-        }
-      }
-    }
-    base.createAdditionalTabComponents(this, myExecutionResult.getProcessHandler());
-  }
-
-  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
-    final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
+  public void addLogConsole(final String name, final String path, final long skippedContent) {
+    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name){
       public boolean isActive() {
         return myComponent instanceof JTabbedPane && ((JTabbedPane)myComponent).getSelectedComponent() == this;
       }
