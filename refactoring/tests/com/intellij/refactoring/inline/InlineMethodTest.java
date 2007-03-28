@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import org.jetbrains.annotations.NonNls;
 
 public class InlineMethodTest extends CodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
@@ -102,17 +103,17 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   private void doTest() throws Exception {
     String name = getTestName(false);
-    String fileName = "/refactoring/inlineMethod/" + name + ".java";
+    @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
     configureByFile(fileName);
     performAction();
     checkResultByFile(fileName + ".after");
   }
 
-  private void performAction() throws Exception{
+  private void performAction() {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
-    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? ((PsiReferenceExpression)ref) : null;
+    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiMethod);
     final boolean condition = InlineMethodProcessor.checkBadReturns((PsiMethod) element);
     assertFalse("Bad returns found", condition);
