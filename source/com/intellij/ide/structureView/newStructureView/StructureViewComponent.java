@@ -12,8 +12,8 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -28,14 +28,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,7 +67,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private static final Key<StructureViewState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private final Project myProject;
   private final StructureViewModel myTreeModel;
-  private final boolean myShowRootNode;
   private boolean mySortByKind = true;
   private static int ourSettingsModificationCount;
 
@@ -85,7 +83,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myProject = project;
     myFileEditor = editor;
     myTreeModel = structureViewModel;
-    myShowRootNode = showRootNode;
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
 
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
@@ -103,7 +100,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
     JTree tree = new Tree(model);
-    tree.setRootVisible(myShowRootNode);
+    tree.setRootVisible(showRootNode);
 
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
@@ -430,8 +427,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       TreeUtil.showRowCentered(getTree(), getTree().getRowForPath(path), false);
       myAutoScrollToSourceHandler.setShouldAutoScroll(true);
       centerSelectedRow();
+      return true;
     }
-    return true;
+    return false;
   }
 
   private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
@@ -476,7 +474,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return null;
   }
 
-  public void scrollToSelectedElement() {
+  private void scrollToSelectedElement() {
     if (myAutoscrollFeedback) {
       myAutoscrollFeedback = false;
       return;
@@ -484,8 +482,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
 
-    if (!structureViewFactory.AUTOSCROLL_FROM_SOURCE)
-    {
+    if (!structureViewFactory.AUTOSCROLL_FROM_SOURCE) {
       return;
     }
 
@@ -493,8 +490,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myAutoscrollAlarm.addRequest(
         new Runnable() {
         public void run() {
-          if (myAbstractTreeBuilder == null)
-          {
+          if (myAbstractTreeBuilder == null) {
             return;
           }
           selectViewableElement();
@@ -545,7 +541,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     rebuild();
   }
 
-  public void rebuild() {
+  protected void rebuild() {
     storeState();
     ++ourSettingsModificationCount;
     ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
@@ -566,7 +562,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return myAbstractTreeBuilder.getTreeStructure();
   }
 
-  public @Nullable JTree getTree() {
+  public JTree getTree() {
     return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
   }
 
@@ -635,11 +631,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
       structureViewFactory.AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-      if (selectedEditors != null && selectedEditors.length > 0) {
-        if (state)
-        {
-          scrollToSelectedElement();
-        }
+      if (selectedEditors.length > 0 && state) {
+        scrollToSelectedElement();
       }
     }
   }
@@ -725,8 +718,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       super(project, value, treeModel);
     }
 
+    @NotNull
     public Object getKey() {
-      return ((StructureViewTreeElement)getValue()).getValue();
+      Object value = ((StructureViewTreeElement)getValue()).getValue();
+      return value == null ? this : value;
     }
 
     @NotNull
@@ -767,11 +762,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return false;
     }
 
-    private Object unwrapValue(Object o) {
-
+    private static Object unwrapValue(Object o) {
       if (o instanceof StructureViewTreeElement) {
         return ((StructureViewTreeElement)o).getValue();
-      } else {
+      }
+      else {
         return o;
       }
     }

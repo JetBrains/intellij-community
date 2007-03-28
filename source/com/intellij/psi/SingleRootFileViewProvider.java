@@ -108,6 +108,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return getPsiInner(target);
   }
 
+  @NotNull
   public List<PsiFile> getAllFiles() {
     return Collections.singletonList(getPsi(getBaseLanguage()));
   }

@@ -24,9 +24,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,12 +113,13 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
-    PsiElement element = getPsiFile().findElementAt(offset);
-    while (!isSuitable(element)) {
-      if (element == null) return null;
+    FileViewProvider viewProvider = getPsiFile().getViewProvider();
+    PsiElement element = viewProvider.findElementAt(offset, getPsiFile().getLanguage());
+    while (element != null && !(element instanceof PsiFile)) {
+      if (isSuitable(element)) return element;
       element = element.getParent();
     }
-    return element;
+    return null;
   }
 
   protected abstract PsiFile getPsiFile();   // TODO: change abstract method to constructor parameter?
@@ -125,7 +128,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     if (element == null) return false;
     final Class[] suitableClasses = getSuitableClasses();
     for (Class suitableClass : suitableClasses) {
-      if (suitableClass.isAssignableFrom(element.getClass())) return true;
+      if (ReflectionCache.isAssignable(suitableClass, element.getClass())) return true;
     }
     return false;
   }

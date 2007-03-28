@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   }
 
 
+  @NotNull
   public List<PsiFile> getAllFiles() {
     final ArrayList<PsiFile> roots = new ArrayList<PsiFile>(myRoots.values());
     final PsiFile base = myRoots.get(getBaseLanguage());

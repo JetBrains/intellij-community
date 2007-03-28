@@ -26,7 +26,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   Set<Language> getPrimaryLanguages();
   PsiFile getPsi(Language target);
 
-  List<PsiFile> getAllFiles();
+  @NotNull List<PsiFile> getAllFiles();
 
   boolean isEventSystemEnabled();
   boolean isPhysical();
