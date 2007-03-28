@@ -229,7 +229,7 @@ public final class GridChangeUtilTest extends TestCase {
 
       assertFalse(GridChangeUtil.canDeleteColumn(grid, 0));
       assertFalse(GridChangeUtil.canDeleteColumn(grid, 1));
-      assertTrue(GridChangeUtil.canDeleteColumn(grid, 2));
+      assertFalse(GridChangeUtil.canDeleteColumn(grid, 2));
       assertTrue(GridChangeUtil.canDeleteColumn(grid, 3));
       assertTrue(GridChangeUtil.canDeleteColumn(grid, 4));
     }
@@ -259,19 +259,6 @@ public final class GridChangeUtilTest extends TestCase {
         assertFalse(GridChangeUtil.canDeleteRow(grid, i));
       }
     }
-  }
-
-  public void test_delete_2() throws Exception{
-    final RadContainer grid = SampleGrid.create();
-    GridChangeUtil.deleteCell(grid, 2, false);
-    assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS - 1);
-
-    assertComponentCellAndSpan(grid, 0, 0, 2);
-    assertComponentCellAndSpan(grid, 1, 1, 2);
-    assertComponentCellAndSpan(grid, 2, 0, 3);
-    assertComponentCellAndSpan(grid, 3, 1, 1);
-    assertComponentCellAndSpan(grid, 4, 2, 2);
-    assertComponentCellAndSpan(grid, 5, 0, 1);
   }
 
   public void testMoveRowDown() throws Exception {
