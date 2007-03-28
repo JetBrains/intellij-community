@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -75,11 +74,11 @@ public final class FormEditingUtil {
     editor.refreshAndSave(true);
   }
 
-  public static void deleteComponents(final List<? extends RadComponent> selection, boolean deleteEmptyCells) {
+  public static void deleteComponents(final Collection<? extends RadComponent> selection, boolean deleteEmptyCells) {
     if (selection.size() == 0) {
       return;
     }
-    final RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.get(0));
+    final RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.iterator().next());
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
@@ -461,26 +460,31 @@ public final class FormEditingUtil {
   }
 
   public static void deleteRowOrColumn(final GuiEditor editor, final RadContainer container,
-                                        final int cell, final boolean isRow) {
+                                       final int[] cellsToDelete, final boolean isRow) {
+    Arrays.sort(cellsToDelete);
+    final int[] cells = ArrayUtil.reverseArray(cellsToDelete);
     if (!editor.ensureEditable()) {
       return;
     }
 
     Runnable runnable = new Runnable() {
       public void run() {
-        if (!GridChangeUtil.canDeleteCell(container, cell, isRow, false)) {
-          ArrayList<RadComponent> componentsInColumn = new ArrayList<RadComponent>();
+        if (!GridChangeUtil.canDeleteCells(container, cells, isRow, false)) {
+          Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
           for(RadComponent component: container.getComponents()) {
             GridConstraints c = component.getConstraints();
-            if (c.contains(isRow, cell)) {
-              componentsInColumn.add(component);
+            for(int cell: cells) {
+              if (c.contains(isRow, cell)) {
+                componentsInColumn.add(component);
+                break;
+              }
             }
           }
 
           if (componentsInColumn.size() > 0) {
             String message = isRow
-                             ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size())
-                             : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size());
+                             ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
+                             : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
 
             final int rc = Messages.showYesNoDialog(editor, message,
                                                     isRow ? UIDesignerBundle.message("delete.row.title")
@@ -493,7 +497,9 @@ public final class FormEditingUtil {
           }
         }
 
-        container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+        for(int cell: cells) {
+          container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+        }
         editor.refreshAndSave(true);
       }
     };

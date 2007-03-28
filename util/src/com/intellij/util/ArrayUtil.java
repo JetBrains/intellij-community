@@ -248,6 +248,14 @@ public class ArrayUtil {
     return newArray;
   }
 
+  public static int[] reverseArray(int[] array) {
+    int[] newArray = array.clone();
+    for (int i = 0; i < array.length; i++) {
+      newArray[array.length - i - 1] = array[i];
+    }
+    return newArray;
+  }
+
   public static int lexicographicCompare(@NotNull String[] obj1, @NotNull String[] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
       String o1 = i < obj1.length ? obj1[i] : null;

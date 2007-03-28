@@ -139,6 +139,15 @@ public final class GridChangeUtil {
     return true;
   }
 
+  public static boolean canDeleteCells(final RadContainer grid, final int[] cells, final boolean row, final boolean mustBeEmpty) {
+    for(int cell: cells) {
+      if (!canDeleteCell(grid, cell, row, mustBeEmpty)) {
+        return false;
+      }
+    }
+    return true;    
+  }
+
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is deleted, otherwise column

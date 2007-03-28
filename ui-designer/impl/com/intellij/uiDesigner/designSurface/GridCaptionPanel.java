@@ -424,9 +424,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDeleteProvider implements DeleteProvider {
     public void deleteElement(DataContext dataContext) {
-      int selectedIndex = mySelectionModel.getMinSelectionIndex();
-      if (selectedIndex >= 0) {
-        FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selectedIndex, myIsRow);
+      int[] selection = getSelectedCells(null);
+      if (selection.length > 0) {
+        FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selection, myIsRow);
       }
     }
 
@@ -434,10 +434,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
         return false;
       }
+      int[] selection = getSelectedCells(null);
       if (myIsRow) {
-        return mySelectedContainer.getGridRowCount() > 1;
+        return mySelectedContainer.getGridRowCount() > selection.length;
       }
-      return mySelectedContainer.getGridColumnCount() > 1;
+      return mySelectedContainer.getGridColumnCount() > selection.length;
     }
   }
 

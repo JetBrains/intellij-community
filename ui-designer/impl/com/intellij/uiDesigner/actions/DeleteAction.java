@@ -23,28 +23,35 @@ public final class DeleteAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
+    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (editor == null || selection == null || selection.getFocusedIndex() < 0) return;
-    FormEditingUtil.deleteRowOrColumn(editor, selection.getContainer(), selection.getFocusedIndex(), selection.isRow());
+    FormEditingUtil.deleteRowOrColumn(editor, selection.getContainer(), selection.getSelection(), selection.isRow());
     selection.getContainer().revalidate();
   }
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
+    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if(selection == null || selection.getContainer() == null){
       presentation.setVisible(false);
       return;
     }
     presentation.setVisible(true);
-    presentation.setText(!selection.isRow()
-                         ? UIDesignerBundle.message("action.delete.column")
-                         : UIDesignerBundle.message("action.delete.row"));
+    if (selection.getSelection().length > 1) {
+      presentation.setText(!selection.isRow()
+                           ? UIDesignerBundle.message("action.delete.columns")
+                           : UIDesignerBundle.message("action.delete.rows"));
+    }
+    else {
+      presentation.setText(!selection.isRow()
+                           ? UIDesignerBundle.message("action.delete.column")
+                           : UIDesignerBundle.message("action.delete.row"));
+    }
 
-    if(selection.isRow() && selection.getContainer().getGridRowCount() < 2) {
+    if(selection.isRow() && selection.getContainer().getGridRowCount() <= selection.getSelection().length) {
       presentation.setEnabled(false);
     }
-    else if (!selection.isRow() && selection.getContainer().getGridColumnCount() < 2) {
+    else if (!selection.isRow() && selection.getContainer().getGridColumnCount() <= selection.getSelection().length) {
       presentation.setEnabled(false);
     }
     else if (selection.getFocusedIndex() < 0) {
