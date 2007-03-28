@@ -23,7 +23,7 @@ import java.awt.event.*;
 
 import org.jetbrains.annotations.Nullable;
 
-public class TabsWithActions extends JComponent implements PropertyChangeListener {
+public class JBTabs extends JComponent implements PropertyChangeListener {
 
   private ActionManager myActionManager;
   private List<TabInfo> myInfos = new ArrayList<TabInfo>();
@@ -49,7 +49,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private PopupMenuListener myPopupListener;
   private JPopupMenu myActivePopup;
 
-  public TabsWithActions(ActionManager actionManager, Disposable parent) {
+  public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
 
     myOwnGroup = new DefaultActionGroup();
@@ -59,11 +59,12 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     UIUtil.addAwtListener(new AWTEventListener() {
       public void eventDispatched(final AWTEvent event) {
         final FocusEvent fe = (FocusEvent)event;
-        final TabsWithActions tabs = findTabs(fe.getComponent());
+        final JBTabs tabs = findTabs(fe.getComponent());
         if (tabs == null) return;
         if (fe.getID() == FocusEvent.FOCUS_LOST) {
           tabs.setFocused(false);
-        } else if (fe.getID() == FocusEvent.FOCUS_GAINED) {
+        }
+        else if (fe.getID() == FocusEvent.FOCUS_GAINED) {
           tabs.setFocused(true);
         }
       }
@@ -84,11 +85,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   }
 
-  private TabsWithActions findTabs(Component c) {
+  private JBTabs findTabs(Component c) {
     Component eachParent = c;
-    while(eachParent != null) {
-      if (eachParent instanceof TabsWithActions) {
-        return (TabsWithActions)eachParent;
+    while (eachParent != null) {
+      if (eachParent instanceof JBTabs) {
+        return (JBTabs)eachParent;
       }
       eachParent = eachParent.getParent();
     }
@@ -105,9 +106,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     if (index < 0) {
       myInfos.add(0, info);
-    } else if (index > myInfos.size() - 1) {
+    }
+    else if (index > myInfos.size() - 1) {
       myInfos.add(info);
-    } else {
+    }
+    else {
       myInfos.add(index, info);
     }
 
@@ -117,6 +120,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     return info;
   }
+
   public TabInfo addTab(TabInfo info) {
     return addTab(info, -1);
   }
@@ -174,9 +178,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         myInfo2Toolbar.put(tabInfo, toolbar);
         add(toolbar);
       }
-    } else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
+    }
+    else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       myInfo2Label.get(tabInfo).setText(tabInfo.getText());
-    } else if (TabInfo.ICON.equals(evt.getPropertyName())) {
+    }
+    else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
     }
 
@@ -192,12 +198,30 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   protected JComponent createToolbarComponent(final TabInfo tabInfo) {
-    if (tabInfo.getGroup() == null) return null;
-    return myActionManager.createActionToolbar(tabInfo.getPlace(), tabInfo.getGroup(), true).getComponent();
+    return new Toolbar(tabInfo);
+  }
+
+  private class Toolbar extends JPanel {
+    public Toolbar(TabInfo info) {
+      setLayout(new BorderLayout());
+
+      final ActionGroup group = info.getGroup();
+      if (group != null) {
+        final String place = info.getPlace();
+        final JComponent actionToolbar =
+          myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, true).getComponent();
+        add(actionToolbar, BorderLayout.CENTER);
+      }
+
+      final JComponent side = info.getSideComponent();
+      if (side != null) {
+        add(side, BorderLayout.EAST);
+      }
+    }
   }
 
   public void doLayout() {
-    final TabsWithActions.Max max = computeMaxSize();
+    final JBTabs.Max max = computeMaxSize();
     myHeaderFitSize = new Dimension(getSize().width, Math.max(max.myLabel.height, max.myToolbar.height));
     Insets insets = getInsets();
     if (insets == null) {
@@ -214,12 +238,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
       final JComponent comp = eachInfo.getComponent();
       if (selected == eachInfo) {
-        comp.setBounds(insets.left + INNER,
-                       myHeaderFitSize.height + insets.top,
-                       getWidth() - insets.left - insets.right - INNER * 2,
+        comp.setBounds(insets.left + INNER, myHeaderFitSize.height + insets.top, getWidth() - insets.left - insets.right - INNER * 2,
                        getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
         mySelectedBounds = label.getBounds();
-      } else {
+      }
+      else {
         comp.setBounds(0, 0, 0, 0);
       }
       final JComponent eachToolbar = myInfo2Toolbar.get(eachInfo);
@@ -232,11 +255,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     if (selectedToolbar != null) {
       final int toolbarInset = getArcSize() * 2;
       if (currentX + selectedToolbar.getMinimumSize().width + toolbarInset < getWidth()) {
-        selectedToolbar.setBounds(currentX + toolbarInset,
-                                  insets.top,
-                                  getSize().width - currentX - insets.left - toolbarInset,
+        selectedToolbar.setBounds(currentX + toolbarInset, insets.top, getSize().width - currentX - insets.left - toolbarInset,
                                   myHeaderFitSize.height - 1);
-      } else {
+      }
+      else {
         selectedToolbar.setBounds(0, 0, 0, 0);
       }
     }
@@ -278,13 +300,14 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     final Color from;
     final Color to;
-    final int alpha ;
+    final int alpha;
     final boolean paintFocused = myFocused || myActivePopup != null;
     if (paintFocused) {
       alpha = 100;
       from = toAlpha(UIUtil.getListSelectionBackground(), alpha);
       to = toAlpha(UIUtil.getListSelectionBackground(), alpha);
-    } else {
+    }
+    else {
       alpha = 150;
       from = toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
       to = toAlpha(UIUtil.getPanelBackgound(), alpha);
@@ -293,8 +316,9 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));
     g2d.fill(path);
     if (paintFocused) {
-      g2d.setColor(UIUtil.getListSelectionBackground().darker().darker());      
-    } else {
+      g2d.setColor(UIUtil.getListSelectionBackground().darker().darker());
+    }
+    else {
       g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
     }
     g2d.draw(path);
@@ -322,7 +346,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     }
 
     max.myToolbar.height++;
-    
+
     return max;
   }
 
@@ -384,7 +408,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     while (component != this || component != null) {
       if (component instanceof TabLabel) {
         return ((TabLabel)component).getInfo();
-      } else if (!labelsOnly) {
+      }
+      else if (!labelsOnly) {
         final TabInfo info = findInfo(component);
         if (info != null) return info;
       }
@@ -416,7 +441,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     return myActionManager;
   }
 
-   public void addTabMouseListener(MouseListener listener) {
+  public void addTabMouseListener(MouseListener listener) {
     removeListeners();
     myTabMouseListeners.add(listener);
     addListeners();
@@ -469,7 +494,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         public void mousePressed(final MouseEvent e) {
           if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1 && !e.isPopupTrigger()) {
             setSelected(info, true);
-          } else if (e.getClickCount() == 1 && e.isPopupTrigger()) {
+          }
+          else if (e.getClickCount() == 1 && e.isPopupTrigger()) {
             String place = getPopupPlace();
             place = place != null ? place : ActionPlaces.UNKNOWN;
             myPopupInfo = myInfo;
@@ -518,7 +544,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     private ShadowAction myShadow;
 
     protected BaseAction(final String copyFromID) {
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), TabsWithActions.this);
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), JBTabs.this);
     }
 
     public final void update(final AnActionEvent e) {
@@ -583,7 +609,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final int[] count = new int[1];
-    final TabsWithActions tabs = new TabsWithActions(null, new Disposable() {
+    final JBTabs tabs = new JBTabs(null, new Disposable() {
       public void dispose() {
       }
     }) {
@@ -608,7 +634,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
       }
     });
 
-    tabs.addTab(new TabInfo(new JTree())).setText("Tree").setActions(new DefaultActionGroup(), null).setIcon(IconLoader.getIcon("/debugger/frame.png"));
+    tabs.addTab(new TabInfo(new JTree())).setText("Tree").setActions(new DefaultActionGroup(), null)
+      .setIcon(IconLoader.getIcon("/debugger/frame.png"));
     tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
     tabs.addTab(new TabInfo(new JTable())).setText("Table").setActions(new DefaultActionGroup(), null);
 

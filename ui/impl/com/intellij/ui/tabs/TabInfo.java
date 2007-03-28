@@ -23,6 +23,7 @@ public final class TabInfo {
   private Icon myIcon;
   private String myPlace;
   private Object myObject;
+  private JComponent mySideComponent;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -65,6 +66,15 @@ public final class TabInfo {
 
   String getPlace() {
     return myPlace;
+  }
+
+  public TabInfo setSideComponent(JComponent comp) {
+    mySideComponent = comp;
+    return this;
+  }
+
+  JComponent getSideComponent() {
+    return mySideComponent;
   }
 
   public TabInfo setActions(ActionGroup group, String place) {
