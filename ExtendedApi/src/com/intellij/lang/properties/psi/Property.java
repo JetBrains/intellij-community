@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.lang.properties.psi.PropertiesElementFactory
+ */
 public interface Property extends PsiNamedElement {
   @Nullable String getKey();
   @Nullable String getValue();
