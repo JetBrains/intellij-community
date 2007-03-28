@@ -9,6 +9,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -147,7 +148,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     }
 
     public void deleteElement(DataContext dataContext) {
-      Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       DeleteHandler.deletePsiElement(myElements, project);
     }
 
@@ -156,14 +157,15 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     }
 
     private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode> selected) {
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      Set<PsiElement> result = new HashSet<PsiElement>();
       for(AbstractTreeNode node: selected) {
         if (node.getValue() instanceof Form) {
           Form form = (Form) node.getValue();
           result.add(form.getClassToBind());
-          for(PsiFile file: form.getFormFiles()) {
-            result.add(file);
-          }
+          result.addAll(Arrays.asList(form.getFormFiles()));
+        }
+        else if (node.getValue() instanceof PsiElement) {
+          result.add((PsiElement) node.getValue());
         }
       }
       return result.toArray(new PsiElement[result.size()]);
