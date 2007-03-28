@@ -3875,7 +3875,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final int min = Math.min(oldEndLine, newEndLine);
         if (min >= lineWidthSize) {
           final int[] delta = new int[min - lineWidthSize + 1];
-          myLineWidths.insert(min, delta);
+          myLineWidths.insert(lineWidthSize, delta);
         }
 
         for (int i = startLine; i <= min; i++) myLineWidths.set(i, -1);
