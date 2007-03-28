@@ -1,19 +1,19 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,8 @@ import java.util.List;
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeValueImpl");
   private static final Class ourReferenceClass = XmlAttributeValue.class;
+  private volatile PsiReference[] myCachedReferences;
+  private volatile long myModCount;
 
   public XmlAttributeValueImpl() {
     super(XmlElementType.XML_ATTRIBUTE_VALUE);
@@ -39,9 +41,22 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return StringUtil.stripQuotesAroundValue(getText());
   }
 
+  public void clearCaches() {
+    super.clearCaches();
+    myCachedReferences = null;
+  }
+
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
+    PsiReference[] cachedReferences = myCachedReferences;
+    final long curModCount = getManager().getModificationTracker().getModificationCount();
+    if (cachedReferences != null && myModCount == curModCount) {
+      return cachedReferences;
+    }
+    cachedReferences = ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
+    myCachedReferences = cachedReferences;
+    myModCount = curModCount;
+    return cachedReferences;
   }
 
   public PsiReference getReference() {

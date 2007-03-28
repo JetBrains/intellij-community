@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -65,10 +67,11 @@ public class FileReference
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    if (myCachedResult == null) {
-      myCachedResult = innerResolve();
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
     }
-    return myCachedResult;
+    return innerResolve();
   }
 
   protected ResolveResult[] innerResolve() {
@@ -85,13 +88,13 @@ public class FileReference
   private void innerResolveInContext(final String text, final PsiFileSystemItem context, final Collection<ResolveResult> result) {
     if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
       result.add(new PsiElementResolveResult(context));
-    } 
+    }
     else if ("..".equals(text)) {
       final PsiFileSystemItem resolved = context.getParent();
       if (resolved != null) {
         result.add(new PsiElementResolveResult(resolved));
       }
-    } 
+    }
     else {
       final int separatorIndex = text.indexOf('/');
       if (separatorIndex >= 0) {
@@ -319,14 +322,24 @@ public class FileReference
   }
 
   public void clearResolveCaches() {
-    myCachedResult = null;
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
+    }
   }
-
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     for (final FileReferenceHelper<?> helper : getHelpers()) {
       result.addAll(helper.registerFixes(null, this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);
+  }
+
+  static class MyResolver implements ResolveCache.PolyVariantResolver {
+    static MyResolver INSTANCE = new MyResolver();
+
+    public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
+      return ((FileReference)ref).innerResolve();
+    }
   }
 }
