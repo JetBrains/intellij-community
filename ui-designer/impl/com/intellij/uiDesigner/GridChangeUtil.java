@@ -118,6 +118,8 @@ public final class GridChangeUtil {
       return false;
     }
 
+    boolean haveExtendRight = false;
+    boolean haveExtendLeft = false;
     for (int i = 0; i < grid.getComponentCount(); i++) {
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
       final int cell = constraints.getCell(isRow);
@@ -133,7 +135,22 @@ public final class GridChangeUtil {
           // only cells where components with span 1 are located cannot be deleted
           return false;
         }
+        if (span > 1) {
+          if (cell == cellIndex) {
+            haveExtendRight = true;
+          }
+          else if (cell + span - 1 == cellIndex) {
+            haveExtendLeft = true;
+          }
+        }
       }
+    }
+    if (haveExtendLeft && haveExtendRight) {
+      // if there are components which end at this column and other components which begin at it,
+      // deleting it will not keep the layout
+      // AA
+      //  BB
+      return false;
     }
 
     return true;
