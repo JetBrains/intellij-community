@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2007 JetBrains s.r.o.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
@@ -212,7 +227,7 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
-                                             yybegin(IN_INNER_BLOCK);
+                                             yybegin(WAIT_FOR_REGEX);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
@@ -247,6 +262,7 @@ mGSTRING_LITERAL = \"\"
 
 <IN_INNER_BLOCK>{
   "{"                                     {  blockStack.push(mLCURLY);
+                                             yybegin(WAIT_FOR_REGEX);
                                              return(mLCURLY);  }
 
   "}"                                     {  if (!blockStack.isEmpty()) {
@@ -283,7 +299,7 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLBRACK);
-                                             yybegin(IN_INNER_BLOCK);
+                                             yybegin(WAIT_FOR_REGEX);
                                              return mLCURLY; }
   [^{[:jletter:]](. | mONE_NL)*           {  clearStacks();
                                              return mWRONG_GSTRING_LITERAL; }
@@ -354,7 +370,7 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDIV);
-                                             yybegin(IN_INNER_BLOCK);
+                                             yybegin(WAIT_FOR_REGEX);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
@@ -429,7 +445,7 @@ mGSTRING_LITERAL = \"\"
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
-\" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
+\" ([^\""$"\n] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
 | \"\"\"[^"$"]                                             {  return mWRONG_GSTRING_LITERAL; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
