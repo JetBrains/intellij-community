@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.filters.AndFilter;
@@ -220,6 +221,10 @@ public class CodeInsightUtil {
 
       public void visitImportList(PsiImportList list) {
         if (!(list instanceof JspxImportList)) super.visitImportList(list);
+      }
+
+      public void visitJspFile(final JspFile file) {
+        visitFile(file);
       }
     };
     commonParent.accept(visitor);
@@ -548,7 +553,7 @@ public class CodeInsightUtil {
     }
   }
 
-  public static PsiType createType(PsiClass cls,
+  private static PsiType createType(PsiClass cls,
                              PsiSubstitutor currentSubstitutor,
                              int arrayDim) {
     final PsiElementFactory elementFactory = cls.getManager().getElementFactory();

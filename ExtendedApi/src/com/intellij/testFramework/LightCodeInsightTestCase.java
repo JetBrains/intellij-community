@@ -92,7 +92,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param fileText - data file text.
    * @throws IOException
    */
-  protected static void configureFromFileText(final String fileName, String fileText) throws IOException {
+  protected static void configureFromFileText(@NonNls final String fileName, String fileText) throws IOException {
     final Document fakeDocument = new DocumentImpl(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);

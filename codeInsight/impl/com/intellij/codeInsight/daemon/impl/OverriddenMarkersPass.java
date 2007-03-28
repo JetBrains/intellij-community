@@ -32,22 +32,14 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
 
   private final PsiFile myFile;
-  private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
 
-  private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
+  private Collection<LineMarkerInfo> myMarkers;
 
-  public OverriddenMarkersPass(
-    Project project,
-    PsiFile file,
-    Document document,
-    int startOffset,
-    int endOffset
-    ) {
+  public OverriddenMarkersPass(Project project, PsiFile file, Document document, int startOffset, int endOffset) {
     super(project, document);
     myFile = file;
-    myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
@@ -64,9 +56,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    UpdateHighlightersUtil.setLineMarkersToEditor(
-      myProject, myDocument, myStartOffset, myEndOffset,
-      myMarkers, Pass.UPDATE_OVERRIDEN_MARKERS);
+    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_OVERRIDEN_MARKERS);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
