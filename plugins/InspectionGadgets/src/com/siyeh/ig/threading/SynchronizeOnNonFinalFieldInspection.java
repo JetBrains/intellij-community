@@ -118,6 +118,9 @@ public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
             @NotNull PsiField field) {
         final PsiClass containingClass = field.getContainingClass();
         final PsiMethod[] constructors = containingClass.getConstructors();
+        if (constructors.length == 0) {
+            return false;
+        }
         for (PsiMethod constructor : constructors) {
             if (!InitializationUtils.methodAssignsVariableOrFails(
                     constructor, field)) {
@@ -144,10 +147,16 @@ public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiField)) {
+            if (!(element instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiField field = (PsiField) element;
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)element;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return;
+            }
+            final PsiField field = (PsiField) target;
             final PsiModifierList modifierList = field.getModifierList();
             if (modifierList == null) {
                 return;
