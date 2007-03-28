@@ -170,16 +170,11 @@ public class ViewOfflineResultsAction extends AnAction {
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, inspectionContext,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
-    try {
-      view.update();
-      TreeUtil.selectFirstNode(view.getTree());
-      if (inspectionContext.getContentManager() != null) { //test
-        inspectionContext.addView(view, title);
-      }
-      return view;
+    view.update();
+    TreeUtil.selectFirstNode(view.getTree());
+    if (inspectionContext.getContentManager() != null) { //test
+      inspectionContext.addView(view, title);
     }
-    finally {
-      ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionFinished();
-    }
+    return view;
   }
 }
