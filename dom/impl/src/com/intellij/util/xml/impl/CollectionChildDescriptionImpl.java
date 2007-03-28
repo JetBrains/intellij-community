@@ -10,11 +10,12 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -110,7 +111,11 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getGetterMethod().getAnnotation(annotationClass);
+    final T annotation = getGetterMethod().getAnnotation(annotationClass);
+    if (annotation != null) return annotation;
+
+    final Type elemType = getType();
+    return elemType instanceof AnnotatedElement ? ((AnnotatedElement)elemType).getAnnotation(annotationClass) : null;
   }
 
   public boolean equals(final Object o) {
