@@ -438,7 +438,7 @@ mGSTRING_LITERAL = \"\"
 
 "?"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mQUESTION);  }
-"/"                                       {  return(mDIV); }
+"/"                                       {  return(mDIV);  } 
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mDIV_ASSIGN);  }
 "("                                       {  yybegin(WAIT_FOR_REGEX);
