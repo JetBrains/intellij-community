@@ -1,0 +1,12 @@
+/asd
+/abcdef
+-----
+Groovy script
+  PsiErrorElement:';' or new line expected
+    PsiElement(/)('/')
+    PsiElement(identifier)('asd')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(wrong regex)('/abcdef')
+    PsiErrorElement:Wrong string literal
+      <empty list>
