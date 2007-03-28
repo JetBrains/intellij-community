@@ -3,7 +3,6 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -13,8 +12,6 @@ import java.util.List;
 
 public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntBuildFileClassLoaderHolder");
-  @NonNls private static final String USER_HOME = "user.home";
-  @NonNls private static final String ANT_LIB = "/.ant/lib";
 
   public AntBuildFileClassLoaderHolder(AbstractProperty.AbstractPropertyContainer options) {
     super(options);
@@ -24,10 +21,6 @@ public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
     final ArrayList<File> files = new ArrayList<File>();
     for (final AntClasspathEntry entry : AntBuildFileImpl.ADDITIONAL_CLASSPATH.get(myOptions)) {
       entry.addFilesTo(files);
-    }
-    final String homeDir = System.getProperty(USER_HOME);
-    if (homeDir != null && homeDir.length() > 0) {
-      new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(files);
     }
     
     final AntInstallation antInstallation = AntBuildFileImpl.RUN_WITH_ANT.get(myOptions);
