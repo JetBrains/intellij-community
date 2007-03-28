@@ -1,0 +1,35 @@
+protected static a (A.B<String>.C f) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(protected)('protected')
+      PsiWhiteSpace(' ')
+      PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Class type
+          Class type
+            Class type
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+            Type arguments
+              PsiElement(<)('<')
+              Type argument
+                Class type
+                  PsiElement(identifier)('String')
+              PsiElement(>)('>')
+          PsiElement(.)('.')
+          PsiElement(identifier)('C')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('f')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

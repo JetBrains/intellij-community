@@ -109,11 +109,16 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition");
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition");
 
+  //types
   GroovyElementType CLASS_INTERFACE_TYPE = new GroovyElementType("class or interface type");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
   GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause");
   GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
 
+  GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type parameters");
+  GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type parameter");
+
+  //fields
   GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
   GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
   GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
@@ -126,6 +131,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
   GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
 
+  //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
   GroovyElementType PARAMETER_MODIFIERS = new GroovyElementType("parameter modifiers");

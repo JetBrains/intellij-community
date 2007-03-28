@@ -1,0 +1,26 @@
+synchronized a (A.B<String> s)
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(synchronized)('synchronized')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Class type
+          Class type
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          PsiElement(identifier)('B')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Class type
+                PsiElement(identifier)('String')
+            PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+    PsiElement())(')')

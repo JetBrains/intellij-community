@@ -1,0 +1,35 @@
+private a (A.Map<String, int> b) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(private)('private')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Class type
+          Class type
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          PsiElement(identifier)('Map')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Class type
+                PsiElement(identifier)('String')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Type argument
+              Built in type
+                PsiElement(int)('int')
+            PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

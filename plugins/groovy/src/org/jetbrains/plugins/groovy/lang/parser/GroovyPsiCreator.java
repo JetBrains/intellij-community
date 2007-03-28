@@ -58,9 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrArrayTypeElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrBuiltInTypeImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClassInterfaceTypeImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -141,6 +139,10 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(PARAMETER)) return new GrParameterImpl(node);
     if (elem.equals(PARAMETER_MODIFIERS)) return new GrParameterModifiersImpl(node);
 
+    //type parameters
+    if (elem.equals(TYPE_ARGUMENT)) return new GrTypeArgumentImpl(node);
+    if (elem.equals(TYPE_ARGUMENTS)) return new GrTypeArgumentsImpl(node);
+
     //expressions
     if (elem.equals(EXPRESSION_STATEMENT)) return new GrCallExpressionImpl(node);
     if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgsImpl(node);
@@ -169,6 +171,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(REGEX)) return new GrRegexImpl(node);
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
     if (elem.equals(PARENTHSIZED_EXPRESSION)) return new GrParenthesizedExprImpl(node);
+
 
     //Paths
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);

@@ -1,0 +1,29 @@
+public static void main (String[] args) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(public)('public')
+      PsiWhiteSpace(' ')
+      PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(void)('void')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('main')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Array type
+          Class type
+            PsiElement(identifier)('String')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('args')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

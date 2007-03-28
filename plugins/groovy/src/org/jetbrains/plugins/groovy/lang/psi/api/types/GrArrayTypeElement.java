@@ -15,14 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiElement;
 import com.intellij.navigation.NavigationItem;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author Ilya.Sergey
  */
-public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
 }

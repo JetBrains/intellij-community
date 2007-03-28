@@ -1,0 +1,27 @@
+def a (A.B.C x) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Class type
+          Class type
+            Class type
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+          PsiElement(.)('.')
+          PsiElement(identifier)('C')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('x')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

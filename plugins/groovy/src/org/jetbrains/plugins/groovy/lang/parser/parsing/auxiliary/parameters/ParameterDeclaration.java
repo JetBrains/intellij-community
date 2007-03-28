@@ -55,7 +55,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
         pdMarker.done(PARAMETER);
         return PARAMETER;
-      } else { //parse typized identifier
+      } else { //parse typized parameter
         checkMarker.drop();
         VariableInitializer.parse(builder);
 
@@ -63,8 +63,17 @@ public class ParameterDeclaration implements GroovyElementTypes {
         return PARAMETER;
       }
     } else {
-      //TODO:
-      return WRONGWAY;
+      checkMarker.rollbackTo();
+
+      if (!ParserUtils.getToken(builder, mIDENT)) { //parse parameter without type
+        pdMarker.rollbackTo();
+        return WRONGWAY;
+      }
+
+      VariableInitializer.parse(builder);
+
+      pdMarker.done(PARAMETER);
+      return PARAMETER;
     }
   }
 }

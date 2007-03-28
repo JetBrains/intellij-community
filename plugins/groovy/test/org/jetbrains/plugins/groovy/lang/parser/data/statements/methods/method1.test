@@ -4,6 +4,8 @@ Groovy script
   Method
     Modifiers
       PsiElement(protected)('protected')
+      PsiWhiteSpace(' ')
+      PsiElement(synchronized)('synchronized')
     PsiWhiteSpace(' ')
     Class type
       PsiElement(identifier)('String')
@@ -14,7 +16,7 @@ Groovy script
     Parameter list
       Parameter
         Class type
-          PsiElement(identifier)('String')
+          PsiElement(identifier)('Object')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('param')
     PsiElement())(')')
