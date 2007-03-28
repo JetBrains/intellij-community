@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,6 +212,33 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     myProject.init();
   }
 
+  public void load() throws IOException {
+    super.load();
+    try {
+      final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+      assert stateStorage instanceof FileBasedStorage;
+      FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
+
+      Document doc = fileBasedStorage.getDocument();
+      final Element element = doc.getRootElement();
+
+      final List attributes = element.getAttributes();
+      for (Object attribute : attributes) {
+        Attribute attr = (Attribute)attribute;
+        final String optionName = attr.getName();
+        final @NonNls String optionValue = attr.getValue();
+
+        if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
+          setSavePathsRelative(true);
+        }
+      }
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+      throw new IOException(e.getMessage());
+    }
+  }
+
   private boolean checkMacros(final ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = getProjectFilePath();
     Document document = JDOMUtil.loadDocument(new File(projectFilePath));
@@ -299,11 +327,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls
   protected String getRootNodeName() {
     return "project";
-  }
-
-
-  public boolean isSavePathsRelative() {
-    return super.isSavePathsRelative();
   }
 
   String getLineSeparator(final VirtualFile file) {
