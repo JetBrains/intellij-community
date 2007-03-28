@@ -96,12 +96,24 @@ public class VcsUtil
     markAsUpToDate(project, true, canonicalPath);
   }
 
-  public static void refreshFiles( HashSet<FilePath> paths )
+  /**
+   * Call "fileDirty" in the read action.
+   */
+  public static void markFileAsDirty( final Project project, final VirtualFile file )
+  {
+    final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance( project );
+    ApplicationManager.getApplication().runReadAction( new Runnable() { public void run() { mgr.fileDirty( file ); } } );
+  }
+
+  public static void refreshFiles( Project project, HashSet<FilePath> paths )
   {
     for( FilePath path : paths )
     {
       VirtualFile vFile = path.getVirtualFile();
-      vFile.refresh( true, vFile.isDirectory() );
+      if( vFile.isDirectory() )
+        markFileAsDirty( project, vFile );
+      else
+        vFile.refresh( true, vFile.isDirectory() );
     }
   }
 
@@ -188,17 +200,20 @@ public class VcsUtil
     return new VcsSelection(editor.getDocument(), selectionModel);
   }
 
-  public static AbstractVcs getVcsFor(Project project, FilePath file) {
+  @Nullable
+  public static AbstractVcs getVcsFor(Project project, FilePath file)
+  {
+    AbstractVcs vcs = null;
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
     VirtualFile virtualFile = file.getVirtualFile();
     VirtualFile virtualFileParent = file.getVirtualFileParent();
-    if (virtualFile != null){
-      return projectLevelVcsManager.getVcsFor(virtualFile);
-    } else if (virtualFileParent != null){
-      return projectLevelVcsManager.getVcsFor(virtualFileParent);
-    } else {
-      return null;
-    }
+    if (virtualFile != null)
+      vcs = projectLevelVcsManager.getVcsFor(virtualFile);
+    else
+    if (virtualFileParent != null)
+      vcs = projectLevelVcsManager.getVcsFor(virtualFileParent);
+
+    return vcs;
   }
 
   /**
