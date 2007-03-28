@@ -93,6 +93,12 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
         if (nameElement != null) {
           textRange = nameElement.getTextRange();
         }
+
+        // highlight injected element in host document textrange
+        PsiElement hostElement = psiFile.getContext();
+        if (hostElement != null) {
+          textRange = textRange.shiftRight(hostElement.getTextRange().getStartOffset());
+        }
       }
       myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                     HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
@@ -103,6 +109,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
   private static Editor createEditor(final PsiFile psiFile, Document document) {
     Project project = psiFile.getProject();
+
     Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getFileType(), true);
 
     EditorSettings settings = editor.getSettings();

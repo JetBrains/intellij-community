@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -124,8 +125,9 @@ public class EditorFactoryImpl extends EditorFactory {
     return editor;
   }
 
-  private Editor createEditor(Document document, boolean isViewer, Project project) {
-    EditorImpl editor = new EditorImpl(document, isViewer, project);
+  private Editor createEditor(@NotNull Document document, boolean isViewer, Project project) {
+    Document hostDocument = document instanceof DocumentRange ? ((DocumentRange)document).getDelegate() : document;
+    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
