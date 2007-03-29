@@ -55,6 +55,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
   static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
+  private Set<String> myTrackingSet = new TreeSet<String>();
 
   @SuppressWarnings({"UnusedDeclaration"})
   public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
@@ -202,7 +203,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
-    final boolean macrosOk = checkMacros(myProjectManager, getDefinedMacros());
+    final boolean macrosOk = checkMacros(getDefinedMacros());
     if (!macrosOk) {
       throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
     }
@@ -237,7 +238,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  private boolean checkMacros(final ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
+  private boolean checkMacros(Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = getProjectFilePath();
     Document document = JDOMUtil.loadDocument(new File(projectFilePath));
     Element root = document.getRootElement();
@@ -316,6 +317,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
   }
 
+  public Set<String> getMacroTrackingSet() {
+    return myTrackingSet;
+  }
+
 
   protected XmlElementStorage getMainStorage() {
     return (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
@@ -388,7 +393,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
+    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(myTrackingSet), myProject);
   }
 
   public ProjectImpl getProject() {

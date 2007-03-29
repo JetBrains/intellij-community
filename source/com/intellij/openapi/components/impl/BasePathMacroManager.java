@@ -11,7 +11,6 @@ import org.jdom.Element;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.TreeSet;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros;
@@ -38,8 +37,8 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
-  public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
-    return new MyTrackingPathMacroSubstitutor();
+  public TrackingPathMacroSubstitutor createTrackingSubstitutor(final Set<String> macroSet) {
+    return new MyTrackingPathMacroSubstitutor(macroSet);
   }
 
   public String expandPath(final String path) {
@@ -69,7 +68,11 @@ public class BasePathMacroManager extends PathMacroManager {
 
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
-    private Set<String> myUsedMacros = new TreeSet<String>();
+    private Set<String> myUsedMacros;
+
+    public MyTrackingPathMacroSubstitutor(final Set<String> usedMacros) {
+      myUsedMacros = usedMacros;
+    }
 
     public Set<String> getUsedMacros() {
       return Collections.unmodifiableSet(myUsedMacros);

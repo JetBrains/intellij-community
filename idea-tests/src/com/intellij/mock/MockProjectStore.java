@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author peter
@@ -66,6 +68,10 @@ public class MockProjectStore implements IProjectStore {
   @NotNull
   public String getProjectFilePath() {
     return null;
+  }
+
+  public Set<String> getMacroTrackingSet() {
+    return new TreeSet<String>();
   }
 
   public void initStore() {

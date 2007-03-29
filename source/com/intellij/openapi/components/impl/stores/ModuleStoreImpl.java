@@ -156,6 +156,9 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   protected StateStorageManager createStateStorageManager() {
-    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);
+    Set<String> s = ((ProjectImpl)myModule.getProject()).getStateStore().getMacroTrackingSet();
+
+    return new ModuleStateStorageManager(
+      PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(s), myModule);
   }
 }

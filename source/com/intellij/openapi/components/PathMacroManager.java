@@ -4,6 +4,8 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public abstract class PathMacroManager implements PathMacroSubstitutor {
   public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
     final PathMacroManager component = (PathMacroManager)componentManager.getPicoContainer().getComponentInstanceOfType(PathMacroManager.class);
@@ -16,5 +18,5 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
   public abstract void expandPaths(Element element);
   public abstract void collapsePaths(Element element);
 
-  public abstract TrackingPathMacroSubstitutor createTrackingSubstitutor();
+  public abstract TrackingPathMacroSubstitutor createTrackingSubstitutor(final Set<String> macroSet);
 }
