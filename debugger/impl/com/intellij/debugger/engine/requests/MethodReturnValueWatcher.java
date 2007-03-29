@@ -7,6 +7,7 @@ package com.intellij.debugger.engine.requests;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.MethodExitRequest;
@@ -93,17 +94,21 @@ public class MethodReturnValueWatcher  {
   }
 
   private void updateRequestState(final boolean enabled) {
-    if (enabled) {
-      myLastExecutedMethod = null;
-      myLastMethodReturnValue = null;
-      if (!myWatchMethodReturnValueRequest.isEnabled()) {
-        myWatchMethodReturnValueRequest.enable();
+    try {
+      if (enabled) {
+        myLastExecutedMethod = null;
+        myLastMethodReturnValue = null;
+        if (!myWatchMethodReturnValueRequest.isEnabled()) {
+          myWatchMethodReturnValueRequest.enable();
+        }
+      }
+      else {
+        if (myWatchMethodReturnValueRequest.isEnabled()) {
+          myWatchMethodReturnValueRequest.disable();
+        }
       }
     }
-    else {
-      if (myWatchMethodReturnValueRequest.isEnabled()) {
-        myWatchMethodReturnValueRequest.disable();
-      }
+    catch (ObjectCollectedException ignored) {
     }
   }
 }
