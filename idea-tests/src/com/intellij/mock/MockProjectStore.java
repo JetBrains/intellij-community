@@ -4,12 +4,12 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +54,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getWorkspaceFile is not yet implemented in " + getClass().getName());
   }
 
-  public void loadProjectFromTemplate(Project project) {
+  public void loadProjectFromTemplate(ProjectImpl project) {
     throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());
   }
 

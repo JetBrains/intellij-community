@@ -166,4 +166,8 @@ abstract class XmlElementStorage implements StateStorage {
 
     return myDocument;
   }
+
+  public void setDefaultState(final Element element) {
+    myDocument = new Document(element);
+  }
 }

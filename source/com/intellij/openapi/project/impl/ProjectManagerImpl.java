@@ -134,7 +134,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (useDefaultProjectSettings) {
       try {
-        project.getStateStore().loadProjectFromTemplate(getDefaultProject());
+        project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
       }
       catch (Exception e) {
         LOG.error(e);

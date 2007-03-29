@@ -30,19 +30,24 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     myElement = projectManager.getDefaultProjectRootElement();
   }
 
+  Element getStateCopy() {
+    return (Element)myProjectManager.getDefaultProjectRootElement().clone();
+  }
+
+
   @Override
   protected StateStorageManager createStateStorageManager() {
-
-    Document d = null;
+    Document _d = null;
 
     if (myElement != null) {
       myElement.detach();
-      d = new Document(myElement);
+      _d = new Document(myElement);
     }
 
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getComponentManager());
 
-    final Document document = d;
+    final Document document = _d;
+
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager) {
       @Nullable
       protected Document loadDocument() throws StateStorage.StateStorageException {

@@ -1,6 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
@@ -34,7 +34,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getWorkspaceFile();
 
-  void loadProjectFromTemplate(Project project);
+  void loadProjectFromTemplate(ProjectImpl project);
 
   @NotNull
   String getProjectFileName();

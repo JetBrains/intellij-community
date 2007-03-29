@@ -16,7 +16,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -29,10 +28,10 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,7 +290,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE)).getVirtualFile();
   }
 
-  public void loadProjectFromTemplate(final Project project) {
+  public void loadProjectFromTemplate(final ProjectImpl defaultProject) {
+    final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+
+    assert stateStorage instanceof XmlElementStorage;
+    XmlElementStorage xmlElementStorage = (XmlElementStorage)stateStorage;
+
+    defaultProject.save();
+    final IProjectStore projectStore = defaultProject.getStateStore();
+    assert projectStore instanceof DefaultProjectStoreImpl;
+    DefaultProjectStoreImpl defaultProjectStore = (DefaultProjectStoreImpl)projectStore;
+    final Element element = defaultProjectStore.getStateCopy();
+    xmlElementStorage.setDefaultState(element);
   }
 
   @NotNull
