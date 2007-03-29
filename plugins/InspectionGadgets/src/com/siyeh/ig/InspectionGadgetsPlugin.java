@@ -580,6 +580,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerJdk5SpecificInspections() {
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
+        m_inspectionClasses.add(EnumerationCanBeIterationInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
         m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
         m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
