@@ -37,14 +37,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EnumerationCanBeIterationInspection extends BaseInspection {
+
     @NonNls
-        static final String ITERATOR_TEXT = ".iterator()";
+    static final String ITERATOR_TEXT = ".iterator()";
+
     @NonNls
-        static final String KEY_SET_ITERATOR_TEXT =
-            ".keySet().iterator()";
+    static final String KEY_SET_ITERATOR_TEXT = ".keySet().iterator()";
+
     @NonNls
-        static final String VALUES_ITERATOR_TEXT =
-            ".values().iterator()";
+    static final String VALUES_ITERATOR_TEXT = ".values().iterator()";
 
     @NotNull
     public String getDisplayName() {
@@ -55,8 +56,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "enumeration.can.be.iteration.problem.descriptor",
-                infos[0]);
+                "enumeration.can.be.iteration.problem.descriptor", infos[0]);
     }
 
     @Nullable
@@ -121,26 +121,26 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (qualifier == null) {
                 qualifierText = "";
             } else {
-                qualifierText = qualifier.getText() + '.';
+                qualifierText = qualifier.getText();
             }
             final String newStatementText;
             if ("elements".equals(methodName)) {
                 if (TypeUtils.expressionHasTypeOrSubtype(qualifier,
                         "java.util.Vector")) {
-                    newStatementText = "Iterator " +
-                            variableName + ' ' + qualifierText + ITERATOR_TEXT;
+                    newStatementText = "Iterator " + variableName + '=' +
+                            qualifierText + ITERATOR_TEXT + ';';
                 } else if (TypeUtils.expressionHasTypeOrSubtype(qualifier,
                     "java.util.Hashtable")) {
-                    newStatementText = "Iterator " + variableName +
-                            + ' '  + qualifierText + VALUES_ITERATOR_TEXT;
+                    newStatementText = "Iterator " + variableName +'=' +
+                            qualifierText + VALUES_ITERATOR_TEXT  + ';';
                 } else {
                     return;
                 }
             } else if ("keys".equals(methodName)) {
                 if (TypeUtils.expressionHasTypeOrSubtype(qualifier,
                         "java.util.Hashtable")) {
-                    newStatementText = "Iterator " + variableName +
-                            ' ' + qualifierText + KEY_SET_ITERATOR_TEXT;
+                    newStatementText = "Iterator " + variableName + '=' +
+                            qualifierText + KEY_SET_ITERATOR_TEXT + ';';
                 } else {
                     return;
                 }
@@ -150,7 +150,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiStatement newStatement =
                     factory.createStatementFromText(newStatementText,
                             element);
-            statementParent.addAfter(statement, newStatement);
             final Query<PsiReference> query = ReferencesSearch.search(variable);
             for (PsiReference reference : query) {
                 final PsiElement referenceElement = reference.getElement();
@@ -191,9 +190,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                         factory.createExpressionFromText(newExpressionText,
                                 callExpression);
                 callExpression.replace(newExpression);
-                if (deleteEnumerationVariable) {
-                    variable.delete();
-                }
+            }
+            statementParent.addAfter(newStatement, statement);
+            if (deleteEnumerationVariable) {
+                variable.delete();
             }
         }
 
@@ -260,7 +260,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (containingMethod == null) {
                 return;
             }
-            if (isEnumerationMethodCalled(variable, containingMethod)) {
+            if (!isEnumerationMethodCalled(variable, containingMethod)) {
                 return;
             }
             if (isElements) {
