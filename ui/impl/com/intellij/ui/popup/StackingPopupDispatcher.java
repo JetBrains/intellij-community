@@ -108,7 +108,7 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
 
   @Nullable
   public Component getComponent() {
-    return myStack.peek().getContent();
+    return myStack.size() > 0 ?myStack.peek().getContent() : null;
   }
 
   public boolean dispatch(AWTEvent event) {
