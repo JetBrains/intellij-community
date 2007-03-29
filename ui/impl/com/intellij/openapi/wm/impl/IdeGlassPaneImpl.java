@@ -165,7 +165,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       if (actualTarget == null || actualContainer == null) break;
       targetEvent = convertEvent(originalEvent, actualTarget);
 
-      actualTarget.dispatchEvent(targetEvent);
+      dispatchEvent(actualTarget, targetEvent);
       processed.add(actualTarget);
 
       if (targetEvent.isConsumed()) {
@@ -199,6 +199,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     }
 
     return false;
+  }
+
+  private void dispatchEvent(final Component component, final MouseEvent event) {
+    final boolean eventValid = event.getPoint() != null && event.getComponent() != null;
+    if (eventValid) {
+      component.dispatchEvent(event);
+    }
   }
 
   private MouseEvent convertEvent(final MouseEvent e, final Component target) {
