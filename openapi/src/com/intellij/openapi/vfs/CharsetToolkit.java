@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.Patches;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -419,5 +420,20 @@ public class CharsetToolkit {
     catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static int getBOMLength(byte[] content, Charset charset) {
+    if (Patches.SUN_BUG_ID_4508058) {
+      if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && hasUTF8Bom(content)) {
+        return UTF8_BOM.length;
+      }
+    }
+    if (hasUTF16LEBom(content)) {
+      return UTF16LE_BOM.length;
+    }
+    if (hasUTF16BEBom(content)) {
+      return UTF16BE_BOM.length;
+    }
+    return 0;
   }
 }
