@@ -1,13 +1,8 @@
 package com.intellij.codeInsight.hint.api;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.editor.Editor;
 
-import javax.swing.border.Border;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,7 +16,6 @@ public interface ParameterInfoUIContext {
   boolean isUIComponentEnabled();
   void setUIComponentEnabled(boolean enabled);
 
-  boolean isLastParameterOwner();
   int getCurrentParameterIndex();
   PsiElement getParameterOwner();
 
