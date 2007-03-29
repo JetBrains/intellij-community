@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,29 +40,37 @@ public class RefElementNode extends InspectionTreeNode {
   public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
 
   @Nullable
-  public RefElement getElement() {
-    return (RefElement)getUserObject();
+  public RefEntity getElement() {
+    return (RefEntity)getUserObject();
   }
 
   @Nullable
   public Icon getIcon(boolean expanded) {
-    final RefElement refElement = getElement();
-    if (refElement == null) {
+    final RefEntity refEntity = getElement();
+    if (refEntity == null) {
       return null;
     }
-    final PsiElement element = refElement.getElement();
-    if (element != null) {
-      final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-      if (refElement.isSyntheticJSP()) {
-        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
-                                flags,
-                                element.getProject());
+    if (refEntity instanceof RefElement) {
+      final RefElement refElement = (RefElement)refEntity;
+      final PsiElement element = refElement.getElement();
+      if (element != null) {
+        final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+        if (refElement.isSyntheticJSP()) {
+          return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
+                                  flags,
+                                  element.getProject());
+        }
+        return element.getIcon(flags);
       }
-      return element.getIcon(flags);
+      else {
+        return null;
+      }
+    } else if (refEntity instanceof RefPackage) {
+      return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
+    } else if (refEntity instanceof RefModule) {
+      return ((RefModule)refEntity).getModule().getModuleType().getNodeIcon(expanded);
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public int getProblemCount() {
@@ -69,7 +78,7 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    final RefElement element = getElement();
+    final RefEntity element = getElement();
     if (element == null) {
       return "";
     }
@@ -80,8 +89,8 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   public boolean isValid() {
-    final RefElement refElement = getElement();
-    return refElement != null && refElement.isValid();
+    final RefEntity refEntity = getElement();
+    return refEntity != null && refEntity.isValid();
   }
 
   public boolean isResolved() {

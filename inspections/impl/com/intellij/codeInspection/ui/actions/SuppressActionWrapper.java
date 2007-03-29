@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -78,7 +79,7 @@ class SuppressActionWrapper extends AnAction {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
             for (InspectionTreeNode node : myNodesToSuppress) {
-              final Pair<RefElement, CommonProblemDescriptor> content = getNodeContent(node);
+              final Pair<RefElement, CommonProblemDescriptor> content = getContentToSuppress(node);
               if (content.first == null) break;
               final PsiElement element = content.first.getElement();
               if (!suppress(element, getAction(content.second, element))) break;
@@ -126,7 +127,7 @@ class SuppressActionWrapper extends AnAction {
       presentation.setEnabled(false);
     }
     for (InspectionTreeNode node : myNodesToSuppress) {
-      final Pair<RefElement, CommonProblemDescriptor> content = getNodeContent(node);
+      final Pair<RefElement, CommonProblemDescriptor> content = getContentToSuppress(node);
       if (content.first == null) {
         return;
       }
@@ -141,17 +142,19 @@ class SuppressActionWrapper extends AnAction {
     }
   }
 
-  private static Pair<RefElement, CommonProblemDescriptor> getNodeContent(InspectionTreeNode node) {
-    RefElement refElement;
-    CommonProblemDescriptor descriptor;
+  private static Pair<RefElement, CommonProblemDescriptor> getContentToSuppress(InspectionTreeNode node) {
+    RefElement refElement = null;
+    CommonProblemDescriptor descriptor = null;
     if (node instanceof RefElementNode) {
       final RefElementNode elementNode = (RefElementNode)node;
-      refElement = elementNode.getElement();
+      final RefEntity element = elementNode.getElement();
+      refElement = element instanceof RefElement ? (RefElement)element : null;
       descriptor = elementNode.getProblem();
     }
-    else {
+    else if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode descriptionNode = (ProblemDescriptionNode)node;
-      refElement = (RefElement)descriptionNode.getElement();
+      final RefEntity element = descriptionNode.getElement();
+      refElement = element instanceof RefElement ? (RefElement)element : null;
       descriptor = descriptionNode.getDescriptor();
     }
     return Pair.create(refElement, descriptor);

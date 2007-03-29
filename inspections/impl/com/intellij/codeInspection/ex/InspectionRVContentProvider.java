@@ -42,6 +42,8 @@ public abstract class InspectionRVContentProvider {
     String getModule();
 
     boolean areEqual(final T o1, final T o2);
+
+    boolean supportStructure();
   }
 
   public abstract boolean checkReportedProblems(final InspectionTool tool);
@@ -68,10 +70,12 @@ public abstract class InspectionRVContentProvider {
                                                    final boolean showStructure) {
     final List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
     final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<String, Map<String, InspectionPackageNode>>();
+    boolean supportStructure = showStructure;
     for (String packageName : packageContents.keySet()) {
       final Set<T> elements = packageContents.get(packageName);
       for (T userObject : elements) {
         final UserObjectContainer<T> container = computeContainer.fun(userObject);
+        supportStructure &= container.supportStructure();
         final String moduleName = showStructure ? container.getModule() : null;
         Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
         if (packageNodes == null) {
@@ -86,7 +90,7 @@ public abstract class InspectionRVContentProvider {
         appendDescriptor(tool, container, pNode, canPackageRepeat);
       }
     }
-    if (showStructure) {
+    if (supportStructure) {
       final HashMap<String, InspectionModuleNode> moduleNodes = new HashMap<String, InspectionModuleNode>();
       for (final String moduleName : module2PackageMap.keySet()) {
         final Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
@@ -180,6 +184,7 @@ public abstract class InspectionRVContentProvider {
     }
   }
 
+  @SuppressWarnings({"ConstantConditions"}) //class cast suppression
   protected static void merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     if (merge) {
       for (int i = 0; i < parent.getChildCount(); i++) {

@@ -61,4 +61,11 @@ public interface RefEntity extends UserDataHolder {
    * @return the user-readable name.
    */
   String getExternalName();
+
+  /**
+   * Checks if the element corresponding to the node is valid.
+   *
+   * @return true if the element is valid, false otherwise.
+   */
+  boolean isValid();
 }

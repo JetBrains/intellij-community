@@ -37,13 +37,6 @@ public interface RefElement extends RefEntity {
   @Nullable RefModule getModule();
 
   /**
-   * Checks if the PSI element corresponding to the node is valid.
-   *
-   * @return true if the element is valid, false otherwise.
-   */
-  boolean isValid();
-
-  /**
    * Returns the reference graph manager for the node.
    *
    * @return the reference graph element for the instance.

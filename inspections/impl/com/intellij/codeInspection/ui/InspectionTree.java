@@ -26,8 +26,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -39,7 +39,9 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 
 public class InspectionTree extends Tree {
@@ -130,7 +132,7 @@ public class InspectionTree extends Tree {
   private static void addElementsInNode(InspectionTreeNode node, List<RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
-      final RefElement element = ((RefElementNode)node).getElement();
+      final RefEntity element = ((RefElementNode)node).getElement();
       if (!out.contains(element)) {
         out.add(0, element);
       }
@@ -169,26 +171,7 @@ public class InspectionTree extends Tree {
     }
   }
 
-  public static List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
-    List<RefElement> result = new ArrayList<RefElement>();
-    if (node.isValid()) {
-      if (node instanceof RefElementNode){
-        result.add(((RefElementNode)node).getElement());
-      } else if (node instanceof ProblemDescriptionNode){
-        final RefEntity element = ((ProblemDescriptionNode)node).getElement();
-        if (element instanceof RefElement) {
-          result.add((RefElement)element);
-        }
-      } else {
-        for(int i = 0; i < node.getChildCount(); i++){
-          result.addAll(getElementsToSuppressInSubTree((InspectionTreeNode)node.getChildAt(i)));
-        }
-      }
-    }
-    return result;
-  }
-
-  public void nodeStructureChanged(InspectionTreeNode node) {
+  private void nodeStructureChanged(InspectionTreeNode node) {
     ((DefaultTreeModel)getModel()).nodeStructureChanged(node);
   }
 
@@ -282,14 +265,14 @@ public class InspectionTree extends Tree {
     private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
       SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (node instanceof RefElementNode) {
-        RefElement refElement = ((RefElementNode)node).getElement();
+        RefEntity refElement = ((RefElementNode)node).getElement();
 
         if (refElement instanceof RefClass) {
           RefElement defaultConstructor = ((RefClass)refElement).getDefaultConstructor();
           if (defaultConstructor != null) refElement = defaultConstructor;
         }
 
-        if (refElement != null && refElement.isEntry() && refElement.isPermanentEntry()) {
+        if (refElement != null && refElement instanceof RefElement && ((RefElement)refElement).isEntry() && ((RefElement)refElement).isPermanentEntry()) {
           foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
         }
       }
@@ -309,7 +292,7 @@ public class InspectionTree extends Tree {
     sortChildren(getRoot());
   }
 
-  protected static void sortChildren(InspectionTreeNode node) {
+  private static void sortChildren(InspectionTreeNode node) {
     TreeUtil.sort(node, InspectionResultsViewComparator.getInstance());
   }
 

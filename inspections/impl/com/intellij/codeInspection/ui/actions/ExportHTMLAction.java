@@ -13,7 +13,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExporter;
-import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionGroupNode;
@@ -183,8 +183,10 @@ public class ExportHTMLAction extends AnAction {
     final String shortName = tool.getShortName();
     final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
     final Set<Pair<InspectionTool,InspectionProfile>> tools = context.getTools().get(shortName);
-    for (Pair<InspectionTool, InspectionProfile> pair : tools) {
-      result.add(pair.first);
+    if (tools != null) {   //dummy entry points tool
+      for (Pair<InspectionTool, InspectionProfile> pair : tools) {
+        result.add(pair.first);
+      }
     }
     return result;
   }
@@ -222,7 +224,7 @@ public class ExportHTMLAction extends AnAction {
     StringBuffer packageIndex = new StringBuffer();
     packageIndex.append("<html><body>");
 
-    final Map<String, Set<RefElement>> content = new HashMap<String, Set<RefElement>>();
+    final Map<String, Set<RefEntity>> content = new HashMap<String, Set<RefEntity>>();
 
     for (InspectionTool tool : tools) {
       content.putAll(tool.getPackageContent());
@@ -233,13 +235,12 @@ public class ExportHTMLAction extends AnAction {
     Collections.sort(packageNames, RefEntityAlphabeticalComparator.getInstance());
     for (String packageName : packageNames) {
       appendPackageReference(packageIndex, packageName);
-      final ArrayList<RefElement> packageContent = new ArrayList<RefElement>(content.get(packageName));
+      final ArrayList<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
       Collections.sort(packageContent, RefEntityAlphabeticalComparator.getInstance());
       StringBuffer contentIndex = new StringBuffer();
       contentIndex.append("<html><body>");
-      for (RefElement refElement : packageContent) {
+      for (RefEntity refElement : packageContent) {
         if (refElement instanceof RefImplicitConstructor) {
-          //noinspection AssignmentToForLoopParameter
           refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
         }
 

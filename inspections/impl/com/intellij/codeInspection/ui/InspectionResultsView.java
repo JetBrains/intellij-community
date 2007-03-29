@@ -190,13 +190,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         if (node instanceof RefElementNode) {
           final RefElementNode refNode = (RefElementNode)node;
           if (refNode.hasDescriptorsUnder()) return null;
-          final RefElement element = refNode.getElement();
+          final RefEntity element = refNode.getElement();
           if (element == null || !element.isValid()) return null;
           final CommonProblemDescriptor problem = refNode.getProblem();
           if (problem != null) {
             return navigate(problem);
           }
-          return getOpenFileDescriptor(element);
+          if (element instanceof RefElement) {
+            return getOpenFileDescriptor((RefElement)element);
+          }
         }
         else if (node instanceof ProblemDescriptionNode) {
           if (!((ProblemDescriptionNode)node).isValid()) return null;
@@ -363,7 +365,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final CommonProblemDescriptor problem = refElementNode.getProblem();
-          final RefElement refSelected = refElementNode.getElement();
+          final RefEntity refSelected = refElementNode.getElement();
           if (problem != null) {
             showInBrowser(refSelected, problem);
           }
@@ -576,8 +578,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     if (selectedNode instanceof RefElementNode) {
       final RefElementNode refElementNode = (RefElementNode)selectedNode;
-      RefElement refElement = refElementNode.getElement();
-      final RefElement item;
+      RefEntity refElement = refElementNode.getElement();
+      final RefEntity item;
       if (refElement instanceof RefImplicitConstructor) {
         item = ((RefImplicitConstructor)refElement).getOwnerClass();
       }
@@ -587,7 +589,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       if (item == null || !item.isValid()) return null;
 
-      PsiElement psiElement = item.getElement();
+      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getProblem();

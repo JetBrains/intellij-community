@@ -44,4 +44,8 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   public static RefEntity packageFromFQName(final RefManager manager, final String name) {
     return manager.getPackage(name);
   }
+
+  public boolean isValid() {
+    return true;
+  }
 }

@@ -66,6 +66,10 @@ public class XMLExportUtl {
       problem.addContent(fileElement);
       appendModule(problem, refModule);
       appendFakePackage(problem);
+    } else if (refEntity instanceof RefPackage) {
+      Element packageElement = new Element("package");
+      packageElement.addContent(refEntity.getName());
+      problem.addContent(packageElement);
     }
 
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);

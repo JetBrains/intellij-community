@@ -27,7 +27,7 @@ import java.util.*;
  */
 public abstract class DescriptorProviderInspection extends InspectionTool implements ProblemDescriptionsProcessor {
   private THashMap<RefEntity, CommonProblemDescriptor[]> myProblemElements;
-  private HashMap<String, Set<RefElement>> myPackageContents = null;
+  private HashMap<String, Set<RefEntity>> myPackageContents = null;
   private HashSet<RefModule> myModulesProblems = null;
   private THashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
@@ -206,7 +206,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   @Nullable
   public CommonProblemDescriptor[] getDescriptions(RefEntity refEntity) {
-    if (refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) {
+    if (!refEntity.isValid()) {
       ignoreElement(refEntity);
       return null;
     }
@@ -297,7 +297,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       }
       if (myOldProblemElements != null){
         for (RefEntity entity : myOldProblemElements.keySet()) {
-          if (entity instanceof RefElement && getElementStatus((RefElement)entity) != FileStatus.NOT_CHANGED){
+          if (getElementStatus(entity) != FileStatus.NOT_CHANGED){
             return true;
           }
         }
@@ -312,48 +312,54 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   public void updateContent() {
-    myPackageContents = new HashMap<String, Set<RefElement>>();
+    myPackageContents = new HashMap<String, Set<RefEntity>>();
     myModulesProblems = new HashSet<RefModule>();
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredElements().containsKey(element)) continue;
       if (element instanceof RefElement) {
         String packageName = RefUtil.getInstance().getPackageName(element);
-        Set<RefElement> content = myPackageContents.get(packageName);
+        Set<RefEntity> content = myPackageContents.get(packageName);
         if (content == null) {
-          content = new HashSet<RefElement>();
+          content = new HashSet<RefEntity>();
           myPackageContents.put(packageName, content);
         }
-        content.add((RefElement)element);
+        content.add(element);
       } else if (element instanceof RefModule){
         myModulesProblems.add((RefModule)element);
+      } else if (element instanceof RefPackage) {
+        final RefPackage refPackage = (RefPackage)element;
+        Set<RefEntity> content = myPackageContents.get(refPackage.getName());
+        if (content == null) {
+          content = new HashSet<RefEntity>();
+          myPackageContents.put(refPackage.getName(), content);
+        }
+        content.add(element);
       }
     }
   }
 
-  public Map<String, Set<RefElement>> getPackageContent() {
+  public Map<String, Set<RefEntity>> getPackageContent() {
     return myPackageContents;
   }
 
-  public Map<String, Set<RefElement>> getOldPackageContent() {
+  public Map<String, Set<RefEntity>> getOldPackageContent() {
     if (myOldProblemElements == null) return null;
-    final HashMap<String, Set<RefElement>> oldContents = new HashMap<String, Set<RefElement>>();
+    final HashMap<String, Set<RefEntity>> oldContents = new HashMap<String, Set<RefEntity>>();
     final Set<RefEntity> elements = myOldProblemElements.keySet();
     for (RefEntity element : elements) {
-      if (element instanceof RefElement) {
-        String packageName = RefUtil.getInstance().getPackageName(element);
-        final Set<RefElement> collection = myPackageContents.get(packageName);
-        if (collection != null) {
-          final Set<RefEntity> currentElements = new HashSet<RefEntity>(collection);
-          if (contains((RefElement)element, currentElements)) continue;
-        }
-        Set<RefElement> oldContent = oldContents.get(packageName);
-        if (oldContent == null) {
-          oldContent = new HashSet<RefElement>();
-          oldContents.put(packageName, oldContent);
-        }
-        oldContent.add((RefElement)element);
+      String packageName = RefUtil.getInstance().getPackageName(element);
+      final Set<RefEntity> collection = myPackageContents.get(packageName);
+      if (collection != null) {
+        final Set<RefEntity> currentElements = new HashSet<RefEntity>(collection);
+        if (contains(element, currentElements)) continue;
       }
+      Set<RefEntity> oldContent = oldContents.get(packageName);
+      if (oldContent == null) {
+        oldContent = new HashSet<RefEntity>();
+        oldContents.put(packageName, oldContent);
+      }
+      oldContent.add(element);
     }
     return oldContents;
   }
@@ -414,14 +420,11 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
 
-  public boolean isElementIgnored(final RefElement element) {
+  public boolean isElementIgnored(final RefEntity element) {
     if (getIgnoredElements() == null) return false;
     for (RefEntity entity : getIgnoredElements().keySet()) {
-      if (entity instanceof RefElement){
-        final RefElement refElement = (RefElement)entity;
-        if (Comparing.equal(refElement, element)){
-          return true;
-        }
+      if (Comparing.equal(entity, element)) {
+        return true;
       }
     }
     return false;
@@ -464,7 +467,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
 
-  public FileStatus getElementStatus(final RefElement element) {
+  public FileStatus getElementStatus(final RefEntity element) {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
       if (myOldProblemElements != null){

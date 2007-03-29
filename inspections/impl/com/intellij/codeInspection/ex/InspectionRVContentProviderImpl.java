@@ -21,7 +21,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
 
@@ -46,13 +48,23 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
     final Map<RefEntity, CommonProblemDescriptor[]> problems =
       tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null;
-    Function<RefElement, UserObjectContainer<RefElement>> computeContainer = new Function<RefElement, UserObjectContainer<RefElement>>() {
-      public UserObjectContainer<RefElement> fun(final RefElement refElement) {
+    Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+      public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
         return new RefElementContainer(refElement, problems != null ? problems.get(refElement) : null);
       }
     };
 
-    List<InspectionTreeNode> list = buildTree(tool.getPackageContent(), false, tool, computeContainer, showStructure);
+    final Map<String, Set<RefEntity>> contents = tool.getPackageContent();
+    final Set<RefModule> moduleProblems = tool.getModuleProblems();
+    if (moduleProblems != null) {
+      Set<RefEntity> entities = contents.get("");
+      if (entities == null) {
+        entities = new HashSet<RefEntity>();
+        contents.put("", entities);
+      }
+      entities.addAll(moduleProblems);
+    }
+    List<InspectionTreeNode> list = buildTree(contents, false, tool, computeContainer, showStructure);
 
     for (InspectionTreeNode node : list) {
       merge(node, toolNode, runWithEditorProfile);
@@ -62,8 +74,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       final Map<RefEntity, CommonProblemDescriptor[]> oldProblems =
         tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool)
           .getOldProblemElements() : null;
-      computeContainer = new Function<RefElement, UserObjectContainer<RefElement>>() {
-        public UserObjectContainer<RefElement> fun(final RefElement refElement) {
+      computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+        public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
           return new RefElementContainer(refElement, oldProblems != null ? oldProblems.get(refElement) : null);
         }
       };
@@ -83,7 +95,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                   final boolean canPackageRepeat) {
     final GlobalInspectionContextImpl context = tool.getContext();
     final RefElementContainer refElementDescriptor = ((RefElementContainer)container);
-    final RefElement refElement = refElementDescriptor.getUserObject();
+    final RefEntity refElement = refElementDescriptor.getUserObject();
     if (context.getUIOptions().SHOW_ONLY_DIFF && tool.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
     if (tool instanceof DescriptorProviderInspection) {
       final DescriptorProviderInspection descriptorProviderInspection = (DescriptorProviderInspection)tool;
@@ -104,7 +116,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     }
     else {
       if (canPackageRepeat) {
-        final Set<RefElement> currentElements = tool.getPackageContent().get(pNode.getPackageName());
+        final Set<RefEntity> currentElements = tool.getPackageContent().get(pNode.getPackageName());
         if (currentElements != null) {
           final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
           if (InspectionTool.contains(refElement, currentEntities)) return;
@@ -114,11 +126,11 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     }
   }
 
-  private static class RefElementContainer implements UserObjectContainer<RefElement> {
-    private RefElement myElement;
+  private static class RefElementContainer implements UserObjectContainer<RefEntity> {
+    private RefEntity myElement;
     private CommonProblemDescriptor[] myDescriptors;
 
-    public RefElementContainer(final RefElement element, final CommonProblemDescriptor[] descriptors) {
+    public RefElementContainer(final RefEntity element, final CommonProblemDescriptor[] descriptors) {
       myElement = element;
       myDescriptors = descriptors;
     }
@@ -127,7 +139,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     public RefElementContainer getOwner() {
       final RefEntity entity = myElement.getOwner();
       if (entity instanceof RefElement) {
-        return new RefElementContainer((RefElement)entity, myDescriptors);
+        return new RefElementContainer(entity, myDescriptors);
       }
       return null;
     }
@@ -136,18 +148,24 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       return new RefElementNode(myElement, tool);
     }
 
-    public RefElement getUserObject() {
+    public RefEntity getUserObject() {
       return myElement;
     }
 
     @Nullable
     public String getModule() {
-      final RefModule refModule = myElement.getModule();
+      final RefModule refModule = myElement instanceof RefElement
+                                  ? ((RefElement)myElement).getModule()
+                                  : myElement instanceof RefModule ? ((RefModule)myElement) : null;
       return refModule != null ? refModule.getName() : null;
     }
 
-    public boolean areEqual(final RefElement o1, final RefElement o2) {
+    public boolean areEqual(final RefEntity o1, final RefEntity o2) {
       return Comparing.equal(o1, o2);
+    }
+
+    public boolean supportStructure() {
+      return myElement instanceof RefElement; //do not show structure for refModule and refPackage
     }
 
     public CommonProblemDescriptor[] getProblemDescriptors() {

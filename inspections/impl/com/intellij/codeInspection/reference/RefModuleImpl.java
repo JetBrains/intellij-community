@@ -6,6 +6,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,8 +44,13 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
     });
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
+  }
+
+  public boolean isValid() {
+    return myModule != null && !myModule.isDisposed();
   }
 
   @Nullable

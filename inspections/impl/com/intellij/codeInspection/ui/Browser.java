@@ -379,7 +379,7 @@ public class Browser extends JPanel {
     try {
       if (descriptionUrl != null){
         @NonNls final String description = ResourceUtil.loadText(descriptionUrl);
-        if (description != null && description.startsWith("<html>")) {
+        if (description.startsWith("<html>")) {
           page.append(description.substring(description.indexOf("<html>") + 6));
         } else {
           page.append(underConstruction);
@@ -426,7 +426,7 @@ public class Browser extends JPanel {
     }
     else if (node instanceof RefElementNode) {
       RefElementNode elementNode = (RefElementNode)node;
-      RefElement element = elementNode.getElement();
+      RefEntity element = elementNode.getElement();
       CommonProblemDescriptor descriptor = elementNode.getProblem();
       if (descriptor != null) {
         invokeFix(element, descriptor, idx);

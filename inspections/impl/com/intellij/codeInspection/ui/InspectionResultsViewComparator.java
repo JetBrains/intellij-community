@@ -10,11 +10,12 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
@@ -67,29 +68,7 @@ public class InspectionResultsViewComparator implements Comparator {
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
-      final RefElement refElement1 = ((RefElementNode)node1).getElement();
-      final RefElement refElement2 = ((RefElementNode)node2).getElement();
-      if (refElement1 != null && refElement2 != null) {
-        final PsiElement element1 = refElement1.getElement();
-        final PsiElement element2 = refElement2.getElement();
-        if (element1 != null && element2 != null) {
-          final PsiFile psiFile1 = element1.getContainingFile();
-          final PsiFile psiFile2 = element2.getContainingFile();
-          if (Comparing.equal(psiFile1, psiFile2)){
-            final TextRange textRange1 = element1.getTextRange();
-            final TextRange textRange2 = element2.getTextRange();
-            if (textRange1 != null && textRange2 != null) {
-              return textRange1.getStartOffset() - textRange2.getStartOffset();
-            }
-          } else if (psiFile1 != null && psiFile2 != null){
-            final String name1 = psiFile1.getName();
-            LOG.assertTrue(name1 != null);
-            final String name2 = psiFile2.getName();
-            LOG.assertTrue(name2 != null);
-            return name1.compareTo(name2);
-          }
-        }
-      }
+      return compareEntities(((RefElementNode)node1).getElement(), ((RefElementNode)node2).getElement());
     }
     if (node1 instanceof ProblemDescriptionNode && node2 instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
@@ -103,6 +82,59 @@ public class InspectionResultsViewComparator implements Comparator {
       return 0;
     }
 
+    if (node1 instanceof RefElementNode && node2 instanceof ProblemDescriptionNode) {
+      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node2).getDescriptor();
+      if (descriptor instanceof ProblemDescriptor) {
+        return compareEntity(((RefElementNode)node1).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
+      }
+      return compareEntities(((RefElementNode)node1).getElement(), ((ProblemDescriptionNode)node2).getElement());
+    }
+
+    if (node2 instanceof RefElementNode && node1 instanceof ProblemDescriptionNode) {
+      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node1).getDescriptor();
+      if (descriptor instanceof ProblemDescriptor) {
+        return -compareEntity(((RefElementNode)node2).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
+      }
+      return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
+    }
+
+    return 0;
+  }
+
+  private static int compareEntity(final RefEntity entity, final PsiElement element) {
+    if (entity instanceof RefElement) {
+      return compareElements(((RefElement)entity).getElement(), element);
+    }
+    return -1;
+  }
+
+  private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
+    if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
+      return compareElements(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+    } else if (entity1 != null && entity2 != null) {
+      return entity1.getName().compareToIgnoreCase(entity2.getName());
+    }
+    return 0;
+  }
+
+  private static int compareElements(final PsiElement element1, final PsiElement element2) {
+    if (element1 != null && element2 != null) {
+      final PsiFile psiFile1 = element1.getContainingFile();
+      final PsiFile psiFile2 = element2.getContainingFile();
+      if (Comparing.equal(psiFile1, psiFile2)){
+        final TextRange textRange1 = element1.getTextRange();
+        final TextRange textRange2 = element2.getTextRange();
+        if (textRange1 != null && textRange2 != null) {
+          return textRange1.getStartOffset() - textRange2.getStartOffset();
+        }
+      } else if (psiFile1 != null && psiFile2 != null){
+        final String name1 = psiFile1.getName();
+        LOG.assertTrue(name1 != null);
+        final String name2 = psiFile2.getName();
+        LOG.assertTrue(name2 != null);
+        return name1.compareToIgnoreCase(name2);
+      }
+    }
     return 0;
   }
 

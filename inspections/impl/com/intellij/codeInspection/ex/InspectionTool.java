@@ -96,10 +96,10 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void updateContent();
 
-  public abstract Map<String, Set<RefElement>> getPackageContent();
+  public abstract Map<String, Set<RefEntity>> getPackageContent();
 
   @Nullable
-  public abstract Map<String, Set<RefElement>> getOldPackageContent();
+  public abstract Map<String, Set<RefEntity>> getOldPackageContent();
 
   public boolean isOldProblemsIncluded() {
     final GlobalInspectionContextImpl context = getContext();
@@ -117,10 +117,10 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void amnesty(RefEntity refEntity);
 
-  public abstract boolean isElementIgnored(final RefElement element);
+  public abstract boolean isElementIgnored(final RefEntity element);
 
 
-  public abstract FileStatus getElementStatus(final RefElement element);
+  public abstract FileStatus getElementStatus(final RefEntity element);
 
   protected static FileStatus calcStatus(boolean old, boolean current) {
     if (old) {
@@ -134,10 +134,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return FileStatus.NOT_CHANGED;
   }
 
-  protected static boolean contains(RefElement element, Collection<RefEntity> entities){
+  protected static boolean contains(RefEntity element, Collection<RefEntity> entities){
     for (RefEntity refEntity : entities) {
-      if (!(refEntity instanceof RefElement)) continue;
-      if (Comparing.equal(((RefElement)refEntity).getElement(), element.getElement())){
+      if (Comparing.equal(refEntity, element)) {
         return true;
       }
     }

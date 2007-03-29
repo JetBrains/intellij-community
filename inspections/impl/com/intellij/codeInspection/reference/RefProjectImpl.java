@@ -35,4 +35,8 @@ public class RefProjectImpl extends RefEntityImpl implements RefProject {
 
     return myDefaultPackage;
   }
+
+  public boolean isValid() {
+    return true;
+  }
 }

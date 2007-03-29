@@ -10,14 +10,15 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -117,7 +118,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       content = null; //GC it
       for (RefEntity refEntity : tool.getIgnoredRefElements()) {
         if (refEntity instanceof RefElement) {
-          excludeProblem(((RefElement)refEntity).getExternalName(), current);
+          excludeProblem(refEntity.getExternalName(), current);
         }
       }
       return current;
@@ -196,6 +197,11 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       if (!Comparing.strEqual(o1.getType(), o2.getType())) return false;
 
       return true;
+    }
+
+    public boolean supportStructure() {
+      return !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointerImpl.MODULE) &&
+             !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointerImpl.PACKAGE);
     }
   }
 }
