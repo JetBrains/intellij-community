@@ -57,7 +57,7 @@ public class DirectoryDifferenceModel {
     return tm.getFileTypeByFileName(getEntry(i).getName()).getIcon();
   }
 
-  private Entry getEntry(int i) {
+  public Entry getEntry(int i) {
     return i == 0 ? myDiff.getLeft() : myDiff.getRight();
   }
 

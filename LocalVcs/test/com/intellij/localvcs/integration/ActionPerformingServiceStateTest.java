@@ -4,16 +4,14 @@ import com.intellij.localvcs.Clock;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
-import org.junit.Ignore;
 import org.junit.Test;
 
-public class ScopedServiceStateTest extends LocalVcsTestCase {
+public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
-  ChangeSetServiceState s;
+  ActionPerformingServiceSate s;
 
   @Test
-  @Ignore
   public void testRegisteringUnsavedDocumentsBeforeEnteringState() {
     vcs.createFile("file", b("old"), 123L);
 
@@ -29,7 +27,6 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   @Test
-  @Ignore
   public void testRegisteringUnsavedDocumentsAsOneChangeSetBeforeEntering() {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
@@ -45,7 +42,6 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   @Test
-  @Ignore
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
     vcs.createFile("f", b("one"), -1);
 
@@ -58,7 +54,6 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   @Test
-  @Ignore
   public void testRegisteringUnsavedDocumentsBeforeExitingState() {
     vcs.createFile("file", b("old"), 123L);
     initState();
@@ -75,7 +70,6 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   @Test
-  @Ignore
   public void testRegisteringUnsavedDocumentsBeforeExitingStateWithinInnerChangeset() {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
@@ -94,7 +88,6 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   @Test
-  @Ignore
   public void testFilteringDocuments() {
     TestFileFilter ff = new TestFileFilter();
     gw.setFileFilter(ff);
@@ -110,7 +103,7 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   }
 
   private void initState() {
-    s = new ChangeSetServiceState("name", new ServiceStateHolder(), vcs, gw) {
+    s = new ActionPerformingServiceSate("name", new ServiceStateHolder(), vcs, gw) {
     };
   }
 }

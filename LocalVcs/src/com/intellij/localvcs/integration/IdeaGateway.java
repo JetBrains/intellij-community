@@ -39,6 +39,7 @@ public class IdeaGateway {
     return myProject;
   }
 
+  // todo get rid of file filter
   public FileFilter getFileFilter() {
     return myFileFilter;
   }

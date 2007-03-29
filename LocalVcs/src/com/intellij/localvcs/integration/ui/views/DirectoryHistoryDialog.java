@@ -40,7 +40,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
     p.add(ScrollPaneFactory.createScrollPane(myDiffTree), BorderLayout.CENTER);
 
-    ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createActionGroup(), true);
+    ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createDiffTreeActions(), true);
     p.add(tb.getComponent(), BorderLayout.NORTH);
 
     return p;
@@ -56,14 +56,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     myDiffTree.getSecondTreeColumn().setName(n.getPresentableText(1));
 
     TreeUtil.expandAll(myDiffTree.getTree());
-    addPopupMenuToComponent(myDiffTree, createActionGroup());
+    addPopupMenuToComponent(myDiffTree, createDiffTreeActions());
     new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myDiffTree);
   }
 
-  private ActionGroup createActionGroup() {
+  private ActionGroup createDiffTreeActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new ShowDifferenceAction());
-    result.add(new RevertAction());
+    result.add(new RevertSelectionAction());
     return result;
   }
 
@@ -79,39 +79,57 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return (DirectoryDifferenceNode)path.getLastPathComponent();
   }
 
-  private class ShowDifferenceAction extends AnAction {
+  private class ShowDifferenceAction extends ActionOnSelection {
     public ShowDifferenceAction() {
-      super("Show difference");
+      super("Show difference", "/actions/diff.png");
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      DirectoryDifferenceNode n = getSelectedNode();
+    @Override
+    protected void performOn(DirectoryDifferenceNode n) {
       DiffRequest r = createDifference(n.getFileDifferenceModel());
       DiffManager.getInstance().getDiffTool().show(r);
     }
 
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setIcon(IconLoader.getIcon("/actions/diff.png"));
-      DirectoryDifferenceNode n = getSelectedNode();
-      p.setEnabled(n != null && n.canShowFileDifference());
+    @Override
+    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+      return n.canShowFileDifference();
     }
   }
 
-  private class RevertAction extends AnAction {
-    public RevertAction() {
-      super("Revert");
+  private class RevertSelectionAction extends ActionOnSelection {
+    public RevertSelectionAction() {
+      super("Revert selection", "/actions/rollback.png");
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      DirectoryDifferenceNode n = getSelectedNode();
+    protected void performOn(DirectoryDifferenceNode n) {
       if (!myModel.revert(n.getModel())) return;
       close(0);
     }
+  }
+
+  private abstract class ActionOnSelection extends AnAction {
+    private Icon myIcon;
+
+    public ActionOnSelection(String name, String iconName) {
+      super(name);
+      myIcon = IconLoader.getIcon(iconName);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      performOn(getSelectedNode());
+    }
+
+    protected abstract void performOn(DirectoryDifferenceNode n);
 
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
+      p.setIcon(myIcon);
+      DirectoryDifferenceNode n = getSelectedNode();
+      p.setEnabled(n != null && canPerformOn(n));
+    }
+
+    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+      return true;
     }
   }
 }

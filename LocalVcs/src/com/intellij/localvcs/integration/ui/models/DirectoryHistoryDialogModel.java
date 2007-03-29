@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
@@ -20,6 +21,6 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   public boolean revert(DirectoryDifferenceModel m) {
-    return m.revert(myGateway, getLeftLabel());
+    return Reverter.revert(myGateway, getLeftLabel(), m.getEntry(0), m.getEntry(1));
   }
 }

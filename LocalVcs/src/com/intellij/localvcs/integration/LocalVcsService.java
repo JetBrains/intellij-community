@@ -101,8 +101,8 @@ public class LocalVcsService {
     return c.isAvailable() ? new EntryProvidedContent(c) : null;
   }
 
-  public LocalVcsAction startAction(String label) {
-    LocalVcsAction a = new LocalVcsAction(myVcs, myGateway, label);
+  public LocalVcsAction startAction(String name) {
+    LocalVcsAction a = new LocalVcsAction(myFileListener, name);
     a.start();
     return a;
   }

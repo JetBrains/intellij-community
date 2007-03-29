@@ -41,6 +41,14 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     getState().finishCommand();
   }
 
+  public void startAction(String name) {
+    getState().startAction(name);
+  }
+
+  public void finishAction() {
+    getState().finishAction();
+  }
+
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;

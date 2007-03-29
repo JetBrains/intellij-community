@@ -83,6 +83,24 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertEquals("3", m.getRightLabel().getName());
   }
 
+  @Test
+  public void testCanRevert() {
+    m.selectLabels(1, 1);
+    assertTrue(m.canRevert());
+
+    m.selectLabels(2, 2);
+    assertTrue(m.canRevert());
+
+    m.selectLabels(0, 0);
+    assertFalse(m.canRevert());
+
+    m.selectLabels(-1, -1);
+    assertFalse(m.canRevert());
+
+    m.selectLabels(1, 2);
+    assertFalse(m.canRevert());
+  }
+
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new MyHistoryDialogModel(f, vcs);

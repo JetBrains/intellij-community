@@ -2,7 +2,6 @@ package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -46,10 +45,6 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
 
   public FileDifferenceModel getDifferenceModel() {
     return new FileDifferenceModel(getLeftEntry(), getRightEntry());
-  }
-
-  public boolean revert() {
-    return Reverter.revert(myGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
   }
 
   private class NotSavedLabel extends Label {

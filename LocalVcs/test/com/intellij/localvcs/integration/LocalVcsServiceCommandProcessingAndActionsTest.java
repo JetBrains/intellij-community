@@ -8,12 +8,25 @@ import java.util.List;
 public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServiceTestCase {
   @Test
   public void testActions() {
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    fileManager.fireFileCreated(dir);
+
+    TestVirtualFile one = new TestVirtualFile("one", null, -1);
+    TestVirtualFile two = new TestVirtualFile("two", null, -1);
+    dir.addChild(one);
+    dir.addChild(two);
+
     LocalVcsAction a = service.startAction("label");
-    fileManager.fireFileCreated(new TestVirtualFile("f", null, -1));
+    fileManager.fireFileCreated(one);
+    fileManager.fireFileCreated(two);
     a.finish();
 
-    assertTrue(vcs.hasEntry("f"));
-    assertEquals("label", vcs.getLabelsFor("f").get(0).getName());
+    assertTrue(vcs.hasEntry("dir/one"));
+    assertTrue(vcs.hasEntry("dir/two"));
+
+    List<Label> ll = vcs.getLabelsFor("dir");
+    assertEquals(2, ll.size());
+    assertEquals("label", ll.get(0).getName());
   }
 
   @Test

@@ -4,6 +4,7 @@ import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Label;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -62,5 +63,13 @@ public abstract class HistoryDialogModel {
       myRightLabel = first;
       myLeftLabel = second;
     }
+  }
+
+  public boolean revert() {
+    return Reverter.revert(myGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
+  }
+
+  public boolean canRevert() {
+    return myLeftLabel > 0 && myRightLabel == 0;
   }
 }

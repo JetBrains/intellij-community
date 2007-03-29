@@ -124,9 +124,9 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     return ApplicationManagerEx.getApplicationEx().isUnitTestMode();
   }
 
-  public LocalVcsAction startAction(String label) {
+  public LocalVcsAction startAction(String name) {
     if (!isEnabled()) return LocalVcsAction.NULL;
-    return myService.startAction(label);
+    return myService.startAction(name);
   }
 
   @NonNls

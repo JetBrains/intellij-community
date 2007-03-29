@@ -7,21 +7,20 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
+import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -51,7 +50,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   @Override
   protected JComponent createCenterPanel() {
     JComponent diff = createDiffPanel();
-    JComponent labels = createLabelsTable();
+    JComponent labels = createLabelsList();
 
     mySplitter = new Splitter(true);
     mySplitter.setFirstComponent(diff);
@@ -72,9 +71,35 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract JComponent createDiffPanel();
 
-  protected JComponent createLabelsTable() {
-    JTable t = new JTable(new LabelsTableModel());
+  private JComponent createLabelsList() {
+    ActionGroup actions = createLabelsActions();
+
+    ActionToolbar tb = createLabelsToolbar(actions);
+    JComponent t = createLabelsTable(actions);
+
+    JPanel result = new JPanel(new BorderLayout());
+    result.add(tb.getComponent(), BorderLayout.NORTH);
+    result.add(t, BorderLayout.CENTER);
+
+    return result;
+  }
+
+  private ActionGroup createLabelsActions() {
+    DefaultActionGroup result = new DefaultActionGroup();
+    result.add(new RevertAction());
+    return result;
+  }
+
+  private ActionToolbar createLabelsToolbar(ActionGroup actions) {
+    ActionManager am = ActionManager.getInstance();
+    return am.createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+  }
+
+  private JComponent createLabelsTable(ActionGroup actions) {
+    JTable t = new Table(new LabelsTableModel());
+    addPopupMenuToComponent(t, actions);
     addSelectionListener(t);
+
     t.getColumnModel().getColumn(0).setMinWidth(150);
     t.getColumnModel().getColumn(0).setMaxWidth(150);
 
@@ -88,7 +113,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     final ListSelectionModel selectionModel = t.getSelectionModel();
     selectionModel.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        // todo do always-selected selection
         if (e.getValueIsAdjusting()) return;
         int first = selectionModel.getMinSelectionIndex();
         int last = selectionModel.getMaxSelectionIndex();
@@ -144,13 +168,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   @Override
   protected String getDimensionServiceKey() {
-    // enable size auto-save
+    // enables size auto-save
     return getClass().getName();
   }
 
   @Override
   protected Action[] createActions() {
-    // remove ok/cancel buttons
+    // removes ok/cancel buttons
     return new Action[0];
   }
 
@@ -179,6 +203,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     private Label getLabelFor(int row) {
       return myModel.getLabels().get(row);
+    }
+  }
+
+  private class RevertAction extends AnAction {
+    public RevertAction() {
+      super("Revert");
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      if (!myModel.revert()) return;
+      close(0);
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
+      p.setEnabled(myModel.canRevert());
     }
   }
 }

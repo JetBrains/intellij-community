@@ -35,6 +35,14 @@ public abstract class ServiceState {
     illegalState();
   }
 
+  public void startAction(String name) {
+    illegalState();
+  }
+
+  public void finishAction() {
+    illegalState();
+  }
+
   protected void goToState(ServiceState s) {
     beforeExitingFromState();
     myHolder.setState(s);
