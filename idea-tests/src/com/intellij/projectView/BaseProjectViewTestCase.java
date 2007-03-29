@@ -68,6 +68,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return new AbstractTreeUpdater(treeBuilder);
       }
 
+      @NotNull
       protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
         return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
                                       (ProjectAbstractTreeStructureBase)myTreeStructure) {
