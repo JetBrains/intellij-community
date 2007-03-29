@@ -56,6 +56,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String JRE_DIR_NAME = "jre";
+  @NonNls private static final String PLUGINS_DIR = "plugins";
+  @NonNls private static final String JAVAEE_DIR = "JavaEE";
+  @NonNls private static final String JSF_DIR = "JSF";
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -188,19 +191,27 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    JarFileSystem jfs = JarFileSystem.getInstance();
-    File lib = new File(home + File.separator + LIB_DIR_NAME);
-    File[] jars = lib.listFiles();
-    if (jars != null) {
-      for (File jar : jars) {
-        @NonNls String name = jar.getName();
-        if (jar.isFile() && !name.equals("idea.jar") && (name.endsWith(".jar") || name.endsWith(".zip"))) {
-          result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
-        }
+    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, "idea.jar", result);
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, "javaee-impl.jar",
+                      result);
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, "jsf-impl.jar", result);
+    return result.toArray(new VirtualFile[result.size()]);
+  }
 
+  private static void appendIdeaLibrary(final String path, @NonNls final String forbidden, final ArrayList<VirtualFile> result) {
+    final JarFileSystem jfs = JarFileSystem.getInstance();
+    final File lib = new File(path);
+    if (lib.isDirectory()) {
+      File[] jars = lib.listFiles();
+      if (jars != null) {
+        for (File jar : jars) {
+          @NonNls String name = jar.getName();
+          if (jar.isFile() && !name.equals(forbidden) && (name.endsWith(".jar") || name.endsWith(".zip"))) {
+            result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
+          }
+        }
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
   }
 
 
