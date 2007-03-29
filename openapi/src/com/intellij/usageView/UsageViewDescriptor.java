@@ -19,11 +19,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface UsageViewDescriptor {
-  String OCCURRENCE_WORD= UsageViewBundle.message("terms.occurrence");
-  String USAGE_WORD= UsageViewBundle.message("terms.usage");
-  String REFERENCE_WORD= UsageViewBundle.message("terms.reference");
-  String INVOCATION_WORD= UsageViewBundle.message("terms.invocation");
-
   /**
    * @return an array of elements whose usages were searched or {@link com.intellij.psi.PsiElement#EMPTY_ARRAY} if not available
    */

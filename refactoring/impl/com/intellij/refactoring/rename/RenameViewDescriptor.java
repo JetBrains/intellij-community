@@ -18,9 +18,9 @@ import java.util.Set;
 
 class RenameViewDescriptor implements UsageViewDescriptor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameViewDescriptor");
-  private String myProcessedElementsHeader;
-  private String myCodeReferencesText;
-  private PsiElement[] myElements;
+  private final String myProcessedElementsHeader;
+  private final String myCodeReferencesText;
+  private final PsiElement[] myElements;
 
   public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
 
