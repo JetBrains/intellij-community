@@ -60,7 +60,8 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
       return false;
     }
 
-    JBPopupImpl popup = ourInstance.myStack.peek();
+    JBPopupImpl popup = findPopup();
+
     final MouseEvent mouseEvent = ((MouseEvent) event);
 
     Point point = (Point) mouseEvent.getPoint().clone();
@@ -87,6 +88,20 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
       }
       popup = ourInstance.myStack.peek();
     }
+  }
+
+  private static JBPopupImpl findPopup() {
+    while(true) {
+      if (ourInstance.myStack.isEmpty()) break;
+      final JBPopupImpl each = ourInstance.myStack.peek();
+      if (each == null || each.isDisposed()) {
+        ourInstance.myStack.pop();
+      } else {
+        return each;
+      }
+    }
+
+    return null;
   }
 
   public boolean dispatchKeyEvent(final KeyEvent e) {
