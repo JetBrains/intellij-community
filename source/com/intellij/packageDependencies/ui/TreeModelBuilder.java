@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,7 +22,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +33,7 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public class TreeModelBuilder {
+  private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
   private ProjectFileIndex myFileIndex;
   private PsiManager myPsiManager;
   private Project myProject;
@@ -59,7 +60,6 @@ public class TreeModelBuilder {
   private Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<ScopeType, Map<OrderEntry, LibraryNode>>();
   private int myScannedFileCount = 0;
   private int myTotalFileCount = 0;
-  private static TObjectIntHashMap<Project> ourTotalFilesCount = new TObjectIntHashMap<Project>();
   private int myMarkedFileCount = 0;
   private GeneralGroupNode myAllLibsNode = null;
 
@@ -190,7 +190,8 @@ public class TreeModelBuilder {
   }
 
   private void countFiles(Project project) {
-    if (!ourTotalFilesCount.containsKey(project)) {
+    final Integer fileCount = project.getUserData(FILE_COUNT);
+    if (fileCount == null) {
       myFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
@@ -206,13 +207,14 @@ public class TreeModelBuilder {
           countFilesRecursively(root);
         }
       }
-      ourTotalFilesCount.put(project, myTotalFileCount);
-    }    
-    myTotalFileCount = ourTotalFilesCount.get(project);
+      project.putUserData(FILE_COUNT, myTotalFileCount);
+    } else {
+      myTotalFileCount = fileCount.intValue();
+    }
   }
 
   public static void clearCaches(Project project) {
-    ourTotalFilesCount.remove(project);
+    project.putUserData(FILE_COUNT, null);
   }
 
   public TreeModel build(final Project project, boolean showProgress) {

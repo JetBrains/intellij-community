@@ -24,8 +24,8 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -367,7 +367,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     myContent = content;
   }
 
-  public void dispose() {    
+  public void dispose() {
+    TreeModelBuilder.clearCaches(myProject);
   }
 
   @Nullable

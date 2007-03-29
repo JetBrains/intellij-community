@@ -325,6 +325,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   public void dispose() {
+    TreeModelBuilder.clearCaches(myProject);
   }
 
   @Nullable

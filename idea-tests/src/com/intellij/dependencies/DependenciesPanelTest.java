@@ -33,41 +33,56 @@ package com.intellij.dependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.idea.IdeaTestUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.TestSourceBasedTestCase;
+import junit.framework.Assert;
 
 import javax.swing.*;
 
 public class DependenciesPanelTest extends TestSourceBasedTestCase{
   public void testDependencies(){
-    final PsiClass[] classes = getPackageDirectory("com/package1").getPackage().getClasses();
-    final PsiFile file = classes[0].getContainingFile();
-    final AnalysisScope scope = new AnalysisScope(file);
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
-    builder.analyze();
-    final DependenciesPanel dependenciesPanel =
-     new DependenciesPanel(myProject, builder);
-    JTree leftTree = dependenciesPanel.getLeftTree();
-    IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
-                          " Library Classes\n" +
-                          " -Production Classes\n" +
-                          "  -" + myModule.getName() + "\n" +
-                          "   -com.package1\n" +
-                          "    [Class1.java]\n" +
-                              " Test Classes\n", true);
+    DependenciesPanel dependenciesPanel = null;
+    try {
+      final PsiDirectory psiDirectory = getPackageDirectory("com/package1");
+      Assert.assertNotNull(psiDirectory);
+      final PsiPackage psiPackage = psiDirectory.getPackage();
+      Assert.assertNotNull(psiPackage);
+      final PsiClass[] classes = psiPackage.getClasses();
+      final PsiFile file = classes[0].getContainingFile();
+      final AnalysisScope scope = new AnalysisScope(file);
+      final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
+      builder.analyze();
+      dependenciesPanel = new DependenciesPanel(myProject, builder);
+      JTree leftTree = dependenciesPanel.getLeftTree();
+      IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
+                            " Library Classes\n" +
+                            " -Production Classes\n" +
+                            "  -" + myModule.getName() + "\n" +
+                            "   -com.package1\n" +
+                            "    [Class1.java]\n" +
+                                " Test Classes\n", true);
 
-    JTree rightTree = dependenciesPanel.getRightTree();
-    IdeaTestUtil.assertTreeEqual(rightTree, "-Root\n" +
-                           " Library Classes\n" +
-                           " -Production Classes\n" +
-                           "  -" + myModule.getName() + "\n" +
-                           "   -com.package1\n" +
-                           "    Class2.java\n" +
-                           " Test Classes\n", true);
+      JTree rightTree = dependenciesPanel.getRightTree();
+      IdeaTestUtil.assertTreeEqual(rightTree, "-Root\n" +
+                             " Library Classes\n" +
+                             " -Production Classes\n" +
+                             "  -" + myModule.getName() + "\n" +
+                             "   -com.package1\n" +
+                             "    Class2.java\n" +
+                             " Test Classes\n", true);
+    }
+    finally {
+      if (dependenciesPanel != null) {
+        Disposer.dispose(dependenciesPanel);
+      }
+    }
   }
 
   protected String getTestPath() {
