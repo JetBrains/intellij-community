@@ -11,13 +11,17 @@ import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
+import java.util.Enumeration;
 
 /**
  * @author yole
@@ -110,6 +114,26 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     try {
       if (component.getParent() != null) {
         Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+        if (componentFont instanceof FontUIResource) {
+          final Constructor constructor = component.getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+          constructor.setAccessible(true);
+          JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+          Font defaultFont = (Font) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
+
+          if (defaultFont == componentFont) {
+            return;
+          }
+          UIDefaults defaults = UIManager.getDefaults();
+          Enumeration e = defaults.keys ();
+          while(e.hasMoreElements()) {
+            Object key = e.nextElement();
+            Object value = defaults.get(key);
+            if (key instanceof String && value == componentFont) {
+              setValue(radComponent, FontDescriptor.fromSwingFont((String) key));
+              return;
+            }
+          }
+        }
         Font parentFont = (Font) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
         if (!Comparing.equal(componentFont, parentFont)) {
           String fontName = componentFont.getName().equals(parentFont.getName()) ? null : componentFont.getName();
