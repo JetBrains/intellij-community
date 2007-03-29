@@ -90,7 +90,7 @@ public final class GridChangeUtilTest extends TestCase {
 
     try {
       // should cause exception
-      GridChangeUtil.canDeleteColumn(grid, -1);
+      GridChangeUtil.canDeleteCell(grid, -1, false);
       assertTrue(false);
     }
     catch (IllegalArgumentException ok) {
@@ -98,7 +98,7 @@ public final class GridChangeUtilTest extends TestCase {
 
     try {
       // should cause exception
-      GridChangeUtil.canDeleteColumn(grid, ((GridLayoutManager)grid.getLayout()).getColumnCount());
+      GridChangeUtil.canDeleteCell(grid, ((GridLayoutManager)grid.getLayout()).getColumnCount(), false);
       assertTrue(false);
     }
     catch (IllegalArgumentException ok) {
@@ -227,17 +227,17 @@ public final class GridChangeUtilTest extends TestCase {
     {
       final RadContainer grid = SampleGrid.create();
 
-      assertFalse(GridChangeUtil.canDeleteColumn(grid, 0));
-      assertFalse(GridChangeUtil.canDeleteColumn(grid, 1));
-      assertFalse(GridChangeUtil.canDeleteColumn(grid, 2));
-      assertTrue(GridChangeUtil.canDeleteColumn(grid, 3));
-      assertTrue(GridChangeUtil.canDeleteColumn(grid, 4));
+      assertEquals(GridChangeUtil.CellStatus.Required, GridChangeUtil.canDeleteCell(grid, 0, false));
+      assertEquals(GridChangeUtil.CellStatus.Required, GridChangeUtil.canDeleteCell(grid, 1, false));
+      assertEquals(GridChangeUtil.CellStatus.CanShift, GridChangeUtil.canDeleteCell(grid, 2, false));
+      assertEquals(GridChangeUtil.CellStatus.Redundant, GridChangeUtil.canDeleteCell(grid, 3, false));
+      assertEquals(GridChangeUtil.CellStatus.Redundant, GridChangeUtil.canDeleteCell(grid, 4, false));
     }
 
     for (int i=0; i < SampleGrid.ORIGINAL_COLUMNS; i++){
       final RadContainer grid = SampleGrid.create();
 
-      if (GridChangeUtil.canDeleteColumn(grid, i)) {
+      if (GridChangeUtil.canDeleteCell(grid, i, false) != GridChangeUtil.CellStatus.Required) {
         GridChangeUtil.deleteCell(grid, i, false);
         assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS - 1);
       }
@@ -256,7 +256,7 @@ public final class GridChangeUtilTest extends TestCase {
     {
       final RadContainer grid = SampleGrid.create();
       for (int i=0; i < SampleGrid.ORIGINAL_ROWS; i++){
-        assertFalse(GridChangeUtil.canDeleteRow(grid, i));
+        assertEquals(GridChangeUtil.CellStatus.Required, GridChangeUtil.canDeleteCell(grid, i, true));
       }
     }
   }

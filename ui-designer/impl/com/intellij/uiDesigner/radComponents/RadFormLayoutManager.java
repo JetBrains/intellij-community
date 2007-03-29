@@ -504,11 +504,16 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
   @Override
   public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
-    //noinspection SimplifiableIfStatement
-    if (cellIndex < 0 || cellIndex >= (isRow ? getGridRowCount(grid) : getGridColumnCount(grid))) {
+    if (cellIndex < 0 || cellIndex >= getGridCellCount(grid, isRow)) {
       return false;
     }
-    return cellIndex % 2 == 1 && GridChangeUtil.canDeleteCell(grid, cellIndex, isRow, false);
+    if (cellIndex % 2 == 1) {
+      final GridChangeUtil.CellStatus status = GridChangeUtil.canDeleteCell(grid, cellIndex, isRow);
+      if (status == GridChangeUtil.CellStatus.Empty || status == GridChangeUtil.CellStatus.Redundant) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

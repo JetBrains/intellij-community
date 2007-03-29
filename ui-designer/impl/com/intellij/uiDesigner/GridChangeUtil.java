@@ -24,20 +24,12 @@ public final class GridChangeUtil {
     splitCell(grid, rowIndex, true);
   }
 
-  public static boolean canDeleteColumn(final RadContainer grid, final int columnIndex) {
-    return canDeleteCell(grid, columnIndex, false, false);
-  }
-
   public static boolean isColumnEmpty(final RadContainer grid, final int columnIndex) {
-    return canDeleteCell(grid, columnIndex, false, true);
-  }
-
-  public static boolean canDeleteRow(final RadContainer grid, final int rowIndex) {
-    return canDeleteCell(grid, rowIndex, true, false);
+    return canDeleteCell(grid, columnIndex, false) == CellStatus.Empty;
   }
 
   public static boolean isRowEmpty(final RadContainer grid, final int rowIndex) {
-    return canDeleteCell(grid, rowIndex, true, true);
+    return canDeleteCell(grid, rowIndex, true) == CellStatus.Empty;
   }
 
   /**
@@ -101,64 +93,61 @@ public final class GridChangeUtil {
     }
   }
 
+  public enum CellStatus {
+    Empty, Redundant, CanShift, Required
+  }
+
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is deleted, otherwise column
-   * @param mustBeEmpty
-   * @return true if specified row/column can be deleted
+   * @return whether the specified column can be deleted
    */
- public static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean mustBeEmpty) {
+ public static CellStatus canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column
     if(isRow && grid.getGridRowCount() < 2){
-      return false;
+      return CellStatus.Required;
     }
     else if(!isRow && grid.getGridColumnCount() < 2){
-      return false;
+      return CellStatus.Required;
     }
 
-    boolean haveExtendRight = false;
-    boolean haveExtendLeft = false;
+    boolean haveComponents = false;
+    boolean haveOrigins = false;
+    boolean haveSingleSpan = false;
     for (int i = 0; i < grid.getComponentCount(); i++) {
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
       final int cell = constraints.getCell(isRow);
       final int span = constraints.getSpan(isRow);
 
-      if (mustBeEmpty) {
-        if (cellIndex >= cell && cellIndex < cell+span) {
-          return false;
-        }
-      }
-      else {
-        if (cell == cellIndex && span == 1) {
-          // only cells where components with span 1 are located cannot be deleted
-          return false;
-        }
-        if (span > 1) {
-          if (cell == cellIndex) {
-            haveExtendRight = true;
-          }
-          else if (cell + span - 1 == cellIndex) {
-            haveExtendLeft = true;
+      if (cellIndex >= cell && cellIndex < cell+span) {
+        haveComponents = true;
+        if (cellIndex == cell) {
+          haveOrigins = true;
+          if (span == 1) {
+            haveSingleSpan = true;
           }
         }
       }
     }
-    if (haveExtendLeft && haveExtendRight) {
-      // if there are components which end at this column and other components which begin at it,
-      // deleting it will not keep the layout
-      // AA
-      //  BB
-      return false;
-    }
-
-    return true;
+    if (haveSingleSpan)
+      return CellStatus.Required;
+    if (haveOrigins)
+      return CellStatus.CanShift;
+    if (haveComponents)
+      return CellStatus.Redundant;
+    return CellStatus.Empty;
   }
 
-  public static boolean canDeleteCells(final RadContainer grid, final int[] cells, final boolean row, final boolean mustBeEmpty) {
+  public static boolean canDeleteCells(final RadContainer grid, final int[] cells, final boolean row) {
+    // for multiple cells, we can't determine if deleting all cells will have a correct result
     for(int cell: cells) {
-      if (!canDeleteCell(grid, cell, row, mustBeEmpty)) {
+      CellStatus status = canDeleteCell(grid, cell, row);
+      if (status != CellStatus.Empty) {
+        if (cells.length == 1 && status == CellStatus.Redundant) {
+          return true;
+        }
         return false;
       }
     }
@@ -171,7 +160,7 @@ public final class GridChangeUtil {
    */
   public static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
-    if (!canDeleteCell(grid, cellIndex, isRow, false)) {
+    if (canDeleteCell(grid, cellIndex, isRow) == CellStatus.Required) {
       throw new IllegalArgumentException("cell cannot be deleted");
     }
 

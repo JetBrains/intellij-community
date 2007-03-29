@@ -193,7 +193,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     if (mySelectionModel.isSelectedIndex(i)) {
       return LightColors.BLUE;
     }
-    if (GridChangeUtil.canDeleteCell(mySelectedContainer, i, myIsRow, false)) {
+    final GridChangeUtil.CellStatus status = GridChangeUtil.canDeleteCell(mySelectedContainer, i, myIsRow);
+    if (status == GridChangeUtil.CellStatus.Empty || status == GridChangeUtil.CellStatus.Redundant) {
       return Color.PINK;
     }
     return LightColors.GREEN;

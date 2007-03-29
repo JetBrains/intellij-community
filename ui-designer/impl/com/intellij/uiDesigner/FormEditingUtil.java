@@ -157,15 +157,16 @@ public final class FormEditingUtil {
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
-    final RadAbstractGridLayoutManager layoutManaget = parent.getGridLayoutManager();
-    for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
-      if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row) && !layoutManaget.isGapCell(parent, true, row)) {
-        layoutManaget.deleteGridCells(parent, row, true);
-      }
-    }
-    for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
-      if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col) && !layoutManaget.isGapCell(parent, false, col)) {
-        layoutManaget.deleteGridCells(parent, col, false);
+    deleteEmptyGridCells(parent, delConstraints, true);
+    deleteEmptyGridCells(parent, delConstraints, false);
+  }
+
+  private static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints, final boolean isRow) {
+    final RadAbstractGridLayoutManager layoutManager = parent.getGridLayoutManager();
+    for(int cell=delConstraints.getCell(isRow) + delConstraints.getSpan(isRow)-1; cell>= delConstraints.getCell(isRow); cell--) {
+      if (cell < parent.getGridCellCount(isRow) && GridChangeUtil.canDeleteCell(parent, cell, isRow) == GridChangeUtil.CellStatus.Empty &&
+          !layoutManager.isGapCell(parent, isRow, cell)) {
+        layoutManager.deleteGridCells(parent, cell, isRow);
       }
     }
   }
@@ -469,7 +470,7 @@ public final class FormEditingUtil {
 
     Runnable runnable = new Runnable() {
       public void run() {
-        if (!GridChangeUtil.canDeleteCells(container, cells, isRow, false)) {
+        if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
           Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
           for(RadComponent component: container.getComponents()) {
             GridConstraints c = component.getConstraints();
