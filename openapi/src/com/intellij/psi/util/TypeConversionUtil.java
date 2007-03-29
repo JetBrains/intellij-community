@@ -497,7 +497,7 @@ public class TypeConversionUtil {
       return typeRank == BOOL_RANK;
     }
     else {
-      LOG.assertTrue(false, "unknown token: " + token);
+      LOG.error("unknown token: " + token);
     }
     return true;
   }
@@ -651,7 +651,9 @@ public class TypeConversionUtil {
         return IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
       }
       else {
-        assert right instanceof PsiClassType : right.toString();
+        if (!(right instanceof PsiClassType)) {
+          LOG.error(right.toString());
+        }
         if (left instanceof PsiPrimitiveType) {
           return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
         }
@@ -927,7 +929,7 @@ public class TypeConversionUtil {
       LOG.assertTrue(type != null);
       return type;
     }
-    LOG.assertTrue(false, "Invalid type for unboxing");
+    LOG.error("Invalid type for unboxing "+type);
     return type;
   }
 
