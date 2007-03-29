@@ -4,27 +4,26 @@ package com.intellij.ui.content.impl;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Hashtable;
 
-public class ContentImpl implements Content {
+public class ContentImpl extends UserDataHolderBase implements Content {
   private String myDisplayName;
   private String myDescription;
   private JComponent myComponent;
   private Icon myIcon;
   private PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private ContentManager myManager = null;
-  private Hashtable myUserData = new Hashtable();
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
@@ -140,33 +139,14 @@ public class ContentImpl implements Content {
   }
 
   public boolean isSelected() {
-    if (myManager == null) return false;
-    return (myManager.getSelectedContent() == this);
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    if (key == null) return;
-    if (value != null){
-      myUserData.put(key, value);
-    }
-    else{
-      myUserData.remove(key);
-    }
-  }
-
-  public <T> T getUserData(Key<T> key) {
-    if (key == null) return null;
-    return (T)myUserData.get(key);
+    return myManager != null && myManager.getSelectedContent() == this;
   }
 
   public final void release() {
     myComponent = null;
     myManager = null;
-    if (myUserData != null) {
-      myUserData.clear();
-    }
-    myUserData = null;
 
+    clearUserData();
     if (myDisposer != null) {
       myDisposer.dispose();
       myDisposer = null;
@@ -216,6 +196,7 @@ public class ContentImpl implements Content {
     return myPlace;
   }
 
+  @NonNls
   public String toString() {
     return "Content name=" + myDisplayName;
   }

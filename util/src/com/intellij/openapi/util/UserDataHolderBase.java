@@ -177,4 +177,14 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
     clone.putUserData(COPYABLE_USER_MAP_KEY, copyableMap);
   }
+
+  protected void clearUserData() {
+    w.lock();
+    try {
+       myUserMap = null;
+    }
+    finally{
+      w.unlock();
+    }
+  }
 }
