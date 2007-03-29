@@ -72,6 +72,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentStore;
   }
 
+  public IComponentStore getComponentStore() {
+    return getStateStore();
+  }
+
+
   public MessageBus getMessageBus() {
     assert myMessageBus != null : "Not initialized yet";
     return myMessageBus;
@@ -216,10 +221,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     config.pluginDescriptor =  pluginDescriptor;
     myComponentsRegistry.registerComponent(config);
-  }
-
-  public IComponentStore getComponentStore() {
-    return myComponentStore;
   }
 
   @NotNull
