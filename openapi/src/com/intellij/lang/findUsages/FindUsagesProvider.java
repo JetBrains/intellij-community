@@ -42,7 +42,7 @@ public interface FindUsagesProvider {
    * @return true if the search is allowed, false otherwise.
    * @see com.intellij.find.FindManager#canFindUsages(com.intellij.psi.PsiElement)
    */
-  boolean canFindUsagesFor(PsiElement psiElement);
+  boolean canFindUsagesFor(@NotNull PsiElement psiElement);
 
   /**
    * Returns the ID of the help topic which is shown when the specified element is selected

@@ -32,27 +32,27 @@ public class EmptyFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
-  public boolean canFindUsagesFor(PsiElement psiElement) {
+  public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
     return false;
   }
 
   @Nullable
-  public String getHelpId(PsiElement psiElement) {
+  public String getHelpId(@NotNull PsiElement psiElement) {
     return null;
   }
 
   @NotNull
-  public String getType(PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     return "";
   }
 
   @NotNull
-  public String getDescriptiveName(PsiElement element) {
+  public String getDescriptiveName(@NotNull PsiElement element) {
     return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
   }
 
   @NotNull
-  public String getNodeText(PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
   }
 }

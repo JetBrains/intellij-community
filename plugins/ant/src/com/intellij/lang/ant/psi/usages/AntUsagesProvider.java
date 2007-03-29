@@ -17,24 +17,24 @@ public class AntUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
-  public boolean canFindUsagesFor(PsiElement element) {
+  public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (!(element instanceof AntStructuredElement)) return false;
     AntStructuredElement se = (AntStructuredElement)element;
     return se.hasNameElement() || se.hasIdElement();
   }
 
   @Nullable
-  public String getHelpId(PsiElement element) {
+  public String getHelpId(@NotNull PsiElement element) {
     return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull
-  public String getType(PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     return ((AntStructuredElement)element).getSourceElement().getName();
   }
 
   @NotNull
-  public String getDescriptiveName(PsiElement element) {
+  public String getDescriptiveName(@NotNull PsiElement element) {
     if( element instanceof AntFile) {
       return ((AntFile)element).getName();
     }
@@ -45,7 +45,7 @@ public class AntUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getNodeText(PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 }

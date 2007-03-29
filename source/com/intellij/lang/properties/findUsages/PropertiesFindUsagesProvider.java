@@ -14,27 +14,27 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class PropertiesFindUsagesProvider implements FindUsagesProvider {
-  public boolean canFindUsagesFor(PsiElement psiElement) {
+  public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
     return psiElement instanceof PsiNamedElement;
   }
 
-  public String getHelpId(PsiElement psiElement) {
+  public String getHelpId(@NotNull PsiElement psiElement) {
     return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull
-  public String getType(PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     if (element instanceof Property) return LangBundle.message("terms.property");
     return "";
   }
 
   @NotNull
-  public String getDescriptiveName(PsiElement element) {
+  public String getDescriptiveName(@NotNull PsiElement element) {
     return ((PsiNamedElement)element).getName();
   }
 
   @NotNull
-  public String getNodeText(PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 

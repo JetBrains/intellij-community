@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class JavaFindUsagesProvider implements FindUsagesProvider {
-  public boolean canFindUsagesFor(PsiElement element) {
+  public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
       return psiPackage != null && psiPackage.getQualifiedName().length() != 0;

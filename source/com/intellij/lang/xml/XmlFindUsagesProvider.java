@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
 
-  public boolean canFindUsagesFor(PsiElement element) {
+  public boolean canFindUsagesFor(@NotNull PsiElement element) {
     return element instanceof XmlElementDecl ||
            element instanceof XmlAttributeDecl ||
            element instanceof XmlEntityDecl ||
@@ -26,25 +26,31 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getType(PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     if (element instanceof XmlElementDecl || element instanceof XmlTag) {
       return LangBundle.message("xml.terms.tag");
-    } else if (element instanceof XmlAttributeDecl) {
+    }
+    else if (element instanceof XmlAttributeDecl) {
       return LangBundle.message("xml.terms.attribute");
-    } else if (element instanceof XmlAttributeValue) {
+    }
+    else if (element instanceof XmlAttributeValue) {
       return LangBundle.message("xml.terms.attribute.value");
-    } else if (element instanceof XmlEntityDecl) {
+    }
+    else if (element instanceof XmlEntityDecl) {
       return LangBundle.message("xml.terms.entity");
+    }
+    else if (element instanceof XmlAttribute) {
+      return LangBundle.message("xml.terms.attribute");
     }
     throw new IllegalArgumentException("Cannot get type for " + element);
   }
 
-  public String getHelpId(PsiElement element) {
+  public String getHelpId(@NotNull PsiElement element) {
     return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull
-  public String getDescriptiveName(PsiElement element) {
+  public String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     } else {
@@ -53,7 +59,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getNodeText(PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     } else {
