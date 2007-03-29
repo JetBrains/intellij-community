@@ -38,8 +38,12 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
   }
 
   protected void doOKAction() {
-    if (shouldDoOkAction() && myIncludeOverloadedMethodsAvailable) {
-      FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
+    if (shouldDoOkAction()) {
+      if (myIncludeOverloadedMethodsAvailable) {
+        FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
+      }
+    } else {
+      return;
     }
     super.doOKAction();
   }

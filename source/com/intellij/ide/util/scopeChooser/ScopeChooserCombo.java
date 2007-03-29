@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -312,7 +313,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
         classesToSearch.addAll(Arrays.asList(descendants));
 
         myCachedScope = new LocalSearchScope(classesToSearch.toArray(new PsiElement[classesToSearch.size()]),
-                                             IdeBundle.message("scope.hierarchy", aClass.getQualifiedName()));
+                                             IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
       }
 
       return myCachedScope;
