@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -43,7 +44,7 @@ public class JavaMethodSignature {
   }
 
   public final Object invoke(final Object instance, final Object... args) throws IllegalAccessException, InvocationTargetException {
-    final Class<? extends Object> aClass = instance.getClass();
+    final Class<?> aClass = instance.getClass();
     final Method method = findMethod(aClass);
     assert method != null : "No method " + this + " in " + aClass;
     return method.invoke(instance, args);
@@ -70,17 +71,8 @@ public class JavaMethodSignature {
 
   @Nullable
   private Method getDeclaredMethod(final Class aClass) {
-    try {
-      return aClass.getMethod(myMethodName, myMethodParameters);
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        return aClass.getDeclaredMethod(myMethodName, myMethodParameters);
-      }
-      catch (NoSuchMethodException e1) {
-        return null;
-      }
-    }
+    final Method method = ReflectionUtil.getMethod(aClass, myMethodName, myMethodParameters);
+    return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
 
   private void addMethodWithSupers(final Class aClass, final Method method) {

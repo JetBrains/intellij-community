@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
@@ -13,17 +14,6 @@ public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
 
   private ReflectionUtil() {
-  }
-
-  @Nullable
-  public static Method getMethod(Class aClass, @NonNls String name, Class... paramTypes) {
-    try {
-      return aClass.getMethod(name, paramTypes);
-    }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 
   @Nullable
@@ -163,6 +153,24 @@ public class ReflectionUtil {
     } else {
       field.set(object, null);
     }
+  }
+
+  @Nullable
+  public static Method findMethod(Method[] methods, @NonNls @NotNull String name, Class... parameters) {
+    for (final Method method : methods) {
+      if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) return method;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, Class... parameters) {
+    return findMethod(ReflectionCache.getMethods(aClass), name, parameters);
+  }
+
+  @Nullable
+  public static Method getDeclaredMethod(@NotNull Class aClass, @NonNls @NotNull String name, Class... parameters) {
+    return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
 }

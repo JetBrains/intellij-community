@@ -5,7 +5,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
@@ -31,22 +30,10 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public abstract class DomUIFactory {
-  public static Method GET_VALUE_METHOD = null;
-  public static Method SET_VALUE_METHOD = null;
-  public static Method GET_STRING_METHOD = null;
-  public static Method SET_STRING_METHOD = null;
-
-  static {
-    try {
-      GET_VALUE_METHOD = GenericDomValue.class.getMethod("getValue");
-      GET_STRING_METHOD = GenericDomValue.class.getMethod("getStringValue");
-      SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
-      SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
-    }
-    catch (NoSuchMethodException e) {
-      Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory").error(e);
-    }
-  }
+  public static Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
+  public static Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
+  public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
+  public static Method SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
 
   @NotNull
   public static DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
@@ -102,9 +89,9 @@ public abstract class DomUIFactory {
     return getDomUIFactory().createTextControl(stringWrapper, commitOnEveryChange);
   }
 
+  @Nullable
   public static Method findMethod(Class clazz, @NonNls String methodName) {
-    final Method[] methods = clazz.getMethods();
-    for (Method method : methods) {
+    for (Method method : clazz.getMethods()) {
       if (methodName.equals(method.getName())) {
         return method;
       }

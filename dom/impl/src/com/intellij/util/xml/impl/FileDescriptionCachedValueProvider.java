@@ -201,7 +201,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @Nullable
   private String getRootTag() {
-    return ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue();
+    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : null;
   }
 
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents) {

@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -19,7 +18,6 @@ import java.util.List;
  * @author peter
  */
 public class DomReflectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomReflectionUtil");
   private DomReflectionUtil() {
   }
 
@@ -63,18 +61,14 @@ public class DomReflectionUtil {
   @Nullable
   public static JavaMethod findGetter(Class aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
-    try {
-      return JavaMethod.getMethod(aClass, aClass.getMethod("get" + capitalized));
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        final JavaMethod javaMethod = JavaMethod.getMethod(aClass, aClass.getMethod("is" + capitalized));
-        return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
-      }
-      catch (NoSuchMethodException e1) {
-        return null;
-      }
-    }
+    Method method = ReflectionUtil.getMethod(aClass, "get" + capitalized);
+    if (method != null) return JavaMethod.getMethod(aClass, method);
+
+    method = ReflectionUtil.getMethod(aClass, "is" + capitalized);
+    if (method == null) return null;
+
+    final JavaMethod javaMethod = JavaMethod.getMethod(aClass, method);
+    return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
   }
 
   public static Object invokeMethod(final JavaMethodSignature method, final Object object, final Object... args) {

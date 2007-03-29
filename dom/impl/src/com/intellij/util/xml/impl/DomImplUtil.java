@@ -5,11 +5,16 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.testFramework.LightVirtualFile;
 import org.apache.xerces.parsers.SAXParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +141,18 @@ public class DomImplUtil {
 
   @Nullable
   public static String getRootTagName(final PsiFile file) throws IOException {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile instanceof LightVirtualFile && file instanceof XmlFile && FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
+      final XmlDocument document = ((XmlFile)file).getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null) {
+          return tag.getLocalName();
+        }
+      }
+      return null;
+    }
+
     final NanoXmlUtil.RootTagNameBuilder builder = new NanoXmlUtil.RootTagNameBuilder();
     NanoXmlUtil.parseFile(file, builder);
     return builder.getResult();
