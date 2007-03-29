@@ -58,22 +58,27 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   public JComponent createComponent() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new BorderLayout(4, 0));
 
     final JComponent renderersList = createRenderersList();
     final JComponent toolbar = createToolbar();
     final JComponent rendererDataPanel = myRendererDataConfigurable.createComponent();
 
-    panel.add(toolbar, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(6, 0, 0, 0), 0, 0));
-    panel.add(renderersList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
+    final JPanel left = new JPanel(new BorderLayout());
+
+    left.add(toolbar, BorderLayout.NORTH);
+    left.add(renderersList, BorderLayout.CENTER);
 
     myNameField = new JTextField();
     final JPanel nameFieldPanel = new JPanel(new BorderLayout());
     nameFieldPanel.add(new JLabel(DebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
     nameFieldPanel.add(myNameField, BorderLayout.CENTER);
-    panel.add(nameFieldPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(6, 6, 0, 6), 0, 0));
 
-    panel.add(rendererDataPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 6, 10, 6), 0, 0));
+
+    final JPanel center = new JPanel(new BorderLayout(0, 4));
+
+    center.add(nameFieldPanel, BorderLayout.NORTH);
+    center.add(rendererDataPanel, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -83,6 +88,9 @@ public class UserRenderersConfigurable implements Configurable{
         }
       }
     });
+
+    panel.add(left, BorderLayout.WEST);
+    panel.add(center, BorderLayout.CENTER);
 
     return panel;
   }
