@@ -8,11 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -106,16 +106,28 @@ public final class AntInstrospector {
   public Enumeration getNestedElements() {
     return invokeMethod("getNestedElements");
   }
-
-  public Map getNestedElementMap() {
-    return invokeMethod("getNestedElementMap");
+  
+  @Nullable
+  public Class getElementType(String name) {
+    try {
+      return invokeMethod("getElementType", name);
+    }
+    catch (RuntimeException e) {
+      return null;
+    }
   }
 
   public Enumeration getAttributes() {
     return invokeMethod("getAttributes");
   }
 
+  @Nullable
   public Class getAttributeType(final String attr) {
-    return invokeMethod("getAttributeType", attr);
+    try {
+      return invokeMethod("getAttributeType", attr);
+    }
+    catch (RuntimeException e) {
+      return null;
+    }
   }
 }
