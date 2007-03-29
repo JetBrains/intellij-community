@@ -102,6 +102,9 @@ public class FrameDebuggerTree extends DebuggerTree {
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext)
       throws EvaluateException {
       final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+      if (sourcePosition == null) {
+        return;
+      }
       final Pair<Set<String>, Set<TextWithImports>> usedVars =
         ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
           public Pair<Set<String>, Set<TextWithImports>> compute() {
