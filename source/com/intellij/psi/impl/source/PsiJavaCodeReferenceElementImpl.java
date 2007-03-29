@@ -215,15 +215,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  /**
-     * [dsl]:Should not be called when tree is not loaded
-     *
-     * @return
-     */
-  public PsiIdentifier getClassName() {
-    return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
-  }
-
   public String getCanonicalText() {
     switch (getKind()) {
     case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
@@ -364,7 +355,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     case CLASS_IN_QUALIFIED_NEW_KIND:
            {
-             final PsiExpression qualifier;
              PsiElement parent = getParent();
              if (parent instanceof DummyHolder) {
                parent = parent.getContext();
@@ -373,6 +363,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              if (parent instanceof PsiAnonymousClass) {
                parent = parent.getParent();
              }
+             final PsiExpression qualifier;
              if (parent instanceof PsiNewExpression) {
                qualifier = ((PsiNewExpression)parent).getQualifier();
                LOG.assertTrue(qualifier != null);
@@ -390,8 +381,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              if (!(qualifierType instanceof PsiClassType)) return JavaResolveResult.EMPTY_ARRAY;
              final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(qualifierType);
              if (result.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
-             final PsiElement classNameElement;
-             classNameElement = getReferenceNameElement();
+             final PsiElement classNameElement = getReferenceNameElement();
              if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
              final String className = classNameElement.getText();
 
@@ -401,8 +391,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
     case CLASS_NAME_KIND:
            {
-             final PsiElement classNameElement;
-             classNameElement = getReferenceNameElement();
+             final PsiElement classNameElement = getReferenceNameElement();
              if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
              final String className = classNameElement.getText();
 
@@ -606,24 +595,23 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
 
     case CLASS_OR_PACKAGE_NAME_KIND:
-           {
-             //        if (lastChild.type != IDENTIFIER) return false;
-             if (element instanceof PsiPackage) {
-               final String qName = ((PsiPackage)element).getQualifiedName();
-               return qName.equals(getCanonicalText());
-             }
-             else if (element instanceof PsiClass) {
-               final PsiIdentifier nameIdentifier = ((PsiClass)element).getNameIdentifier();
-               if (nameIdentifier == null) return false;
-               if (!getReferenceNameElement().textMatches(nameIdentifier)) return false;
-               return element.getManager().areElementsEquivalent(element, resolve());
-             }
-             else {
-               return false;
-             }
-           }
+      //        if (lastChild.type != IDENTIFIER) return false;
+      if (element instanceof PsiPackage) {
+        final String qName = ((PsiPackage)element).getQualifiedName();
+        return qName.equals(getCanonicalText());
+      }
+      else if (element instanceof PsiClass) {
+        final PsiIdentifier nameIdentifier = ((PsiClass)element).getNameIdentifier();
+        if (nameIdentifier == null) return false;
+        PsiElement nameElement = getReferenceNameElement();
+        return nameElement != null && nameElement.textMatches(nameIdentifier) &&
+               element.getManager().areElementsEquivalent(element, resolve());
+      }
+      else {
+        return false;
+      }
 
-    case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
            if (element instanceof PsiClass) {
              final String qName = ((PsiClass)element).getQualifiedName();
              if (qName == null) return false;
