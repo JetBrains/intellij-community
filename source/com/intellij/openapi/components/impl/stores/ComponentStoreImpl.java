@@ -214,19 +214,20 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
-  private void initPersistentComponent(final PersistentStateComponent<Object> component) {
+  private <T> void initPersistentComponent(final PersistentStateComponent<T> component) {
     final String name = getComponentName(component);
 
     myComponents.put(name, component);
     if (optimizeTestLoading()) return;
 
-    Object state = null;
+    Class<T> stateClass = getComponentStateClass(component);
+
+    T state = null;
     //todo: defaults merging
     final StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       try {
 
-        Class stateClass = getComponentStateClass(component);
         state = defaultsStorage.getState(component, name, stateClass, null);
       }
       catch (StateStorage.StateStorageException e) {
@@ -240,7 +241,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
       if (stateStorage == null) return;
 
-      Class stateClass = getComponentStateClass(component);
       state = stateStorage.getState(component, name, stateClass, state);
     }
     catch (StateStorage.StateStorageException e) {
@@ -256,7 +256,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
 
-  private static Class getComponentStateClass(final PersistentStateComponent<Object> persistentStateComponent) {
+  private static <T> Class<T> getComponentStateClass(final PersistentStateComponent<T> persistentStateComponent) {
     final Class persistentStateComponentClass = PersistentStateComponent.class;
     Class componentClass = persistentStateComponent.getClass();
 
@@ -275,10 +275,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final Type type =
       ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
 
-    return ReflectionUtil.getRawType(type);
+    return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
-  private static String getComponentName(final PersistentStateComponent<Object> persistentStateComponent) {
+  private static String getComponentName(final PersistentStateComponent<?> persistentStateComponent) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     assert stateSpec != null;
     return stateSpec.name();
