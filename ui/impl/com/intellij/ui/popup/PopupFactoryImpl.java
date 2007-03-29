@@ -272,6 +272,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     int maxWidth = -1;
     int maxHeight = -1;
     for (AnAction action : actions) {
+      if (action == null) continue;
+      
       Icon icon = action.getTemplatePresentation().getIcon();
       if (icon != null) {
         final int width = icon.getIconWidth();
