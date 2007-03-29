@@ -15,7 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -24,8 +26,8 @@ import java.util.Map;
  */
 public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
   private ConcurrentSoftHashMap<T, ConcurrentSoftArrayHashMap<T,V>> myContinuationMap;
-  private ConcurrentSoftHashMap<T,V> myValuesMap;
-  private V myEmptyValue;
+  private ConcurrentSoftHashMap<T, SoftReference<V>> myValuesMap;
+  private SoftReference<V> myEmptyValue;
   private final TObjectHashingStrategy<T> myStrategy;
 
   public ConcurrentSoftArrayHashMap() {
@@ -37,13 +39,22 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     myStrategy = strategy;
   }
 
+  @Nullable
   private V get(T[] array, int index) {
     if (index == array.length - 1) {
-      return myValuesMap != null ? myValuesMap.get(array[index]) : null;
+      final ConcurrentSoftHashMap<T, SoftReference<V>> valuesMap = myValuesMap;
+      if (valuesMap != null) {
+        final SoftReference<V> softReference = valuesMap.get(array[index]);
+        if (softReference != null) {
+          return softReference.get();
+        }
+      }
+      return null;
     }
 
-    if (myContinuationMap != null) {
-      final ConcurrentSoftArrayHashMap<T, V> map = myContinuationMap.get(array[index]);
+    final ConcurrentSoftHashMap<T, ConcurrentSoftArrayHashMap<T, V>> continuationMap = myContinuationMap;
+    if (continuationMap != null) {
+      final ConcurrentSoftArrayHashMap<T, V> map = continuationMap.get(array[index]);
       if (map != null) {
         return map.get(array, index + 1);
       }
@@ -52,9 +63,11 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     return null;
   }
 
+  @Nullable
   public final V get(T[] key) {
     if (key.length == 0) {
-      return myEmptyValue;
+      final SoftReference<V> emptyValue = myEmptyValue;
+      return emptyValue == null ? null : emptyValue.get();
     }
     return get(key, 0);
   }
@@ -63,9 +76,9 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     final T key = array[index];
     if (index == array.length - 1) {
       if (myValuesMap == null) {
-        myValuesMap = new ConcurrentSoftHashMap<T, V>(myStrategy);
+        myValuesMap = new ConcurrentSoftHashMap<T, SoftReference<V>>(myStrategy);
       }
-      myValuesMap.put(key, value);
+      myValuesMap.put(key, new SoftReference<V>(value));
     } else {
       if (myContinuationMap == null) {
         myContinuationMap = new ConcurrentSoftHashMap<T, ConcurrentSoftArrayHashMap<T,V>>(myStrategy);
@@ -78,15 +91,15 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     }
   }
 
-  public final void put(T[] key, V value) {
+  public final synchronized void put(T[] key, V value) {
     if (key.length == 0) {
-      myEmptyValue = value;
+      myEmptyValue = new SoftReference<V>(value);
     } else {
       put(key, 0, value);
     }
   }
 
-  public final void clear() {
+  public final synchronized void clear() {
     myContinuationMap = null;
     myValuesMap = null;
     myEmptyValue = null;
