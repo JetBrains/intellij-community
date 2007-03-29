@@ -744,7 +744,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       })
       .setCancelOnMouseOutCallback(new MouseChecker() {
         public boolean check(final MouseEvent event) {
-          if (myActionManager.isActionPopupStackEmpty()) {
+          if (myAutoPopupRec != null && myActionManager.isActionPopupStackEmpty()) {
             return !new RelativeRectangle(ActionToolbarImpl.this, myAutoPopupRec).contains(new RelativePoint(event));
           }
           return false;
