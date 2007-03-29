@@ -18,7 +18,7 @@ public class DirectoryHistoryDialogModelTest {
     TestVirtualFile file = new TestVirtualFile("file", null, -1);
     parent.addChild(file);
 
-    m = new DirectoryHistoryDialogModel(file, vcs);
+    m = new DirectoryHistoryDialogModel(file, vcs, null);
 
     assertEquals("parent/file", m.getTitle());
   }
@@ -55,6 +55,6 @@ public class DirectoryHistoryDialogModelTest {
   }
 
   private void initModelFor(String path) {
-    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path), vcs);
+    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path), vcs, null);
   }
 }

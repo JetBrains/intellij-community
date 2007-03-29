@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-public class FileReverter {
+public class Reverter {
   private IdeaGateway myGateway;
   private VirtualFile myFile;
   private Label myLabel;
@@ -16,10 +16,10 @@ public class FileReverter {
   private Entry myRightEntry;
 
   public static boolean revert(IdeaGateway gw, Label l, Entry left, Entry right) {
-    return new FileReverter(gw, l, left, right).revert();
+    return new Reverter(gw, l, left, right).revert();
   }
 
-  private FileReverter(IdeaGateway gw, Label l, Entry left, Entry right) {
+  private Reverter(IdeaGateway gw, Label l, Entry left, Entry right) {
     myGateway = gw;
     myLabel = l;
 
@@ -76,23 +76,39 @@ public class FileReverter {
     return myGateway.askForProceed("There is file that prevents revertion.\nDo you want to delete that file and proceed?");
   }
 
-  private void revertDeletion() throws IOException {
-    // test parent recreation...
-    VirtualFile parent = myGateway.findOrCreateDirectory(myLeftEntry.getParent().getPath());
-
-    VirtualFile f = parent.createChildData(null, myLeftEntry.getName());
-    f.setBinaryContent(myLeftEntry.getContent().getBytes(), -1, myLeftEntry.getTimestamp());
-  }
-
   private void revertCreation() throws IOException {
     myFile.delete(null);
+  }
+
+  private void revertDeletion() throws IOException {
+    VirtualFile parent = myGateway.findOrCreateDirectory(getParentOf(myLeftEntry));
+    restoreRecursively(parent, myLeftEntry);
+  }
+
+  private void restoreRecursively(VirtualFile parent, Entry e) throws IOException {
+    if (e.isDirectory()) {
+      VirtualFile dir = parent.createChildDirectory(null, getNameOf(e));
+      for (Entry child : e.getChildren()) {
+        restoreRecursively(dir, child);
+      }
+    }
+    else {
+      VirtualFile f = parent.createChildData(null, getNameOf(e));
+      f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
+    }
   }
 
   private void revertModification() throws IOException {
     removeInterferedFile();
     revertMovement();
     reventRename();
-    revertContent();
+
+    if (myFile.isDirectory()) {
+      revertDirectoryModifications(myFile, myLeftEntry);
+    }
+    else {
+      revertContent();
+    }
   }
 
   private void removeInterferedFile() throws IOException {
@@ -106,16 +122,8 @@ public class FileReverter {
     return f;
   }
 
-  private boolean hasPreviousVersion() {
-    return myLeftEntry != null;
-  }
-
-  private boolean hasCurrentVersion() {
-    return myRightEntry != null;
-  }
-
   private void revertMovement() throws IOException {
-    String parentPath = myLeftEntry.getParent().getPath();
+    String parentPath = getParentOf(myLeftEntry);
 
     if (!Paths.equals(parentPath, myFile.getParent().getPath())) {
       VirtualFile parent = myGateway.findOrCreateDirectory(parentPath);
@@ -124,10 +132,40 @@ public class FileReverter {
   }
 
   private void reventRename() throws IOException {
-    if (!myFile.getName().equals(myLeftEntry.getName())) {
-      myFile.rename(null, myLeftEntry.getName());
+    if (!myFile.getName().equals(getNameOf(myLeftEntry))) {
+      myFile.rename(null, getNameOf(myLeftEntry));
     }
   }
+
+  private void revertDirectoryModifications(VirtualFile parentFile, Entry parentEntry) throws IOException {
+    if (!parentFile.isDirectory()) {
+      if (parentFile.getTimeStamp() != parentEntry.getTimestamp()) {
+        parentFile.setBinaryContent(parentEntry.getContent().getBytes(), -1, parentEntry.getTimestamp());
+      }
+      return;
+    }
+    for (VirtualFile f : parentFile.getChildren()) {
+      Entry e = parentEntry.findChild(f.getName());
+      if (e == null) {
+        f.delete(null);
+      }
+      else {
+        revertDirectoryModifications(f, e);
+      }
+    }
+    for (Entry e : parentEntry.getChildren()) {
+      if (parentFile.findChild(e.getName()) == null) restoreRecursively(parentFile, e);
+    }
+  }
+
+  private boolean hasPreviousVersion() {
+    return myLeftEntry != null;
+  }
+
+  private boolean hasCurrentVersion() {
+    return myRightEntry != null;
+  }
+
 
   private void revertContent() throws IOException {
     if (myFile.getTimeStamp() != myLeftEntry.getTimestamp()) {
@@ -137,5 +175,15 @@ public class FileReverter {
 
   private String formatCommandName() {
     return "Reverted to " + FormatUtil.formatTimestamp(myLabel.getTimestamp());
+  }
+
+  // todo HACK: remove after introducing GhostDirectoryEntry
+  private String getParentOf(Entry e) {
+    return Paths.getParentOf(e.getPath());
+  }
+
+  // todo HACK: remove after introducing GhostDirectoryEntry
+  private String getNameOf(Entry e) {
+    return Paths.getNameOf(e.getPath());
   }
 }

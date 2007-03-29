@@ -66,7 +66,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   private class RevertAction extends AnAction {
     public RevertAction() {
-      super("Rollback");
+      super("Revert");
     }
 
     public void actionPerformed(AnActionEvent e) {

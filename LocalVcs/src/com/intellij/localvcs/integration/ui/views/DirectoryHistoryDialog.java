@@ -28,7 +28,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new DirectoryHistoryDialogModel(f, vcs);
+    return new DirectoryHistoryDialogModel(f, vcs, myIdeaGateway);
   }
 
   @Override
@@ -63,6 +63,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   private ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new ShowDifferenceAction());
+    result.add(new RevertAction());
     return result;
   }
 
@@ -94,6 +95,23 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       p.setIcon(IconLoader.getIcon("/actions/diff.png"));
       DirectoryDifferenceNode n = getSelectedNode();
       p.setEnabled(n != null && n.canShowFileDifference());
+    }
+  }
+
+  private class RevertAction extends AnAction {
+    public RevertAction() {
+      super("Revert");
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      DirectoryDifferenceNode n = getSelectedNode();
+      if (!myModel.revert(n.getModel())) return;
+      close(0);
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
     }
   }
 }

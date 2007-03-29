@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Label;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -11,13 +12,15 @@ import java.util.List;
 public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
   protected VirtualFile myFile;
+  protected IdeaGateway myGateway;
   private int myRightLabel;
   private int myLeftLabel;
   private List<Label> myLabelsCache;
 
-  public HistoryDialogModel(VirtualFile f, ILocalVcs vcs) {
+  public HistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myFile = f;
+    myGateway = gw;
   }
 
   public List<Label> getLabels() {

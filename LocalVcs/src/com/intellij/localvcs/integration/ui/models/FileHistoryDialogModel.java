@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.*;
-import com.intellij.localvcs.integration.FileReverter;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -10,11 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
-  private IdeaGateway myIdeaGateway;
-
   public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
-    super(f, vcs);
-    myIdeaGateway = gw;
+    super(f, vcs, gw);
   }
 
   @Override
@@ -35,7 +32,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   private Content getCurrentContent() {
-    byte[] b = myIdeaGateway.getDocumentByteContent(myFile);
+    byte[] b = myGateway.getDocumentByteContent(myFile);
     return new ByteContent(b);
   }
 
@@ -52,7 +49,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public boolean revert() {
-    return FileReverter.revert(myIdeaGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
+    return Reverter.revert(myGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
   }
 
   private class NotSavedLabel extends Label {

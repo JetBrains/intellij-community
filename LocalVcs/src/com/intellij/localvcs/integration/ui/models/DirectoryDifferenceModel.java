@@ -2,6 +2,9 @@ package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.Label;
+import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.Icons;
 
@@ -65,6 +68,10 @@ public class DirectoryDifferenceModel {
   public boolean canShowFileDifference() {
     if (!isFile()) return false;
     return getEntry(0) != null && getEntry(1) != null;
+  }
+
+  public boolean revert(IdeaGateway gw, Label l) {
+    return Reverter.revert(gw, l, getEntry(0), getEntry(1));
   }
 
   private static class MyComparator implements Comparator<DirectoryDifferenceModel> {

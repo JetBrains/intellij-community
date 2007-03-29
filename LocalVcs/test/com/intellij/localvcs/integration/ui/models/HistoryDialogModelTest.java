@@ -90,7 +90,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   private class MyHistoryDialogModel extends HistoryDialogModel {
     public MyHistoryDialogModel(VirtualFile f, ILocalVcs vcs) {
-      super(f, vcs);
+      super(f, vcs, null);
     }
   }
 }
