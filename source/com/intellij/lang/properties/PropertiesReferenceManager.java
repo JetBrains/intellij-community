@@ -154,7 +154,9 @@ public class PropertiesReferenceManager implements ProjectComponent {
           containingFiles = ConcurrencyUtil.cacheOrGet(myPropertiesMap, key, containingFiles);
         }
         synchronized (LOCK) {
-          containingFiles.add(virtualFile);
+          if (!containingFiles.contains(virtualFile)) {
+            containingFiles.add(virtualFile);
+          } 
         }
       }
     }
