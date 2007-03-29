@@ -245,12 +245,17 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     content.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR);
 
     Content[] contents = myViewsContentManager.getContents();
+    final Content[] selected = myViewsContentManager.getSelectedContents();
     myViewsContentManager.removeAllContents();
 
     myViewsContentManager.addContent(content);
-    for (Content content1 : contents) {
-      myViewsContentManager.addContent(content1);
+    for (Content each : contents) {
+      myViewsContentManager.addContent(each);
     }
+    for (Content each : selected) {
+      myViewsContentManager.addSelectedContent(each);
+    }
+
 
     if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
