@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionInitializer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
@@ -314,6 +315,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     final MutablePicoContainer picoContainer = getPicoContainer();
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
     picoContainer.registerComponentInstance(this);
+    picoContainer.registerComponentInstance(ExtensionInitializer.class, new ExtensionInitializer() {
+      public void initExtension(final Object extension) {
+        getComponentStore().initComponent(extension);
+      }
+    });
   }
 
 

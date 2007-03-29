@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class Extensions {
   private static LogProvider ourLogger = new SimpleLogProvider();
@@ -155,31 +154,12 @@ public abstract class Extensions {
     }
   }
 
-  public static AreaInstance[] getAllAreas() {
-    init();
-    final Set<AreaInstance> keys = ourAreaInstance2area.keySet();
-    return keys.toArray(new AreaInstance[keys.size()]);
-  }
-
   public static AreaInstance[] getAllAreas(String areaClass) {
     Collection instances = (Collection) ourAreaClass2instances.get(areaClass);
     if (instances != null) {
       return (AreaInstance[]) instances.toArray(new AreaInstance[instances.size()]);
     }
     return new AreaInstance[0];
-  }
-
-  public static Object getAreaClass(AreaInstance areaInstance) {
-    if (areaInstance == null) return null;
-
-    assert ourAreaInstance2class.containsKey(areaInstance);
-    return ourAreaInstance2class.get(areaInstance);
-  }
-
-  public static void unregisterAreaClass(String areaClass) {
-    init();
-    assert ourAreaClass2Configuration.containsKey(areaClass) : "Area class is not registered: " + areaClass;
-    ourAreaClass2Configuration.remove(areaClass);
   }
 
   private static boolean equals(Object object1, Object object2) {

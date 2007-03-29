@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -30,6 +27,7 @@ import org.picocontainer.defaults.NotConcreteRegistrationException;
 
 /**
  * @author Alexander Kireyev
+ * todo: optimize memory print
  */
 public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder.Orderable, AssignableToComponentAdapter {
   private Object myComponentInstance;
@@ -77,6 +75,12 @@ public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder
             throw new PicoInitializationException(e);
           }
         }
+
+        ExtensionInitializer  initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
+        if (initializer != null) {
+          initializer.initExtension(componentInstance);
+        }
+
 
         myComponentInstance = componentInstance;
       }

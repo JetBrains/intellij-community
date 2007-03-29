@@ -36,6 +36,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   public void initComponent(final Object component) {
+    boolean isSerializable =
+      component instanceof JDOMExternalizable ||
+      component instanceof PersistentStateComponent ||
+      component instanceof SettingsSavingComponent;
+
+    if (!isSerializable) return;
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (component instanceof JDOMExternalizable) {
