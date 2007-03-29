@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlComment;
 
 import java.util.List;
 
@@ -56,6 +57,11 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
       if (o!=null) result.addAll(o);
     }
 
+    final PsiElement parent = e.getParent();
+    if (parent instanceof XmlComment) {
+      result.addAll(SelectWordUtil.expandToWholeLine(editorText, parent.getTextRange(), true));
+    }
+    
     PsiFile psiFile = e.getContainingFile();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(psiFile.getVirtualFile());
 

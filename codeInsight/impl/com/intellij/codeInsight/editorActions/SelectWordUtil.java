@@ -111,7 +111,7 @@ public class SelectWordUtil {
     return element instanceof PsiDocTag;
   }
 
-  private static List<TextRange> expandToWholeLine(CharSequence text, TextRange range, boolean isSymmetric) {
+  static List<TextRange> expandToWholeLine(CharSequence text, TextRange range, boolean isSymmetric) {
     int textLength = text.length();
     List<TextRange> result = new ArrayList<TextRange>();
 
