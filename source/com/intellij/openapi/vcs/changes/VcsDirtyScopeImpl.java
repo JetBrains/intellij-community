@@ -55,7 +55,16 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   }
 
   public synchronized Set<FilePath> getDirtyFiles() {
-    return new THashSet<FilePath>(myDirtyFiles);
+    final THashSet<FilePath> result = new THashSet<FilePath>(myDirtyFiles);
+    for(FilePath filePath: myDirtyFiles) {
+      VirtualFile vFile = filePath.getVirtualFile();
+      if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+        for(VirtualFile child: vFile.getChildren()) {
+          result.add(new FilePathImpl(child));
+        }
+      }
+    }
+    return result;
   }
 
   public synchronized Set<FilePath> getRecursivelyDirtyDirectories() {
