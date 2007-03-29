@@ -161,7 +161,7 @@ public class FilePatch {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
-        file.rename(null, afterNameComponents [afterNameComponents.length-1]);
+        file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
       }
       boolean pathChanged = (beforeNameComponents.length != afterNameComponents.length);
       if (!pathChanged) {
