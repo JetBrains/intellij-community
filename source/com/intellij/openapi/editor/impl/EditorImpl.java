@@ -3738,7 +3738,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
                 editor.putUserData(LAST_PASTED_REGION, null);
                 pasteHandler.execute(editor, editor.getDataContext());
-                clipboard.setContents(backup, clipboardOwner);
+                try {
+                  clipboard.setContents(backup, clipboardOwner);
+                }
+                catch (IllegalStateException e) {
+                  LOG.info(e);
+                }
 
                 TextRange range = editor.getUserData(LAST_PASTED_REGION);
                 if (range != null) {
