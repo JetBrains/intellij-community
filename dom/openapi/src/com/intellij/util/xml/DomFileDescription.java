@@ -17,12 +17,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.*;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.InstanceMap;
+import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -42,7 +42,7 @@ public class DomFileDescription<T> {
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
-  private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
+  private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();

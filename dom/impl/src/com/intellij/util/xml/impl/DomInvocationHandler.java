@@ -21,7 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
@@ -79,7 +79,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       return myGenericConverter;
     }
   };
-  private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
+  private final ConcurrentFactoryMap<JavaMethod, Converter> myScalarConverters = new ConcurrentFactoryMap<JavaMethod, Converter>() {
     protected Converter create(final JavaMethod method) {
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;

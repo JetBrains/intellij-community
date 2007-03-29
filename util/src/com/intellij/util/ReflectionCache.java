@@ -16,35 +16,36 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * @author peter
  */
 public class ReflectionCache {
-  private static final Map<Class,Class> ourSuperClasses = new WeakHashMap<Class, Class>();
-  private static final ConcurrentWeakFactoryMap<Class,Class[]> ourInterfaces = new ConcurrentWeakFactoryMap<Class, Class[]>() {
+  private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
+    protected Class create(final Class key) {
+      return key.getSuperclass();
+    }
+  };
+  private static final ConcurrentFactoryMap<Class,Class[]> ourInterfaces = new ConcurrentFactoryMap<Class, Class[]>() {
     @NotNull
     protected Class[] create(final Class key) {
       return key.getInterfaces();
     }
   };
-  private static final ConcurrentWeakFactoryMap<Class, Method[]> ourMethods = new ConcurrentWeakFactoryMap<Class, Method[]>() {
+  private static final ConcurrentFactoryMap<Class, Method[]> ourMethods = new ConcurrentFactoryMap<Class, Method[]>() {
     @NotNull
     protected Method[] create(final Class key) {
       return key.getMethods();
     }
   };
 
-  private static final ConcurrentWeakFactoryMap<Class, ConcurrentFactoryMap<Class,Boolean>> ourAssignables = new ConcurrentWeakFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {
+  private static final ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class,Boolean>> ourAssignables = new ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {
     @NotNull
     protected ConcurrentFactoryMap<Class, Boolean> create(final Class key1) {
       return new ConcurrentFactoryMap<Class, Boolean>() {
@@ -56,25 +57,25 @@ public class ReflectionCache {
     }
   };
 
-  private static final ConcurrentWeakFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentWeakFactoryMap<Class, Boolean>() {
+  private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @NotNull
     protected Boolean create(final Class key) {
       return key.isInterface();
     }
   };
-  private static final ConcurrentWeakFactoryMap<Class, TypeVariable[]> ourTypeParameters = new ConcurrentWeakFactoryMap<Class, TypeVariable[]>() {
+  private static final ConcurrentFactoryMap<Class, TypeVariable[]> ourTypeParameters = new ConcurrentFactoryMap<Class, TypeVariable[]>() {
     @NotNull
     protected TypeVariable[] create(final Class key) {
       return key.getTypeParameters();
     }
   };
-  private static final ConcurrentWeakFactoryMap<Class, Type[]> ourGenericInterfaces = new ConcurrentWeakFactoryMap<Class, Type[]>() {
+  private static final ConcurrentFactoryMap<Class, Type[]> ourGenericInterfaces = new ConcurrentFactoryMap<Class, Type[]>() {
     @NotNull
     protected Type[] create(final Class key) {
       return key.getGenericInterfaces();
     }
   };
-  private static final ConcurrentWeakFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new ConcurrentWeakFactoryMap<ParameterizedType, Type[]>() {
+  private static final ConcurrentFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new ConcurrentFactoryMap<ParameterizedType, Type[]>() {
     @NotNull
     protected Type[] create(final ParameterizedType key) {
       return key.getActualTypeArguments();
@@ -85,11 +86,7 @@ public class ReflectionCache {
   }
 
   public static Class getSuperClass(Class aClass) {
-    Class superClass = ourSuperClasses.get(aClass);
-    if (superClass == null) {
-      ourSuperClasses.put(aClass, superClass = aClass.getSuperclass());
-    }
-    return superClass;
+    return ourSuperClasses.get(aClass);
   }
 
   public static Class[] getInterfaces(Class aClass) {

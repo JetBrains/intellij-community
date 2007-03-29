@@ -75,7 +75,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   };
 
-  private final ConcurrentFactoryMap<Type, GenericInfoImpl> myMethodsMaps = new ConcurrentFactoryMap<Type, GenericInfoImpl>() {
+  private final FactoryMap<Type, GenericInfoImpl> myGenericInfos = new FactoryMap<Type, GenericInfoImpl>() {
     @NotNull
     protected GenericInfoImpl create(final Type type) {
       final Class<?> rawType = ReflectionUtil.getRawType(type);
@@ -89,8 +89,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       return new InvocationCache();
     }
   };
-  private final FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-    new FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
+  private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
+    new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
       @NotNull
       protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
         return new VisitorDescription(key);
@@ -263,7 +263,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   public final GenericInfoImpl getGenericInfo(final Type type) {
-    return myMethodsMaps.get(type);
+    synchronized (myGenericInfos) {
+      return myGenericInfos.get(type);
+    }
   }
 
   final InvocationCache getInvocationCache(final Pair<Type, Type> type) {

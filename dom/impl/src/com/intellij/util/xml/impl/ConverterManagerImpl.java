@@ -3,12 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.paths.PathReference;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.InstanceMap;
+import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.converters.PathReferenceConverter;
-import com.intellij.openapi.paths.PathReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,7 @@ import java.util.Map;
  * @author peter
  */
 class ConverterManagerImpl implements ConverterManager {
-  private final InstanceMap<Object> myConverterInstances = new InstanceMap<Object>();
+  private final ConcurrentInstanceMap<Object> myConverterInstances = new ConcurrentInstanceMap<Object>();
   private final Map<Class,Converter> mySimpleConverters = new HashMap<Class, Converter>();
 
   ConverterManagerImpl() {
