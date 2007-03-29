@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -181,8 +182,12 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     else if (myChangeInfo.isParameterTypesChanged) {
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
       for (PsiReference reference : refs) {
-        if (reference.getElement() instanceof PsiDocTagValue) { //types are mentioned in e.g @link, see SCR 40895
-          result.add(new UsageInfo(reference.getElement()));
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiDocTagValue) {
+          result.add(new UsageInfo(reference));
+        }
+        else if (element instanceof XmlElement) {
+          result.add(new MoveRenameUsageInfo(reference, method));
         }
       }
     }
