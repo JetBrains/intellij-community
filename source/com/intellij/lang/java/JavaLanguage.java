@@ -118,6 +118,7 @@ public class JavaLanguage extends Language {
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     if (!(psiFile instanceof PsiJavaFile)) return null;
     return new TreeBasedStructureViewBuilder() {
+      @NotNull
       public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel((PsiJavaFile)psiFile);
       }

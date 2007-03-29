@@ -83,6 +83,7 @@ public class PropertiesLanguage extends Language {
 
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new StructureViewBuilder() {
+      @NotNull
       public StructureView createStructureView(FileEditor fileEditor, Project project) {
         return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiFile, fileEditor);
       }

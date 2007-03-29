@@ -91,6 +91,7 @@ public class JavaClassFileType implements FileType {
     final PsiJavaFile javaFile = (PsiJavaFile) PsiManager.getInstance(project).findFile(file);
     if (javaFile == null) return null;
     return new TreeBasedStructureViewBuilder() {
+      @NotNull
       public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel(javaFile);
       }

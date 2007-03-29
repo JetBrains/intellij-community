@@ -86,6 +86,7 @@ public class AntLanguage extends Language {
     final AntFile antFile = AntSupport.getAntFile(psiFile);
     if (antFile != null ) {
       return new TreeBasedStructureViewBuilder() {
+        @NotNull
         public StructureViewModel createStructureViewModel() {
           return new AntStructureViewTreeModel(antFile);
         }

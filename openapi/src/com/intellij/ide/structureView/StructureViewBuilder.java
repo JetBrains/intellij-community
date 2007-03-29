@@ -17,6 +17,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines the implementation of Structure View and the file structure popup for
@@ -40,5 +41,6 @@ public interface StructureViewBuilder {
    * @return the structure view implementation.
    * @see TreeBasedStructureViewBuilder
    */
+  @NotNull
   StructureView createStructureView(FileEditor fileEditor, Project project);
 }

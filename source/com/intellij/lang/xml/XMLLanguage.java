@@ -121,6 +121,7 @@ public class XMLLanguage extends CompositeLanguage {
         return builder;
       }
       return new TreeBasedStructureViewBuilder() {
+        @NotNull
         public StructureViewModel createStructureViewModel() {
           return new XmlStructureViewTreeModel((XmlFile)psiFile);
         }

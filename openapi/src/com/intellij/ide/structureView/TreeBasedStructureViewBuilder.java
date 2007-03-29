@@ -18,6 +18,7 @@ package com.intellij.ide.structureView;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.peer.PeerFactory;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -38,8 +39,10 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
    * @return the structure view model instance.
    * @see TextEditorBasedStructureViewModel
    */
+  @NotNull
   public abstract StructureViewModel createStructureViewModel();
 
+  @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
     return PeerFactory.getInstance().getStructureViewFactory().createStructureView(fileEditor, createStructureViewModel(), project, isRootNodeShown());
   }
