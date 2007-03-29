@@ -6,15 +6,11 @@ import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementResolveResult;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import com.intellij.psi.util.PsiUtil;
@@ -38,7 +34,8 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
     if (getIndex() == 0 && path != null && path.equals(BASEDIR_PROPERTY_REFERENCE) && getFileReferenceSet().isAbsolutePathReference()) {
       return ".";
     }
-    return getElement().computeAttributeValue(path);
+    final String _path = getElement().computeAttributeValue(path);
+    return _path != null? FileUtil.toSystemIndependentName(_path) : null;
   }
 
   public AntStructuredElement getElement() {
@@ -112,11 +109,12 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
     if (resolveResult.length == 0) {
       final String text = getText();
       if (text != null && text.length() > 0 && getFileReferenceSet().isAbsolutePathReference()) {
-        final VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(text);
-        if (dir != null) {
-          final PsiDirectory psiDir = getElement().getManager().findDirectory(dir);
-          if (psiDir != null) {
-            return new ResolveResult[]{new PsiElementResolveResult(psiDir)};
+        final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(text));
+        if (file != null) {
+          final PsiManager psiManager = getElement().getManager();
+          final PsiFileSystemItem fsItem = file.isDirectory()? psiManager.findDirectory(file) : psiManager.findFile(file);
+          if (fsItem != null) {
+            return new ResolveResult[]{new PsiElementResolveResult(fsItem)};
           }
         }
       }
