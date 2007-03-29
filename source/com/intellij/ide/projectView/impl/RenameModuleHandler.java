@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -35,11 +36,11 @@ public class RenameModuleHandler implements RenameHandler {
     return isAvailableOnDataContext(dataContext);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.assertTrue(false);
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(dataContext != null);
     final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     LOG.assertTrue(module != null);

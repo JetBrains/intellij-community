@@ -120,7 +120,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     return null;
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);

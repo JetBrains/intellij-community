@@ -16,11 +16,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NotNull;
+
 public class EncapsulateFieldsHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -51,7 +53,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    * if elements.length == 1 the expected value is either PsiClass or PsiField
    * if elements.length > 1 the expected values are PsiField objects only
    */
-  public void invoke(final Project project, final PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = null;
     final HashSet<PsiField> preselectedFields = new HashSet<PsiField>();
     if (elements.length == 1) {

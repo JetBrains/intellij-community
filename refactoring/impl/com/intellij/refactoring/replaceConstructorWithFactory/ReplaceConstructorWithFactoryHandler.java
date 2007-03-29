@@ -10,6 +10,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -19,7 +20,7 @@ public class ReplaceConstructorWithFactoryHandler
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.constructor.with.factory.method.title");
   private Project myProject;
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -43,7 +44,7 @@ public class ReplaceConstructorWithFactoryHandler
     }
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;

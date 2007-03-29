@@ -11,6 +11,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -18,7 +19,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 public class InvertBooleanHandler implements RefactoringActionHandler {
   static final String REFACTORING_NAME = RefactoringBundle.message("invert.boolean.title");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiMethod) {
@@ -57,7 +58,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
     new InvertBooleanDialog(var).show();
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiMethod) {
       invoke((PsiMethod)elements[0], project);
     }

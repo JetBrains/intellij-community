@@ -18,17 +18,18 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
   private PsiClass mySubclass;
   private Project myProject;
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -61,7 +62,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     }
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
     myProject = project;
 

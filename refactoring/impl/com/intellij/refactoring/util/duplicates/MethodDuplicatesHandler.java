@@ -36,7 +36,7 @@ import java.util.List;
 public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
 
-  public void invoke(final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -119,7 +119,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.METHOD_DUPLICATES, project);
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     throw new UnsupportedOperationException();
   }
 

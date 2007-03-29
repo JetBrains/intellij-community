@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * RefactoringActionHandler is an implementation of IDEA refactoring,
@@ -39,7 +41,7 @@ public interface RefactoringActionHandler {
    * @param file file should correspond to <code>editor</code>
    * @param dataContext can be null.
    */
-  void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext);
+  void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext);
 
   /**
    * Invokes refactoring action from elsewhere (not from editor). Some refactorings
@@ -49,5 +51,5 @@ public interface RefactoringActionHandler {
    * @param elements list of elements that refactoring should work on. Refactoring-dependent.
    * @param dataContext can be null.
    */
-  void invoke(Project project, PsiElement[] elements, DataContext dataContext);
+  void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext);
 }

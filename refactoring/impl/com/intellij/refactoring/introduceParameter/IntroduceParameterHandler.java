@@ -33,6 +33,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -45,11 +46,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private Project myProject;
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ElementToWorkOn elementToWorkOn =
-            ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
     if(elementToWorkOn == null) return;
 
     final PsiExpression expr = elementToWorkOn.getExpression();
@@ -196,7 +196,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   }
 
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // Never called
     /* do nothing */
   }

@@ -199,7 +199,7 @@ class MoveDropTargetListener implements DropTargetListener {
       return myPsiRetriever.getPsiElement(treeNode);
     }
 
-    protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
+    @NotNull protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
       List<PsiElement> psiElements = new ArrayList<PsiElement>(nodes.length);
       for (TreeNode node : nodes) {
         PsiElement psiElement = getPsiElement(node);

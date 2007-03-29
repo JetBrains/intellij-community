@@ -28,6 +28,7 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * created at Nov 13, 2001
@@ -37,14 +38,14 @@ import org.jetbrains.annotations.Nullable;
 public class PsiElementRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.PsiElementRenameHandler");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiElement element = elements != null && elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);

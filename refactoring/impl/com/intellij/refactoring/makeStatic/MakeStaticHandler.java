@@ -23,12 +23,13 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 /*import com.intellij.refactoring.util.ParameterTablePanel;*/
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null) {
@@ -49,7 +50,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
 
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];

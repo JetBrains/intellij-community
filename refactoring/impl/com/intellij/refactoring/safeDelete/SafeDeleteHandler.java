@@ -28,13 +28,15 @@ import com.intellij.util.containers.HashSet;
 import java.util.Arrays;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
 public class SafeDeleteHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null || !SafeDeleteProcessor.validElement(element)) {
@@ -45,7 +47,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, elements, true);
   }
 

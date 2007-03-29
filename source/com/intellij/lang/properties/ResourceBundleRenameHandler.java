@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -33,7 +34,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     return isAvailableOnDataContext(dataContext);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     ResourceBundle resourceBundle = getResourceBundleFromDataContext(dataContext);
 
     assert resourceBundle != null;
@@ -45,7 +46,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
                              new MyInputValidator(project, resourceBundle));
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
 

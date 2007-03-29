@@ -12,6 +12,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
@@ -38,12 +39,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return HelpID.INTRODUCE_FIELD;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ElementToWorkOn elementToWorkOn =
-      ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, null);
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project);
 
     if (elementToWorkOn == null) return;
 
@@ -68,7 +68,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
     boolean isInSuperOrThis = false;
     if (!declareStatic) {
-      for (int i = 0; !declareStatic & i < occurences.length; i++) {
+      for (int i = 0; !declareStatic && i < occurences.length; i++) {
         PsiExpression occurence = occurences[i];
         isInSuperOrThis = isInSuperOrThis(occurence);
         declareStatic = isInSuperOrThis;
@@ -84,9 +84,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
     int occurencesNumber = occurences.length;
-    final boolean currentMethodConstructor = (containingMethod != null && containingMethod.isConstructor());
-    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiStatement);
-    final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElementIfAll instanceof PsiStatement);
+    final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
+    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && anchorElement instanceof PsiStatement;
+    final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
       currentMethodConstructor,
@@ -116,14 +116,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {
-    if (!NotInSuperCallOccurenceFilter.INSTANCE.isOK(occurence)) {
-      return true;
-    }
-
-    if (!NotInThisCallFilter.INSTANCE.isOK(occurence)) {
-      return true;
-    }
-    return false;
+    return !NotInSuperCallOccurenceFilter.INSTANCE.isOK(occurence) || !NotInThisCallFilter.INSTANCE.isOK(occurence);
   }
 
   protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {

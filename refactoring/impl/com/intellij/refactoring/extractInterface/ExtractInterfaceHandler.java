@@ -20,6 +20,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
@@ -35,7 +36,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
   private PsiDirectory myTargetDir;
   private JavaDocPolicy myJavaDocPolicy;
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -53,7 +54,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;

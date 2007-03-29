@@ -23,6 +23,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -43,13 +44,13 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private boolean myMakeStatic;
   private Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
       invoke(project, (PsiAnonymousClass)elements[0]);
     }
   }
 
-  public void invoke(final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     final int offset = editor.getCaretModel().getOffset();

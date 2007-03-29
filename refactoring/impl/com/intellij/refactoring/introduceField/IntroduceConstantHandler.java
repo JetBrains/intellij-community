@@ -14,6 +14,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
@@ -31,7 +32,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     super.invoke(project, expressions, null);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

@@ -20,11 +20,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TurnRefsToSuperHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("use.interface.where.possible.title");
 
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -42,7 +44,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
         PsiClass subClass = (PsiClass) elements[0];

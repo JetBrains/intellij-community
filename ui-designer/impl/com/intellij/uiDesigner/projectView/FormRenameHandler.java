@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.rename.RenameHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class FormRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
@@ -29,7 +30,7 @@ public class FormRenameHandler implements RenameHandler {
     return isAvailableOnDataContext(dataContext);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     if (forms == null || forms.length != 1) return;
     PsiClass boundClass = forms [0].getClassToBind();
@@ -37,7 +38,7 @@ public class FormRenameHandler implements RenameHandler {
                                                                                dataContext);
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
 }

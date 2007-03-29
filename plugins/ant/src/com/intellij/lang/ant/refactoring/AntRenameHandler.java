@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,11 +26,11 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     return element instanceof PsiAntElement && ((PsiAntElement)element).canRename();
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     invoke(project, BaseRefactoringAction.getPsiElementArray(dataContext), dataContext);
   }
 
-  public void invoke(final Project project, final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof AntNameElementImpl) {

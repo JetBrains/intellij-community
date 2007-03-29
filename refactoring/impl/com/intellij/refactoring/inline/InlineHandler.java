@@ -18,12 +18,13 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class InlineHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     if (dataContext == null) {
       dataContext = DataManager.getInstance().getDataContext();
@@ -40,7 +41,7 @@ public class InlineHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiLocalVariable) {

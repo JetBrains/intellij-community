@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -18,7 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 public abstract class IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.IntroduceHandlerBase");
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length >= 1 && elements[0] instanceof PsiExpression, "incorrect invoke() parameters");
     final PsiElement tempExpr = elements[0];
     final Editor editor;

@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -47,7 +48,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
   };
 
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
@@ -66,7 +67,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     final PsiClass aClass = (PsiClass)elements[0];

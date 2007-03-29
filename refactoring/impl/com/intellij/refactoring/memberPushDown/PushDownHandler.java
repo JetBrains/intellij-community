@@ -16,13 +16,15 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
 public class PushDownHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
@@ -47,7 +49,7 @@ public class PushDownHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     PsiElement element = elements[0];

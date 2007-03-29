@@ -14,11 +14,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiMethod) {
@@ -33,7 +34,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(final Project project, final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
     if (elements[0] instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)elements[0];

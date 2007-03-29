@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
@@ -35,7 +36,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   private Project myProject;
 
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
@@ -53,7 +54,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }
   }
 
-  public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;

@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
@@ -44,11 +45,11 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
     return this;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.debug("invoked FormMoveProvider on file");
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     LOG.assertTrue(forms != null);
     PsiClass[] classesToMove = new PsiClass[forms.length];

@@ -25,13 +25,14 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
 
-  public void invoke(final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
@@ -124,7 +125,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (dataContext != null) {
       final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
       final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);

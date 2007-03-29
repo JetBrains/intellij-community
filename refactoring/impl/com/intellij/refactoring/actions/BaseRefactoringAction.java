@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
-  protected abstract @Nullable RefactoringActionHandler getHandler(DataContext dataContext);
+  @Nullable
+  protected abstract RefactoringActionHandler getHandler(DataContext dataContext);
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -90,7 +92,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       if (isEnabledOnDataContext(dataContext)) {
         presentation.setEnabled(true);
       }
-      else if (elements != null && elements.length != 0) {
+      else if (elements.length != 0) {
         presentation.setEnabled(isEnabledOnElements(elements));
       }
       else {
@@ -111,7 +113,8 @@ public abstract class BaseRefactoringAction extends AnAction {
     return true;
   }
 
-  public static PsiElement[] getPsiElementArray(DataContext dataContext) {
+  @NotNull
+    public static PsiElement[] getPsiElementArray(DataContext dataContext) {
     PsiElement[] psiElements = (PsiElement[]) dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
