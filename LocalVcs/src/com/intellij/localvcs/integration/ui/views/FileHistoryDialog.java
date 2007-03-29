@@ -5,6 +5,8 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
+import com.intellij.openapi.diff.ex.DiffPanelEx;
+import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -30,6 +32,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected JComponent createDiffPanel() {
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myIdeaGateway.getProject());
+    DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
+    o.setRequestFocusOnNewContent(false);
     updateDiffs();
     return myDiffPanel.getComponent();
   }
