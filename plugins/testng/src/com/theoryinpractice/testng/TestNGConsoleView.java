@@ -19,8 +19,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
-import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.DiffHyperLink;
+import com.theoryinpractice.testng.ui.TestNGResults;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
@@ -59,7 +59,7 @@ public class TestNGConsoleView implements ConsoleView
                 //trim useless crud from stacktrace
                 String trimmed = trimStackTrace(stackTrace);
                 List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
-                synchronized(allOutput) {
+                synchronized (allOutput) {
                     allOutput.addAll(printables);
                 }
             }
@@ -130,7 +130,7 @@ public class TestNGConsoleView implements ConsoleView
         //figure out if we have a diff we need to hyperlink
         //TODO replace this with a saner regexp
         String assertText = "java.lang.AssertionError: expected:<";
-        if(s.startsWith(assertText)) {
+        if (s.startsWith(assertText)) {
             printables.add(new Chunk("java.lang.AssertionError:", type));
             String end = "> but was:<";
             int actualStart = s.indexOf(end, assertText.length());
@@ -151,7 +151,7 @@ public class TestNGConsoleView implements ConsoleView
         }
         return printables;
     }
-    
+
     public void print(String s, ConsoleViewContentType contentType) {
         Chunk chunk = new Chunk(s, contentType);
         synchronized (allOutput) {
@@ -197,6 +197,10 @@ public class TestNGConsoleView implements ConsoleView
 
     public void addMessageFilter(Filter filter) {
         console.addMessageFilter(filter);
+    }
+
+    public JComponent getPreferredFocusableComponent() {
+        return console.getComponent();
     }
 
     public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
