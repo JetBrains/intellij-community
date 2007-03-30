@@ -5,12 +5,13 @@ package com.intellij.ide;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import org.apache.xmlrpc.*;
+import org.apache.xmlrpc.IdeaAwareWebServer;
+import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
+import org.apache.xmlrpc.WebServer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.BindException;
 import java.net.ServerSocket;
 
@@ -61,7 +62,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
       return false;
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
       return false;
     }
     finally {
