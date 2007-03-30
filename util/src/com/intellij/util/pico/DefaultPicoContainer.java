@@ -25,10 +25,10 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private PicoContainer parent;
   private Set<PicoContainer> children = new HashSet<PicoContainer>();
 
-  private Map<Object, ComponentAdapter> componentKeyToAdapterCache = new HashMap<Object, ComponentAdapter>();
-  private Collection<ComponentAdapter> componentAdapters = new OrderedSet<ComponentAdapter>();
+  private Map<Object, ComponentAdapter> componentKeyToAdapterCache = Collections.synchronizedMap(new HashMap<Object, ComponentAdapter>());
+  private Collection<ComponentAdapter> componentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
   // Keeps track of instantiation order.
-  private List<ComponentAdapter> orderedComponentAdapters = new OrderedSet<ComponentAdapter>();
+  private List<ComponentAdapter> orderedComponentAdapters = Collections.synchronizedList(new OrderedSet<ComponentAdapter>());
 
   public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
     this.componentAdapterFactory = componentAdapterFactory;
