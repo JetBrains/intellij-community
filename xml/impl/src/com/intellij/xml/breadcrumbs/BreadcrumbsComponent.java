@@ -24,6 +24,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -151,7 +152,17 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     //assert xmlDocument != null;
     //return xmlDocument.findElementAt(offset);
 
-    return myFile.getViewProvider().findElementAt(offset);
+    PsiElement element = myFile.getViewProvider().findElementAt(offset);
+    if (!isValidElement(element)) {
+      // ok, now try to get XMLLanguage
+      element = myFile.getViewProvider().findElementAt(offset, StdLanguages.XML);
+    }
+
+    return element;
+  }
+
+  private static boolean isValidElement(@Nullable PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
   }
 
   @NotNull
