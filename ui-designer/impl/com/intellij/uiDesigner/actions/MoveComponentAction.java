@@ -43,7 +43,7 @@ public class MoveComponentAction extends AbstractGuiEditorAction {
       });
     }
     for(RadComponent c: selection) {
-      c.getParent().getLayoutManager().moveComponent(c, myRowDelta, myColumnDelta, 0, 0);
+      c.getParent().getLayoutManager().moveComponent(c, myRowDelta, myColumnDelta, myRowSpanDelta, myColSpanDelta);
     }
   }
 
