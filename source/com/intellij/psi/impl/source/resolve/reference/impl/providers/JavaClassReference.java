@@ -152,22 +152,24 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return getElement();
 
-    final String qualifiedName;
+    final String newName;
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)element;
-      qualifiedName = psiClass.getQualifiedName();
+      newName = psiClass.getQualifiedName();
     }
     else if (element instanceof PsiPackage) {
       PsiPackage psiPackage = (PsiPackage)element;
-      qualifiedName = psiPackage.getQualifiedName();
+      newName = psiPackage.getQualifiedName();
     }
     else {
       throw new IncorrectOperationException("Cannot bind to " + element);
     }
+    assert newName != null;
 
-    final String newName = qualifiedName;
     TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
-    final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
+    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    assert manipulator != null;
+    final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
     range = new TextRange(range.getStartOffset(), range.getStartOffset() + newName.length());
     myJavaClassReferenceSet.reparse(finalElement, range);
     return finalElement;
@@ -200,7 +202,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
 
         for (PsiClass c : psiClasses) {
-          if (c.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+          if (c.hasModifierProperty(PsiModifier.STATIC)) {
             staticClasses.add(c);
           }
         }
@@ -270,8 +272,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
           if (javaResolveResult != JavaResolveResult.EMPTY && getOptions() != null) {
             final Boolean value = JavaClassReferenceProvider.RESOLVE_QUALIFIED_CLASS_NAME.getValue(getOptions());
-            if (value != null && value.booleanValue()) {
-              final String qualifiedName = ((PsiClass)javaResolveResult.getElement()).getQualifiedName();
+            final PsiClass psiClass = (PsiClass)javaResolveResult.getElement();
+            if (value != null && value.booleanValue() && psiClass != null) {
+              final String qualifiedName = psiClass.getQualifiedName();
 
               if (!qName.equals(qualifiedName)) {
                 return JavaResolveResult.EMPTY;
@@ -332,7 +335,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @NotNull
-  protected Object[] getSubclassVariants(PsiPackage context, String[] extendClasses) {
+  private Object[] getSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses) {
     HashSet<Object> lookups = new HashSet<Object>();
     GlobalSearchScope packageScope = GlobalSearchScope.packageScope(context, true);
     final GlobalSearchScope allScope = context.getProject().getAllScope();
@@ -361,7 +364,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  protected Object createSubclassLookupValue(final PsiPackage context, final PsiClass clazz, boolean instantiatable) {
+  private static Object createSubclassLookupValue(@NotNull final PsiPackage context, @NotNull final PsiClass clazz, boolean instantiatable) {
     if (instantiatable && !PsiUtil.isInstantiatable(clazz)) {
       return null;
     }
@@ -369,6 +372,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (name == null) return null;
     final String pack = context.getQualifiedName();
     if (pack.length() > 0) {
+      // paranoic check for IDEADEV-13982
+      if (pack.length() + 1 > name.length()) {
+        return null;
+      }
       name = name.substring(pack.length() + 1);
     }
     return LookupValueFactory.createLookupValue(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
