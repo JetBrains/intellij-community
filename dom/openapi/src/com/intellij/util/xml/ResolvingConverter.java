@@ -164,7 +164,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
    * @return LocalQuickFix'es to correct non-resolved value (e.g. 'create from usage')
    */
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
-    return new LocalQuickFix[0];
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
 
