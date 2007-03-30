@@ -53,6 +53,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
 import java.util.*;
@@ -103,13 +104,21 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       final CvsResult result = cvsOperationExecutor.getResult();
       return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
         public void onRefreshFilesCompleted() {
-          if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty() ||
-              !updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID).isEmpty()) {
+          final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+          final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
+          if (!mergedWithConflictsGroup.isEmpty() || !binaryMergedGroup.isEmpty()) {
             Collection<String> paths = new ArrayList<String>();
-            paths.addAll(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles());
-            paths.addAll(updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID).getFiles());
+            paths.addAll(mergedWithConflictsGroup.getFiles());
+            paths.addAll(binaryMergedGroup.getFiles());
 
-            invokeManualMerging(paths, myProject);
+            final List<VirtualFile> list = invokeManualMerging(paths, myProject);
+            FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
+            for(VirtualFile mergedFile: list) {
+              String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
+              mergedWithConflictsGroup.getFiles().remove(path);
+              binaryMergedGroup.getFiles().remove(path);
+              mergedGroup.add(path);
+            }
           }
         }
       };
@@ -120,7 +129,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
-  private static void invokeManualMerging(Collection<String> paths, Project project) {
+  private static List<VirtualFile> invokeManualMerging(Collection<String> paths, Project project) {
     Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
     final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     for (final String path : paths) {
@@ -151,9 +160,9 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
     if (!fileToRevisions.isEmpty()) {
       final List<VirtualFile> mergedFiles = new ArrayList<VirtualFile>(fileToRevisions.keySet());
-      AbstractVcsHelper.getInstance(project).showMergeDialog(mergedFiles, new CvsMergeProvider(fileToRevisions, project), null);
+      return AbstractVcsHelper.getInstance(project).showMergeDialog(mergedFiles, new CvsMergeProvider(fileToRevisions, project));
     }
-
+    return Collections.emptyList();
   }
 
 

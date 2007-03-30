@@ -59,8 +59,7 @@ public class MergeAction extends AnAction {
       }
       final Project project = context.getProject();
       AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(fileToRevisions.keySet()),
-                                                             new CvsMergeProvider(fileToRevisions, project),
-                                                             e);
+                                                             new CvsMergeProvider(fileToRevisions, project));
 
     }
     catch (Exception e1) {

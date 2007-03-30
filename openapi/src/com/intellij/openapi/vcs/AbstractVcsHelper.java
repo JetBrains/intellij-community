@@ -16,28 +16,28 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.CodeSmellInfo;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.awt.*;
 
 /**
  * Component which provides means to invoke different VCS-related services.
@@ -94,7 +94,8 @@ public abstract class AbstractVcsHelper {
   public abstract void openCommittedChangesTab(CommittedChangesProvider provider, VirtualFile root, ChangeBrowserSettings settings,
                                                int maxCount, final String title);
 
-  public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
+  @NotNull
+  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
 
   /**
    * Performs pre-checkin code analysis on the specified files.

@@ -60,6 +60,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private final ListTableModel<VirtualFile> myModel;
   private Project myProject;
   private ProjectManagerEx myProjectManager;
+  private List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
 
   private VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
@@ -187,7 +188,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
               file.setBinaryContent(data.LAST);
               checkMarkModifiedProject(file);
             }
-            myProvider.conflictResolvedForFile(file);
+            markFileProcessed(file);
           }
           catch (Exception e) {
             ex.set(e);
@@ -198,10 +199,15 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         Messages.showErrorDialog(myRootPanel, "Error saving merged data: " + ex.get().getMessage());
         break;
       }
-
-      myFiles.remove(file);
     }
     updateModelFromFiles();
+  }
+
+  private void markFileProcessed(final VirtualFile file) {
+    myFiles.remove(file);
+    myProvider.conflictResolvedForFile(file);
+    myProcessedFiles.add(file);
+    VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
   }
 
   private void updateModelFromFiles() {
@@ -258,9 +264,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-        myFiles.remove(file);
-        myProvider.conflictResolvedForFile(file);
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+        markFileProcessed(file);
         checkMarkModifiedProject(file);
       }
       else {
@@ -294,6 +298,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {
     return StringUtil.convertLineSeparators(file.getCharset().decode(ByteBuffer.wrap(content)).toString());
+  }
+
+  public List<VirtualFile> getProcessedFiles() {
+    return myProcessedFiles;
   }
 
   private static class VirtualFileRenderer extends ColoredTableCellRenderer {

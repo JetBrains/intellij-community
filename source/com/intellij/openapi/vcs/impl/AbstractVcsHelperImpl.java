@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +28,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -55,6 +54,7 @@ import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -526,10 +526,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  public void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e) {
-    if (files.isEmpty()) return;
-    new MultipleFileMergeDialog(myProject, files, provider).show();
-    //new AbstractMergeAction(myProject, files, provider).actionPerformed(e);
+  @NotNull
+  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
+    if (files.isEmpty()) return Collections.emptyList();
+    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider);
+    fileMergeDialog.show();
+    return fileMergeDialog.getProcessedFiles();
   }
 
   public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
