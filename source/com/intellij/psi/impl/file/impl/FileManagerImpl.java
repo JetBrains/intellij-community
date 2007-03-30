@@ -1218,11 +1218,11 @@ public class FileManagerImpl implements FileManager {
   // The file name under passed psi file is "new" but parser def is from old name
   private static boolean languageDialectChanged(final PsiFile newPsiFile) {
     return ( newPsiFile.getLanguageDialect() != null && 
-             newPsiFile.getLanguageDialect().getParserDefinition() != newPsiFile.getLanguage().getParserDefinition()
+             newPsiFile.getLanguageDialect().getParserDefinition().getClass() != newPsiFile.getLanguage().getParserDefinition().getClass()
            ) ||
            ( newPsiFile.getLanguageDialect() == null &&
              newPsiFile instanceof PsiFileBase &&
-             newPsiFile.getLanguage().getParserDefinition() == ((PsiFileBase)newPsiFile).getParserDefinition()
+             newPsiFile.getLanguage().getParserDefinition().getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass()
            );
   }
 
