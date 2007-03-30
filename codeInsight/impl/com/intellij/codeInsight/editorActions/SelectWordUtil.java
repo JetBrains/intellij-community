@@ -715,6 +715,7 @@ public class SelectWordUtil {
 
         }
 
+        if (firstChild == null) break;
         element = firstChild;
       }
 
