@@ -72,7 +72,8 @@
 
   <target name="build.project" depends="clear.all, make.project" description="builds project"/>
 
-  <target name="rebuild.all" depends="build.project, jar.groovy, zip.sources.groovy" description="builds and jar project and zip sources"/>
+  <target name="rebuild.all" depends="build.project, jar.groovy, zip.sources.groovy"
+          description="builds and jar project and zip sources"/>
 
   <target name="jar.groovy" depends="make.project" description="makes groovy jar">
     <mkdir dir="${project.dir}/tempjar/Groovy/lib"/>
@@ -101,10 +102,10 @@
          src/**/*.jar,
          src/**/*.skeleton,
          src/**/*.xml,
-         resources/**/*.png,
+         resources/**/*.*,
          META-INF/**/*.xml"
          excludes="src/**/*junit*"
-        />
+            />
   </target>
 
 </project>
