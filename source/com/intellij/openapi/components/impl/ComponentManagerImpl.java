@@ -78,6 +78,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
 
   public MessageBus getMessageBus() {
+    assert !myDisposeCompleted && !myDisposed : "Already disposed";
     assert myMessageBus != null : "Not initialized yet";
     return myMessageBus;
   }
