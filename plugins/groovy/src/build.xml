@@ -73,10 +73,11 @@
 
     <copy todir="${production.dest}/resources">
       <fileset dir="${project.dir}/resources"/>
-      <fileset dir="${project.dir}/src/org">
-        <include name="*.properties"/>
-      </fileset>
     </copy>
+
+    <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/GroovyBundle.properties"
+          tofile="${production.dest}/org/jetbrains/plugins/groovy/GroovyBundle.properties"/>
+
 
     <javac srcdir="."
            destdir="${production.dest}">
@@ -120,7 +121,7 @@
          resources/**/*.*,
          META-INF/**/*.xml"
          excludes="src/**/*junit*"
-            />
+        />
   </target>
 
   <target name="build tests" depends="make.project">
