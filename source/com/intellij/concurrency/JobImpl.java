@@ -107,9 +107,15 @@ public class JobImpl<T> implements Job<T> {
     Throwable ex = null;
     for (Future<T> f : myFutures) {
       try {
-        results.add(f.get(100, TimeUnit.MILLISECONDS));
-      }
-      catch (TimeoutException ignore) {
+        while (true) {
+          try {
+            results.add(f.get(100, TimeUnit.MILLISECONDS));
+            break;
+          }
+          catch (TimeoutException e) {
+            if (f.isDone() || f.isCancelled()) break;
+          }
+        }
       }
       catch (CancellationException ignore) {
       }
