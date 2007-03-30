@@ -479,16 +479,16 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
         if (usage instanceof DefaultConstructorImplicitUsageInfo) {
           final DefaultConstructorImplicitUsageInfo defConstructorUsage = (DefaultConstructorImplicitUsageInfo)usage;
-          addSuperCall(defConstructorUsage.getConstructor(), defConstructorUsage.getBaseConstructor());
+          addSuperCall(defConstructorUsage.getConstructor(), defConstructorUsage.getBaseConstructor(),usages);
         }
         else if (usage instanceof NoConstructorClassUsageInfo) {
-          addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass());
+          addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass(),usages);
         }
         else if (element instanceof PsiJavaCodeReferenceElement) {
           if (usage instanceof MethodCallUsageInfo) {
             final MethodCallUsageInfo methodCallInfo = (MethodCallUsageInfo)usage;
             processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(),
-                               methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod());
+                               methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), usages);
           }
           else if (usage instanceof MyParameterUsageInfo) {
             String newName = ((MyParameterUsageInfo)usage).newParameterName;
@@ -601,13 +601,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return callExpression;
   }
 
-  private void addDefaultConstructor(PsiClass aClass) throws IncorrectOperationException {
+  private void addDefaultConstructor(PsiClass aClass, final UsageInfo[] usages) throws IncorrectOperationException {
     if (!(aClass instanceof PsiAnonymousClass)) {
       PsiMethod defaultConstructor = myFactory.createMethodFromText(aClass.getName() + "(){}", aClass);
       defaultConstructor = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(defaultConstructor);
       defaultConstructor = (PsiMethod) aClass.add(defaultConstructor);
       defaultConstructor.getModifierList().setModifierProperty(VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
-      addSuperCall(defaultConstructor, null);
+      addSuperCall(defaultConstructor, null, usages);
     } else {
       final PsiElement parent = aClass.getParent();
       if (parent instanceof PsiNewExpression) {
@@ -617,7 +617,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addSuperCall(PsiMethod constructor, PsiMethod callee) throws IncorrectOperationException {
+  private void addSuperCall(PsiMethod constructor, PsiMethod callee, final UsageInfo[] usages) throws IncorrectOperationException {
     PsiExpressionStatement superCall = (PsiExpressionStatement) myFactory.createStatementFromText("super();", constructor);
     PsiCodeBlock body = constructor.getBody();
     assert body != null;
@@ -628,7 +628,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       superCall = (PsiExpressionStatement) body.add(superCall);
     }
     PsiMethodCallExpression callExpression = (PsiMethodCallExpression) superCall.getExpression();
-    processMethodUsage(callExpression.getMethodExpression(), myChangeInfo, true, false, callee);
+    processMethodUsage(callExpression.getMethodExpression(), myChangeInfo, true, false, callee, usages);
   }
 
   private PsiParameter createNewParameter(ParameterInfo newParm,
@@ -646,9 +646,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   ChangeInfo changeInfo,
                                   boolean toChangeArguments,
                                   boolean toCatchExceptions,
-                                  PsiMethod callee)
-          throws IncorrectOperationException {
-
+                                  PsiMethod callee, final UsageInfo[] usages) throws IncorrectOperationException {
     if (changeInfo.isNameChanged) {
       if (ref instanceof PsiJavaCodeReferenceElement) {
         PsiElement last = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
@@ -664,7 +662,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       boolean toInsertDefaultValue = !myPropagateParametersMethods.contains(caller);
       if (toInsertDefaultValue && ref instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression) ref).getQualifierExpression();
-        if (qualifierExpression instanceof PsiSuperExpression) {
+        if (qualifierExpression instanceof PsiSuperExpression && callerSignatureIsAboutToChangeToo(caller, usages)) {
           toInsertDefaultValue = false;
         }
       }
@@ -680,6 +678,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+  }
+
+  private static boolean callerSignatureIsAboutToChangeToo(final PsiMethod caller, final UsageInfo[] usages) {
+    for (UsageInfo usage : usages) {
+      if (usage instanceof MethodCallUsageInfo && ((MethodCallUsageInfo)usage).getReferencedMethod() == caller) return true;
+    }
+    return false;
   }
 
   private static PsiClassType[] getCalleeChangedExceptionInfo(final PsiMethod callee) {

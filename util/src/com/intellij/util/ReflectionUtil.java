@@ -54,8 +54,15 @@ public class ReflectionUtil {
     return null;
   }
 
+//void f() {} sdfg
   public static String declarationToString(final GenericDeclaration anInterface) {
-    return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class)anInterface).getClassLoader();
+
+    return anInterface.toString()
+
+           + Arrays.asList(anInterface.getTypeParameters())
+           +
+
+           " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
   public static Class<?> getRawType(Type type) {

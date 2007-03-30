@@ -15,13 +15,11 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testSimple() throws Exception {
-    doTest(null, null, null,
-      new ParameterInfo[0], new ThrownExceptionInfo[0], false);
+    doTest(null, null, null, new ParameterInfo[0], new ThrownExceptionInfo[0], false);
   }
 
   public void testParameterReorder() throws Exception {
-    doTest(null,
-           new ParameterInfo[]{new ParameterInfo(1), new ParameterInfo(0)}, false);
+    doTest(null, new ParameterInfo[]{new ParameterInfo(1), new ParameterInfo(0)}, false);
   }
 
   public void testGenericTypes() throws Exception {
@@ -111,6 +109,12 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     doTest(null, new ParameterInfo[] {
       new ParameterInfo(0, "y", PsiType.INT),
       new ParameterInfo(1, "b", PsiType.BOOLEAN)
+    }, false);
+  }
+
+  public void testSuperCallFromOtherMethod() throws Exception {
+    doTest(null, new ParameterInfo[] {
+      new ParameterInfo(-1, "nnn", PsiType.INT, "-222"),
     }, false);
   }
 
@@ -208,7 +212,8 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   private void doTest(String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
-    @NonNls final String filePath = "/refactoring/changeSignature/" + getTestName(false) + ".java";
+    String basePath = "/refactoring/changeSignature/" + getTestName(false);
+    @NonNls final String filePath = basePath + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
@@ -218,7 +223,8 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
                                  newName != null ? newName : method.getName(),
                                  newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
-    checkResultByFile(filePath + ".after");
+    @NonNls String after = basePath + "_after.java";
+    checkResultByFile(after);
   }
 
   private interface GenParams {
