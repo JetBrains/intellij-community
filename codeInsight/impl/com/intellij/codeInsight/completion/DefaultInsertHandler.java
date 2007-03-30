@@ -111,7 +111,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myDocument = myEditor.getDocument();
 
     if (isTemplateToBeCompleted(myLookupItem)){
-        handleTemplate(context, signatureSelected, completionChar);
+        handleTemplate(startOffset, signatureSelected, completionChar);
       // we could not clear in this case since handleTemplate has templateFinished lisntener that works
       // with e.g. myLookupItem
         return false;
@@ -506,14 +506,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return tailType;
   }
 
-  private void handleTemplate(final CompletionContext context, final boolean signatureSelected, final char completionChar){
+  private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){
     Template template = (Template)myLookupItem.getObject();
 
-    int offset1 = context.startOffset;
-    final RangeMarker offsetRangeMarker = context.editor.getDocument().createRangeMarker(offset1, offset1);
+    int offset1 = templateStartOffset;
+    final RangeMarker offsetRangeMarker = myContext.editor.getDocument().createRangeMarker(offset1, offset1);
 
     TemplateManager.getInstance(myProject).startTemplate(
-      context.editor,
+      myContext.editor,
       template,
       new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
@@ -524,12 +524,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           final int offset = offsetRangeMarker.getStartOffset();
 
           String lookupString =
-              context.editor.getDocument().getCharsSequence().subSequence(
+              myContext.editor.getDocument().getCharsSequence().subSequence(
               offset,
-              context.editor.getCaretModel().getOffset()).toString();
+              myContext.editor.getCaretModel().getOffset()).toString();
           myLookupItem.setLookupString(lookupString);
 
-          CompletionContext newContext = new CompletionContext(context.project, context.editor, context.file, offset, offset);
+          CompletionContext newContext = new CompletionContext(myContext.project, myContext.editor, myContext.file, offset, offset);
           handleInsert(newContext, myStartOffset, myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }
