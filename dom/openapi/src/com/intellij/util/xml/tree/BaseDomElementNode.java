@@ -2,6 +2,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -164,11 +165,13 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   protected void doUpdate() {
     if (!myDomElement.isValid()) return;
+    final Project project = myDomElement.getManager().getProject();
+    if (project.isDisposed()) return;
 
     setUniformIcon(getNodeIcon());
     clearColoredText();
 
-    final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject());
+    final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
     final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(myDomElement);
     final List<DomElementProblemDescriptor> problems =
       holder.getProblems(myDomElement, highlightIfChildrenHaveProblems(), HighlightSeverity.ERROR);
