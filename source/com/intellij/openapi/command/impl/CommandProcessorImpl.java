@@ -85,8 +85,14 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       command.run();
     }
     catch (TooComplexPSIModificationException rollback) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(rollback);
+      }
       failed = true;
     } catch (UnsupportedOperationException operation) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(operation);
+      }
       failed = true;
     }
     catch (Throwable e) {
