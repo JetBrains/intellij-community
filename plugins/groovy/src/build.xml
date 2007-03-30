@@ -13,7 +13,7 @@
   ~ limitations under the License.
   -->
 
-<project name="Generating the build of groovy language plugin" default="build.project">
+<project name="Generating the build of groovy language plugin" default="make.project">
   <property file="groovy.properties"/>
   <property name="project.dest" value="${project.dir}/classes/production/Groovy"/>
   <property name="idea.dir" value="${project.dest}/lib/idea"/>
@@ -70,9 +70,9 @@
     </javac>
   </target>
 
-  <target name="build.project" depends="clear.all, make.project">
+  <target name="build.project" depends="clear.all, make.project" description="builds project"/>
 
-  </target>
+  <target name="rebuild.all" depends="build.project, jar.groovy, zip.sources.groovy" description="builds and jar project and zip sources"/>
 
   <target name="jar.groovy" depends="make.project" description="makes groovy jar">
     <mkdir dir="${project.dir}/tempjar/Groovy/lib"/>
@@ -104,7 +104,7 @@
          resources/**/*.png,
          META-INF/**/*.xml"
          excludes="src/**/*junit*"
-            />
+        />
   </target>
 
 </project>
