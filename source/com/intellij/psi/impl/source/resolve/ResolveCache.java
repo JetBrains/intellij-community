@@ -10,7 +10,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,7 @@ public class ResolveCache {
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   //store types for method call expressions, NB: this caching is semantical, without this captured wildcards won't work
-  private final ConcurrentWeakHashMap<PsiExpression, WeakReference<PsiType>> myCaclulatedlTypes = new ConcurrentWeakHashMap<PsiExpression, WeakReference<PsiType>>();
+  private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCaclulatedlTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
 
   private static final Object NULL = Key.create("NULL");
 
@@ -72,17 +71,22 @@ public class ResolveCache {
     });
   }
 
+  private static final PsiType NULL_TYPE = new PsiEllipsisType(null){
+    public boolean isValid() {
+      return true;
+    }
+  };
   public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
-    WeakReference<PsiType> ref = myCaclulatedlTypes.get(expr);
-    PsiType type = ref == null ? null : ref.get();
+    PsiType type = myCaclulatedlTypes.get(expr);
     if (type == null) {
       type = f.fun(expr);
-      WeakReference<PsiType> existingRef = ConcurrencyUtil.cacheOrGet(myCaclulatedlTypes, expr, new WeakReference<PsiType>(type));
-      PsiType existing = existingRef.get();
-      if (existing != null) type = existing;
+      if (type == null) {
+        type = NULL_TYPE;
+      }
+      type = ConcurrencyUtil.cacheOrGet(myCaclulatedlTypes, expr, type);
     }
-    assert type == null || type.isValid();
-    return type;
+    assert type.isValid();
+    return type == NULL_TYPE ? null : type;
   }
 
   public void clearCache() {
@@ -97,6 +101,7 @@ public class ResolveCache {
 
     myResolveMaps[2].clear();
     myResolveMaps[3].clear();
+    myCaclulatedlTypes.clear();
   }
 
   private <Ref extends PsiReference, Result> Result resolve(Ref ref,
