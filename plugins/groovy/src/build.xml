@@ -23,7 +23,7 @@
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
-  <property name="tools.jar.dir" value="${env.JAVA_HOME}/../lib"/>
+  <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
 
   <property name="output" value="${basedir}/dist"/>
 
@@ -36,7 +36,6 @@
   <path id="tools.path">
     <fileset dir="${tools.jar.dir}">
       <include name="**/*.jar"/>
-      <!--<include name="**/*.jar"/>-->
     </fileset>
   </path>
 
@@ -155,7 +154,6 @@
       <classpath>
         <path location="${test.dest}"/>
         <path location="${production.dest}"/>
-        <path location="${env.JAVA_HOME}/lib/"/>
 
         <path refid="base.path"/>
         <path refid="groovy.path"/>
