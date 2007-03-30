@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -104,9 +105,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
             }
           }
           if (!vfFiles.isEmpty()) {
-            AbstractVcsHelper.getInstance(myVcs.getProject()).showMergeDialog(vfFiles,
-                                                                              new SvnMergeProvider(myVcs.getProject()),
-                                                                              null);
+            final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myVcs.getProject());
+            List<VirtualFile> mergedFiles = vcsHelper.showMergeDialog(vfFiles, new SvnMergeProvider(myVcs.getProject()));
+            FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
+            for(VirtualFile mergedFile: mergedFiles) {
+              String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
+              conflictedFiles.remove(path);
+              mergedGroup.add(path);
+            }
           }
         }
       }
