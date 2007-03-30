@@ -74,8 +74,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private DirectoryDifferenceNode getSelectedNode() {
-    if (myDiffTree.getTree().isSelectionEmpty()) return null;
-    TreePath path = myDiffTree.getTree().getSelectionPaths()[0];
+    if (myDiffTree.getTree().getSelectionCount() != 1) return null;
+    TreePath path = myDiffTree.getTree().getSelectionPath();
     return (DirectoryDifferenceNode)path.getLastPathComponent();
   }
 
