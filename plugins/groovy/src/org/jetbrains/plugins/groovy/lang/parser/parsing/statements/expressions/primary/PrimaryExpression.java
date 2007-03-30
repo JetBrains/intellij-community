@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.S
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -118,7 +119,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     ParserUtils.getToken(builder, kNEW);
     ParserUtils.getToken(builder, mNLS);
     PsiBuilder.Marker rb = builder.mark();
-    TypeSpec.parseStrict(builder);
+    TypeArguments.parse(builder);
     if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) &&
             !mIDENT.equals(builder.getTokenType())){
       rb.rollbackTo();
