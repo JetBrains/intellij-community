@@ -39,12 +39,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -342,6 +344,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
+    Disposer.register(getProject(), new Disposable() {
+      public void dispose() {
+        inspectionProfileManager.deleteProfile(PROFILE);
+      }
+    });
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
   }
@@ -352,6 +359,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (VirtualFile openFile : openFiles) {
       editorManager.closeFile(openFile);
     }
+
     myProjectFixture.tearDown();
     myTempDirFixture.tearDown();
 
