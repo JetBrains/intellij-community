@@ -107,11 +107,11 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     */
 
+    checkSwitchedDir(dir, builder);
+
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
       processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
     }
-
-    checkSwitchedDir(dir, builder);
 
     if (recursively) {
       for (VirtualFile file : dir.getChildren()) {
