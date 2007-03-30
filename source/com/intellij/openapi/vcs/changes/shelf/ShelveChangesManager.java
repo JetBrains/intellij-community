@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,6 +112,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();
     for(Change change: changes) {
+      if (ChangesUtil.getFilePath(change).isDirectory()) {
+        continue;
+      }
       if (change.getBeforeRevision() instanceof BinaryContentRevision || change.getAfterRevision() instanceof BinaryContentRevision) {
         binaryFiles.add(shelveBinaryFile(change));
       }
