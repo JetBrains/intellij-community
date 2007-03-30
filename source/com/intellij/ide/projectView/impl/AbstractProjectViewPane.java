@@ -5,8 +5,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.dnd.DnDEnabler;
-import com.intellij.ide.dnd.AdvancedDnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
@@ -27,7 +25,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -41,8 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -450,13 +445,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         public PsiElement getPsiElement(@Nullable final TreeNode node) {
           return getPSIElement(getElement(node));
         }
-      },
-      new MoveDropTargetListener.ModifierSource() {
-        public int getModifiers() {
-          return myDragSourceListener.getModifiers();
-        }
-      },
-      myTree, myProject, FLAVORS[0]));
+      }, myTree, myProject, FLAVORS[0]));
 
       myTree.enableDnd(myProject);
     }
@@ -520,15 +509,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   private static class MyDragSourceListener implements DragSourceListener {
-    private int myModifiers;
-
-    public int getModifiers() {
-      return myModifiers;
-    }
 
     public void dragEnter(DragSourceDragEvent dsde) {
       dsde.getDragSourceContext().setCursor(null);
-      myModifiers = dsde.getGestureModifiersEx();
     }
 
     public void dragOver(DragSourceDragEvent dsde) {}

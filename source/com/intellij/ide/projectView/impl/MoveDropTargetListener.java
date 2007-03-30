@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
@@ -24,7 +25,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,6 @@ import java.util.List;
  */
 class MoveDropTargetListener implements DropTargetListener {
   final private DataFlavor dataFlavor;
-  private final ModifierSource myModifierSource;
   final private Project myProject;
   final private JTree myTree;
   final private PsiRetriever myPsiRetriever;
@@ -48,9 +47,8 @@ class MoveDropTargetListener implements DropTargetListener {
     int getModifiers();
   }
 
-  public MoveDropTargetListener(final PsiRetriever psiRetriever, final ModifierSource modifierSource, final JTree tree, final Project project, final DataFlavor flavor) {
+  public MoveDropTargetListener(final PsiRetriever psiRetriever, final JTree tree, final Project project, final DataFlavor flavor) {
     myPsiRetriever = psiRetriever;
-    myModifierSource = modifierSource;
     myProject = project;
     myTree = tree;
     dataFlavor = flavor;
@@ -58,7 +56,7 @@ class MoveDropTargetListener implements DropTargetListener {
 
   public void dragEnter(DropTargetDragEvent dtde) {
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
-    if (sourceNodes != null && getDropHandler().isValidSource(sourceNodes)) {
+    if (sourceNodes != null && getDropHandler(dtde.getDropAction()).isValidSource(sourceNodes)) {
       dtde.acceptDrag(dtde.getDropAction());
     }
     else {
@@ -69,8 +67,9 @@ class MoveDropTargetListener implements DropTargetListener {
   public void dragOver(DropTargetDragEvent dtde) {
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
     final TreeNode targetNode = getTargetNode(dtde.getLocation());
-    if (sourceNodes != null && targetNode != null && canDrop(sourceNodes, targetNode)) {
-      dtde.acceptDrag(dtde.getDropAction());
+    final int dropAction = dtde.getDropAction();
+    if (sourceNodes != null && targetNode != null && canDrop(sourceNodes, targetNode, dropAction)) {
+      dtde.acceptDrag(dropAction);
     }
     else {
       dtde.rejectDrag();
@@ -86,8 +85,9 @@ class MoveDropTargetListener implements DropTargetListener {
   public void drop(DropTargetDropEvent dtde) {
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
     final TreeNode targetNode = getTargetNode(dtde.getLocation());
-    if ((dtde.getDropAction() & DnDConstants.ACTION_COPY_OR_MOVE) == 0 || sourceNodes == null || targetNode == null ||
-        !doDrop(sourceNodes, targetNode, dtde)) {
+    final int dropAction = dtde.getDropAction();
+    if ((dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0 || sourceNodes == null || targetNode == null ||
+        !doDrop(sourceNodes, targetNode, dropAction, dtde)) {
       dtde.rejectDrop();
     }
   }
@@ -111,20 +111,21 @@ class MoveDropTargetListener implements DropTargetListener {
     return path == null ? null : (TreeNode)path.getLastPathComponent();
   }
 
-  private boolean canDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
-    return doDrop(sourceNodes, targetNode, null);
+  private boolean canDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode, final int dropAction) {
+    return doDrop(sourceNodes, targetNode, dropAction, null);
   }
 
   private boolean doDrop(@NotNull final TreeNode[] sourceNodes,
                          @NotNull final TreeNode targetNode,
+                         final int dropAction,
                          @Nullable final DropTargetDropEvent dtde) {
-    TreeNode validTargetNode = getValidTargetNode(sourceNodes, targetNode);
+    TreeNode validTargetNode = getValidTargetNode(sourceNodes, targetNode, dropAction);
     if (validTargetNode != null) {
-      final TreeNode[] filteredSourceNodes = removeRedundantSourceNodes(sourceNodes, validTargetNode);
+      final TreeNode[] filteredSourceNodes = removeRedundantSourceNodes(sourceNodes, validTargetNode, dropAction);
       if (filteredSourceNodes.length != 0) {
         if (dtde != null) {
           dtde.dropComplete(true);
-          getDropHandler().doDrop(filteredSourceNodes, validTargetNode);
+          getDropHandler(dropAction).doDrop(filteredSourceNodes, validTargetNode);
         }
         return true;
       }
@@ -133,8 +134,8 @@ class MoveDropTargetListener implements DropTargetListener {
   }
 
   @Nullable
-  private TreeNode getValidTargetNode(final @NotNull TreeNode[] sourceNodes, final @NotNull TreeNode targetNode) {
-    final DropHandler dropHandler = getDropHandler();
+  private TreeNode getValidTargetNode(final @NotNull TreeNode[] sourceNodes, final @NotNull TreeNode targetNode, final int dropAction) {
+    final DropHandler dropHandler = getDropHandler(dropAction);
     TreeNode currentNode = targetNode;
     while (true) {
       if (dropHandler.isValidTarget(sourceNodes, currentNode)) {
@@ -146,8 +147,8 @@ class MoveDropTargetListener implements DropTargetListener {
     }
   }
 
-  private TreeNode[] removeRedundantSourceNodes(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
-    final DropHandler dropHandler = getDropHandler();
+  private TreeNode[] removeRedundantSourceNodes(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode, final int dropAction) {
+    final DropHandler dropHandler = getDropHandler(dropAction);
     List<TreeNode> result = new ArrayList<TreeNode>(sourceNodes.length);
     for (TreeNode sourceNode : sourceNodes) {
       if (!dropHandler.isDropRedundant(sourceNode, targetNode)) {
@@ -157,8 +158,8 @@ class MoveDropTargetListener implements DropTargetListener {
     return result.toArray(new TreeNode[result.size()]);
   }
 
-  public DropHandler getDropHandler() {
-    return (myModifierSource.getModifiers() & KeyEvent.SHIFT_DOWN_MASK ) != 0 ? new CopyDropHandler() : new MoveDropHandler();
+  public DropHandler getDropHandler(final int dropAction) {
+    return (dropAction == DnDConstants.ACTION_COPY ) ? new CopyDropHandler() : new MoveDropHandler();
   }
 
   private interface DropHandler {
@@ -207,7 +208,11 @@ class MoveDropTargetListener implements DropTargetListener {
           psiElements.add(psiElement);
         }
       }
-      return psiElements.toArray(new PsiElement[psiElements.size()]);
+      if ( psiElements.size() != 0) {
+        return psiElements.toArray(new PsiElement[psiElements.size()]);
+      } else {
+        return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
+      }
     }
 
     protected boolean fromSameProject(final PsiElement[] sourceElements, final PsiElement targetElement) {
@@ -275,7 +280,7 @@ class MoveDropTargetListener implements DropTargetListener {
         psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
       } else {
         psiDirectory = (PsiDirectory)targetElement;
-        psiPackage = psiDirectory.getPackage();
+        psiPackage = psiDirectory == null ? null : psiDirectory.getPackage();
       }
       CopyHandler.doCopy(sourceElements, psiPackage, psiDirectory );
     }
