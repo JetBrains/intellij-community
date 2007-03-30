@@ -984,6 +984,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private final class CancelCurrentOperationAction extends AnAction {
     public void actionPerformed(final AnActionEvent e) {
       myProcessor.cancelOperation();
+      myQuickFixManager.hideIntentionHint();
     }
 
     public void update(final AnActionEvent e) {
