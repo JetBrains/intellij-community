@@ -77,11 +77,13 @@ public abstract class NewActionBase extends CreateElementActionBase
 
     super.update(e);
 
-    if (presentation.isEnabled() && !isUnderSourceRoots(e))
-    {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-    }
+    if (!presentation.isEnabled() || !isUnderSourceRoots(e))
+      return;
+
+    if (GroovyGroup.isGroovyFacetPresented(e)) return;
+
+    presentation.setEnabled(false);
+    presentation.setVisible(false);
   }
 
   public static boolean isUnderSourceRoots(final AnActionEvent e)
