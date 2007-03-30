@@ -184,6 +184,9 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
         parent = parent.getParentDirectory();
       }
+      myDetectedStripLeadingDirs = 0;
+      myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
+      return true;
     }
     return false;
   }
