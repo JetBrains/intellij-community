@@ -229,9 +229,17 @@ class DeclarationMover extends LineMover {
       // moving inside class
       PsiClass aClass = (PsiClass)sibling;
       if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
-      return isDown
-             ? new LineRange(aClass.getFirstChild(), aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace(), editor.getDocument())
-             : new LineRange(aClass.getRBrace(), aClass.getRBrace(), editor.getDocument());
+      if (isDown) {
+        PsiElement child = aClass.getFirstChild();
+        if (child == null) throw new IllegalMoveException();
+        return new LineRange(child, aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace(),
+                             editor.getDocument());
+      }
+      else {
+        PsiJavaToken rBrace = aClass.getRBrace();
+        if (rBrace == null) throw new IllegalMoveException();
+        return new LineRange(rBrace, rBrace, editor.getDocument());
+      }
     }
     if (sibling instanceof JspClassLevelDeclarationStatement) {
       // there should be another scriptlet/decl to move
