@@ -47,11 +47,9 @@ import java.nio.charset.Charset;
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final Key<Object> REQUESTOR_MARKER = new Key<Object>("REQUESTOR_MARKER");
-
+  private static final Key<byte[]> BOM_KEY = new Key<byte[]>("BOM");
+  private static final Key<Charset> CHARSET_KEY = new Key<Charset>("CHARSET");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
-
-  private Charset myCharset = null;
-  private byte[] myBOM = null;
 
   protected VirtualFile() {
   }
@@ -397,18 +395,20 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return Retreive the charset file have been loaded with (if loaded) and would be saved with (if would).
    */
   public Charset getCharset() {
-    if (myCharset == null) {
-      myCharset = CharsetToolkit.getIDEOptionsCharset();
+    Charset charset = getUserData(CHARSET_KEY);
+    if (charset == null) {
+      charset = CharsetToolkit.getIDEOptionsCharset();
+      setCharset(charset);
     }
-    return myCharset;
+    return charset;
   }
 
   public void setCharset(final Charset charset) {
-    myCharset = charset;
+    putUserData(CHARSET_KEY, charset);
   }
 
   protected boolean isCharsetSet() {
-    return myCharset != null;
+    return getUserData(CHARSET_KEY) != null;
   }
 
   public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
@@ -540,11 +540,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract InputStream getInputStream() throws IOException;
 
   protected byte[] getBOM() {
-    return myBOM;
+    return getUserData(BOM_KEY);
   }
 
   public void setBOM(final byte[] BOM) {
-    myBOM = BOM;
+    putUserData(BOM_KEY, BOM);
   }
 
   @NonNls

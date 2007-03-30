@@ -421,7 +421,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
             manager.findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
           for(PsiModifierListOwner element: nonNlsTargets) {
             if (manager.isInProject(element)) {
-              fixes.add(new AnnotateQuickFix(element, AnnotationUtil.NON_NLS));
+              fixes.add(new AnnotateQuickFix(element, AnnotationUtil.NON_NLS, AnnotationUtil.NON_NLS_SIMPLE_NAME));
             }
           }
         }

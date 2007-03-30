@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.*;
@@ -35,9 +36,10 @@ import java.util.*;
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicateStringLiteralInspection");
   private JTextField myMinStringLengthField;
-  public int MIN_STRING_LENGTH = 5;
+  @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
   private JLabel myMinStringLengthLabel;
   private JPanel myPanel;
+  @NonNls private static final String BR = "<br>";
 
   public DuplicateStringLiteralInspection() {
     myMinStringLengthLabel.setLabelFor(myMinStringLengthField);
@@ -67,9 +69,9 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return allProblems;
   }
 
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final List<ProblemDescriptor> allProblems = visitExpressionsUnder(aClass, manager, isOnTheFly);
-    return allProblems.size() == 0 ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
+    return allProblems.isEmpty() ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
   @NotNull
@@ -95,7 +97,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     final String stringToFind = (String)originalExpression.getValue();
     final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
-    if (words.size() == 0) return;
+    if (words.isEmpty()) return;
     // put longer strings first
     Collections.sort(words, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
@@ -114,10 +116,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         else {
           resultFiles.retainAll(files);
         }
-        if (resultFiles.size() == 0) return;
+        if (resultFiles.isEmpty()) return;
       }
     }
-    if (resultFiles == null || resultFiles.size() == 0) return;
+    if (resultFiles == null || resultFiles.isEmpty()) return;
     final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
     for (PsiFile file : resultFiles) {
       CharSequence text = file.getViewProvider().getContents();
@@ -134,7 +136,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         }
       }
     }
-    if (foundExpr.size() == 0) return;
+    if (foundExpr.isEmpty()) return;
     Set<PsiClass> classes = new THashSet<PsiClass>();
     for (PsiElement aClass : foundExpr) {
       do {
@@ -145,7 +147,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         classes.add((PsiClass)aClass);
       }
     }
-    if (classes.size() == 0) return;
+    if (classes.isEmpty()) return;
 
     List<PsiClass> tenClassesMost = Arrays.asList(classes.toArray(new PsiClass[classes.size()]));
     if (tenClassesMost.size() > 10) {
@@ -161,7 +163,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           return "&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'" +
                  (thisFile ? " " + InspectionsBundle.message("inspection.duplicates.message.in.this.file") : "");
         }
-      }, ", <br>");
+      }, ", " + BR);
 
     }
     else {
@@ -173,8 +175,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
 
     if (classes.size() > tenClassesMost.size()) {
-      //noinspection HardCodedStringLiteral
-      classList += "<br>" + InspectionsBundle.message("inspection.duplicates.message.more", classes.size() - 10);
+      classList += BR + InspectionsBundle.message("inspection.duplicates.message.more", classes.size() - 10);
     }
 
     String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
@@ -243,7 +244,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size() + 1]);
     expressions[foundExpr.size()] = originalExpression;
 
-    final LocalQuickFix introduceConstFix = new LocalQuickFix() {
+    return new LocalQuickFix() {
       @NotNull
       public String getName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
@@ -280,7 +281,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         return getName();
       }
     };
-    return introduceConstFix;
   }
 
   @Nullable

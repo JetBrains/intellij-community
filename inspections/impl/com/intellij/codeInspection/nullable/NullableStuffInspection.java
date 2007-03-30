@@ -90,7 +90,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(parameter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AnnotateQuickFix(parameter, anno));
+                                 new AnnotateQuickFix(parameter, anno, simpleName));
               }
             }
           }
@@ -204,7 +204,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             holder.registerProblem(parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new AnnotateQuickFix(parameter, AnnotationUtil.NOT_NULL));
+                                   new AnnotateQuickFix(parameter, AnnotationUtil.NOT_NULL, AnnotationUtil.NOT_NULL_SIMPLE_NAME));
           }
         }
       }

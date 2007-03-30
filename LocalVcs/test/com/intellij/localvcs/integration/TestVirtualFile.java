@@ -44,12 +44,13 @@ public class TestVirtualFile extends VirtualFile {
     myIsDirectory = true;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
   @Override
-  protected boolean nameEquals(String name) {
+  protected boolean nameEquals(@NotNull String name) {
     return Paths.isCaseSensitive() ? myName.equals(name) : myName.equalsIgnoreCase(name);
   }
 

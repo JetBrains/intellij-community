@@ -46,7 +46,7 @@ public class VirtualFileImpl extends VirtualFile {
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
   //do not delete or rename or change visibility without correcting native code
-  public long myTimeStamp = -1; // -1, if file content has not been requested yet
+  @SuppressWarnings({"WeakerAccess"}) public long myTimeStamp = -1; // -1, if file content has not been requested yet
 
   private static final VirtualFileImpl[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFileImpl[0];
 
@@ -208,11 +208,13 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   //do not delete or rename or change visibility without correcting native code
+  @SuppressWarnings({"WeakerAccess"})
   public void cacheIsWritableInitialized() {
     myFlags |= IS_WRITABLE_INITIALIZED_FLAG;
   }
 
   //do not delete or rename or change visibility without correcting native code
+  @SuppressWarnings({"WeakerAccess"})
   public void cacheIsWritable(final boolean canWrite) {
     if (canWrite) {
       myFlags |= IS_WRITABLE_FLAG;
@@ -223,6 +225,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   //do not delete or rename or change visibility without correcting native code
+  @SuppressWarnings({"WeakerAccess"})
   public void cacheIsDirectory(final boolean isDirectory) {
     if (isDirectory) {
       myFlags |= IS_DIRECTORY_FLAG;
@@ -607,7 +610,7 @@ public class VirtualFileImpl extends VirtualFile {
         if (index < 0) {
           ourFileSystem.getManager().addEventToFireByRefresh(new Runnable() {
             public void run() {
-              if (VirtualFileImpl.this.isValid()) {
+              if (isValid()) {
                 if (findChild(file.getName()) != null) return; // was already created
                 VirtualFileImpl newChild = new VirtualFileImpl(VirtualFileImpl.this, file, file.isDirectory());
                 addChild(newChild);
