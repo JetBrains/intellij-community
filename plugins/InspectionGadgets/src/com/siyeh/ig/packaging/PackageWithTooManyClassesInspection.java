@@ -26,8 +26,8 @@ import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -77,7 +77,4 @@ public class PackageWithTooManyClassesInspection extends BaseGlobalInspection {
                 this, "limit");
     }
 
-    public boolean isGraphNeeded() {
-        return false;
-    }
 }

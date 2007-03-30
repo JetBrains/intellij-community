@@ -39,10 +39,6 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     return "BooleanMethodIsAlwaysInverted";
   }
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public RefGraphAnnotator getAnnotator(final RefManager refManager) {
     return new BooleanInvertedAnnotator();

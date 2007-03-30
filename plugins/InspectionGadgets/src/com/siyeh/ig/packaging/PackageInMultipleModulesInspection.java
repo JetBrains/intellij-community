@@ -11,8 +11,8 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -49,9 +49,5 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
 
         return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
 
-    }
-
-    public boolean isGraphNeeded() {
-        return false;
     }
 }

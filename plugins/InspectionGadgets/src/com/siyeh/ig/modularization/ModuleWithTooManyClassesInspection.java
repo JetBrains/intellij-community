@@ -26,10 +26,10 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.List;
 
 public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
@@ -75,9 +75,5 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
                 InspectionGadgetsBundle.message(
                         "module.with.too.many.classes.max.option"),
                 this, "limit", 3);
-    }
-
-    public boolean isGraphNeeded() {
-        return false;
     }
 }

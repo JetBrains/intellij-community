@@ -15,8 +15,8 @@ import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -85,10 +85,6 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
                     InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch", name, m_regex);
             return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
         }
-    }
-
-    public boolean isGraphNeeded() {
-        return false;
     }
 
     public void readSettings(Element element) throws InvalidDataException {

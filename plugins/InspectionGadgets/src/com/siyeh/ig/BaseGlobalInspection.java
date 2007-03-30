@@ -63,10 +63,6 @@ public abstract class BaseGlobalInspection extends GlobalInspectionTool {
                 displayNameSuffix);
     }
 
-    public boolean isGraphNeeded() {
-        return true;
-    }
-
     @NotNull
     public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.WARNING;
