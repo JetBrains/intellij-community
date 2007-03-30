@@ -43,7 +43,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     PsiBuilder.Marker varMarker = builder.mark();
     if ((ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL)) && ParserUtils.getToken(builder, mLPAREN)) {
 
-      ParameterDeclarationList.parse(builder);
+      ParameterDeclarationList.parse(builder, mRPAREN);
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         ParserUtils.waitNextRCurly(builder);
 

@@ -15,10 +15,9 @@ Groovy script
       Modifiers
         PsiElement(def)('def')
       PsiWhiteSpace(' ')
-      PsiErrorElement:'}' expected
-        PsiElement(identifier)('a')
-        PsiWhiteSpace(' ')
-        PsiElement(()('(')
-        PsiElement())(')')
-        PsiElement(new line)('\n')
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      PsiElement())(')')
+      PsiElement(new line)('\n')
       PsiElement(})('}')

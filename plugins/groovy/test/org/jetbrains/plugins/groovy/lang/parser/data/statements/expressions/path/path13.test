@@ -1,0 +1,23 @@
+'medved'.((1+3).toString)
+-----
+Groovy script
+  Property selection
+    Literal
+      PsiElement(string)(''medved'')
+    PsiElement(.)('.')
+    Parenthesized expression
+      PsiElement(()('(')
+      Property selection
+        Parenthesized expression
+          PsiElement(()('(')
+          Additive expression
+            Literal
+              PsiElement(number)('1')
+            PsiElement(+)('+')
+            Literal
+              PsiElement(number)('3')
+          PsiElement())(')')
+        PsiElement(.)('.')
+        Property selector
+          PsiElement(identifier)('toString')
+      PsiElement())(')')

@@ -5,7 +5,7 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('foo')
-    Closable block
+    Open block
       PsiElement({)('{')
       Call expression
         Reference expression

@@ -144,6 +144,14 @@ public class PathExpression implements GroovyElementTypes {
       RegexConstructorExpression.parse(builder);
       return PATH_PROPERTY;
     }
+    if (mLCURLY.equals(builder.getTokenType())){
+      OpenOrClosableBlock.parseOpenBlock(builder);
+      return PATH_PROPERTY;
+    }
+    if (mLPAREN.equals(builder.getTokenType())){
+      PrimaryExpression.parenthesizedExprParse(builder);
+      return PATH_PROPERTY;
+    }
     if (TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
       return PATH_PROPERTY;
@@ -171,7 +179,7 @@ public class PathExpression implements GroovyElementTypes {
   }
 
   /**
-   * 
+   * Parses method arguments
    *
    * @param builder
    * @return

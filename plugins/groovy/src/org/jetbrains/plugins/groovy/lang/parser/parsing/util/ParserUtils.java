@@ -171,6 +171,18 @@ public abstract class ParserUtils {
     return elem;
   }
 
+  /**
+   * Wraps current token with error message
+   *
+   * @param builder
+   * @param msg Error message
+   */
+  public static void wrapError(PsiBuilder builder, String msg) {
+    Marker marker = builder.mark();
+    builder.advanceLexer();
+    marker.error(msg);
+  }
+
   public static void waitNextRCurly(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();

@@ -67,13 +67,6 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
    */
   // TODO Implement it, please in accordance with javadoc above
   public static GroovyElementType parseStrict(PsiBuilder builder){
-    PsiBuilder.Marker citMarker = builder.mark();
-    if (!ParserUtils.getToken(builder, mIDENT)) {
-      citMarker.rollbackTo();
-      return WRONGWAY;
-    }
-
-    citMarker.done(CLASS_INTERFACE_TYPE);
-    return CLASS_INTERFACE_TYPE;
+    return parse(builder);
   }
 }

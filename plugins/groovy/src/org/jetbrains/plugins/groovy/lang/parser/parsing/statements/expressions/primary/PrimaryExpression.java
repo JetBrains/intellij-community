@@ -18,6 +18,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -41,6 +44,10 @@ public class PrimaryExpression implements GroovyElementTypes {
     }
     if (kSUPER.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
+      return PRIMARY_EXPRESSION;
+    }
+    if (kNEW.equals(builder.getTokenType())) {
+      newExprParse(builder);
       return PRIMARY_EXPRESSION;
     }
     if (mIDENT.equals(builder.getTokenType())) {
@@ -99,6 +106,73 @@ public class PrimaryExpression implements GroovyElementTypes {
     marker.done(PARENTHSIZED_EXPRESSION);
     return PARENTHSIZED_EXPRESSION;
   }
+
+  /**
+   * Parses 'new' expression
+   *
+   * @param builder
+   * @return
+   */
+  public static GroovyElementType newExprParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
+    ParserUtils.getToken(builder, kNEW);
+    ParserUtils.getToken(builder, mNLS);
+    PsiBuilder.Marker rb = builder.mark();
+    TypeSpec.parseStrict(builder);
+    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) &&
+            !mIDENT.equals(builder.getTokenType())){
+      rb.rollbackTo();
+    } else {
+      rb.drop();
+    }
+
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())){
+      ParserUtils.eatElement(builder, BUILT_IN_TYPE);
+    } else if (mIDENT.equals(builder.getTokenType())) {
+      ClassOrInterfaceType.parseStrict(builder);
+    } else {
+      builder.error(GroovyBundle.message("type.specification.expected"));
+      marker.done(NEW_EXPRESSION);
+      return NEW_EXPRESSION;
+    }
+
+    if (ParserUtils.lookAhead(builder, mLPAREN) ||
+            ParserUtils.lookAhead(builder, mNLS, mLPAREN)){
+      ParserUtils.getToken(builder, mNLS);
+      methodCallArgsParse(builder);
+      if (ParserUtils.lookAhead(builder, mLCURLY)) {
+        OpenOrClosableBlock.parseClosableBlock(builder);
+      }
+
+    } else {
+      builder.error(GroovyBundle.message("lparen.expected"));
+    }
+    
+    marker.done(NEW_EXPRESSION);
+    return NEW_EXPRESSION;
+  }
+
+  /**
+   * Parses method arguments
+   *
+   * @param builder
+   * @return
+   */
+  private static GroovyElementType methodCallArgsParse(PsiBuilder builder) {
+    if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
+      ParserUtils.getToken(builder, mNLS);
+      if (ParserUtils.getToken(builder, mRPAREN)) {
+        return PATH_METHOD_CALL;
+      }
+      ArgumentList.parse(builder, mRPAREN);
+      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
+    }
+    return PATH_METHOD_CALL;
+  }
+
+
+  
 
 
 }

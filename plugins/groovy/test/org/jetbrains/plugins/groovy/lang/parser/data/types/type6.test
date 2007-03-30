@@ -12,6 +12,8 @@ Groovy script
     PsiElement(()('(')
     Parameter list
       Parameter
+        Parameter modifiers
+          <empty list>
         Class type
           Class type
             Class type

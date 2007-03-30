@@ -10,6 +10,8 @@ Groovy script
     PsiElement(()('(')
     Parameter list
       Parameter
+        Parameter modifiers
+          <empty list>
         Array type
           Class type
             PsiElement(identifier)('String')

@@ -40,7 +40,7 @@ public class MethodDefinition implements GroovyElementTypes {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
-    ParameterDeclarationList.parse(builder);
+    ParameterDeclarationList.parse(builder, mRPAREN);
 
     if (!ParserUtils.getToken(builder, mRPAREN)) {
       ParserUtils.waitNextRCurly(builder);

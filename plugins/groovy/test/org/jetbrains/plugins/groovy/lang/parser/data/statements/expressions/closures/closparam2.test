@@ -1,0 +1,45 @@
+{def a = 1, final String b = 3 -> a+b; 3}
+------
+Groovy script
+  Closable block
+    PsiElement({)('{')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('1')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Parameter modifiers
+          PsiElement(final)('final')
+        PsiWhiteSpace(' ')
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+    PsiWhiteSpace(' ')
+    PsiElement(->)('->')
+    PsiWhiteSpace(' ')
+    Additive expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(+)('+')
+      Reference expression
+        PsiElement(identifier)('b')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(number)('3')
+    PsiElement(})('}')

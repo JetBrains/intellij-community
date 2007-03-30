@@ -89,6 +89,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
+  GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 
   // Lists & maps
@@ -156,6 +157,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
+  GroovyElementType VARIABLE_INITIALIZER = new GroovyElementType("variable initializer");
 
   //modifiers
   //  GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node

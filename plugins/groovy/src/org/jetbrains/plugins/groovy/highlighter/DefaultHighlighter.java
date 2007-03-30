@@ -58,6 +58,7 @@ public class DefaultHighlighter {
     TextAttributesKey.createTextAttributesKey(KEYWORD_ID, HighlighterColors.JAVA_KEYWORD.getDefaultAttributes());
     TextAttributesKey.createTextAttributesKey(NUMBER_ID, HighlighterColors.JAVA_NUMBER.getDefaultAttributes());
     TextAttributesKey.createTextAttributesKey(STRING_ID, HighlighterColors.JAVA_STRING.getDefaultAttributes());
+
     TextAttributesKey.createTextAttributesKey(REGEXP_ID, HighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
     TextAttributesKey.createTextAttributesKey(BRACKETS_ID, HighlighterColors.JAVA_BRACKETS.getDefaultAttributes());
 

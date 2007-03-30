@@ -17,63 +17,109 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters;
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ParameterModifierOptional;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitializer;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.VariableDefinitions;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.apache.commons.collections.set.SynchronizedSet;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
+
+import java.util.Set;
+import java.util.HashSet;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author: Dmitry.Krasilschikov, Ilya Sergey
  */
 public class ParameterDeclaration implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+
+  /**
+   * @param builder
+   * @param ending  Given ending: -> or )
+   * @return
+   */
+  public static GroovyElementType parse(PsiBuilder builder, IElementType ending) {
     PsiBuilder.Marker pdMarker = builder.mark();
 
-    if (WRONGWAY.equals(ParameterModifierOptional.parse(builder))) {
-      pdMarker.rollbackTo();
-      return WRONGWAY;
+    // Parse optional modifier(s)
+    parseOptionalModifier(builder);
+
+    PsiBuilder.Marker rb = builder.mark();
+    TypeSpec.parseStrict(builder);
+    if (!mIDENT.equals(builder.getTokenType())) {
+      rb.rollbackTo();
+    } else {
+      rb.drop();
     }
 
-    PsiBuilder.Marker checkMarker = builder.mark();
+    // TODO When does it work? I tried but i failed.
+    // Possible it is a parameter, not statement
+    boolean hasDots = ParserUtils.getToken(builder, mTRIPLE_DOT);
 
-    GroovyElementType type = TypeSpec.parse(builder);
-    if (!WRONGWAY.equals(type)) { //type was recognized
-      ParserUtils.getToken(builder, mTRIPLE_DOT);
-
-      if (!ParserUtils.getToken(builder, mIDENT)) { //if there is no identifier rollback to begin
-        checkMarker.rollbackTo();
-
-        if (!ParserUtils.getToken(builder, mIDENT)) { //parse identifier because suggestion about type was wrong
-          pdMarker.rollbackTo();
-          return WRONGWAY;
-        }
-
+    if (ParserUtils.getToken(builder, mIDENT)) {
+      if (mASSIGN.equals(builder.getTokenType())) {
         VariableInitializer.parse(builder);
-
-        pdMarker.done(PARAMETER);
-        return PARAMETER;
-      } else { //parse typized parameter
-        checkMarker.drop();
-        VariableInitializer.parse(builder);
-
-        pdMarker.done(PARAMETER);
-        return PARAMETER;
       }
-    } else {
-      checkMarker.rollbackTo();
-
-      if (!ParserUtils.getToken(builder, mIDENT)) { //parse parameter without type
+      if (ParserUtils.lookAhead(builder, mCOMMA) ||
+              ParserUtils.lookAhead(builder, ending) ||
+              ParserUtils.lookAhead(builder, mNLS, ending)) {
+        pdMarker.done(PARAMETER);
+        return PARAMETER;
+      } else {
         pdMarker.rollbackTo();
         return WRONGWAY;
       }
-
-      VariableInitializer.parse(builder);
-
-      pdMarker.done(PARAMETER);
-      return PARAMETER;
+    } else {
+      // If has triple dots
+      if (hasDots) {
+        builder.error(GroovyBundle.message("identifier.expected"));
+        pdMarker.done(PARAMETER);
+        return PARAMETER;
+      } else {
+        pdMarker.rollbackTo();
+        return WRONGWAY;
+      }
     }
   }
+
+  /**
+   * Parses optional modifiers
+   *
+   * @param builder Given builder
+   */
+  private static void parseOptionalModifier(PsiBuilder builder) {
+
+    Set<IElementType> modSet = new HashSet<IElementType>();
+
+    PsiBuilder.Marker marker = builder.mark();
+
+    while (ParserUtils.lookAhead(builder, kFINAL) ||
+            ParserUtils.lookAhead(builder, kDEF) ||
+            ParserUtils.lookAhead(builder, mAT)) {
+
+      if (kFINAL.equals(builder.getTokenType())) {
+        if (modSet.contains(kFINAL)) {
+          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier"));
+        } else {
+          builder.advanceLexer();
+          modSet.add(kFINAL);
+        }
+        ParserUtils.getToken(builder, mNLS);
+      } else if (kDEF.equals(builder.getTokenType())) {
+        if (modSet.contains(kDEF)) {
+          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier"));
+        } else {
+          builder.advanceLexer();
+          modSet.add(kDEF);
+        }
+        ParserUtils.getToken(builder, mNLS);
+      } else if (!WRONGWAY.equals(Annotation.parse(builder))) {
+        ParserUtils.getToken(builder, mNLS);
+      }
+    }
+    marker.done(PARAMETER_MODIFIERS);
+  }
+
 }
