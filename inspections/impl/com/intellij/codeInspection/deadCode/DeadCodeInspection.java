@@ -10,6 +10,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -181,7 +182,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   public JComponent createOptionsPanel() {
-    return new OptionsPanel();
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(new OptionsPanel());
+    scrollPane.setBorder(BorderFactory.createEtchedBorder());
+    return scrollPane;
   }
 
   private boolean isAddMainsEnabled() {

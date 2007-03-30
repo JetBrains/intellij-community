@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,10 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     north.add(panel, BorderLayout.NORTH);
     north.add(listPanel, BorderLayout.SOUTH);
     doNotExpand.add(north, BorderLayout.NORTH);
-    return doNotExpand;
+
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(doNotExpand);
+    scrollPane.setBorder(BorderFactory.createEtchedBorder());
+    return scrollPane;
   }
 
   public IntentionAction createQuickFix(final String qualifiedName, final PsiElement context) {
