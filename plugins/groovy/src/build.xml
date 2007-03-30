@@ -35,7 +35,7 @@
 
   <path id="tools.path">
     <fileset dir="${tools.jar.dir}">
-      <include name="**/*.jar"/>
+      <include name="**/*tools.jar"/>
     </fileset>
   </path>
 
