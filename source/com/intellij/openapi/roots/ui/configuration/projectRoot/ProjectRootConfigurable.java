@@ -1212,11 +1212,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
         public boolean value(final Object object) {
           if (object instanceof MyNode) {
             final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
-            final Object editableObject = namedConfigurable.getEditableObject();
-            if (editableObject instanceof ProjectJdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
-            if (editableObject instanceof Library) {
-              final LibraryTable table = ((Library)editableObject).getTable();
-              return table == null || table.isEditable();
+            if (namedConfigurable != null) {
+              final Object editableObject = namedConfigurable.getEditableObject();
+              if (editableObject instanceof ProjectJdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
+              if (editableObject instanceof Library) {
+                final LibraryTable table = ((Library)editableObject).getTable();
+                return table == null || table.isEditable();
+              }
             }
           }
           return false;
