@@ -2,11 +2,12 @@ package com.theoryinpractice.testng.inspection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,4 +110,5 @@ public class DependsOnMethodInspection extends LocalInspectionTool
             }
         }
     }
+
 }

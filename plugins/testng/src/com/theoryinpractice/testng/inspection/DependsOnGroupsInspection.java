@@ -2,14 +2,13 @@ package com.theoryinpractice.testng.inspection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
@@ -85,7 +84,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
         
 
         TestNGDefaultConfigurationComponent defaultConfig = manager.getProject().getComponent(TestNGDefaultConfigurationComponent.class);
-        Set<String> groups = defaultConfig.getDefaultSettings().getGroups();
+        List<String> groups = defaultConfig.getDefaultSettings().getGroups();
 
 
         if (!groups.contains(groupName)) {
@@ -122,7 +121,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
 
         public void applyFix(@NotNull Project project, ProblemDescriptor problemDescriptor) {
             TestNGDefaultConfigurationComponent defaultConfig = project.getComponent(TestNGDefaultConfigurationComponent.class);
-            Set<String> groups = defaultConfig.getDefaultSettings().getGroups();
+            List<String> groups = defaultConfig.getDefaultSettings().getGroups();
             groups.add(groupName);
             try {
                 defaultConfig.apply();
