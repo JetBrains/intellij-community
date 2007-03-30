@@ -242,7 +242,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     return null;
   }
 
-  public boolean isGraphNeeded() {
-    return true;
+  public boolean isEnabledByDefault() {
+    return false;
   }
 }

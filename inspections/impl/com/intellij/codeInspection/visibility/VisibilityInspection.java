@@ -114,10 +114,6 @@ public class VisibilityInspection extends GlobalInspectionTool {
     return SHORT_NAME;
   }
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
                                                 final AnalysisScope scope,

@@ -123,10 +123,6 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
     return false;
   }
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public String getHint(final QuickFix fix) {
     return ((AcceptSuggested)fix).getHint();

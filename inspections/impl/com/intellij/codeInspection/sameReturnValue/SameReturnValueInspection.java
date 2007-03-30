@@ -16,11 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class SameReturnValueInspection extends GlobalInspectionTool {
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
- @Nullable
+  @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
                                                 ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {

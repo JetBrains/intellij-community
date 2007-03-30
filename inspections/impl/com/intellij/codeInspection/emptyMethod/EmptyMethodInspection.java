@@ -49,10 +49,6 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,

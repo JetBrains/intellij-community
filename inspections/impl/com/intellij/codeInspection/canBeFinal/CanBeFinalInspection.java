@@ -211,11 +211,6 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
   }
 
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
-
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null);

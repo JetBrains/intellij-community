@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public class UnusedReturnValue extends GlobalInspectionTool {
   private MakeVoidQuickFix myQuickFix;
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,

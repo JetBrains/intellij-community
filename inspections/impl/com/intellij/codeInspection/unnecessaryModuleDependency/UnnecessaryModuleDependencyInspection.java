@@ -29,10 +29,6 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, final GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefModule){
       final RefModule refModule = (RefModule)refEntity;

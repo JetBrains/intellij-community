@@ -112,10 +112,10 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * is built if at least one of the global inspection has requested that.
    *
    * @return true if the reference graph is required, false if the inspection does not use a
-   * reference graph and uses some other APIs for its processing.
+   * reference graph (refEntities) and uses some other APIs for its processing.
    */
   public boolean isGraphNeeded() {
-    return false;
+    return true;
   }
 
 

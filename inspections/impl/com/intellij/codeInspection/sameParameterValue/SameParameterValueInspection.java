@@ -16,10 +16,6 @@ import java.util.ArrayList;
  * @author max
  */
 public class SameParameterValueInspection extends GlobalInspectionTool {
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
                                                 ProblemDescriptionsProcessor processor) {

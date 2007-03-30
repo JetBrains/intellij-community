@@ -38,10 +38,6 @@ public class RedundantThrows extends GlobalInspectionTool {
   private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<String, QuickFix>();
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,
