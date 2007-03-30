@@ -4,12 +4,12 @@ import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -17,18 +17,18 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -52,6 +52,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods) {
+    invoke(project, elements, checkSuperMethods, null);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods, final @Nullable Runnable successRunnable) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
@@ -108,6 +112,9 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       public void run(final SafeDeleteDialog dialog) {
         SafeDeleteProcessor.createInstance(project, new Runnable() {
           public void run() {
+            if (successRunnable != null) {
+              successRunnable.run();
+            }
             dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
           }
         }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();

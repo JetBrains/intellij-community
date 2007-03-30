@@ -5,10 +5,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefImplicitConstructor;
-import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -195,18 +192,19 @@ public class QuickFixAction extends AnAction {
         }, getTemplatePresentation().getText(), null);
       }
       if (refreshNeeded[0]) {
-        final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
-        for (RefElement element : refElements) {
-          final PsiElement psiElement = element.getElement();
-          if (psiElement != null && psiElement.isValid()) {
-            ignoredElements.add(psiElement);
-          }
-        }
-        refreshViews(view.getProject(), ignoredElements, myTool);
+        refreshViews(view.getProject(), refElements, myTool);
       }
     }
     finally {  //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
+    }
+  }
+
+  public static void removeElements(final RefElement[] refElements, final Project project, final InspectionTool tool) {
+    refreshViews(project, refElements, tool);
+    final ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
+    for (RefElement refElement : refElements) {
+      RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
     }
   }
 
@@ -220,7 +218,7 @@ public class QuickFixAction extends AnAction {
     return readOnlyFiles;
   }
 
-  protected static RefElement[] getSelectedElements(AnActionEvent e) {
+  private static RefElement[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
@@ -258,6 +256,17 @@ public class QuickFixAction extends AnAction {
       }
       context.refreshViews();
     }
+  }
+
+  private static void refreshViews(final Project project, final RefElement[] refElements, final InspectionTool tool) {
+    final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
+    for (RefElement element : refElements) {
+      final PsiElement psiElement = element.getElement();
+      if (psiElement != null && psiElement.isValid()) {
+        ignoredElements.add(psiElement);
+      }
+    }
+    refreshViews(project, ignoredElements, tool);
   }
 
   /**

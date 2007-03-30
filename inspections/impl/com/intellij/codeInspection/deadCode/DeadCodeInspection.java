@@ -10,10 +10,9 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -35,6 +34,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -670,23 +670,26 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DeadCodeInspection.this);
     }
 
-    protected boolean applyFix(RefElement[] refElements) {
-      ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
+    protected boolean applyFix(final RefElement[] refElements) {
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
         psiElements.add(psiElement);
-        RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          SafeDeleteHandler.invoke(getContext().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
+          final Project project = getContext().getProject();
+          SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false, new Runnable(){
+            public void run() {
+              removeElements(refElements, project, DeadCodeInspection.this);
+            }
+          });
         }
       });
 
-      return true;
+      return false; //refresh after safe delete dialog is closed
     }
   }
 
@@ -711,7 +714,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       return true;
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (myElement != null && myElement.isValid()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

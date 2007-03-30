@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -305,7 +307,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
     public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
-        List<RefElement> refElements = new ArrayList<RefElement>(1);
+        final List<RefElement> refElements = new ArrayList<RefElement>(1);
         RefMethod refMethod = (RefMethod)refElement;
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         if (myNeedToDEleteHierarchy) {
@@ -314,14 +316,13 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
           deleteMethod(refMethod, psiElements, refElements);
         }
 
-        ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-        for (RefElement element : refElements) {
-          RefUtil.getInstance().removeRefElement(element, deletedRefs);
-        }
-
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false);
+            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false, new Runnable() {
+              public void run() {
+                QuickFixAction.removeElements(refElements.toArray(new RefElement[refElements.size()]), project, (InspectionTool)myProcessor);
+              }
+            });
           }
         });
       }
