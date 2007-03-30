@@ -46,10 +46,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     final PsiElement element = (PsiElement)this;
 
     final Icon providersIcon = IconUtil.getProvidersIcon(element, flags);
-    if(providersIcon != null) {
-      return addVisibilityIcon(element, flags, providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags));
+    if (providersIcon != null) {
+      final RowIcon rowIcon = providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+      return addVisibilityIcon(element, flags, rowIcon);
     }
 
+    boolean visibilityAdded = false;
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
@@ -80,6 +82,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
       else {
         fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
+        if (fileTypeIcon instanceof RowIcon) {
+          visibilityAdded = true;
+        }
       }
       baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
     }
@@ -116,7 +121,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else {
       return null;
     }
-    return addVisibilityIcon(element, flags, baseIcon);
+    return visibilityAdded ? baseIcon : addVisibilityIcon(element, flags, baseIcon);
   }
 
   private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
