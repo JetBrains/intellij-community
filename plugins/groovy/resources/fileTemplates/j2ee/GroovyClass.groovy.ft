@@ -1,0 +1,6 @@
+package ${PACKAGE_NAME};
+#parse("File Header.java")
+
+class ${NAME} {
+
+}

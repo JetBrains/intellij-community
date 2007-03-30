@@ -1,6 +1,18 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <id>org.intellij.groovy</id>
+  <actions>
+    <group id="Groovy" class="org.jetbrains.plugins.groovy.actions.GroovyGroup"
+           text="Groovy">
+      <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewClassAction"
+              text="Groovy Class" description="Create new Groovy class">
+      </action>
+      <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
+              text="Groovy Script" description="Create new Groovy script">
+      </action>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+  </actions>
   <name>JetGroovy</name>
   <description>Plugin for Groovy language support</description>
   <version>0.01</version>
@@ -11,22 +23,28 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
-<!--
+    <!--
+        <component>
+          <implementation-class>org.codehaus.groovy.intellij.EditorAPIFactory</implementation-class>
+        </component>
+    -->
     <component>
-      <implementation-class>org.codehaus.groovy.intellij.EditorAPIFactory</implementation-class>
-    </component>
--->
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.components.GroovyScriptTemplate</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.components.GroovyTemplates</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.sdk.GroovySdkType</implementation-class>
     </component>
-<!--
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.configuration.GroovyConfigurationType</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.templates.GroovyTemplatesFactory</implementation-class>
     </component>
--->
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.facet.GroovyFacetRegistrar</implementation-class>
+    </component>
+    <!--
+        <component>
+          <implementation-class>org.jetbrains.plugins.groovy.configuration.GroovyConfigurationType</implementation-class>
+        </component>
+    -->
   </application-components>
 
 </idea-plugin>
