@@ -238,7 +238,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * changes its file type.
    */
   private void updateHighlighters(){
-    final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, myFile.getName());
+    final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, myFile);
     ((EditorEx)myEditor).setHighlighter(highlighter);
   }
 

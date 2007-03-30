@@ -2,6 +2,7 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -1038,7 +1039,8 @@ public class FileManagerImpl implements FileManager {
                     myManager.childRemoved(treeEvent);
                   }
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
-                           newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue())
+                           newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
+                           languageDialectChanged(newPsiFile)
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 
@@ -1209,6 +1211,19 @@ public class FileManagerImpl implements FileManager {
       }
       else myVFileToViewProviderMap.remove(vFile);
     }
+  }
+
+  // When file is renamed so that extension changes then language dialect might change and thus psiFile should be invalidated
+  // We could detect it right now with checks of parser definition equivalence
+  // The file name under passed psi file is "new" but parser def is from old name
+  private static boolean languageDialectChanged(final PsiFile newPsiFile) {
+    return ( newPsiFile.getLanguageDialect() != null && 
+             newPsiFile.getLanguageDialect().getParserDefinition() != newPsiFile.getLanguage().getParserDefinition()
+           ) ||
+           ( newPsiFile.getLanguageDialect() == null &&
+             newPsiFile instanceof PsiFileBase &&
+             newPsiFile.getLanguage().getParserDefinition() == ((PsiFileBase)newPsiFile).getParserDefinition()
+           );
   }
 
   private class MyModuleRootListener implements ModuleRootListener {

@@ -92,4 +92,9 @@ public abstract class PsiFileBase extends PsiFileImpl {
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }
+
+  @NotNull
+  public ParserDefinition getParserDefinition() {
+    return myParserDefinition;
+  }
 }
