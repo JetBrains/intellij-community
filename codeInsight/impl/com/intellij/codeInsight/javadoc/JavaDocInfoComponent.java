@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.lang.StdLanguages;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -400,11 +401,9 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
         }
 
         public void update(AnActionEvent e) {
-            Presentation presentation = e.getPresentation();
-            presentation.setEnabled(myElement != null);
-            if (getElement() instanceof PsiVariable && !(getElement() instanceof PsiField)) {
-                presentation.setEnabled(false);
-            }
+            final Presentation presentation = e.getPresentation();
+            boolean actionEnabled = isExternalDocActionEnabled(myElement != null ? myElement.getElement():null);
+            presentation.setEnabled(actionEnabled);
         }
     }
 
@@ -516,5 +515,14 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
       myElement = null;
       myManager = null;
       myHint = null;
+    }
+
+    private static boolean isExternalDocActionEnabled(PsiElement element) {
+        boolean actionEnabled = element != null && (element.getLanguage() == StdLanguages.JAVA || JavaDocManager.getExternalJavaDocUrl(element) != null);
+
+        if (element instanceof PsiVariable && !(element instanceof PsiField)) {
+          actionEnabled = false;
+        }
+        return actionEnabled;
     }
 }

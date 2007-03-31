@@ -348,7 +348,7 @@ public class JavaDocManager implements ProjectComponent {
     };
   }
 
-  private String getExternalJavaDocUrl(final PsiElement element) {
+  public static String getExternalJavaDocUrl(final PsiElement element) {
     String url = null;
 
     if (element instanceof PsiClass) {
@@ -425,7 +425,7 @@ public class JavaDocManager implements ProjectComponent {
     return hint;
   }
 
-  private String findUrlForClass(PsiClass aClass) {
+  private static String findUrlForClass(PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName == null) return null;
     PsiFile file = aClass.getContainingFile();
@@ -445,10 +445,10 @@ public class JavaDocManager implements ProjectComponent {
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
 
-    return findUrlForVirtualFile(getProject(containingFile), virtualFile, relPath);
+    return findUrlForVirtualFile(containingFile.getProject(), virtualFile, relPath);
   }
 
-  private String findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
+  private static String findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
 
@@ -481,11 +481,11 @@ public class JavaDocManager implements ProjectComponent {
     return null;
   }
 
-  private String findUrlForPackage(PsiPackage aPackage) {
+  private static String findUrlForPackage(PsiPackage aPackage) {
     String qName = aPackage.getQualifiedName();
     qName = qName.replace('.', '/') +  '/' + PACKAGE_SUMMARY_FILE;
     for(PsiDirectory directory: aPackage.getDirectories()) {
-      String url = findUrlForVirtualFile(getProject(aPackage),directory.getVirtualFile(), qName);
+      String url = findUrlForVirtualFile(aPackage.getProject(),directory.getVirtualFile(), qName);
       if (url != null) {
         return url;
       }

@@ -52,14 +52,23 @@ public class ExternalJavaDocAction extends AnAction {
     if (editor != null) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
-                        file!=null && JavaDocManager.getProviderFromElement(file)!=null;
+      boolean enabled = (file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
+                        (file!=null && JavaDocManager.getProviderFromElement(file)!=null
+                        )) &&
+                        JavaDocManager.getExternalJavaDocUrl(
+                           (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT)
+                        ) != null;
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);
     }
     else{
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-      presentation.setEnabled(element != null);
+      presentation.setEnabled(
+        element != null &&
+        JavaDocManager.getExternalJavaDocUrl(
+          element
+        ) != null
+      );
       presentation.setVisible(true);
     }
   }
