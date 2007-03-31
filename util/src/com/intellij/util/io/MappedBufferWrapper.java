@@ -99,7 +99,11 @@ public abstract class MappedBufferWrapper {
    * An assumption made here that any retreiver of the buffer will not use it for time longer than 60 seconds.
    */
   public ByteBuffer buf() {
-    lock();
+    boolean lockNecessary = (myAccessCounter == myAccessCounterDisposerLastCheckedMe);
+    if (lockNecessary) {
+      lock();
+    }
+
     try {
       myAccessCounter++;
 
@@ -119,7 +123,9 @@ public abstract class MappedBufferWrapper {
       return buffer;
     }
     finally {
-      unlock();
+      if (lockNecessary) {
+        unlock();
+      }
     }
   }
 
