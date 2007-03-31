@@ -186,6 +186,22 @@ public class XmlCompletionData extends CompletionData {
       editor.getCaretModel().moveToOffset(caretOffset + 2);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
+
+      //if (completionChar == '/' ||
+      //    completionChar == '>'
+      //   ) {
+      //  final XmlTag tag = PsiTreeUtil.getContextOfType(context.file.findElementAt(caretOffset), XmlTag.class, false);
+      //
+      //  if (tag == null) return;
+      //
+      //  if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
+      //      XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
+      //    document.insertString(
+      //      tag.getTextRange().getEndOffset() - 1,
+      //      completionChar == '/' ?  "/>": "></" + tag.getName() + ">"
+      //    );
+      //  }
+      //}
     }
   }
 
@@ -312,6 +328,15 @@ public class XmlCompletionData extends CompletionData {
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
       StringBuilder indirectRequiredAttrs = null;
 
+      if (completionChar == ' ') {
+        template.addTextSegment(" ");
+        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
+        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+        template.addTextSegment("=\"");
+        template.addEndVariable();
+        template.addTextSegment("\"");
+      }
+
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
@@ -346,12 +371,6 @@ public class XmlCompletionData extends CompletionData {
       }
       else if (completionChar == '/') {
         template.addTextSegment("/>");
-      }
-      else if (completionChar == ' ') {
-        template.addTextSegment(" ");
-        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
-        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
-        //template.addEndVariable();
       }
 
       templateManager.startTemplate(editor, template);

@@ -11,15 +11,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +28,7 @@ public class DefaultCharFilter implements CharFilter {
   public DefaultCharFilter(Editor editor,PsiFile file, int offset) {
     myFile = file;
 
-    PsiElement psiElement = file.findElementAt(offset);
+    PsiElement psiElement = file.findElementAt(offset + 1);
     if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
     if (psiElement != null) myDelegate = ourCharFilterRegistry.get(psiElement.getLanguage());
 
@@ -55,8 +49,14 @@ public class DefaultCharFilter implements CharFilter {
       
       if (!inJavaContext) {
         final PsiElement parentElement = psiElement.getParent() != null ? psiElement.getParent():null;
-        final boolean withinTag = parentElement instanceof XmlTag ||
-         ((parentElement instanceof XmlDocument || parentElement instanceof XmlText) && psiElement.getText().equals("<"));
+        String s;
+        final boolean withinTag = parentElement != null &&
+                                  ( parentElement instanceof XmlTag ||
+                                    ( parentElement instanceof PsiErrorElement &&
+                                      parentElement.getParent() instanceof XmlDocument
+                                    ) ||
+        ((parentElement instanceof XmlDocument || parentElement instanceof XmlText) &&
+         ((s = psiElement.getText()).equals("<") || s.equals("\""))));
         myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter(withinTag, editor) : new XmlCharFilter(withinTag, editor);
       }
     } else {
