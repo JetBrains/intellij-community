@@ -39,10 +39,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
@@ -175,7 +172,10 @@ public class RefactoringUtil {
     if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
       return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
     }
-    if (psiElement instanceof XmlTag || psiElement instanceof XmlAttribute || psiElement instanceof XmlElementDecl) {
+    if (psiElement instanceof XmlTag ||
+        psiElement instanceof XmlAttribute ||
+        psiElement instanceof XmlElementDecl ||
+        psiElement instanceof XmlAttributeDecl) {
       return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
     }
     if (psiElement instanceof XmlAttributeValue) {
