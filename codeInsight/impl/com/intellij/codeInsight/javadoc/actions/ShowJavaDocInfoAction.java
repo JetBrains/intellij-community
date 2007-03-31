@@ -14,6 +14,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.xml.XMLLanguage;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
   public ShowJavaDocInfoAction() {
@@ -74,6 +77,11 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
         }
         else {
           presentation.setEnabled(isEnabledForFile(project, editor, file));
+        }
+
+        // we allow request quick doc over content of the tag
+        if (element == null && file != null && file.getLanguage() instanceof XMLLanguage) {
+          element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), XmlTag.class);
         }
       }
 

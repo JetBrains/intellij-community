@@ -36,6 +36,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -88,6 +90,12 @@ public class JavaDocManager implements ProjectComponent {
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
     }
   };
+  private static int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
+                                                             | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+  | TargetElementUtil.NEW_AS_CONSTRUCTOR
+  | TargetElementUtil.THIS_ACCEPTED
+  | TargetElementUtil.SUPER_ACCEPTED;
 
   public static JavaDocManager getInstance(Project project) {
     return project.getComponent(JavaDocManager.class);
@@ -189,14 +197,8 @@ public class JavaDocManager implements ProjectComponent {
     }
 
 
-    PsiElement element = TargetElementUtil.findTargetElement(editor,
-                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                                             | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                                                             | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-                                                             | TargetElementUtil.NEW_AS_CONSTRUCTOR
-                                                             | TargetElementUtil.THIS_ACCEPTED
-                                                             | TargetElementUtil.SUPER_ACCEPTED);
     PsiElement originalElement = (file != null)?file.findElementAt(editor.getCaretModel().getOffset()): null;
+    PsiElement element = findTargetElement(editor, originalElement);
 
     if (element == null && editor != null) {
       final PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
@@ -319,6 +321,25 @@ public class JavaDocManager implements ProjectComponent {
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
 
     return hint;
+  }
+
+  public static PsiElement findTargetElement(final Editor editor, PsiElement contextElement) {
+    PsiElement element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements);
+
+    // Allow context doc over xml tag content
+    if (element == null && contextElement != null) {
+        final PsiElement parent = contextElement.getParent();
+        if (parent instanceof XmlText) {
+          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
+                                                             parent.getParent().getTextRange().getStartOffset() + 1
+                                                           );
+        } else if (parent instanceof XmlTag) {
+          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
+                                                             parent.getTextRange().getStartOffset() + 1
+                                                           );
+        }
+      }
+    return element;
   }
 
   private boolean fromQuickSearch() {

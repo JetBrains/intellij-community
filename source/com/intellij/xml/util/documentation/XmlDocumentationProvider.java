@@ -110,10 +110,12 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
+    XmlTag contextTag;
+
     if (descriptor == null &&
         originalElement != null &&
-        originalElement.getParent() instanceof XmlTag) {
-      descriptor = ((XmlTag)originalElement.getParent()).getDescriptor();
+        (contextTag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class)) != null) {
+      descriptor = contextTag.getDescriptor();
     }
 
     if (descriptor instanceof XmlElementDescriptorImpl) {
