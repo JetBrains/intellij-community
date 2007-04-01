@@ -109,7 +109,7 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     return get(path) != null;
   }
 
-  public final ConcurrentSoftArrayHashMap<T,V> clone() {
+  public final synchronized ConcurrentSoftArrayHashMap<T,V> clone() {
     final ConcurrentSoftArrayHashMap<T, V> copy = new ConcurrentSoftArrayHashMap<T, V>(myStrategy);
     copy.myContinuationMap = copyMap(myContinuationMap);
     copy.myValuesMap = copyMap(myValuesMap);
