@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -50,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent {
+public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent, Disposable {
   protected final Project myProject;
   private Runnable myTreeChangeListener;
   protected DnDAwareTree myTree;
@@ -447,7 +448,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         }
       }, myTree, myProject, FLAVORS[0]));
 
-      myTree.enableDnd(myProject);
+      myTree.enableDnd(this);
     }
   }
 

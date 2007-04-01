@@ -309,7 +309,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (selected instanceof Module) {
         selectedModule = (Module)selected;
       }
-      currentPane.dispose();
+      Disposer.dispose(currentPane);
     }
     removeLabelFocusListener();
     myViewContentPanel.removeAll();
@@ -598,7 +598,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void dispose() {
     myConnection.disconnect();
-    getCurrentProjectViewPane().dispose();
+    Disposer.dispose(getCurrentProjectViewPane());
     myStructureViewWrapper.dispose();
     myStructureViewWrapper = null;
   }
