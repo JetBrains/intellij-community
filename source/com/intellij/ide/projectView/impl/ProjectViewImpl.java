@@ -249,17 +249,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
-    if (myCombo.getSelectedItem() == null) { //old selection isn't available anymore
-      final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myCombo.getModel();
-      if (comboBoxModel.getSize() > 0) {
-        final Pair<String, String> ids = (Pair<String, String>)comboBoxModel.getElementAt(0);
-        changeView(ids.first, ids.second);
-      }
-    }
     myUninitializedPanes.clear();
   }
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
+    Pair<String, String> selected = (Pair<String, String>)myCombo.getSelectedItem();
     int index;
     for (index = 0; index < myCombo.getItemCount(); index++) {
       Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(index);
@@ -289,6 +283,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       changeView(mySavedPaneId, mySavedPaneSubId);
       mySavedPaneId = null;
       mySavedPaneSubId = null;
+    }
+    else if (selected == null) {
+      changeView(id, subIds.length == 1 ? subIds[0] : subIds[1]);
     }
   }
 
