@@ -39,6 +39,9 @@ public class InspectionResultsViewComparator implements Comparator {
       return -((InspectionSeverityGroupNode)node1).getSeverityLevel().getSeverity().compareTo(((InspectionSeverityGroupNode)node2).getSeverityLevel().getSeverity());
     }
 
+    if (node1 instanceof InspectionGroupNode && node2 instanceof InspectionGroupNode) {
+      return ((InspectionGroupNode)node1).getGroupTitle().compareToIgnoreCase(((InspectionGroupNode)node2).getGroupTitle());
+    }
     if (node1 instanceof InspectionNode && node2 instanceof InspectionGroupNode) return -1;
     if (node2 instanceof InspectionNode && node1 instanceof InspectionGroupNode) return 1;
 
