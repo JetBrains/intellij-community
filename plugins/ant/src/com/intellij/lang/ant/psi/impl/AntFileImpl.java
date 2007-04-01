@@ -31,7 +31,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Target;
+import org.apache.tools.ant.types.DataType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntFileImpl extends LightPsiFileBase implements AntFile {
-
+  
   @NonNls public static final String PROJECT_TAG = "project";
   @NonNls public static final String TARGET_TAG = "target";
   @NonNls public static final String IMPORT_TAG = "import";
@@ -329,7 +329,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (myTypeDefinitions == null) {
         myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
         myProjectElements = new HashMap<AntTypeId, String>();
-        final ReflectedProject reflectedProject = ReflectedProject.geProject(getClassLoader());
+        final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
         if (reflectedProject.myProject != null) {
           final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
           try {
@@ -355,25 +355,45 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     getBaseTypeDefinition(null);
     synchronized (PsiLock.LOCK) {
       if (myTargetDefinition == null) {
-        @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
-        targetAttrs.put(NAME_ATTR, AntAttributeType.STRING);
-        targetAttrs.put(DEPENDS_ATTR, AntAttributeType.STRING);
-        targetAttrs.put(IF_ATTR, AntAttributeType.STRING);
-        targetAttrs.put(UNLESS_ATTR, AntAttributeType.STRING);
-        targetAttrs.put(DESCRIPTION_ATTR, AntAttributeType.STRING);
-        final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
+        final Class targetClass = ReflectedProject.getProject(getClassLoader()).myTargetClass;
+        final AntTypeDefinition targetDef = createTypeDefinition(new AntTypeId(TARGET_TAG), targetClass, false);
         for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
           final AntTypeId id = def.getTypeId();
-          if (def.isTask() || targetElements.get(id) == null) {
-            targetElements.put(id, def.getClassName());
+          if ((def.isTask() || isDataDype(def)) && isProjectNestedElement(def)) { 
+            // if type definition is a task _and_ is visible at the project level
+            // custom tasks can define nested types with the same typeId (e.g. "property") but different implementation class
+            // such nested types can be used only inside tasks which defined them, but not at a project level
+            targetDef.registerNestedType(id, def.getClassName());
           }
         }
-        myTargetDefinition =
-          new AntTypeDefinitionImpl(new AntTypeId(TARGET_TAG), Target.class.getName(), false, targetAttrs, targetElements);
-        registerCustomType(myTargetDefinition);
+        myTargetDefinition = targetDef;
+        registerCustomType(targetDef);
       }
       return myTargetDefinition;
     }
+  }
+
+  private boolean isDataDype(final AntTypeDefinition def) {
+    try {
+      final ClassLoader loader = getClassLoader();
+      final Class defClass = loader.loadClass(def.getClassName());
+      final Class dataTypeClass = loader.loadClass(DataType.class.getName());
+      return dataTypeClass.isAssignableFrom(defClass);
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
+  private boolean isProjectNestedElement(final AntTypeDefinition def) {
+    final AntTypeId id = def.getTypeId();
+    if (myProject != null) {
+      final AntTypeDefinition projectDef = myProject.getTypeDefinition();
+      if (projectDef != null) {
+        return def.getClassName().equals(projectDef.getNestedClassName(id));
+      }
+    }
+    return def.getClassName().equals(myProjectElements.get(id));
   }
 
   public void registerCustomType(final AntTypeDefinition def) {
@@ -381,7 +401,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
       myTypeDefinitions.put(classname, def);
-      myProjectElements.put(def.getTypeId(), classname);
       if (myTargetDefinition != null && myTargetDefinition != def) {
         myTargetDefinition = null;
       }
@@ -521,8 +540,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     private Hashtable myTaskDefinitions;
     private Hashtable myDataTypeDefinitions;
     private Hashtable myProperties;
+    private Class myTargetClass;
 
-    private static ReflectedProject geProject(final ClassLoader classLoader) {
+    private static ReflectedProject getProject(final ClassLoader classLoader) {
       try {
         synchronized (ourProjects) {
           for (final SoftReference<Pair<ReflectedProject, ClassLoader>> ref : ourProjects) {
@@ -571,6 +591,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
           method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
           myProperties = (Hashtable)method.invoke(myProject);
+          myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
         }
       }
       catch (Exception e) {

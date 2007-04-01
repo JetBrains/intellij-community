@@ -137,7 +137,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         myNewDefinitions = AntTypeDefinition.EMPTY_ARRAY;
         final String classname = getClassName();
         if (classname != null) {
-          loadClass(classname, getDefinedName(), getUri());
+          final AntStructuredElement parent = getAntParent();
+          final AntFile antFile = parent != null? parent.getAntFile() : null;
+          loadClass(antFile, classname, getDefinedName(), getUri(),getAntParent());
         }
         else {
           final String resource = getResource();
@@ -232,8 +234,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       propStream.close();
       final PropertiesFile propFile =
         (PropertiesFile)createDummyFile("dummy.properties", StdFileTypes.PROPERTIES, builder, element.getManager());
+      final AntStructuredElement parent = getAntParent();
+      final AntFile antFile = parent != null? parent.getAntFile() : null;
       for (final Property property : propFile.getProperties()) {
-        loadClass(property.getValue(), property.getKey(), getUri());
+        loadClass(antFile, property.getValue(), property.getKey(), getUri(),getAntParent());
       }
     }
     catch (IOException e) {
@@ -296,35 +300,36 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
   }
 
-  private AntTypeDefinitionImpl loadClass(@Nullable final String classname,
-                                                             @Nullable final String name,
-                                                             @Nullable final String uri) {
-    if (classname == null || name == null || name.length() == 0) return null;
+  private AntTypeDefinitionImpl loadClass(final @Nullable AntFile antFile,
+                                          @Nullable final String classname,
+                                          @Nullable final String name,
+                                          @Nullable final String uri,
+                                          final AntStructuredElement parent) {
+    if (classname == null || name == null || name.length() == 0) {
+      return null;
+    }
     boolean newlyLoaded = false;
     final URL[] urls = getClassPathUrls();
     Class clazz = CLASS_CACHE.getClass(urls, classname);
     if (clazz == null) {
-      ClassLoader loader = getClassLoader(urls);
-      try {
-        if (loader == null) {
-          clazz = Class.forName(classname);
-        }
-        else {
+      final ClassLoader loader = getClassLoader(urls);
+      if (loader != null) {
+        try {
           clazz = loader.loadClass(classname);
+          newlyLoaded = true;
         }
-        newlyLoaded = true;
-      }
-      catch (ClassNotFoundException e) {
-        myLocalizedError = e.getLocalizedMessage();
-        clazz = null;
-      }
-      catch (NoClassDefFoundError e) {
-        myLocalizedError = e.getLocalizedMessage();
-        clazz = null;
-      }
-      catch (UnsupportedClassVersionError e) {
-        myLocalizedError = e.getLocalizedMessage();
-        clazz = null;
+        catch (ClassNotFoundException e) {
+          myLocalizedError = e.getLocalizedMessage();
+          clazz = null;
+        }
+        catch (NoClassDefFoundError e) {
+          myLocalizedError = e.getLocalizedMessage();
+          clazz = null;
+        }
+        catch (UnsupportedClassVersionError e) {
+          myLocalizedError = e.getLocalizedMessage();
+          clazz = null;
+        }
       }
     }
     final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
@@ -335,34 +340,44 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     else {
       myClassesLoaded = true;
-      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-    }
-    if (newlyLoaded && clazz != null) {
-      CLASS_CACHE.setClass(urls, classname, clazz);
+      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isTask(clazz));
+      if (newlyLoaded) {
+        CLASS_CACHE.setClass(urls, classname, clazz);
+      }
     }
     if (def != null) {
       myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
       def.setDefiningElement(this);
-      final AntStructuredElement parent = getAntParent();
       if (parent != null) {
         parent.registerCustomType(def);
-        final AntFile antFile = parent.getAntFile();
-        if (antFile != null) {
-          for (final AntTypeId typeId : def.getNestedElements()) {
-            final String nestedClassName = def.getNestedClassName(typeId);
-            AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
-            if (nestedDef == null) {
-              nestedDef = loadClass(nestedClassName, typeId.getName(), uri);
-            }
+      }
+      if (antFile != null) {
+        for (final AntTypeId typeId : def.getNestedElements()) {
+          final String nestedClassName = def.getNestedClassName(typeId);
+          AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
+          if (nestedDef == null) {
+            nestedDef = loadClass(antFile, nestedClassName, typeId.getName(), uri, null);
             if (nestedDef != null) {
               nestedDef.setDefiningElement(this);
-              parent.registerCustomType(nestedDef);
+              def.registerNestedType(nestedDef.getTypeId(), nestedDef.getClassName());
+              antFile.registerCustomType(nestedDef);
             }
           }
         }
       }
     }
     return def;
+  }
+
+  private static boolean isTask(final Class clazz) {
+    try {
+      final ClassLoader loader = clazz.getClassLoader();
+      final Class taskClass = loader.loadClass(Task.class.getName());
+      return taskClass.isAssignableFrom(clazz);
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 
   private URL[] getClassPathUrls() {
