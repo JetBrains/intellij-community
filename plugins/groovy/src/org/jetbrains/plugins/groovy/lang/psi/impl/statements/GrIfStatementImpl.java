@@ -30,6 +30,6 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
    public String toString() {
-    return "If statement";
+    return "IF statement";
   }
 }
