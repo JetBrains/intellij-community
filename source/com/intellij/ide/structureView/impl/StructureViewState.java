@@ -9,9 +9,6 @@ public final class StructureViewState {
   private Object[] myExpandedElements;
   private Object[] mySelectedElements;
 
-  public StructureViewState() {
-  }
-
   public Object[] getExpandedElements() {
     return myExpandedElements;
   }

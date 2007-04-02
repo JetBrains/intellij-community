@@ -27,10 +27,9 @@ import java.util.HashSet;
  * @author Eugene Belyaev
  */
 public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements JDOMExternalizable, ProjectComponent {
-  public boolean AUTOSCROLL_MODE = true;
-  public boolean AUTOSCROLL_FROM_SOURCE = false;
-
-  private String ACTIVE_ACTIONS = "";
+  @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
+  @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
 
   private Project myProject;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
@@ -95,9 +94,9 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
-      for (Class<? extends PsiElement> registeregType : myExtensions.keySet()) {
-        if (ReflectionCache.isAssignable(registeregType, type)) {
-          final Collection<StructureViewExtension> extensions = myExtensions.get(registeregType);
+      for (Class<? extends PsiElement> registeredType : myExtensions.keySet()) {
+        if (ReflectionCache.isAssignable(registeredType, type)) {
+          final Collection<StructureViewExtension> extensions = myExtensions.get(registeredType);
           for (StructureViewExtension extension : extensions) {
             myImplExtensions.put(type, extension);
           }
@@ -110,12 +109,12 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   public void setActiveAction(final String name, final boolean state) {
-
     Collection<String> activeActions = collectActiveActions();
 
     if (state) {
       activeActions.add(name);
-    } else {
+    }
+    else {
       activeActions.remove(name);
     }
 

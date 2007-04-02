@@ -337,8 +337,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         result.add(new TreeActionWrapper(sorter, this));
       }
     }
-    if (sorters.length > 0)
-    {
+    if (sorters.length > 0) {
       result.addSeparator();
     }
 
