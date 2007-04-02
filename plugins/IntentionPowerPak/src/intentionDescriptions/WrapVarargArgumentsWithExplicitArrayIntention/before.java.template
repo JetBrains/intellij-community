@@ -1,5 +1,5 @@
 public class X {
   List f(<spot>int x, int y</spot>) {
-    return Arrays.asList(x, y);
+    return java.util.Arrays.asList(x, y);
   }
 }
