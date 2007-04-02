@@ -24,6 +24,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private boolean myDragJustStarted;
   private IdeGlassPane myGlassPane;
   private Disposable myParentDisposable;
+  private Dimension myDelta;
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -54,6 +55,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressPointComponent = e.getPoint();
+
+    myDelta = new Dimension();
+    if (myDragComponent.isShowing()) {
+      final Point delta = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myDragComponent);
+      myDelta.width = delta.x;
+      myDelta.height = delta.y;
+    }
   }
 
   public void mouseReleased(final MouseEvent e) {
@@ -90,8 +98,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myDraggingNow && myPressPointScreen != null) {
       final Point draggedTo = new RelativePoint(e).getScreenPoint();
 
-      draggedTo.x -= myPressPointComponent.x;
-      draggedTo.y -= myPressPointComponent.y;
+      draggedTo.x -= myDelta.width;
+      draggedTo.y -= myDelta.height;
 
 
       processDrag(e, draggedTo);
@@ -102,18 +110,12 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   private boolean canStartDragging(MouseEvent me) {
     if (me.getButton() != MouseEvent.BUTTON1) return false;
+    if (!myDragComponent.isShowing()) return false;
 
     Component component = me.getComponent();
     if (NullableComponent.Check.isNullOrHidden(component)) return false;
-    while (component != null) {
-      if (component == myDragComponent) {
-        final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
-        return canStartDragging(myDragComponent, dragComponentPoint);
-      }
-      component = component.getParent();
-    }
-
-    return false;
+    final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
+    return canStartDragging(myDragComponent, dragComponentPoint);
   }
 
   protected boolean canStartDragging(final JComponent dragComponent, Point dragComponentPoint) {

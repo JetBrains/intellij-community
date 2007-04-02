@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
@@ -23,6 +24,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 
 /**
@@ -67,9 +70,6 @@ public class IdeEventQueue extends EventQueue {
   private final IdePopupManager myPopupManager;
 
 
-  private EventDispatcher myDispatcher;
-
-
   private boolean mySuspendMode;
 
   /**
@@ -107,6 +107,8 @@ public class IdeEventQueue extends EventQueue {
 
   private WindowManagerEx myWindowManager;
 
+
+  private Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
 
   public static IdeEventQueue getInstance() {
     if (ourInstance == null) {
@@ -262,8 +264,19 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
-  public void setDispatcher(final EventDispatcher dispatcher) {
-    myDispatcher = dispatcher;
+  public void addDispatcher(final EventDispatcher dispatcher, Disposable parent) {
+    myDispatchers.add(dispatcher);
+    if (parent != null) {
+      Disposer.register(parent, new Disposable() {
+        public void dispose() {
+          removeDispatcher(dispatcher);
+        }
+      });
+    }
+  }
+
+  public void removeDispatcher(EventDispatcher dispatcher) {
+    myDispatchers.remove(dispatcher);
   }
 
 
@@ -384,9 +397,13 @@ public class IdeEventQueue extends EventQueue {
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       return;
     }
-    if (myDispatcher != null && myDispatcher.dispatch(e)) {
-      return;
+
+    for (EventDispatcher eachDispatcher : myDispatchers) {
+      if (eachDispatcher.dispatch(e)) {
+        return;
+      }
     }
+
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;

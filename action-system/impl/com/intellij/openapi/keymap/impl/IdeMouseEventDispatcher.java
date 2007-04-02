@@ -99,10 +99,6 @@ public final class IdeMouseEventDispatcher{
       return false;
     }
 
-    if (component instanceof IdeGlassPaneImpl) {
-      component = ((IdeGlassPaneImpl)component).getTargetComponentFor(e);
-    }
-
     MouseShortcut shortcut=new MouseShortcut(e.getButton(),e.getModifiersEx(),e.getClickCount());
     fillActionsList(component,shortcut,IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager=ActionManagerEx.getInstanceEx();
