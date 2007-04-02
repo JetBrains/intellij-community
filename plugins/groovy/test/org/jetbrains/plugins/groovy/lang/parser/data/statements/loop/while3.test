@@ -10,13 +10,13 @@ Groovy script
       PsiElement(true)('true')
     PsiErrorElement:')' expected
       <empty list>
-    PsiElement(new line)('\n')
-    Open block
-      PsiElement({)('{')
-      Method call
-        Reference expression
-          PsiElement(identifier)('doSomenthing')
-        PsiElement(()('(')
-        PsiElement())(')')
-      PsiElement(;)(';')
-      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Open block
+    PsiElement({)('{')
+    Method call
+      Reference expression
+        PsiElement(identifier)('doSomenthing')
+      PsiElement(()('(')
+      PsiElement())(')')
+    PsiElement(;)(';')
+    PsiElement(})('}')
