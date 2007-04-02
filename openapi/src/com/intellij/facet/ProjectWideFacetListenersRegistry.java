@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ProjectWideFacetListenersRegistry {
 
-  public static ProjectWideFacetListenersRegistry getInstante(Project project) {
+  public static ProjectWideFacetListenersRegistry getInstance(Project project) {
     return ServiceManager.getService(project, ProjectWideFacetListenersRegistry.class);
   }
 

@@ -113,7 +113,7 @@ public class FacetFinderImpl extends FacetFinder {
     private long myModificationCount;
 
     public AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
-      ProjectWideFacetListenersRegistry.getInstante(project).registerListener(type, this, this);
+      ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 
     public void facetAdded(final F facet) {
