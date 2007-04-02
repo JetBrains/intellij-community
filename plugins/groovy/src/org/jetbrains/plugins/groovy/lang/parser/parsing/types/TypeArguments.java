@@ -51,7 +51,7 @@ public class TypeArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (ParserUtils.getToken(builder, mGT) || ParserUtils.getToken(builder, mSR) || ParserUtils.getToken(builder, mBSR)) {
+    if (ParserUtils.getToken(builder, mGT)) {
       ParserUtils.getToken(builder, mNLS);
     }
 

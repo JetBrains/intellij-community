@@ -110,13 +110,17 @@ public interface GroovyTokenTypes {
   IElementType mSTAR_ASSIGN = new GroovyElementType("*=");
   IElementType mMOD = new GroovyElementType("%");
   IElementType mMOD_ASSIGN = new GroovyElementType("%=");
-  IElementType mSR = new GroovyElementType(">>");
-  IElementType mSR_ASSIGN = new GroovyElementType(">>=");
-  IElementType mBSR = new GroovyElementType(">>>");
   IElementType mBSR_ASSIGN = new GroovyElementType(">>>=");
+  IElementType mSR_ASSIGN = new GroovyElementType(">>=");
+
+/*
+  IElementType mSR = new GroovyElementType(">>");
+  IElementType mBSR = new GroovyElementType(">>>");
+  IElementType mSL = new GroovyElementType("<<");
+*/
+
   IElementType mGE = new GroovyElementType(">=");
   IElementType mGT = new GroovyElementType(">");
-  IElementType mSL = new GroovyElementType("<<");
   IElementType mSL_ASSIGN = new GroovyElementType("<<=");
   IElementType mLE = new GroovyElementType("<=");
   IElementType mLT = new GroovyElementType("<");

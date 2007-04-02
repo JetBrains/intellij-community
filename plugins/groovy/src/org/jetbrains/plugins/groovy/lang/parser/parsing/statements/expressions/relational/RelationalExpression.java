@@ -41,7 +41,8 @@ public class RelationalExpression implements GroovyElementTypes {
 
     GroovyElementType result = ShiftExpression.parse(builder);
     if (!result.equals(WRONGWAY)) {
-      if (ParserUtils.getToken(builder, RELATIONS)) {
+      if (ParserUtils.getToken(builder, RELATIONS) ||
+              getCompositeSign(builder)) {
         result = RELATIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder);
@@ -58,5 +59,25 @@ public class RelationalExpression implements GroovyElementTypes {
 
     return result;
   }
+
+  /**
+   * For composite shift operators like >>>
+   *
+   * @param builder
+   * @return
+   */
+  private static boolean getCompositeSign(PsiBuilder builder) {
+    if (ParserUtils.lookAhead(builder, mGT, mASSIGN)) {
+      PsiBuilder.Marker marker = builder.mark();
+      for (int i = 0; i < 2; i++) {
+        builder.advanceLexer();
+      }
+      marker.done(COMPOSITE_SHIFT_SIGN);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 
 }

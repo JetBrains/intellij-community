@@ -1,0 +1,18 @@
+
+// comment
+
+package a.b.c
+-----
+Groovy script
+  PsiElement(new line)('\n')
+  PsiComment(line comment)('// comment')
+  PsiWhiteSpace('\n\n')
+  Package definition
+    PsiElement(package)('package')
+    PsiWhiteSpace(' ')
+    Qualified identifier
+      PsiElement(identifier)('a')
+      PsiElement(.)('.')
+      PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(identifier)('c')

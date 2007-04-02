@@ -43,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
   private Stack <IElementType> gStringStack = new Stack<IElementType>();
   private Stack <IElementType> blockStack = new Stack<IElementType>();
 
+  private int afterComment = YYINITIAL;
+
   private void clearStacks(){
     gStringStack.clear();
     blockStack.clear();
@@ -195,7 +197,22 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_REGEX_IDENT
 %xstate IN_REGEX_DOT
 
+// Not to separate NewLine sequence by comments
+%xstate NLS_AFTER_COMMENT
+
 %%
+<NLS_AFTER_COMMENT>{
+
+  {mSL_COMMENT}                             {  return mSL_COMMENT; }
+  {mML_COMMENT}                             {  return mML_COMMENT; }
+
+  {mNLS}                                    {  yybegin(afterComment);
+                                               return mWS; }
+
+  [^]                                       { yypushback(yytext().length());
+                                              yybegin(afterComment);  }
+}
+
 // Star meeting in Gstring
 <GSTRING_STAR_SINGLE> {
   "*"                                     { return mSTAR; }
@@ -232,7 +249,8 @@ mGSTRING_LITERAL = \"\"
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
-  {mNLS}                                  {  yybegin(YYINITIAL);
+  {mNLS}                                  {  yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
                                              clearStacks();
                                              return mNLS;}
 }
@@ -251,7 +269,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL; }
   {mNLS}                                  {  clearStacks();
-                                             yybegin(YYINITIAL);
+                                             yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
                                              return mNLS; }
 }
 
@@ -288,7 +307,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_NLS>{
-  {mNLS}{mWS}*                            {  yybegin(IN_TRIPLE_IDENT);
+  {mNLS}{mWS}*                            {  yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = IN_TRIPLE_IDENT; //yybegin(IN_TRIPLE_IDENT);
                                              return mNLS;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_TRIPLE_IDENT);  }
@@ -325,7 +345,8 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 <WAIT_FOR_REGEX> {
 
-{mWS}                                     {  return(mWS);  }
+{mWS}                                     {  afterComment = YYINITIAL;
+                                             return(mWS);  }
 
 {mSL_COMMENT}                             {  return mSL_COMMENT; }
 {mML_COMMENT}                             {  return mML_COMMENT; }
@@ -375,7 +396,8 @@ mGSTRING_LITERAL = \"\"
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL;  }
-  {mNLS}                                  {  yybegin(YYINITIAL);
+  {mNLS}                                  {  yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
                                              clearStacks();
                                              return mNLS;}
 }
@@ -394,7 +416,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL; }
   {mNLS}                                  {  clearStacks();
-                                             yybegin(YYINITIAL);
+                                             yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
                                              return mNLS; }
 }
 
@@ -409,7 +432,8 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mWS}                                     {  return mWS; }
-{mNLS}                                    {  yybegin(WAIT_FOR_REGEX);
+{mNLS}                                    {  yybegin(NLS_AFTER_COMMENT);
+                                             afterComment = WAIT_FOR_REGEX; //yybegin(WAIT_FOR_REGEX);
                                              return mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -503,20 +527,20 @@ mGSTRING_LITERAL = \"\"
                                              return(mMOD);  }
 "%="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mMOD_ASSIGN);  }
-">>"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSR);  }
+// ">>"                                      {  yybegin(WAIT_FOR_REGEX);
+//                                              return(mSR);  }
 ">>="                                     {  yybegin(WAIT_FOR_REGEX);
                                              return(mSR_ASSIGN);  }
-">>>"                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBSR);  }
+// ">>>"                                     {  yybegin(WAIT_FOR_REGEX);
+//                                              return(mBSR);  }
 ">>>="                                    {  yybegin(WAIT_FOR_REGEX);
                                              return(mBSR_ASSIGN);  }
 ">="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mGE);  }
 ">"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mGT);  }
-"<<"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSL);  }
+// "<<"                                      {  yybegin(WAIT_FOR_REGEX);
+//                                              return(mSL);  }
 "<<="                                     {  yybegin(WAIT_FOR_REGEX);
                                              return(mSL_ASSIGN);  }
 "<="                                      {  yybegin(WAIT_FOR_REGEX);

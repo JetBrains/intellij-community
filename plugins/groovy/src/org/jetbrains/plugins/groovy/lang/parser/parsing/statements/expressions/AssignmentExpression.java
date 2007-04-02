@@ -36,13 +36,13 @@ public class AssignmentExpression implements GroovyElementTypes {
           mSTAR_ASSIGN,
           mDIV_ASSIGN,
           mMOD_ASSIGN,
-          mSR_ASSIGN,
-          mBSR_ASSIGN,
           mSL_ASSIGN,
           mBAND_ASSIGN,
           mBOR_ASSIGN,
           mBXOR_ASSIGN,
-          mSTAR_STAR_ASSIGN
+          mSTAR_STAR_ASSIGN,
+          mSR_ASSIGN,
+          mBSR_ASSIGN
   );
 
   public static GroovyElementType parse(PsiBuilder builder){

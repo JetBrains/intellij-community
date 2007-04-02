@@ -1,0 +1,72 @@
+native float val (A.B<int[], B<String<T>>> a) {
+  def a () {}
+}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(native)('native')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(float)('float')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('val')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Class type
+          Class type
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          PsiElement(identifier)('B')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Array type
+                Built in type
+                  PsiElement(int)('int')
+                PsiElement([)('[')
+                PsiElement(])(']')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Type argument
+              Class type
+                PsiElement(identifier)('B')
+                Type arguments
+                  PsiElement(<)('<')
+                  Type argument
+                    Class type
+                      PsiElement(identifier)('String')
+                      Type arguments
+                        PsiElement(<)('<')
+                        Type argument
+                          Class type
+                            PsiElement(identifier)('T')
+                        PsiElement(>)('>')
+                  PsiElement(>)('>')
+            PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

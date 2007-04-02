@@ -1,0 +1,58 @@
+private static final boolean s (A.B<int, String, T<boolean[]>> a) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(private)('private')
+      PsiWhiteSpace(' ')
+      PsiElement(static)('static')
+      PsiWhiteSpace(' ')
+      PsiElement(final)('final')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(boolean)('boolean')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Class type
+          Class type
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          PsiElement(identifier)('B')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Built in type
+                PsiElement(int)('int')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Type argument
+              Class type
+                PsiElement(identifier)('String')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Type argument
+              Class type
+                PsiElement(identifier)('T')
+                Type arguments
+                  PsiElement(<)('<')
+                  Type argument
+                    Array type
+                      Built in type
+                        PsiElement(boolean)('boolean')
+                      PsiElement([)('[')
+                      PsiElement(])(']')
+                  PsiElement(>)('>')
+            PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

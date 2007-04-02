@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author Ilya.Sergey
@@ -29,9 +30,9 @@ import com.intellij.psi.tree.TokenSet;
 public class ShiftExpression implements GroovyElementTypes {
 
   private static TokenSet SHIFTS = TokenSet.create(
-          mSL,
-          mSR,
-          mBSR,
+//          mSL,
+//          mSR,
+//          mBSR,
           mRANGE_EXCLUSIVE,
           mRANGE_INCLUSIVE
   );
@@ -42,7 +43,8 @@ public class ShiftExpression implements GroovyElementTypes {
     GroovyElementType result = AdditiveExpression.parse(builder);
 
     if (!result.equals(WRONGWAY)) {
-      if (ParserUtils.getToken(builder, SHIFTS)) {
+      if (ParserUtils.getToken(builder, SHIFTS) ||
+              getCompositeSign(builder)) {
         ParserUtils.getToken(builder, mNLS);
         result = AdditiveExpression.parse(builder);
         if (result.equals(WRONGWAY)) {
@@ -63,6 +65,33 @@ public class ShiftExpression implements GroovyElementTypes {
       marker.drop();
     }
     return result;
+  }
+
+  /**
+   * For composite shift operators like >>>
+   *
+   * @param builder
+   * @return
+   */
+  private static boolean getCompositeSign(PsiBuilder builder) {
+    if (ParserUtils.lookAhead(builder, mGT, mGT, mGT)) {
+      PsiBuilder.Marker marker = builder.mark();
+      for (int i = 0; i < 3; i++) {
+        builder.advanceLexer();
+      }
+      marker.done(COMPOSITE_SHIFT_SIGN);
+      return true;
+    } else if (ParserUtils.lookAhead(builder, mLT, mLT) ||
+            ParserUtils.lookAhead(builder, mGT, mGT)) {
+      PsiBuilder.Marker marker = builder.mark();
+      for (int i = 0; i < 2; i++) {
+        builder.advanceLexer();
+      }
+      marker.done(COMPOSITE_SHIFT_SIGN);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
