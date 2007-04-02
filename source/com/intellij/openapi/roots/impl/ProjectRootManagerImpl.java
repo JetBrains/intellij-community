@@ -583,6 +583,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void addRootsToWatch() {
+    if (myProject.isDefault()) {
+      return;
+    }
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     Set<String> rootPaths = new HashSet<String>();
     for (Module module : modules) {
