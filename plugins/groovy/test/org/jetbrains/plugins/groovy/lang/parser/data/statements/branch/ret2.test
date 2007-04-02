@@ -1,0 +1,25 @@
+def i = {a -> return }
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('i')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        Parameter
+          Parameter modifiers
+            <empty list>
+          PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(->)('->')
+      PsiWhiteSpace(' ')
+      RETURN statement
+        PsiElement(return)('return')
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')

@@ -1,0 +1,60 @@
+public class MyMath {
+   public static int square(int numberToSquare){
+        return numberToSquare * numberToSquare;
+   }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      PsiElement(public)('public')
+    PsiWhiteSpace(' ')
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('MyMath')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('   ')
+      Method
+        Modifiers
+          PsiElement(public)('public')
+          PsiWhiteSpace(' ')
+          PsiElement(static)('static')
+        PsiWhiteSpace(' ')
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('square')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Built in type
+              PsiElement(int)('int')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('numberToSquare')
+        PsiElement())(')')
+        Open block
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('        ')
+          RETURN statement
+            PsiElement(return)('return')
+            PsiWhiteSpace(' ')
+            Multiplicative expression
+              Reference expression
+                PsiElement(identifier)('numberToSquare')
+              PsiWhiteSpace(' ')
+              PsiElement(*)('*')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('numberToSquare')
+          PsiElement(;)(';')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('   ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

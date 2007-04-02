@@ -1,0 +1,13 @@
+throw new Exception()
+-----
+Groovy script
+  THROW statement
+    PsiElement(throw)('throw')
+    PsiWhiteSpace(' ')
+    NEW expression
+      PsiElement(new)('new')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('Exception')
+      PsiElement(()('(')
+      PsiElement())(')')

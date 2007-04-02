@@ -1,0 +1,29 @@
+def foo = {it -> break ; 3}
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        Parameter
+          Parameter modifiers
+            <empty list>
+          PsiElement(identifier)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(->)('->')
+      PsiWhiteSpace(' ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiWhiteSpace(' ')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('3')
+      PsiElement(})('}')

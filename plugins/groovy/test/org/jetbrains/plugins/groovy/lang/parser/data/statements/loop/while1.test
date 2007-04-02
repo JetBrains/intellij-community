@@ -1,0 +1,33 @@
+while (true){
+System.out.println("bugaga");
+}
+-----
+Groovy script
+  WHILE statement
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Literal
+      PsiElement(true)('true')
+    PsiElement())(')')
+    Open block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Method call
+        Property selection
+          Reference expression
+            PsiElement(identifier)('System')
+          PsiElement(.)('.')
+          Property selector
+            PsiElement(identifier)('out')
+        PsiElement(.)('.')
+        Property selector
+          PsiElement(identifier)('println')
+        PsiElement(()('(')
+        Arguments
+          Literal
+            PsiElement(Gstring)('"bugaga"')
+        PsiElement())(')')
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

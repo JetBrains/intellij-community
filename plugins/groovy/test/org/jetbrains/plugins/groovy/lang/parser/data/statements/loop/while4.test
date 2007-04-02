@@ -1,0 +1,24 @@
+while (a==1)
+import a.b.c
+-----
+Groovy script
+  WHILE statement
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Equality expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(==)('==')
+      Literal
+        PsiElement(number)('1')
+    PsiElement())(')')
+    PsiElement(new line)('\n')
+    PsiErrorElement:Imports are not allowed in such block
+      PsiElement(import)('import')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('a')
+      PsiElement(.)('.')
+      PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(identifier)('c')
