@@ -238,12 +238,15 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private void registerImportsDependentProperties(final String fileName) {
     int startProp = 0;
     while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
-      final int endProp = fileName.indexOf('}', startProp + 2);
-      if (endProp > startProp + 2) {
-        if (myImportsDependentProperties == null) {
-          myImportsDependentProperties = new HashSet<String>();
+      if (startProp == 0 || fileName.charAt(startProp - 1) != '$') {
+        // if the '$' is not escaped
+        final int endProp = fileName.indexOf('}', startProp + 2);
+        if (endProp > startProp + 2) {
+          if (myImportsDependentProperties == null) {
+            myImportsDependentProperties = new HashSet<String>();
+          }
+          myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
         }
-        myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
       }
       startProp += 2;
     }

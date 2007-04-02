@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
 
@@ -45,6 +46,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
+  private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
 
   public AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
@@ -261,7 +263,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           }
         }
         else if (value.indexOf('$') < 0){
-          return value;
+          return value; // heuristics
         }
       }
       return null;
@@ -409,6 +411,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     elementStack.add(this);
     int startProp = 0;
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
+      if (startProp > 0 && value.charAt(startProp - 1) == '$') {
+        // the '$' is escaped
+        startProp += 2;
+        continue;
+      }
       final int endProp = value.indexOf('}', startProp + 2);
       if (endProp <= startProp + 2) {
         startProp += 2;
@@ -447,6 +454,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           StringBuilderSpinAllocator.dispose(builder);
         }
       }
+    }
+    if (value.indexOf("$$") >= 0) {
+      return $$_PATTERN.matcher(value).replaceAll("\\$");
     }
     return value;
   }

@@ -64,6 +64,11 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testEscapedProperties() throws Exception {
+    configureByFiles(null, new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml")});
+    doDoTest(true, false);
+  }
+
   public void testPropertiesFromFile() throws Exception {
     doTest();
   }

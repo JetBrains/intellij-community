@@ -73,6 +73,11 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
       int startIndex;
       int endIndex = -1;
       while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
+        if (startIndex > 0 && value.charAt(startIndex - 1) == '$') {
+          // the '$' is escaped
+          endIndex = startIndex + 1;
+          continue;
+        }
         startIndex += 2;
         endIndex = startIndex;
         int nestedBrackets = 0;
