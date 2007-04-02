@@ -95,6 +95,8 @@ public class EscapedJavaLexer extends LexerBase {
 
     char literalStarter = 0;
     do {
+      if (offset >= myBufferEnd) break;
+
       char c = myBuffer.charAt(offset);
       boolean wasEsc = esc;
       esc = false;
@@ -123,7 +125,7 @@ public class EscapedJavaLexer extends LexerBase {
         state = 1;
       }
 
-      if (!esc && state == 0 || offset + 1 >= myBufferEnd) {
+      if (!esc && state == 0) {
         break;
       }
 
@@ -131,7 +133,7 @@ public class EscapedJavaLexer extends LexerBase {
     }
     while (true);
 
-    if(offset == myBufferEnd - 1) state = 0;
+    if(offset >= myBufferEnd - 1) state = 0;
     switch (state){
       case 0:
         if(offset == myCurOffset){
