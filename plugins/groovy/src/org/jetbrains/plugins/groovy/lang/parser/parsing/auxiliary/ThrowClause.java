@@ -15,16 +15,18 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class ThrowClause implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+public class ThrowClause implements GroovyElementTypes
+{
+  public static IElementType parse(PsiBuilder builder)
+  {
     return WRONGWAY;
   }
 }

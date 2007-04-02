@@ -15,21 +15,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrNewExprImpl extends GroovyPsiElementImpl implements GrNewExpression {
-  public GrNewExprImpl(@NotNull ASTNode node) {
+public class GrNewExprImpl extends GroovyPsiElementImpl implements GrNewExpression
+{
+  public GrNewExprImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-   public String toString() {
+  public String toString()
+  {
     return "NEW expression";
   }
 }

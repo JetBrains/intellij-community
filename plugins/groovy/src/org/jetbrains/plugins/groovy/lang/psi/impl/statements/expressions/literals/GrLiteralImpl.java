@@ -15,21 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
+public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral
+{
 
-  public GrLiteralImpl(@NotNull ASTNode node) {
+  public GrLiteralImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-  public String toString(){
+  public String toString()
+  {
     return "Literal";
   }
 }

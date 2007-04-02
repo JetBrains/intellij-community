@@ -15,17 +15,16 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
-import org.jetbrains.annotations.NonNls;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.NonNls;
 
 /**
- *
  * @author Ilya.Sergey
  */
-public class DefaultHighlighter {
+public class DefaultHighlighter
+{
 
   @NonNls
   private static final String LINE_COMMENT_ID = "GROOVY_LINE_COMMENT";
@@ -51,7 +50,8 @@ public class DefaultHighlighter {
 
 
   // Registering TextAttributes
-  static {
+  static
+  {
     TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID, HighlighterColors.JAVA_STRING.getDefaultAttributes());
     TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID, HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes());
     TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID, HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());

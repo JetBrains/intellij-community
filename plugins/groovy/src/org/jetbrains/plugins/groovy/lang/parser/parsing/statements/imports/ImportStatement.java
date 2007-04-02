@@ -15,21 +15,23 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * Parses import statement
  *
  * @author Ilya Sergey
  */
-public class ImportStatement implements GroovyElementTypes {
+public class ImportStatement implements GroovyElementTypes
+{
 
-  public static GroovyElementType parse(PsiBuilder builder){
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
 
     Marker impMarker = builder.mark();
 

@@ -18,20 +18,23 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
 
-public class ClassOrInterfaceType implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+public class ClassOrInterfaceType implements GroovyElementTypes
+{
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
     PsiBuilder.Marker secondInternalTypeMarker;
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+    if (!ParserUtils.getToken(builder, mIDENT))
+    {
       internalTypeMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -42,8 +45,10 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
     internalTypeMarker.done(CLASS_INTERFACE_TYPE);
     internalTypeMarker = secondInternalTypeMarker;
 
-    while (ParserUtils.getToken(builder, mDOT)) {
-      if (!ParserUtils.getToken(builder, mIDENT)) {
+    while (ParserUtils.getToken(builder, mDOT))
+    {
+      if (!ParserUtils.getToken(builder, mIDENT))
+      {
         internalTypeMarker.rollbackTo();
         return WRONGWAY;
       }
@@ -66,7 +71,8 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
    * @return
    */
   // TODO Implement it, please in accordance with javadoc above
-  public static GroovyElementType parseStrict(PsiBuilder builder){
+  public static GroovyElementType parseStrict(PsiBuilder builder)
+  {
     return parse(builder);
   }
 }

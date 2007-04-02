@@ -15,22 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrClosableBlockImpl extends GroovyPsiElementImpl implements GrClosableBlock {
+public class GrClosableBlockImpl extends GroovyPsiElementImpl implements GrClosableBlock
+{
 
-  public GrClosableBlockImpl(@NotNull ASTNode node) {
+  public GrClosableBlockImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-  public String toString(){
+  public String toString()
+  {
     return "Closable block";
   }
 }

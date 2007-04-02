@@ -15,21 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrConditionalExpression {
+public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrConditionalExpression
+{
 
-  public GrConditionalExprImpl(@NotNull ASTNode node) {
+  public GrConditionalExprImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-  public String toString(){
+  public String toString()
+  {
     return "Conditional expression";
   }
 }

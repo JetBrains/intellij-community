@@ -15,22 +15,23 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
-import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyFlexLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Ilya.Sergey
  */
-public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
+public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes
+{
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
@@ -190,7 +191,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.kNULL
   );
 
-  static {   
+  static
+  {
     fillMap(ATTRIBUTES, tCOMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
     fillMap(ATTRIBUTES, tWRONG_STRING, DefaultHighlighter.WRONG_STRING);
@@ -203,12 +205,14 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   }
 
   @NotNull
-  public Lexer getHighlightingLexer() {
+  public Lexer getHighlightingLexer()
+  {
     return new GroovyFlexLexer();
   }
 
   @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType)
+  {
     return pack(ATTRIBUTES.get(tokenType));
   }
 }

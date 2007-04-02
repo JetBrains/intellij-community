@@ -15,21 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportSelector;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportSelector;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrImportSelectorImpl extends GroovyPsiElementImpl implements GrImportSelector {
+public class GrImportSelectorImpl extends GroovyPsiElementImpl implements GrImportSelector
+{
 
-  public GrImportSelectorImpl(@NotNull ASTNode node) {
+  public GrImportSelectorImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-  public String toString(){
+  public String toString()
+  {
     return "Import selector";
   }
 }

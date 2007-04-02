@@ -15,24 +15,29 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author: Ilya Sergey
  */
-public class VariableInitializer implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (!ParserUtils.getToken(builder,mASSIGN)) {
+public class VariableInitializer implements GroovyElementTypes
+{
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
+    if (!ParserUtils.getToken(builder, mASSIGN))
+    {
       return WRONGWAY;
-    } else {
+    }
+    else
+    {
       ParserUtils.getToken(builder, mNLS);
-      if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
+      if (AssignmentExpression.parse(builder).equals(WRONGWAY))
+      {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       return VARIABLE_INITIALIZER;

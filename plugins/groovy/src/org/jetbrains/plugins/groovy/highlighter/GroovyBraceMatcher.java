@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
-import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.BracePair;
+import com.intellij.lang.PairedBraceMatcher;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
@@ -24,7 +24,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  *
  * @author Ilya.Sergey
  */
-public class GroovyBraceMatcher  implements PairedBraceMatcher {
+public class GroovyBraceMatcher implements PairedBraceMatcher
+{
 
   private static final BracePair[] PAIRS = new BracePair[]{
           new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
@@ -32,7 +33,8 @@ public class GroovyBraceMatcher  implements PairedBraceMatcher {
           new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true)
   };
 
-  public BracePair[] getPairs() {
+  public BracePair[] getPairs()
+  {
 
     return PAIRS;
   }

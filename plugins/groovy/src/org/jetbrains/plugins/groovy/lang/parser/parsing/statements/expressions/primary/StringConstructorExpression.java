@@ -15,38 +15,47 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilder.*;
+import com.intellij.lang.PsiBuilder.Marker;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author Ilya.Sergey
  */
-public class StringConstructorExpression implements GroovyElementTypes {
+public class StringConstructorExpression implements GroovyElementTypes
+{
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
 
     Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mGSTRING_SINGLE_BEGIN)) {
+    if (ParserUtils.getToken(builder, mGSTRING_SINGLE_BEGIN))
+    {
       GroovyElementType result = stringConstructorValuePart(builder);
-      if (result.equals(WRONGWAY)) {
+      if (result.equals(WRONGWAY))
+      {
         builder.error(GroovyBundle.message("identifier.or.block.expected"));
         sMarker.done(GSTRING);
         return GSTRING;
-      } else {
-        while (ParserUtils.getToken(builder, mGSTRING_SINGLE_CONTENT) && !result.equals(WRONGWAY)) {
+      }
+      else
+      {
+        while (ParserUtils.getToken(builder, mGSTRING_SINGLE_CONTENT) && !result.equals(WRONGWAY))
+        {
           result = stringConstructorValuePart(builder);
         }
         ParserUtils.getToken(builder, mGSTRING_SINGLE_END, GroovyBundle.message("string.end.expected"));
         sMarker.done(GSTRING);
         return GSTRING;
       }
-    } else {
+    }
+    else
+    {
       sMarker.drop();
       return WRONGWAY;
     }
@@ -58,12 +67,16 @@ public class StringConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static GroovyElementType stringConstructorValuePart(PsiBuilder builder) {
+  private static GroovyElementType stringConstructorValuePart(PsiBuilder builder)
+  {
     ParserUtils.getToken(builder, mSTAR);
-    if (mIDENT.equals(builder.getTokenType())) {
+    if (mIDENT.equals(builder.getTokenType()))
+    {
       PathExpression.parse(builder);
       return PATH_EXPRESSION;
-    } else if (mLCURLY.equals(builder.getTokenType())){
+    }
+    else if (mLCURLY.equals(builder.getTokenType()))
+    {
       OpenOrClosableBlock.parse(builder);
       return CLOSABLE_BLOCK;
     }

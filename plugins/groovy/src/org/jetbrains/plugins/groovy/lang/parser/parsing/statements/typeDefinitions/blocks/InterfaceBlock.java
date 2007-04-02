@@ -15,23 +15,26 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks;
 
+import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class InterfaceBlock implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+public class InterfaceBlock implements GroovyElementTypes
+{
+  public static IElementType parse(PsiBuilder builder)
+  {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
-   PsiBuilder.Marker ibMarker = builder.mark();
+    PsiBuilder.Marker ibMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY)){
+    if (!ParserUtils.getToken(builder, mLCURLY))
+    {
       ibMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -40,13 +43,15 @@ public class InterfaceBlock implements GroovyElementTypes {
 
     IElementType sep = Separators.parse(builder);
 
-    while(!WRONGWAY.equals(sep)){
+    while (!WRONGWAY.equals(sep))
+    {
       InterfaceMember.parse(builder);
 
       sep = Separators.parse(builder);
     }
 
-    if (!ParserUtils.getToken(builder, mRCURLY)){
+    if (!ParserUtils.getToken(builder, mRCURLY))
+    {
       ibMarker.rollbackTo();
       return WRONGWAY;
     }

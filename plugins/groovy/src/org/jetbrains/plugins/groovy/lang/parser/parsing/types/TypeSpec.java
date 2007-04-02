@@ -20,18 +20,23 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class TypeSpec implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+public class TypeSpec implements GroovyElementTypes
+{
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()))
+    {
       return parseBuiltInType(builder);
-    } else if (ParserUtils.lookAhead(builder, mIDENT)) {
+    }
+    else if (ParserUtils.lookAhead(builder, mIDENT))
+    {
       return parseClassOrInterfaceType(builder);
     }
     return WRONGWAY;
@@ -43,12 +48,16 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType parseBuiltInType(PsiBuilder builder) {
+  private static GroovyElementType parseBuiltInType(PsiBuilder builder)
+  {
     PsiBuilder.Marker arrMarker = builder.mark();
     ParserUtils.eatElement(builder, BUILT_IN_TYPE);
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       declarationBracketsParse(builder, arrMarker);
-    } else {
+    }
+    else
+    {
       arrMarker.drop();
     }
     return TYPE_SPECIFICATION;
@@ -61,14 +70,18 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @param marker
    */
-  private static void declarationBracketsParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void declarationBracketsParse(PsiBuilder builder, PsiBuilder.Marker marker)
+  {
     ParserUtils.getToken(builder, mLBRACK);
     ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(ARRAY_TYPE);
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       declarationBracketsParse(builder, newMarker);
-    } else {
+    }
+    else
+    {
       newMarker.drop();
     }
   }
@@ -78,17 +91,22 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    */
 
-  private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder) {
+  private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder)
+  {
     PsiBuilder.Marker arrMarker = builder.mark();
 
-    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder)))
+    {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       declarationBracketsParse(builder, arrMarker);
-    } else {
+    }
+    else
+    {
       arrMarker.drop();
     }
     return TYPE_SPECIFICATION;
@@ -106,10 +124,14 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType parseStrict(PsiBuilder builder) {
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+  public static GroovyElementType parseStrict(PsiBuilder builder)
+  {
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()))
+    {
       return parseBuiltInTypeStrict(builder);
-    } else if (ParserUtils.lookAhead(builder, mIDENT)) {
+    }
+    else if (ParserUtils.lookAhead(builder, mIDENT))
+    {
       return parseClassOrInterfaceTypeStrict(builder);
     }
     return WRONGWAY;
@@ -122,12 +144,16 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType parseBuiltInTypeStrict(PsiBuilder builder) {
+  private static GroovyElementType parseBuiltInTypeStrict(PsiBuilder builder)
+  {
     PsiBuilder.Marker arrMarker = builder.mark();
     ParserUtils.eatElement(builder, BUILT_IN_TYPE);
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       return declarationBracketsParseStrict(builder, arrMarker);
-    } else {
+    }
+    else
+    {
       arrMarker.drop();
       return TYPE_SPECIFICATION;
     }
@@ -140,17 +166,22 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @param marker
    */
-  private static GroovyElementType declarationBracketsParseStrict(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static GroovyElementType declarationBracketsParseStrict(PsiBuilder builder, PsiBuilder.Marker marker)
+  {
     ParserUtils.getToken(builder, mLBRACK);
-    if (!ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"))) {
+    if (!ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected")))
+    {
       marker.rollbackTo();
       return WRONGWAY;
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(ARRAY_TYPE);
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       return declarationBracketsParseStrict(builder, newMarker);
-    } else {
+    }
+    else
+    {
       newMarker.drop();
       return ARRAY_TYPE;
     }
@@ -163,15 +194,20 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder) {
+  private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder)
+  {
     PsiBuilder.Marker arrMarker = builder.mark();
-    if (WRONGWAY.equals(ClassOrInterfaceType.parseStrict(builder))) {
+    if (WRONGWAY.equals(ClassOrInterfaceType.parseStrict(builder)))
+    {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK.equals(builder.getTokenType()))
+    {
       return declarationBracketsParseStrict(builder, arrMarker);
-    } else {
+    }
+    else
+    {
       arrMarker.drop();
       return TYPE_SPECIFICATION;
     }
