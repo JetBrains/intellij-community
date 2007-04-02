@@ -1,20 +1,20 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
-import com.intellij.lang.StdLanguages;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -47,15 +47,14 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -436,12 +435,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public final void propertyChanged(PsiTreeChangeEvent event) {
       String propertyName = event.getPropertyName();
       final PsiElement element = event.getElement();
-      if (element != null && element.isValid()) {
+      if (element != null) {
         final NamedScope scope = getCurrentScope();
         if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)) {
           queueUpdate(new Runnable() {
             public void run() {
-              processRenamed(scope, element.getContainingFile());
+              if (element.isValid()) {
+                processRenamed(scope, element.getContainingFile());
+              }
             }
           }, false);
         }
@@ -477,6 +478,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
 
     private void processRenamed(final NamedScope scope, final PsiFile file) {
+      if (!file.isValid()) return;
       final PackageSet packageSet = scope.getValue();
       LOG.assertTrue(packageSet != null);
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
