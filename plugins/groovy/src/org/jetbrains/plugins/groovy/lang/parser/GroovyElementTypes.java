@@ -157,7 +157,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
   GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
-  //todo: rename star expression
+
   GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement");
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");
   GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement");
