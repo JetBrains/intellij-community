@@ -1,16 +1,19 @@
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author ven
@@ -55,9 +58,9 @@ public class CommonRefactoringUtil {
                                              boolean recursively,
                                              final boolean notifyOnFail) {
     //Not writable, but could be checked out
-    final List<VirtualFile> readonly = new ArrayList<VirtualFile>();
+    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>();
     //Those located in jars
-    final List<VirtualFile> failed = new ArrayList<VirtualFile>();
+    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
@@ -116,11 +119,13 @@ public class CommonRefactoringUtil {
         PsiFile file = element.getContainingFile();
         if (file == null) {
           seenNonWritablePsiFilesWithoutVirtualFile = true;
-        } else if (!file.isWritable()) {
+        }
+        else if (!file.isWritable()) {
           final VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {
             readonly.add(vFile);
-          } else {
+          }
+          else {
             seenNonWritablePsiFilesWithoutVirtualFile = true;
           }
         }
@@ -135,9 +140,9 @@ public class CommonRefactoringUtil {
       message.append('\n');
       for (VirtualFile virtualFile : failed) {
         final String presentableUrl = virtualFile.getPresentableUrl();
-        final String subj = virtualFile.isDirectory() ?
-                            RefactoringBundle.message("directory.description", presentableUrl) :
-                            RefactoringBundle.message("file.description", presentableUrl);
+        final String subj = virtualFile.isDirectory()
+                            ? RefactoringBundle.message("directory.description", presentableUrl)
+                            : RefactoringBundle.message("file.description", presentableUrl);
         if (virtualFile.getFileSystem() instanceof JarFileSystem) {
           message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj));
         }
@@ -152,7 +157,7 @@ public class CommonRefactoringUtil {
     return failed.isEmpty();
   }
 
-  private static void addVirtualFiles(final VirtualFile vFile, final List<VirtualFile> list) {
+  private static void addVirtualFiles(final VirtualFile vFile, final Collection<VirtualFile> list) {
     if (!vFile.isWritable()) {
       list.add(vFile);
     }
