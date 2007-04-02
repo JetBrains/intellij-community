@@ -25,19 +25,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrMethodBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
@@ -66,7 +66,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes {
+public abstract class GroovyPsiCreator implements GroovyElementTypes
+{
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -74,7 +75,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
    * @param node Given node
    * @return Respective PSI element
    */
-  public static PsiElement createElement(ASTNode node) {
+  public static PsiElement createElement(ASTNode node)
+  {
     IElementType elem = node.getElementType();
 
     //Identifiers & literal
@@ -102,7 +104,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
     if (elem.equals(VARIABLE_DEFINITION)) return new GrVariableDefinitionsImpl(node);
-
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
@@ -181,7 +182,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
     if (elem.equals(PARENTHSIZED_EXPRESSION)) return new GrParenthesizedExprImpl(node);
     if (elem.equals(NEW_EXPRESSION)) return new GrNewExprImpl(node);
-
 
     //Paths
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);

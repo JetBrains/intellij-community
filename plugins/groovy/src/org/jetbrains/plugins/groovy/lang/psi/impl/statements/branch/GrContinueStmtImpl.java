@@ -15,21 +15,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement {
-  public GrContinueStmtImpl(@NotNull ASTNode node) {
+public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement
+{
+  public GrContinueStmtImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-   public String toString() {
+  public String toString()
+  {
     return "CONTINUE statement";
   }
 }

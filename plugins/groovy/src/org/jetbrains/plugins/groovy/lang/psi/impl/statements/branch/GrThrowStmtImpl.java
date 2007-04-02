@@ -15,21 +15,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrThrowStmtImpl extends GroovyPsiElementImpl implements GrThrowStatement {
-  public GrThrowStmtImpl(@NotNull ASTNode node) {
+public class GrThrowStmtImpl extends GroovyPsiElementImpl implements GrThrowStatement
+{
+  public GrThrowStmtImpl(@NotNull ASTNode node)
+  {
     super(node);
   }
 
-   public String toString() {
+  public String toString()
+  {
     return "THROW statement";
   }
 }

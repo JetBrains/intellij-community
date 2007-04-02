@@ -15,29 +15,36 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * Parse separators
  *
  * @author Ilya Sergey
  */
-public class Separators implements GroovyElementTypes {
+public class Separators implements GroovyElementTypes
+{
 
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (mSEMI.equals(builder.getTokenType())) {
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
+    if (mSEMI.equals(builder.getTokenType()))
+    {
       builder.advanceLexer();
-      while (ParserUtils.getToken(builder, mNLS)) {
+      while (ParserUtils.getToken(builder, mNLS))
+      {
         // Parse newLines
       }
       return SEP;
-    } else if (mNLS.equals(builder.getTokenType())) {
+    }
+    else if (mNLS.equals(builder.getTokenType()))
+    {
       builder.advanceLexer();
       while (ParserUtils.getToken(builder, mSEMI) ||
-              ParserUtils.getToken(builder, mNLS)) {
+              ParserUtils.getToken(builder, mNLS))
+      {
         // Parse newLines
       }
       return SEP;
