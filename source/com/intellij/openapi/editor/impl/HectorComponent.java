@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
@@ -106,7 +107,7 @@ public class HectorComponent extends JPanel {
     });
     myImportPopupCheckBox.setSelected(myImportPopupOn);
     myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
-    myImportPopupCheckBox.setVisible(notInLibrary);
+    myImportPopupCheckBox.setVisible(notInLibrary && languages.contains(StdLanguages.JAVA));
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
