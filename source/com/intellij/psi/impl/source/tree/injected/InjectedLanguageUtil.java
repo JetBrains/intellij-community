@@ -19,10 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +60,7 @@ public class InjectedLanguageUtil {
       CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = provider.compute();
       if (result == null) return null;
       cachedPsi = host.getManager().getCachedValuesManager().createCachedValue(provider, false);
-      host.putUserData(INJECTED_PSI, cachedPsi);
+      ((UserDataHolderEx)host).putUserDataIfAbsent(INJECTED_PSI, cachedPsi);
       return result.getValue();
     }
     return cachedPsi.getValue();
@@ -408,8 +405,7 @@ public class InjectedLanguageUtil {
     List<DocumentRange> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
 
     if (injected == null) {
-      injected = new ArrayList<DocumentRange>();
-      hostDocument.putUserData(INJECTED_DOCS_KEY, injected);
+      injected = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_DOCS_KEY, new ArrayList<DocumentRange>());
     }
 
     RangeMarker rangeMarker = documentRange.getTextRange();

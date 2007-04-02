@@ -23,7 +23,7 @@ public class QuickFixWrapper implements IntentionAction {
   private int myFixNumber;
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ex.QuickFixWrapper");
 
-  public QuickFixWrapper(ProblemDescriptor descriptor, int fixNumber) {
+  public QuickFixWrapper(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     myDescriptor = descriptor;
     myFixNumber = fixNumber;
     LOG.assertTrue(fixNumber > -1);
@@ -40,12 +40,12 @@ public class QuickFixWrapper implements IntentionAction {
     return myDescriptor.getFixes()[myFixNumber].getName();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
     return psiElement != null && psiElement.isValid();
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
     fix.applyFix(project, myDescriptor);

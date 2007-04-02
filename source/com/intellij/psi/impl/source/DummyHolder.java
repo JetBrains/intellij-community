@@ -225,6 +225,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   private FileViewProvider myViewProvider = null;
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
