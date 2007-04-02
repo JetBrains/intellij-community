@@ -77,8 +77,7 @@ public class FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
-  public ApplyPatchStatus apply(ApplyPatchContext context)
-    throws ApplyPatchException, IOException {
+  public ApplyPatchStatus apply(ApplyPatchContext context) throws ApplyPatchException, IOException {
     VirtualFile fileToPatch = findFileToPatch(context);
 
     if (fileToPatch == null) {
@@ -157,22 +156,17 @@ public class FilePatch {
     if (file == null) {
       file = findFileToPatchByName(context, afterName, isNewFile);
     }
-    else if (context.isAllowRename() && beforeName != null && afterName != null && !beforeName.equals(afterName)) {
+    else if (context.isAllowRename() && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
         file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
       }
-      boolean pathChanged = (beforeNameComponents.length != afterNameComponents.length);
-      if (!pathChanged) {
-        for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
-          if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
-            pathChanged = true;
-            break;
-          }
-        }
+      boolean needMove = (beforeNameComponents.length != afterNameComponents.length);
+      if (!needMove) {
+        needMove = checkPackageRename(context, beforeNameComponents, afterNameComponents, isNewFile);
       }
-      if (pathChanged) {
+      if (needMove) {
         VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length-1);
         if (moveTarget == null) {
           return null;
@@ -181,6 +175,29 @@ public class FilePatch {
       }
     }
     return file;
+  }
+
+  @Nullable
+  private static boolean checkPackageRename(final ApplyPatchContext context,
+                                            final String[] beforeNameComponents,
+                                            final String[] afterNameComponents,
+                                            final boolean isNewFile) throws IOException {
+    int changedIndex = -1;
+    for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
+      if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
+        if (changedIndex != -1) {
+          return true;
+        }
+        changedIndex = i;
+      }
+    }
+    VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex+1);
+    VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex+1);
+    if (oldDir != null && newDir == null) {
+      context.addPendingRename(oldDir, afterNameComponents [changedIndex]);
+      return false;
+    }
+    return true;
   }
 
   @Nullable

@@ -6,6 +6,10 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Map;
+import java.util.HashMap;
+import java.io.IOException;
+
 /**
  * @author yole
  */
@@ -14,6 +18,7 @@ public class ApplyPatchContext {
   private int mySkipTopDirs;
   private boolean myCreateDirectories;
   private boolean myAllowRename;
+  private Map<VirtualFile, String> myPendingRenames = null;
 
   public ApplyPatchContext(final VirtualFile baseDir, final int skipTopDirs, final boolean createDirectories, final boolean allowRename) {
     myBaseDir = baseDir;
@@ -40,5 +45,21 @@ public class ApplyPatchContext {
 
   public ApplyPatchContext getPrepareContext() {
     return new ApplyPatchContext(myBaseDir, mySkipTopDirs, false, false);
+  }
+
+  public void addPendingRename(VirtualFile file, String newName) {
+    if (myPendingRenames == null) {
+      myPendingRenames = new HashMap<VirtualFile, String>();
+    }
+    myPendingRenames.put(file, newName);
+  }
+
+  public void applyPendingRenames() throws IOException {
+    if (myPendingRenames != null) {
+      for(Map.Entry<VirtualFile, String> entry: myPendingRenames.entrySet()) {
+        entry.getKey().rename(FilePatch.class, entry.getValue());      
+      }
+      myPendingRenames = null;
+    }
   }
 }

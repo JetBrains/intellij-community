@@ -91,6 +91,13 @@ public class ApplyPatchAction extends AnAction {
               final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context, affectedFiles);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
+            try {
+              context.applyPendingRenames();
+            }
+            catch (IOException e) {
+              Messages.showErrorDialog(project, "Error renaming directories: " + e.getMessage(),
+                                       VcsBundle.message("patch.apply.dialog.title"));
+            }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
               Messages.showInfoMessage(project, VcsBundle.message("patch.apply.already.applied"),
                                        VcsBundle.message("patch.apply.dialog.title"));
