@@ -1,0 +1,37 @@
+def foo (String s, final def a = 3) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Parameter modifiers
+          PsiElement(final)('final')
+          PsiWhiteSpace(' ')
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
