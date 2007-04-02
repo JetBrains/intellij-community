@@ -62,11 +62,11 @@ public class MethodUtils{
     }
 
     /**
-     * @param method
+     * @param method  the method to compare to.
      * @param containingClassName  the name of the class which contiains the
      * method.
      * @param returnType  the return type, specify null if any type matches
-     * @param methodName
+     * @param methodName  the name the method should have
      * @param parameterTypes  the type of the parameters of the method, specify
      *  null if any number and type of parameters match or an empty array
      * to match zero parameters.
@@ -93,6 +93,9 @@ public class MethodUtils{
                 final PsiParameter parameter = parameters[i];
                 final PsiType type = parameter.getType();
                 final PsiType parameterType = parameterTypes[i];
+                if (PsiType.NULL.equals(parameterType)) {
+                    continue;
+                }
                 if (parameterType != null &&
                         !EquivalenceChecker.typesAreEquivalent(type,
                                 parameterType)) {
