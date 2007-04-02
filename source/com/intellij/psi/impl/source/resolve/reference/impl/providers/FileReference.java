@@ -42,7 +42,6 @@ public class FileReference
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
-  private ResolveResult[] myCachedResult;
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     myFileReferenceSet = fileReferenceSet;
@@ -222,7 +221,8 @@ public class FileReference
     throw new IncorrectOperationException("Manipulator for this element is not defined");
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+    
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
 
     final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
@@ -251,9 +251,9 @@ public class FileReference
         }
       }
       if (root == null) return element;
-
       newName = "/" + PsiFileSystemItemUtil.getNotNullRelativePath(root, dstItem);
-    } else {
+
+    } else { // relative path
       PsiFileSystemItem curItem = null;
       PsiFileSystemItem dstItem = null;
       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
@@ -263,11 +263,15 @@ public class FileReference
           if (_dstItem != null) {
             curItem = _curItem;
             dstItem = _dstItem;
-            break;
+            break;                         
           }
         }
       }
       checkNotNull(curItem, curVFile, dstVFile);
+      assert curItem != null;
+      if (curItem.equals(dstItem)) {
+        return getElement();
+      }
       newName = PsiFileSystemItemUtil.getNotNullRelativePath(curItem, dstItem);
     }
 

@@ -29,15 +29,14 @@ public class MoveFilesOrDirectoriesUtil {
   private MoveFilesOrDirectoriesUtil() {}
 
   // Does not process non-code usages!
-  public static PsiDirectory doMoveDirectory(PsiDirectory aDirectory, PsiDirectory destDirectory) throws IncorrectOperationException{
+  public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException{
     PsiManager manager = aDirectory.getManager();
     // do actual move
     manager.moveDirectory(aDirectory, destDirectory);
-    return aDirectory;
   }
 
   // Does not process non-code usages!
-  public static PsiFile doMoveFile(PsiFile file, PsiDirectory newDirectory) throws IncorrectOperationException{
+  public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException{
     ChangeContextUtil.encodeFileReferences(file);
     PsiManager manager = file.getManager();
     // the class is already there, this is true when multiple classes are defined in the same file
@@ -46,7 +45,6 @@ public class MoveFilesOrDirectoriesUtil {
       manager.moveFile(file, newDirectory);
     }
     ChangeContextUtil.decodeFileReferences(file);
-    return file;
   }
 
   /**
@@ -127,6 +125,7 @@ public class MoveFilesOrDirectoriesUtil {
 
   }
 
+  @Nullable
   private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
     PsiDirectory commonDirectory = null;
 
@@ -154,6 +153,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
   }
 
+  @Nullable
   private static PsiDirectory getInitialTargetDirectory(PsiDirectory initialTargetElement, final PsiElement[] movedElements) {
     PsiDirectory initialTargetDirectory = initialTargetElement;
     if (initialTargetDirectory == null) {
@@ -169,6 +169,7 @@ public class MoveFilesOrDirectoriesUtil {
     return initialTargetDirectory;
   }
 
+  @Nullable
   private static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
     if (psiElement instanceof PsiDirectory) {
       return (PsiDirectory)psiElement;

@@ -5,9 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -16,13 +17,11 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collection;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -56,7 +55,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiElement element = myElementsToMove[i];
@@ -86,25 +84,31 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     // Move files with correction of references.
 
     try {
-      for (int idx = 0; idx < myElementsToMove.length; idx++) {
-        PsiElement element = myElementsToMove[idx];
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
+      for (final PsiElement element : myElementsToMove) {
+
         if (element instanceof PsiDirectory) {
-
-          element = MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
-
+          MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
         }
         else if (element instanceof PsiFile) {
-          element = MoveFilesOrDirectoriesUtil.doMoveFile((PsiFile)element, myNewParent);
+          MoveFilesOrDirectoriesUtil.doMoveFile((PsiFile)element, myNewParent);
         }
 
+        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         elementListener.elementMoved(element);
-        myElementsToMove[idx] = element;
       }
 
       for (UsageInfo usageInfo : usages) {
         final MyUsageInfo info = (MyUsageInfo)usageInfo;
-        info.myReference.bindToElement(myElementsToMove[info.myIndex]);
+        final PsiElement element = myElementsToMove[info.myIndex];
+        final PsiElement usageElement = info.getElement();
+        if (usageElement != null) {
+          final PsiFile usageFile = usageElement.getContainingFile();
+          final PsiFile psiFile = usageFile.getViewProvider().getPsi(usageFile.getViewProvider().getBaseLanguage());
+          if (psiFile != null && psiFile.equals(element)) {
+            continue;  // already processed in MoveFilesOrDirectoriesUtil.doMoveFile
+          }
+        }
+        info.myReference.bindToElement(element);
       }
 
       // Perform CVS "add", "remove" commands on moved files.
@@ -140,7 +144,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  class MyUsageInfo extends UsageInfo {
+  static class MyUsageInfo extends UsageInfo {
     int myIndex;
     PsiReference myReference;
 
