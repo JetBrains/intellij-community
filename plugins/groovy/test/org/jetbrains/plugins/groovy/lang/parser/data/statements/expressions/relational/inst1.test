@@ -1,0 +1,32 @@
+if (x instanceof List<String>) {2+3}
+-----
+Groovy script
+  IF statement
+    PsiElement(if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Relational expression
+      Reference expression
+        PsiElement(identifier)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(instanceof)('instanceof')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('List')
+        Type arguments
+          PsiElement(<)('<')
+          Type argument
+            Class type
+              PsiElement(identifier)('String')
+          PsiElement(>)('>')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      Additive expression
+        Literal
+          PsiElement(number)('2')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(number)('3')
+      PsiElement(})('}')
