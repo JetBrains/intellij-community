@@ -1,7 +1,8 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -9,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,11 +32,19 @@ public class ProjectJdksEditor extends DialogWrapper {
       }
     });
     setTitle(ProjectBundle.message("sdk.configure.title"));
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        if (myConfigurable != null) {
+          myConfigurable.disposeUIResources();
+          myConfigurable = null;
+        }
+      }
+    });
     init();
   }
 
   public ProjectJdksEditor(ProjectJdk jdk, Component parent){
-    this(jdk, (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT), parent);
+    this(jdk, DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), parent);
   }
 
   protected JComponent createCenterPanel(){
