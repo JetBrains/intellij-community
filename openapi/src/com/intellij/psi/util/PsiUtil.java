@@ -992,16 +992,12 @@ public final class PsiUtil {
 
   @Nullable
   public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null) {
+    if (element == null || !element.isValid()) {
       return null;
     }
 
     if (element instanceof PsiFileSystemItem) {
       return ((PsiFileSystemItem)element).getVirtualFile();
-    }
-
-    if (!element.isValid()) {
-      return null;
     }
 
     final PsiFile containingFile = element.getContainingFile();
