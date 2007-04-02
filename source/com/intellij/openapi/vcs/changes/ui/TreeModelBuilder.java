@@ -156,10 +156,10 @@ public class TreeModelBuilder {
     ChangesBrowserNode oldNode = foldersCache.get(nodePath);
     if (oldNode != null) {
       ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
-      for(int i=0; i<oldNode.getChildCount(); i++) {
+      for(int i=oldNode.getChildCount()-1; i >= 0; i--) {
         MutableTreeNode child = (MutableTreeNode) model.getChild(oldNode, i);
         model.removeNodeFromParent(child);
-        model.insertNodeInto(child, node, i);
+        model.insertNodeInto(child, node, 0);
       }
       final MutableTreeNode parent = (MutableTreeNode)oldNode.getParent();
       int index = model.getIndexOfChild(parent, oldNode);
