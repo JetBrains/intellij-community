@@ -22,6 +22,10 @@ public class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlTextImpl> {
   }
 
   public int getOffsetInHost(final int offsetInDecoded, final TextRange rangeInsideHost) {
-    return myXmlText.displayToPhysical(offsetInDecoded);
+    int displayStart = myXmlText.physicalToDisplay(rangeInsideHost.getStartOffset());
+
+    return myXmlText.displayToPhysical(offsetInDecoded+displayStart);
+    
+    //return myXmlText.displayToPhysical(offsetInDecoded);
   }
 }
