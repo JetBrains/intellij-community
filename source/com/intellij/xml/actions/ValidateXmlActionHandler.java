@@ -466,7 +466,6 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
         parser.getXMLReader().setFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef",Boolean.TRUE);
         parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/unparsed-entity-checking",Boolean.FALSE);
-        parser.getXMLReader().setFeature("http://apache.org/xml/features/xinclude",Boolean.TRUE);
       } catch(SAXNotRecognizedException ex) {
         // it is possible to continue work with configured parser
         LOG.info("Xml parser installation seems screwed", ex);
