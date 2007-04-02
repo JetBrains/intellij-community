@@ -71,7 +71,9 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
         return PsiReference.EMPTY_ARRAY;
       }
 
-      final String name = ((XmlAttribute)element.getParent()).getName();
+      final PsiElement parentElement = element.getParent();
+      if (!(parentElement instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
+      final String name = ((XmlAttribute)parentElement).getName();
 
       if (FOR_ATTR_NAME.equals(name)) {
         return new PsiReference[]{new IdRefReference(element, 1)};
