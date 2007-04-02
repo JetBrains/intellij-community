@@ -12,7 +12,6 @@ public class LocalVcs implements ILocalVcs {
   private int myInnerChangeSetCounter = 0;
   private boolean wasSaveRequestedDuringChangeSet = false;
 
-  // todo change type to something else (for example to LinkedList)
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
@@ -68,10 +67,12 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void beginChangeSet() {
+    // todo hack. remove after moving update into service state
     myInnerChangeSetCounter++;
   }
 
   public void endChangeSet(String label) {
+    // todo hack. remove after moving update into service state
     if (myInnerChangeSetCounter == 1) registerChangeSet(label);
     myInnerChangeSetCounter--;
     if (!isInChangeSet()) doPostpondedSave();
@@ -155,19 +156,34 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public List<Label> getLabelsFor(String path) {
-    List<Label> result = new ArrayList<Label>();
-
     Entry e = getEntry(path);
 
-    for (ChangeSet cs : myChangeList.getChangeSetsFor(e)) {
-      result.add(new Label(e, myRoot, myChangeList, cs));
+    List<ChangeSet> sets = myChangeList.getChangeSetsFor(myRoot, e.getPath());
+
+    // todo this hack with names and timestamps is here
+    // todo until I separate revisions from changesets.
+
+    if (sets.isEmpty()) {
+      CurrentLabel l = new CurrentLabel(e, null, getCurrentTimestamp());
+      return Collections.<Label>singletonList(l);
     }
 
-    if (result.isEmpty()) {
-      result.add(new CurrentLabel(e, getCurrentTimestamp()));
+    List<Label> result = new ArrayList<Label>();
+
+    ChangeSet next = sets.get(0);
+    result.add(new CurrentLabel(e, next.getName(), next.getTimestamp()));
+
+    for (int i = 0; i < sets.size() - 1; i++) {
+      ChangeSet cs = sets.get(i);
+      next = sets.get(i + 1);
+      result.add(new Label(e, myRoot, myChangeList, cs, next.getName(), next.getTimestamp()));
     }
 
-    Collections.reverse(result);
+    ChangeSet last = sets.get(sets.size() - 1);
+    if (!last.isCreationalFor(e)) {
+      result.add(new Label(e, myRoot, myChangeList, last, null, last.getTimestamp()));
+    }
+
     return result;
   }
 

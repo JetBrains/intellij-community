@@ -6,18 +6,19 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChangeSet {
-  private String myLabel;
+  private String myName;
   private long myTimestamp;
   private List<Change> myChanges;
 
-  public ChangeSet(long timestamp, String label, List<Change> changes) {
+  public ChangeSet(long timestamp, String name, List<Change> changes) {
     myTimestamp = timestamp;
     myChanges = changes;
-    myLabel = label;
+    myName = name;
   }
 
   public ChangeSet(Stream s) throws IOException {
-    myLabel = s.readStringOrNull();
+    // todo get rid of null here
+    myName = s.readStringOrNull();
     myTimestamp = s.readLong();
 
     int count = s.readInteger();
@@ -28,13 +29,13 @@ public class ChangeSet {
       }
     }
     else {
-      // todo get rid of this. ideally change set can't be empty
+      // todo get rid of this. normally change set can't be empty
       myChanges = Collections.emptyList();
     }
   }
 
   public void write(Stream s) throws IOException {
-    s.writeStringOrNull(myLabel);
+    s.writeStringOrNull(myName);
     s.writeLong(myTimestamp);
 
     s.writeInteger(myChanges.size());
@@ -43,16 +44,16 @@ public class ChangeSet {
     }
   }
 
-  public String getLabel() {
-    return myLabel;
+  public String getName() {
+    return myName;
   }
 
   public long getTimestamp() {
     return myTimestamp;
   }
 
+  // todo test support
   public List<Change> getChanges() {
-    // todo this method is used only in tests
     return myChanges;
   }
 
@@ -63,16 +64,23 @@ public class ChangeSet {
     return false;
   }
 
-  public void applyTo(RootEntry root) {
-    for (Change change : myChanges) {
-      change.applyTo(root);
+  public boolean isCreationalFor(Entry e) {
+    for (Change c : myChanges) {
+      if (c.isCreationalFor(e)) return true;
+    }
+    return false;
+  }
+
+  public void applyTo(RootEntry r) {
+    for (Change c : myChanges) {
+      c.applyTo(r);
     }
   }
 
   public void revertOn(RootEntry e) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
-      Change change = myChanges.get(i);
-      change.revertOn(e);
+      Change c = myChanges.get(i);
+      c.revertOn(e);
     }
   }
 

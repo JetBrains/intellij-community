@@ -12,15 +12,13 @@ public class ChangesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testAffectedEntryIdForCreateFileChange() {
+  public void testAffectedEntryForCreateFileChange() {
     root.createDirectory(99, "dir");
     Change c = new CreateFileChange(1, "dir/name", null, -1);
     c.applyTo(root);
 
-    assertEquals(idp(99, 1), c.getAffectedIdPath());
+    assertEquals(a(idp(99, 1)), c.getAffectedIdPaths());
 
-    assertTrue(c.affects(root.getEntry(1)));
-    assertTrue(c.affects(root.getEntry(99)));
   }
 
   @Test
@@ -28,7 +26,7 @@ public class ChangesTest extends LocalVcsTestCase {
     Change c = new CreateDirectoryChange(2, "name");
     c.applyTo(root);
 
-    assertEquals(idp(2), c.getAffectedIdPath());
+    assertEquals(a(idp(2)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -38,7 +36,7 @@ public class ChangesTest extends LocalVcsTestCase {
     Change c = new ChangeFileContentChange("file", c("new content"), -1);
     c.applyTo(root);
 
-    assertEquals(idp(16), c.getAffectedIdPath());
+    assertEquals(a(idp(16)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -48,7 +46,7 @@ public class ChangesTest extends LocalVcsTestCase {
     Change c = new RenameChange("name", "new name");
     c.applyTo(root);
 
-    assertEquals(idp(42), c.getAffectedIdPath());
+    assertEquals(a(idp(42)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -60,8 +58,7 @@ public class ChangesTest extends LocalVcsTestCase {
     MoveChange c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
-    assertEquals(idp(1, 13), c.getFirstAffectedIdPath());
-    assertEquals(idp(2, 13), c.getSecondAffectedIdPath());
+    assertEquals(a(idp(1, 13), idp(2, 13)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -72,6 +69,6 @@ public class ChangesTest extends LocalVcsTestCase {
     Change c = new DeleteChange("dir/file");
     c.applyTo(root);
 
-    assertEquals(idp(99, 7), c.getAffectedIdPath());
+    assertEquals(a(idp(99, 7)), c.getAffectedIdPaths());
   }
 }

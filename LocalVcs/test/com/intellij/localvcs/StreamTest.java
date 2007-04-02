@@ -196,7 +196,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateFileChange.class, read.getClass());
     CreateFileChange result = (CreateFileChange)read;
 
-    assertEquals(idp(1), result.getAffectedIdPath());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     assertEquals(1, result.getId());
     assertEquals(c("content"), result.getContent());
@@ -214,7 +214,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateDirectoryChange.class, read.getClass());
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
-    assertEquals(idp(2), result.getAffectedIdPath());
+    assertEquals(a(idp(2)), result.getAffectedIdPaths());
     assertEquals(2, result.getId());
   }
 
@@ -232,7 +232,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(ChangeFileContentChange.class, read.getClass());
     ChangeFileContentChange result = (ChangeFileContentChange)read;
 
-    assertEquals(idp(1), result.getAffectedIdPath());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     assertEquals(c("new content"), result.getNewContent());
     assertEquals(2L, result.getNewTimestamp());
@@ -258,7 +258,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
 
-    assertEquals(idp(1), result.getAffectedIdPath());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     Entry e = result.getAffectedEntry();
 
@@ -284,7 +284,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
 
-    assertEquals(idp(1), result.getAffectedIdPath());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     assertEquals("old name", result.getOldName());
     assertEquals("new name", result.getNewName());
@@ -306,8 +306,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(MoveChange.class, read.getClass());
     MoveChange result = ((MoveChange)read);
 
-    assertEquals(idp(1, 3), result.getFirstAffectedIdPath());
-    assertEquals(idp(2, 3), result.getSecondAffectedIdPath());
+    assertEquals(a(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
   }
 
   @Test
@@ -319,7 +318,7 @@ public class StreamTest extends LocalVcsTestCase {
     os.writeChangeSet(cs);
     ChangeSet result = is.readChangeSet();
 
-    assertEquals("label", result.getLabel());
+    assertEquals("label", result.getName());
     assertEquals(123L, result.getTimestamp());
     assertEquals(1, result.getChanges().size());
     assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
@@ -332,7 +331,7 @@ public class StreamTest extends LocalVcsTestCase {
     os.writeChangeSet(cs);
     ChangeSet result = is.readChangeSet();
 
-    assertNull(result.getLabel());
+    assertNull(result.getName());
   }
 
   @Test

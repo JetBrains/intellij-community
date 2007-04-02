@@ -48,21 +48,8 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   private class NotSavedLabel extends Label {
-    private long myTimestamp;
-
     public NotSavedLabel() {
-      super(null, null, null, null);
-      myTimestamp = Clock.getCurrentTimestamp();
-    }
-
-    @Override
-    public String getName() {
-      return "not saved";
-    }
-
-    @Override
-    public long getTimestamp() {
-      return myTimestamp;
+      super(null, null, null, null, "not saved", Clock.getCurrentTimestamp());
     }
 
     @Override
@@ -70,7 +57,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
       // todo review content stuff
       // todo it seems ugly
       final Entry e = getVcsEntry();
-      return new FileEntry(-1, e.getName(), getCurrentContent(), myTimestamp) {
+      return new FileEntry(-1, e.getName(), getCurrentContent(), getTimestamp()) {
         @Override
         public String getPath() {
           return e.getPath();

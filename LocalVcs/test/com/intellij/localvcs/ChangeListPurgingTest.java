@@ -21,8 +21,8 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
     cl.purgeUpTo(3);
 
     assertEquals(2, cl.getChangeSets().size());
-    assertSame(cs3, cl.getChangeSets().get(0));
-    assertSame(cs4, cl.getChangeSets().get(1));
+    assertSame(cs4, cl.getChangeSets().get(0));
+    assertSame(cs3, cl.getChangeSets().get(1));
   }
 
   @Test

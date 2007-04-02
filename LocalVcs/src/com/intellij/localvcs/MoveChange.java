@@ -23,10 +23,13 @@ public class MoveChange extends Change {
   }
 
   @Override
-  protected void doApplyTo(RootEntry root) {
-    setFirstAffectedIdPath(root.getEntry(myPath).getIdPath());
+  protected IdPath doApplyTo(RootEntry root) {
+    IdPath firstIdPath = root.getEntry(myPath).getIdPath();
+
     root.move(myPath, myNewParentPath);
-    setSecondAffectedIdPath(root.getEntry(getNewPath()).getIdPath());
+    mySecondAffectedIdPath = root.getEntry(getNewPath()).getIdPath();
+
+    return firstIdPath;
   }
 
   private String getNewPath() {
@@ -35,29 +38,13 @@ public class MoveChange extends Change {
 
   @Override
   public void revertOn(RootEntry root) {
-    IdPath newPath = getSecondAffectedIdPath();
-    IdPath oldParentPath = getFirstAffectedIdPath().getParent();
+    IdPath newPath = mySecondAffectedIdPath;
+    IdPath oldParentPath = myAffectedIdPath.getParent();
     root.move(newPath, oldParentPath);
   }
 
   @Override
-  public boolean affects(Entry e) {
-    return super.affects(e) || mySecondAffectedIdPath.contains(e.getId());
-  }
-
-  protected void setFirstAffectedIdPath(IdPath p) {
-    setAffectedIdPath(p);
-  }
-
-  protected void setSecondAffectedIdPath(IdPath p) {
-    mySecondAffectedIdPath = p;
-  }
-
-  protected IdPath getFirstAffectedIdPath() {
-    return getAffectedIdPath();
-  }
-
-  protected IdPath getSecondAffectedIdPath() {
-    return mySecondAffectedIdPath;
+  public IdPath[] getAffectedIdPaths() {
+    return new IdPath[]{myAffectedIdPath, mySecondAffectedIdPath};
   }
 }

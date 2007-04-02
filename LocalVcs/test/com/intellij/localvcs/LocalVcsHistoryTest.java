@@ -68,7 +68,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   public void testNamedAndUnnamedLables() {
     vcs.beginChangeSet();
     vcs.createFile("file", null, -1);
-    vcs.endChangeSet("label");
+    vcs.endChangeSet("name");
 
     vcs.changeFileContent("file", null, -1);
 
@@ -76,11 +76,22 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     assertEquals(2, ll.size());
 
     assertNull(ll.get(0).getName());
-    assertEquals("label", ll.get(1).getName());
+    assertEquals("name", ll.get(1).getName());
   }
 
   @Test
-  public void testIncludingCurrentVersionAfterPurge() {
+  public void testLabels() {
+    vcs.createFile("file", b("old"), -1);
+    vcs.changeFileContent("file", b("new"), -1);
+
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(2, ll.size());
+    assertEquals(c("new"), ll.get(0).getEntry().getContent());
+    assertEquals(c("old"), ll.get(1).getEntry().getContent());
+  }
+
+  @Test
+  public void testIncludingCurrentVersionIntoLabelsAfterPurge() {
     setCurrentTimestamp(10);
     vcs.createFile("file", null, -1);
     vcs.purgeUpTo(20);
@@ -92,29 +103,19 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testTakingTimestampForCurrentLabelAtMomentOfGettingLabels() {
+  public void testIncludingVersionBeforeFirstChangeAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1);
-    vcs.purgeUpTo(20);
-
+    vcs.createFile("file", b("one"), -1);
     setCurrentTimestamp(20);
+    vcs.changeFileContent("file", b("two"), -1);
+
+    vcs.purgeUpTo(15);
+
     List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(2, ll.size());
 
-    setCurrentTimestamp(30);
-    assertEquals(20L, ll.get(0).getTimestamp());
-  }
-
-  @Test
-  public void testLabelsTimestamp() {
-    setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1);
-
-    setCurrentTimestamp(20);
-    vcs.changeFileContent("file", null, -1);
-
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(20L, labels.get(0).getTimestamp());
-    assertEquals(10L, labels.get(1).getTimestamp());
+    assertEquals(c("two"), ll.get(0).getEntry().getContent());
+    assertEquals(c("one"), ll.get(1).getEntry().getContent());
   }
 
   @Test
@@ -127,9 +128,55 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createFile("file2", null, -1);
     vcs.endChangeSet("2");
 
-    List<Label> labels = vcs.getLabelsFor("file2");
-    assertEquals(1, labels.size());
-    assertEquals("2", labels.get(0).getName());
+    List<Label> ll = vcs.getLabelsFor("file2");
+    assertEquals(1, ll.size());
+    assertEquals("2", ll.get(0).getName());
+  }
+
+  @Test
+  public void testLabelsTimestamp() {
+    setCurrentTimestamp(10);
+    vcs.createFile("file", null, -1);
+
+    setCurrentTimestamp(20);
+    vcs.changeFileContent("file", null, -1);
+
+    setCurrentTimestamp(30);
+    vcs.changeFileContent("file", null, -1);
+
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(30L, ll.get(0).getTimestamp());
+    assertEquals(20L, ll.get(1).getTimestamp());
+    assertEquals(10L, ll.get(2).getTimestamp());
+  }
+
+  @Test
+  public void testTimestampForCurrentLabelAfterPurgeFromCurrentTimestamp() {
+    setCurrentTimestamp(10);
+    vcs.createFile("file", null, -1);
+    vcs.purgeUpTo(20);
+
+    setCurrentTimestamp(20);
+    assertEquals(20L, vcs.getLabelsFor("file").get(0).getTimestamp());
+  }
+
+  @Test
+  public void testTimestampForLastLabelAfterPurge() {
+    setCurrentTimestamp(10);
+    vcs.createFile("file", null, -1);
+
+    setCurrentTimestamp(20);
+    vcs.changeFileContent("file", null, -1);
+
+    setCurrentTimestamp(30);
+    vcs.changeFileContent("file", null, -1);
+
+    vcs.purgeUpTo(15);
+
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(30L, ll.get(0).getTimestamp());
+    assertEquals(20L, ll.get(1).getTimestamp());
+    assertEquals(20L, ll.get(2).getTimestamp());
   }
 
   @Test
@@ -197,10 +244,11 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.changeFileContent("newDir/file", null, -1);
 
     List<Label> labels = vcs.getLabelsFor("newDir/file");
-    assertEquals(2, labels.size());
+    assertEquals(3, labels.size());
 
     assertEquals("newDir/file", labels.get(0).getEntry().getPath());
-    assertEquals("dir/file", labels.get(1).getEntry().getPath());
+    assertEquals("newDir/file", labels.get(1).getEntry().getPath());
+    assertEquals("dir/file", labels.get(2).getEntry().getPath());
   }
 
   @Test

@@ -26,13 +26,17 @@ public class CreateDirectoryChange extends Change {
   }
 
   @Override
-  protected void doApplyTo(RootEntry root) {
-    Entry e = root.createDirectory(myId, myPath);
-    setAffectedIdPath(e.getIdPath());
+  protected IdPath doApplyTo(RootEntry root) {
+    return root.createDirectory(myId, myPath).getIdPath();
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.delete(getAffectedIdPath());
+    root.delete(myAffectedIdPath);
+  }
+
+  @Override
+  public boolean isCreationalFor(Entry e) {
+    return e.getId() == myAffectedIdPath.getName();
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ChangeList {
@@ -24,28 +25,37 @@ public class ChangeList {
     }
   }
 
+  // todo test support
   public List<ChangeSet> getChangeSets() {
-    return myChangeSets;
-  }
-
-  public List<ChangeSet> getChangeSetsFor(Entry e) {
-    List<ChangeSet> result = new ArrayList<ChangeSet>();
-    for (ChangeSet cs : myChangeSets) {
-      if (cs.hasChangesFor(e)) result.add(cs);
-    }
+    List<ChangeSet> result = new ArrayList<ChangeSet>(myChangeSets);
+    Collections.reverse(result);
     return result;
   }
 
+  public List<ChangeSet> getChangeSetsFor(RootEntry r, String path) {
+    RootEntry rootCopy = r.copy();
+    Entry e = rootCopy.getEntry(path);
+
+    List<ChangeSet> result = new ArrayList<ChangeSet>();
+    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
+      ChangeSet cs = myChangeSets.get(i);
+      if (cs.hasChangesFor(e)) result.add(cs);
+      if (cs.isCreationalFor(e)) break;
+      cs.revertOn(rootCopy);
+    }
+
+    return result;
+  }
 
   public void addChangeSet(ChangeSet cs) {
     myChangeSets.add(cs);
   }
 
-  public void revertUpToChangeSet(RootEntry e, ChangeSet cs) {
+  public void revertUpToChangeSet(RootEntry r, ChangeSet cs) {
     for (int i = myChangeSets.size() - 1; i >= 0; i--) {
       ChangeSet changeSet = myChangeSets.get(i);
+      changeSet.revertOn(r);
       if (changeSet == cs) return;
-      changeSet.revertOn(e);
     }
   }
 

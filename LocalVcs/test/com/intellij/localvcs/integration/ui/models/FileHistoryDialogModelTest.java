@@ -57,17 +57,19 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testLabelsListAfterPurgeConteinsOnlyCurrentVersion() {
+  public void testLabelsListAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
     vcs.createFile("f", b(""), -1);
     vcs.purgeUpTo(20);
 
     initModelFor("f");
 
+    setCurrentTimestamp(20);
     List<Label> ll = m.getLabels();
+    setCurrentTimestamp(30);
 
     assertEquals(1, ll.size());
-    assertEquals("current", ll.get(0).getName());
+    assertEquals(20L, ll.get(0).getTimestamp());
   }
 
   @Test

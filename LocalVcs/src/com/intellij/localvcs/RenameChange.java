@@ -33,19 +33,20 @@ public class RenameChange extends Change {
   }
 
   @Override
-  protected void doApplyTo(RootEntry root) {
+  protected IdPath doApplyTo(RootEntry root) {
     Entry e = root.getEntry(myPath);
 
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
     myOldName = Paths.getNameOf(e.getName());
-    setAffectedIdPath(e.getIdPath());
 
-    root.rename(getAffectedIdPath(), myNewName);
+    IdPath idPath = e.getIdPath();
+    root.rename(idPath, myNewName);
+    return idPath;
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.rename(getAffectedIdPath(), myOldName);
+    root.rename(myAffectedIdPath, myOldName);
   }
 }

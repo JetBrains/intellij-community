@@ -21,24 +21,27 @@ public abstract class Change {
   }
 
   public void applyTo(RootEntry r) {
-    doApplyTo(r);
+    myAffectedIdPath = doApplyTo(r);
     myPath = null;
   }
 
-  protected abstract void doApplyTo(RootEntry r);
+  protected abstract IdPath doApplyTo(RootEntry r);
 
   public abstract void revertOn(RootEntry r);
 
   public boolean affects(Entry e) {
-    return myAffectedIdPath.contains(e.getId());
+    for (IdPath p : getAffectedIdPaths()) {
+      if (p.contains(e.getId()) || e.getIdPath().contains(p.getName())) return true;
+    }
+    return false;
   }
 
-  protected void setAffectedIdPath(IdPath p) {
-    myAffectedIdPath = p;
+  public boolean isCreationalFor(Entry e) {
+    return false;
   }
 
-  protected IdPath getAffectedIdPath() {
-    return myAffectedIdPath;
+  public IdPath[] getAffectedIdPaths() {
+    return new IdPath[]{myAffectedIdPath};
   }
 
   public List<Content> getContentsToPurge() {

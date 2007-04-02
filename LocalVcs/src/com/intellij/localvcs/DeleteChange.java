@@ -27,16 +27,18 @@ public class DeleteChange extends Change {
   }
 
   @Override
-  protected void doApplyTo(RootEntry root) {
+  protected IdPath doApplyTo(RootEntry root) {
     myAffectedEntry = root.getEntry(myPath);
-    setAffectedIdPath(myAffectedEntry.getIdPath());
+    IdPath idPath = myAffectedEntry.getIdPath();
 
-    root.delete(getAffectedIdPath());
+    root.delete(idPath);
+
+    return idPath;
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    restoreEntryRecursively(root, myAffectedEntry, getAffectedIdPath().getParent());
+    restoreEntryRecursively(root, myAffectedEntry, myAffectedIdPath.getParent());
   }
 
   private void restoreEntryRecursively(RootEntry root, Entry e, IdPath parentPath) {
