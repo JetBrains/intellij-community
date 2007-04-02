@@ -5,18 +5,12 @@ Groovy script
     PsiElement(while)('while')
     PsiErrorElement:'(' expected
       <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(true)('true')
     PsiWhiteSpace(' ')
-    Method call
-      Literal
-        PsiElement(true)('true')
-      PsiWhiteSpace(' ')
-      Open block
-        PsiElement({)('{')
-        Method call
-          Reference expression
-            PsiElement(identifier)('doSomething')
-          PsiElement(()('(')
-          PsiElement())(')')
-        PsiElement(})('}')
-    PsiErrorElement:')' expected
-      <empty list>
+    PsiElement({)('{')
+    PsiElement(identifier)('doSomething')
+    PsiElement(()('(')
+    PsiElement())(')')
+    PsiElement(})('}')
