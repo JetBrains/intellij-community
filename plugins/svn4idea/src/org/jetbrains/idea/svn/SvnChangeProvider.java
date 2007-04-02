@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,9 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -54,7 +53,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
 
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        FileStatus status = getParentStatus(context.getClient(), path);
+        FileStatus status = getParentStatus(context, path);
         processFile(path, context, status, false);
       }
 
@@ -64,7 +63,7 @@ public class SvnChangeProvider implements ChangeProvider {
         for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
           SvnChangedFile deletedFile = iterator.next();
           final SVNStatus deletedStatus = deletedFile.getStatus();
-          if (copiedStatus.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
+          if (copiedFile.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
             builder.processChange(new Change(SvnContentRevision.create(deletedFile.getFilePath(), deletedStatus.getRevision()),
                                              CurrentContentRevision.create(copiedFile.getFilePath())));
             iterator.remove();
@@ -75,8 +74,8 @@ public class SvnChangeProvider implements ChangeProvider {
 
         // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
         // by building a relative url
-        if (!foundRename) {
-          File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copiedStatus.getCopyFromURL());
+        if (!foundRename && copiedStatus.getURL() != null) {
+          File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copiedFile.getCopyFromURL());
           SVNStatus status;
           try {
             status = context.getClient().doStatus(wcPath, false);
@@ -112,7 +111,7 @@ public class SvnChangeProvider implements ChangeProvider {
    * (See IDEADEV-13393)
    */
   @Nullable
-  private FileStatus getParentStatus(final SVNStatusClient client, final FilePath path) {
+  private FileStatus getParentStatus(final SvnChangeProviderContext context, final FilePath path) {
     final FilePath parentPath = path.getParentPath();
     if (parentPath == null) {
       return null;
@@ -125,18 +124,30 @@ public class SvnChangeProvider implements ChangeProvider {
     if (status == FileStatus.IGNORED) {
       return status;
     }
-    FileStatus parentStatus = getParentStatus(client, parentPath);
+    final Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(file);
+    if (change != null && (change.isRenamed() || change.isMoved())) {
+      try {
+        final SVNStatus svnStatus = context.getClient().doStatus(parentPath.getIOFile(), false, false);
+        if (svnStatus.getCopyFromURL() != null) {
+          context.addCopyFromURL(parentPath, svnStatus.getCopyFromURL());
+        }
+      }
+      catch (SVNException e) {
+        // ignore
+      }
+    }
+    FileStatus parentStatus = getParentStatus(context, parentPath);
     if (parentStatus != null) {
       return parentStatus;
     }
     // we care about switched only if none of the parents is ignored
-    if (status== FileStatus.SWITCHED) {
+    if (status == FileStatus.SWITCHED) {
       return status;
     }
     return null;
   }
 
-  private static File guessWorkingCopyPath(final File file, final SVNURL url, final String copyFromURL) throws SVNException {
+  private static File guessWorkingCopyPath(final File file, @NotNull final SVNURL url, final String copyFromURL) throws SVNException {
     String copiedPath = url.getPath();
     String copyFromPath = SVNURL.parseURIEncoded(copyFromURL).getPath();
     String commonPathAncestor = SVNPathUtil.getCommonPathAncestor(copiedPath, copyFromPath);
@@ -210,13 +221,19 @@ public class SvnChangeProvider implements ChangeProvider {
   private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final SvnChangeProviderContext context,
                                       final FileStatus parentStatus) throws SVNException {
     if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED && status.getCopyFromURL() != null) {
-      context.getCopiedFiles().add(new SvnChangedFile(filePath, status));
+      context.addCopiedFile(filePath, status, status.getCopyFromURL());
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
       context.getDeletedFiles().add(new SvnChangedFile(filePath, status));
     }
     else {
-      processStatus(filePath, status, context.getBuilder(), parentStatus);
+      String parentCopyFromURL = context.getParentCopyFromURL(filePath);
+      if (parentCopyFromURL != null) {
+        context.addCopiedFile(filePath, status, parentCopyFromURL);
+      }
+      else {
+        processStatus(filePath, status, context.getBuilder(), parentStatus);
+      }
     }
   }
 
@@ -388,10 +405,17 @@ public class SvnChangeProvider implements ChangeProvider {
   private static class SvnChangedFile {
     private FilePath myFilePath;
     private SVNStatus myStatus;
+    private String myCopyFromURL;
 
     public SvnChangedFile(final FilePath filePath, final SVNStatus status) {
       myFilePath = filePath;
       myStatus = status;
+    }
+
+    public SvnChangedFile(final FilePath filePath, final SVNStatus status, final String copyFromURL) {
+      myFilePath = filePath;
+      myStatus = status;
+      myCopyFromURL = copyFromURL;
     }
 
     public FilePath getFilePath() {
@@ -401,13 +425,21 @@ public class SvnChangeProvider implements ChangeProvider {
     public SVNStatus getStatus() {
       return myStatus;
     }
+
+    public String getCopyFromURL() {
+      if (myCopyFromURL == null) {
+        return myStatus.getCopyFromURL();
+      }
+      return myCopyFromURL;
+    }
   }
 
   private static class SvnChangeProviderContext {
     private ChangelistBuilder myChangelistBuilder;
     private SVNStatusClient myStatusClient;
-    private List<SvnChangedFile> myCopiedFiles = new ArrayList<SvnChangedFile>();
+    private List<SvnChangedFile> myCopiedFiles = null;
     private List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
+    private Map<FilePath, String> myCopyFromURLs = null;
 
     public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder) throws SVNException {
       myStatusClient = vcs.createStatusClient();
@@ -422,13 +454,57 @@ public class SvnChangeProvider implements ChangeProvider {
       return myStatusClient;
     }
 
+    @NotNull
     public List<SvnChangedFile> getCopiedFiles() {
+      if (myCopiedFiles == null) {
+        return Collections.emptyList();
+      }
       return myCopiedFiles;
     }
 
     public List<SvnChangedFile> getDeletedFiles() {
       return myDeletedFiles;
     }
-  }
 
+    /**
+     * If the specified filepath or its parent was added with history, returns the URL of the copy source for this filepath.
+     *
+     * @param filePath the original filepath
+     * @return the copy source url, or null if the file isn't a copy of anything
+     */
+    @Nullable
+    public String getParentCopyFromURL(FilePath filePath) {
+      if (myCopyFromURLs == null) {
+        return null;
+      }
+      StringBuilder relPathBuilder = new StringBuilder();
+      while(filePath != null) {
+        String copyFromURL = myCopyFromURLs.get(filePath);
+        if (copyFromURL != null) {
+          return copyFromURL + relPathBuilder.toString();
+        }
+        relPathBuilder.insert(0, "/" + filePath.getName());
+        filePath = filePath.getParentPath();
+      }
+      return null;
+    }
+
+    public void addCopiedFile(final FilePath filePath, final SVNStatus status, final String copyFromURL) {
+      if (myCopiedFiles == null) {
+        myCopiedFiles = new ArrayList<SvnChangedFile>();
+      }
+      myCopiedFiles.add(new SvnChangedFile(filePath, status, copyFromURL));
+      final String url = status.getCopyFromURL();
+      if (url != null) {
+        addCopyFromURL(filePath, url);
+      }
+    }
+
+    public void addCopyFromURL(final FilePath filePath, final String url) {
+      if (myCopyFromURLs == null) {
+        myCopyFromURLs = new HashMap<FilePath, String>();
+      }
+      myCopyFromURLs.put(filePath, url);
+    }
+  }
 }
