@@ -277,6 +277,10 @@ public abstract class PassExecutorService {
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
               }
+              catch(RuntimeException e) {
+                LOG.error(e);
+                throw e;
+              }
             }
           });
         }
