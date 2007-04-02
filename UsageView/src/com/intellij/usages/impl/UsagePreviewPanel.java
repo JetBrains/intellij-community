@@ -79,7 +79,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
-      if (psiElement == null) return;
+      if (psiElement == null || !psiElement.isValid()) continue;
       int offsetInFile = psiElement.getTextOffset();
 
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
