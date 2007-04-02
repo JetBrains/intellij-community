@@ -12,11 +12,8 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -32,7 +29,6 @@ import java.awt.*;
 public class ProjectJdkStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private WizardContext myContext;
-  private boolean myInitialized = false;
 
   private ProjectJdksConfigurable myProjectJdksConfigurable;
 
@@ -72,16 +68,6 @@ public class ProjectJdkStep extends ModuleWizardStep {
   }
 
 
-  public void updateStep() {
-    if (!myInitialized) { //lazy default project initialization
-      ProjectJdk defaultJdk = getDefaultJdk();
-      if (defaultJdk != null) {
-        myProjectJdksConfigurable.selectJdk(defaultJdk);
-      }
-      myInitialized = true;
-    }
-  }
-
   public ProjectJdk getJdk() {
     return myProjectJdksConfigurable.getSelectedJdk();
   }
@@ -89,12 +75,6 @@ public class ProjectJdkStep extends ModuleWizardStep {
   public Icon getIcon() {
     return NEW_PROJECT_ICON;
   }
-
-  private static ProjectJdk getDefaultJdk() {
-    Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectJdk();
-  }
-
 
   public boolean validate() {
     final ProjectJdk jdk = myProjectJdksConfigurable.getSelectedJdk();

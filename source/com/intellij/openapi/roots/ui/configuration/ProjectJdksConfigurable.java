@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -85,6 +84,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER);
       addNode(new MyNode(configurable), myRoot);
     }
+    selectJdk(myProjectJdksModel.getProjectJdk()); //restore selection
     final String value = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION);
     if (value != null) {
       try {
@@ -120,11 +120,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     }
 
     if (myProjectJdksModel.isModified() || modifiedJdks) myProjectJdksModel.apply(this);
-    myProjectJdksModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
-
-    disposeUIResources();
-    reset();
-  }
+    myProjectJdksModel.setProjectJdk(getSelectedJdk());
+ }
 
 
   public boolean isModified() {
