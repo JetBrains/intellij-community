@@ -21,6 +21,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author Ilya.Sergey
@@ -51,9 +53,18 @@ public class RelationalExpression implements GroovyElementTypes
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder);
         marker.done(RELATIONAL_EXPRESSION);
-
-        // TODO add "instanceof" and "as" parsing
-
+      } else if (kINSTANCEOF.equals(builder.getTokenType()) ||
+              kAS.equals(builder.getTokenType())) {
+        builder.advanceLexer();
+        PsiBuilder.Marker rb = builder.mark();
+        ParserUtils.getToken(builder, mNLS);
+        if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+          rb.rollbackTo();
+          builder.error(GroovyBundle.message("type.specification.expected"));
+        } else {
+          rb.drop();
+        }
+        marker.done(RELATIONAL_EXPRESSION);
       }
       else
       {
