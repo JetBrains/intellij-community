@@ -38,10 +38,10 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new StaticNonFinalFieldVisitor();
+        return new FieldHasSetterButNoGetterVisitor();
     }
 
-    private static class StaticNonFinalFieldVisitor
+    private static class FieldHasSetterButNoGetterVisitor
             extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {

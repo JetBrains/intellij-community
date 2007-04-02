@@ -103,10 +103,10 @@ public class StaticMethodOnlyUsedInOneClassInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new StaticmethodOnlyUsedInOneOtherClassVisitor();
+        return new StaticmethodOnlyUsedInOneClassVisitor();
     }
 
-    private static class StaticmethodOnlyUsedInOneOtherClassVisitor
+    private static class StaticmethodOnlyUsedInOneClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethod(PsiMethod method) {
