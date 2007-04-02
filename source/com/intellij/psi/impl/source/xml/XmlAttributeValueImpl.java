@@ -11,9 +11,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +85,11 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Nullable
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlAttributeLiteralEscaper.INSTANCE);
+    PsiElement parent = getParent();
+    if (parent instanceof XmlAttribute) {
+      return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlAttributeLiteralEscaper((XmlAttribute)parent));
+    }
+    return null;
   }
 
   public void fixText(String text) {

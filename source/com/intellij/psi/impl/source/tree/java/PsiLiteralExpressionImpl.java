@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -421,7 +422,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     Object value = getValue();
     if (!(value instanceof String)) return null;
 
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.StringLiteralEscaper.INSTANCE);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, new StringLiteralEscaper());
   }
 
   public void fixText(final String text) {

@@ -180,6 +180,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
   public int physicalToDisplay(int physicalIndex) {
     getDisplayValue();
+    if (physicalIndex < 0 || physicalIndex > myValueTextRange.getLength()) return -1;
     if (myGapPhysicalStarts.length == 0) return physicalIndex;
 
     final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
@@ -195,7 +196,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public int displayToPhysical(int displayIndex) {
-    getDisplayValue();
+    String displayValue = getDisplayValue();
+    if (displayIndex < 0 || displayIndex > displayValue.length()) return -1;
     if (myGapDisplayStarts.length == 0) return displayIndex;
 
     final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
