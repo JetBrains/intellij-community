@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,7 @@ public class VariableInplaceRenamer {
     collectRangesToHighlight(rangesToHighlight, refs);
 
     final HighlightManager highlightManager = HighlightManager.getInstance(myElementToRename.getProject());
-    myElementToRename.getContainingFile();
+
     final PsiElement scope = myElementToRename instanceof PsiParameter ?
         ((PsiParameter) myElementToRename).getDeclarationScope() :
         PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
@@ -72,6 +73,7 @@ public class VariableInplaceRenamer {
     final Project project = myElementToRename.getProject();
     final PsiIdentifier nameIdentifier = myElementToRename.getNameIdentifier();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, editor.getCaretModel().getOffset());
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myElementToRename)) return;
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
@@ -211,7 +213,7 @@ public class VariableInplaceRenamer {
       }
     });
 
-    return usages.size() == 0;
+    return usages.isEmpty();
   }
 
   private class MyExpression implements Expression {
