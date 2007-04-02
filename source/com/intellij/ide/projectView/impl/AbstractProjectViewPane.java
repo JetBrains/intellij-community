@@ -499,7 +499,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
           };
 
           //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
+          if (elements != null && elements.length > 0) {
+            dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
+          }
         }
         catch (InvalidDnDOperationException idoe) {
           // ignore
