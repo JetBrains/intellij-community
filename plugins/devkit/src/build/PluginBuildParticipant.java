@@ -6,9 +6,9 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.compiler.make.BuildParticipantBase;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.deployment.ModuleLink;
@@ -147,17 +147,20 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     final VirtualFile libDir = VfsUtil.findRelativeFile(LIB_DIRECTORY, jdk.getHomeDirectory());
     for (i = 0; i < libraryLinks.length; i++) {
       LibraryLink libraryLink = libraryLinks[i];
-      VirtualFile[] files = libraryLink.getLibrary().getFiles(OrderRootType.CLASSES);
-      for (VirtualFile file : files) {
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
+      final Library library = libraryLink.getLibrary();
+      if (library != null) {
+        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+        for (VirtualFile file : files) {
+          if (file.getFileSystem() instanceof JarFileSystem) {
+            file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
+          }
+          if (libDir != null && VfsUtil.isAncestor(libDir, file, false)) {
+            context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
+                               -1, -1);
+          }
         }
-        if (VfsUtil.isAncestor(libDir, file, false)) {
-          context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
-                             -1, -1);
-        }
+        makeUtil.addLibraryLink(context, instructions, libraryLink, getModule(), explodedPath);
       }
-      makeUtil.addLibraryLink(context, instructions, libraryLink, getModule(), explodedPath);
     }
   }
 
