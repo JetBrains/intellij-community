@@ -164,12 +164,12 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     framesGroup.addSeparator();
     addAction(framesGroup, DebuggerActions.STEP_OVER);
     addAction(framesGroup, DebuggerActions.STEP_INTO);
-    addAction(framesGroup, DebuggerActions.STEP_OUT);
     addAction(framesGroup, DebuggerActions.FORCE_STEP_INTO);
+    addAction(framesGroup, DebuggerActions.STEP_OUT);
+    addAction(framesGroup, DebuggerActions.POP_FRAME);
     framesGroup.addSeparator();
     addAction(framesGroup, IdeActions.ACTION_PREVIOUS_OCCURENCE);
     addAction(framesGroup, IdeActions.ACTION_NEXT_OCCURENCE);
-    addAction(framesGroup, DebuggerActions.POP_FRAME);
     addAction(framesGroup, DebuggerActions.RUN_TO_CURSOR);
     myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
 

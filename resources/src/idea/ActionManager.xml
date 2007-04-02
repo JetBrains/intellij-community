@@ -1147,7 +1147,6 @@
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
-      <!--<reference ref="Debugger.ShowAsHex"/>-->
       <reference ref="Debugger.ViewAsGroup"/>
       <separator/>
       <reference ref="Debugger.AddToWatch"/>
