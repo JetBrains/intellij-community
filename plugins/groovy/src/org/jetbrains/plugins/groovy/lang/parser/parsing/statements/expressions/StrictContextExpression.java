@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.BranchStatement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
@@ -26,7 +27,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
  */
 public class StrictContextExpression implements GroovyElementTypes {
     public static GroovyElementType parse(PsiBuilder builder) {
-      // TODO implement all cases
+
+      if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())){
+        return  BranchStatement.parse(builder);
+      }
+      // TODO implement two other cases
+
       return ExpressionStatement.argParse(builder);
     }
 }

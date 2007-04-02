@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
@@ -142,6 +143,13 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //type parameters
     if (elem.equals(TYPE_ARGUMENT)) return new GrTypeArgumentImpl(node);
     if (elem.equals(TYPE_ARGUMENTS)) return new GrTypeArgumentsImpl(node);
+
+    //Branch statements
+    if (elem.equals(RETURN_STATEMENT)) return new GrReturnStmtImpl(node);
+    if (elem.equals(THROW_STATEMENT)) return new GrThrowStmtImpl(node);
+    if (elem.equals(ASSERT_STATEMENT)) return new GrAssertStmtImpl(node);
+    if (elem.equals(BREAK_STATEMENT)) return new GrBreakStmtImpl(node);
+    if (elem.equals(CONTINUE_STATEMENT)) return new GrContinueStmtImpl(node);
 
     //expressions
     if (elem.equals(EXPRESSION_STATEMENT)) return new GrCallExpressionImpl(node);

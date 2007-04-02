@@ -53,6 +53,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType IMPORT_REFERENCE = new GroovyElementType("Import identifier");
   GroovyElementType IMPORT_SELECTOR = new GroovyElementType("Import selector");
 
+  //Branch statements
+  GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
+  GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("Continue statement");
+  GroovyElementType RETURN_STATEMENT = new GroovyElementType("Return statement");
+  GroovyElementType ASSERT_STATEMENT = new GroovyElementType("Assert statement");
+  GroovyElementType THROW_STATEMENT = new GroovyElementType("Throw statement");
+
   // Expression statements
   GroovyElementType EXPRESSION_STATEMENT = new GroovyElementType("Expression statement");
   GroovyElementType COMMAND_ARGUMENTS = new GroovyElementType("Command arguments");
