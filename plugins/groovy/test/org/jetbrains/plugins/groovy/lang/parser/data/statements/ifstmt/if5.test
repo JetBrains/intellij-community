@@ -1,0 +1,17 @@
+if (expr1) expr2 else
+-----
+Groovy script
+  IF statement
+    PsiElement(if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('expr1')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('expr2')
+    PsiWhiteSpace(' ')
+    PsiElement(else)('else')
+    PsiErrorElement:Expression expected
+      <empty list>

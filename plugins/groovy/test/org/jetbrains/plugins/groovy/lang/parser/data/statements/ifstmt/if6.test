@@ -1,0 +1,16 @@
+else
+{1+2}
+-----
+Groovy script
+  PsiErrorElement:'else' without 'if'
+    PsiElement(else)('else')
+  PsiElement(new line)('\n')
+  Open block
+    PsiElement({)('{')
+    Additive expression
+      Literal
+        PsiElement(number)('1')
+      PsiElement(+)('+')
+      Literal
+        PsiElement(number)('2')
+    PsiElement(})('}')
