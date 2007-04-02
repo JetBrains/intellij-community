@@ -687,7 +687,7 @@ public class SelectWordUtil {
 
       PsiElement endElement = e;
 
-      while (endElement.getNextSibling() != null && endElement instanceof PsiJavaCodeReferenceElement) {
+      while (endElement instanceof PsiJavaCodeReferenceElement && endElement.getNextSibling() != null) {
         endElement = endElement.getNextSibling();
       }
 
