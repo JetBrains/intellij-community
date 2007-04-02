@@ -13,23 +13,23 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.ASTNode;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Ilya.Sergey
  */
-public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhileStatement {
-  public GrWhileStatementImpl(@NotNull ASTNode node) {
+public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStatement {
+  public GrBreakStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
    public String toString() {
-    return "WHILE statement";
+    return "BREAK statement";
   }
 }
