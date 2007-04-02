@@ -32,17 +32,13 @@
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
-public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
+public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
   @NonNls private static final String ID_ATTR_NAME = "id";
   @NonNls private static final String NAME_ATTR_NAME = "name";
 
@@ -50,22 +46,8 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
     super(tag);
   }
 
-  public Collection<StructureViewTreeElement> getChildrenBase() {
-    XmlTag[] subTags = getElement().getSubTags();
-    final XmlStructureViewElementProvider[] providers = (XmlStructureViewElementProvider[])
-      Extensions.getExtensions(XmlStructureViewElementProvider.EXTENSION_POINT_NAME);
-
-    return ContainerUtil.map2List(subTags, new Function<XmlTag, StructureViewTreeElement>() {
-      public StructureViewTreeElement fun(final XmlTag xmlTag) {
-        for (final XmlStructureViewElementProvider provider : providers) {
-          final StructureViewTreeElement element = provider.createCustomXmlTagTreeElement(xmlTag);
-          if (element != null) {
-            return element;
-          }
-        }
-        return new XmlTagTreeElement(xmlTag);
-      }
-    });
+ public Collection<StructureViewTreeElement> getChildrenBase() {
+    return getStructureViewTreeElements(getElement().getSubTags());
   }
 
   public String getPresentableText() {

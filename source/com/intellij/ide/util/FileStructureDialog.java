@@ -27,6 +27,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -49,7 +50,7 @@ public class FileStructureDialog extends DialogWrapper {
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
 
-  public FileStructureDialog(StructureViewModel structureViewModel, Editor editor, Project project, Navigatable navigatable,
+  public FileStructureDialog(StructureViewModel structureViewModel, @Nullable Editor editor, Project project, Navigatable navigatable,
                              final @NotNull Disposable auxDisposable) {
     super(project, true);
     myProject = project;
@@ -58,23 +59,27 @@ public class FileStructureDialog extends DialogWrapper {
     myTreeModel = structureViewModel;
     myAuxDisposable = auxDisposable;
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+    PsiFile psiFile = getPsiFile(project);
 
-    final PsiElement elementAtCursor = getElementAtCursor(psiFile);
+    final PsiElement psiElement = getCurrentElement(psiFile);
 
     //myDialog.setUndecorated(true);
     init();
 
-    if (elementAtCursor != null) {
-      if (elementAtCursor instanceof PsiClass) {
-        myCommanderPanel.getBuilder().enterElement(elementAtCursor, elementAtCursor.getContainingFile().getVirtualFile());
+    if (psiElement != null) {
+      if (psiElement instanceof PsiClass) {
+        myCommanderPanel.getBuilder().enterElement(psiElement, psiElement.getContainingFile().getVirtualFile());
       }
       else {
-        myCommanderPanel.getBuilder().selectElement(elementAtCursor, PsiUtil.getVirtualFile(elementAtCursor));
+        myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtil.getVirtualFile(psiElement));
       }
     }
 
     Disposer.register(myDisposable, myAuxDisposable);
+  }
+
+  protected PsiFile getPsiFile(final Project project) {
+    return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
   protected Border createContentPaneBorder(){
@@ -94,7 +99,10 @@ public class FileStructureDialog extends DialogWrapper {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCommanderPanel);
   }
 
-  private PsiElement getElementAtCursor(final PsiFile psiFile) {
+  @Nullable
+  protected PsiElement getCurrentElement(@Nullable final PsiFile psiFile) {
+    if (psiFile == null) return null;
+
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
@@ -138,7 +146,7 @@ public class FileStructureDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     myCommanderPanel = new MyCommanderPanel(myProject);
 
-    PsiElement parent = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiElement parent = getPsiFile(myProject);
     if (parent instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)parent).getClasses();
       if (classes.length == 1) {

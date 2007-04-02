@@ -32,28 +32,28 @@
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiElement;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
+public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
   public XmlFileTreeElement(XmlFile file) {
     super(file);
   }
 
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    final Collection<StructureViewTreeElement> rootTags = new ArrayList<StructureViewTreeElement>();
     final XmlDocument document = getElement().getDocument();
-    if (document != null)
+    List<XmlTag> rootTags = new ArrayList<XmlTag>();
+    if (document != null) {
       for (PsiElement element : document.getChildren())
-        if (element instanceof XmlTag) rootTags.add(new XmlTagTreeElement((XmlTag)element));
-    return rootTags;
+        if (element instanceof XmlTag) rootTags.add((XmlTag)element);
+    }
+    return getStructureViewTreeElements(rootTags.toArray(new XmlTag[rootTags.size()]) );
   }
 
   public String getPresentableText() {
