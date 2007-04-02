@@ -183,6 +183,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     synchronized (LOCK) {
       infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
     }
+    if (infos.length == 0) {
+      return;
+    }
 
     final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
     final VirtualFileManagerEx manager = getManager();
