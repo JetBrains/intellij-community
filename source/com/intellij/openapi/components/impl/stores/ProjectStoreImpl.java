@@ -302,7 +302,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     assert projectStore instanceof DefaultProjectStoreImpl;
     DefaultProjectStoreImpl defaultProjectStore = (DefaultProjectStoreImpl)projectStore;
     final Element element = defaultProjectStore.getStateCopy();
-    xmlElementStorage.setDefaultState(element);
+    if (element != null) {
+      xmlElementStorage.setDefaultState(element);
+    }
   }
 
   @NotNull

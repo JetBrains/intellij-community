@@ -30,8 +30,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     myElement = projectManager.getDefaultProjectRootElement();
   }
 
+  @Nullable
   Element getStateCopy() {
-    return (Element)myProjectManager.getDefaultProjectRootElement().clone();
+    final Element element = myProjectManager.getDefaultProjectRootElement();
+    return element != null ? (Element)element.clone() : null;
   }
 
 
