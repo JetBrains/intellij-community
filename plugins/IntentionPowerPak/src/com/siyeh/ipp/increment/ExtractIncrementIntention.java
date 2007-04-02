@@ -92,10 +92,12 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         }
         final PsiStatement newStatement =
                 factory.createStatementFromText(newStatementText, null);
-        if (element instanceof PsiPostfixExpression) {
-            parent.addAfter(newStatement, statement);
-        } else {
-            parent.addBefore(newStatement, statement);
+        if (!(statement instanceof PsiForStatement)) {
+            if (element instanceof PsiPostfixExpression) {
+                parent.addAfter(newStatement, statement);
+            } else {
+                parent.addBefore(newStatement, statement);
+            }
         }
         if (statement instanceof PsiLoopStatement) {
             // in/decrement inside loop statement condition
@@ -104,14 +106,26 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             if (body instanceof PsiBlockStatement) {
                 final PsiBlockStatement blockStatement = (PsiBlockStatement) body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-                codeBlock.add(newStatement);
+                if (element instanceof PsiPostfixExpression) {
+                    final PsiElement firstElement = codeBlock.getFirstBodyElement();
+                    codeBlock.addBefore(newStatement, firstElement);
+                } else {
+                    codeBlock.add(newStatement);
+                }
             } else {
                 final StringBuilder blockText = new StringBuilder();
                 blockText.append('{');
-                if (body != null) {
-                    blockText.append(body.getText());
+                if (element instanceof PsiPostfixExpression) {
+                    blockText.append(newStatementText);
+                    if (body != null) {
+                        blockText.append(body.getText());
+                    }
+                } else {
+                    if (body != null) {
+                        blockText.append(body.getText());
+                    }
+                    blockText.append(newStatementText);
                 }
-                blockText.append(newStatementText);
                 blockText.append('}');
                 final PsiStatement blockStatement =
                         factory.createStatementFromText(blockText.toString(),
@@ -123,8 +137,6 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
                 }
             }
         }
-//        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-//        codeStyleManager.reformat(insertedElement);
         replaceExpression(operandText, (PsiExpression)element);
     }
 
@@ -133,10 +145,6 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             @Nullable PsiElement elementToReplace,
             @Nullable String replacement,
             @NotNull StringBuilder out) {
-        int i = 10;
-        do {
-            System.out.println(i);
-        } while (i++ < 20);
         if (element.equals(elementToReplace)) {
             out.append(replacement);
             return;
