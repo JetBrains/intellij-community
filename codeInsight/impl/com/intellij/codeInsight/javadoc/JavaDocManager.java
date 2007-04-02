@@ -2,11 +2,11 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -36,8 +36,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -196,39 +196,8 @@ public class JavaDocManager implements ProjectComponent {
       myParameterInfoController = ParameterInfoController.getControllerAtOffset(editor, list.getTextRange().getStartOffset());
     }
 
-
     PsiElement originalElement = (file != null)?file.findElementAt(editor.getCaretModel().getOffset()): null;
-    PsiElement element = findTargetElement(editor, originalElement);
-
-    if (element == null && editor != null) {
-      final PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
-
-      if (ref != null) {
-        final PsiElement parent = ref.getElement().getParent();
-
-        if (parent instanceof PsiMethodCallExpression) {
-          element = parent;
-        }
-      }
-
-      Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
-
-      if (activeLookup != null) {
-        LookupItem item = activeLookup.getCurrentItem();
-        if (item == null) return null;
-
-        if (file!=null) {
-          DocumentationProvider documentationProvider = getProviderFromElement(file);
-          if (documentationProvider!=null) {
-
-            if (ref!=null) originalElement = ref.getElement();
-            element = documentationProvider.getDocumentationElementForLookupItem(file.getManager(), item.getObject(), originalElement);
-          }
-        } else {
-          return null;
-        }
-      }
-    }
+    PsiElement element = findTargetElement(editor, file, originalElement);
 
     if (element instanceof PsiAnonymousClass) {
       element = ((PsiAnonymousClass)element).getBaseClassType().resolve();
@@ -323,7 +292,8 @@ public class JavaDocManager implements ProjectComponent {
     return hint;
   }
 
-  public static PsiElement findTargetElement(final Editor editor, PsiElement contextElement) {
+  @Nullable
+  public static PsiElement findTargetElement(final Editor editor, final PsiFile file, PsiElement contextElement) {
     PsiElement element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements);
 
     // Allow context doc over xml tag content
@@ -338,7 +308,43 @@ public class JavaDocManager implements ProjectComponent {
                                                              parent.getTextRange().getStartOffset() + 1
                                                            );
         }
+    }
+
+    if (element == null && editor != null) {
+      final PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+
+      if (ref != null) {
+        final PsiElement parent = ref.getElement().getParent();
+
+        if (parent instanceof PsiMethodCallExpression) {
+          element = parent;
+        } else if (ref instanceof PsiPolyVariantReference) {
+          element = ref.getElement();
+        }
       }
+
+      final Lookup activeLookup = LookupManager.getInstance(file.getProject()).getActiveLookup();
+
+      if (activeLookup != null) {
+        LookupItem item = activeLookup.getCurrentItem();
+        if (item == null) return null;
+
+        if (file!=null) {
+          final DocumentationProvider documentationProvider = getProviderFromElement(file);
+
+          if (documentationProvider!=null) {
+            element = documentationProvider.getDocumentationElementForLookupItem(
+              file.getManager(),
+              item.getObject(),
+              ref != null ? ref.getElement():contextElement
+            );
+          }
+        } else {
+          return null;
+        }
+      }
+    }
+
     return element;
   }
 
@@ -661,12 +667,12 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public static DocumentationProvider getProviderFromElement(final PsiElement element) {
+  public static @Nullable DocumentationProvider getProviderFromElement(final PsiElement element) {
     SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
     PsiFile containingFile = (originalElement!=null)?originalElement.getContainingFile() : (element!=null)?element.getContainingFile():null;
 
-    return containingFile.getLanguage().getDocumentationProvider();
+    return containingFile != null ? containingFile.getLanguage().getDocumentationProvider():null;
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {

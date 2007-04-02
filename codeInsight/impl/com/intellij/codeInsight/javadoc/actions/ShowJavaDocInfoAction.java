@@ -79,9 +79,16 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
           presentation.setEnabled(isEnabledForFile(project, editor, file));
         }
 
-        // we allow request quick doc over content of the tag
-        if (element == null && file != null && file.getLanguage() instanceof XMLLanguage) {
-          element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), XmlTag.class);
+        if (element == null && file != null) {
+          if (file.getLanguage() instanceof XMLLanguage) {
+            // we allow request quick doc over content of the tag
+            element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), XmlTag.class);
+          } else {
+            final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
+            if (ref instanceof PsiPolyVariantReference) {
+              element = ref.getElement();
+            }
+          }
         }
       }
 
