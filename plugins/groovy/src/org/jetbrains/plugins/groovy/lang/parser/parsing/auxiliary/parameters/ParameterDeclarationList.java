@@ -37,8 +37,6 @@ public class ParameterDeclarationList implements GroovyElementTypes
   {
     PsiBuilder.Marker pdlMarker = builder.mark();
 
-    // TODO Do something with modifiers in variable definitions, not parameters case
-
     GroovyElementType result = ParameterDeclaration.parse(builder, ending);
 
     if (!PARAMETER.equals(result))

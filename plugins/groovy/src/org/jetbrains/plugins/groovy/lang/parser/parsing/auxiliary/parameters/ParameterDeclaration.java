@@ -57,7 +57,6 @@ public class ParameterDeclaration implements GroovyElementTypes
       rb.drop();
     }
 
-    // TODO When does it work? I tried but i failed.
     // Possible it is a parameter, not statement
     boolean hasDots = ParserUtils.getToken(builder, mTRIPLE_DOT);
 
