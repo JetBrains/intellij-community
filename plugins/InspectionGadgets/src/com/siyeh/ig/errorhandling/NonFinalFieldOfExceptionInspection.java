@@ -16,13 +16,17 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NonFinalFieldOfExceptionInspection extends BaseInspection {
 
@@ -38,12 +42,18 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
                 "non.final.field.of.exception.problem.descriptor");
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return MakeFieldFinalFix.buildFix(location);
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new NonFinalFieldOfExceptionVisitor();
     }
 
     private static class NonFinalFieldOfExceptionVisitor
             extends BaseInspectionVisitor {
+
         public void visitField(PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.FINAL)) {

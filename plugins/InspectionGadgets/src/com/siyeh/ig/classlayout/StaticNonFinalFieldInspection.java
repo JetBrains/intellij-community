@@ -15,12 +15,16 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StaticNonFinalFieldInspection extends BaseInspection {
 
@@ -34,6 +38,11 @@ public class StaticNonFinalFieldInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "static.non.final.field.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return MakeFieldFinalFix.buildFix(location);
     }
 
     public BaseInspectionVisitor buildVisitor() {

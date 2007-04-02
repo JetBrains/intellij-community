@@ -15,10 +15,14 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
         extends BaseInspection {
@@ -35,8 +39,12 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
                 "non.final.static.variable.initialization.problem.descriptor");
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return MakeFieldFinalFix.buildFix(location);
+    }
+
     public BaseInspectionVisitor buildVisitor(){
         return new NonFinalStaticVariableUsedInClassInitializationVisitor();
     }
-
 }

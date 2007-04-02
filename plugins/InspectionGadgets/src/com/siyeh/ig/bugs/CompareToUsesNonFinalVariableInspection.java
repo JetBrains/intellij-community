@@ -19,8 +19,11 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CompareToUsesNonFinalVariableInspection
         extends BaseInspection {
@@ -37,6 +40,11 @@ public class CompareToUsesNonFinalVariableInspection
                 "non.final.field.compareto.problem.descriptor");
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return MakeFieldFinalFix.buildFix(location);
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new CompareToUsesNonFinalVariableVisitor();
     }
@@ -48,6 +56,7 @@ public class CompareToUsesNonFinalVariableInspection
             final boolean isCompareTo = MethodUtils.isCompareTo(method);
             if (isCompareTo) {
                 method.accept(new PsiRecursiveElementVisitor() {
+
                     public void visitClass(PsiClass aClass) {
                         // Do not recurse into.
                     }

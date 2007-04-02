@@ -19,8 +19,11 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HashCodeUsesNonFinalVariableInspection
         extends BaseInspection {
@@ -39,6 +42,11 @@ public class HashCodeUsesNonFinalVariableInspection
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.final.field.in.hashcode.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return MakeFieldFinalFix.buildFix(location);
     }
 
     public BaseInspectionVisitor buildVisitor() {
