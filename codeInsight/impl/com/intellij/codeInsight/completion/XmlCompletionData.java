@@ -328,15 +328,6 @@ public class XmlCompletionData extends CompletionData {
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
       StringBuilder indirectRequiredAttrs = null;
 
-      if (completionChar == ' ') {
-        template.addTextSegment(" ");
-        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
-        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
-        template.addTextSegment("=\"");
-        template.addEndVariable();
-        template.addTextSegment("\"");
-      }
-
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
@@ -371,6 +362,13 @@ public class XmlCompletionData extends CompletionData {
       }
       else if (completionChar == '/') {
         template.addTextSegment("/>");
+      } else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
+        template.addTextSegment(" ");
+        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
+        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+        template.addTextSegment("=\"");
+        template.addEndVariable();
+        template.addTextSegment("\"");
       }
 
       templateManager.startTemplate(editor, template);
