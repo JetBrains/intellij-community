@@ -123,7 +123,7 @@ public class EscapedJavaLexer extends LexerBase {
         state = 1;
       }
 
-      if (!esc && state == 0 || offset >= myBufferEnd) {
+      if (!esc && state == 0 || offset + 1 >= myBufferEnd) {
         break;
       }
 
