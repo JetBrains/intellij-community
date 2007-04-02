@@ -46,10 +46,12 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
                 return null;
             }
             field = (PsiField)target;
-        } else if (location instanceof PsiField) {
-            field = (PsiField)location;
         } else {
-            return null;
+            final PsiElement parent = location.getParent();
+            if (!(parent instanceof PsiField)) {
+                return null;
+            }
+            field = (PsiField)parent;
         }
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
             if (!canStaticFieldBeFinal(field)) {
@@ -138,16 +140,22 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
     protected void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiReferenceExpression)) {
-            return;
+        final PsiField field;
+        if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)element;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return;
+            }
+            field = (PsiField)target;
+        } else {
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiField)) {
+                return;
+            }
+            field = (PsiField)parent;
         }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression)element;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiField)) {
-            return;
-        }
-        final PsiField field = (PsiField) target;
         final PsiModifierList modifierList = field.getModifierList();
         if (modifierList == null) {
             return;
