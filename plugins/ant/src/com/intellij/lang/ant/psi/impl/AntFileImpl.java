@@ -7,6 +7,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -227,13 +228,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       }
       else {
         final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getProject());
-        final AntInstallation antInstallation = configuration != null ? configuration.getProjectDefaultAnt() : null;
-        if (antInstallation != null) {
-          myClassLoader = antInstallation.getClassLoader();
+        AntInstallation antInstallation = null;
+        if (configuration != null) {
+          antInstallation = configuration.getProjectDefaultAnt();
         }
-        else {
-          myClassLoader = null;
+        if (antInstallation == null) {
+          antInstallation = GlobalAntConfiguration.getInstance().getBundledAnt();
         }
+        assert antInstallation != null;
+        myClassLoader = antInstallation.getClassLoader();
       }
     }
     return myClassLoader;
