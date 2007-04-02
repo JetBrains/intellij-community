@@ -52,6 +52,7 @@ public class MarkObjectAction extends DebuggerAction {
     }
     finally {
       tree.restoreState(node);
+      node.labelChanged();
     }
     
     final DebuggerSession session = debuggerContext.getDebuggerSession();

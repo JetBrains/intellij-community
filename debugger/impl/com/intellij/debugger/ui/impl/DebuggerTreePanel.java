@@ -4,25 +4,19 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.Alarm;
-import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.awt.event.KeyEvent;
 
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
   private final DebuggerTree myTree;
@@ -53,6 +47,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
       }
     });
 
+    overrideShortcut(myTree, DebuggerActions.MARK_OBJECT, KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
   }
 
   protected abstract DebuggerTree createTreeView();

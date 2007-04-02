@@ -1,14 +1,15 @@
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
-import com.intellij.debugger.ui.DebuggerView;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.ui.DebuggerView;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 
@@ -106,5 +107,15 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
       disposable.dispose();
     }
     myDisposables.clear();
+  }
+
+  protected void overrideShortcut(final JComponent forComponent, final String actionId, final KeyStroke keyStroke) {
+    final AnAction action = ActionManager.getInstance().getAction(actionId);
+    action.registerCustomShortcutSet(new CustomShortcutSet(keyStroke), forComponent);
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        action.unregisterCustomShortcutSet(forComponent);
+      }
+    });
   }
 }

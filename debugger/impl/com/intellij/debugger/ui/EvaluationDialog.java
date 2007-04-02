@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.WatchPanel;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.Disposable;
@@ -22,6 +23,7 @@ import com.intellij.util.EventDispatcher;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -165,6 +167,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
           setValueAction.unregisterCustomShortcutSet(watchTree);
         }
       });
+      setUpdateEnabled(true);
     }
 
     protected ActionPopupMenu createPopupMenu() {
@@ -173,7 +176,23 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
 
     protected void changeEvent(DebuggerContextImpl newContext, int event) {
-      // left empty to supress the events in order not to spoil the evaluation result
+      if (event == DebuggerSession.EVENT_REFRESH || event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY) {
+        // in order not to spoil the evaluation result do not re-evaluate the tree
+        final TreeModel treeModel = getTree().getModel();
+        updateTree(treeModel, (DebuggerTreeNodeImpl)treeModel.getRoot());
+      }
+    }
+
+    private void updateTree(final TreeModel model, final DebuggerTreeNodeImpl node) {
+      if (node == null) {
+        return;
+      }
+      final int count = model.getChildCount(node);
+      for (int idx = 0; idx < count; idx++) {
+        final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)model.getChild(node, idx);
+        updateTree(model, child);
+      }
+      node.labelChanged();
     }
   }
 
