@@ -44,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -998,6 +998,10 @@ public final class PsiUtil {
 
     if (element instanceof PsiFileSystemItem) {
       return ((PsiFileSystemItem)element).getVirtualFile();
+    }
+
+    if (!element.isValid()) {
+      return null;
     }
 
     final PsiFile containingFile = element.getContainingFile();
