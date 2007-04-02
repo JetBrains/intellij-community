@@ -1,5 +1,8 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -7,10 +10,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -19,15 +22,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeHighlighting.Pass;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -192,11 +193,11 @@ public class UpdateHighlightersUtil {
     clearWhiteSpaceOptimizationFlag(document);
   }
 
-  public static void setLineMarkersToEditor(Project project,
-                                            Document document,
+  public static void setLineMarkersToEditor(@NotNull Project project,
+                                            @NotNull Document document,
                                             int startOffset,
                                             int endOffset,
-                                            Collection<LineMarkerInfo> markers,
+                                            @NotNull Collection<LineMarkerInfo> markers,
                                             int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 

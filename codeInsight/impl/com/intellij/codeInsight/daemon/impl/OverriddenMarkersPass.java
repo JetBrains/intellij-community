@@ -20,6 +20,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
@@ -47,11 +48,12 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+    myMarkers = new SmartList<LineMarkerInfo>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      myMarkers = collectLineMarkers(elements);
+      collectLineMarkers(elements, myMarkers);
     }
   }
 
@@ -62,10 +64,9 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
-  private static Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
+  private static void collectLineMarkers(List<PsiElement> elements, final Collection<LineMarkerInfo> result) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
@@ -77,17 +78,16 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
           }
         }
         else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
-          collectInheritingClasses(element, array);
+          collectInheritingClasses(element, result);
         }
       }
     }
     if (!methods.isEmpty()) {
-      collectOverridingMethods(methods, array);
+      collectOverridingMethods(methods, result);
     }
-    return array;
   }
 
-  private static void collectInheritingClasses(PsiElement element, List<LineMarkerInfo> result) {
+  private static void collectInheritingClasses(PsiElement element, Collection<LineMarkerInfo> result) {
     PsiClass aClass = (PsiClass) element.getParent();
     if (element.equals(aClass.getNameIdentifier())) {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -104,7 +104,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static void collectOverridingMethods(final Set<PsiMethod> methods, List<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(final Set<PsiMethod> methods, Collection<LineMarkerInfo> result) {
     final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
     Set<PsiClass> classes = new HashSet<PsiClass>();
     for (PsiMethod method : methods) {
