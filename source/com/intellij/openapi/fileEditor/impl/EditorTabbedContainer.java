@@ -175,7 +175,11 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         else {
           if (myLastClickedIndex == -1) {
             // push forward events outside thw tab bounds
-            if (getRootPane() != null) {
+            boolean shouldProcess = true;
+            if (Patches.MAC_AQUA_TABS_HACK) {
+              shouldProcess = myTabbedPane.getTabCount() > 0;
+            }
+            if (shouldProcess) {
               super.processMouseEvent(e);
             }
           }

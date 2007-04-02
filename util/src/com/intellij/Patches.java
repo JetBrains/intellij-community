@@ -93,6 +93,12 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_3716835 = DP2_OR_DP3;
 
   /**
+   * Index out of bounds at apple.laf.AquaTabbedPaneUI.tabForCoordinate
+   * http://www.jetbrains.net/jira/browse/IDEADEV-15769
+   */
+  public static final boolean MAC_AQUA_TABS_HACK = SystemInfo.isMac;
+
+  /**
    * it happened on Mac that some thread did not suspended during VM suspend
    * resiming VM in this case caused com.sun.jdi.InternalException #13
    */
