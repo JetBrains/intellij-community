@@ -16,13 +16,13 @@
 package com.siyeh.ipp.increment;
 
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ExtractIncrementIntention extends MutablyNamedIntention {
 
@@ -47,52 +47,107 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             throws IncorrectOperationException {
         final PsiExpression operand;
         if (element instanceof PsiPostfixExpression) {
-            operand = ((PsiPostfixExpression)element).getOperand();
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression) element;
+            operand = postfixExpression.getOperand();
         } else {
-            operand = ((PsiPrefixExpression)element).getOperand();
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression) element;
+            operand = prefixExpression.getOperand();
         }
         if (operand == null) {
             return;
         }
-        PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-        assert statement != null;
-        PsiElement parent = statement.getParent();
+        final PsiStatement statement =
+                PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+        if (statement == null) {
+            return;
+        }
+        final PsiElement parent = statement.getParent();
         if (parent == null) {
             return;
         }
-
         final PsiManager manager = element.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
-
-        if (parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement) {
-            int elementOffsetInStatement = element.getTextRange().getStartOffset() - statement.getTextRange().getStartOffset();
-            int elementLength = element.getTextLength();
-
-            assert elementOffsetInStatement >= 0;
-            assert elementLength > 0;
-
-            PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{ " + statement.getText() + "}", parent);
-            codeBlock = (PsiCodeBlock) statement.replace(codeBlock);
-            statement = codeBlock.getStatements()[0];
-            parent = statement.getParent();
-
-            element = statement.getContainingFile().findElementAt(statement.getTextRange().getStartOffset() + elementOffsetInStatement);
-
-            while (element != null && element.getTextLength() < elementLength) element = element.getParent();
-            if (element == null) return; // Shall not happen BTW
-        }
-      
         final String newStatementText = element.getText() + ';';
-        final PsiStatement newCall =
-                factory.createStatementFromText(newStatementText, null);
-        final PsiElement insertedElement;
-        if (element instanceof PsiPostfixExpression) {
-            insertedElement = parent.addAfter(newCall, statement);
-        } else {
-            insertedElement = parent.addBefore(newCall, statement);
+        final String operandText = operand.getText();
+        if (parent instanceof PsiIfStatement ||
+                parent instanceof PsiLoopStatement) {
+            // need to add braces because
+            // in/decrement is inside braceless control statement body
+            final StringBuilder text = new StringBuilder();
+            text.append('{');
+            if (element instanceof PsiPostfixExpression) {
+                appendElementText(statement, element, operandText, text);
+                text.append(newStatementText);
+            } else {
+                text.append(newStatementText);
+                appendElementText(statement, element, operandText, text);
+            }
+            text.append('}');
+            final PsiCodeBlock codeBlock =
+                    factory.createCodeBlockFromText(text.toString(), parent);
+            statement.replace(codeBlock);
+            return;
         }
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-        codeStyleManager.reformat(insertedElement);
-        replaceExpression(operand.getText(), (PsiExpression)element);
+        final PsiStatement newStatement =
+                factory.createStatementFromText(newStatementText, null);
+        if (element instanceof PsiPostfixExpression) {
+            parent.addAfter(newStatement, statement);
+        } else {
+            parent.addBefore(newStatement, statement);
+        }
+        if (statement instanceof PsiLoopStatement) {
+            // in/decrement inside loop statement condition
+            final PsiLoopStatement loopStatement = (PsiLoopStatement) statement;
+            final PsiStatement body = loopStatement.getBody();
+            if (body instanceof PsiBlockStatement) {
+                final PsiBlockStatement blockStatement = (PsiBlockStatement) body;
+                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+                codeBlock.add(newStatement);
+            } else {
+                final StringBuilder blockText = new StringBuilder();
+                blockText.append('{');
+                if (body != null) {
+                    blockText.append(body.getText());
+                }
+                blockText.append(newStatementText);
+                blockText.append('}');
+                final PsiStatement blockStatement =
+                        factory.createStatementFromText(blockText.toString(),
+                                statement);
+                if (body == null) {
+                    loopStatement.add(blockStatement);
+                } else{
+                    body.replace(blockStatement);
+                }
+            }
+        }
+//        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+//        codeStyleManager.reformat(insertedElement);
+        replaceExpression(operandText, (PsiExpression)element);
+    }
+
+    public static void appendElementText(
+            @NotNull PsiElement element,
+            @Nullable PsiElement elementToReplace,
+            @Nullable String replacement,
+            @NotNull StringBuilder out) {
+        int i = 10;
+        do {
+            System.out.println(i);
+        } while (i++ < 20);
+        if (element.equals(elementToReplace)) {
+            out.append(replacement);
+            return;
+        }
+        final PsiElement[] children = element.getChildren();
+        if (children.length == 0) {
+            out.append(element.getText());
+            return;
+        }
+        for (PsiElement child : children) {
+            appendElementText(child, elementToReplace, replacement, out);
+        }
     }
 }
