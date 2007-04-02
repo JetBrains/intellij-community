@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -8,6 +9,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.Reference;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
@@ -75,6 +78,11 @@ public class ResolveCache {
     public boolean isValid() {
       return true;
     }
+
+    @NonNls
+    public String getPresentableText() {
+      return "FAKE TYPE";
+    }
   };
   public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
     PsiType type = myCaclulatedlTypes.get(expr);
@@ -85,7 +93,9 @@ public class ResolveCache {
       }
       type = ConcurrencyUtil.cacheOrGet(myCaclulatedlTypes, expr, type);
     }
-    assert type.isValid();
+    if (!type.isValid()) {
+      LOG.error("Type is invalid: " + type);
+    }
     return type == NULL_TYPE ? null : type;
   }
 
