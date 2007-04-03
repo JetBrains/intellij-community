@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.siyeh.ipp.increment;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
@@ -91,12 +93,32 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             return;
         }
         final PsiStatement newStatement =
-                factory.createStatementFromText(newStatementText, null);
-        if (!(statement instanceof PsiForStatement)) {
+                factory.createStatementFromText(newStatementText, element);
+        if (statement instanceof PsiReturnStatement ||
+            statement instanceof PsiThrowStatement) {
+            // cannot extract to after throw or return
+            if (element instanceof PsiPrefixExpression) {
+                parent.addBefore(newStatement, statement);
+            }
+        } else if (!(statement instanceof PsiForStatement)) {
             if (element instanceof PsiPostfixExpression) {
                 parent.addAfter(newStatement, statement);
             } else {
                 parent.addBefore(newStatement, statement);
+            }
+        } else if (operand instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)operand;
+            final PsiElement target = referenceExpression.resolve();
+            if (target != null) {
+                final SearchScope useScope = target.getUseScope();
+                if (!new LocalSearchScope(statement).equals(useScope)) {
+                    if (element instanceof PsiPostfixExpression) {
+                        parent.addAfter(newStatement, statement);
+                    } else {
+                        parent.addBefore(newStatement, statement);
+                    }
+                }
             }
         }
         if (statement instanceof PsiLoopStatement) {
@@ -104,10 +126,12 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             final PsiLoopStatement loopStatement = (PsiLoopStatement) statement;
             final PsiStatement body = loopStatement.getBody();
             if (body instanceof PsiBlockStatement) {
-                final PsiBlockStatement blockStatement = (PsiBlockStatement) body;
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement) body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
                 if (element instanceof PsiPostfixExpression) {
-                    final PsiElement firstElement = codeBlock.getFirstBodyElement();
+                    final PsiElement firstElement =
+                            codeBlock.getFirstBodyElement();
                     codeBlock.addBefore(newStatement, firstElement);
                 } else {
                     codeBlock.add(newStatement);
@@ -140,7 +164,7 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         replaceExpression(operandText, (PsiExpression)element);
     }
 
-    public static void appendElementText(
+    private static void appendElementText(
             @NotNull PsiElement element,
             @Nullable PsiElement elementToReplace,
             @Nullable String replacement,

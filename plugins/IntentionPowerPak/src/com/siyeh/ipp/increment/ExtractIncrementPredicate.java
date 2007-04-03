@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,32 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExtractIncrementPredicate implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiPrefixExpression) &&
+        if (!(element instanceof PsiPrefixExpression) &&
                 !(element instanceof PsiPostfixExpression)){
             return false;
         }
-        final PsiJavaToken sign;
+        final IElementType tokenType;
         if(element instanceof PsiPostfixExpression){
-            sign = ((PsiPostfixExpression) element).getOperationSign();
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression)element;
+            final PsiExpression operand = postfixExpression.getOperand();
+            if (!(operand instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            tokenType = postfixExpression.getOperationTokenType();
         } else{
-            sign = ((PsiPrefixExpression) element).getOperationSign();
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression)element;
+            final PsiExpression operand = prefixExpression.getOperand();
+            if (!(operand instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            tokenType = prefixExpression.getOperationTokenType();
         }
-        final IElementType tokenType = sign.getTokenType();
         if(!JavaTokenType.PLUSPLUS.equals(tokenType) &&
                 !JavaTokenType.MINUSMINUS.equals(tokenType)){
             return false;
@@ -45,14 +55,6 @@ class ExtractIncrementPredicate implements PsiElementPredicate{
         }
         final PsiStatement containingStatement =
                 PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-        if((containingStatement instanceof PsiReturnStatement ||
-                containingStatement instanceof PsiThrowStatement) &&
-                element instanceof PsiPostfixExpression){
-            return false;
-        }
-        if (containingStatement == null) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+        return containingStatement != null;
     }
 }
