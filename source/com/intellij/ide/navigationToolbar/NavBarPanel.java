@@ -564,7 +564,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       myNodePopup = new ListPopupImpl(step) {
         protected ListCellRenderer getListElementRenderer() { return new MySiblingsListCellRenderer();}
-        public boolean isCancelOnClickOutside() { return false;}
         public boolean canClose() {
           final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
           return focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent);
@@ -852,7 +851,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myColoredComponent.clear();
       final boolean selected = myModel.getSelectedIndex() == myIndex;
       final Color fg = selected
-                       ? UIUtil.getListSelectionForeground() : myModel.getSelectedIndex() < myIndex ? UIUtil.getInactiveTextColor() : myAttributes.getFgColor();
+                       ? UIUtil.getListSelectionForeground() : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1 ? UIUtil.getInactiveTextColor() : myAttributes.getFgColor();
       final Color bg = selected ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
       myColoredComponent.append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
       if (selected || (myModel.getSelectedIndex() == -1 && myIndex == myModel.size() - 1)) {
