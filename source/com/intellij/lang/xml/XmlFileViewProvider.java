@@ -24,6 +24,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
     myRelevantLanguages = null;
   }
 
+  @NotNull
   public Set<Language> getRelevantLanguages() {
     if (myRelevantLanguages != null) return myRelevantLanguages;
     List<Language> relevantLanguages = new ArrayList<Language>(1);

@@ -53,19 +53,22 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return myLightVirtualFile;
   }
 
+  @NotNull
   public Language getBaseLanguage() {
     return myHolder.getLanguage();
   }
 
+  @NotNull
   public Set<Language> getRelevantLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
+  @NotNull
   public Set<Language> getPrimaryLanguages() {
     return getRelevantLanguages();
   }
 
-  public PsiFile getPsi(Language target) {
+  public PsiFile getPsi(@NotNull Language target) {
     ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;
   }
@@ -118,11 +121,11 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return findElementAt(offset);
   }
 
-  public PsiReference findReferenceAt(final int offsetInElement, final Language language) {
+  public PsiReference findReferenceAt(final int offsetInElement, @NotNull final Language language) {
     return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
   }
 
-  public Lexer createLexer(final Language language) {
+  public Lexer createLexer(@NotNull final Language language) {
     return myHolder.createLexer();
   }
 

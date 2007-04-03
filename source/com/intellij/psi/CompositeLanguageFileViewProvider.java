@@ -18,6 +18,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -26,6 +27,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   private final ConcurrentHashMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private Set<Language> myRelevantLanguages;
 
+  @NotNull
   public Set<Language> getRelevantLanguages() {
     if (myRelevantLanguages != null) return myRelevantLanguages;
     Set<Language> relevantLanguages = new HashSet<Language>();

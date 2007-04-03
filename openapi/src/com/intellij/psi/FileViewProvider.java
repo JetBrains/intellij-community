@@ -21,10 +21,10 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @NotNull CharSequence getContents();
   @NotNull VirtualFile getVirtualFile();
 
-  Language getBaseLanguage();
-  Set<Language> getRelevantLanguages();
-  Set<Language> getPrimaryLanguages();
-  PsiFile getPsi(Language target);
+  @NotNull Language getBaseLanguage();
+  @NotNull Set<Language> getRelevantLanguages();
+  @NotNull Set<Language> getPrimaryLanguages();
+  PsiFile getPsi(@NotNull Language target);
 
   @NotNull List<PsiFile> getAllFiles();
 
@@ -49,8 +49,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @Nullable
   PsiElement findElementAt(int offset, Class<? extends Language> lang);
   @Nullable
-  PsiReference findReferenceAt(final int offsetInElement, final Language language);
-  Lexer createLexer(final Language language);
+  PsiReference findReferenceAt(final int offsetInElement, @NotNull Language language);
+  Lexer createLexer(@NotNull Language language);
 
   boolean isLockedByPsiOperations();
 }
