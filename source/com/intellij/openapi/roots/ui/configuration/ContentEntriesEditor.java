@@ -205,6 +205,11 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private void addContentEntryPanel(final ContentEntry contentEntry) {
     final ContentEntryEditor contentEntryEditor = new ContentEntryEditor(contentEntry, myModel);
     contentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        contentEntryEditor.removeContentEntryEditorListener(myContentEntryEditorListener);
+      }
+    });
     myEntryToEditorMap.put(contentEntry, contentEntryEditor);
     Border border = BorderFactory.createEmptyBorder(2, 2, 0, 2);
     final JComponent component = contentEntryEditor.getComponent();

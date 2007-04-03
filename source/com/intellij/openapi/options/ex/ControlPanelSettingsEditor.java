@@ -291,6 +291,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     Disposer.register(myDisposable, new Disposable() {
       public void dispose() {
         if (mySearchField != null) {
+          panel.remove(mySearchField);
           mySearchField.removeDocumentListener(docAdapter);
           mySearchField = null;
         }
@@ -443,7 +444,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      ControlPanelSettingsEditor.this.close(OK_EXIT_CODE);
+      close(OK_EXIT_CODE);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

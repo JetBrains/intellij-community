@@ -456,6 +456,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     Disposer.register(myDisposable, new Disposable(){
       public void dispose() {
         if (mySearchField != null) {
+          panel.remove(mySearchField);
           mySearchField.removeDocumentListener(documentAdapter);
           mySearchField = null;
         }
@@ -507,7 +508,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        selectConfigurable(configurable, index);
+        if (isShowing()) {
+          selectConfigurable(configurable, index);
+        }
       }
     }, 400);
     myKeySelectedConfigurableIndex = index;

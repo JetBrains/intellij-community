@@ -86,6 +86,7 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   public void disposeUIResources() {
     myPanel = null;
     myLanguageLevelCombo = null;
+    myModule = null;
   }
 
 }
