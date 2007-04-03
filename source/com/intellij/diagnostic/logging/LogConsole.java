@@ -325,7 +325,9 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
       try {
         try {
           myFileStream = new BufferedReader(new FileReader(file));
-          myFileStream.skip(mySkippedContents);
+          if (file.length() > mySkippedContents) { //do not skip forward
+            myFileStream.skip(mySkippedContents);
+          }
         }
         catch (FileNotFoundException e) {
           FileUtil.createParentDirs(file);
