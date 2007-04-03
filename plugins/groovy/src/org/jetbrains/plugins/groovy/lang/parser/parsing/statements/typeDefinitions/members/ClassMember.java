@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
@@ -32,76 +31,57 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
-public class ClassMember implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class ClassMember implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    //PsiBuilder.Marker cmMarker = builder.mark();
+
     //constructor
-    PsiBuilder.Marker constructorStartMarker = builder.mark();
-    if (ConstructorStart.parse(builder))
-    {
-      constructorStartMarker.rollbackTo();
+    PsiBuilder.Marker constructorMarker = builder.mark();
+    ModifiersOptional.parse(builder);
 
-      PsiBuilder.Marker cmMarker = builder.mark();
+    IElementType constructorDef = ConstructorDefinition.parse(builder);
 
-      if (WRONGWAY.equals(ModifiersOptional.parse(builder)))
-      {
-        cmMarker.drop();
-        return WRONGWAY;
-      }
-
-      IElementType methodDef = MethodDefinition.parse(builder);
-      if (WRONGWAY.equals(methodDef))
-      {
-        cmMarker.drop();
-        return WRONGWAY;
-      }
-
-      cmMarker.done(methodDef);
-      return methodDef;
+    if (WRONGWAY.equals(constructorDef)) {
+      constructorMarker.rollbackTo();
+    } else {
+      constructorMarker.done(constructorDef);
+      return constructorDef;
     }
-    constructorStartMarker.rollbackTo();
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    if (DeclarationStart.parse(builder))
-    {
+    if (DeclarationStart.parse(builder)) {
       declMarker.rollbackTo();
       return Declaration.parse(builder);
     }
+
     declMarker.rollbackTo();
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
-    if (TypeDeclarationStart.parse(builder))
-    {
+    if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
       IElementType typeDef = TypeDefinition.parse(builder);
-      if (WRONGWAY.equals(typeDef))
-      {
+      if (WRONGWAY.equals(typeDef)) {
         return WRONGWAY;
       }
       return typeDef;
     }
+
     typeDeclStartMarker.rollbackTo();
 
     //static compound statement
-    if (ParserUtils.getToken(builder, kSTATIC))
-    {
-      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder)))
-      {
+    if (ParserUtils.getToken(builder, kSTATIC)) {
+      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         return STATIC_COMPOUND_STATEMENT;
-      }
-      else
-      {
+      } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return WRONGWAY;
       }
     }
 
-    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder)))
-    {
+    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       return COMPOUND_STATEMENT;
     }
 

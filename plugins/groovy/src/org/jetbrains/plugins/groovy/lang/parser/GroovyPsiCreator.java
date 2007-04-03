@@ -133,7 +133,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
     if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
     if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
 
-    if (elem.equals(CONSTRUCTOR_DEFINITION)) return new GrConstructorBodyImpl(node);
+    if (elem.equals(CONSTRUCTOR_DEFINITION)) return new GrConstructorDefinitionImpl(node);
     if (elem.equals(METHOD_DEFINITION)) return new GrMethodDefinitionImpl(node);
 
     //parameters
