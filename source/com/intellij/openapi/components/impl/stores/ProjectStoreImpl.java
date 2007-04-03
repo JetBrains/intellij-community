@@ -64,6 +64,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     myProjectManager = projectManager;
   }
 
+  @Override
+  protected void beforeSave() throws StateStorage.StateStorageException, SaveCancelledException {
+    super.beforeSave();
+
+    //is needed for compatibility with demetra
+    final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
+
+    final Element rootElement = wsStorage.getRootElement();
+    if (rootElement == null) return;
+
+    writeRootElement(rootElement);
+  }
+
   private static String[] readUsedMacros(Element root) {
     Element child = root.getChild(ProjectStateStorageManager.USED_MACROS_ELEMENT_NAME);
     if (child == null) {
