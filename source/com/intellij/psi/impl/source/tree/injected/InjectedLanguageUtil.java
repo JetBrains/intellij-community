@@ -121,7 +121,9 @@ public class InjectedLanguageUtil {
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
     virtualFile.setContent(null, documentRange.getText(), false);
     FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-    psiFile = registerDocumentRange(documentRange, psiFile);
+    synchronized (PsiLock.LOCK) {
+      psiFile = registerDocumentRange(documentRange, psiFile);
+    }
 
     ((MyFileViewProvider)psiFile.getViewProvider()).setVirtualFile(virtualFile);
     ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
@@ -133,7 +135,7 @@ public class InjectedLanguageUtil {
   }
 
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
-    public MyFileViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
+    public MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileDelegate virtualFile) {
       super(PsiManager.getInstance(project), virtualFile);
     }
 
@@ -359,13 +361,15 @@ public class InjectedLanguageUtil {
       return result;
     }
   }
-
+   
   private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(final T host) {
-    return host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer<T>() {
-      public T getElement() {
-        return host;
-      }
-    };
+    return host.isPhysical()
+           ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host)
+           : new SmartPsiElementPointer<T>() {
+             public T getElement() {
+               return host;
+             }
+           };
   }
 
   private static final Key<List<DocumentRange>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");

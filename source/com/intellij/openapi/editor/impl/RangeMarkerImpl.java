@@ -7,38 +7,38 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
-  protected Document myDocument;
+  protected final Document myDocument;
   protected int myStart;
   protected int myEnd;
   private boolean isValid = true;
   private boolean isExpandToLeft = false;
   private boolean isExpandToRight = false;
 
-  private static long counter = 0;
-  private long myId;
+  private static final AtomicLong counter = new AtomicLong();
+  private final long myId;
 
-  public RangeMarkerImpl(Document document, int start, int end) {
-    if (!(start <= end && start >= 0 && end <= document.getTextLength())) {
-      if (start < 0) {
-        LOG.error("Wrong start: " + start);
-      }
-      else if (end > document.getTextLength()) {
-        LOG.error("Wrong end: " + end, "document length="+document.getTextLength());
-      }
-      else {
-        LOG.error("start > end: start=" + start+"; end="+end);
-      }
+  public RangeMarkerImpl(@NotNull Document document, int start, int end) {
+    if (start < 0) {
+      LOG.error("Wrong start: " + start);
+    }
+    else if (end > document.getTextLength()) {
+      LOG.error("Wrong end: " + end, "; document length="+document.getTextLength());
+    }
+    else if (start > end){
+      LOG.error("start > end: start=" + start+"; end="+end);
     }
 
     myDocument = document;
     myStart = start;
     myEnd = end;
-    myId = counter;
-    counter++;
+    myId = counter.getAndIncrement();
     registerInDocument();
   }
 
@@ -155,7 +155,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   public String toString() {
     return "RangeMarker[" + (isValid ? "valid" : "invalid") + "," + myStart + "," + myEnd + "]";
   }

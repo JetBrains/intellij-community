@@ -66,6 +66,8 @@ public class TextRange {
   }
 
   public TextRange cutOut(TextRange subRange) {
+    assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
+    assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
     return new TextRange(myStartOffset + subRange.getStartOffset(), Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }
 
