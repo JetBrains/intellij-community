@@ -290,7 +290,10 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     mySearchField.addDocumentListener(docAdapter);
     Disposer.register(myDisposable, new Disposable() {
       public void dispose() {
-        mySearchField.removeDocumentListener(docAdapter);
+        if (mySearchField != null) {
+          mySearchField.removeDocumentListener(docAdapter);
+          mySearchField = null;
+        }
       }
     });
 

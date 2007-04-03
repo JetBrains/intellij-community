@@ -73,7 +73,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private Set<Configurable> myOptionContainers = null;
   private Alarm mySearchUpdater = new Alarm();
   private JTree myTree;
-  @NonNls final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
+  @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
   private JBPopup [] myPopup = new JBPopup[2];
@@ -426,15 +426,18 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final JPanel panel = new JPanel(new GridBagLayout());
     mySearchField = new SearchUtil.SearchTextField();
-    mySearchField.addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         mySearchUpdater.cancelAllRequests();
         mySearchUpdater.addRequest(new Runnable() {
           public void run() {
             final @NonNls String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
-              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
-            } else {
+              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
+                                                                     CodeStyleSettingsManager
+                                                                       .getInstance(myProject).USE_PER_PROJECT_SETTINGS);
+            }
+            else {
               myOptionContainers = null;
             }
             SearchUtil.showHintPopup(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
@@ -447,6 +450,15 @@ public class ExplorerSettingsEditor extends DialogWrapper {
             myComponentPanel.repaint();
           }
         }, 300, ModalityState.defaultModalityState());
+      }
+    };
+    mySearchField.addDocumentListener(documentAdapter);
+    Disposer.register(myDisposable, new Disposable(){
+      public void dispose() {
+        if (mySearchField != null) {
+          mySearchField.removeDocumentListener(documentAdapter);
+          mySearchField = null;
+        }
       }
     });
     SearchUtil.registerKeyboardNavigation(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
@@ -642,8 +654,8 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       super(OptionsBundle.message("options.apply.button"));
       final Runnable updateRequest = new Runnable() {
         public void run() {
-          if (!ExplorerSettingsEditor.this.isShowing()) return;
-          ApplyAction.this.setEnabled(mySelectedConfigurable != null && mySelectedConfigurable.isModified());
+          if (!isShowing()) return;
+          setEnabled(mySelectedConfigurable != null && mySelectedConfigurable.isModified());
           addUpdateRequest(this);
         }
       };
@@ -675,15 +687,18 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      switchToDefaultView(null);
+      switchToDefaultView(mySelectedConfigurable);
     }
   }
   private void switchToDefaultView(final Configurable preselectedConfigurable) {
+    if (preselectedConfigurable != null) {
+      preselectedConfigurable.disposeUIResources();
+    }
     close(OK_EXIT_CODE);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showControlPanelOptions(myProject, myGroups, preselectedConfigurable);
+        ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showControlPanelOptions(myProject, myGroups, null);
       }
     }, ModalityState.NON_MODAL);
   }

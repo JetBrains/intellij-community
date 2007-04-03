@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
@@ -101,7 +102,7 @@ public class ContentEntryTreeEditor {
       return;
     }
     if (myFileSystemTree != null) {
-      myFileSystemTree.dispose();
+      Disposer.dispose(myFileSystemTree);
       myFileSystemTree = null;
     }
     if (myContentEntryEditor != null) {
@@ -130,7 +131,7 @@ public class ContentEntryTreeEditor {
         return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor);
       }
     };
-    final com.intellij.openapi.fileChooser.actions.NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
+    final NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
     DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
     mousePopupGroup.add(myEditingActionsGroup);
     mousePopupGroup.addSeparator();
