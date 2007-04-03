@@ -171,10 +171,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     return myInitializedConfigurables.contains(configurable);
   }
 
-  protected boolean hasDeletedeItems() {
-    return myHasDeletedItems;
-  }
-
   public void apply() throws ConfigurationException {
     processRemovedItems();
     final ConfigurationException[] ex = new ConfigurationException[1];
@@ -325,7 +321,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
   }
 
-  public void fireItemsChangedExternally() {
+  private void fireItemsChangedExternally() {
     for (ItemsChangeListener listner : myListners) {
       listner.itemsExternallyChanged();
     }
@@ -350,10 +346,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         return toolTip;
       }
     };
-  }
-
-  protected void updateBannerSlogan(String updatedText) {
-    myBanner.setText(updatedText);
   }
 
   protected void addNode(MyNode nodeToAdd, MyNode parent) {
@@ -454,7 +446,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myInitializedConfigurables.add(configurable);
   }
 
-  public boolean canApply(Set<MyNode> rootNodes, String prefix, String title) {
+  protected boolean canApply(Set<MyNode> rootNodes, String prefix, String title) {
     String alreadyExist = null;
     for (MyNode rootNode : rootNodes) {
       alreadyExist = alreadyExist(rootNode);
@@ -521,12 +513,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       int idx = -1;
       for (TreePath path : paths) {
         final MyNode node = (MyNode)path.getLastPathComponent();
-        final Object editableObject = node.getConfigurable().getEditableObject();
+        final NamedConfigurable namedConfigurable = node.getConfigurable();
+        final Object editableObject = namedConfigurable.getEditableObject();
         parentNode = (MyNode)node.getParent();
         idx = parentNode.getIndex(node);
         parentNode.remove(node);
         myHasDeletedItems |= wasObjectStored(editableObject);
         fireItemsChangeListener(editableObject);
+        namedConfigurable.disposeUIResources();
       }
       ((DefaultTreeModel)myTree.getModel()).reload();
       if (parentNode != null && idx != -1){
@@ -556,14 +550,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
       LOG.assertTrue(configurable != null, "Tree was already disposed");
       return configurable.getDisplayName();
-    }
-
-    public void setDisplayName(String name) {
-      if (name == null || name.trim().length() == 0) return; //can't be empty string as a name
-      final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
-      if (configurable != null) {
-        configurable.setDisplayName(name);
-      }
     }
 
     public NamedConfigurable getConfigurable() {
