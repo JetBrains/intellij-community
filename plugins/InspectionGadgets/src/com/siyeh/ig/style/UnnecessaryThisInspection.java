@@ -18,12 +18,12 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,8 +122,8 @@ public class UnnecessaryThisInspection extends BaseInspection {
                         return;
                     }
                     final String methodName = calledMethod.getName();
-                    PsiClass parentClass = PsiTreeUtil.getParentOfType(
-                            expression, PsiClass.class);
+                    PsiClass parentClass =
+                            ClassUtils.getContainingClass(expression);
                     while (parentClass != null) {
                         if (qualifierName.equals(parentClass.getName())) {
                             registerError(thisExpression);
@@ -132,20 +132,20 @@ public class UnnecessaryThisInspection extends BaseInspection {
                         final PsiMethod[] methods =
                                 parentClass.findMethodsByName(methodName,
                                         true);
-                        if (methods.length > 0) {  //todo: filter only accessible methods
+                        //todo: filter only accessible methods
+                        if (methods.length > 0) {
                             return;
                         }
                         parentClass =
-                                PsiTreeUtil.getParentOfType(parentClass,
-                                        PsiClass.class);
+                                ClassUtils.getContainingClass(parentClass);
                     }
                 } else {
                     if (VariableSearchUtils.existsLocalOrParameter(referenceName,
                             expression)) {
                         return;
                     }
-                    PsiClass parentClass = PsiTreeUtil.getParentOfType(
-                            expression, PsiClass.class);
+                    PsiClass parentClass =
+                            ClassUtils.getContainingClass(expression);
                     while (parentClass != null) {
                         if (qualifierName.equals(parentClass.getName())) {
                             registerError(thisExpression);
@@ -156,8 +156,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
                             return;
                         }
                         parentClass =
-                                PsiTreeUtil.getParentOfType(parentClass,
-                                        PsiClass.class);
+                                ClassUtils.getContainingClass(parentClass);
                     }
                 }
             }

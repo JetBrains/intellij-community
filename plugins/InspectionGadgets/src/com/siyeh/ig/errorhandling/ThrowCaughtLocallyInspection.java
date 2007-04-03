@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,8 +95,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
                             }
                         }
                         final PsiClass containingClass =
-                                PsiTreeUtil.getParentOfType(statement,
-                                        PsiClass.class);
+                                ClassUtils.getContainingClass(statement);
                         if (PsiTreeUtil.isAncestor(containingClass,
                                 containingTryStatement, true)) {
                             registerStatementError(statement);

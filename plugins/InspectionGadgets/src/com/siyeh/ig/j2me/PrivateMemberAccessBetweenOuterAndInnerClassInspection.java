@@ -46,24 +46,29 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return new MakePackagePrivateFix(location);
+        final PsiReferenceExpression reference =
+                (PsiReferenceExpression) location;
+        final PsiMember member = (PsiMember) reference.resolve();
+        if (member == null) {
+            return null;
+        }
+        final String memberName = member.getName();
+        final PsiClass containingClass = member.getContainingClass();
+        if (containingClass == null) {
+            return null;
+        }
+        final String containingClassName = containingClass.getName();
+        String elementName = containingClassName + '.' + memberName;
+        return new MakePackagePrivateFix(elementName);
     }
 
     private static class MakePackagePrivateFix extends InspectionGadgetsFix{
 
         private String elementName;
 
-        private MakePackagePrivateFix(PsiElement location){
+        private MakePackagePrivateFix(String elementName){
             super();
-            final PsiReferenceExpression reference =
-                    (PsiReferenceExpression) location;
-            final PsiMember member = (PsiMember) reference.resolve();
-            assert member != null;
-            final String memberName = member.getName();
-            final PsiClass containingClass = member.getContainingClass();
-            assert containingClass != null;
-            final String containingClassName = containingClass.getName();
-            elementName = containingClassName + '.' + memberName;
+            this.elementName = elementName;
         }
 
         @NotNull
@@ -135,14 +140,14 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         private static PsiClass getContainingContextClass(
                 PsiReferenceExpression expression){
             final PsiClass aClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                    ClassUtils.getContainingClass(expression);
             if(aClass instanceof PsiAnonymousClass){
                 final PsiAnonymousClass anonymousClass =
                         (PsiAnonymousClass) aClass;
                 final PsiExpressionList args = anonymousClass.getArgumentList();
                 if(args!=null &&
                         PsiTreeUtil.isAncestor(args, expression, true)){
-                    return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+                    return ClassUtils.getContainingClass(aClass);
                 }
             }
             return aClass;

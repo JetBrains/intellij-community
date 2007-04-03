@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -36,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,8 +159,8 @@ public class StaticMethodOnlyUsedInOneClassInspection
                     ProgressManager.getInstance();
             progressManager.checkCanceled();
             final PsiElement element = reference.getElement();
-            final PsiClass usageClass = PsiTreeUtil.getParentOfType(element,
-                    PsiClass.class);
+            final PsiClass usageClass =
+                    ClassUtils.getContainingClass(element);
             if (this.usageClass != null &&
                     !this.usageClass.equals(usageClass)) {
                 this.usageClass = null;

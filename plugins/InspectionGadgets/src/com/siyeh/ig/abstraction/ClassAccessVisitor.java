@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,17 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 class ClassAccessVisitor extends PsiRecursiveElementVisitor {
 
-    private final Map<PsiClass,Integer> m_accessCounts = new HashMap<PsiClass, Integer>(2);
-    private final Set<PsiClass> m_overAccessedClasses = new HashSet<PsiClass>(2);
+    private final Map<PsiClass,Integer> m_accessCounts =
+            new HashMap<PsiClass, Integer>(2);
+    private final Set<PsiClass> m_overAccessedClasses =
+            new HashSet<PsiClass>(2);
     private final PsiClass currentClass;
 
     ClassAccessVisitor(PsiClass currentClass) {
@@ -36,24 +39,25 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         this.currentClass = currentClass;
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod method = expression.resolveMethod();
         if (method == null) {
             return;
         }
         final PsiClass calledClass = method.getContainingClass();
-        if(calledClass == null) {
+        if (calledClass == null) {
             return;
         }
         if (currentClass.equals(calledClass)) {
             return;
         }
         final Set<PsiClass> overAccessedClasses = m_overAccessedClasses;
-        if(overAccessedClasses.contains(calledClass)){
+        if (overAccessedClasses.contains(calledClass)) {
             return;
         }
-        if(LibraryUtil.classIsInLibrary(calledClass)){
+        if (LibraryUtil.classIsInLibrary(calledClass)) {
             return;
         }
         if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {
@@ -63,20 +67,19 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         PsiClass lexicallyEnclosingClass = currentClass;
-        while(lexicallyEnclosingClass != null){
-            if(lexicallyEnclosingClass.isInheritor(calledClass, true)){
+        while (lexicallyEnclosingClass != null) {
+            if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
                 return;
             }
             lexicallyEnclosingClass =
-                    PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
-                            PsiClass.class);
+                    ClassUtils.getContainingClass(lexicallyEnclosingClass);
         }
         final Map<PsiClass,Integer> accessCounts = m_accessCounts;
         final Integer count = accessCounts.get(calledClass);
         if (count == null) {
-            accessCounts.put(calledClass, 1);
-        } else if (count.equals(1)) {
-            accessCounts.put(calledClass, 2);
+            accessCounts.put(calledClass, Integer.valueOf(1));
+        } else if (count.equals(Integer.valueOf(1))) {
+            accessCounts.put(calledClass, Integer.valueOf(2));
         } else {
             overAccessedClasses.add(calledClass);
         }

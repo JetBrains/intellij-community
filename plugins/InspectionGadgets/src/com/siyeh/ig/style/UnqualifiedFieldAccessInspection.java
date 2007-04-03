@@ -18,12 +18,12 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +68,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
             }
             final PsiClass containingClass = field.getContainingClass();
             final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                    ClassUtils.getContainingClass(expression);
             @NonNls final String newExpression;
             if (!containingClass.equals(parentClass)) {
                 newExpression = containingClass.getQualifiedName() + ".this." +

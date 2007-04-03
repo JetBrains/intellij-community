@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -50,10 +51,12 @@ public class OverridableMethodCallDuringObjectConstructionInspection
         final PsiElement methodExpression = location.getParent();
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression)methodExpression.getParent();
-        final PsiClass callClass = PsiTreeUtil
-                .getParentOfType(methodCallExpression, PsiClass.class);
+        final PsiClass callClass =
+                ClassUtils.getContainingClass(methodCallExpression);
         final PsiMethod method = methodCallExpression.resolveMethod();
-        assert method != null;
+        if (method == null) {
+            return null;
+        }
         final PsiClass containingClass = method.getContainingClass();
         if (!containingClass.equals(callClass) ||
                 MethodUtils.isOverridden(method)) {

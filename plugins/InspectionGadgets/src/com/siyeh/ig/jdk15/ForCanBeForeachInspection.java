@@ -985,8 +985,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         final PsiClass qualifierClass;
         if(qualifier == null){
             qualifierClass =
-                    PsiTreeUtil.getParentOfType(initialMethodExpression,
-                            PsiClass.class);
+                    ClassUtils.getContainingClass(initialMethodExpression);
         } else {
             final PsiType qualifierType = qualifier.getType();
             if(!(qualifierType instanceof PsiClassType)){

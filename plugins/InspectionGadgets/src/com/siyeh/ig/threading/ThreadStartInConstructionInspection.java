@@ -16,7 +16,6 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -96,7 +95,7 @@ public class ThreadStartInConstructionInspection extends BaseInspection {
                     return;
                 }
                 final PsiClass containingClass =
-                        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                        ClassUtils.getContainingClass(expression);
                 if (containingClass == null ||
                         containingClass.hasModifierProperty(
                                 PsiModifier.FINAL)) {

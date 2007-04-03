@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -69,8 +69,7 @@ public class StaticInheritanceInspection extends BaseInspection {
             final PsiField[] allFields = iface.getAllFields();
 
             final PsiClass implementingClass =
-                    PsiTreeUtil.getParentOfType(referenceElement,
-                            PsiClass.class);
+                    ClassUtils.getContainingClass(referenceElement);
             final PsiManager manager = referenceElement.getManager();
             assert implementingClass != null;
             final SearchScope searchScope = implementingClass.getUseScope();

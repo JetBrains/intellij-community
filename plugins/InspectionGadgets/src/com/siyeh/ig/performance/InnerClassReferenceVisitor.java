@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
@@ -45,7 +46,7 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         }
         PsiClass classScope = aClass;
         final PsiClass outerClass =
-                PsiTreeUtil.getParentOfType(innerClass, PsiClass.class);
+                ClassUtils.getContainingClass(innerClass);
         while (classScope != null) {
             if (InheritanceUtil.isCorrectDescendant(outerClass, classScope,
                     true)) {
