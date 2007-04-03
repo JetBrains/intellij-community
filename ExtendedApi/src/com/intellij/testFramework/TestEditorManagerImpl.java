@@ -40,7 +40,8 @@ import java.util.Map;
   private VirtualFile myActiveFile = null;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(VirtualFile file, boolean focusEditor) {
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor) {
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});
@@ -78,19 +79,19 @@ import java.util.Map;
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(VirtualFile file) {
+  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public boolean isChanged(EditorComposite editor) {
+  public boolean isChanged(@NotNull EditorComposite editor) {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public EditorWindow getNextWindow(EditorWindow window) {
+  public EditorWindow getNextWindow(@NotNull EditorWindow window) {
     return null;
   }
 
-  public EditorWindow getPrevWindow(EditorWindow window) {
+  public EditorWindow getPrevWindow(@NotNull EditorWindow window) {
     return null;
   }
 
@@ -117,7 +118,7 @@ import java.util.Map;
     myVirtualFile2Editor.clear();
   }
 
-  public Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor) {
+  public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
     return openTextEditor(descriptor, false);
   }
 
@@ -162,7 +163,7 @@ import java.util.Map;
   public void setCurrentWindow(EditorWindow window) {
   }
 
-  public VirtualFile getFile(FileEditor editor) {
+  public VirtualFile getFile(@NotNull FileEditor editor) {
     return LIGHT_VIRTUAL_FILE;
   }
 
@@ -186,6 +187,7 @@ import java.util.Map;
     //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @NotNull
   public EditorWindow[] getWindows() {
     return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -202,16 +204,17 @@ import java.util.Map;
     throw new UnsupportedOperationException();
   }
 
-  public FileEditor getSelectedEditor(VirtualFile file) {
+  public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
     final Editor editor = getEditor(file);
     return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
   }
 
-  public boolean isFileOpen(VirtualFile file) {
+  public boolean isFileOpen(@NotNull VirtualFile file) {
     return getEditor(file) != null;
   }
 
-  public FileEditor[] getEditors(VirtualFile file) {
+  @NotNull
+  public FileEditor[] getEditors(@NotNull VirtualFile file) {
     return new FileEditor[] {getSelectedEditor(file)};
   }
 
@@ -219,6 +222,7 @@ import java.util.Map;
     myProject = project;
   }
 
+  @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {
     throw new UnsupportedOperationException();
   }
@@ -243,14 +247,16 @@ import java.util.Map;
     }
   }
 
-  public void closeFile(VirtualFile file, EditorWindow window) {
+  public void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     closeFile(file);
   }
 
+  @NotNull
   public VirtualFile[] getSelectedFiles() {
     return myActiveFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{myActiveFile};
   }
 
+  @NotNull
   public FileEditor[] getSelectedEditors() {
     return new FileEditor[0];
   }
@@ -263,6 +269,7 @@ import java.util.Map;
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public VirtualFile[] getOpenFiles() {
     return myVirtualFile2Editor.keySet().toArray(new VirtualFile[myVirtualFile2Editor.size()]);
   }
@@ -271,6 +278,7 @@ import java.util.Map;
     return myVirtualFile2Editor.get(myActiveFile);
   }
 
+  @NotNull
   public FileEditor[] getAllEditors(){
     throw new UnsupportedOperationException();
   }
@@ -313,17 +321,17 @@ import java.util.Map;
     return editor;
   }
 
-  public void addFileEditorManagerListener(FileEditorManagerListener listener) {
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
   }
 
-  public void removeFileEditorManagerListener(FileEditorManagerListener listener) {
+  public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
   @NotNull
-  public List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
+  public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return Collections.emptyList();
   }
 
@@ -332,14 +340,15 @@ import java.util.Map;
     return myProject;
   }
 
-  public void registerExtraEditorDataProvider(EditorDataProvider provider, Disposable parentDisposable) {
+  public void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable) {
   }
 
   public JComponent getPreferredFocusedComponent() {
     throw new UnsupportedOperationException();
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(VirtualFile file) {
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

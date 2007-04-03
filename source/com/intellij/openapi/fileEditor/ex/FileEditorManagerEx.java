@@ -34,6 +34,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    */
   public abstract JComponent getPreferredFocusedComponent();
 
+  @NotNull
   public abstract Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
   @Nullable
@@ -52,13 +53,14 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    *
    * @param file file to be closed. Cannot be null.
    */
-  public abstract void closeFile(@NotNull VirtualFile file, EditorWindow window);
+  public abstract void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window);
 
   public abstract void unsplitWindow();
 
   public abstract void unsplitAllWindow();
 
-  public abstract EditorWindow [] getWindows ();
+  @NotNull
+  public abstract EditorWindow[] getWindows();
 
   /**
    * @return arrays of all files (including <code>file</code> itself) that belong

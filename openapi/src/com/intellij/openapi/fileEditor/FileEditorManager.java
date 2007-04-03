@@ -144,6 +144,6 @@ public abstract class FileEditorManager {
   @NotNull
   public abstract Project getProject();
 
-  public abstract void registerExtraEditorDataProvider(EditorDataProvider provider, Disposable parentDisposable);
+  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
 
 }

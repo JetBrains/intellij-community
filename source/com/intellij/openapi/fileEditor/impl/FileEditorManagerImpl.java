@@ -139,7 +139,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @return color of the <code>file</code> which corresponds to the
    *         file's status
    */
-  protected Color getFileColor(@NotNull final VirtualFile file) {
+  Color getFileColor(@NotNull final VirtualFile file) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : Color.BLACK;
     if (statusColor == null) statusColor = Color.BLACK;
@@ -170,7 +170,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   /**
    * Updates tab title and tab tool tip for the specified <code>file</code>
    */
-  void updateFileName(final @Nullable VirtualFile file) {
+  void updateFileName(@Nullable final VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
     myQueue.queue(new Update("UpdateFileName "+(file==null?"":file.getPath())) {
@@ -214,6 +214,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
+  @NotNull
   public EditorWindow [] getWindows() {
     return mySplitters.getWindows();
   }
@@ -306,7 +307,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     mySplitters.setCurrentWindow(window, true);
   }
 
-  public void closeFile(@NotNull final VirtualFile file, final EditorWindow window) {
+  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
     assertThread();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -710,7 +711,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return myProject;
   }
 
-  public void registerExtraEditorDataProvider(final EditorDataProvider provider, Disposable parentDisposable) {
+  public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
     myDataProviders.add(provider);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -798,6 +799,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
+  @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
     assertThread();
 
@@ -854,9 +856,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final EditorWithProviderComposite[] editorsComposites = mySplitters.getEditorsComposites();
     for (EditorWithProviderComposite editorsComposite : editorsComposites) {
       final FileEditor[] editors = editorsComposite.getEditors();
-      for (FileEditor editor : editors) {
-        result.add(editor);
-      }
+      result.addAll(Arrays.asList(editors));
     }
     return result.toArray(new FileEditor[result.size()]);
   }
