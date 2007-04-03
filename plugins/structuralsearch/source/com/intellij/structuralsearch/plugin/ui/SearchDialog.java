@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
@@ -82,9 +81,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
   @NonNls private static String ourFileType = "java";
-  private static final TooltipGroup OUR_TOOLTIP_GROUP = new TooltipGroup("ssr.error.tooltip", 100);
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;
+  private boolean myDoingOkAction;
 
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
@@ -754,7 +753,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     SearchScope selectedScope = getSelectedScope();
     if (selectedScope == null) return;
 
+    myDoingOkAction = true;
     boolean result = doValidate();
+    myDoingOkAction = false;
     if (!result) return;
 
     super.doOKAction();
@@ -829,7 +830,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     MatchOptions options = config.getMatchOptions();
 
     boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
-    options.setScope(searchWithinHierarchy ? GlobalSearchScope.projectScope(getProject()) :myScopeChooserCombo.getSelectedScope());
+    // We need to reset search within hierarchy scope during online validation since the scope works with user participation
+    options.setScope(searchWithinHierarchy && !myDoingOkAction? GlobalSearchScope.projectScope(getProject()) :myScopeChooserCombo.getSelectedScope());
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
     //options.setDistinct( distinctResults.isSelected() );
