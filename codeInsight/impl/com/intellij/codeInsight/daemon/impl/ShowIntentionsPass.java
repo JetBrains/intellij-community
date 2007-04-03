@@ -134,7 +134,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
     final PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
     final PsiElement injectedElement = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-    LOG.assertTrue(injectedElement == null || injectedElement.isValid(), injectedElement);
 
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -187,6 +186,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           if (hintComponent.updateActions(fixesToShow, intentionsToShow)) {
             return;
           }
+          hintComponent.hide();
           codeAnalyzer.setLastIntentionHint(null);
         }
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
