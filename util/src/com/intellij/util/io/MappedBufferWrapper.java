@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class MappedBufferWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
@@ -37,11 +36,10 @@ public abstract class MappedBufferWrapper {
   protected long myLength;
 
 
-  private volatile ByteBuffer myBuffer;
+  private ByteBuffer myBuffer;
 
-  private volatile int myAccessCounter = 0;
+  private int myAccessCounter = 0;
   private int myAccessCounterDisposerLastCheckedMe = -1;
-  private final AtomicBoolean myUnmapperGuard = new AtomicBoolean(true);
 
   private static List<MappedBufferWrapper> ourMappedWrappers = new ArrayList<MappedBufferWrapper>();
 
@@ -57,17 +55,13 @@ public abstract class MappedBufferWrapper {
         }
 
         for (MappedBufferWrapper wrapper : wrappers) {
-          wrapper.lock();
-          try {
+          synchronized (wrapper) {
             if (wrapper.myAccessCounter == wrapper.myAccessCounterDisposerLastCheckedMe) {
               wrapper.unmap();
             }
             else {
               wrapper.myAccessCounterDisposerLastCheckedMe = wrapper.myAccessCounter;
             }
-          }
-          finally {
-            wrapper.unlock();
           }
         }
       }
@@ -99,12 +93,7 @@ public abstract class MappedBufferWrapper {
    * An assumption made here that any retreiver of the buffer will not use it for time longer than 60 seconds.
    */
   public ByteBuffer buf() {
-    boolean lockNecessary = (myAccessCounter == myAccessCounterDisposerLastCheckedMe);
-    if (lockNecessary) {
-      lock();
-    }
-
-    try {
+    synchronized (this) {
       myAccessCounter++;
 
       ByteBuffer buffer = myBuffer;
@@ -121,11 +110,6 @@ public abstract class MappedBufferWrapper {
       }
 
       return buffer;
-    }
-    finally {
-      if (lockNecessary) {
-        unlock();
-      }
     }
   }
 
@@ -208,11 +192,11 @@ public abstract class MappedBufferWrapper {
     }
   }
 
-  public boolean isMapped() {
+  public synchronized boolean isMapped() {
     return myBuffer != null;
   }
 
-  public void flush() {
+  public synchronized void flush() {
     final ByteBuffer buffer = myBuffer;
     if (buffer != null) {
       if (buffer instanceof MappedByteBuffer) {
@@ -220,13 +204,5 @@ public abstract class MappedBufferWrapper {
         mappedByteBuffer.force();
       }
     }
-  }
-
-  private void lock() {
-    while (!myUnmapperGuard.compareAndSet(true, false)) {}
-  }
-
-  private void unlock() {
-    while (!myUnmapperGuard.compareAndSet(false, true)) {}
   }
 }
