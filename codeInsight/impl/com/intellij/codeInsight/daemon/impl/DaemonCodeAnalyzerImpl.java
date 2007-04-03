@@ -290,14 +290,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
            myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
   }
 
-  public boolean isInspectionCompleted(PsiFile file) {
-    if (file instanceof PsiCompiledElement) return true;
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    return document != null &&
-           document.getModificationStamp() == file.getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, Pass.LOCAL_INSPECTIONS) == null;
-  }
-
   public FileStatusMap getFileStatusMap() {
     return myFileStatusMap;
   }
@@ -462,11 +454,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public void setLastIntentionHint(IntentionHintComponent hintComponent) {
+  public synchronized void setLastIntentionHint(IntentionHintComponent hintComponent) {
+    if (myLastIntentionHint != null) {
+      myLastIntentionHint.hide();
+    }
     myLastIntentionHint = hintComponent;
   }
 
-  public IntentionHintComponent getLastIntentionHint() {
+  public synchronized IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 

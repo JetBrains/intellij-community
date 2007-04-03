@@ -81,15 +81,18 @@ public abstract class Logger {
     info("", t);
   }
 
-  public boolean assertTrue(boolean value, @NonNls String message) {
+  public boolean assertTrue(boolean value, @NonNls Object message) {
     if (!value) {
-      @NonNls StringBuffer resultMessage = new StringBuffer("Assertion failed");
-      if (message.length() > 0) resultMessage.append(": ").append(message);
+      @NonNls StringBuilder resultMessage = new StringBuilder("Assertion failed");
+      if (message != null) resultMessage.append(": ").append(message);
 
       error(resultMessage.toString(), new Throwable());
     }
 
     return value;
+  }
+  public boolean assertTrue(boolean value, @NonNls String message) {
+    return assertTrue(value, (Object)message);
   }
 
   public boolean assertTrue(boolean value) {

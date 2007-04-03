@@ -118,7 +118,6 @@ public class DaemonListeners {
         stopDaemon(true);
         IntentionHintComponent component = myDaemonCodeAnalyzer.getLastIntentionHint();
         if (component != null) {
-          component.hide();
           myDaemonCodeAnalyzer.setLastIntentionHint(null);
         }
       }
