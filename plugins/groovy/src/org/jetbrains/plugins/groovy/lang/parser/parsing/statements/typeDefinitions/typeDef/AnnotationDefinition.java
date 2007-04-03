@@ -25,37 +25,23 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class AnnotationDefinition implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-//    PsiBuilder.Marker adMarker = builder.mark();
-
-    if (!ParserUtils.getToken(builder, mAT))
-    {
-//      adMarker.rollbackTo();
+public class AnnotationDefinition implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, mAT)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, kINTERFACE))
-    {
-//      adMarker.rollbackTo();
+    if (!ParserUtils.getToken(builder, kINTERFACE)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
-//      adMarker.rollbackTo();
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(AnnotationBlock.parse(builder)))
-    {
-//      adMarker.rollbackTo();
+    if (WRONGWAY.equals(AnnotationBlock.parse(builder))) {
       return WRONGWAY;
     }
-
-//    adMarker.done(ANNOTATION_BLOCK);
     return ANNOTATION_BLOCK;
   }
 }

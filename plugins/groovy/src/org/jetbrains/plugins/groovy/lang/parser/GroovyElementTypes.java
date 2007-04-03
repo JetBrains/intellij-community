@@ -124,21 +124,33 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause");
   GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
 
-  GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type parameters");
-  GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type parameter");
+  GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
+  GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
 
   //fields
   GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
   GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
   GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
   GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
+  GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation");
 
   GroovyElementType TYPE_DEFINITION_FIELD = new GroovyElementType("type definition field");
 
+  //methods
   GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
-  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
+
+  //bodies
+//  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
+
+  //throws
+  GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
+
+  //annotation
+  GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
+  GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
+  GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");
 
   //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");

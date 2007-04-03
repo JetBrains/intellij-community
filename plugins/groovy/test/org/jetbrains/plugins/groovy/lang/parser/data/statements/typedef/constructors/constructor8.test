@@ -1,0 +1,48 @@
+class s {
+  def s () throws A.B {
+    this ()
+  }
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('s')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          PsiElement(throws)('throws')
+          PsiWhiteSpace(' ')
+          Qualified identifier
+            PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('    ')
+          PsiElement(this)('this')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Arguments
+            <empty list>
+          PsiElement())(')')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

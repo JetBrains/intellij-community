@@ -1,0 +1,24 @@
+protected synchronized String a (Object param)
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(protected)('protected')
+      PsiWhiteSpace(' ')
+      PsiElement(synchronized)('synchronized')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Class type
+          PsiElement(identifier)('Object')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('param')
+    PsiElement())(')')

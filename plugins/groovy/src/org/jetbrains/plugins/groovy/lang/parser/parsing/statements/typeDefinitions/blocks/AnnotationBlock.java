@@ -17,17 +17,44 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.AnnotationMember;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class AnnotationBlock implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class AnnotationBlock implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
-    return WRONGWAY;
+    PsiBuilder.Marker abMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      builder.error(GroovyBundle.message("lcurly.expected"));
+      abMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    AnnotationMember.parse(builder);
+
+    IElementType sep = Separators.parse(builder);
+
+    while (!WRONGWAY.equals(sep)) {
+      AnnotationMember.parse(builder);
+
+      sep = Separators.parse(builder);
+    }
+
+    ParserUtils.waitNextRCurly(builder);
+
+    if (!ParserUtils.getToken(builder, mRCURLY)) {
+      builder.error(GroovyBundle.message("rcurly.expected"));
+    }
+
+    abMarker.done(ANNOTATION_BLOCK);
+    return ANNOTATION_BLOCK;
   }
 }

@@ -60,7 +60,7 @@ public class Modifiers implements GroovyElementTypes {
     def = ParserUtils.lookAhead(builder, kDEF) ? kDEF : NONE;
 
     boolean moreThanOneModifier = false;
-    while(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)) {
+    while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)) {
       annotation = Annotation.parse(builder);
       modifier = Modifier.parse(builder);
       def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;
@@ -70,13 +70,8 @@ public class Modifiers implements GroovyElementTypes {
       moreThanOneModifier = true;
     }
 
-//    if (moreThanOneModifier) {
-      modifiersMarker.done(MODIFIERS);
-      return MODIFIERS;
-//    } else {
-//      modifiersMarker.done(MODIFIER);
-//      return MODIFIER;
-//    }
+    modifiersMarker.done(MODIFIERS);
+    return MODIFIERS;
 
   }
 }

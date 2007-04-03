@@ -1,0 +1,37 @@
+synchronized def final protected String a () throws NullPointerException, BigException.SmallException {} 
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(synchronized)('synchronized')
+      PsiWhiteSpace(' ')
+      PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      PsiElement(final)('final')
+      PsiWhiteSpace(' ')
+      PsiElement(protected)('protected')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      PsiElement(throws)('throws')
+      PsiWhiteSpace(' ')
+      Qualified identifier
+        PsiElement(identifier)('NullPointerException')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Qualified identifier
+        PsiElement(identifier)('BigException')
+        PsiElement(.)('.')
+        PsiElement(identifier)('SmallException')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
+  PsiWhiteSpace(' ')

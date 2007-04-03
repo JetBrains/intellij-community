@@ -1,5 +1,5 @@
 class b {
- a (def a, final b) {
+ def a (def a, final b) {
   interface a {}  
  }
 }
@@ -15,6 +15,9 @@ Groovy script
       PsiElement(new line)('\n')
       PsiWhiteSpace(' ')
       Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
@@ -33,7 +36,7 @@ Groovy script
             PsiElement(identifier)('b')
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Method body
+        Open block
           PsiElement({)('{')
           PsiElement(new line)('\n')
           PsiWhiteSpace('  ')

@@ -16,17 +16,46 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Identifier;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class Annotation implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-    return WRONGWAY;
+
+/*
+* annotation	:	AT identifier (	LPAREN (	annotationArguments | ) RPAREN | )
+*/
+public class Annotation implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    PsiBuilder.Marker annMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mAT)) {
+      annMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    if (WRONGWAY.equals(Identifier.parse(builder))) {
+      annMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    if (!ParserUtils.getToken(builder, mLPAREN)) {
+      annMarker.done(ANNOTATION);
+      return ANNOTATION;
+    }
+
+    AnnotationArguments.parse(builder);
+
+    if (!ParserUtils.getToken(builder, mRPAREN)) {
+      annMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    annMarker.done(ANNOTATION);
+    return ANNOTATION;
   }
 }

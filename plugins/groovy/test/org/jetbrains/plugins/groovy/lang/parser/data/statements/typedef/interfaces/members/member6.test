@@ -1,0 +1,4 @@
+interface a {
+  def String[] a
+}
+-----

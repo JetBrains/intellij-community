@@ -36,7 +36,7 @@ Groovy script
             PsiElement(identifier)('y')
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Method body
+        Open block
           PsiElement({)('{')
           PsiElement(new line)('\n')
           PsiWhiteSpace('    ')

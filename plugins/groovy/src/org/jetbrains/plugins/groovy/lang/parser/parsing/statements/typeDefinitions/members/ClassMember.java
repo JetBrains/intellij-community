@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ClassMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    //PsiBuilder.Marker cmMarker = builder.mark();
 
     //constructor
     PsiBuilder.Marker constructorMarker = builder.mark();
@@ -68,7 +67,6 @@ public class ClassMember implements GroovyElementTypes {
       }
       return typeDef;
     }
-
     typeDeclStartMarker.rollbackTo();
 
     //static compound statement

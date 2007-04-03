@@ -27,15 +27,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class ClassBlock implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class ClassBlock implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker cbMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
       return WRONGWAY;
@@ -45,8 +42,7 @@ public class ClassBlock implements GroovyElementTypes
 
     IElementType sep = Separators.parse(builder);
 
-    while (!WRONGWAY.equals(sep))
-    {
+    while (!WRONGWAY.equals(sep)) {
       ClassMember.parse(builder);
 
       sep = Separators.parse(builder);
@@ -54,8 +50,7 @@ public class ClassBlock implements GroovyElementTypes
 
     ParserUtils.waitNextRCurly(builder);
 
-    if (!ParserUtils.getToken(builder, mRCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
 //      cbMarker.rollbackTo();
 //      return WRONGWAY;

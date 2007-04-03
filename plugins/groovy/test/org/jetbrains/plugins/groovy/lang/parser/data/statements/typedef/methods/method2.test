@@ -23,7 +23,7 @@ Groovy script
         PsiElement(()('(')
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Method body
+        Open block
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n')

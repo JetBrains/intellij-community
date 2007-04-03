@@ -21,9 +21,11 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -38,13 +40,28 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
 
     PsiBuilder.Marker varMarker = builder.mark();
+    boolean isStringName = ParserUtils.lookAhead(builder, mSTRING_LITERAL);
+
     if ((ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL)) && ParserUtils.getToken(builder, mLPAREN)) {
 
-      ParameterDeclarationList.parse(builder, mRPAREN);
+      GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
+
+      //todo: define whether param list is empty or not
+      boolean isEmptyParamDeclList = NONE.equals(paramDeclList);
+
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         ParserUtils.waitNextRCurly(builder);
 
         builder.error(GroovyBundle.message("rparen.expected"));
+      }
+
+      if (!isStringName && isEmptyParamDeclList && ParserUtils.getToken(builder, kDEFAULT)) {
+        ParserUtils.getToken(builder, mNLS);
+
+        if (parseAnnotationMemberValueInitializer(builder)) {
+          varMarker.done(DEFAULT_ANNOTATION_MEMBER);
+          return DEFAULT_ANNOTATION_MEMBER;
+        }
       }
 
       ThrowClause.parse(builder);
@@ -87,5 +104,9 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
 
     return true;
+  }
+
+  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
+    return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
   }
 }

@@ -18,15 +18,40 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class ThrowClause implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-    return WRONGWAY;
+public class ThrowClause implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    PsiBuilder.Marker throwClauseMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, kTHROWS)) {
+      throwClauseMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    ParserUtils.getToken(builder, mNLS);
+
+    if (WRONGWAY.equals(Identifier.parse(builder))) {
+      throwClauseMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    while (ParserUtils.getToken(builder, mCOMMA)) {
+      ParserUtils.getToken(builder, mNLS);
+
+      if (WRONGWAY.equals(Identifier.parse(builder))) {
+        throwClauseMarker.rollbackTo();
+        return WRONGWAY;
+      }
+    }
+
+    ParserUtils.getToken(builder, mNLS);
+
+    throwClauseMarker.done(THROW_CLAUSE);
+    return THROW_CLAUSE;
   }
 }

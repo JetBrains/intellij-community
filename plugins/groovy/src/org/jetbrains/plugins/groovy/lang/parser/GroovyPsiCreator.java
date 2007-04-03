@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumen
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrMethodBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
@@ -89,6 +89,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
 //    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
     if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
 
+    //throws
+    if (elem.equals(THROW_CLAUSE)) return new GrThrowClauseImpl(node);
+
     // Imports
     if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
     if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelectorImpl(node);
@@ -125,7 +128,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
     if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(CONSTRUCTOR_BODY)) return new GrConstructorBodyImpl(node);
-    if (elem.equals(METHOD_BODY)) return new GrMethodBodyImpl(node);
+//    if (elem.equals(METHOD_BODY)) return new GrMethodBodyImpl(node);
 
     //members
     if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);

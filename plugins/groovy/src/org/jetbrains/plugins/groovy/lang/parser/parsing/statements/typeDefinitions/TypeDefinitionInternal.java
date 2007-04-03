@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.AnnotationDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.ClassDefinition;
@@ -36,10 +36,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
  *                          | AnnotationDefinition 
  */
 
-public class TypeDefinitionInternal implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class TypeDefinitionInternal implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     if (!WRONGWAY.equals(ClassDefinition.parse(builder))) return CLASS_DEFINITION;
 

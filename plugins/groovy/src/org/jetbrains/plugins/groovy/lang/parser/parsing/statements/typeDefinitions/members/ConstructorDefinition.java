@@ -54,9 +54,6 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     IElementType methodBody = ConstructorBody.parse(builder);
 
-   /* if (METHOD_BODY.equals(methodBody)) {
-      return METHOD_DEFINITION;
-    } else */
     if (CONSTRUCTOR_BODY.equals(methodBody)) {
       return CONSTRUCTOR_DEFINITION;
     } else {

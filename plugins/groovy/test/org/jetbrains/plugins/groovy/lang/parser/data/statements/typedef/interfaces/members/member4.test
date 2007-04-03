@@ -1,0 +1,73 @@
+interface a {
+  def String a (def a = 5, int[][] s) {
+
+  }
+
+  class B {}
+}
+-----
+Groovy script
+  Interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Interface block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(number)('5')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Array type
+              Array type
+                Built in type
+                  PsiElement(int)('int')
+                PsiElement([)('[')
+                PsiElement(])(']')
+              PsiElement([)('[')
+              PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('s')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(new line)('\n\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n')
+      PsiWhiteSpace('  ')
+      Class definition
+        PsiElement(class)('class')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('B')
+        PsiWhiteSpace(' ')
+        Class body
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

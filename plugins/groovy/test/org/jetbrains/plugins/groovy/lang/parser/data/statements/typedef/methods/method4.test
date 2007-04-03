@@ -12,12 +12,13 @@ Groovy script
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
-      Modifiers
-        PsiElement(def)('def')
-      PsiWhiteSpace(' ')
-      PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(()('(')
-      PsiElement())(')')
-      PsiElement(new line)('\n')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiElement(new line)('\n')
       PsiElement(})('}')
