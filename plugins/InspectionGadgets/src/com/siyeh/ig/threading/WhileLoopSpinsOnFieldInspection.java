@@ -124,7 +124,13 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
             if (!(expression instanceof PsiReferenceExpression)) {
                 return false;
             }
-            final PsiReference reference = (PsiReference) expression;
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression) expression;
+            final PsiExpression qualifierExpression =
+                    reference.getQualifierExpression();
+            if (qualifierExpression != null) {
+                return false;
+            }
             final PsiElement referent = reference.resolve();
             if (!(referent instanceof PsiField)) {
                 return false;
