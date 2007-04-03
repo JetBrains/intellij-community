@@ -58,16 +58,13 @@ public class DeclarationStart implements GroovyElementTypes {
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
-    if (!WRONGWAY.equals(UpperCaseIdent.parse(builder)) || !WRONGWAY.equals(BuiltInType.parse(builder)) || !WRONGWAY.equals(QualifiedTypeName.parse(builder))) {
+    if (UpperCaseIdent.parse(builder) || !WRONGWAY.equals(BuiltInType.parse(builder)) || !WRONGWAY.equals(QualifiedTypeName.parse(builder))) {
 
       IElementType balancedTokens;
 
       do {
         balancedTokens = parseBalancedTokensInBrackets(builder);
-        if (!BALANCED_TOKENS.equals(balancedTokens)) {
-          return false;
-        }
-      } while (!WRONGWAY.equals(balancedTokens));
+      } while (!NONE.equals(balancedTokens) && !WRONGWAY.equals(balancedTokens));
 
       //IDENT
       return ParserUtils.getToken(builder, mIDENT);
@@ -91,17 +88,17 @@ public class DeclarationStart implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       btm.rollbackTo();
-      return WRONGWAY;
+      return NONE;
     }
 
     if (WRONGWAY.equals(BalancedTokens.parse(builder))) {
       btm.rollbackTo();
-      return WRONGWAY;
+      return NONE;
     }
 
     if (!ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"))) {
       btm.rollbackTo();
-      return WRONGWAY;
+      return NONE;
     }
 
     btm.done(BALANCED_TOKENS);

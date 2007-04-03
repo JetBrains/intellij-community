@@ -1,0 +1,42 @@
+class w {
+  final def w () {
+    super()
+  }
+}  
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('w')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Constructor
+        Modifiers
+          PsiElement(final)('final')
+          PsiWhiteSpace(' ')
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('w')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('    ')
+          PsiElement(super)('super')
+          PsiElement(()('(')
+          Arguments
+            <empty list>
+          PsiElement())(')')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiWhiteSpace('  ')

@@ -1,0 +1,53 @@
+class s {
+  def a () {
+    this();
+    def a = 3.7
+  }
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('s')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('    ')
+          PsiElement(this)('this')
+          PsiElement(()('(')
+          Arguments
+            <empty list>
+          PsiElement())(')')
+          PsiElement(;)(';')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('    ')
+          Variable definitions
+            Modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(number)('3.7')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

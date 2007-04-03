@@ -1,0 +1,8 @@
+Map map
+-----
+Groovy script
+  Variable definitions
+    Class type
+      PsiElement(identifier)('Map')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('map')
