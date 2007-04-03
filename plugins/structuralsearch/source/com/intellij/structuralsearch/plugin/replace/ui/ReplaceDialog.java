@@ -299,21 +299,6 @@ public class ReplaceDialog extends SearchDialog {
     options.setToReformatAccordingToStyle(formatAccordingToStyle.isSelected());
   }
 
-  protected static boolean equalsConfigs(Configuration config, Configuration configuration) {
-    if (config instanceof ReplaceConfiguration && configuration instanceof ReplaceConfiguration) {
-      final ReplaceConfiguration replaceConfig = (ReplaceConfiguration)config;
-      final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
-
-      return replaceConfig.getOptions().getReplacement().equals(
-        replaceConfiguration.getOptions().getReplacement()) &&
-                                                            replaceConfig.getOptions().getMatchOptions().getSearchPattern().equals(
-                                                              replaceConfiguration.getOptions().getMatchOptions().getSearchPattern()
-                                                            );
-    }
-
-    return false;
-  }
-
   protected boolean isRecursiveSearchEnabled() {
     return false;
   }

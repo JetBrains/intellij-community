@@ -509,7 +509,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       searchContext.getProject(),
       true,
       false,
-      isReplaceDialog() ? SSRBundle.message("default.replace.scope") : FindSettings.getInstance().getDefaultScopeName()
+      FindSettings.getInstance().getDefaultScopeName()
     );
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
@@ -760,9 +760,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
-    if (!isReplaceDialog()) {
-      FindSettings.getInstance().setDefaultScopeName(selectedScope.getDisplayName());
-    }
+    FindSettings.getInstance().setDefaultScopeName(selectedScope.getDisplayName());
     ourOpenInNewTab = openInNewTab.isSelected();
 
     try {
