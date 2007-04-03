@@ -117,7 +117,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   @Nullable
   public Library getLibrary() {
-    if (myLibraryName == null || !getRootModel().isWritable()){
+    if (!getRootModel().isWritable()){
       return myLibrary;
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
