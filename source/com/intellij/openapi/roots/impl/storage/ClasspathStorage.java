@@ -45,7 +45,7 @@ abstract public class ClasspathStorage implements StateStorage {
 
   @NonNls private static final String COMPONENT_TAG = "component";
 
-  protected CachedXmlDocumentSet myFileCache;
+  private Module myModule;
 
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
@@ -55,11 +55,10 @@ abstract public class ClasspathStorage implements StateStorage {
     assert stateClass == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      final Module module = ((ModuleRootManagerImpl)component).getModule();
+      myModule = ((ModuleRootManagerImpl)component).getModule();
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-      createFileCache(module);
-      getClasspath(module, element);
-      PathMacroManager.getInstance(module).expandPaths(element);
+      getClasspath(myModule, element);
+      PathMacroManager.getInstance(myModule).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
       //noinspection unchecked
@@ -79,12 +78,11 @@ abstract public class ClasspathStorage implements StateStorage {
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      final Module module = ((ModuleRootManagerImpl)component).getModule();
+      myModule = ((ModuleRootManagerImpl)component).getModule();
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
       ((ModuleRootManagerImpl.ModuleRootManagerState)state).writeExternal(element);
-      PathMacroManager.getInstance(module).collapsePaths(element);
-      createFileCache(module);
-      setClasspath(module, element);
+      PathMacroManager.getInstance(myModule).collapsePaths(element);
+      setClasspath(myModule, element);
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e);
@@ -96,12 +94,12 @@ abstract public class ClasspathStorage implements StateStorage {
 
   public List<VirtualFile> getAllStorageFiles() {
     final List<VirtualFile> list = new ArrayList<VirtualFile>();
-    myFileCache.listFiles(list);
+    getFileSet(myModule).listFiles(list);
     return list;
   }
 
   public boolean needsSave() throws StateStorageException {
-    return myFileCache.hasChanged();
+    return getFileSet(myModule).hasChanged();
   }
 
   public void save() throws StateStorageException {
@@ -109,7 +107,7 @@ abstract public class ClasspathStorage implements StateStorage {
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         public void run() {
           try {
-            myFileCache.commit();
+            getFileSet(myModule).commit();
           }
           catch (IOException e) {
             ref.set(e);
@@ -122,14 +120,7 @@ abstract public class ClasspathStorage implements StateStorage {
     }
   }
 
-  private void createFileCache(final Module module) throws StateStorageException, IOException {
-    if (myFileCache == null) {
-      myFileCache = new CachedXmlDocumentSet();
-      registerFiles(module, getModuleDir(module), getStorageRootFromOptions(module));
-    }
-  }
-
-  private static String getStorageRootFromOptions(final Module module) {
+  protected static String getStorageRootFromOptions(final Module module) {
     final String moduleRoot = getModuleDir(module);
     final String storageRef = module.getOptionValue(CLASSPATH_DIR_OPTION);
     return storageRef != null ? PathUtil.concatPath(moduleRoot,storageRef) : moduleRoot;
@@ -142,6 +133,15 @@ abstract public class ClasspathStorage implements StateStorage {
   }
 
   public static void setStorageType(final Module module, final String storageID) {
+    final String oldStorageType = getStorageType(module);
+    if ( oldStorageType.equals(storageID)) {
+      return;
+    }
+
+    if (EclipseClasspathStorage.ID.equals(oldStorageType) ){
+        EclipseClasspathStorage.closeFileSet(module);
+    }
+
     if ( storageID.equals(DEFAULT_STORAGE)) {
       module.clearOption(CLASSPATH_OPTION);
       module.clearOption(CLASSPATH_DIR_OPTION);
@@ -186,9 +186,9 @@ abstract public class ClasspathStorage implements StateStorage {
     return map;
   }
 
-  protected abstract void registerFiles(final Module module, final String moduleRoot, final String contentRoot ) throws IOException;
+  protected abstract FileSet getFileSet(final Module module);
 
   protected abstract void getClasspath(final Module module, Element element) throws IOException, InvalidDataException;
 
-  protected abstract void setClasspath(Module module, Element element) throws IOException, WriteExternalException;
+  protected abstract void setClasspath(final Module module, Element element) throws IOException, WriteExternalException;
 }

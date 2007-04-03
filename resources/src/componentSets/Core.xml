@@ -273,7 +273,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.projectImport.eclipse.config.EclipseModuleResolver</implementation-class>
+      <implementation-class>com.intellij.projectImport.eclipse.config.EclipseModuleManager</implementation-class>
       <skipForDummyProject/>
     </component>
   </module-components>
