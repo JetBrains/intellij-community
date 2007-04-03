@@ -190,7 +190,7 @@ public class ChangeList {
   }
 
   public void remove(Change change) {
-    LOG.assertTrue(myChanges.remove(change), change.toString());
+    LOG.assertTrue(myChanges.remove(change), change);
     change.onRemovedFromList();
     fireOnChangeRemoved();
   }

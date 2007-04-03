@@ -91,9 +91,6 @@ public abstract class Logger {
 
     return value;
   }
-  public boolean assertTrue(boolean value, @NonNls String message) {
-    return assertTrue(value, (Object)message);
-  }
 
   public boolean assertTrue(boolean value) {
     return value || assertTrue(value, "");

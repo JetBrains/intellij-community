@@ -519,7 +519,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void addDocumentListener(DocumentListener listener) {
     myCachedDocumentListeners = null;
-    LOG.assertTrue(!myDocumentListeners.contains(listener), listener.toString());
+    LOG.assertTrue(!myDocumentListeners.contains(listener), listener);
     myDocumentListeners.add(listener);
   }
 

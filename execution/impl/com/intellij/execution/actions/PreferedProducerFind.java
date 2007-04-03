@@ -44,7 +44,7 @@ class PreferedProducerFind {
     for (final RuntimeConfigurationProducer prototype : prototypes) {
       final RuntimeConfigurationProducer producer = prototype.createProducer(location, context);
       if (producer.getConfiguration() != null) {
-        LOG.assertTrue(producer.getSourceElement() != null, producer.toString());
+        LOG.assertTrue(producer.getSourceElement() != null, producer);
         producers.add(producer);
       }
     }

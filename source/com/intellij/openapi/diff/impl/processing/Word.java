@@ -12,7 +12,7 @@ public class Word {
     myText = text;
     myRange = range;
     LOG.assertTrue(myRange.getStartOffset() >= 0);
-    LOG.assertTrue(myRange.getEndOffset() >= myRange.getStartOffset(), myRange.toString());
+    LOG.assertTrue(myRange.getEndOffset() >= myRange.getStartOffset(), myRange);
   }
 
   public int hashCode() {

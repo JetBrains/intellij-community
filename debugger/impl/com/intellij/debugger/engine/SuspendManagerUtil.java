@@ -59,7 +59,7 @@ public class SuspendManagerUtil {
       if(suspendContext.suspends(thread)) {
         ThreadReferenceProxyImpl contextThread = suspendContext.getThread();
         if (contextThreads.contains(contextThread)) {
-          LOG.assertTrue(false, suspendContext.toString());
+          LOG.assertTrue(false, suspendContext);
         }
         contextThreads.add(contextThread);
         result.add(suspendContext);

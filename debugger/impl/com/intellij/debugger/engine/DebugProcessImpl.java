@@ -1013,7 +1013,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       LOG.assertTrue(context.isEvaluating());
       try {
         final boolean isSuspended = thread.isSuspended();
-        LOG.assertTrue(isSuspended, thread.toString());
+        LOG.assertTrue(isSuspended, thread);
       }
       catch (ObjectCollectedException ignored) {
       }

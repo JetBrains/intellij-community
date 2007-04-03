@@ -183,7 +183,7 @@ public class SuspendManagerImpl implements SuspendManager {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final boolean removed = myEventContexts.remove(suspendContext);
     if (!removed) {
-      LOG.assertTrue(false, suspendContext.toString());
+      LOG.assertTrue(false, suspendContext);
     }
     myPausedContexts.remove(suspendContext);
   }

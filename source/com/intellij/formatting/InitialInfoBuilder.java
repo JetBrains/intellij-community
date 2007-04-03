@@ -256,10 +256,10 @@ class InitialInfoBuilder {
     buffer.append("Invalid formatting blocks:").append(message).append("\n");
     buffer.append("Start offset:").append(startOffset).append(" end offset:").append(newEndOffset).append("\n");
 
-    int minOffset = Math.max( Math.min(startOffset,newEndOffset) - 20, 0);
-    int maxOffset = Math.min( Math.max(startOffset, newEndOffset) + 20, model.getTextLength());
+    int minOffset = Math.max(Math.min(startOffset, newEndOffset) - 20, 0);
+    int maxOffset = Math.min(Math.max(startOffset, newEndOffset) + 20, model.getTextLength());
 
-    buffer.append("Affected text fragment:[").append(minOffset).append (",").append(maxOffset).append("] - '")
+    buffer.append("Affected text fragment:[").append(minOffset).append(",").append(maxOffset).append("] - '")
       .append(model.getText(new TextRange(minOffset, maxOffset))).append("'\n");
 
     if (model instanceof FormattingDocumentModelImpl) {
@@ -283,6 +283,6 @@ class InitialInfoBuilder {
       buffer.append('\n');
     }
 
-    LOG.assertTrue(false, buffer.toString());
+    LOG.assertTrue(false, buffer);
   }
 }

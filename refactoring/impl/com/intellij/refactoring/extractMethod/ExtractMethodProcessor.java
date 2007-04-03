@@ -506,7 +506,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
         }
         else {
-          LOG.assertTrue(false, exitStatement.toString());
+          LOG.assertTrue(false, exitStatement);
           continue;
         }
 
