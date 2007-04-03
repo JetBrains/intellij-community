@@ -173,28 +173,38 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void commitDocument(final Document doc) {
     final Document document = doc instanceof DocumentRange ? ((DocumentRange)doc).getDelegate() : doc;
-    if (!isUncommited(document)) return;
+    if (isUncommited(document)) {
+      doCommit(document, null);
+    }
+  }
 
+  private void doCommit(final Document document, final PsiFile excludeFile) {
     ApplicationManager.getApplication().runWriteAction(
       new CommitToPsiFileAction() {
         public void run() {
-          if (!isUncommited(document)) return;
+          if (isCommittingDocument(document)) return;
+          document.putUserData(KEY_COMMITING, Boolean.TRUE);
 
-          boolean hasCommits = false;
-          final FileViewProvider viewProvider = getCachedViewProvider(document);
-          if (viewProvider != null) {
-            final List<PsiFile> psiFiles = viewProvider.getAllFiles();
-            for (PsiFile file : psiFiles) {
-              if (file.isValid()) {
-                hasCommits |= commit(document, file);
+          try {
+            boolean hasCommits = false;
+            final FileViewProvider viewProvider = getCachedViewProvider(document);
+            if (viewProvider != null) {
+              final List<PsiFile> psiFiles = viewProvider.getAllFiles();
+              for (PsiFile file : psiFiles) {
+                if (file.isValid() && file != excludeFile) {
+                  hasCommits |= commit(document, file);
+                }
               }
             }
-          }
 
-          myUncommittedDocuments.remove(document);
-          if (hasCommits) {
-            InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-            viewProvider.contentsSynchronized();
+            myUncommittedDocuments.remove(document);
+            if (hasCommits) {
+              InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
+              viewProvider.contentsSynchronized();
+            }
+          }
+          finally {
+            document.putUserData(KEY_COMMITING, null);
           }
         }
       }
@@ -206,27 +216,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (viewProvider != null && viewProvider.getAllFiles().size() > 1) {
       PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction() {
-              public void run() {
-                boolean hasCommits = false;
-                final FileViewProvider viewProvider = getCachedViewProvider(document);
-                if (viewProvider != null) {
-                  final List<PsiFile> psiFiles = viewProvider.getAllFiles();
-                  for (PsiFile file : psiFiles) {
-                    if (file.isValid() && file != psiFile) {
-                      hasCommits |= commit(document, file);
-                    }
-                  }
-                }
-                
-                myUncommittedDocuments.remove(document);
-                if (hasCommits) {
-                  viewProvider.contentsSynchronized();
-                  InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-                }
-              }
-            }
-          );
+          doCommit(document, psiFile);
         }
       });
     }
@@ -347,15 +337,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   protected boolean commit(final Document document, final PsiFile file) {
-    if (document.getUserData(KEY_COMMITING) == Boolean.TRUE) return false;
-
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document, file);
     if (textBlock.isEmpty()) return false;
 
     myIsCommitInProgress = true;
-    document.putUserData(KEY_COMMITING, Boolean.TRUE);
     try{
       if (true/*file.getModificationStamp() != document.getModificationStamp()*/){
         if (mySmartPointerManager != null) { // mock tests
@@ -387,7 +374,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
     finally{
       myIsCommitInProgress = false;
-      document.putUserData(KEY_COMMITING, Boolean.FALSE);
     }
     //checkConsistency(file, document);
 
@@ -500,42 +486,43 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     char[] fileText = psiFile.textToCharArray();
-    LOG.error("File text mismatch after reparse. File length="+fileText.length+"; Doc length="+documentLength);
+    StringBuilder error = new StringBuilder();
+    error.append("File text mismatch after reparse. File length="+fileText.length+"; Doc length="+documentLength+"\n");
     int i = 0;
     for(; i < documentLength; i++){
       if (i >= fileText.length){
-        LOG.info("editorText.length > psiText.length i=" + i);
+        error.append("editorText.length > psiText.length i=" + i+"\n");
         break;
       }
       if (editorText.charAt(i) != fileText[i]){
-        LOG.info("first unequal char i=" + i);
+        error.append("first unequal char i=" + i+"\n");
         break;
       }
     }
-    LOG.info("*********************************************");
+    error.append("*********************************************"+"\n");
     if (i <= 500){
-      LOG.info("Equal part:" + editorText.subSequence(0, i));
+      error.append("Equal part:" + editorText.subSequence(0, i)+"\n");
     }
     else{
-      LOG.info("Equal part start:\n" + editorText.subSequence(0, 200));
-      LOG.info("................................................");
-      LOG.info("................................................");
-      LOG.info("................................................");
-      LOG.info("Equal part end:\n" + editorText.subSequence(i - 200, i));
+      error.append("Equal part start:\n" + editorText.subSequence(0, 200)+"\n");
+      error.append("................................................"+"\n");
+      error.append("................................................"+"\n");
+      error.append("................................................"+"\n");
+      error.append("Equal part end:\n" + editorText.subSequence(i - 200, i)+"\n");
     }
-    LOG.info("*********************************************");
-    LOG.info("Editor Text tail:\n" + editorText.subSequence(i, Math.min(i + 300, documentLength)));
-    LOG.info("*********************************************");
-    LOG.info("Psi Text tail:\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i));
-    LOG.info("*********************************************");
+    error.append("*********************************************"+"\n");
+    error.append("Editor Text tail:\n" + editorText.subSequence(i, Math.min(i + 300, documentLength))+"\n");
+    error.append("*********************************************"+"\n");
+    error.append("Psi Text tail:\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i)+"\n");
+    error.append("*********************************************"+"\n");
+    LOG.error(error.toString());
     document.replaceString(0, documentLength, psiFile.getText());
     return false;
   }
 
   public void contentsLoaded(PsiFileImpl file) {
     final Document document = getCachedDocument(file);
-    if(document != null)
-      getTextBlock(document, file).clear();
+    if (document != null) getTextBlock(document, file).clear();
   }
 
   public boolean isDocumentCommitted(Document doc) {

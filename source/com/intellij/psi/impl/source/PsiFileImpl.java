@@ -42,6 +42,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   protected PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
   private FileViewProvider myViewProvider;
+  private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     this(provider);
@@ -175,7 +176,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     synchronized (PsiLock.LOCK) {
       treeElement = createFileElement(viewProvider.getContents());
       if (document != null) {
-        treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
+        treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
       }
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
