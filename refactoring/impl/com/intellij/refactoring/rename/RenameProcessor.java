@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -55,7 +56,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public RenameProcessor(Project project,
                          PsiElement element,
-                         String newName,
+                         @NonNls String newName,
                          boolean isSearchInComments,
                          boolean isSearchTextOccurrences) {
     super(project);
