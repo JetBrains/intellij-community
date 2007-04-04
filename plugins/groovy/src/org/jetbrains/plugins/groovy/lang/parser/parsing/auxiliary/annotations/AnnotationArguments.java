@@ -12,6 +12,7 @@ import com.intellij.lang.PsiBuilder;
  */
 public class AnnotationArguments implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
+
     PsiBuilder.Marker annArgs = builder.mark();
     if (parseAnnotationMemberValueInitializer(builder)) {
       annArgs.done(ANNOTATION_ARGUMENTS);

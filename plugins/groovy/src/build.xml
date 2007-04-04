@@ -156,7 +156,6 @@
       <classpath>
         <path location="${test.dest}"/>
         <path location="${production.dest}"/>
-        <!--<path location="C:\Java\jdk1.6.0\lib\tools.jar"/>-->
 
         <path refid="base.path"/>
         <path refid="groovy.path"/>

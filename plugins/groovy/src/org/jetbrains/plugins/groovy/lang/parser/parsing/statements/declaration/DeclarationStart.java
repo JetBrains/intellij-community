@@ -67,7 +67,7 @@ public class DeclarationStart implements GroovyElementTypes {
       } while (!NONE.equals(balancedTokens) && !WRONGWAY.equals(balancedTokens));
 
       //IDENT
-      return ParserUtils.getToken(builder, mIDENT);
+      return ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT);
 
     } else {
 //      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
