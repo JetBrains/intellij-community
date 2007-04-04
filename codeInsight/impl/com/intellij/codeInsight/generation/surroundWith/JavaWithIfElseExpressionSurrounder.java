@@ -2,26 +2,16 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
-  public boolean isApplicable(PsiExpression expr) {
-    PsiType type = expr.getType();
-    if (PsiType.BOOLEAN != type) return false;
-    PsiElement parent = expr.getParent();
-    if (!(parent instanceof PsiExpressionStatement)) return false;
-    final PsiElement psiElement = parent.getParent();
-    if (!(psiElement instanceof PsiCodeBlock) && !(PsiUtil.isInJspFile(psiElement) && psiElement instanceof PsiFile)) return false;
-    return true;
-  }
+public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurrounder{
 
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
@@ -38,7 +28,10 @@ class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
 
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    TextRange range = block.getStatements()[0].getTextRange();
+
+    PsiStatement afterStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
+    
+    TextRange range = afterStatement.getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());
   }
