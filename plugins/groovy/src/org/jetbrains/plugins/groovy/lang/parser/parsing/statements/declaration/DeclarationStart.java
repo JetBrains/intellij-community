@@ -45,13 +45,26 @@ public class DeclarationStart implements GroovyElementTypes {
     IElementType elementType;
 
     //def
-    if (ParserUtils.getToken(builder, kDEF)) return parseNextTokenInDeclaration(builder);
+    if (ParserUtils.getToken(builder, kDEF)) {
+      if (parseNextTokenInDeclaration(builder)) {
+        declStartMarker.rollbackTo();
+        return true;
+      } else {
+        declStartMarker.rollbackTo();
+        return false;
+      }
+    }
 
     //Modifiers
     elementType = Modifiers.parse(builder);
     if (!WRONGWAY.equals(elementType)) {
-      declStartMarker.rollbackTo();
-      return parseNextTokenInDeclaration(builder);
+      if (parseNextTokenInDeclaration(builder)) {
+        declStartMarker.rollbackTo();
+        return true;
+      } else {
+        declStartMarker.rollbackTo();
+        return false;
+      }
     }
 
     //@IDENT
@@ -70,11 +83,15 @@ public class DeclarationStart implements GroovyElementTypes {
       } while (!NONE.equals(balancedTokens) && !WRONGWAY.equals(balancedTokens));
 
       //IDENT
-      declStartMarker.rollbackTo();
-      return ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT);
+      if (ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT)) {
+        declStartMarker.rollbackTo();
+        return true;
+      } else {
+        declStartMarker.rollbackTo();
+        return false;
+      }
 
     } else {
-//      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
       declStartMarker.rollbackTo();
       return false;
     }
