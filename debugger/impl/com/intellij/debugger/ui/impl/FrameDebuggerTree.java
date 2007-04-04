@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -187,9 +188,27 @@ public class FrameDebuggerTree extends DebuggerTree {
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
   }
 
-  private static boolean hasMethodCall(PsiElement element) {
+  private static boolean hasSideEffects(PsiElement element) {
     final AtomicBoolean rv = new AtomicBoolean(false);
     element.accept(new PsiRecursiveElementVisitor() {
+      public void visitPostfixExpression(final PsiPostfixExpression expression) {
+        rv.set(true);
+      }
+
+      public void visitPrefixExpression(final PsiPrefixExpression expression) {
+        final IElementType op = expression.getOperationTokenType();
+        if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
+          rv.set(true);
+        }
+        else {
+          super.visitPrefixExpression(expression);
+        }
+      }
+
+      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+        rv.set(true);
+      }
+
       public void visitCallExpression(final PsiCallExpression callExpression) {
         rv.set(true);
       }
@@ -334,7 +353,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
           final PsiVariable var = (PsiVariable)psiElement;
-          if (var instanceof PsiField && !hasMethodCall(reference)) {
+          if (var instanceof PsiField && !hasSideEffects(reference)) {
             myExpressions.add(new TextWithImportsImpl(reference));
           }
           else {
@@ -346,7 +365,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
 
     public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
-      if (!hasMethodCall(expression)) {
+      if (!hasSideEffects(expression)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitArrayAccessExpression(expression);
