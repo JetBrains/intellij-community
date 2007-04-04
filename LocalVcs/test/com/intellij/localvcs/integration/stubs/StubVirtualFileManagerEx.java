@@ -1,15 +1,15 @@
 package com.intellij.localvcs.integration.stubs;
 
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
+import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.ide.startup.CacheUpdater;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.FileContentProvider;
+import com.intellij.openapi.vfs.ex.ProvidedContent;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
   public VirtualFileSystem[] getFileSystems() {
@@ -99,6 +99,14 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
   }
 
   public void unregisterRefreshUpdater(CacheUpdater updater) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void registerFileSystem(VirtualFileSystem fileSystem) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void unregisterFileSystem(VirtualFileSystem fileSystem) {
     throw new UnsupportedOperationException();
   }
 

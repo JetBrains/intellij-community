@@ -76,10 +76,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void disposeComponent() {
   }
 
-  private void registerFileSystem(VirtualFileSystem fileSystem) {
+  public void registerFileSystem(VirtualFileSystem fileSystem) {
     myFileSystems.add(fileSystem);
     fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
     myProtocolToSystemMap.put(fileSystem.getProtocol(), fileSystem);
+  }
+
+  public void unregisterFileSystem(VirtualFileSystem fileSystem) {
+    myFileSystems.remove(fileSystem);
+    fileSystem.removeVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
+    myProtocolToSystemMap.remove(fileSystem.getProtocol());
   }
 
   public VirtualFileSystem[] getFileSystems() {

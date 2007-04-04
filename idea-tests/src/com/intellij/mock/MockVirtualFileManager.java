@@ -1,12 +1,12 @@
 package com.intellij.mock;
 
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
+import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.FileContentProvider;
+import com.intellij.openapi.vfs.ex.ProvidedContent;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +83,12 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   public void unregisterRefreshUpdater(CacheUpdater updater) {
+  }
+
+  public void registerFileSystem(VirtualFileSystem fileSystem) {
+  }
+
+  public void unregisterFileSystem(VirtualFileSystem fileSystem) {
   }
 
   @Nullable
