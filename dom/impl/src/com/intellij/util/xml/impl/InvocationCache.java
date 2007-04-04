@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.DomUIFactory;
-import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -88,6 +88,13 @@ public class InvocationCache {
             return false;
           }
 
+        });
+      }
+      else if ("hashCode".equals(method.getName())) {
+        ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
+          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
+            return handler.hashCode();
+          }
         });
       }
       else {
