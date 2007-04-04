@@ -18,7 +18,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
     final IElementType tokenType = myOriginalLexer.getTokenType();
 
     if (tokenType == JavaTokenType.IDENTIFIER
-        || tokenType == JavaTokenType.LONG_LITERAL 
+        || tokenType == JavaTokenType.LONG_LITERAL
         || tokenType == JavaTokenType.INTEGER_LITERAL
         || tokenType == JavaTokenType.CHARACTER_LITERAL) {
       addOccurrenceInToken(UsageSearchContext.IN_CODE);

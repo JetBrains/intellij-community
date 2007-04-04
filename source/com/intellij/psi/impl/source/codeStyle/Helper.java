@@ -221,7 +221,7 @@ public class Helper {
 
         if (offset1 < text.length()) {
           ASTNode next = element.findLeafElementAt(offset1);
-          if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT 
+          if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT
                || next.getElementType() == ElementType.C_STYLE_COMMENT
                || next.getElementType() == JspElementType.JSP_COMMENT
           ) &&
