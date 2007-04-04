@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class DeclarationStart implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
+    PsiBuilder.Marker declStartMarker = builder.mark();
     IElementType elementType;
 
     //def
@@ -49,12 +50,14 @@ public class DeclarationStart implements GroovyElementTypes {
     //Modifiers
     elementType = Modifiers.parse(builder);
     if (!WRONGWAY.equals(elementType)) {
+      declStartMarker.rollbackTo();
       return parseNextTokenInDeclaration(builder);
     }
 
     //@IDENT
     if (ParserUtils.getToken(builder, mAT)) {
-      return ParserUtils.getToken(builder, mIDENT);
+      declStartMarker.rollbackTo();
+      return ParserUtils.lookAhead(builder, mIDENT);
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
@@ -67,10 +70,12 @@ public class DeclarationStart implements GroovyElementTypes {
       } while (!NONE.equals(balancedTokens) && !WRONGWAY.equals(balancedTokens));
 
       //IDENT
+      declStartMarker.rollbackTo();
       return ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT);
 
     } else {
 //      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
+      declStartMarker.rollbackTo();
       return false;
     }
   }
