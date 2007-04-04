@@ -7,6 +7,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,6 @@ public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
         LOG.debug(e);
       }
     }
-    return new UrlClassLoader(urls, parentLoader);
+    return new UrlClassLoader(urls, parentLoader, false, false);
   }
 }

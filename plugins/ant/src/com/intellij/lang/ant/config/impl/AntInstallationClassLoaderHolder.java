@@ -42,6 +42,6 @@ public class AntInstallationClassLoaderHolder extends ClassLoaderHolder {
         LOG.debug(e);
       }
     }
-    return new UrlClassLoader(urls, null);
+    return new UrlClassLoader(urls, null, true, false);
   }
 }
