@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForTradClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
@@ -101,8 +103,11 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
     if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinitionImpl(node);
 
     //statements
+    if (elem.equals(LABELED_STATEMENT)) return new GrLabeledStatementImpl(node);
     if (elem.equals(IF_STATEMENT)) return new GrIfStatementImpl(node);
     if (elem.equals(FOR_STATEMENT)) return new GrForStatementImpl(node);
+    if (elem.equals(FOR_IN_CLAUSE)) return new GrForInClauseImpl(node);
+    if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrForTradClauseImpl(node);
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);

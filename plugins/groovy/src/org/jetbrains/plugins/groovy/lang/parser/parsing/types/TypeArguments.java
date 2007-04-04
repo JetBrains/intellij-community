@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -55,11 +56,15 @@ public class TypeArguments implements GroovyElementTypes
       }
     }
 
+    PsiBuilder.Marker rb = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
-    if (ParserUtils.getToken(builder, mGT))
-    {
+    if (ParserUtils.getToken(builder, mGT)){
+      rb.drop();
       ParserUtils.getToken(builder, mNLS);
+    } else {
+      rb.rollbackTo();
+      builder.error(GroovyBundle.message("gt.expected"));
     }
 
     taMarker.done(TYPE_ARGUMENTS);

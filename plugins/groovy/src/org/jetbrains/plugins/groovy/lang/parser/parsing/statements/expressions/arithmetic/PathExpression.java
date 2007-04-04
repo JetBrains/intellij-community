@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.p
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.RegexConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 
 /**
  * @author Ilya.Sergey
@@ -82,10 +83,14 @@ public class PathExpression implements GroovyElementTypes
     if (DOTS.contains(builder.getTokenType()) ||
             ParserUtils.lookAhead(builder, mNLS, mDOT))
     {
-      ParserUtils.getToken(builder, mNLS);
+      if (ParserUtils.lookAhead(builder, mNLS, mDOT)){
+        ParserUtils.getToken(builder, mNLS);
+      }
       ParserUtils.getToken(builder, DOTS);
       ParserUtils.getToken(builder, mNLS);
-      // TODO Add type arguments parsing
+
+      TypeArguments.parse(builder);
+
       res = namePartParse(builder);
       if (!res.equals(WRONGWAY))
       {

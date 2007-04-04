@@ -28,10 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ShiftExpression implements GroovyElementTypes
 {
 
-  private static TokenSet SHIFTS = TokenSet.create(
-//          mSL,
-//          mSR,
-//          mBSR,
+  private static TokenSet RANGES = TokenSet.create(
           mRANGE_EXCLUSIVE,
           mRANGE_INCLUSIVE
   );
@@ -44,7 +41,7 @@ public class ShiftExpression implements GroovyElementTypes
 
     if (!result.equals(WRONGWAY))
     {
-      if (ParserUtils.getToken(builder, SHIFTS) ||
+      if (ParserUtils.getToken(builder, RANGES) ||
               getCompositeSign(builder))
       {
         ParserUtils.getToken(builder, mNLS);
@@ -56,7 +53,7 @@ public class ShiftExpression implements GroovyElementTypes
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(SHIFT_EXPRESSION);
         result = SHIFT_EXPRESSION;
-        if (SHIFTS.contains(builder.getTokenType()))
+        if (RANGES.contains(builder.getTokenType()))
         {
           subParse(builder, newMarker);
         }
@@ -114,7 +111,7 @@ public class ShiftExpression implements GroovyElementTypes
 
   private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker)
   {
-    ParserUtils.getToken(builder, SHIFTS);
+    ParserUtils.getToken(builder, RANGES);
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = AdditiveExpression.parse(builder);
     if (result.equals(WRONGWAY))
@@ -123,7 +120,7 @@ public class ShiftExpression implements GroovyElementTypes
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(SHIFT_EXPRESSION);
-    if (SHIFTS.contains(builder.getTokenType()))
+    if (RANGES.contains(builder.getTokenType()))
     {
       subParse(builder, newMarker);
     }

@@ -19,22 +19,53 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.BranchStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @autor: Dmitry.Krasilschikov, Ilya Sergey
+ *
  */
 public class StrictContextExpression implements GroovyElementTypes
 {
   public static GroovyElementType parse(PsiBuilder builder)
   {
 
-    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType()))
-    {
+    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())){
       return BranchStatement.parse(builder);
     }
+    if (mAT.equals(builder.getTokenType())){
+      return Annotation.parse(builder);
+    }
+
+
+    
+
+/*
+    if (DeclarationStart.parse(builder)) {
+      return SingleDeclara
+    }
+*/
     // TODO implement two other cases
 
     return ExpressionStatement.argParse(builder);
+  }
+
+  public static GroovyElementType singleDeclarationParse(PsiBuilder builder){
+/*
+    if (!WRONGWAY.equals(Modifiers.parse(builder))) {
+      
+    } else {
+      if (!WRONGWAY.equals(TypeSpec.parse(builder))) {
+
+      } else {
+        builder.error();
+      }
+    }
+*/
+
+    return  DECLARATION;
   }
 }

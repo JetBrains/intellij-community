@@ -61,6 +61,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType THROW_STATEMENT = new GroovyElementType("Throw statement");
 
   // Expression statements
+  GroovyElementType LABELED_STATEMENT = new GroovyElementType("Labeled statement");
   GroovyElementType EXPRESSION_STATEMENT = new GroovyElementType("Expression statement");
   GroovyElementType COMMAND_ARGUMENTS = new GroovyElementType("Command arguments");
   GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
@@ -169,6 +170,10 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
   GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
+
+  //for clauses
+  GroovyElementType FOR_IN_CLAUSE = new GroovyElementType("IN clause");
+  GroovyElementType FOR_TRADITIONAL_CLAUSE = new GroovyElementType("Traditional clause");
 
   GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement");
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");

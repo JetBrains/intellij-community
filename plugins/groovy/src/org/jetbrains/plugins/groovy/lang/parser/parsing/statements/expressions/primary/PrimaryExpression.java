@@ -153,7 +153,7 @@ public class PrimaryExpression implements GroovyElementTypes
     }
     else if (mIDENT.equals(builder.getTokenType()))
     {
-      ClassOrInterfaceType.parseStrict(builder);
+      ClassOrInterfaceType.parse(builder);
     }
     else
     {

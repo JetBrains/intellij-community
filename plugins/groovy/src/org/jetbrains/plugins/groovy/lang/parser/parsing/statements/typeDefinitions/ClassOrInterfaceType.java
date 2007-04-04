@@ -64,15 +64,4 @@ public class ClassOrInterfaceType implements GroovyElementTypes
     return CLASS_INTERFACE_TYPE;
   }
 
-  /**
-   * Strict parsing. In case of any convergence returns WRONGWAY
-   *
-   * @param builder
-   * @return
-   */
-  // TODO Implement it, please in accordance with javadoc above
-  public static GroovyElementType parseStrict(PsiBuilder builder)
-  {
-    return parse(builder);
-  }
 }

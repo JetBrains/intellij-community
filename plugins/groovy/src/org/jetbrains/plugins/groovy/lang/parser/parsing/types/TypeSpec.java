@@ -197,7 +197,7 @@ public class TypeSpec implements GroovyElementTypes
   private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder)
   {
     PsiBuilder.Marker arrMarker = builder.mark();
-    if (WRONGWAY.equals(ClassOrInterfaceType.parseStrict(builder)))
+    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder)))
     {
       arrMarker.rollbackTo();
       return WRONGWAY;
