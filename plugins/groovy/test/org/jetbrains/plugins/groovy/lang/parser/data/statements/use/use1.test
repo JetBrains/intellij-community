@@ -1,0 +1,76 @@
+use (StringCalculationCategory) {
+  assert 1 == '1' + '0'
+  assert 2 == '1' + '1'
+  assert 'x1' == 'x' + '1'
+}
+-----
+Groovy script
+  USE statement
+    PsiElement(useh)('use')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Class type
+      PsiElement(identifier)('StringCalculationCategory')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      ASSERT statement
+        PsiElement(assert)('assert')
+        PsiWhiteSpace(' ')
+        Equality expression
+          Literal
+            PsiElement(number)('1')
+          PsiWhiteSpace(' ')
+          PsiElement(==)('==')
+          PsiWhiteSpace(' ')
+          Additive expression
+            Literal
+              PsiElement(string)(''1'')
+            PsiWhiteSpace(' ')
+            PsiElement(+)('+')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(string)(''0'')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      ASSERT statement
+        PsiElement(assert)('assert')
+        PsiWhiteSpace(' ')
+        Equality expression
+          Literal
+            PsiElement(number)('2')
+          PsiWhiteSpace(' ')
+          PsiElement(==)('==')
+          PsiWhiteSpace(' ')
+          Additive expression
+            Literal
+              PsiElement(string)(''1'')
+            PsiWhiteSpace(' ')
+            PsiElement(+)('+')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(string)(''1'')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      ASSERT statement
+        PsiElement(assert)('assert')
+        PsiWhiteSpace(' ')
+        Equality expression
+          Literal
+            PsiElement(string)(''x1'')
+          PsiWhiteSpace(' ')
+          PsiElement(==)('==')
+          PsiWhiteSpace(' ')
+          Additive expression
+            Literal
+              PsiElement(string)(''x'')
+            PsiWhiteSpace(' ')
+            PsiElement(+)('+')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(string)(''1'')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
