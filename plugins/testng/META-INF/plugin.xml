@@ -4,7 +4,7 @@
     <description>TestNG Integration</description>
     <version>1.0.3</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
-    <idea-version since-build="5594"/>
+    <idea-version since-build="6791"/>
     <application-components>
         <component>
             <implementation-class>com.theoryinpractice.testng.TestNGConfigurationType</implementation-class>
@@ -36,6 +36,7 @@
     </project-components>
     <change-notes>
         <![CDATA[
+            TESTNG-150 Fixed NPE on dependsOnGroups and dependsOnMethods inspections.
             Fixed problem with quotes in output directory and source directory, new
             inspections for dependsOnMethods and dependsOnGroups.
         ]]>
