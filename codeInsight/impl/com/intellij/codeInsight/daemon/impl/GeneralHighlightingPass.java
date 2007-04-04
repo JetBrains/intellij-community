@@ -46,7 +46,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
   private final PsiFile myFile;
-  private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
@@ -67,7 +66,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  int endOffset, boolean updateAll) {
     super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
     myFile = file;
-    myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
