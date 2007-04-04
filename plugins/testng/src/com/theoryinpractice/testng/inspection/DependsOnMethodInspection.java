@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,10 +63,12 @@ public class DependsOnMethodInspection extends LocalInspectionTool
             }
 
             if (dep != null) {
-                Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
-                while (matcher.find()) {
-                    String methodName = matcher.group(1);
-                    checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                if (dep.getValue() != null) {
+                    Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
+                    while (matcher.find()) {
+                        String methodName = matcher.group(1);
+                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                    }
                 }
             }
         }
