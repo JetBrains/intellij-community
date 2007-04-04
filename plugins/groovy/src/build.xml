@@ -17,7 +17,7 @@
   <property file="groovy.properties"/>
   <property environment="env"/>
 
-  <property name="production.dest" value="${project.dir}/classes/production/Groovy"/>
+  <property name="production.dest" location="${project.dir}/classes/production/Groovy"/>
   <property name="idea.dir" value="${production.dest}/lib/idea"/>
   <property name="idea.lib" value="${production.dest}/lib/idea/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
