@@ -29,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /*
 * annotation	:	AT identifier (	LPAREN (	annotationArguments | ) RPAREN | )
 */
+
+
 public class Annotation implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker annMarker = builder.mark();

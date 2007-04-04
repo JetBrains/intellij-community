@@ -32,6 +32,17 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
+
+/*
+ * variableDefinitions ::=
+ *      variableDeclarator ( COMMA nls variableDeclarator )*
+ *    |	(	IDENT |	STRING_LITERAL )
+ *      LPAREN parameterDeclarationList RPAREN
+ *      (throwsClause | )
+ *      (	( nlsWarn openBlock ) | )
+ */
+
+  
 public class VariableDefinitions implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL))) {
@@ -48,7 +59,6 @@ public class VariableDefinitions implements GroovyElementTypes {
     if (eaten && ParserUtils.getToken(builder, mLPAREN)) {
       GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
 
-      //todo: define whether param list is empty or not
       boolean isEmptyParamDeclList = NONE.equals(paramDeclList);
 
       if (!ParserUtils.getToken(builder, mRPAREN)) {
@@ -99,6 +109,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
   }
 
+  //a, a = b
   private static boolean parseVariableDeclarator(PsiBuilder builder) {
     if (!(ParserUtils.getToken(builder, mIDENT))) {
       return false;

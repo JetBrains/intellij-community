@@ -97,7 +97,7 @@ public class DeclarationStart implements GroovyElementTypes {
     }
   }
 
-
+  //todo: check it
   private static boolean parseNextTokenInDeclaration(PsiBuilder builder) {
     return ParserUtils.lookAhead(builder, mIDENT) ||
         TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
@@ -108,7 +108,6 @@ public class DeclarationStart implements GroovyElementTypes {
           ParserUtils.lookAhead(builder, mGSTRING_LITERAL) ||
           ParserUtils.lookAhead(builder, mSTRING_LITERAL);
   }
-
 
   private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder) {
     PsiBuilder.Marker btm = builder.mark();

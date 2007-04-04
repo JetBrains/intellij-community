@@ -25,6 +25,12 @@ import com.intellij.lang.PsiBuilder;
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
+
+/*
+ * annotationArguments ::= annotationMemberValueInitializer |	anntotationMemberValuePairs
+ */
+
+
 public class AnnotationArguments implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
 
@@ -45,6 +51,10 @@ public class AnnotationArguments implements GroovyElementTypes {
     return WRONGWAY;
   }
 
+  /*
+  * annotationMemberValueInitializer ::=  conditionalExpression |	annotation
+  */
+
   private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     if (ParserUtils.lookAhead(builder, mAT)) {
       return !WRONGWAY.equals(Annotation.parse(builder));
@@ -53,6 +63,10 @@ public class AnnotationArguments implements GroovyElementTypes {
     //check
     return !WRONGWAY.equals(ConditionalExpression.parse(builder)) && !ParserUtils.getToken(builder, mASSIGN);
   }
+
+  /*
+   * anntotationMemberValuePairs ::= annotationMemberValuePair ( COMMA nls annotationMemberValuePair )*
+   */
 
   private static GroovyElementType parseAnnotationMemberValuePairs(PsiBuilder builder) {
     PsiBuilder.Marker annmvps = builder.mark();
@@ -74,6 +88,10 @@ public class AnnotationArguments implements GroovyElementTypes {
     annmvps.done(ANNOTATION_MEMBER_VALUE_PAIRS);
     return ANNOTATION_MEMBER_VALUE_PAIRS;
   }
+
+  /*
+   * annotationMemberValuePair ::= IDENT ASSIGN nls annotationMemberValueInitializer
+   */
 
   private static GroovyElementType parseAnnotationMemberValueSinglePair(PsiBuilder builder) {
     PsiBuilder.Marker annmvp = builder.mark();
@@ -98,6 +116,4 @@ public class AnnotationArguments implements GroovyElementTypes {
     annmvp.rollbackTo();
     return ANNOTATION_MEMBER_VALUE_PAIR;
   }
-
-
 }
