@@ -157,7 +157,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
               public void run() {
                 myEditor.getDocument().deleteString(0, myEditor.getDocument().getTextLength());
               }
-            }, null, null);
+            }, null, myEditor.getDocument());
           }
         });
       }
@@ -319,14 +319,14 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     }
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
-    final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength();
+    final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
             document.insertString(document.getTextLength(), text);
           }
-        }, null, null);
+        }, null, document);
       }
     });
     final int newLineCount = document.getLineCount();

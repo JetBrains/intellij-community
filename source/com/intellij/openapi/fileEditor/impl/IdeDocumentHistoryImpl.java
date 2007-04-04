@@ -13,9 +13,10 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -129,7 +130,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCurrentCommandHasMoves = true;
   }
 
-  public final void onCaretPositionChanged(CaretEvent e) {
+  private void onCaretPositionChanged(CaretEvent e) {
     if (e.getOldPosition().line == e.getNewPosition().line) return;
     Document document = e.getEditor().getDocument();
     if (getFileDocumentManager().getFile(document) != null) {
@@ -137,7 +138,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
-  public final void onDocumentChanged(DocumentEvent e) {
+  private void onDocumentChanged(DocumentEvent e) {
     Document document = e.getDocument();
     if (getFileDocumentManager().getFile(document) != null) {
       myCurrentCommandHasChanges = true;
@@ -165,7 +166,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (myCommandStartPlace != null) {
       if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
         if (!myBackInProgress) {
-          if (commandGroupId == null || !commandGroupId.equals(myLastGroupId)) {
+          if (commandGroupId == null || !commandGroupId.equals(myLastGroupId) || commandGroupId instanceof Document) {
             putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
           }
           if (!myForwardInProgress) {
@@ -211,7 +212,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
     final PlaceInfo placeInfo = createPlaceInfo(selectedEditorWithProvider.getFirst(), selectedEditorWithProvider.getSecond ());
     myCurrentChangePlace = placeInfo;
-    if (myChangePlaces.size() > 0) {
+    if (!myChangePlaces.isEmpty()) {
       final PlaceInfo lastInfo = myChangePlaces.get(myChangePlaces.size() - 1);
       if (isSame(placeInfo, lastInfo)) {
         myChangePlaces.removeLast();
@@ -332,48 +333,24 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   private void removeInvalidFilesFromStacks() {
-    for (Iterator<PlaceInfo> iterator = myBackPlaces.iterator(); iterator.hasNext();) {
-      PlaceInfo info = iterator.next();
-      if (info.myFile != null) {
-        if (!info.myFile.isValid()) {
-          iterator.remove();
-        }
-      }
-      else {
-        if (!info.getFile().isValid()) {
-          iterator.remove();
-        }
-      }
-    }
+    removeInvalidFilesFrom(myBackPlaces);
 
-    for (Iterator<PlaceInfo> iterator = myForwardPlaces.iterator(); iterator.hasNext();) {
-      PlaceInfo info = iterator.next();
-      if (info.myFile != null) {
-        if (!info.myFile.isValid()) {
-          iterator.remove();
-        }
-      }
-      else {
-        if (!info.getFile().isValid()) {
-          iterator.remove();
-        }
-      }
+    removeInvalidFilesFrom(myForwardPlaces);
+    if (removeInvalidFilesFrom(myChangePlaces)) {
+      myCurrentIndex = myStartIndex + myChangePlaces.size();
     }
+  }
 
-    for (Iterator<PlaceInfo> iterator = myChangePlaces.iterator(); iterator.hasNext();) {
+  private static boolean removeInvalidFilesFrom(final LinkedList<PlaceInfo> backPlaces) {
+    boolean removed = false;
+    for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext();) {
       PlaceInfo info = iterator.next();
-      if (info.myFile != null) {
-        if (!info.myFile.isValid()) {
-          iterator.remove();
-        }
-      }
-      else {
-        if (!info.getFile().isValid()) {
-          iterator.remove();
-          myCurrentIndex = myStartIndex + myChangePlaces.size();
-        }
+      if (!info.myFile.isValid()) {
+        iterator.remove();
+        removed = true;
       }
     }
+    return removed;
   }
 
   private void gotoPlaceInfo(PlaceInfo info) { // TODO: Msk
@@ -416,12 +393,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
 
+  @NotNull
   public final String getComponentName() {
     return "IdeDocumentHistory";
   }
 
-  private void putLastOrMerge(LinkedList<PlaceInfo> list, PlaceInfo next, int limitSizeLimit) {
-    if (list.size() > 0) {
+  private static void putLastOrMerge(LinkedList<PlaceInfo> list, PlaceInfo next, int limitSizeLimit) {
+    if (!list.isEmpty()) {
       PlaceInfo prev = list.get(list.size() - 1);
       if (isSame(prev, next)) {
         list.removeLast();
@@ -434,7 +412,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
-  public FileDocumentManager getFileDocumentManager() {
+  private FileDocumentManager getFileDocumentManager() {
     if (myFileDocumentManager == null) {
       myFileDocumentManager = FileDocumentManager.getInstance();
     }
@@ -447,7 +425,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
 
-    public PlaceInfo(VirtualFile file, FileEditorState navigationState, String editorTypeId) {
+    public PlaceInfo(@NotNull VirtualFile file, FileEditorState navigationState, String editorTypeId) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
@@ -457,6 +435,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       return myNavigationState;
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return myFile;
     }
@@ -488,7 +467,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCmdProcessor.executeCommand(myProject, runnable, name, groupId);
   }
 
-  private boolean isSame(PlaceInfo first, PlaceInfo second) {
+  private static boolean isSame(PlaceInfo first, PlaceInfo second) {
     if (first.getFile().equals(second.getFile())) {
       FileEditorState firstState = first.getNavigationState();
       FileEditorState secondState = second.getNavigationState();

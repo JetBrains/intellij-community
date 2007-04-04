@@ -101,7 +101,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       LOG.error(e);
     }
     finally {
-      _fireCommandFinished();
+      fireCommandFinished();
     }
 
     if (failed) {
@@ -117,7 +117,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
-  private void _fireCommandFinished() {
+  private void fireCommandFinished() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
                                             myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     try {
@@ -146,7 +146,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   public void enterModal() {
     myInterruptedCommands.push(myCurrentCommand);
     if (myCurrentCommand != null) {
-      _fireCommandFinished();
+      fireCommandFinished();
     }
   }
 
@@ -237,7 +237,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, null, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
+    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);

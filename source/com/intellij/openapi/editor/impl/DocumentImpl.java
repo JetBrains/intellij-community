@@ -682,7 +682,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           }
         },
         "file text set",
-        null
+        this
       );
     }
     else {

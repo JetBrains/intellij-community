@@ -55,7 +55,7 @@ public abstract class EditorAction extends AnAction {
 
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
-    commandProcessor.executeCommand(editor.getProject(), command, commandName, null);
+    commandProcessor.executeCommand(editor.getProject(), command, commandName, editor.getDocument());
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

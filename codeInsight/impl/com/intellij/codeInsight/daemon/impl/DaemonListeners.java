@@ -11,10 +11,7 @@ import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -62,7 +59,10 @@ import gnu.trove.THashSet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -107,6 +107,9 @@ public class DaemonListeners {
 
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
+        Document document = e.getDocument();
+        if (!worthBothering(document)) return; //no need to stop daemon if something happened in the console
+
         stopDaemon(true);
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
@@ -115,6 +118,9 @@ public class DaemonListeners {
 
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
+        Editor editor = e.getEditor();
+        if (!worthBothering(editor.getDocument())) return; //no need to stop daemon if something happened in the console
+
         stopDaemon(true);
         IntentionHintComponent component = myDaemonCodeAnalyzer.getLastIntentionHint();
         if (component != null) {
@@ -141,8 +147,7 @@ public class DaemonListeners {
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file != null) {
+        if (worthBothering(document)) {
           myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
         }
       }
@@ -214,6 +219,10 @@ public class DaemonListeners {
     }
   }
 
+  private boolean worthBothering(final Document document) {
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(document) != null;
+  }
+
   public void dispose() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.removeDocumentListener(myDocumentListener);
@@ -272,6 +281,9 @@ public class DaemonListeners {
     private final String myCutActionName = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     public void commandStarted(CommandEvent event) {
+      Object id = event.getCommandGroupId();
+      if (id instanceof Document && !worthBothering((Document)id)) return;
+
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
       if (LOG.isDebugEnabled()) {
@@ -281,6 +293,9 @@ public class DaemonListeners {
     }
 
     public void commandFinished(CommandEvent event) {
+      Object id = event.getCommandGroupId();
+      if (id instanceof Document && !worthBothering((Document)id)) return;
+
       if (myEscPressed) {
         myEscPressed = false;
       }
@@ -325,6 +340,8 @@ public class DaemonListeners {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
+      if (dataContext.getData(DataConstants.PSI_FILE) == null) return; //no need to stop daemon if something happened in the console
+
       stopDaemon(true);
       myEscPressed = false;
     }
@@ -385,7 +402,7 @@ public class DaemonListeners {
     }
   }
 
-  protected void stopDaemon(boolean toRestartAlarm) {
+  private void stopDaemon(boolean toRestartAlarm) {
     myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
   }
 

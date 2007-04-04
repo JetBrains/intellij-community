@@ -37,7 +37,8 @@ public abstract class FileDocumentManager {
 
   public abstract void saveAllDocuments();
   public abstract void saveDocument(@NotNull Document document);
-  public abstract @NotNull Document[] getUnsavedDocuments();
+  @NotNull
+  public abstract Document[] getUnsavedDocuments();
   public abstract boolean isDocumentUnsaved(@NotNull Document document);
   public abstract boolean isFileModified(@NotNull VirtualFile file);
 

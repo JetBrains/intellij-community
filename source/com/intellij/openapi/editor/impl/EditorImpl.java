@@ -2173,7 +2173,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMousePressed(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", null);
+      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument());
     }
     else {
       processMousePressed(e);
@@ -2208,7 +2208,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMouseReleased(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", null);
+      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument());
     }
     else {
       processMouseReleased(e);
@@ -2895,7 +2895,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                   }
                                 }
                               },
-                                                                EditorBundle.message("move.cursor.command.name"), null);
+                                                                EditorBundle.message("move.cursor.command.name"), getDocument());
                             }
                           });
       myTimer.start();
@@ -3430,7 +3430,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               ApplicationManager.getApplication().runWriteAction(runnable);
             }
-          }, "", null);
+          }, "", getDocument());
         }
       });
     }

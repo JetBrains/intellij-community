@@ -216,3 +216,4 @@ class StatementMover extends LineMover {
     return new LineRange(startLine, endLine);
   }
 }
+

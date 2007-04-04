@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -666,7 +667,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     synchronized (myWriteActionsStack) {
       for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
         Runnable action = myWriteActionsStack.get(i);
-        if (actionClass == null || actionClass.isAssignableFrom(action.getClass())) return action;
+        if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return action;
       }
     }
     return null;
@@ -735,7 +736,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     */
   }
 
-  protected void assertCanRunWriteAction() {
+  private void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
 
   }

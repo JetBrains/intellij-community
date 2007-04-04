@@ -38,7 +38,7 @@ public class TypedAction {
   private static final Object TYPING_COMMAND_GROUP = Key.create("Typing");
 
   private TypedActionHandler myHandler;
-  private final static PsiTreeChangeListener myCommitLogger = new PsiModificationTracker();
+  private static final PsiTreeChangeListener myCommitLogger = new PsiModificationTracker();
 
   public TypedAction() {
     myHandler = new Handler();

@@ -131,7 +131,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           }
         }
       }
-      if (infos.size() != 0) {
+      if (!infos.isEmpty()) {
         // show errors first
         Collections.sort(infos, new Comparator<HighlightInfo>() {
           public int compare(final HighlightInfo o1, final HighlightInfo o2) {
@@ -200,7 +200,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (mySpots != null) return;
       final List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
       mySpots = new ArrayList<MarkSpot>();
-      if (sortedHighlighters.size() == 0) return;
+      if (sortedHighlighters.isEmpty()) return;
       Queue<PositionedRangeHighlighter> startQueue =
         new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
           public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
@@ -282,7 +282,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
             //startQueue.remove(highlighter);
           }
-          if (startQueue.size() == 0) {
+          if (startQueue.isEmpty()) {
             currentSpot = null;
           }
         }
@@ -342,7 +342,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         //right
         UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
 
-      }
+      }      
     }
 
     private boolean isAdjacent(MarkSpot markTop, MarkSpot markBottom) {
@@ -432,7 +432,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void setErrorStripeRenderer(ErrorStripeRenderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myErrorStripeRenderer = renderer;
-    HintManager.getInstance().getTooltipController().cancelTooltips();
+    //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
+    //HintManager.getInstance().getTooltipController().cancelTooltips();
     if (myErrorPanel != null) {
       myErrorPanel.repaint();
     }
@@ -474,7 +475,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
 
-      if (myCachedSortedHighlighters.size() != 0) {
+      if (!myCachedSortedHighlighters.isEmpty()) {
         Collections.sort(myCachedSortedHighlighters, new Comparator<RangeHighlighter>() {
           public int compare(final RangeHighlighter h1, final RangeHighlighter h2) {
             return h1.getStartOffset() - h2.getStartOffset();
@@ -579,7 +580,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             doMouseClicked(e);
           }
         },
-        EditorBundle.message("move.caret.command.name"), null
+        EditorBundle.message("move.caret.command.name"), getDocument()
       );
     }
 

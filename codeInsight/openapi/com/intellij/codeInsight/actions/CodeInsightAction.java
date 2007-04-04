@@ -48,7 +48,7 @@ public abstract class CodeInsightAction extends AnAction {
           action.run();
         }
       }
-    }, getCommandName(), null);
+    }, getCommandName(), editor.getDocument());
   }
 
   public void update(AnActionEvent event) {
