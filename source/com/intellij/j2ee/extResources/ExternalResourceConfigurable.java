@@ -6,6 +6,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -203,7 +204,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       final String loc = value.toString().replace('\\', '/');
-      setForeground(LocalFileSystem.getInstance().findFileByPath(loc) != null ? Color.black : new Color(210, 0, 0));
+      setForeground(LocalFileSystem.getInstance().findFileByPath(loc) != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
       return this;
     }
   }
