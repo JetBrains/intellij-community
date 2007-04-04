@@ -19,6 +19,8 @@ package com.intellij.util.descriptors;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -41,7 +43,8 @@ public abstract class ConfigFileFactory {
 
   public abstract CustomConfigFileSet createCustomConfigFileSet();
 
-  public abstract void createFile(Project project, String url, ConfigFileVersion version);
+  @Nullable
+  public abstract VirtualFile createFile(Project project, String url, ConfigFileVersion version);
 
   public abstract ConfigFileContainer createSingleFileContainer(Project project, ConfigFileMetaData metaData);
 }

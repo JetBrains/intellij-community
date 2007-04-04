@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.descriptors.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,24 +56,29 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return template.getText(templateManager.getDefaultProperties());
   }
 
-  public void createFile(Project project, String url, ConfigFileVersion version) {
-    createFileFromTemplate(project, url, version.getTemplateName());
+  @Nullable
+  public VirtualFile createFile(Project project, String url, ConfigFileVersion version) {
+    return createFileFromTemplate(project, url, version.getTemplateName());
   }
 
-  private void createFileFromTemplate(final Project project, String url, final String templateName) {
+  @Nullable
+  private VirtualFile createFileFromTemplate(final Project project, String url, final String templateName) {
+    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtil.urlToPath(url));
-    if (file.exists()) {
-      return;
+    final VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
+    if (existingFile != null) {
+      return existingFile;
     }
     try {
       String text = getText(templateName);
       final VirtualFile virtualFile;
       if (!FileUtil.createParentDirs(file) ||
-          (virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile())) == null) {
+          (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
         throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));
       }
       final VirtualFile childData = virtualFile.createChildData(this, file.getName());
       DeploymentItemUtil.setFileText(project, childData, text);
+      return childData;
     }
     catch (final IOException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -82,6 +88,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
         }
       });
     }
+    return null;
   }
 
   public ConfigFileContainer createSingleFileContainer(Project project, ConfigFileMetaData metaData) {
