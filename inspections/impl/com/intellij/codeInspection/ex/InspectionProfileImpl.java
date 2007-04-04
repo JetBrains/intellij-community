@@ -411,6 +411,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return result.toArray(new InspectionTool[result.size()]);
   }
 
+  public boolean wasInitialized() {
+    return myInitialized.get();
+  }
+
   public void initInspectionTools() {
     if (!myInitialized.getAndSet(true)) {
       if (myBaseProfile != null){

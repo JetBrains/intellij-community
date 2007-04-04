@@ -15,7 +15,6 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -74,7 +73,10 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   public void disposeComponent() {
     final Collection<Profile> profiles = getProfiles().values();
     for (Profile profile : profiles) {
-      ((InspectionProfile)profile).save();
+      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
+      if (inspectionProfile.wasInitialized()) {
+        inspectionProfile.save();
+      }
     }
   }
 
