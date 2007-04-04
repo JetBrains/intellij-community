@@ -66,41 +66,70 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public URL findResource(final String name) {
-    final URL resource = super.findResource(name);
-    if (resource != null) {
-      return resource;
-    }
+    final long started = System.currentTimeMillis();
+    
+    try {
+      final URL resource = super.findResource(name);
+      if (resource != null) {
+        return resource;
+      }
 
-    for (ClassLoader parent : myParents) {
-      final URL parentResource = fetchResource(parent, name);
-      if (parentResource != null) {
-        return parentResource;
+      for (ClassLoader parent : myParents) {
+        final URL parentResource = fetchResource(parent, name);
+        if (parentResource != null) {
+          return parentResource;
+        }
+      }
+      return null;
+    }
+    finally {
+      long doneFor = System.currentTimeMillis() - started;
+      if (doneFor > 50) {
+        System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource:"+name);
       }
     }
-    return null;
   }
 
   @Nullable
   @Override
   public InputStream getResourceAsStream(final String name) {
-    final InputStream stream = super.getResourceAsStream(name);
-    if (stream != null) return stream;
+    final long started = System.currentTimeMillis();
 
-    for (ClassLoader parent : myParents) {
-      final InputStream inputStream = parent.getResourceAsStream(name);
-      if (inputStream != null) return inputStream;
+    try {
+      final InputStream stream = super.getResourceAsStream(name);
+      if (stream != null) return stream;
+
+      for (ClassLoader parent : myParents) {
+        final InputStream inputStream = parent.getResourceAsStream(name);
+        if (inputStream != null) return inputStream;
+      }
+
+      return null;
     }
-
-    return null;
+    finally {
+      long doneFor = System.currentTimeMillis() - started;
+      if (doneFor > 50) {
+        System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource as stream:"+name);
+      }
+    }
   }
 
   public Enumeration<URL> findResources(final String name) throws IOException {
-    final Enumeration[] resources = new Enumeration[myParents.length + 1];
-    resources[0] = super.findResources(name);
-    for (int idx = 0; idx < myParents.length; idx++) {
-      resources[idx + 1] = fetchResources(myParents[idx], name);
+    final long started = System.currentTimeMillis();
+    try {
+      final Enumeration[] resources = new Enumeration[myParents.length + 1];
+      resources[0] = super.findResources(name);
+      for (int idx = 0; idx < myParents.length; idx++) {
+        resources[idx + 1] = fetchResources(myParents[idx], name);
+      }
+      return new CompoundEnumeration<URL>(resources);
     }
-    return new CompoundEnumeration<URL>(resources);
+    finally {
+      long doneFor = System.currentTimeMillis() - started;
+      if (doneFor > 50) {
+        System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", find resources:"+name);
+      }
+    }
   }
 
   protected String findLibrary(String libName) {

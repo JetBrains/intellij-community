@@ -33,16 +33,26 @@ class ClassPath {
 
   @Nullable
   public Resource getResource(String s, boolean flag) {
-    Loader loader;
+    final long started = System.currentTimeMillis();
 
-    for (int i = 0; (loader = getLoader(i)) != null; i++) {
-      Resource resource = loader.getResource(s, flag);
-      if (resource != null) {
-        return resource;
+    try {
+      Loader loader;
+
+      for (int i = 0; (loader = getLoader(i)) != null; i++) {
+        Resource resource = loader.getResource(s, flag);
+        if (resource != null) {
+          return resource;
+        }
+      }
+
+      return null;
+    }
+    finally {
+      long doneFor = System.currentTimeMillis() - started;
+      if (doneFor > 50) {
+        System.out.println(doneFor + " ms for getResource:"+s+", flag:"+flag);
       }
     }
-
-    return null;
   }
 
   public Enumeration<URL> getResources(final String name, final boolean check) {
