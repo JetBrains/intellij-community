@@ -632,7 +632,7 @@ mGSTRING_LITERAL = \"\"
 "if"                                      {  return( kIF );  }
 "else"                                    {  return( kELSE );  }
 "while"                                   {  return( kWHILE );  }
-"use"                                     {  return( kUSE );  }
+"use"                                     {  return( kUSE );  }  
 "switch"                                  {  return( kSWITCH );  }
 "for"                                     {  return( kFOR );  }
 "in"                                      {  return( kIN );  }
