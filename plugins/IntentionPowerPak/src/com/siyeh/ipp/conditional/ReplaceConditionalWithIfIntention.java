@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,111 +17,112 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConditionalWithIfIntention extends Intention {
 
-	@NotNull
-	public PsiElementPredicate getElementPredicate() {
-		return new ReplaceConditionalWithIfPredicate();
-	}
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new ReplaceConditionalWithIfPredicate();
+    }
 
-	public void processIntention(PsiElement element)
-			throws IncorrectOperationException {
-		if (element instanceof PsiReturnStatement) {
-			replaceConditionalReturn(element);
-		} else if (element instanceof PsiDeclarationStatement) {
-			replaceConditionalDeclaration(element);
-		} else {
-			replaceConditionalAssignment(element);
-		}
-	}
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        PsiConditionalExpression expression = (PsiConditionalExpression)element;
+        replaceConditionalWithIf(expression);
+    }
 
-	private static void replaceConditionalAssignment(PsiElement element)
-			throws IncorrectOperationException {
-		final PsiExpressionStatement statement =
-				(PsiExpressionStatement)element;
-		final PsiAssignmentExpression assigmentExpression =
-				(PsiAssignmentExpression)statement.getExpression();
-		final PsiConditionalExpression rhs =
-				(PsiConditionalExpression)assigmentExpression.getRExpression();
-		final PsiExpression lhs = assigmentExpression.getLExpression();
-		final String lhsText = lhs.getText();
-		final PsiJavaToken sign = assigmentExpression.getOperationSign();
-		final String operator = sign.getText();
-		assert rhs != null;
-		final PsiExpression condition = rhs.getCondition();
-		final PsiExpression thenExpression = rhs.getThenExpression();
-		final PsiExpression elseExpression = rhs.getElseExpression();
-		assert thenExpression != null;
-		assert elseExpression != null;
-		@NonNls final String ifStatementString =
-				"if(" + condition.getText() + ')' + lhsText + operator +
-				thenExpression.getText() + "; else " + lhsText + operator +
-				elseExpression.getText() + ';';
-		replaceStatement(ifStatementString, statement);
-	}
+    private static void replaceConditionalWithIf(
+            PsiConditionalExpression expression)
+            throws IncorrectOperationException {
+        final PsiStatement statement =
+                PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+        if (statement == null) {
+            return;
+        }
+        final PsiVariable variable;
+        if (statement instanceof PsiDeclarationStatement) {
+            variable =
+                    PsiTreeUtil.getParentOfType(expression, PsiVariable.class);
+        } else {
+            variable = null;
+        }
+        final PsiExpression thenExpression = expression.getThenExpression();
+        final String thenExpressionText;
+        if (thenExpression != null) {
+            thenExpressionText = thenExpression.getText();
+        } else {
+            thenExpressionText = "";
+        }
+        final PsiExpression elseExpression = expression.getElseExpression();
+        final String elseExpressionText;
+        if (elseExpression != null) {
+            elseExpressionText = elseExpression.getText();
+        } else {
+            elseExpressionText = "";
+        }
+        final PsiExpression condition = expression.getCondition();
+        StringBuilder newStatement = new StringBuilder();
+        newStatement.append("if(");
+        newStatement.append(condition.getText());
+        newStatement.append(')');
+        if (variable != null) {
+            final String name = variable.getName();
+            newStatement.append(name);
+            newStatement.append('=');
+            final PsiExpression initializer = variable.getInitializer();
+            if (initializer == null) {
+                return;
+            }
+            appendElementText(initializer, expression, thenExpressionText,
+                    newStatement);
+            newStatement.append("; else ");
+            newStatement.append(name);
+            newStatement.append('=');
+            appendElementText(initializer, expression, elseExpressionText,
+                    newStatement);
+            newStatement.append(';');
+            initializer.delete();
+            final PsiManager manager = statement.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiStatement ifStatement = factory.createStatementFromText(
+                    newStatement.toString(), statement);
+            final PsiElement parent = statement.getParent();
+            final PsiElement addedElement = parent.addAfter(ifStatement,
+                    statement);
+            final CodeStyleManager styleManager = manager.getCodeStyleManager();
+            styleManager.reformat(addedElement);
+        } else {
+            appendElementText(statement, expression, thenExpressionText,
+                    newStatement);
+            newStatement.append(" else ");
+            appendElementText(statement, expression, elseExpressionText,
+                    newStatement);
+            replaceStatement(newStatement.toString(), statement);
+        }
+    }
 
-	private static void replaceConditionalDeclaration(PsiElement element)
-			throws IncorrectOperationException {
-		final PsiManager mgr = element.getManager();
-		final PsiElementFactory factory = mgr.getElementFactory();
-		final PsiDeclarationStatement statement =
-				(PsiDeclarationStatement)element;
-		final PsiVariable var =
-				(PsiVariable)statement.getDeclaredElements()[0];
-		final PsiConditionalExpression rhs =
-				(PsiConditionalExpression)var.getInitializer();
-		assert rhs != null;
-		final String lhsText = var.getName();
-		final String str = statement.getText();
-		final int equalsIndex = str.indexOf((int)'=');
-		final String declarationString =
-				str.substring(0, equalsIndex) + ';';
-		final PsiExpression condition = rhs.getCondition();
-		final PsiExpression thenExpression = rhs.getThenExpression();
-		final PsiExpression elseExpression = rhs.getElseExpression();
-		assert thenExpression != null;
-		assert elseExpression != null;
-		@NonNls final String ifStatementString =
-				"if(" + condition.getText() + ')' + lhsText + '=' + thenExpression.getText() +
-				"; else " + lhsText + '=' + elseExpression.getText() + ';';
-		final PsiStatement declarationStatement =
-				factory.createStatementFromText(declarationString, null);
-		final PsiStatement ifStatement =
-				factory.createStatementFromText(ifStatementString, null);
-		PsiElement ifElement = statement.replace(ifStatement);
-		final CodeStyleManager styleManager = mgr.getCodeStyleManager();
-		ifElement = styleManager.reformat(ifElement);
-		final PsiElement parent = ifElement.getParent();
-		assert parent != null;
-		final PsiElement declarationElement =
-				parent.addBefore(declarationStatement, ifElement);
-		styleManager.reformat(declarationElement);
-		styleManager.reformat(parent);
-	}
-
-	private static void replaceConditionalReturn(PsiElement element)
-			throws IncorrectOperationException {
-		final PsiReturnStatement returnStatement =
-				(PsiReturnStatement)element;
-		final PsiConditionalExpression returnValue =
-				(PsiConditionalExpression)returnStatement.getReturnValue();
-		assert returnValue != null;
-		final PsiExpression condition = returnValue.getCondition();
-		final PsiExpression thenExpression =
-				returnValue.getThenExpression();
-		final PsiExpression elseExpression =
-				returnValue.getElseExpression();
-		assert thenExpression != null;
-		assert elseExpression != null;
-		@NonNls final String ifStatementString =
-				"if(" + condition.getText() + ")return " + thenExpression.getText() +
-				";else return " + elseExpression.getText() + ';';
-		replaceStatement(ifStatementString, returnStatement);
-	}
+    private static void appendElementText(
+            @NotNull PsiElement element,
+            @Nullable PsiElement elementToReplace,
+            @Nullable String replacement,
+            @NotNull StringBuilder out) {
+        if (element.equals(elementToReplace)) {
+            out.append(replacement);
+            return;
+        }
+        final PsiElement[] children = element.getChildren();
+        if (children.length == 0) {
+            out.append(element.getText());
+            return;
+        }
+        for (PsiElement child : children) {
+            appendElementText(child, elementToReplace, replacement, out);
+        }
+    }
 }
