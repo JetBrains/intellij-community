@@ -404,7 +404,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   private void manageSearchPopup(SearchPopup searchPopup) {
     final Project project;
-    if (ApplicationManager.getApplication() != null) {
+    if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
       project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
     }
     else {
