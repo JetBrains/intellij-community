@@ -169,7 +169,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
-  GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement");
+  GroovyElementType USE_STATEMENT = new GroovyElementType("with statement");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
 
   //for clauses
@@ -178,7 +178,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement");
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");
-  GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement");
+  GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType STATIC_COMPOUND_STATEMENT = new GroovyElementType("static compound statement");
   GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 

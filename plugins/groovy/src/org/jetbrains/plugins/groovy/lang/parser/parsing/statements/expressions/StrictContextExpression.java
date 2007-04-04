@@ -49,6 +49,7 @@ public class StrictContextExpression implements GroovyElementTypes {
 
     PsiBuilder.Marker marker = builder.mark();
     if (!WRONGWAY.equals(Modifiers.parse(builder))) {
+      PsiBuilder.Marker rb = builder.mark();
       TypeSpec.parse(builder);
       ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
       if (mASSIGN.equals(builder.getTokenType())) {
