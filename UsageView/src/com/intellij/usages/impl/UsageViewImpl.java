@@ -51,6 +51,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -598,7 +599,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private volatile boolean myIsFirstVisibleUsageFound = false;
 
-  public void appendUsage(Usage usage) {
+  public void appendUsage(@NotNull Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
@@ -614,7 +615,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public void removeUsage(Usage usage) {
+  public void removeUsage(@NotNull Usage usage) {
     final UsageNode node = myUsageNodes.remove(usage);
     if (node != NULL_NODE) {
       SwingUtilities.invokeLater(new Runnable() {
@@ -626,7 +627,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public void includeUsages(Usage[] usages) {
+  public void includeUsages(@NotNull Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
       if (node != NULL_NODE) {
@@ -636,7 +637,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     updateImmediately();
   }
 
-  public void excludeUsages(Usage[] usages) {
+  public void excludeUsages(@NotNull Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
       if (node != NULL_NODE) {
@@ -646,9 +647,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     updateImmediately();
   }
 
-  public void selectUsages(Usage[] usages) {
-    if (usages == null) return;
-
+  public void selectUsages(@NotNull Usage[] usages) {
     List<TreePath> paths = new LinkedList<TreePath>();
 
     for (Usage usage : usages) {
@@ -663,6 +662,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (!paths.isEmpty()) myTree.scrollPathToVisible(paths.get(0));
   }
 
+  @NotNull
   public JComponent getComponent() {
     return myRootPanel;
   }
@@ -754,7 +754,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
   }
 
-  public void addButtonToLowerPane(Runnable runnable, String text) {
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
     int index = myButtonPanel.getComponentCount();
 
     if (index > 0 && myPresentation.isShowCancelButton()) index--;
@@ -762,15 +762,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myButtonPanel.add(index, runnable, text);
   }
 
-  public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
+  public void addButtonToLowerPane(@NotNull final Runnable runnable, @NotNull String text, char mnemonic) {
     // implemented method is deprecated, so, it just calls non-deprecated overloading one
     addButtonToLowerPane(runnable, text);
   }
 
-  public void addPerformOperationAction(final Runnable processRunnable,
+  public void addPerformOperationAction(@NotNull final Runnable processRunnable,
                                         final String commandName,
                                         final String cannotMakeString,
-                                        String shortDescription) {
+                                        @NotNull String shortDescription) {
 
     addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
                          shortDescription);
@@ -832,6 +832,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return result;
   }
 
+  @NotNull
   public Set<Usage> getExcludedUsages() {
     Set<Usage> result = new THashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
@@ -886,10 +887,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return usages;
   }
 
+  @NotNull
   public Set<Usage> getUsages() {
     return myUsages;
   }
 
+  @NotNull
   public List<Usage> getSortedUsages() {
     List<Usage> usages = new ArrayList<Usage>(myUsages);
     Collections.sort(usages, USAGE_COMPARATOR);
@@ -963,7 +966,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator {
-    private @Nullable OccurenceNavigatorSupport mySupport;
+    @Nullable private OccurenceNavigatorSupport mySupport;
 
     public MyPanel(JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {

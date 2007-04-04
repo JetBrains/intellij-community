@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -45,11 +46,11 @@ public interface UsageView extends Disposable {
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
-  void appendUsage(Usage usage);
-  void removeUsage(Usage usage);
-  void includeUsages(Usage[] usages);
-  void excludeUsages(Usage[] usages);
-  void selectUsages(Usage[] usages);
+  void appendUsage(@NotNull Usage usage);
+  void removeUsage(@NotNull Usage usage);
+  void includeUsages(@NotNull Usage[] usages);
+  void excludeUsages(@NotNull Usage[] usages);
+  void selectUsages(@NotNull Usage[] usages);
 
   void close();
   boolean isSearchInProgress();
@@ -57,19 +58,19 @@ public interface UsageView extends Disposable {
   /**
    * @deprecated please specify mnemonic by prefixing the mnenonic character with an ampersand (&& for Mac-specific ampersands)
    */
-  void addButtonToLowerPane(Runnable runnable, String text, char mnemonic);
-  void addButtonToLowerPane(Runnable runnable, String text);
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
 
-  void addPerformOperationAction(Runnable processRunnable, String commandName, String cannotMakeString, String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription);
 
   UsageViewPresentation getPresentation();
 
-  Set<Usage> getExcludedUsages();
+  @NotNull Set<Usage> getExcludedUsages();
   Set<Usage> getSelectedUsages();
-  Set<Usage> getUsages();
-  List<Usage> getSortedUsages();
+  @NotNull Set<Usage> getUsages();
+  @NotNull List<Usage> getSortedUsages();
 
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
   int getUsagesCount();
 }
