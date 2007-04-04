@@ -46,6 +46,9 @@ public class CompletionProcessor extends BaseScopeProcessor
     while(myScope != null && !(myScope instanceof PsiFile || myScope instanceof PsiClass)){
       myScope = myScope.getContext();
     }
+    if (!(element.getContainingFile() instanceof PsiJavaFile)) {
+      myMembersFlag = true;
+    }
 
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
