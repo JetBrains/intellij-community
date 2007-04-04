@@ -13,12 +13,17 @@ Groovy script
       Literal
         PsiElement(number)('1')
     PsiElement())(')')
-    PsiElement(new line)('\n')
-    PsiErrorElement:Imports are not allowed in such block
-      PsiElement(import)('import')
-      PsiWhiteSpace(' ')
-      PsiElement(identifier)('a')
-      PsiElement(.)('.')
-      PsiElement(identifier)('b')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiElement(new line)('\n')
+  Import expression
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    Import referenece
+      Import referenece
+        Import referenece
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
       PsiElement(.)('.')
       PsiElement(identifier)('c')

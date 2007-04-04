@@ -1,0 +1,40 @@
+def f ={
+while (a==1)
+import a.b.c
+}
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('f')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    Open block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      WHILE statement
+        PsiElement(while)('while')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Equality expression
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiElement(==)('==')
+          Literal
+            PsiElement(number)('1')
+        PsiElement())(')')
+        PsiErrorElement:Expression expected
+          <empty list>
+      PsiElement(new line)('\n')
+      PsiErrorElement:Imports are not allowed in such block
+        PsiElement(import)('import')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
+        PsiElement(.)('.')
+        PsiElement(identifier)('c')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
