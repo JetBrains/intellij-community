@@ -6,7 +6,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -152,10 +151,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public void load() throws IOException {
-  }
-
-  String getLineSeparator(final VirtualFile file) {
-    return FileDocumentManager.getInstance().getLineSeparator(file, null);
   }
 
   public boolean isSavePathsRelative() {

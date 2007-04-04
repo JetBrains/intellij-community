@@ -213,7 +213,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       myDefaultProjectRootElement = null;
 
-      myDefaultProject.init();
+      try {
+        myDefaultProject.getStateStore().load();
+        myDefaultProject.init();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     return myDefaultProject;
   }

@@ -5,10 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface IModuleStore extends IComponentStore {
-  @SuppressWarnings({"EmptyMethod"})
   boolean isSavePathsRelative();
 
-  @SuppressWarnings({"EmptyMethod"})
   void setModuleFilePath(final String filePath);
 
   @Nullable

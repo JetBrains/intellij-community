@@ -7,7 +7,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -141,10 +140,6 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   public void setSavePathsRelative(boolean value) {
     super.setSavePathsRelative(value);
     myModule.setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
-  }
-
-  synchronized String getLineSeparator(final VirtualFile file) {
-    return FileDocumentManager.getInstance().getLineSeparator(file, myModule.getProject());
   }
 
   public synchronized void initStore() {

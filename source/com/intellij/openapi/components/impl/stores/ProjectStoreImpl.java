@@ -12,7 +12,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -230,9 +229,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     super.load();
     try {
       final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-      if  (stateStorage instanceof FileBasedStorage) {
-        FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
-        Document doc = fileBasedStorage.getDocument();
+      if  (stateStorage instanceof XmlElementStorage) {
+        XmlElementStorage xmlElementStorage = (XmlElementStorage)stateStorage;
+        Document doc = xmlElementStorage.getDocument();
         final Element element = doc.getRootElement();
         final List attributes = element.getAttributes();
         for (Object attribute : attributes) {
@@ -357,10 +356,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls
   protected String getRootNodeName() {
     return "project";
-  }
-
-  String getLineSeparator(final VirtualFile file) {
-    return FileDocumentManager.getInstance().getLineSeparator(file, myProject);
   }
 
   public void initStore() {
