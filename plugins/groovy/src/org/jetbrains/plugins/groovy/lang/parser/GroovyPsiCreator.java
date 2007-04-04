@@ -23,6 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
@@ -68,8 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes
-{
+public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -77,8 +80,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
    * @param node Given node
    * @return Respective PSI element
    */
-  public static PsiElement createElement(ASTNode node)
-  {
+  public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
     //Identifiers & literal
@@ -88,8 +90,11 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
     //Lists, mapetc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
-//    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
     if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
+    if (elem.equals(ANNOTATION)) return new GrAnnotationImpl(node);
+    if (elem.equals(ANNOTATION_ARGUMENTS)) return new GrAnnotationArgumentsImpl(node);
+    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIR)) return new GrAnnotationMemberValuePairImpl(node);
+    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIRS)) return new GrAnnotationMemberValuePairsImpl(node);
 
     //throws
     if (elem.equals(THROW_CLAUSE)) return new GrThrowClauseImpl(node);

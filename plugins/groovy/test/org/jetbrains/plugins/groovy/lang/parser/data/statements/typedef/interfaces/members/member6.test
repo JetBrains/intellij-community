@@ -2,3 +2,26 @@ interface a {
   def String[] a
 }
 -----
+Groovy script
+  Interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Interface block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Array type
+          Class type
+            PsiElement(identifier)('String')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

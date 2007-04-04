@@ -34,16 +34,18 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class VariableDefinitions implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
-    if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL))) {
+    if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL))) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
     }
 
     PsiBuilder.Marker varMarker = builder.mark();
-    boolean isStringName = ParserUtils.lookAhead(builder, mSTRING_LITERAL);
+    boolean isStringName = ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL);
 
-    if ((ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL)) && ParserUtils.getToken(builder, mLPAREN)) {
+    //eaten one of these tokens
+    boolean eaten = ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL) || ParserUtils.getToken(builder, mGSTRING_LITERAL);
 
+    if (eaten && ParserUtils.getToken(builder, mLPAREN)) {
       GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
 
       //todo: define whether param list is empty or not
@@ -51,7 +53,6 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         ParserUtils.waitNextRCurly(builder);
-
         builder.error(GroovyBundle.message("rparen.expected"));
       }
 
@@ -66,29 +67,36 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
-      NlsWarn.parse(builder);
+      //if there is no OpenOrClosableBlock, nls haven'to be eaten
+      PsiBuilder.Marker nlsMarker = builder.mark();
 
-      OpenOrClosableBlock.parseOpenBlock(builder);
+      if (mNLS.equals(NlsWarn.parse(builder)) && !ParserUtils.lookAhead(builder, mLPAREN)) {
+        nlsMarker.rollbackTo();
+      } else {
+        nlsMarker.drop();
+      }
+
+      OpenOrClosableBlock.parse(builder);
 
       varMarker.drop();
       return METHOD_DEFINITION;
     } else {
       varMarker.rollbackTo();
-    }
 
-    if (parseVariableDeclarator(builder)) {
-      while (ParserUtils.getToken(builder, mCOMMA)) {
-        ParserUtils.getToken(builder, mNLS);
+      // a = b, c = d
+      if (parseVariableDeclarator(builder)) {
+        while (ParserUtils.getToken(builder, mCOMMA)) {
+          ParserUtils.getToken(builder, mNLS);
 
-        parseVariableDeclarator(builder);
+          parseVariableDeclarator(builder);
+        }
+
+        return VARIABLE_DEFINITION;
+      } else {
+        builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
+        return WRONGWAY;
       }
-
-      return VARIABLE_DEFINITION;
     }
-
-    builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
-    return WRONGWAY;
-
   }
 
   private static boolean parseVariableDeclarator(PsiBuilder builder) {
@@ -102,7 +110,6 @@ public class VariableDefinitions implements GroovyElementTypes {
         return false;
       }
     }
-
     return true;
   }
 

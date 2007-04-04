@@ -104,6 +104,8 @@ public class DeclarationStart implements GroovyElementTypes {
         TokenSets.MODIFIERS.contains(builder.getTokenType()) ||
           ParserUtils.lookAhead(builder, kDEF) ||
           ParserUtils.lookAhead(builder, mAT) ||
+          ParserUtils.lookAhead(builder, mASSIGN) ||
+          ParserUtils.lookAhead(builder, mGSTRING_LITERAL) ||
           ParserUtils.lookAhead(builder, mSTRING_LITERAL);
   }
 

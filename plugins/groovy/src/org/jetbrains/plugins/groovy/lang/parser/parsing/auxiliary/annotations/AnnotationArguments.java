@@ -51,7 +51,7 @@ public class AnnotationArguments implements GroovyElementTypes {
     }
 
     //check
-    return !WRONGWAY.equals(ConditionalExpression.parse(builder));
+    return !WRONGWAY.equals(ConditionalExpression.parse(builder)) && !ParserUtils.getToken(builder, mASSIGN);
   }
 
   private static GroovyElementType parseAnnotationMemberValuePairs(PsiBuilder builder) {

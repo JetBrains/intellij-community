@@ -4,34 +4,36 @@ interface a {
 }
 -----
 Groovy script
-  PsiErrorElement:';' or new line expected
+  Interface definition
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    PsiElement({)('{')
-  PsiElement(new line)('\n')
-  PsiWhiteSpace('  ')
-  Method
-    Modifiers
-      PsiElement(static)('static')
-      PsiWhiteSpace(' ')
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
-    PsiElement())(')')
-    PsiElement(new line)('\n')
-  PsiWhiteSpace('  ')
-  PsiErrorElement:';' or new line expected
-    PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    PsiElement(number)('3')
-  PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
-    PsiElement(})('}')
+    Interface block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Method
+        Modifiers
+          PsiElement(static)('static')
+          PsiWhiteSpace(' ')
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

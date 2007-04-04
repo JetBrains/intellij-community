@@ -152,6 +152,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");
+  GroovyElementType ANNOTATION = new GroovyElementType("annotation");
 
   //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
@@ -187,10 +188,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //modifiers
   //  GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node
   GroovyElementType MODIFIERS = new GroovyElementType("modifiers"); //node
-
-  //annotation
-  GroovyElementType ANNOTATION = new GroovyElementType("annotation"); //node
-
 
   GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
 

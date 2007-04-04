@@ -106,4 +106,9 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kVOLATILE,
       kSTRICTFP
   );
+
+  public static TokenSet STRING_LITERALS = TokenSet.create(
+      mSTRING_LITERAL,
+      mGSTRING_LITERAL
+  );
 }

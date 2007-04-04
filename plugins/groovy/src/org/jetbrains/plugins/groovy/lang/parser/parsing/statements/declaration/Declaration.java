@@ -49,6 +49,7 @@ public class Declaration implements GroovyElementTypes {
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
+          declmMarker.rollbackTo();
           return WRONGWAY;
         } else {
           declmMarker.done(varDecl);
@@ -63,6 +64,7 @@ public class Declaration implements GroovyElementTypes {
           GroovyElementType varDecl = VariableDefinitions.parse(builder);
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
+            declmMarker.rollbackTo();
             return WRONGWAY;
           } else {
             declmMarker.done(varDecl);
@@ -77,12 +79,14 @@ public class Declaration implements GroovyElementTypes {
     } else {
       if (WRONGWAY.equals(TypeSpec.parse(builder))) {
         builder.error(GroovyBundle.message("type.specification.expected"));
+        declmMarker.rollbackTo();
         return WRONGWAY;
       }
 
       GroovyElementType varDef = VariableDefinitions.parse(builder);
       if (WRONGWAY.equals(varDef)) {
         builder.error(GroovyBundle.message("variable.definitions.expected"));
+        declmMarker.rollbackTo();
         return WRONGWAY;
       }
 

@@ -36,7 +36,6 @@ public class InterfaceMember implements GroovyElementTypes {
       declMarker.rollbackTo();
       return Declaration.parse(builder);
     }
-
     declMarker.rollbackTo();
 
     //type definition
@@ -50,7 +49,6 @@ public class InterfaceMember implements GroovyElementTypes {
       }
       return typeDef;
     }
-
     typeDeclStartMarker.rollbackTo();
     
     return WRONGWAY;
