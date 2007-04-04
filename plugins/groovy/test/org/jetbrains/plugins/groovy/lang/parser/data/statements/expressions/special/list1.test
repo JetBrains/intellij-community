@@ -1,0 +1,13 @@
+[] + []
+-----
+Groovy script
+  Additive expression
+    Generalized list
+      PsiElement([)('[')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(+)('+')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      PsiElement(])(']')

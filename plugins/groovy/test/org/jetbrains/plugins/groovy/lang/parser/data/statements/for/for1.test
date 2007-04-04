@@ -1,0 +1,28 @@
+for (i in 1..10) {do()}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    In clause
+      PsiElement(identifier)('i')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      Shift expression
+        Literal
+          PsiElement(number)('1')
+        PsiElement(..)('..')
+        Literal
+          PsiElement(number)('10')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      Method call
+        Reference expression
+          PsiElement(identifier)('do')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(})('}')

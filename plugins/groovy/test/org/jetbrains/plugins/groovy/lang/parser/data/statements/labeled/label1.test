@@ -1,0 +1,21 @@
+1
+l: {println 'bugaga'}
+-----
+Groovy script
+  Literal
+    PsiElement(number)('1')
+  PsiElement(new line)('\n')
+  Labeled statement
+    PsiElement(identifier)('l')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Literal
+            PsiElement(string)(''bugaga'')
+      PsiElement(})('}')

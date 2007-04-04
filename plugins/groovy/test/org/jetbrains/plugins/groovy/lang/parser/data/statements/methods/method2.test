@@ -1,0 +1,28 @@
+private method (String param1, int param2)
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(private)('private')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('method')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('param1')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('param2')
+    PsiElement())(')')
