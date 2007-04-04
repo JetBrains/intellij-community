@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class IdReferenceProvider extends PsiReferenceProviderBase {
   @NonNls public static final String FOR_ATTR_NAME = "for";
   @NonNls public static final String ID_ATTR_NAME = "id";
+  @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
   @NonNls public static final String NAME_ATTR_NAME = "name";
   private static THashSet<String> ourNamespacesWithoutIdRefs = new THashSet<String>();
   static {
@@ -39,7 +40,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   }
 
   public String[] getIdForAttributeNames() {
-    return new String[]{FOR_ATTR_NAME, ID_ATTR_NAME, NAME_ATTR_NAME};
+    return new String[]{FOR_ATTR_NAME, ID_ATTR_NAME, NAME_ATTR_NAME,STYLE_ID_ATTR_NAME};
   }
 
   public ElementFilter getIdForFilter() {
@@ -78,7 +79,10 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
       if (FOR_ATTR_NAME.equals(name)) {
         return new PsiReference[]{new IdRefReference(element, 1)};
       }
-      else if (ID_ATTR_NAME.equals(name) || NAME_ATTR_NAME.equals(name)) {
+      else if (ID_ATTR_NAME.equals(name) ||
+               NAME_ATTR_NAME.equals(name) ||
+               STYLE_ID_ATTR_NAME.equals(name)
+              ) {
         return new PsiReference[]{new GlobalAttributeValueSelfReference(element)};
       }
     }
