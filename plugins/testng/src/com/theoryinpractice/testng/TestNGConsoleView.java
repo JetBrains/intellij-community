@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -100,7 +98,7 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     private void buildView(Project project) {
-        console = TextConsoleBuidlerFactory.getInstance().createBuilder(project).getConsole();
+        console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
         testNGResults = new TestNGResults(project, this);
         testNGResults.getTabbedPane().add("Output", console.getComponent());
         testNGResults.getTabbedPane().add("Statistics", new JScrollPane(testNGResults.getResultsTable()));
