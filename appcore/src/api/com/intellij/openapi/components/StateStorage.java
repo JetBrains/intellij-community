@@ -9,12 +9,14 @@ public interface StateStorage {
   @Nullable
   <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
   void setState(Object component, final String componentName, Object state) throws StateStorageException;
+  boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException;
 
 
   List<VirtualFile> getAllStorageFiles();
 
   boolean needsSave() throws StateStorageException;
   void save() throws StateStorageException;
+
 
 
   class StateStorageException extends Exception {

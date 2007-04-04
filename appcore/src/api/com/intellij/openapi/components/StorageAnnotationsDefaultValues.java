@@ -17,6 +17,10 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method setState is not supported in " + getClass());
     }
 
+    public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+      throw new UnsupportedOperationException("Method hasState not implemented in " + getClass());
+    }
+
     public List<VirtualFile> getAllStorageFiles() {
       throw new UnsupportedOperationException("Method getAllStorageFiles is not supported in " + getClass());
     }
@@ -31,7 +35,7 @@ public interface StorageAnnotationsDefaultValues {
   }
 
   class NullStateStorageChooser implements StateStorageChooser {
-    public Storage selectStorage(Storage[] storages, Object component, final Operation operation) {
+    public Storage selectStorage(Storage[] storages, Object component, final StateStorageOperation operation) {
       throw new UnsupportedOperationException("Method selectStorage is not supported in " + getClass());
     }
   }

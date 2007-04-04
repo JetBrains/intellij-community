@@ -27,7 +27,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     throw new UnsupportedOperationException("Method getStateStorage is not supported in " + getClass());
   }
 
-  protected StateStorage getOldStorage(final Object component) throws StateStorage.StateStorageException {
+  @Nullable
+  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
     throw new UnsupportedOperationException("Method getOldStorage is not supported in " + getClass());
   }
 
@@ -123,7 +124,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private void savePersistentComponent(final PersistentStateComponent<Object> persistentStateComponent) {
     try {
-      Storage storageSpec = getComponentStorage(persistentStateComponent, StateStorageChooser.Operation.WRITE);
+      Storage storageSpec = getComponentStorage(persistentStateComponent, StateStorageOperation.WRITE);
       StateStorage stateStorage = getStateStorage(storageSpec);
 
       if (stateStorage == null) return;
@@ -141,7 +142,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final String componentName = getComponentName(component);
 
     try {
-      StateStorage stateStorage = getOldStorage(component);
+      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       stateStorage.setState(component, componentName, component);
     }
     catch (StateStorage.StateStorageException e) {
@@ -160,7 +161,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     Element element = null;
     try {
-      StateStorage stateStorage = getOldStorage(component);
+      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
 
       if (stateStorage == null) return;
       element = getJdomState(component, componentName, stateStorage);
@@ -236,7 +237,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     try {
-      Storage storageSpec = getComponentStorage(component, StateStorageChooser.Operation.READ);
+      Storage storageSpec = getComponentStorage(component, StateStorageOperation.READ);
       StateStorage stateStorage = getStateStorage(storageSpec);
 
       if (stateStorage == null) return;
@@ -293,7 +294,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @Nullable
   private static <T> Storage getComponentStorage(final PersistentStateComponent<T> persistentStateComponent,
-                                                 final StateStorageChooser.Operation operation) throws StateStorage.StateStorageException {
+                                                 final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
     final Storage[] storages = stateSpec.storages();

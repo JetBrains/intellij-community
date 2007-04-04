@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -395,24 +396,33 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected StateStorage getOldStorage(final Object component) {
+  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws
+                                                                                                                                  StateStorage.StateStorageException {
     final ComponentConfig config = getComponentManager().getConfig(component.getClass());
     assert config != null: "Couldn't find old storage for " + component.getClass().getName();
 
     String macro = PROJECT_FILE_MACRO;
 
-    if (isWorkspace(config.options)) {
+    final boolean workspace = isWorkspace(config.options);
+
+    if (workspace) {
       macro = WS_FILE_MACRO;
     }
-    return getStateStorageManager().getFileStateStorage("$" + macro + "$");
+
+    StateStorage storage = getStateStorageManager().getFileStateStorage("$" + macro + "$");
+
+    if (operation == StateStorageOperation.READ &&
+        storage != null &&
+        workspace &&
+        !storage.hasState(component, componentName, Element.class)) {
+      storage = getStateStorageManager().getFileStateStorage("$" + PROJECT_FILE_MACRO + "$");
+    }
+
+    return storage;
   }
 
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(myTrackingSet), myProject);
-  }
-
-  public ProjectImpl getProject() {
-    return myProject;
   }
 
   @Override

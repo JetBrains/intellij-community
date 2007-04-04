@@ -99,6 +99,20 @@ abstract class XmlElementStorage implements StateStorage {
     }
   }
 
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+    final Element rootElement = getRootElement();
+    if (rootElement == null) return false;
+
+    final Element[] elements = JDOMUtil.getElements(rootElement);
+    for (Element element : elements) {
+      if (element.getName().equals(COMPONENT) && Comparing.equal(element.getAttributeValue(NAME), componentName)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     final Element element = getState(componentName);

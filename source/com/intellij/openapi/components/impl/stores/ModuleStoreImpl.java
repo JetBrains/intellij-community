@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -151,7 +152,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
 
   @Override
-  protected StateStorage getOldStorage(final Object component) {
+  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) {
     return getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
   }
 

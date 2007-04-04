@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+
 class DefaultsStateStorage implements StateStorage {
   private PathMacroManager myPathMacroManager;
 
@@ -51,6 +52,11 @@ class DefaultsStateStorage implements StateStorage {
 
   public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
     throw new UnsupportedOperationException("Method setState is not supported in " + getClass());
+  }
+
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+    final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
+    return url != null;
   }
 
   public void save() {

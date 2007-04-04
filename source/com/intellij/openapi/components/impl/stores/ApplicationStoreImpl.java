@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -87,7 +88,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   @Override
-  protected StateStorage getOldStorage(final Object component) throws StateStorage.StateStorageException {
+  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final String fileName;
 
     if (component instanceof NamedJDOMExternalizable) {

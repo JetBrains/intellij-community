@@ -1,10 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StateStorageChooser;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -644,7 +641,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
-    public Storage selectStorage(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final Operation operation) {
+    public Storage selectStorage(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
       final String id = ClasspathStorage.getStorageType(moduleRootManager.getModule());
       for (Storage storage : storages) {
         if (storage.id().equals(id)) return storage;
