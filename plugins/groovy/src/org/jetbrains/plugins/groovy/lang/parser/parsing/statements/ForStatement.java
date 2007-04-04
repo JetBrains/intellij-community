@@ -62,7 +62,7 @@ public class ForStatement implements GroovyElementTypes {
     } else {
       result = Statement.parse(builder);
     }
-    if (result.equals(WRONGWAY)) {
+    if (result.equals(WRONGWAY) || result.equals(IMPORT_STATEMENT)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(FOR_STATEMENT);

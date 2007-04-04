@@ -22,50 +22,50 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.BranchStateme
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitializer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @autor: Dmitry.Krasilschikov, Ilya Sergey
- *
  */
-public class StrictContextExpression implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class StrictContextExpression implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
-    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())){
+    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())) {
       return BranchStatement.parse(builder);
     }
-    if (mAT.equals(builder.getTokenType())){
+    if (mAT.equals(builder.getTokenType())) {
       return Annotation.parse(builder);
     }
-
-
-    
-
-/*
     if (DeclarationStart.parse(builder)) {
-      return SingleDeclara
+      return singleDeclarationParse(builder);
     }
-*/
-    // TODO implement two other cases
-
     return ExpressionStatement.argParse(builder);
   }
 
-  public static GroovyElementType singleDeclarationParse(PsiBuilder builder){
-/*
+  public static GroovyElementType singleDeclarationParse(PsiBuilder builder) {
+
+    PsiBuilder.Marker marker = builder.mark();
     if (!WRONGWAY.equals(Modifiers.parse(builder))) {
-      
+      TypeSpec.parse(builder);
+      ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+      if (mASSIGN.equals(builder.getTokenType())) {
+        VariableInitializer.parse(builder);
+      }
+      marker.done(VARIABLE_DEFINITION);
     } else {
       if (!WRONGWAY.equals(TypeSpec.parse(builder))) {
-
+        ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+        if (mASSIGN.equals(builder.getTokenType())) {
+          VariableInitializer.parse(builder);
+        }
+        marker.done(VARIABLE_DEFINITION);
       } else {
-        builder.error();
+        builder.error(GroovyBundle.message("type.specification.expected"));
       }
     }
-*/
-
-    return  DECLARATION;
+    return DECLARATION;
   }
 }
