@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class UsageViewContext {
   protected SearchContext mySearchContext;
-  private com.intellij.usages.UsageView myUsageView;
+  private UsageView myUsageView;
   protected Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
   private SearchCommand myCommand;
@@ -39,7 +39,7 @@ public class UsageViewContext {
     return myExcludedSet.contains(usage);
   }
 
-  public com.intellij.usages.UsageView getUsageView() {
+  public UsageView getUsageView() {
     return myUsageView;
   }
 
@@ -56,7 +56,7 @@ public class UsageViewContext {
     return myCommand;
   }
 
-  protected void setCommand(final SearchCommand command) {
+  private void setCommand(final SearchCommand command) {
     myCommand = command;
   }
 
