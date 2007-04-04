@@ -8,14 +8,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +95,11 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   public void fixText(String text) {
     try {
       String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
-      new XmlAttributeValueManipulator().handleContentChange(this, contents);
+      XmlAttribute newAttribute = getManager().getElementFactory().createXmlAttribute("q", contents);
+      XmlAttributeValue newValue = newAttribute.getValueElement();
+
+      CheckUtil.checkWritable(this);
+      replaceAllChildrenToChildrenOf(newValue.getNode());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

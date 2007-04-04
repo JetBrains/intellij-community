@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +30,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return false;
   }
 
-  private void doTestFor(final String testName) throws Exception {
+  private void doTestFor(final String testName) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -72,8 +71,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void beforeActionStarted(final String testName, final String contents) {
   }
 
-  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) throws IOException {
-    String comment = file instanceof XmlFile ? "<!--" : "//";
+  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) {
+    PsiFile hostFile = file.getContext() == null ? file : file.getContext().getContainingFile();
+
+    String comment = hostFile instanceof XmlFile ? "<!--" : "//";
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);

@@ -58,11 +58,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private SoftReference<Document> myDocument;
   private Language myBaseLanguage;
 
-  public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
+  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
   }
 
-  public SingleRootFileViewProvider(PsiManager manager, final VirtualFile virtualFile, final boolean physical) {
+  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical) {
     myManager = manager;
     myFile = virtualFile;
     myEventSystemEnabled = physical;
@@ -71,6 +71,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     calcPhysical();
   }
 
+  @NotNull
   public Language getBaseLanguage() {
     return myBaseLanguage;
   }
@@ -93,15 +94,17 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return Language.ANY;
   }
 
+  @NotNull
   public Set<Language> getRelevantLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
+  @NotNull
   public Set<Language> getPrimaryLanguages() {
     return getRelevantLanguages();
   }
 
-  public final PsiFile getPsi(Language target) {
+  public final PsiFile getPsi(@NotNull Language target) {
     if (!isPhysical()) {
       ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     }
@@ -357,12 +360,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  public PsiReference findReferenceAt(final int offset, final Language language) {
+  public PsiReference findReferenceAt(final int offset, @NotNull final Language language) {
     final PsiFile psiFile = getPsi(language);
     return psiFile != null ? findReferenceAt(psiFile, offset) : null;
   }
 
-  public Lexer createLexer(final Language language) {
+  public Lexer createLexer(@NotNull final Language language) {
     if (language != getBaseLanguage() && language != Language.ANY) return null;
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return ((PsiFileImpl)getPsi(getBaseLanguage())).createLexer();
