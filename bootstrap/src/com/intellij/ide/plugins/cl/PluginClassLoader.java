@@ -23,6 +23,7 @@ public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final File myLibDirectory;
+  private static boolean myDebugTime = false;
 
   public PluginClassLoader(List<URL> urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
     super(urls, null, true, true);
@@ -66,7 +67,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public URL findResource(final String name) {
-    final long started = System.currentTimeMillis();
+    final long started = myDebugTime ? System.currentTimeMillis():0;
     
     try {
       final URL resource = super.findResource(name);
@@ -83,7 +84,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return null;
     }
     finally {
-      long doneFor = System.currentTimeMillis() - started;
+      long doneFor = myDebugTime ? (System.currentTimeMillis() - started):0;
       if (doneFor > 50) {
         System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource:"+name);
       }
@@ -93,7 +94,7 @@ public class PluginClassLoader extends UrlClassLoader {
   @Nullable
   @Override
   public InputStream getResourceAsStream(final String name) {
-    final long started = System.currentTimeMillis();
+    final long started = myDebugTime ? System.currentTimeMillis():0;
 
     try {
       final InputStream stream = super.getResourceAsStream(name);
@@ -107,7 +108,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return null;
     }
     finally {
-      long doneFor = System.currentTimeMillis() - started;
+      long doneFor = myDebugTime ? System.currentTimeMillis() - started:0;
       if (doneFor > 50) {
         System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource as stream:"+name);
       }
@@ -115,7 +116,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public Enumeration<URL> findResources(final String name) throws IOException {
-    final long started = System.currentTimeMillis();
+    final long started = myDebugTime ? System.currentTimeMillis() : 0;
     try {
       final Enumeration[] resources = new Enumeration[myParents.length + 1];
       resources[0] = super.findResources(name);
@@ -125,7 +126,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return new CompoundEnumeration<URL>(resources);
     }
     finally {
-      long doneFor = System.currentTimeMillis() - started;
+      long doneFor = myDebugTime ? System.currentTimeMillis() - started:0;
       if (doneFor > 50) {
         System.out.println(doneFor + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", find resources:"+name);
       }

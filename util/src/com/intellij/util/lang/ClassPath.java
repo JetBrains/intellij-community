@@ -18,6 +18,7 @@ class ClassPath {
   private ArrayList<Loader> myLoaders = new ArrayList<Loader>();
   private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
   @NonNls private static final String FILE_PROTOCOL = "file";
+  private static boolean myDebugTime = false;
   private boolean myCanLockJars;
   private final boolean myCanUseCache;
 
@@ -33,7 +34,7 @@ class ClassPath {
 
   @Nullable
   public Resource getResource(String s, boolean flag) {
-    final long started = System.currentTimeMillis();
+    final long started = myDebugTime ? System.currentTimeMillis():0;
 
     try {
       Loader loader;
@@ -48,7 +49,7 @@ class ClassPath {
       return null;
     }
     finally {
-      long doneFor = System.currentTimeMillis() - started;
+      long doneFor = myDebugTime ? System.currentTimeMillis() - started:0;
       if (doneFor > 50) {
         System.out.println(doneFor + " ms for getResource:"+s+", flag:"+flag);
       }
