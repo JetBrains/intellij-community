@@ -68,11 +68,13 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
             }
 
             if (dep != null) {
-                LOGGER.info("Found dependsOnGroups with: " + dep.getValue().getText());
-                Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
-                while (matcher.find()) {
-                    String methodName = matcher.group(1);
-                    checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                if (dep.getValue() != null) {
+                    LOGGER.info("Found dependsOnGroups with: " + dep.getValue().getText());
+                    Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
+                    while (matcher.find()) {
+                        String methodName = matcher.group(1);
+                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                    }
                 }
             }
         }
