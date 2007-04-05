@@ -118,6 +118,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       String url = (String)myIgnoredUrl;
       manager.addIgnoredResource(url);
     }
+    setModified(false);
   }
 
   public void reset() {
