@@ -72,7 +72,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       final int elementLength = element.getTextLength();
       int diffFromEnd = 0;
 
-      for(ASTNode node = element.getNode().getLastChildNode(); node != nameElement; node = node.getTreePrev()) {
+      for(ASTNode node = element.getNode().getLastChildNode(); node != nameElement && node != null; node = node.getTreePrev()) {
         diffFromEnd += node.getTextLength();
       }
 
