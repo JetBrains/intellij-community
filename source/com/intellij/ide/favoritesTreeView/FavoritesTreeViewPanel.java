@@ -22,17 +22,16 @@ import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -104,13 +103,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         super.customizeCellRenderer(tree, value, selected, expanded, leaf, row,
                                     hasFocus);
         if (value instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
           //only favorites roots to explain
-          if (node.getParent() == null || node.getParent().getParent() != null) {
-            return;
-          }
-          Object userObject = node.getUserObject();
-
+          final Object userObject = node.getUserObject();
           if (userObject instanceof FavoritesTreeNodeDescriptor) {
             final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
             AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
@@ -119,7 +114,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             if (locationString != null && locationString.length() > 0) {
               append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
             }
-            else {
+            else if (node.getParent() != null && node.getParent().getParent() == null){
               final String location = favoritesTreeNodeDescriptor.getLocation();
               if (location != null && location.length() > 0) {
                 append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

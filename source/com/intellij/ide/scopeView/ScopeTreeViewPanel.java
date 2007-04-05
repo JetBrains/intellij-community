@@ -1,6 +1,7 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -320,7 +321,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
@@ -332,24 +333,34 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         TextAttributes textAttributes = null;
+        final String locationString;
+        final PsiElement psiElement = node.getPsiElement();
+        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);
         if (node instanceof DirectoryNode) {
           final DirectoryNode directoryNode = (DirectoryNode)node;
           append(directoryNode.getDirName(), regularAttributes);
-          final String locationString = directoryNode.getLocationString();
-          if (locationString != null) {
-            append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-          }
+          final String informationString = psiElement != null ? coverageDataManager.getDirCoverageInformationString((PsiDirectory)psiElement) : null;
+          locationString = informationString != null ? informationString : directoryNode.getLocationString();
         }
         else {
-          final PsiElement psiElement = node.getPsiElement();
-          if (psiElement instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiElement).isDeprecated()){
-            textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
+          if (psiElement instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiElement).isDeprecated()) {
+            textAttributes =
+              EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
           }
-          if (textAttributes == null){
+          if (textAttributes == null) {
             textAttributes = regularAttributes.toTextAttributes();
           }
           textAttributes.setForegroundColor(node.getStatus().getColor());
           append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
+          if (psiElement instanceof PsiClass) {
+            locationString = coverageDataManager.getClassCoverageInformationString(((PsiClass)psiElement).getQualifiedName());
+          }
+          else {
+            locationString = null;
+          }
+        }
+        if (locationString != null) {
+          append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
     }
