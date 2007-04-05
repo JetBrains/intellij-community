@@ -171,7 +171,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               myFailedModulePaths.remove(modulePath);
             }
             catch (final IOException e) {
-              fireError(ProjectBundle.message("module.cannot.load.error", e.getMessage()), modulePath);
+              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
             }
             catch (JDOMException e) {
               fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
