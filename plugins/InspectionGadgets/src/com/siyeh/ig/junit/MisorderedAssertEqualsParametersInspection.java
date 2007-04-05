@@ -93,7 +93,6 @@ public class MisorderedAssertEqualsParametersInspection
             replaceExpression(expectedArgument, actualArgumentText);
             replaceExpression(actualArgument, expectedArgumentText);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -145,13 +144,31 @@ public class MisorderedAssertEqualsParametersInspection
             if (expectedArgument == null || actualArgument == null) {
                 return;
             }
-            if (expectedArgument instanceof PsiLiteralExpression) {
+            if (isLiteralOrConstant(expectedArgument)) {
                 return;
             }
-            if (!(actualArgument instanceof PsiLiteralExpression)) {
+            if (!isLiteralOrConstant(actualArgument)) {
                 return;
             }
             registerMethodCallError(expression);
+        }
+
+        private static boolean isLiteralOrConstant(PsiExpression expression) {
+            if (expression instanceof PsiLiteralExpression) {
+                return true;
+            }
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) expression;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field = (PsiField) target;
+            return !(!field.hasModifierProperty(PsiModifier.STATIC) ||
+                    !field.hasModifierProperty(PsiModifier.FINAL));
         }
 
         private static boolean isAssertEquals(
