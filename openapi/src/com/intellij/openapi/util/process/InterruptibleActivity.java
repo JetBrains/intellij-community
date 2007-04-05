@@ -89,7 +89,7 @@ public abstract class InterruptibleActivity {
     return 0;
   }
 
-  private int processTimeoutInEDT() {
+  protected int processTimeoutInEDT() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return processTimeout();
     }
