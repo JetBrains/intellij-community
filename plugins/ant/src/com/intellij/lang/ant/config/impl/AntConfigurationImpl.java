@@ -19,6 +19,9 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -92,7 +95,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
-  private long myModificationCount = 0;
+  private volatile long myModificationCount = 0;
   private AntExplorer myAntExplorer;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration) {
@@ -185,11 +188,45 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   }
 
   public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
-    myModificationCount++;
-    final AntBuildFile buildFile = addBuildFileImpl(file);
-    updateRegisteredActions();
-    myPsiManager.getCachedValuesManager().releaseOutdatedValues();
-    return buildFile;
+    final AntBuildFile[] result = new AntBuildFile[] {null};
+    final AntNoFileException[] ex = new AntNoFileException[] {null};
+    final String title = AntBundle.message("register.ant.build.progress", file.getPresentableUrl());
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, false) {
+      public void run(final ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        indicator.pushState();
+        try {
+          indicator.setText(title);
+          myModificationCount++;
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              try {
+                result[0] = addBuildFileImpl(file);
+                updateRegisteredActions();
+                myPsiManager.getCachedValuesManager().releaseOutdatedValues();
+              }
+              catch (AntNoFileException e) {
+                ex[0] = e;
+              }
+            }
+          });
+          if (result[0] != null) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                myEventDispatcher.getMulticaster().buildFileAdded(result[0]);
+              }
+            });
+          }
+        }
+        finally {
+          indicator.popState();
+        }
+      }
+    });
+    if (ex[0] != null) {
+      throw ex[0];
+    }
+    return result[0];
   }
 
   public void removeBuildFile(final AntBuildFile file) {
@@ -436,7 +473,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     }
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
     myBuildFiles.add(buildFile);
-    myEventDispatcher.getMulticaster().buildFileAdded(buildFile);
     return buildFile;
   }
 

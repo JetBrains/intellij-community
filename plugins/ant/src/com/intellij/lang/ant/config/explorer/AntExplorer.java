@@ -14,14 +14,15 @@ import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -176,33 +177,37 @@ public class AntExplorer extends JPanel implements DataProvider {
     if (files.length == 0) {
       return;
     }
-    final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-    final ArrayList<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
-    for (VirtualFile file : files) {
-      try {
-        antConfiguration.addBuildFile(file);
-      }
-      catch (AntNoFileException e) {
-        ignoredFiles.add(e.getFile());
-      }
-    }
-    if (ignoredFiles.size() != 0) {
-      String messageText;
-      final StringBuilder message = StringBuilderSpinAllocator.alloc();
-      try {
-        String separator = "";
-        for (final VirtualFile virtualFile : ignoredFiles) {
-          message.append(separator);
-          message.append(virtualFile.getPresentableUrl());
-          separator = "\n";
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+        final ArrayList<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
+        for (VirtualFile file : files) {
+          try {
+            antConfiguration.addBuildFile(file);
+          }
+          catch (AntNoFileException e) {
+            ignoredFiles.add(e.getFile());
+          }
         }
-        messageText = message.toString();
+        if (ignoredFiles.size() != 0) {
+          String messageText;
+          final StringBuilder message = StringBuilderSpinAllocator.alloc();
+          try {
+            String separator = "";
+            for (final VirtualFile virtualFile : ignoredFiles) {
+              message.append(separator);
+              message.append(virtualFile.getPresentableUrl());
+              separator = "\n";
+            }
+            messageText = message.toString();
+          }
+          finally {
+            StringBuilderSpinAllocator.dispose(message);
+          }
+          Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
+        }
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(message);
-      }
-      Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
-    }
+    });
   }
 
   public void removeBuildFile() {
