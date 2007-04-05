@@ -155,6 +155,7 @@ public class FrameWrapper {
       for (Disposable disposable : myDisposables) {
         disposable.dispose();
       }
+      myDisposables.clear();
       myDatas.clear();
       if (myProject != null) {
         ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectListener);
