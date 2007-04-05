@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,7 @@ import java.util.List;
 public class UsagePreviewPanel extends JPanel implements Disposable {
   private Editor myEditor;
   private final UsageViewImpl myUsageView;
+  private String myTitle;
 
   public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView) {
     myUsageView = usageView;
@@ -38,7 +40,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
           public void run() {
             List<UsageInfo> infos = usageView.getSelectedUsageInfos();
             if (infos != null) {
-              resetEditor(infos, false);
+              resetEditor(infos);
             }
           }
         });
@@ -48,7 +50,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     setLayout(new BorderLayout());
   }
 
-  private void resetEditor(@NotNull final List<UsageInfo> infos, final boolean force) {
+  private void resetEditor(@NotNull final List<UsageInfo> infos) {
     PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
     PsiFile psiFile = psiElement.getContainingFile();
@@ -56,12 +58,14 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
     Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
-    if (force || myEditor == null || document != myEditor.getDocument()) {
+    String title = UsageViewBundle.message("preview.title", psiFile.getName());
+    if (myEditor == null || document != myEditor.getDocument() || !Comparing.strEqual(title, myTitle)) {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
-      JComponent title = new JLabel(UsageViewBundle.message("preview.title", psiFile.getName()));
-      add(title, BorderLayout.NORTH);
+      myTitle = title;
+      JComponent titleComp = new JLabel(myTitle);
+      add(titleComp, BorderLayout.NORTH);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
       revalidate();
@@ -85,7 +89,9 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
-      TextRange textRange = psiElement.getTextRange().cutOut(info.getRange());
+      TextRange elementRange = psiElement.getTextRange();
+      TextRange infoRange = info.getRange();
+      TextRange textRange = elementRange.contains(infoRange) ? elementRange.cutOut(infoRange) : elementRange;
       // hack to determine element range to highlight
       if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();
@@ -136,7 +142,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   public void update() {
     List<UsageInfo> infos = myUsageView.getSelectedUsageInfos();
     if (infos != null) {
-      resetEditor(infos, true);
+      resetEditor(infos);
     }
   }
 }
