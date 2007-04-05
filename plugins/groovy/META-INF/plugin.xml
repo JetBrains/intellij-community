@@ -1,6 +1,11 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <id>org.intellij.groovy</id>
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.GrailsConsole</implementation-class>
+    </component>
+  </project-components>
   <module-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GFacetListener</implementation-class>
@@ -15,6 +20,9 @@
       <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
               text="Groovy Script" description="Create new Groovy script">
       </action>
+      <action id="Grails.NewApp" class="org.jetbrains.plugins.groovy.actions.NewGrailsAppAction"
+              text="Grails Application"
+              description="Create new Grails application"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
   </actions>
@@ -33,6 +41,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.grailsmodule.GrailsModuleType</implementation-class>
     </component>
   </application-components>
 

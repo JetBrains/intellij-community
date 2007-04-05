@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.Icons;
 
-/**
- * @author nik
- */
 public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent
 {
   @NonNls

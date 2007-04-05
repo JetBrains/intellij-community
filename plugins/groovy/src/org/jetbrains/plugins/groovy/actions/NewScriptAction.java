@@ -17,7 +17,7 @@ public class NewScriptAction extends NewActionBase
 
   protected String getActionName(PsiDirectory directory, String newName)
   {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   protected String getDialogPrompt()
