@@ -246,7 +246,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
     }
     catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
+      LOG.info(e);
       throw new IOException(e.getMessage());
     }
   }
