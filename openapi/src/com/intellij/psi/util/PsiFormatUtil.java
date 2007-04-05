@@ -387,7 +387,7 @@ public class PsiFormatUtil {
   public static String formatType(PsiType type, int options, PsiSubstitutor substitutor){
     type = substitutor.substitute(type);
     if ((options & SHOW_FQ_CLASS_NAMES) != 0){
-      return type.getCanonicalText();
+      return type.getInternalCanonicalText();
     }
     else{
       return type.getPresentableText();

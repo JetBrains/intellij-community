@@ -28,8 +28,7 @@ public class ResolveCache {
   private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
-  //store types for method call expressions, NB: this caching is semantical, without this captured wildcards won't work
-  private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCaclulatedlTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
+  private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
 
   private static final Object NULL = Key.create("NULL");
 
@@ -69,7 +68,7 @@ public class ResolveCache {
 
     manager.registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
-        myCaclulatedlTypes.clear();
+        myCalculatedTypes.clear();
       }
     });
   }
@@ -85,13 +84,13 @@ public class ResolveCache {
     }
   };
   public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
-    PsiType type = myCaclulatedlTypes.get(expr);
+    PsiType type = myCalculatedTypes.get(expr);
     if (type == null) {
       type = f.fun(expr);
       if (type == null) {
         type = NULL_TYPE;
       }
-      type = ConcurrencyUtil.cacheOrGet(myCaclulatedlTypes, expr, type);
+      type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
     }
     if (!type.isValid()) {
       LOG.error("Type is invalid: " + type);
@@ -111,7 +110,7 @@ public class ResolveCache {
 
     myResolveMaps[2].clear();
     myResolveMaps[3].clear();
-    myCaclulatedlTypes.clear();
+    myCalculatedTypes.clear();
   }
 
   private <Ref extends PsiReference, Result> Result resolve(Ref ref,

@@ -202,15 +202,15 @@ public class GenericsUtil {
     supers.add(classToAdd);
   }
 
-  public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor) {
+  public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor, final PsiElement context) {
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return true;
-      substituted = PsiUtil.captureToplevelWildcards(substituted);
+      substituted = PsiUtil.captureToplevelWildcards(substituted, context);
 
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
-        PsiType extendsType = substitutor.substituteAndCapture(type);
+        PsiType extendsType = substitutor.substitute(type);
         if (!extendsType.isAssignableFrom(substituted)) {
           return false;
         }

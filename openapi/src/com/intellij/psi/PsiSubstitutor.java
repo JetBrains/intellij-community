@@ -54,18 +54,6 @@ public interface PsiSubstitutor {
    */
   PsiType substitute(PsiType type);
 
-  /**
-   * Substitutes type parameters occuring in <code>type</code> with their values.
-   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
-   * If value of a <b>class</b> type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
-   *
-   * @param type the type to substitute the type parameters for.
-   * @return the result of the substitution.
-   */
-  PsiType substituteAndCapture(PsiType type);
-
-  PsiType substituteWithoutBoundsPromotion(PsiType type);
-
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
   PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter);

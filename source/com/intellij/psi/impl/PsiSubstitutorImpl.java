@@ -40,20 +40,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return correctExternalSubstitution(substituted, type);
   }
 
-  public PsiType substituteWithoutBoundsPromotion(PsiType type) {
-    if (type == null) return null;
-    PsiType substituted = type.accept(mySimpleSubstitutionVisitor);
-    return correctExternalSubstitution(substituted, type);
-  }
-
   public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
     return addBounds(substitute(typeParameter), typeParameter);
-  }
-
-  public PsiType substituteAndCapture(PsiType type) {
-    if (type == null) return null;
-    PsiType substituted = type.accept(myCapturingSubstitutionVisitor);
-    return correctExternalSubstitution(substituted, type);
   }
 
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
@@ -131,12 +119,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   private final SubstitutionVisitor myAddingBoundsSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.ADD_BOUNDS);
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.SIMPLE);
-  private final SubstitutionVisitor myCapturingSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.ADD_BOUNDS_AND_CAPTURE);
 
   enum SubstituteKind {
     SIMPLE,
-    ADD_BOUNDS,
-    ADD_BOUNDS_AND_CAPTURE
+    ADD_BOUNDS
   }
 
   private class SubstitutionVisitor extends SubstitutionVisitorBase {
@@ -174,12 +160,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       else if (myKind == SubstituteKind.ADD_BOUNDS) {
         return addBounds(t, typeParameter);
       }
-      else if (myKind == SubstituteKind.ADD_BOUNDS_AND_CAPTURE) {
-        t = addBounds(t, typeParameter);
-        if (t instanceof PsiWildcardType && typeParameter.getOwner() instanceof PsiClass) {
-          return PsiCapturedWildcardType.create((PsiWildcardType)t);
-        }
-      }
 
       return t;
     }
@@ -209,10 +189,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+    PsiElement captureContext = null;
     if (substituted instanceof PsiCapturedWildcardType) {
-      substituted = ((PsiCapturedWildcardType)substituted).getWildcard();
+      final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)substituted;
+      substituted = captured.getWildcard();
+      captureContext = captured.getContext();
     }
-
     if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
       PsiType originalBound = ((PsiWildcardType)substituted).getBound();
       PsiManager manager = typeParameter.getManager();
@@ -225,7 +207,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
             if (wildcardType.isExtends()) {
               final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
               if (glb != null) {
-               substituted = PsiWildcardType.createExtends(manager, glb);
+                substituted = PsiWildcardType.createExtends(manager, glb);
               }
             }
             else {
@@ -235,6 +217,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
           }
         }
       }
+    }
+
+    if (captureContext != null) {
+      LOG.assertTrue(substituted instanceof PsiWildcardType);
+      substituted = PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
     }
     return substituted;
   }

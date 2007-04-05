@@ -91,7 +91,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     PsiTypeParameter[] typeParams = getElement().getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length) return false;
     PsiSubstitutor substitutor = getSubstitutor();
-    return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor);
+    return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, myArgumentList.getParent());
   }
 
   public boolean isValidResult(){

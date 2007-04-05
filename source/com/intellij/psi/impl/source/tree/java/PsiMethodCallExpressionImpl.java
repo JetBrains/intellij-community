@@ -142,7 +142,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
       if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
         final PsiSubstitutor substitutor = result.getSubstitutor();
         if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
-        PsiType substitutedReturnType = substitutor.substituteAndCapture(ret);
+        PsiType substitutedReturnType = substitutor.substitute(ret);
         return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
       }
       return TypeConversionUtil.erasure(ret);

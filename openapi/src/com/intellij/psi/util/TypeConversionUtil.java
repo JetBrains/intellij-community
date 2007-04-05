@@ -293,9 +293,11 @@ public class TypeConversionUtil {
   private static boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
     PsiClassType.ClassResolveResult resolveResult1 = type1.resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = type2.resolveGenerics();
-    if (resolveResult1.getElement() == null || resolveResult2.getElement() == null) return true;
-    if (resolveResult1.getElement() != resolveResult2.getElement()) return true;
-    return areDistinctArgumentTypes(resolveResult1.getElement(), resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
+    final PsiClass aClass = resolveResult1.getElement();
+    final PsiClass bClass = resolveResult2.getElement();
+    if (aClass == null || bClass == null) return true;
+    if (!aClass.getManager().areElementsEquivalent(aClass, bClass)) return true;
+    return areDistinctArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
   }
 
   private static boolean areDistinctArgumentTypes(PsiClass aClass, PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
@@ -762,7 +764,8 @@ public class TypeConversionUtil {
       final PsiType leftBound = leftWildcard.getBound();
       if (leftBound == null) return true;
       if (leftBound.equalsToText("java.lang.Object")) {
-        return !leftWildcard.isSuper() || typeRight.equalsToText("java.lang.Object");
+        if (!leftWildcard.isSuper()) return true;
+        if (typeRight.equalsToText("java.lang.Object")) return true;
       }
 
       if (typeRight instanceof PsiWildcardType) {
@@ -822,7 +825,7 @@ public class TypeConversionUtil {
     // [dsl] assertion commented out since we no longer cache isInheritor
     //LOG.assertTrue(derivedClass.isInheritor(superClass, true), "Not inheritor: " + derivedClass + " super: " + superClass);
 
-    if (!superClass.hasTypeParameters()) return PsiSubstitutor.EMPTY;
+    if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization
 
     final PsiManager manager = superClass.getManager();
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {

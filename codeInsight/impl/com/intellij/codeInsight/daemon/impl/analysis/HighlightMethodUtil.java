@@ -560,7 +560,7 @@ public class HighlightMethodUtil {
     @NonNls String ms = "";
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      PsiType type = substitutor.substituteAndCapture(parameter.getType());
+      PsiType type = substitutor.substitute(parameter.getType());
       ms += "<td><b><nobr>" + (i == 0 ? "(" : "") +
             XmlStringUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
@@ -577,7 +577,7 @@ public class HighlightMethodUtil {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
     if (expression == null) return true;
     PsiType paramType = i < parameters.length && parameters[i] != null
-                        ? substitutor.substituteAndCapture(parameters[i].getType())
+                        ? substitutor.substitute(parameters[i].getType())
                         : null;
     return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
   }

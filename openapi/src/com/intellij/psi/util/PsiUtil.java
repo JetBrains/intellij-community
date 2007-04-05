@@ -44,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Map;
 
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -843,7 +843,7 @@ public final class PsiUtil {
     if (parmType instanceof PsiClassType) {
       parmType = ((PsiClassType)parmType).setLanguageLevel(languageLevel);
     }
-    return substitutor.substituteAndCapture(parmType);
+    return substitutor.substitute(parmType);
   }
 
   public static boolean equalOnClass(PsiSubstitutor s1, PsiSubstitutor s2, PsiClass aClass) {
@@ -1008,7 +1008,7 @@ public final class PsiUtil {
     return containingFile.getVirtualFile();
   }
 
-  public static PsiType captureToplevelWildcards(final PsiType type) {
+  public static PsiType captureToplevelWildcards(final PsiType type, final PsiElement context) {
     if (type instanceof PsiClassType) {
       Map<PsiTypeParameter, PsiType> substitutionMap = null;
       final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
@@ -1021,7 +1021,7 @@ public final class PsiUtil {
           final PsiType substituted = substitutor.substitute(typeParameter);
           if (substituted instanceof PsiWildcardType) {
             if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-            substitutionMap.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted));
+            substitutionMap.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted, context));
           }
         }
 
@@ -1032,7 +1032,7 @@ public final class PsiUtil {
         }
       }
     } else if (type instanceof PsiArrayType) {
-      return captureToplevelWildcards(((PsiArrayType)type).getComponentType()).createArrayType();
+      return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
     }
 
     return type;

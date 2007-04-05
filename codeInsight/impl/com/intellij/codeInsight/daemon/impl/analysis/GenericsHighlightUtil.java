@@ -48,10 +48,10 @@ public class GenericsHighlightUtil {
     for (PsiTypeParameter typeParameter : typeParameters) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return null;
-      substituted = PsiUtil.captureToplevelWildcards(substituted);
+      substituted = PsiUtil.captureToplevelWildcards(substituted, call);
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
-        PsiType extendsType = substitutor.substituteAndCapture(type);
+        PsiType extendsType = substitutor.substitute(type);
         if (!TypeConversionUtil.isAssignable(extendsType, substituted, false)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
 
@@ -138,7 +138,7 @@ public class GenericsHighlightUtil {
         if (referenceClass == null) continue;
         final PsiClassType[] bounds = classParameter.getSuperTypes();
         for (PsiClassType type1 : bounds) {
-          PsiType bound = substitutor.substituteWithoutBoundsPromotion(type1);
+          PsiType bound = substitutor.substitute(type1);
           if (!TypeConversionUtil.isAssignable(bound, type, false)) {
             PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 

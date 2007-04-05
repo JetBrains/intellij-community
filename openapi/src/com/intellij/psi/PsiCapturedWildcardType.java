@@ -23,13 +23,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiCapturedWildcardType extends PsiType {
   private PsiWildcardType myExistential;
+  private PsiElement myContext;
 
-  private PsiCapturedWildcardType(PsiWildcardType existential) {
-    myExistential = existential;
+  public boolean equals(final Object o) {
+    if (!(o instanceof PsiCapturedWildcardType)) return false;
+    final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
+    return myContext.equals(captured.myContext) &&
+           myExistential.equals(captured.myExistential);
   }
 
-  public static PsiCapturedWildcardType create (PsiWildcardType existential) {
-    return new PsiCapturedWildcardType(existential);
+  public int hashCode() {
+    return myExistential.hashCode() + 31 * myContext.hashCode();
+  }
+
+  private PsiCapturedWildcardType(PsiWildcardType existential, final PsiElement context) {
+    myExistential = existential;
+    myContext = context;
+  }
+
+  public static PsiCapturedWildcardType create(PsiWildcardType existential, final PsiElement context) {
+    return new PsiCapturedWildcardType(existential, context);
   }
 
   public String getPresentableText() {
@@ -66,8 +79,6 @@ public class PsiCapturedWildcardType extends PsiType {
     return myExistential.getSuperTypes();
   }
 
-  //equals() is not implemented intentionally
-
   public PsiType getLowerBound () {
     return myExistential.isSuper() ? myExistential.getBound() : PsiType.NULL;
   }
@@ -79,5 +90,9 @@ public class PsiCapturedWildcardType extends PsiType {
 
   public PsiWildcardType getWildcard() {
     return myExistential;
+  }
+
+  public PsiElement getContext() {
+    return myContext;
   }
 }

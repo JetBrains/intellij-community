@@ -217,7 +217,7 @@ public class PsiImplUtil {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
 
       if (PsiUtil.isAccessedForWriting(toplevel)) {
-        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType);
+        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
       }
       else {
         if (wildcardType.isExtends()) {
@@ -236,7 +236,7 @@ public class PsiImplUtil {
       }
     }
     else if (type instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
-      return PsiUtil.captureToplevelWildcards(type);
+      return PsiUtil.captureToplevelWildcards(type, expression);
     }
 
     return type;
