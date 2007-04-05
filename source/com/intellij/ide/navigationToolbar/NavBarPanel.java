@@ -626,6 +626,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void restorePopup() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         cancelPopup();
         ctrlClick(myModel.getSelectedIndex());
       }
@@ -800,6 +801,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         select();
       }
     });
@@ -952,6 +954,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         immediateUpdateList(true);
         paintComponent();
       }
@@ -967,6 +970,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myUpdateAlarm.cancelAllRequests();
       myUpdateAlarm.addRequest(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           immediateUpdateList(myModel.updateModel(event.getParent()));
         }
       }, 500, ModalityState.NON_MODAL);
