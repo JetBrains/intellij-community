@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,6 +73,7 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
+  @NotNull
   public String getName() {
     return myLogEntry.getMessage();
   }
