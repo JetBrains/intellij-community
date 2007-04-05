@@ -72,7 +72,10 @@ public class ProjectUtil {
               public void run() {
                 final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
                 projectRootManager.setProjectJdk(jdk);
-                projectRootManager.setLanguageLevel(getDefaultLanguageLevel(versionString));
+                final LanguageLevel languageLevel = getDefaultLanguageLevel(versionString);
+                if (projectRootManager.getLanguageLevel().compareTo(languageLevel) > 0) {                  
+                  projectRootManager.setLanguageLevel(languageLevel);
+                }
               }
             });
           }
