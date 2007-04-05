@@ -95,6 +95,10 @@ public final class IdeMouseEventDispatcher{
     }
     component=SwingUtilities.getDeepestComponentAt(component,e.getX(),e.getY());
 
+    if (component instanceof IdeGlassPaneImpl) {
+      component = ((IdeGlassPaneImpl)component).getTargetComponentFor(e);
+    }
+
     if(component==null){ // do nothing if component doesn't contains specified point
       return false;
     }
