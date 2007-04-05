@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -26,8 +27,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -326,20 +327,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   private String getInitialMessageFromVcs() {
-    FilePath[] filesToCheckin = getPaths();
-    if (filesToCheckin != null) {
-      for (FilePath virtualFile : filesToCheckin) {
-        AbstractVcs activeVcs = VcsUtil.getVcsFor(myProject, virtualFile);
-        if (activeVcs == null) continue;
-        CheckinEnvironment checkinEnvironment = activeVcs.getCheckinEnvironment();
-        if (checkinEnvironment != null) {
-          String defaultMessage = checkinEnvironment.getDefaultMessageFor(filesToCheckin);
-          if (defaultMessage != null) return defaultMessage;
+    final List<Change> list = getIncludedChanges();
+    final Ref<String> result = new Ref<String>();
+    ChangesUtil.processChangesByVcs(myProject, list, new ChangesUtil.PerVcsProcessor<Change>() {
+      public void process(final AbstractVcs vcs, final List<Change> items) {
+        if (result.isNull()) {
+          CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+          if (checkinEnvironment != null) {
+            final Collection<FilePath> paths = ChangesUtil.getPaths(items);
+            String defaultMessage = checkinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
+            if (defaultMessage != null) {
+              result.set(defaultMessage);
+            }
+          }
         }
       }
-    }
-
-    return null;
+    });
+    return result.get();
   }
 
   private void updateComment() {
@@ -638,6 +642,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myLegend.update(myBrowser.getCurrentDisplayedChanges(), myBrowser.getCurrentIncludedChanges());
   }
 
+  @NotNull
   private List<Change> getIncludedChanges() {
     return myBrowser.getCurrentIncludedChanges();
   }
