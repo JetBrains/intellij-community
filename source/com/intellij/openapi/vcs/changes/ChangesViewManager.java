@@ -321,6 +321,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     private void refreshChangesViewNodeAsync(final VirtualFile file) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           refreshChangesViewNode(file);
         }
       });
