@@ -18,7 +18,7 @@ class ClassPath {
   private ArrayList<Loader> myLoaders = new ArrayList<Loader>();
   private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
   @NonNls private static final String FILE_PROTOCOL = "file";
-  private static boolean myDebugTime = true;
+  private static boolean myDebugTime = false;
   private boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
