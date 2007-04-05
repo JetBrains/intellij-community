@@ -764,7 +764,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     final Window window = SwingUtilities.getWindowAncestor(this);
     if (window != null) {
-      window.addComponentListener(new ComponentAdapter() {
+      final ComponentAdapter componentAdapter = new ComponentAdapter() {
         public void componentResized(final ComponentEvent e) {
           hidePopup();
         }
@@ -779,6 +779,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
         public void componentHidden(final ComponentEvent e) {
           hidePopup();
+        }
+      };
+      window.addComponentListener(componentAdapter);
+      Disposer.register(myPopupToolbar, new Disposable() {
+        public void dispose() {
+          window.removeComponentListener(componentAdapter);
         }
       });
     }
