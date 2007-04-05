@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private Project myProject;
   private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
-  private String myName;
+  @NotNull private String myName;
   private String myComment = "";
 
   private boolean myIsDefault = false;
@@ -34,13 +35,13 @@ public class LocalChangeListImpl extends LocalChangeList {
   private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
 
-  public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String description) {
-    return new LocalChangeListImpl(project, description);
+  public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
+    return new LocalChangeListImpl(project, name);
   }
 
-  private LocalChangeListImpl(Project project, final String description) {
+  private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
-    myName = description;
+    myName = name;
   }
 
   public synchronized Collection<Change> getChanges() {
@@ -61,11 +62,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
-  public void setName(final String name) {
+  public void setName(@NotNull final String name) {
     if (!myName.equals(name)) {
       String oldName = myName;
       myName = name;

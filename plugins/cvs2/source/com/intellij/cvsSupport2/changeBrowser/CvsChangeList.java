@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.File;
@@ -31,7 +32,7 @@ public class CvsChangeList implements CommittedChangeList {
   private long myFinishDate;
 
   private final long myNumber;
-  private final String myDescription;
+  @NotNull private final String myDescription;
 
   private final String myRootPath;
 
@@ -47,7 +48,7 @@ public class CvsChangeList implements CommittedChangeList {
   @NonNls public static final String DEAD_STATE = "dead";
 
 
-  public CvsChangeList(final long number, final String description, final long date,
+  public CvsChangeList(final long number, @NotNull final String description, final long date,
                        String user, String rootPath, final CvsEnvironment environment, final Project project) {
     myDate = date;
     myFinishDate = date;
@@ -93,6 +94,7 @@ public class CvsChangeList implements CommittedChangeList {
     return myChanges;
   }
 
+  @NotNull
   public String getName() {
     return myDescription;
   }

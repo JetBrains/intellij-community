@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 /**
@@ -8,6 +10,7 @@ import java.util.Collection;
 public interface ChangeList {
   Collection<Change> getChanges();
 
+  @NotNull
   String getName();
 
   String getComment();

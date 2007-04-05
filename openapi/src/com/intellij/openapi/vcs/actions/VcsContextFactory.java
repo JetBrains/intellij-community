@@ -16,10 +16,11 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -40,5 +41,5 @@ public interface VcsContextFactory {
 
   FilePath createFilePathOn(VirtualFile parent, String name);
 
-  LocalChangeList createLocalChangeList(Project project, final String description);
+  LocalChangeList createLocalChangeList(Project project, @NotNull final String name);
 }

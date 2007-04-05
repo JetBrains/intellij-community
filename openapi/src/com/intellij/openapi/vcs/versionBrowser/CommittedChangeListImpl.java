@@ -24,9 +24,10 @@
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 
 public class CommittedChangeListImpl implements CommittedChangeList {
   private String myCommitterName;
@@ -63,6 +64,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return myChanges;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
