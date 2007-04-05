@@ -98,6 +98,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     component.putClientProperty(SOURCE_KEY, null);
 
     myLastProcessedOverComponent = null;
+    myCurrentDragContext = null;
   }
 
   public void registerTarget(DnDTarget target, JComponent component) {
