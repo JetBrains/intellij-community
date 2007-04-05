@@ -169,6 +169,9 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
         myProject,
         new Runnable() {
           public void run() {
+            if (!guiEditor.ensureEditable()) {
+              return;
+            }
             dialog.show();
             if(!dialog.isOK()){
               return;
