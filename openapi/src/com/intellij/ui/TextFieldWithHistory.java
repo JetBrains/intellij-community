@@ -405,6 +405,16 @@ public class TextFieldWithHistory extends JPanel {
       if (myListener != null) {
         removeKeyListener(myListener);
       }
+      final Runnable chooseRunnable = new Runnable() {
+        public void run() {
+          final String value = (String)list.getSelectedValue();
+          getTextEditor().setText(value != null ? value : "");
+          if (myPopup != null) {
+            myPopup.cancel();
+            myPopup = null;
+          }
+        }
+      };
       myListener = new KeyAdapter() {
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_DOWN) {
@@ -415,6 +425,10 @@ public class TextFieldWithHistory extends JPanel {
             if (list.getSelectedIndex() > 0) {
               list.setSelectedIndex(list.getSelectedIndex() - 1);
             }
+          } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            if (list.getSelectedIndex() > -1) {
+              chooseRunnable.run();
+            }
           }
         }
       };
@@ -422,13 +436,7 @@ public class TextFieldWithHistory extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(false)
-        .setItemChoosenCallback(new Runnable() {
-        public void run() {
-          final String value = (String)list.getSelectedValue();
-          getTextEditor().setText(value != null ? value : "");
-          myPopup = null;
-        }
-      }).createPopup();
+        .setItemChoosenCallback(chooseRunnable).createPopup();
 
       if (isShowing()) myPopup.showUnderneathOf(this);
     }
