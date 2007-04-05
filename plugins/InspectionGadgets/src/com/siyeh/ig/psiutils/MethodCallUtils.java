@@ -146,8 +146,7 @@ public class MethodCallUtils {
             if (!(lastParameterType instanceof PsiArrayType)) {
                 return false;
             }
-            lastParameterType = substitutorForMethod.substituteAndCapture(
-                    lastParameterType);
+            lastParameterType = substitutorForMethod.substitute(lastParameterType);
             if (lastParameter.isVarArgs()) {
                 for (int i = 0; i < parameters.length - 1; i++) {
                     final PsiParameter parm = parameters[i];
@@ -160,9 +159,8 @@ public class MethodCallUtils {
                     }
                     final PsiType parameterType = parameters[i].getType();
                     final PsiType substitutedParmType =
-                            substitutorForMethod.substituteAndCapture(
-                                    parameterType);
-                    if (!TypeConversionUtil.isAssignable(substitutedParmType,
+                            substitutorForMethod.substitute(parameterType);
+                  if (!TypeConversionUtil.isAssignable(substitutedParmType,
                             argType)) {
                         return false;
                     }
@@ -199,7 +197,7 @@ public class MethodCallUtils {
                 }
                 final PsiType parameterType = parameters[i].getType();
                 final PsiType substitutedParameterType =
-                        substitutorForMethod.substituteAndCapture(parameterType);
+                        substitutorForMethod.substitute(parameterType);
                 if (!TypeConversionUtil.isAssignable(substitutedParameterType,
                         type)) {
                     return false;
