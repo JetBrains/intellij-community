@@ -63,7 +63,8 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
 
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
-  private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchReturnValues.png");
+  private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
+  private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
 
   private final Project myProject;
   private final ContentManager myViewsContentManager;
@@ -522,7 +523,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     private final String myDefaultModeText = "All-Variables Mode";
 
     public AutoVarsSwitchAction() {
-      super("", "", WATCHES_ICON);
+      super("", "", AUTO_VARS_ICONS);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
 

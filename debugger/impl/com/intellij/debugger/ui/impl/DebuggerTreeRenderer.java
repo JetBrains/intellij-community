@@ -28,6 +28,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
   private static Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
   private static Icon myValueIcon = IconLoader.getIcon("/debugger/value.png");
+  private static Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
   private static Icon myArrayValueIcon = IconLoader.getIcon("/debugger/db_array.png");
   private static Icon myPrimitiveValueIcon = IconLoader.getIcon("/debugger/db_primitive.png");
   private static Icon myStaticFieldIcon = Icons.FIELD_ICON;
@@ -80,7 +81,11 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         nodeIcon = myPrimitiveValueIcon;
       }
       else {
-        nodeIcon = myValueIcon;
+        if (valueDescriptor instanceof WatchItemDescriptor) {
+          nodeIcon = myWatchedValueIcon;           
+        } else {
+          nodeIcon = myValueIcon;
+        }
       }
     }
     else if (descriptor instanceof MessageDescriptor) {
