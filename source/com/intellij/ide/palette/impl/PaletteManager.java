@@ -45,7 +45,6 @@ public class PaletteManager implements ProjectComponent {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     myListener = new MyFileEditorManagerListener();
-    myFileEditorManager.addFileEditorManagerListener(myListener);
   }
 
   public void projectOpened() {
@@ -57,6 +56,7 @@ public class PaletteManager implements ProjectComponent {
                                                                                           ToolWindowAnchor.RIGHT);
         myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
         myPaletteToolWindow.setAvailable(false, null);
+        myFileEditorManager.addFileEditorManagerListener(myListener);
       }
     });
   }
