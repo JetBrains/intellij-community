@@ -29,12 +29,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
-import java.awt.im.InputContext;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.im.InputContext;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Locale;
 
 /**
  * This class is automaton with finite number of state.
@@ -271,8 +270,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK)) {
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
-        Locale locale = inputContext.getLocale();
-        if (locale.getLanguage().equals("pl") || locale.getLanguage().equals("de")) {
+        @NonNls final String language = inputContext.getLocale().getLanguage();
+        if (language.equals("pl") ||
+            language.equals("de") ||
+            language.equals("fi") ||
+            language.equals("fr")) {
           // don't search for shortcuts
           return false;
         }
