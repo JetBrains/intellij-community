@@ -182,6 +182,12 @@ public abstract class AnAction {
    * state and(or) presentation depending on the context (For example
    * when your action state depends on the selection you can check for
    * selection and change the state accordingly).
+   * This method can be called frequently, for instance, if an action is added to a toolbar,
+   * it will be updated twice a second. This means that this method is supposed to work really fast,
+   * no real work should be done at this phase. For example, checking selection in a tree or a list,
+   * is considered valid, but working with a file system is not. If you cannot understand the state of
+   * the action fast you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
+   * the user that action cannot be executed if it's the case.
    *
    * @param e Carries information on the invocation place and data available
    */
