@@ -66,7 +66,15 @@ public class SuspiciousIndentAfterControlStatementInspection
 
         public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
-            //final PsiStatement elseStatement = statement.getElseBranch();
+            final PsiStatement elseStatement = statement.getElseBranch();
+            if (elseStatement instanceof PsiBlockStatement) {
+                return;
+            } else if (elseStatement == null) {
+                final PsiStatement thenStatement = statement.getThenBranch();
+                if (thenStatement instanceof PsiBlockStatement) {
+                    return;
+                }
+            }
             //if (elseStatement != null) {
             //    return;
             //}
@@ -76,6 +84,9 @@ public class SuspiciousIndentAfterControlStatementInspection
             final PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
                             PsiStatement.class);
+            if (nextStatement == null) {
+                return;
+            }
             registerStatementError(nextStatement);
         }
 
@@ -90,6 +101,9 @@ public class SuspiciousIndentAfterControlStatementInspection
             final PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
                             PsiStatement.class);
+            if (nextStatement == null) {
+                return;
+            }
             registerStatementError(nextStatement);
         }
 
