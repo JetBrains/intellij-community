@@ -19,6 +19,7 @@ class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
   private final boolean myUseCache;
+  private static boolean myDebugTime = false;
 
   //private SoftReference<ZipFile> myZipFileRef;
   private final TimedReference<ZipFile> myZipFileRef = new TimedReference<ZipFile>(null) {
@@ -38,6 +39,7 @@ class JarLoader extends Loader {
   private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
+  private static final long NS_THRESHOLD = 10000000;
 
   JarLoader(URL url, boolean canLockJar, boolean useCache) throws IOException {
     super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
@@ -109,6 +111,7 @@ class JarLoader extends Loader {
 
   @Nullable
   Resource getResource(String name, boolean flag) {
+    final long started = myDebugTime ? System.nanoTime():0;
     try {
       initPackageCache();
 
@@ -136,6 +139,11 @@ class JarLoader extends Loader {
     }
     catch (Exception e) {
       return null;
+    } finally {
+      final long doneFor = myDebugTime ? (System.nanoTime() - started):0;
+      if (doneFor > NS_THRESHOLD) {
+        System.out.println((doneFor/1000000) + " ms for jar loader get resource:"+name);
+      }
     }
 
     return null;

@@ -14,6 +14,8 @@ public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
   @NonNls static final String CLASS_EXTENSION = ".class";
+  protected static boolean myDebugTime = true;
+  protected static final long NS_THRESHOLD = 10000000;
 
   public UrlClassLoader(ClassLoader parent) {
     this(Arrays.asList(((URLClassLoader)parent).getURLs()), null, true, true);
@@ -78,6 +80,19 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   public URL findResource(final String name) {
+    final long started = myDebugTime ? System.nanoTime():0;
+
+    try {
+      return findResourceImpl(name);
+    } finally {
+      long doneFor = myDebugTime ? (System.nanoTime() - started):0;
+      if (doneFor > NS_THRESHOLD) {
+        System.out.println((doneFor / 1000000) + " ms for UrlClassLoader.getResource, resource:"+name);
+      }
+    }
+  }
+
+  protected URL findResourceImpl(final String name) {
     Resource res = _getResource(name);
     if (res == null) return null;
     return res.getURL();
