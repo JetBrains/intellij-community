@@ -204,15 +204,17 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (key == SHELVED_CHANGELIST_KEY) {
         final TreePath[] selections = getSelectionPaths();
         final Set<ShelvedChangeList> changeLists = new HashSet<ShelvedChangeList>();
-        for(TreePath path: selections) {
-          if (path.getPathCount() >= 2) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
-            if (node.getUserObject() instanceof ShelvedChangeList) {
-              changeLists.add((ShelvedChangeList) node.getUserObject());
+        if (selections != null) {
+          for(TreePath path: selections) {
+            if (path.getPathCount() >= 2) {
+              DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
+              if (node.getUserObject() instanceof ShelvedChangeList) {
+                changeLists.add((ShelvedChangeList) node.getUserObject());
+              }
             }
           }
         }
-        
+
         if (changeLists.size() > 0) {
           sink.put(SHELVED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
         }
