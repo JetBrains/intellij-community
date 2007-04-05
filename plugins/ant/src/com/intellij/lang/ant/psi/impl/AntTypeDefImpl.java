@@ -372,12 +372,14 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private static boolean isTask(final Class clazz) {
     try {
       final ClassLoader loader = clazz.getClassLoader();
-      final Class taskClass = loader.loadClass(Task.class.getName());
-      return taskClass.isAssignableFrom(clazz);
+      if (loader != null) {
+        final Class taskClass = loader.loadClass(Task.class.getName());
+        return taskClass.isAssignableFrom(clazz);
+      }
     }
-    catch (ClassNotFoundException e) {
-      return false;
+    catch (ClassNotFoundException ignored) {
     }
+    return false;
   }
 
   private URL[] getClassPathUrls() {
