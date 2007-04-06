@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -37,13 +38,14 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
             return false;
         }
         final PsiExpression rhs = assignment.getRExpression();
-        if(rhs == null){
+        final PsiExpression expression = PsiUtil.deparenthesizeExpression(rhs);
+        if(expression == null){
             return false;
         }
-        if(!(rhs instanceof PsiBinaryExpression)){
+        if(!(expression instanceof PsiBinaryExpression)){
             return false;
         }
-        final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
+        final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) expression;
         final PsiExpression rhsRhs = binaryRhs.getROperand();
         final PsiExpression rhsLhs = binaryRhs.getLOperand();
         if(rhsRhs == null){

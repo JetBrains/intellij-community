@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,24 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOperatorAssignmentIntention
         extends MutablyNamedIntention {
 
     public String getTextForElement(PsiElement element) {
-        final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
-        final PsiBinaryExpression rhs =
-                (PsiBinaryExpression)exp.getRExpression();
-        assert rhs != null;
-        final PsiJavaToken sign = rhs.getOperationSign();
+        final PsiAssignmentExpression assignmentExpression =
+                (PsiAssignmentExpression)element;
+        final PsiExpression rhs = assignmentExpression.getRExpression();
+        final PsiBinaryExpression expression =
+                (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
+        assert expression != null;
+        final PsiJavaToken sign = expression.getOperationSign();
         final String operator = sign.getText();
         return IntentionPowerPackBundle.message(
                 "replace.assignment.with.operator.assignment.intention.name",
@@ -44,17 +47,18 @@ public class ReplaceWithOperatorAssignmentIntention
 
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
-        final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
+        final PsiAssignmentExpression expression =
+                (PsiAssignmentExpression)element;
         final PsiBinaryExpression rhs =
-                (PsiBinaryExpression)exp.getRExpression();
-        final PsiExpression lhs = exp.getLExpression();
+                (PsiBinaryExpression)expression.getRExpression();
+        final PsiExpression lhs = expression.getLExpression();
         assert rhs != null;
         final PsiJavaToken sign = rhs.getOperationSign();
         final String operand = sign.getText();
         final PsiExpression rhsrhs = rhs.getROperand();
         assert rhsrhs != null;
-        final String expString =
+        final String newExpression =
                 lhs.getText() + operand + '=' + rhsrhs.getText();
-        replaceExpression(expString, exp);
+        replaceExpression(newExpression, expression);
     }
 }
