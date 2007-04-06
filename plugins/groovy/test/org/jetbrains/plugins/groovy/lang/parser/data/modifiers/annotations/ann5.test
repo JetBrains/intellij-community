@@ -1,0 +1,51 @@
+@Annotation (a = @Ann1, b = true ? c : false) String a ()
+-----
+Groovy script
+  Method
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Qualified identifier
+          PsiElement(identifier)('Annotation')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Annotation arguments
+          Annotation member value pairs
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Annotation
+                PsiElement(@)('@')
+                Qualified identifier
+                  PsiElement(identifier)('Ann1')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Annotation member value pair
+              PsiElement(identifier)('b')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Conditional expression
+                Literal
+                  PsiElement(true)('true')
+                PsiWhiteSpace(' ')
+                PsiElement(?)('?')
+                PsiWhiteSpace(' ')
+                Reference expression
+                  PsiElement(identifier)('c')
+                PsiWhiteSpace(' ')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                Literal
+                  PsiElement(false)('false')
+        PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Class type
+      PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement())(')')

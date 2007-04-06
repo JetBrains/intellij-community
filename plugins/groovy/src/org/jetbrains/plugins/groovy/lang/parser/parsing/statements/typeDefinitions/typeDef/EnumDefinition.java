@@ -26,37 +26,24 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class EnumDefinition implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-//    PsiBuilder.Marker edMarker = builder.mark();
-
-    if (!ParserUtils.getToken(builder, kENUM))
-    {
-//      edMarker.rollbackTo();
+public class EnumDefinition implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, kENUM)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
-//      edMarker.rollbackTo();
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(ImplementsClause.parse(builder)))
-    {
-//      edMarker.rollbackTo();
+    if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(EnumBlock.parse(builder)))
-    {
-//      edMarker.rollbackTo();
+    if (WRONGWAY.equals(EnumBlock.parse(builder))) {
       return WRONGWAY;
     }
 
-//    edMarker.done(ENUM_DEFINITION);
     return ENUM_DEFINITION;
   }
 }

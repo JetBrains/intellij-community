@@ -42,11 +42,17 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
-  // Statements
+  // Blocks
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
   GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
   GroovyElementType BLOCK_BODY = new GroovyElementType("Closable block");
+
+  // Enum
+  GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
+  GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
+  GroovyElementType ENUM_CONSTANT_BODY = new GroovyElementType("Enumeration constant block");
+  GroovyElementType ENUM_CONSTANT_MEMBER = new GroovyElementType("Enumeration constant member");
 
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
@@ -129,13 +135,11 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
 
   //fields
-  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
-  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
-  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
-  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
+//  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
+//  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
+//  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
+//  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation");
-
-  GroovyElementType TYPE_DEFINITION_FIELD = new GroovyElementType("type definition field");
 
   //methods
   GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
@@ -159,7 +163,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
   GroovyElementType PARAMETER_MODIFIERS = new GroovyElementType("parameter modifiers");
 
-  //blocks
+  //bodies
   GroovyElementType CLASS_BLOCK = new GroovyElementType("class block");
   GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block");
   GroovyElementType ENUM_BLOCK = new GroovyElementType("enumeration block");

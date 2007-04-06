@@ -60,4 +60,22 @@ public class Annotation implements GroovyElementTypes {
     annMarker.done(ANNOTATION);
     return ANNOTATION;
   }
+
+  public static GroovyElementType parseAnnotationOptional(PsiBuilder builder) {
+    PsiBuilder.Marker annOptMarker = builder.mark();
+
+    boolean hasAnnotations = false;
+    while (!WRONGWAY.equals(Annotation.parse(builder))) {
+      ParserUtils.getToken(builder, mNLS);
+      hasAnnotations = true;
+    }
+
+    if (hasAnnotations) {
+      annOptMarker.done(MODIFIERS);
+      return MODIFIERS;
+    } else {
+      annOptMarker.rollbackTo();
+      return NONE;
+    }
+  }
 }

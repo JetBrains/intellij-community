@@ -1,0 +1,59 @@
+class a {
+  def s (String s) {
+    this (s, a = b)
+  }
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Class type
+              PsiElement(identifier)('String')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('s')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('    ')
+          PsiElement(this)('this')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Arguments
+            Reference expression
+              PsiElement(identifier)('s')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Assignment expression
+              Reference expression
+                PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('b')
+          PsiElement())(')')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

@@ -17,17 +17,64 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstants;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class EnumBlock implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class EnumBlock implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
-    return WRONGWAY;
+    PsiBuilder.Marker ebMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      ebMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    if (parseEnumConstantStart(builder)) {
+      EnumConstants.parse(builder);
+    } else {
+      ClassMember.parse(builder);
+    }
+
+    IElementType sep = Separators.parse(builder);
+
+    while (!WRONGWAY.equals(sep)) {
+      ClassMember.parse(builder);
+
+      sep = Separators.parse(builder);
+    }
+
+    ParserUtils.waitNextRCurly(builder);
+
+    if (!ParserUtils.getToken(builder, mRCURLY)) {
+      builder.error(GroovyBundle.message("rcurly.expected"));
+    }
+
+    ebMarker.done(ENUM_BLOCK);
+    return ENUM_BLOCK;
   }
+
+  private static boolean parseEnumConstantStart(PsiBuilder builder) {
+    PsiBuilder.Marker checkMarker = builder.mark();
+
+    boolean result = !WRONGWAY.equals(EnumConstant.parse(builder))
+        && (ParserUtils.getToken(builder, mCOMMA)
+        || ParserUtils.getToken(builder, mSEMI)
+        || ParserUtils.getToken(builder, mNLS)
+        || ParserUtils.getToken(builder, mRCURLY));
+
+    checkMarker.rollbackTo();
+    return result;
+  }
+
 }

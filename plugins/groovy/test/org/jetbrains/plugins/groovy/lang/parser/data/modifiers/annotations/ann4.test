@@ -1,0 +1,31 @@
+@Nullable (a = @b) class a {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Qualified identifier
+          PsiElement(identifier)('Nullable')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Annotation arguments
+          Annotation member value pairs
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Annotation
+                PsiElement(@)('@')
+                Qualified identifier
+                  PsiElement(identifier)('b')
+        PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(})('}')

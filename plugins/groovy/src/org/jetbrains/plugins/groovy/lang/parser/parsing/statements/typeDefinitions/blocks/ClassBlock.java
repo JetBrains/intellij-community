@@ -22,13 +22,14 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
 public class ClassBlock implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker cbMarker = builder.mark();
 
@@ -52,8 +53,6 @@ public class ClassBlock implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
-//      cbMarker.rollbackTo();
-//      return WRONGWAY;
     }
 
     cbMarker.done(CLASS_BLOCK);

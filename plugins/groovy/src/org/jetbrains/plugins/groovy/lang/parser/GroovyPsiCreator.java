@@ -55,12 +55,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relatio
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.GrAnnotationBodyImplType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.GrClassBodyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.GrEnumBodyImplType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.GrInterfaceBodyImplType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrAnnotationBodyImplType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrClassBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumBodyImplType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrInterfaceBodyImplType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.enumConstantBody.GrEnumConstantBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.enumConstantMember.GrEnumConstantMemberImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportReferenceImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
@@ -131,7 +134,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(IMPLEMENTS_CLAUSE)) return new GrImplementsClauseImpl(node);
     if (elem.equals(EXTENDS_CLAUSE)) return new GrExtendsClauseImpl(node);
 
-    //blocks
+    //bodies
     if (elem.equals(CLASS_BLOCK)) return new GrClassBodyImpl(node);
     if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBodyImplType(node);
     if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
@@ -139,13 +142,18 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
     if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(CONSTRUCTOR_BODY)) return new GrConstructorBodyImpl(node);
-//    if (elem.equals(METHOD_BODY)) return new GrMethodBodyImpl(node);
+
+    //enum
+    if (elem.equals(ENUM_CONSTANTS)) return new GrEnumConstantImpl(node);
+    if (elem.equals(ENUM_CONSTANT)) return new GrEnumConstantImpl(node);
+    if (elem.equals(ENUM_CONSTANT_BODY)) return new GrEnumConstantBodyImpl(node);
+    if (elem.equals(ENUM_CONSTANT_MEMBER)) return new GrEnumConstantMemberImpl(node);
 
     //members
-    if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);
-    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceMemberImpl(node);
-    if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
-    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
+//    if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);
+//    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceMemberImpl(node);
+//    if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
+//    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
 
     if (elem.equals(CONSTRUCTOR_DEFINITION)) return new GrConstructorDefinitionImpl(node);
     if (elem.equals(METHOD_DEFINITION)) return new GrMethodDefinitionImpl(node);

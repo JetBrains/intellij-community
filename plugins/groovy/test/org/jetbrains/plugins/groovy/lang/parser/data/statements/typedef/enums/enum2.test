@@ -1,0 +1,19 @@
+enum a implements b {
+}
+-----
+Groovy script
+  Enumeration definition
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Implements clause
+      PsiElement(implements)('implements')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Enumeration body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

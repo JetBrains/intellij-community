@@ -42,9 +42,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *      (	( nlsWarn openBlock ) | )
  */
 
-  
+
 public class VariableDefinitions implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
+    return parseDefinitions(builder, false, false);
+  }
+
+  public static GroovyElementType parseDefinitions(PsiBuilder builder, boolean isEnumConstantMember, boolean isAnnotationMember) {
     if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL))) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
@@ -53,11 +57,23 @@ public class VariableDefinitions implements GroovyElementTypes {
     PsiBuilder.Marker varMarker = builder.mark();
     boolean isStringName = ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL);
 
+    if (isAnnotationMember && isStringName) {
+      builder.error(GroovyBundle.message("string.name.unexpected"));
+    }
+
     //eaten one of these tokens
     boolean eaten = ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL) || ParserUtils.getToken(builder, mGSTRING_LITERAL);
 
     if (eaten && ParserUtils.getToken(builder, mLPAREN)) {
       GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
+
+      if (isEnumConstantMember && !isStringName) {
+        builder.error(GroovyBundle.message("string.name.unexpected"));
+      }
+
+      if (isAnnotationMember && !NONE.equals(paramDeclList)) {
+        builder.error(GroovyBundle.message("empty.parameter.list.expected"));
+      }
 
       boolean isEmptyParamDeclList = NONE.equals(paramDeclList);
 
@@ -87,6 +103,12 @@ public class VariableDefinitions implements GroovyElementTypes {
       }
 
       OpenOrClosableBlock.parse(builder);
+
+      if (isEnumConstantMember) {
+//        varMarker.done(ENUM_CONSTANT_MEMBER);
+        varMarker.drop();
+        return ENUM_CONSTANT_MEMBER;
+      }
 
       varMarker.drop();
       return METHOD_DEFINITION;
@@ -126,5 +148,13 @@ public class VariableDefinitions implements GroovyElementTypes {
 
   private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
+  }
+
+  public static GroovyElementType parseEnumConstantMember(PsiBuilder builder) {
+    return parseDefinitions(builder, true, false);
+  }
+
+  public static GroovyElementType parseAnnotationMameber(PsiBuilder builder) {
+    return parseDefinitions(builder, false, true);
   }
 }

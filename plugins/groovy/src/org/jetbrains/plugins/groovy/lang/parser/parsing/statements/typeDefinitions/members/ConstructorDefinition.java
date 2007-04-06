@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.Par
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
@@ -30,7 +31,7 @@ import com.intellij.lang.PsiBuilder;
  * @date: 23.03.2007
  */
 public class ConstructorDefinition implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, mIDENT)) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;

@@ -1,0 +1,34 @@
+@notnull (a = @notnull)
+def class b {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Qualified identifier
+          PsiElement(identifier)('notnull')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Annotation arguments
+          Annotation member value pairs
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Annotation
+                PsiElement(@)('@')
+                Qualified identifier
+                  PsiElement(identifier)('notnull')
+        PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(})('}')

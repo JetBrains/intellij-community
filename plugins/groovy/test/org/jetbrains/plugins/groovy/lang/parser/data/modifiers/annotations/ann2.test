@@ -1,0 +1,44 @@
+@Notnull (a = isNull() ? b : c) a () {}
+-----
+Groovy script
+  Method
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Qualified identifier
+          PsiElement(identifier)('Notnull')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Annotation arguments
+          Annotation member value pairs
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Conditional expression
+                Method call
+                  Reference expression
+                    PsiElement(identifier)('isNull')
+                  PsiElement(()('(')
+                  PsiElement())(')')
+                PsiWhiteSpace(' ')
+                PsiElement(?)('?')
+                PsiWhiteSpace(' ')
+                Reference expression
+                  PsiElement(identifier)('b')
+                PsiWhiteSpace(' ')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                Reference expression
+                  PsiElement(identifier)('c')
+        PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
