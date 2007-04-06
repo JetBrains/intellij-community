@@ -811,14 +811,21 @@ public final class GuiEditor extends JPanel implements DataProvider {
       refresh();
     }
     catch (final Exception exc) {
-      LOG.info(exc);
-      // setting fictive container
-      setRootContainer(new RadRootContainer(myModule, "0"));
-      myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
-      myInvalid = true;
-      myCardLayout.show(this, CARD_INVALID);
-      repaint();
+      showInvalidCard(exc);
     }
+    catch(final LinkageError exc) {
+      showInvalidCard(exc);
+    }
+  }
+
+  private void showInvalidCard(final Throwable exc) {
+    LOG.info(exc);
+    // setting fictive container
+    setRootContainer(new RadRootContainer(myModule, "0"));
+    myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
+    myInvalid = true;
+    myCardLayout.show(this, CARD_INVALID);
+    repaint();
   }
 
   public boolean isFormInvalid() {
