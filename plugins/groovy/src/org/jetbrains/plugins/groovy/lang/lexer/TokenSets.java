@@ -73,8 +73,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
           kINT,
           kFLOAT,
           kLONG,
-          kDOUBLE,
-          kANY
+          kDOUBLE
   );
 
   public static TokenSet KEYWORD_PROPERTY_NAMES = TokenSet.orSet(TokenSet.create(

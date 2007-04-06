@@ -170,7 +170,7 @@ public interface GroovyTokenTypes {
   IElementType kFLOAT = new GroovyElementType("float");
   IElementType kLONG = new GroovyElementType("long");
   IElementType kDOUBLE = new GroovyElementType("double");
-  IElementType kANY = new GroovyElementType("any");
+  IElementType kIDENT = new GroovyElementType("ident");
   IElementType kAS = new GroovyElementType("as");
   IElementType kPRIVATE = new GroovyElementType("private");
   IElementType kPUBLIC = new GroovyElementType("public");

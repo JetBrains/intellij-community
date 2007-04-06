@@ -186,8 +186,6 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_TRIPLE_IDENT
 %xstate IN_TRIPLE_DOT
 %xstate IN_TRIPLE_NLS
-%xstate GSTRING_STAR_SINGLE
-%xstate GSTRING_STAR_TRIPLE
 %xstate WRONG_STRING
 %state IN_INNER_BLOCK
 
@@ -211,18 +209,6 @@ mGSTRING_LITERAL = \"\"
 
   [^]                                       { yypushback(yytext().length());
                                               yybegin(afterComment);  }
-}
-
-// Star meeting in Gstring
-<GSTRING_STAR_SINGLE> {
-  "*"                                     { return mSTAR; }
-  [^"*"]                                  { yypushback(yytext().length());
-                                            yybegin(IN_SINGLE_GSTRING_DOLLAR);  }
-}
-<GSTRING_STAR_TRIPLE> {
-  "*"                                     { return mSTAR; }
-  [^"*"]                                  { yypushback(yytext().length());
-                                            yybegin(IN_TRIPLE_GSTRING_DOLLAR);  }
 }
 
 // Single double-quoted GString
@@ -256,7 +242,7 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_SINGLE_GSTRING> {
-  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(GSTRING_STAR_SINGLE);
+  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
                                              return mGSTRING_SINGLE_CONTENT; }
   {mGSTRING_SINGLE_CONTENT}"\""           {  gStringStack.pop();
                                              if (blockStack.isEmpty()){
@@ -326,7 +312,7 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_TRIPLE_GSTRING> {
-  {mGSTRING_TRIPLE_CONTENT}"$"            {  yybegin(GSTRING_STAR_TRIPLE);
+  {mGSTRING_TRIPLE_CONTENT}"$"            {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
                                              return mGSTRING_SINGLE_CONTENT; }
   {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  gStringStack.pop();
                                              if (blockStack.isEmpty()){
@@ -459,11 +445,11 @@ mGSTRING_LITERAL = \"\"
 {mSINGLE_QUOTED_STRING_BEGIN}                              {  return mWRONG_STRING_LITERAL; }
 
 // GStrings
-{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(GSTRING_STAR_SINGLE);
+{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
                                                               gStringStack.push(mLPAREN);
                                                               return mGSTRING_SINGLE_BEGIN; }
 
-{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(GSTRING_STAR_TRIPLE);
+{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
                                                               gStringStack.push(mLBRACK);
                                                               return mGSTRING_SINGLE_BEGIN; }
 
@@ -616,7 +602,7 @@ mGSTRING_LITERAL = \"\"
 "float"                                   {  return( kFLOAT );  }
 "long"                                    {  return( kLONG );  }
 "double"                                  {  return( kDOUBLE );  }
-"any"                                     {  return( kANY );  }
+"ident"                                     {  return( kIDENT );  }
 "as"                                      {  return( kAS );  }
 "private"                                 {  return( kPRIVATE );  }
 "public"                                  {  return( kPUBLIC );  }
