@@ -18,10 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
@@ -41,7 +38,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
   @NonNls private static final String TO_SCOPE_KEY = "to_scope";
   @NonNls private static final String IS_DENY_KEY = "is_deny";
-  private NamedScope myProjectScope;
   private NamedScope myProjectTestScope;
   private NamedScope myProjectProductionScope;
   private List<NamedScope> myPredifinedScopes;
@@ -137,6 +133,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       myPredifinedScopes.add(getProjectProductionScope());
       myPredifinedScopes.add(getProjectTestScope());
       myPredifinedScopes.add(getProblemsScope());
+      final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
+      if (scopesProviders != null) {
+        for (CustomScopesProvider scopesProvider : scopesProviders) {
+          myPredifinedScopes.addAll(scopesProvider.getCustomScopes());
+        }
+      }
     }
     return myPredifinedScopes;
   }
