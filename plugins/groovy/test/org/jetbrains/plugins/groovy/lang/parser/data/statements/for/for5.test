@@ -1,0 +1,38 @@
+for (def MyClass c  [1,2,3]) {do}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Class type
+          PsiElement(identifier)('MyClass')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('c')
+      PsiWhiteSpace('  ')
+      Generalized list
+        PsiElement([)('[')
+        Arguments
+          Literal
+            PsiElement(number)('1')
+          PsiElement(,)(',')
+          Literal
+            PsiElement(number)('2')
+          PsiElement(,)(',')
+          Literal
+            PsiElement(number)('3')
+        PsiElement(])(']')
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      Reference expression
+        PsiElement(identifier)('do')
+      PsiElement(})('}')

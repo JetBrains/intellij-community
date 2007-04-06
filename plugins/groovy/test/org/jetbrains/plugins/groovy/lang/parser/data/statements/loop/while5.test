@@ -1,0 +1,34 @@
+while (def A a = 2+3){do()} 
+-----
+Groovy script
+  WHILE statement
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Variable definitions
+      Modifiers
+        PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('A')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Additive expression
+        Literal
+          PsiElement(number)('2')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(number)('3')
+    PsiElement())(')')
+    Open block
+      PsiElement({)('{')
+      Method call
+        Reference expression
+          PsiElement(identifier)('do')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(})('}')
+  PsiWhiteSpace(' ')
