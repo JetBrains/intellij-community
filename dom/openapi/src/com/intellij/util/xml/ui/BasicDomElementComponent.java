@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
@@ -44,10 +45,14 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     if (domElement == null) return;
 
     DomElementAnnotationsManager.getInstance(domElement.getManager().getProject()).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
-      public void highlightingFinished(@NotNull DomFileElement element) {
-        if (getComponent().isShowing() && element.isValid()) {
-          updateHighlighting();
-        }
+      public void highlightingFinished(@NotNull final DomFileElement element) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (getComponent().isShowing() && element.isValid()) {
+              updateHighlighting();
+            }
+          }
+        });
       }
     }, this);
 
