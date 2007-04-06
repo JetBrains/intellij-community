@@ -11,7 +11,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,11 +55,15 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
-        if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
-          deselectNotify();
-        } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
-          selectNotify();
-        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
+              deselectNotify();
+            } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
+              selectNotify();
+            }
+          }
+        });
 
         final FileEditor oldEditor = event.getOldEditor();
         final FileEditor newEditor = event.getNewEditor();
