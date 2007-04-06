@@ -60,7 +60,7 @@ public abstract class SerializableInspection extends BaseInspection {
     }
 
     protected boolean isIgnoredSubclass(PsiClass aClass) {
-        if (!SerializationUtils.isDirectlySerializable(aClass)) {
+        if (SerializationUtils.isDirectlySerializable(aClass)) {
             return false;
         }
         for (String superClassName : superClassList) {
