@@ -467,6 +467,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
           }
         }
         myContentManager.removeContentManagerListener(this);
+        ProjectManagerEx.getInstanceEx().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
       }
