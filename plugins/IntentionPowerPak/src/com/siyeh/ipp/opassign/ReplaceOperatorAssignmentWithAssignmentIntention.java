@@ -66,13 +66,31 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
             final int precedence2 =
                     ParenthesesUtils.getPrecedenceForBinaryOperator(newOperand);
             if (precedence1 > precedence2) {
-                final String expString = lhsText + '=' + lhsText + newOperand
-                        + '(' + rhsText + ')';
+                final String expString;
+                if (needsCast(rhs)) {
+                    expString = lhsText + "=(int)" + lhsText + newOperand
+                                + '(' + rhsText + "))";
+                } else {
+                    expString = lhsText + '=' + lhsText + newOperand
+                                + '(' + rhsText + ')';
+                }
                 replaceExpression(expString, assignmentExpression);
                 return;
             }
         }
-        final String expString = lhsText + '=' + lhsText + newOperand + rhsText;
+        final String expString;
+        if (needsCast(rhs)) {
+            expString = lhsText + "=(int)(" + lhsText + newOperand + rhsText
+                        + ')';
+        } else {
+            expString = lhsText + '=' + lhsText + newOperand + rhsText;
+        }
         replaceExpression(expString, assignmentExpression);
+    }
+
+    private static boolean needsCast(PsiExpression expression) {
+        final PsiType type = expression.getType();
+        return PsiType.LONG.equals(type) || PsiType.DOUBLE.equals(type) ||
+               PsiType.FLOAT.equals(type);
     }
 }
