@@ -15,23 +15,24 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.RemoveAction;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-
-import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-
+import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.ig.ui.AddAction;
+import com.siyeh.ig.ui.IGTable;
+import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.RemoveAction;
 import org.jdom.Element;
 
-import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class SerializableInspection extends BaseInspection {
 
@@ -56,6 +57,18 @@ public abstract class SerializableInspection extends BaseInspection {
     public void writeSettings(Element node) throws WriteExternalException {
         superClassString = formatString(superClassList);
         super.writeSettings(node);
+    }
+
+    protected boolean isIgnoredSubclass(PsiClass aClass) {
+        if (!SerializationUtils.isDirectlySerializable(aClass)) {
+            return false;
+        }
+        for (String superClassName : superClassList) {
+            if (ClassUtils.isSubclass(aClass, superClassName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private class Form {

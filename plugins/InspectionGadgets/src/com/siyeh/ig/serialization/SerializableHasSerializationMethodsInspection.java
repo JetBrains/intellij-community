@@ -20,7 +20,6 @@ import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,10 +75,8 @@ public class SerializableHasSerializationMethodsInspection
             if (hasWriteObject && hasReadObject) {
                 return;
             }
-            for (String superClassName : superClassList) {
-                if (ClassUtils.isSubclass(aClass, superClassName)) {
-                    return;
-                }
+            if (isIgnoredSubclass(aClass)) {
+                return;
             }
             registerClassError(aClass, Boolean.valueOf(hasReadObject),
                     Boolean.valueOf(hasWriteObject));

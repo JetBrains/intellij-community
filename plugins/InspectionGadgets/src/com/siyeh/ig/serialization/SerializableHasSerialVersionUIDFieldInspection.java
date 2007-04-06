@@ -21,7 +21,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,10 +78,8 @@ public class SerializableHasSerialVersionUIDFieldInspection
             if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
-            for (String superClassName : superClassList) {
-                if (ClassUtils.isSubclass(aClass, superClassName)) {
-                    return;
-                }
+            if (isIgnoredSubclass(aClass)) {
+                return;
             }
             registerClassError(aClass);
         }

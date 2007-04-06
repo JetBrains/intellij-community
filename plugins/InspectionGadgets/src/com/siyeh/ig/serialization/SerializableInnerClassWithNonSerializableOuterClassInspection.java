@@ -63,10 +63,8 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
             if (SerializationUtils.isSerializable(containingClass)) {
                 return;
             }
-            for (String superClassName : superClassList) {
-                if (ClassUtils.isSubclass(aClass, superClassName)) {
-                    return;
-                }
+            if (isIgnoredSubclass(aClass)) {
+                return;
             }
             registerClassError(aClass);
         }
