@@ -1,6 +1,5 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
@@ -34,10 +33,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
   private DefaultsStateStorage myDefaultsStateStorage;
   private StateStorageManager myStateStorageManager;
-
-  @Nullable
-  protected abstract VirtualFile getComponentConfigurationFile(ComponentConfig componentInterface);
-  protected abstract String getRootNodeName();
 
 
   protected BaseFileConfigurableStoreImpl(final ComponentManagerImpl componentManager) {

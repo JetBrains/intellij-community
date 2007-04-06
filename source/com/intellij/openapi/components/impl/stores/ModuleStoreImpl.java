@@ -1,7 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
@@ -56,7 +55,9 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   protected XmlElementStorage getMainStorage() {
-    return (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    assert storage != null;
+    return storage;
   }
 
   @Override
@@ -78,7 +79,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
         final String optionValue = attr.getValue();
         myModule.setOption(optionName, optionValue);
 
-        if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
+        if (optionName.equals(RELATIVE_PATHS_OPTION) && Boolean.parseBoolean(optionValue)) {
           setSavePathsRelative(true);
         }
       }
@@ -107,32 +108,28 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   @Nullable
   public VirtualFile getModuleFile() {
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getVirtualFile();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    assert storage != null;
+    return storage.getVirtualFile();
   }
 
   @NotNull
   public String getModuleFilePath() {
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getFilePath();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    assert storage != null;
+    return storage.getFilePath();
   }
 
   @NotNull
   public String getModuleFileName() {
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getFileName();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    assert storage != null;
+    return storage.getFileName();
   }
 
   @Override
   protected boolean optimizeTestLoading() {
     return ((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed();
-  }
-
-  @Nullable
-  protected VirtualFile getComponentConfigurationFile(ComponentConfig componentInterface) {
-    return getModuleFile();
-  }
-
-  @NonNls
-  protected String getRootNodeName() {
-    return "module";
   }
 
   // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),

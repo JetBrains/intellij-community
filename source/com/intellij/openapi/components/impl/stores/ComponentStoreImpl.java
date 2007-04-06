@@ -50,7 +50,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
           initJdomExternalizable((JDOMExternalizable)component);
         }
         else if (component instanceof PersistentStateComponent) {
-          initPersistentComponent((PersistentStateComponent<Object>)component);
+          initPersistentComponent((PersistentStateComponent<?>)component);
         }
         else if (component instanceof SettingsSavingComponent) {
           SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
@@ -71,6 +71,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       }
 
       try {
+        //noinspection EmptyCatchBlock
         try {
           doSave();
         }
@@ -92,6 +93,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "WeakerAccess"})
   protected void afterSave() {
     ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
   }
@@ -117,19 +119,19 @@ abstract class ComponentStoreImpl implements IComponentStore {
         saveJdomExternalizable((JDOMExternalizable)component);
       }
       else if (component instanceof PersistentStateComponent) {
-        savePersistentComponent((PersistentStateComponent<Object>)component);
+        savePersistentComponent((PersistentStateComponent<?>)component);
       }
     }
   }
 
-  private void savePersistentComponent(final PersistentStateComponent<Object> persistentStateComponent) {
+  private <T> void savePersistentComponent(final PersistentStateComponent<T> persistentStateComponent) {
     try {
       Storage storageSpec = getComponentStorage(persistentStateComponent, StateStorageOperation.WRITE);
       StateStorage stateStorage = getStateStorage(storageSpec);
 
       if (stateStorage == null) return;
 
-      final Object state = persistentStateComponent.getState();
+      final T state = persistentStateComponent.getState();
 
       stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
@@ -143,6 +145,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     try {
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
+      assert stateStorage != null;
       stateStorage.setState(component, componentName, component);
     }
     catch (StateStorage.StateStorageException e) {
@@ -276,6 +279,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final Type type =
       ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
 
+    //noinspection unchecked
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
@@ -308,6 +312,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     assert storageChooserClass != StorageAnnotationsDefaultValues.NullStateStorageChooser.class : "State chooser not specified for: " + persistentStateComponent.getClass();
 
     try {
+      //noinspection unchecked
       final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
       return storageChooser.selectStorage(storages, persistentStateComponent, operation);
     }

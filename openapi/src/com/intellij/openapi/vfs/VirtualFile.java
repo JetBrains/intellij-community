@@ -235,6 +235,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return null;
   }
 
+  @Nullable
+  public VirtualFile findOrCreateChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
+    final VirtualFile child = findChild(name);
+    if (child != null) return child;
+    return createChildData(requestor, name);
+  }
+
   public Icon getIcon() {
     return getFileType().getIcon();
   }

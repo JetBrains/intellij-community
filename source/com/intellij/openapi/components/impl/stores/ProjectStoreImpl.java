@@ -45,15 +45,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
+  @NonNls private static final String DIRECTORY_STORE_FOLDER = ".idea";
 
   private ProjectImpl myProject;
-  private ProjectManagerImpl myProjectManager;
 
   @NonNls private static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
   @NonNls private static final String WS_FILE_MACRO = "WORKSPACE_FILE";
 
-  static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
-  static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
+  private static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
+  private static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
   private Set<String> myTrackingSet = new TreeSet<String>();
 
@@ -61,7 +61,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(componentManager);
     myProject = project;
-    myProjectManager = projectManager;
   }
 
   @Override
@@ -69,8 +68,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     super.beforeSave();
 
     //is needed for compatibility with demetra
+    writeWsVerrsion();
+  }
+
+  private void writeWsVerrsion() throws StateStorage.StateStorageException {
     final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
 
+    if (wsStorage == null) return;
     final Element rootElement = wsStorage.getRootElement();
     if (rootElement == null) return;
 
@@ -131,27 +135,25 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             VirtualFile projectDir = projectFile.getParent();
             assert projectDir != null;
 
-            final String oldProjectName = projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension();
-            VirtualFile oldProject = projectDir.findChild(oldProjectName);
-            if (oldProject == null) {
-              oldProject = projectDir.createChildData(this, oldProjectName);
-            }
-            VfsUtil.saveText(oldProject, VfsUtil.loadText(projectFile));
+            backup(projectDir, projectFile);
+
             VirtualFile workspaceFile = getWorkspaceFile();
             if (workspaceFile != null) {
-              final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
-                                              getWorkspaceFile().getExtension();
-              VirtualFile oldWorkspace = projectDir.findChild(oldWorkspaceName);
-              if (oldWorkspace == null) {
-                oldWorkspace = projectDir.createChildData(this, oldWorkspaceName);
-              }
-              VfsUtil.saveText(oldWorkspace, VfsUtil.loadText(workspaceFile));
+              backup(projectDir, workspaceFile);
             }
           }
           catch (IOException e) {
             LOG.error(e);
           }
         }
+
+        private void backup(final VirtualFile projectDir, final VirtualFile vile) throws IOException {
+          final String oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
+                                          vile.getExtension();
+          VirtualFile oldFile = projectDir.findOrCreateChildData(this, oldName);
+          VfsUtil.saveText(oldFile, VfsUtil.loadText(vile));
+        }
+
       });
     }
 
@@ -295,13 +297,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Nullable
   public VirtualFile getProjectFile() {
     if (myProject.isDefault()) return null;
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    assert storage != null;
+    return storage.getVirtualFile();
   }
 
   @Nullable
   public VirtualFile getWorkspaceFile() {
     if (myProject.isDefault()) return null;
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE)).getVirtualFile();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
+    assert storage != null;
+    return storage.getVirtualFile();
   }
 
   public void loadProjectFromTemplate(final ProjectImpl defaultProject) {
@@ -322,14 +328,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   public String getProjectFileName() {
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getFileName();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    assert storage != null;
+    return storage.getFileName();
   }
 
   @NotNull
   public String getProjectFilePath() {
     if (myProject.isDefault()) return "";
 
-    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    assert storage != null;
+    return storage.getFilePath();
   }
 
   public Set<String> getMacroTrackingSet() {
@@ -338,24 +348,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
 
   protected XmlElementStorage getMainStorage() {
-    return (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-  }
-
-  protected VirtualFile getComponentConfigurationFile(ComponentConfig componentConfig) {
-    if (myProject.isDefault()) {
-      return getProjectFile();
-    }
-
-    return isWorkspace(componentConfig.options) ? getWorkspaceFile() : getProjectFile();
+    final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+    assert storage != null;
+    return storage;
   }
 
   private static boolean isWorkspace(final Map options) {
     return options != null && Boolean.parseBoolean((String)options.get(OPTION_WORKSPACE));
-  }
-
-  @NonNls
-  protected String getRootNodeName() {
-    return "project";
   }
 
   public void initStore() {
