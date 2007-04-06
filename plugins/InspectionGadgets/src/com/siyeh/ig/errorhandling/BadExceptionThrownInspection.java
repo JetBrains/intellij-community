@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BadExceptionThrownInspection extends BaseInspection {
 
@@ -50,37 +53,17 @@ public class BadExceptionThrownInspection extends BaseInspection {
     final List<String> exceptionList = new ArrayList<String>(32);
 
     public BadExceptionThrownInspection(){
-        parseExceptionsString();
+        parseString(exceptionsString, exceptionList);
     }
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseExceptionsString();
-    }
-
-    private void parseExceptionsString(){
-        final String[] strings = exceptionsString.split(",");
-        exceptionList.clear();
-        exceptionList.addAll(Arrays.asList(strings));
+        parseString(exceptionsString, exceptionList);
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatExceptionsString();
+        exceptionsString = formatString(exceptionList);
         super.writeSettings(element);
-    }
-
-    private void formatExceptionsString(){
-        final StringBuilder buffer = new StringBuilder();
-        boolean first=true;
-        for(String exceptionName : exceptionList){
-            if(first){
-                first = false;
-            } else{
-                buffer.append(',');
-            }
-            buffer.append(exceptionName);
-        }
-        exceptionsString = buffer.toString();
     }
 
     @NotNull
@@ -132,7 +115,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
     }
 
     private class Form{
-        
+
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;

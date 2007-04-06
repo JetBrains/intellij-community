@@ -42,12 +42,12 @@ import java.util.*;
 public class QuestionableNameInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    @NonNls public String nameCheckString = "foo,bar,baz";
+    @NonNls public String nameString = "foo,bar,baz";
 
-    private List<String> nameList = new ArrayList<String>(32);
+    List<String> nameList = new ArrayList<String>(32);
 
     public QuestionableNameInspection(){
-        parseNameString();
+        parseString(nameString, nameList);
     }
 
     @NotNull
@@ -64,31 +64,12 @@ public class QuestionableNameInspection extends BaseInspection {
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseNameString();
-    }
-
-    private void parseNameString(){
-        final String[] strings = nameCheckString.split(",");
-        nameList.clear();
-        nameList.addAll(Arrays.asList(strings));
+        parseString(nameString, nameList);
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatNameString();
+        nameString = formatString(nameList);
         super.writeSettings(element);
-    }
-
-    private void formatNameString(){
-        final StringBuilder buffer = new StringBuilder();
-        final int size = nameList.size();
-        if (size > 0) {
-            buffer.append(nameList.get(0));
-            for (int i = 1; i < size; i++) {
-                buffer.append(',');
-                buffer.append(nameList.get(i));
-            }
-        }
-        nameCheckString = buffer.toString();
     }
 
     public JComponent createOptionsPanel(){

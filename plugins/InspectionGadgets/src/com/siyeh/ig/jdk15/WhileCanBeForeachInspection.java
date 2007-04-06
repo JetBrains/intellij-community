@@ -50,18 +50,14 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 "while.can.be.foreach.display.name");
     }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new WhileCanBeForeachVisitor();
-    }
-
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "while.can.be.foreach.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -366,6 +362,10 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 return body;
             }
         }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new WhileCanBeForeachVisitor();
     }
 
     private static class WhileCanBeForeachVisitor

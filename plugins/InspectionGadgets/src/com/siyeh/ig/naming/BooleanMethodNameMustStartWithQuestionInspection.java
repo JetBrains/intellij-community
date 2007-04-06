@@ -38,7 +38,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection
@@ -49,10 +48,10 @@ public class BooleanMethodNameMustStartWithQuestionInspection
             "is,can,has,should,could,will,shall,check,contains,equals,add," +
                     "put,remove,startsWith,endsWith";
 
-    private List<String> questionList = new ArrayList(32);
+    List<String> questionList = new ArrayList(32);
 
     public BooleanMethodNameMustStartWithQuestionInspection(){
-        parseQuestionString();
+        parseString(questionString, questionList);
     }
 
     @NotNull
@@ -69,31 +68,12 @@ public class BooleanMethodNameMustStartWithQuestionInspection
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseQuestionString();
-    }
-
-    private void parseQuestionString(){
-        final String[] strings = questionString.split(",");
-        questionList.clear();
-        questionList.addAll(Arrays.asList(strings));
+        parseString(questionString, questionList);
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatQuestionString();
+        questionString = formatString(questionList);
         super.writeSettings(element);
-    }
-
-    private void formatQuestionString(){
-        final StringBuilder buffer = new StringBuilder();
-        final int size = questionList.size();
-        if (size > 0){
-            buffer.append(questionList.get(0));
-            for (int i = 1; i < size; i++){
-                buffer.append(',');
-                buffer.append(questionList.get(i));
-            }
-        }
-        questionString = buffer.toString();
     }
 
     public JComponent createOptionsPanel(){

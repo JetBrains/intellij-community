@@ -36,6 +36,7 @@ import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class BaseInspection extends LocalInspectionTool {
@@ -134,9 +135,6 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return null;
     }
 
-    @NotNull
-    public abstract String getDisplayName();
-
     public boolean hasQuickFix() {
         final Class<? extends BaseInspection> aClass = getClass();
         final Method[] methods = aClass.getDeclaredMethods();
@@ -191,5 +189,40 @@ public abstract class BaseInspection extends LocalInspectionTool {
             LOG.error(e);
         }
         return null;
+    }
+
+    protected static void parseString(String string, List<String>... outs){
+        final String[] strings = string.split(",");
+        for (List<String> out : outs) {
+            out.clear();
+        }
+        for (int i = 0; i < strings.length; i += outs.length) {
+            for (int j = 0; j < outs.length; j++) {
+                final List<String> out = outs[j];
+                out.add(strings[i + j]);
+            }
+        }
+    }
+
+    protected static String formatString(List<String>... strings){
+        final StringBuilder buffer = new StringBuilder();
+        final int size = strings[0].size();
+        if (size > 0) {
+            formatString(strings, 0, buffer);
+            for (int i = 1; i < size; i++) {
+                buffer.append(',');
+                formatString(strings, i, buffer);
+            }
+        }
+        return buffer.toString();
+    }
+
+    private static void formatString(List<String>[] strings, int index,
+                                     StringBuilder out) {
+        out.append(strings[0].get(index));
+        for (int i = 1; i < strings.length; i++) {
+            out.append(',');
+            out.append(strings[i].get(index));
+        }
     }
 }

@@ -30,7 +30,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BadExceptionDeclaredInspection extends BaseInspection {
 
@@ -46,10 +49,10 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreTestCases = false;
-    private final List<String> exceptionList = new ArrayList<String>(32);
+    final List<String> exceptionList = new ArrayList<String>(32);
 
     public BadExceptionDeclaredInspection() {
-        parseExceptionsString();
+        parseString(exceptionsString, exceptionList);
     }
 
     @NotNull
@@ -71,31 +74,12 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseExceptionsString();
-    }
-
-    private void parseExceptionsString(){
-        final String[] strings = exceptionsString.split(",");
-        exceptionList.clear();
-        exceptionList.addAll(Arrays.asList(strings));
+        parseString(exceptionsString, exceptionList);
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatExceptionsString();
+        exceptionsString = formatString(exceptionList);
         super.writeSettings(element);
-    }
-
-    private void formatExceptionsString(){
-        final StringBuilder buffer = new StringBuilder();
-        final int size = exceptionList.size();
-        if (size > 0) {
-            buffer.append(exceptionList.get(0));
-            for (int i = 1; i < size; i++) {
-                buffer.append(',');
-                buffer.append(exceptionList.get(i));
-            }
-        }
-        exceptionsString = buffer.toString();
     }
 
     public JComponent createOptionsPanel(){
@@ -139,7 +123,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     }
 
     private class Form{
-        
+
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;

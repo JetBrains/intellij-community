@@ -57,7 +57,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     Map<String, Pattern> patternCache = null;
 
     public IgnoreResultOfCallInspection(){
-        parseCallCheckString();
+        parseString(callCheckString, classNames, methodNamePatterns);
     }
 
     @NotNull
@@ -82,42 +82,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseCallCheckString();
-    }
-
-    private void parseCallCheckString(){
-        final String[] strings = callCheckString.split(",");
-        methodNamePatterns.clear();
-        classNames.clear();
-        patternCache = null;
-        for (int i = 0; i < strings.length - 1; i += 2){
-            final String className = strings[i];
-            classNames.add(className);
-            final String methodNamePattern = strings[i + 1];
-            methodNamePatterns.add(methodNamePattern);
-        }
+        parseString(callCheckString, classNames, methodNamePatterns);
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatCallCheckString();
+        formatString(classNames, methodNamePatterns);
         super.writeSettings(element);
-    }
-
-    private void formatCallCheckString(){
-        final StringBuilder buffer = new StringBuilder();
-        final int size = methodNamePatterns.size();
-        if (size > 0) {
-            buffer.append(classNames.get(0));
-            buffer.append(',');
-            buffer.append(methodNamePatterns.get(0));
-            for (int i = 1; i < size; i++) {
-                buffer.append(',');
-                buffer.append(classNames.get(i));
-                buffer.append(',');
-                buffer.append(methodNamePatterns.get(i));
-            }
-        }
-        callCheckString = buffer.toString();
     }
 
     public JComponent createOptionsPanel(){
