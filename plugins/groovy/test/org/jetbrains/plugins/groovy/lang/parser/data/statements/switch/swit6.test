@@ -1,0 +1,46 @@
+switch (k){
+case 1: case 2: case 3: do1
+default: 
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('k')
+    PsiElement())(')')
+    Case block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('1')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('2')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('do1')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(default)('default')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

@@ -1,0 +1,32 @@
+switch (a){
+case 1: break
+default: 
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement())(')')
+    Case block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('1')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(default)('default')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

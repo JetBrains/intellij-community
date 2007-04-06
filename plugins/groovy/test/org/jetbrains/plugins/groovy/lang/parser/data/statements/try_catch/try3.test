@@ -27,9 +27,10 @@ Groovy script
   PsiElement(new line)('\n')
   PsiErrorElement:'finally' without 'try'
     PsiElement(finally)('finally')
-  PsiErrorElement:';' or new line expected
+  Open block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('doNothing')
+    Reference expression
+      PsiElement(identifier)('doNothing')
     PsiWhiteSpace(' ')
     PsiElement(})('}')

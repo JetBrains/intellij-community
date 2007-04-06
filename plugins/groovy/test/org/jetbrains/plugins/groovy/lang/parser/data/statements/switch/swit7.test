@@ -1,0 +1,21 @@
+case 1: 1+2
+true
+-----
+Groovy script
+  PsiErrorElement:'case' outside 'switch' block
+    Case label
+      PsiElement(case)('case')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('1')
+      PsiElement(:)(':')
+  PsiWhiteSpace(' ')
+  Additive expression
+    Literal
+      PsiElement(number)('1')
+    PsiElement(+)('+')
+    Literal
+      PsiElement(number)('2')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(true)('true')

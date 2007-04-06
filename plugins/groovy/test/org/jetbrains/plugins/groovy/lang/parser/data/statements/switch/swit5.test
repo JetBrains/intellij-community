@@ -1,0 +1,41 @@
+switch (k) {
+case 1 expr1
+default: println 'abc'
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('k')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Case block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('1')
+        PsiErrorElement:':' expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('expr1')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(default)('default')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Literal
+            PsiElement(string)(''abc'')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

@@ -1,0 +1,43 @@
+switch('bear'){
+case ~/..../ :
+case 2: assert true; break
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiElement(()('(')
+    Literal
+      PsiElement(string)(''bear'')
+    PsiElement())(')')
+    Case block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Unary expression
+          PsiElement(~)('~')
+          Literal
+            PsiElement(regexp)('/..../')
+        PsiWhiteSpace(' ')
+        PsiElement(:)(':')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('2')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      ASSERT statement
+        PsiElement(assert)('assert')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(true)('true')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

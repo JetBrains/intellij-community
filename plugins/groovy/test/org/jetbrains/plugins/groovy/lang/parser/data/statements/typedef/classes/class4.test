@@ -1,0 +1,38 @@
+class b {
+ a (def a, final b) {}
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace(' ')
+      Method
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('a')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Parameter modifiers
+              PsiElement(final)('final')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('b')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Method body
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

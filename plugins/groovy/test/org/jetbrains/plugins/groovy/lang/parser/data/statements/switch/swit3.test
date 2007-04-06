@@ -1,0 +1,57 @@
+switch(age){
+case 16..20 : insuranceRate = 0.05 ; break
+default: throw new IllegalArgumentException()
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('age')
+    PsiElement())(')')
+    Case block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Shift expression
+          Literal
+            PsiElement(number)('16')
+          PsiElement(..)('..')
+          Literal
+            PsiElement(number)('20')
+        PsiWhiteSpace(' ')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Assignment expression
+        Reference expression
+          PsiElement(identifier)('insuranceRate')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('0.05')
+      PsiWhiteSpace(' ')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n')
+      Case label
+        PsiElement(default)('default')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      THROW statement
+        PsiElement(throw)('throw')
+        PsiWhiteSpace(' ')
+        NEW expression
+          PsiElement(new)('new')
+          PsiWhiteSpace(' ')
+          Class type
+            PsiElement(identifier)('IllegalArgumentException')
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

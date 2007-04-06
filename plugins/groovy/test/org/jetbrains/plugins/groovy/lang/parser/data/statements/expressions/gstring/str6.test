@@ -1,4 +1,4 @@
-"My $aaa your $*bbb string"
+"My $aaa your $bbb string"
 -----
 Groovy script
   Compound Gstring
@@ -6,7 +6,6 @@ Groovy script
     Reference expression
       PsiElement(identifier)('aaa')
     PsiElement(Gstring content)(' your $')
-    PsiElement(*)('*')
     Reference expression
       PsiElement(identifier)('bbb')
     PsiElement(Gstring end)(' string"')
