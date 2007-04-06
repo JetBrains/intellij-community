@@ -19,10 +19,10 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -33,8 +33,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
-import com.intellij.util.graph.Graph;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +45,11 @@ public class ModuleUtil {
   private ModuleUtil() {}
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return module.getName();
+    return new ReadAction<String>(){
+      protected void run(final Result<String> result) throws Throwable {
+        result.setResult(module.getName());
       }
-    });
+    }.execute().getResultObject();
   }
 
   public static boolean isModuleDisposed(PsiElement element) {
