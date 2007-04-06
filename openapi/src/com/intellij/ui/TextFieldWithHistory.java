@@ -201,7 +201,7 @@ public class TextFieldWithHistory extends JPanel {
     getTextEditor().selectAll();
   }
 
-  protected TextFieldWithProcessing getTextEditor() {
+  public JTextField getTextEditor() {
     return myTextField;
   }
 

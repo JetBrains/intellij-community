@@ -503,7 +503,7 @@ public class SearchUtil {
     }
 
     public void process(final KeyEvent e) {
-      getTextEditor().processKeyEvent(e);
+      ((TextFieldWithProcessing)getTextEditor()).processKeyEvent(e);
     }
   }
 }

@@ -1,23 +1,28 @@
 package com.intellij.execution.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.ui.TextFieldWithHistory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 /**
  * User: anna
  * Date: Jun 21, 2005
  */
 public class AlternativeJREPanel extends JPanel{
-  private TextFieldWithBrowseButton myPathField;
+  private ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private JCheckBox myCbEnabled;
 
   public AlternativeJREPanel() {
@@ -27,11 +32,21 @@ public class AlternativeJREPanel extends JPanel{
                                                          GridBagConstraints.HORIZONTAL, new Insets(2, -2, 2, 2), 0, 0);
     add(myCbEnabled, gc);
 
-    myPathField = new TextFieldWithBrowseButton();
-    myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"), ExecutionBundle.message("run.configuration.select.jre.dir.label"), null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    final TextFieldWithHistory fieldWithHistory = new TextFieldWithHistory();
+    fieldWithHistory.setBorder(BorderFactory.createEtchedBorder());
+    final ArrayList<String> foundJdks = new ArrayList<String>();
+    final ProjectJdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (ProjectJdk jdk : allJdks) {
+      foundJdks.add(jdk.getHomePath());
+    }
+    fieldWithHistory.setHistory(foundJdks);
+    myPathField = new ComponentWithBrowseButton<TextFieldWithHistory>(fieldWithHistory, null);
+    myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
+                                        ExecutionBundle.message("run.configuration.select.jre.dir.label"),
+                                        null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR, TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     gc.insets.left = 20;
     add(myPathField, gc);
-    InsertPathAction.addTo(myPathField.getTextField());
+    InsertPathAction.addTo(fieldWithHistory.getTextEditor());
 
     gc.weighty = 1;
     add(Box.createVerticalBox(), gc);
@@ -50,17 +65,18 @@ public class AlternativeJREPanel extends JPanel{
   }
 
   public String getPath() {
-    return FileUtil.toSystemIndependentName(myPathField.getText().trim());
+    return FileUtil.toSystemIndependentName(myPathField.getChildComponent().getText().trim());
   }
 
-  public void setPath(final String path) {
-    myPathField.setText(FileUtil.toSystemDependentName(path == null ? "" : path));
+  private void setPath(final String path) {
+    myPathField.getChildComponent().setText(FileUtil.toSystemDependentName(path == null ? "" : path));
   }
 
   public boolean isPathEnabled() {
     return myCbEnabled.isSelected();
   }
-  public void setPathEnabled(boolean b) {
+
+  private void setPathEnabled(boolean b) {
     myCbEnabled.setSelected(b);
     enabledChanged();
   }
@@ -69,6 +85,5 @@ public class AlternativeJREPanel extends JPanel{
     setPathEnabled(isEnabled);
     setPath(path);
   }
-
 }
 
