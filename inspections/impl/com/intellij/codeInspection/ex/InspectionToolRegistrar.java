@@ -13,9 +13,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ResourceUtil;
-import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -153,7 +155,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
     if (!myToolsAreInitialized.getAndSet(true)) {
       final Application app = ApplicationManager.getApplication();
-      if (app.isUnitTestMode()) return;
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
       app.executeOnPooledThread(new Runnable(){
         public void run() {
@@ -179,8 +181,9 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
+    if (ApplicationManager.getApplication().isDisposed()) return;
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    if (optionsRegistrar == null) return; //application disposed during startup
+    LOG.assertTrue(optionsRegistrar != null);
     final Set<String> words = optionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
       optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), ErrorOptionsConfigurable.ID, ErrorOptionsConfigurable.DISPLAY_NAME);
