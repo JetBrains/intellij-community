@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
@@ -333,7 +334,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 public void processUnversionedFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     if (isIgnoredFile(file)) {
                       ignoredHolder.addFile(file);
@@ -358,7 +359,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 public void processModifiedWithoutCheckout(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     modifiedWithoutEditingHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -368,7 +369,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 public void processIgnoredFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     ignoredHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -378,7 +379,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     switchedHolder.addFile(file, branch, recursive);
                   }
