@@ -80,7 +80,7 @@ public class CleanupAction extends BasicAction {
 
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
     throws VcsException {
-    SVNWCClient wcClient = new SVNWCClient(null, null);
+    SVNWCClient wcClient = activeVcs.createWCClient();
     try {
       wcClient.doCleanup(new File(file.getPath()));
     }

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
@@ -80,7 +81,7 @@ class SvnContentRevision implements ContentRevision {
       return null;
     }
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    SVNWCClient wcClient = new SVNWCClient(null, null);
+    SVNWCClient wcClient = SVNClientManager.newInstance().getWCClient();
     wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, myUseBaseRevision ? SVNRevision.BASE : myRevision, true, buffer);
     buffer.close();
     return buffer.toByteArray();

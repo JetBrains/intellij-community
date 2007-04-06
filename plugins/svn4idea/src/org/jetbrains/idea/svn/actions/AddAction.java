@@ -67,7 +67,7 @@ public class AddAction extends BasicAction {
       if (cachedStatus != null) {
         status = cachedStatus.getStatus();
       } else {
-        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        SVNStatusClient stClient = vcs.createStatusClient();
         status = stClient.doStatus(new File(file.getPath()), false);
         vcs.cacheStatus(file, status);
       }

@@ -81,14 +81,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final List<VcsException> exception = new ArrayList<VcsException>();
     final Collection<File> committables = getCommitables(paths);
 
-    final SVNCommitClient committer;
-    try {
-      committer = mySvnVcs.createCommitClient();
-    }
-    catch (SVNException e) {
-      exception.add(new VcsException(e));
-      return exception;
-    }
+    final SVNCommitClient committer = mySvnVcs.createCommitClient();
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     final Collection<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
@@ -215,13 +208,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private Collection<File> getCommitables(List<File> paths) {
     Collection<File> result = new HashSet<File>();
-    SVNStatusClient statusClient = null;
-    try {
-      statusClient = mySvnVcs.createStatusClient();
-    }
-    catch (SVNException e) {
-      //
-    }
+    SVNStatusClient statusClient = mySvnVcs.createStatusClient();
     for (File path : paths) {
       File file = path.getAbsoluteFile();
       result.add(file);
@@ -333,14 +320,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private List<VcsException> processMissingFiles(final List<FilePath> filePaths, final boolean delete) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient;
-    try {
-      wcClient = mySvnVcs.createWCClient();
-    }
-    catch (SVNException e) {
-      exceptions.add(new VcsException(e));
-      return exceptions;
-    }
+    final SVNWCClient wcClient = mySvnVcs.createWCClient();
 
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
     for (File file : files) {
@@ -368,14 +348,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient;
-    try {
-      wcClient = mySvnVcs.createWCClient();
-    }
-    catch (SVNException e) {
-      exceptions.add(new VcsException(e));
-      return exceptions;
-    }
+    final SVNWCClient wcClient = mySvnVcs.createWCClient();
 
     for (VirtualFile file : files) {
       try {

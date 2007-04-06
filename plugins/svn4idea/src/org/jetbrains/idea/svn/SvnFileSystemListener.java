@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -110,7 +111,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return null;
     }
 
-    SVNCopyClient client = new SVNCopyClient(null, vcs.getSvnOptions());
+    SVNCopyClient client = vcs.createCopyClient();
     try {
       client.doCopy(srcFile, SVNRevision.WORKING, destFile, false, false);
     }
@@ -144,9 +145,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return false;
   }
 
-  private static boolean move(SvnVcs vcs, final File src, final File dst) {
-    ISVNOptions options = vcs != null ? vcs.getSvnOptions() : null;
-    SVNMoveClient mover = new SVNMoveClient(null, options);
+  private static boolean move(@NotNull SvnVcs vcs, final File src, final File dst) {
+    SVNMoveClient mover = vcs.createMoveClient();
     long srcTime = src.lastModified();
     try {
       if (isUndo(vcs)) {
@@ -263,8 +263,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (!SVNWCUtil.isVersionedDirectory(ioDir)) {
       return false;
     }
-    ISVNOptions options = vcs.getSvnOptions();
-    SVNWCClient wcClient = new SVNWCClient(null, options);
+    SVNWCClient wcClient = vcs.createWCClient();
     File targetFile = new File(ioDir, name);
     SVNStatus status = getFileStatus(targetFile);
 
@@ -347,7 +346,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
         if (filesToProcess != null) {
           List<VcsException> exceptions = new ArrayList<VcsException>();
-          SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
+          SVNWCClient wcClient = vcs.createWCClient();
           for(VirtualFile file: filesToProcess) {
             File ioFile = new File(file.getPath());
             try {
@@ -390,7 +389,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
         if (filesToProcess != null) {
           List<VcsException> exceptions = new ArrayList<VcsException>();
-          SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
+          SVNWCClient wcClient = vcs.createWCClient();
           for(FilePath file: filesToProcess) {
             File ioFile = new File(file.getPath());
             try {
@@ -441,7 +440,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   @Nullable
   private static SVNStatus getFileStatus(File file) {
-    SVNStatusClient stClient = new SVNStatusClient(null, null);
+    SVNStatusClient stClient = SVNClientManager.newInstance().getStatusClient();
     SVNStatus status;
     try {
       status = stClient.doStatus(file, false);

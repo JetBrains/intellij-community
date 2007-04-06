@@ -180,7 +180,7 @@ public class SvnChangeProvider implements ChangeProvider {
             processStatusFirstPass(path, status, context, parentStatus);
             if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
               // process children of this file with another client.
-              SVNStatusClient client = new SVNStatusClient(null, null);
+              SVNStatusClient client = myVcs.createStatusClient();
               if (recursively && path.isDirectory()) {
                 VirtualFile[] children = path.getVirtualFile().getChildren();
                 for (VirtualFile aChildren : children) {

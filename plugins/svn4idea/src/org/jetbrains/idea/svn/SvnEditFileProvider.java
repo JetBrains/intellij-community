@@ -43,13 +43,7 @@ public class SvnEditFileProvider implements EditFileProvider {
 
   public void editFiles(VirtualFile[] files) throws VcsException {
     File[] ioFiles = new File[files.length];
-    SVNWCClient client;
-    try {
-      client = myVCS.createWCClient();
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    SVNWCClient client = myVCS.createWCClient();
     for (int i = 0; i < files.length; i++) {
       ioFiles[i] = new File(files[i].getPath());
       try {

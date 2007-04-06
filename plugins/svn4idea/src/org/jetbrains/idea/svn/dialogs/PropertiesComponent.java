@@ -3,11 +3,10 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -235,7 +234,7 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-      SVNWCClient wcClient = new SVNWCClient(null, null);
+      SVNWCClient wcClient = myVcs.createWCClient();
       SVNPropertyData propValue = null;
       try {
         propValue = wcClient.doGetProperty(myFile, SVNProperty.KEYWORDS, SVNRevision.UNDEFINED, SVNRevision.WORKING, false);
@@ -300,7 +299,7 @@ public class PropertiesComponent extends JPanel {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = new SVNWCClient(null, null);
+        SVNWCClient wcClient = myVcs.createWCClient();
         try {
           wcClient.doSetProperty(myFile, name, value, false, recursive, null);
         }
@@ -332,7 +331,7 @@ public class PropertiesComponent extends JPanel {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = new SVNWCClient(null, null);
+        SVNWCClient wcClient = myVcs.createWCClient();
         try {
           wcClient.doSetProperty(myFile, name, value, false, recursive, null);
         }

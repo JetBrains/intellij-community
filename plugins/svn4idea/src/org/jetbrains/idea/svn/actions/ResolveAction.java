@@ -63,7 +63,7 @@ public class ResolveAction extends BasicAction {
       if (statusValue != null) {
         status = statusValue.getStatus();
       } else {
-        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        SVNStatusClient stClient = vcs.createStatusClient();
         status = stClient.doStatus(new File(file.getPath()), false);
       }
       if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
@@ -72,7 +72,7 @@ public class ResolveAction extends BasicAction {
         if (infoValue != null) {
           info = infoValue.getInfo();
         } else {
-          SVNWCClient wcClient = new SVNWCClient(null, null);
+          SVNWCClient wcClient = vcs.createWCClient();
           info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
           vcs.cacheInfo(file, info);
         }

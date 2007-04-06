@@ -1,3 +1,11 @@
+= version 1.1.2
+
++ SVNKit command line client: interactive credentials prompt added.
++ SVNKit command line client: jsvnversion added.
++ JavaHL: SVNAdmin implemented using SVNKit API.
++ System-wide configuration files support (e.g. /etc/subversion on Linux)
++ bugfixes.
+
 = version 1.1.1
 
 + added support for svnlook features.

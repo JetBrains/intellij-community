@@ -36,18 +36,18 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -61,7 +61,7 @@ public class MarkResolvedAction extends BasicAction {
     return false;
   }
 
-  protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(Project project, @NotNull SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) {
       SVNInfo info = null;
       try {
@@ -69,7 +69,7 @@ public class MarkResolvedAction extends BasicAction {
         if (infoValue != null) {
           return infoValue.getInfo() != null;
         } else {
-          SVNWCClient wcClient = new SVNWCClient(null, null);
+          SVNWCClient wcClient = vcs.createWCClient();
           info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
         }
       }
@@ -85,7 +85,7 @@ public class MarkResolvedAction extends BasicAction {
       if (statusValue != null) {
         status = statusValue.getStatus();
       } else {
-        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        SVNStatusClient stClient = vcs.createStatusClient();
         status = stClient.doStatus(new File(file.getPath()), false);
         vcs.cacheStatus(file, status);
       }
@@ -111,12 +111,12 @@ public class MarkResolvedAction extends BasicAction {
     throws VcsException {
     SvnVcs vcs = SvnVcs.getInstance(project);
     ApplicationManager.getApplication().saveAll();
-    Collection paths = collectResolvablePaths(files);
+    Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {
       Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"), SvnBundle.message("message.title.no.conflicts.found"));
       return;
     }
-    String[] pathsArray = (String[])paths.toArray(new String[paths.size()]);
+    String[] pathsArray = paths.toArray(new String[paths.size()]);
     SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
                                                      SvnBundle.message("dialog.title.mark.resolved"),
                                                      SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
@@ -128,8 +128,7 @@ public class MarkResolvedAction extends BasicAction {
     pathsArray = dialog.getSelectedPaths();
     try {
       SVNWCClient wcClient = vcs.createWCClient();
-      for (int i = 0; i < pathsArray.length; i++) {
-        String path = pathsArray[i];
+      for (String path : pathsArray) {
         File ioFile = new File(path);
         wcClient.doResolve(ioFile, false);
       }
@@ -138,11 +137,11 @@ public class MarkResolvedAction extends BasicAction {
       throw new VcsException(e);
     }
     finally {
-      for(int i = 0; i < files.length; i++) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(files[i]);
-        files[i].refresh(true, false);
-        if (files[i].getParent() != null) {
-          files[i].getParent().refresh(true, false);
+      for (VirtualFile file : files) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+        file.refresh(true, false);
+        if (file.getParent() != null) {
+          file.getParent().refresh(true, false);
         }
       }
 
@@ -153,11 +152,10 @@ public class MarkResolvedAction extends BasicAction {
     return true;
   }
 
-  private static Collection collectResolvablePaths(VirtualFile[] files) {
-    final Collection target = new TreeSet();
-    SVNStatusClient stClient = new SVNStatusClient(null, null);
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+  private static Collection<String> collectResolvablePaths(final SvnVcs vcs, VirtualFile[] files) {
+    final Collection<String> target = new TreeSet<String>();
+    SVNStatusClient stClient = vcs.createStatusClient();
+    for (VirtualFile file : files) {
       try {
         stClient.doStatus(new File(file.getPath()), true, false, false, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) {
