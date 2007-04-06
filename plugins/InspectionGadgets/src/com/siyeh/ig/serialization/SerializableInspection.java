@@ -40,6 +40,7 @@ public abstract class SerializableInspection extends BaseInspection {
     protected List<String> superClassList = new ArrayList();
 
     protected SerializableInspection() {
+        parseString(superClassString, superClassList);
     }
 
     public JComponent createOptionsPanel() {
