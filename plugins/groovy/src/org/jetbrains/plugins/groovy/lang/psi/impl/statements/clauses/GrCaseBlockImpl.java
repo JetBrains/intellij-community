@@ -13,19 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
-import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.ForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.ASTNode;
 
 /**
- * @autor: Ilya Sergey
- *
+ * @author Ilya.Sergey
  */
-public class TypeParameters implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
-//    PsiBuilder.Marker tpMarker = builder.mark();
-      return WRONGWAY;    
+public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock {
+
+  public GrCaseBlockImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String toString() {
+    return "Case block";
   }
 }

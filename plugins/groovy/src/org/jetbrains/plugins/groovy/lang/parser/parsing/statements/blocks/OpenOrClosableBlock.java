@@ -130,7 +130,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    *
    * @param builder
    */
-  private static void cleanAfterError(PsiBuilder builder) {
+  public static void cleanAfterError(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
     while (!builder.eof() &&

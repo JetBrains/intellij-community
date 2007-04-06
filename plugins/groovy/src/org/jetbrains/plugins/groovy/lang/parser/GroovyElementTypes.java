@@ -174,7 +174,11 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
   GroovyElementType USE_STATEMENT = new GroovyElementType("with statement");
+
+  // switch dtatement
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
+  GroovyElementType CASE_BLOCK = new GroovyElementType("case block");
+  GroovyElementType CASE_LABEL = new GroovyElementType("case label");
 
   //for clauses
   GroovyElementType FOR_IN_CLAUSE = new GroovyElementType("IN clause");

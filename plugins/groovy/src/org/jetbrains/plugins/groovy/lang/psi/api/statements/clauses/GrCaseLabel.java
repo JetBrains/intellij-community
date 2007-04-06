@@ -13,19 +13,12 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
-import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @autor: Ilya Sergey
- *
+ * @author Ilya.Sergey
  */
-public class TypeParameters implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
-//    PsiBuilder.Marker tpMarker = builder.mark();
-      return WRONGWAY;    
-  }
+public interface GrCaseLabel extends GroovyPsiElement {
 }

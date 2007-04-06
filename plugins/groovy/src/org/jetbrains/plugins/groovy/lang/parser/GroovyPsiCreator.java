@@ -32,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParamete
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForTradClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
@@ -120,6 +122,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStmtImpl(node);
     if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchroStmtImpl(node);
     if (elem.equals(USE_STATEMENT)) return new GrUseStatementImpl(node);
+    if (elem.equals(SWITCH_STATEMENT)) return new GrSwitchStatementImpl(node);
+    if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
+    if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
     if (elem.equals(VARIABLE_DEFINITION)) return new GrVariableDefinitionsImpl(node);
 
