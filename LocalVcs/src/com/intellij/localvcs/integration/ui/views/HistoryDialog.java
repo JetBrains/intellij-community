@@ -96,7 +96,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private JComponent createLabelsTable(ActionGroup actions) {
-    JTable t = new Table(new LabelsTableModel());
+    JTable t = new Table();
+    t.setModel(new LabelsTableModel());
+
     addPopupMenuToComponent(t, actions);
     addSelectionListener(t);
 
@@ -105,6 +107,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     t.getColumnModel().getColumn(0).setResizable(false);
     t.getColumnModel().getColumn(1).setResizable(false);
+
 
     return ScrollPaneFactory.createScrollPane(t);
   }

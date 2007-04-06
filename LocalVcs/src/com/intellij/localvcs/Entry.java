@@ -127,7 +127,7 @@ public abstract class Entry {
   // todo generalize findEntry(*) methods
   public Entry findEntry(IdPath p) {
     if (!p.rootEquals(myId)) return null;
-    if (p.getName() == myId) return this;
+    if (p.getId() == myId) return this;
     return searchInChildren(p.withoutRoot());
   }
 

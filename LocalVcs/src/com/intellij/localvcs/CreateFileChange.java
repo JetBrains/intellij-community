@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public class CreateFileChange extends Change {
+public class CreateFileChange extends StructuralChange {
   private int myId;
   private Content myContent;
   private long myTimestamp;
@@ -53,6 +53,6 @@ public class CreateFileChange extends Change {
 
   @Override
   public boolean isCreationalFor(Entry e) {
-    return e.getId() == myAffectedIdPath.getName();
+    return e.getId() == myAffectedIdPath.getId();
   }
 }

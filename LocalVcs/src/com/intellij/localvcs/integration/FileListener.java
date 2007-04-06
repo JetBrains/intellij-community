@@ -177,7 +177,6 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
       myNewName = newName;
     }
 
-    @NotNull
     @Override
     public String getName() {
       return myNewName;

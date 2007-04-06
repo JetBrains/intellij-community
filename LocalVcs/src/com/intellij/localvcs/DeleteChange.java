@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteChange extends Change {
+public class DeleteChange extends StructuralChange {
   private Entry myAffectedEntry;
 
   public DeleteChange(String path) {

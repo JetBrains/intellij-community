@@ -40,7 +40,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   @Test
   public void testStorageReading() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(60, new Task() {
+    assertExecutionTime(50, new Task() {
       public void execute() throws Exception {
         readContentsRandomly(cc);
       }
@@ -50,7 +50,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   @Test
   public void testStorageDeletion() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(10, new Task() {
+    assertExecutionTime(15, new Task() {
       public void execute() throws Exception {
         deleteHalfOfContentsRandomly(cc);
       }

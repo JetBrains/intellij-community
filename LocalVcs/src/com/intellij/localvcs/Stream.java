@@ -76,17 +76,23 @@ public class Stream {
   public Change readChange() throws IOException {
     switch (myIs.readInt()) {
       case 0:
-        return new CreateFileChange(this);
+        return new ChangeSet(this);
       case 1:
-        return new CreateDirectoryChange(this);
+        return new CreateFileChange(this);
       case 2:
-        return new ChangeFileContentChange(this);
+        return new CreateDirectoryChange(this);
       case 3:
-        return new RenameChange(this);
+        return new ChangeFileContentChange(this);
       case 4:
-        return new MoveChange(this);
+        return new RenameChange(this);
       case 5:
+        return new MoveChange(this);
+      case 6:
         return new DeleteChange(this);
+      case 7:
+        return new PutLabelChange(this);
+      case 8:
+        return new PutEntryLabelChange(this);
     }
     throw new IOException();
   }
@@ -95,23 +101,18 @@ public class Stream {
     int id = -1;
 
     Class c = change.getClass();
-    if (c.equals(CreateFileChange.class)) id = 0;
-    if (c.equals(CreateDirectoryChange.class)) id = 1;
-    if (c.equals(ChangeFileContentChange.class)) id = 2;
-    if (c.equals(RenameChange.class)) id = 3;
-    if (c.equals(MoveChange.class)) id = 4;
-    if (c.equals(DeleteChange.class)) id = 5;
+    if (c.equals(ChangeSet.class)) id = 0;
+    if (c.equals(CreateFileChange.class)) id = 1;
+    if (c.equals(CreateDirectoryChange.class)) id = 2;
+    if (c.equals(ChangeFileContentChange.class)) id = 3;
+    if (c.equals(RenameChange.class)) id = 4;
+    if (c.equals(MoveChange.class)) id = 5;
+    if (c.equals(DeleteChange.class)) id = 6;
+    if (c.equals(PutLabelChange.class)) id = 7;
+    if (c.equals(PutEntryLabelChange.class)) id = 8;
 
     myOs.writeInt(id);
     change.write(this);
-  }
-
-  public ChangeSet readChangeSet() throws IOException {
-    return new ChangeSet(this);
-  }
-
-  public void writeChangeSet(ChangeSet c) throws IOException {
-    c.write(this);
   }
 
   public ChangeList readChangeList() throws IOException {
@@ -127,7 +128,6 @@ public class Stream {
   }
 
   public void writeString(String s) throws IOException {
-    // todo writeUTF is very time consuming
     myOs.writeUTF(s);
   }
 

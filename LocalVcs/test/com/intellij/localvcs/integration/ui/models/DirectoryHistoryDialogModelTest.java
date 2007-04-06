@@ -3,12 +3,12 @@ package com.intellij.localvcs.integration.ui.models;
 import static com.intellij.localvcs.Difference.Kind.CREATED;
 import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.TestVirtualFile;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-public class DirectoryHistoryDialogModelTest {
+public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
   private LocalVcs vcs = new TestLocalVcs();
   private DirectoryHistoryDialogModel m;
 

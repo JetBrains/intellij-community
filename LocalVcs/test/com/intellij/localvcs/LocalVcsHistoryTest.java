@@ -7,7 +7,7 @@ import java.util.List;
 
 public class LocalVcsHistoryTest extends LocalVcsTestCase {
   // todo difference on root does not work!!!
-  TestLocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testTreatingSeveralChangesDuringChangeSetAsOne() {
@@ -56,12 +56,12 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
-    assertEquals(1, vcs.getChangeList().getChangeSets().size());
+    assertEquals(1, vcs.getChangeList().getChanges().size());
 
     vcs.beginChangeSet();
     vcs.endChangeSet(null);
 
-    assertEquals(1, vcs.getChangeList().getChangeSets().size());
+    assertEquals(1, vcs.getChangeList().getChanges().size());
   }
 
   @Test
@@ -185,10 +185,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.delete("file");
     vcs.createFile("file", b("new"), -1);
 
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(1, labels.size());
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(1, ll.size());
 
-    Entry e = labels.get(0).getEntry();
+    Entry e = ll.get(0).getEntry();
     assertEquals("file", e.getName());
     assertEquals(c("new"), e.getContent());
   }
@@ -199,21 +199,21 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.rename("file1", "file2");
     vcs.createFile("file1", b("content2"), -1);
 
-    List<Label> labels = vcs.getLabelsFor("file1");
-    assertEquals(1, labels.size());
+    List<Label> ll = vcs.getLabelsFor("file1");
+    assertEquals(1, ll.size());
 
-    Entry e = labels.get(0).getEntry();
+    Entry e = ll.get(0).getEntry();
     assertEquals("file1", e.getName());
     assertEquals(c("content2"), e.getContent());
 
-    labels = vcs.getLabelsFor("file2");
-    assertEquals(2, labels.size());
+    ll = vcs.getLabelsFor("file2");
+    assertEquals(2, ll.size());
 
-    e = labels.get(0).getEntry();
+    e = ll.get(0).getEntry();
     assertEquals("file2", e.getName());
     assertEquals(c("content1"), e.getContent());
 
-    e = labels.get(1).getEntry();
+    e = ll.get(1).getEntry();
     assertEquals("file1", e.getName());
     assertEquals(c("content1"), e.getContent());
   }
@@ -223,14 +223,14 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createFile("file", b("content"), 123L);
     vcs.changeFileContent("file", b("new content"), 456L);
 
-    List<Label> labels = vcs.getLabelsFor("file");
+    List<Label> ll = vcs.getLabelsFor("file");
 
-    Entry e = labels.get(0).getEntry();
+    Entry e = ll.get(0).getEntry();
     assertEquals("file", e.getName());
     assertEquals(c("new content"), e.getContent());
     assertEquals(456L, e.getTimestamp());
 
-    e = labels.get(1).getEntry();
+    e = ll.get(1).getEntry();
     assertEquals("file", e.getName());
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
@@ -243,12 +243,12 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.rename("dir", "newDir");
     vcs.changeFileContent("newDir/file", null, -1);
 
-    List<Label> labels = vcs.getLabelsFor("newDir/file");
-    assertEquals(3, labels.size());
+    List<Label> ll = vcs.getLabelsFor("newDir/file");
+    assertEquals(3, ll.size());
 
-    assertEquals("newDir/file", labels.get(0).getEntry().getPath());
-    assertEquals("newDir/file", labels.get(1).getEntry().getPath());
-    assertEquals("dir/file", labels.get(2).getEntry().getPath());
+    assertEquals("newDir/file", ll.get(0).getEntry().getPath());
+    assertEquals("newDir/file", ll.get(1).getEntry().getPath());
+    assertEquals("dir/file", ll.get(2).getEntry().getPath());
   }
 
   @Test
@@ -256,9 +256,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createFile("file", b("content"), -1);
     vcs.changeFileContent("file", b("new content"), -1);
 
-    List<Label> labels = vcs.getLabelsFor("file");
+    List<Label> ll = vcs.getLabelsFor("file");
 
-    assertEquals(c("content"), labels.get(1).getEntry().getContent());
+    assertEquals(c("content"), ll.get(1).getEntry().getContent());
     assertEquals(c("new content"), vcs.getEntry("file").getContent());
   }
 
@@ -267,10 +267,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createFile("file", b("content"), -1);
     vcs.changeFileContent("file", b("new content"), -1);
 
-    List<Label> labels = vcs.getLabelsFor("file");
+    List<Label> ll = vcs.getLabelsFor("file");
 
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
+    Label recent = ll.get(0);
+    Label prev = ll.get(1);
 
     Difference d = prev.getDifferenceWith(recent);
     assertEquals(MODIFIED, d.getKind());
@@ -282,10 +282,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   public void testNoDifferenceBetweenLabels() {
     vcs.createFile("file", b("content"), -1);
 
-    List<Label> labels = vcs.getLabelsFor("file");
+    List<Label> ll = vcs.getLabelsFor("file");
 
-    Label one = labels.get(0);
-    Label two = labels.get(0);
+    Label one = ll.get(0);
+    Label two = ll.get(0);
 
     Difference d = one.getDifferenceWith(two);
     assertFalse(d.hasDifference());
@@ -296,11 +296,11 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.createFile("dir/file", null, -1);
 
-    List<Label> labels = vcs.getLabelsFor("dir");
-    assertEquals(2, labels.size());
+    List<Label> ll = vcs.getLabelsFor("dir");
+    assertEquals(2, ll.size());
 
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
+    Label recent = ll.get(0);
+    Label prev = ll.get(1);
 
     Difference d = prev.getDifferenceWith(recent);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -318,9 +318,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     vcs.createFile("dir/file", null, -1);
     vcs.delete("dir/file");
 
-    List<Label> labels = vcs.getLabelsFor("dir");
+    List<Label> ll = vcs.getLabelsFor("dir");
 
-    Difference d = labels.get(0).getDifferenceWith(labels.get(2));
+    Difference d = ll.get(0).getDifferenceWith(ll.get(2));
     assertFalse(d.hasDifference());
   }
 
@@ -335,9 +335,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
     vcs.createFile("dir1/dir3/file", null, -1);
 
-    List<Label> labels = vcs.getLabelsFor("dir1");
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
+    List<Label> ll = vcs.getLabelsFor("dir1");
+    Label recent = ll.get(0);
+    Label prev = ll.get(1);
 
     Difference d = prev.getDifferenceWith(recent);
 

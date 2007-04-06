@@ -135,7 +135,7 @@ public class LocalVcs implements ILocalVcs {
     if (myPendingChanges.isEmpty()) return;
 
     ChangeSet cs = new ChangeSet(getCurrentTimestamp(), label, myPendingChanges);
-    myChangeList.addChangeSet(cs);
+    myChangeList.addChange(cs);
     clearPendingChanges();
   }
 
@@ -158,28 +158,28 @@ public class LocalVcs implements ILocalVcs {
   public List<Label> getLabelsFor(String path) {
     Entry e = getEntry(path);
 
-    List<ChangeSet> sets = myChangeList.getChangeSetsFor(myRoot, e.getPath());
+    List<Change> cc = myChangeList.getChangesFor(myRoot, e.getPath());
 
     // todo this hack with names and timestamps is here
     // todo until I separate revisions from changesets.
 
-    if (sets.isEmpty()) {
+    if (cc.isEmpty()) {
       CurrentLabel l = new CurrentLabel(e, null, getCurrentTimestamp());
       return Collections.<Label>singletonList(l);
     }
 
     List<Label> result = new ArrayList<Label>();
 
-    ChangeSet next = sets.get(0);
+    Change next = cc.get(0);
     result.add(new CurrentLabel(e, next.getName(), next.getTimestamp()));
 
-    for (int i = 0; i < sets.size() - 1; i++) {
-      ChangeSet cs = sets.get(i);
-      next = sets.get(i + 1);
-      result.add(new Label(e, myRoot, myChangeList, cs, next.getName(), next.getTimestamp()));
+    for (int i = 0; i < cc.size() - 1; i++) {
+      Change c = cc.get(i);
+      next = cc.get(i + 1);
+      result.add(new Label(e, myRoot, myChangeList, c, next.getName(), next.getTimestamp()));
     }
 
-    ChangeSet last = sets.get(sets.size() - 1);
+    Change last = cc.get(cc.size() - 1);
     if (!last.isCreationalFor(e)) {
       result.add(new Label(e, myRoot, myChangeList, last, null, last.getTimestamp()));
     }

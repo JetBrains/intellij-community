@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class ChangeFileContentChange extends Change {
+public class ChangeFileContentChange extends StructuralChange {
   private Content myNewContent;
   private Content myOldContent;
   private long myNewTimestamp;

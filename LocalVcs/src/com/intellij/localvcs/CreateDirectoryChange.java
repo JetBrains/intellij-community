@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public class CreateDirectoryChange extends Change {
+public class CreateDirectoryChange extends StructuralChange {
   private int myId;
 
   public CreateDirectoryChange(int id, String path) {
@@ -37,6 +37,6 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public boolean isCreationalFor(Entry e) {
-    return e.getId() == myAffectedIdPath.getName();
+    return e.getId() == myAffectedIdPath.getId();
   }
 }

@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChangeList {
-  private List<ChangeSet> myChangeSets = new ArrayList<ChangeSet>();
+  // todo hold changes in reverse order
+  private List<Change> myChanges = new ArrayList<Change>();
 
   public ChangeList() {
   }
@@ -14,64 +15,64 @@ public class ChangeList {
   public ChangeList(Stream s) throws IOException {
     int count = s.readInteger();
     while (count-- > 0) {
-      myChangeSets.add(s.readChangeSet());
+      myChanges.add(s.readChange());
     }
   }
 
   public void write(Stream s) throws IOException {
-    s.writeInteger(myChangeSets.size());
-    for (ChangeSet c : myChangeSets) {
-      s.writeChangeSet(c);
+    s.writeInteger(myChanges.size());
+    for (Change c : myChanges) {
+      s.writeChange(c);
     }
   }
 
   // todo test support
-  public List<ChangeSet> getChangeSets() {
-    List<ChangeSet> result = new ArrayList<ChangeSet>(myChangeSets);
+  public List<Change> getChanges() {
+    List<Change> result = new ArrayList<Change>(myChanges);
     Collections.reverse(result);
     return result;
   }
 
-  public List<ChangeSet> getChangeSetsFor(RootEntry r, String path) {
+  public List<Change> getChangesFor(RootEntry r, String path) {
     RootEntry rootCopy = r.copy();
     Entry e = rootCopy.getEntry(path);
 
-    List<ChangeSet> result = new ArrayList<ChangeSet>();
-    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
-      ChangeSet cs = myChangeSets.get(i);
-      if (cs.hasChangesFor(e)) result.add(cs);
-      if (cs.isCreationalFor(e)) break;
-      cs.revertOn(rootCopy);
+    List<Change> result = new ArrayList<Change>();
+    for (int i = myChanges.size() - 1; i >= 0; i--) {
+      Change c = myChanges.get(i);
+      if (c.affects(e)) result.add(c);
+      if (c.isCreationalFor(e)) break;
+      c.revertOn(rootCopy);
     }
 
     return result;
   }
 
-  public void addChangeSet(ChangeSet cs) {
-    myChangeSets.add(cs);
+  public void addChange(Change c) {
+    myChanges.add(c);
   }
 
-  public void revertUpToChangeSet(RootEntry r, ChangeSet cs) {
-    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
-      ChangeSet changeSet = myChangeSets.get(i);
-      changeSet.revertOn(r);
-      if (changeSet == cs) return;
+  public void revertUpTo(RootEntry r, Change target) {
+    for (int i = myChanges.size() - 1; i >= 0; i--) {
+      Change c = myChanges.get(i);
+      c.revertOn(r);
+      if (c == target) return;
     }
   }
 
   public List<Content> purgeUpTo(long timestamp) {
-    List<ChangeSet> newChangeSets = new ArrayList<ChangeSet>();
+    List<Change> newChanges = new ArrayList<Change>();
     List<Content> purgedContents = new ArrayList<Content>();
 
-    for (ChangeSet cs : myChangeSets) {
-      if (cs.getTimestamp() < timestamp) {
-        purgedContents.addAll(cs.getContentsToPurge());
+    for (Change c : myChanges) {
+      if (c.getTimestamp() < timestamp) {
+        purgedContents.addAll(c.getContentsToPurge());
       }
       else {
-        newChangeSets.add(cs);
+        newChanges.add(c);
       }
     }
-    myChangeSets = newChangeSets;
+    myChanges = newChanges;
 
     return purgedContents;
   }

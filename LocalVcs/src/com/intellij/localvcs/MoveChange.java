@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public class MoveChange extends Change {
+public class MoveChange extends StructuralChange {
   private String myNewParentPath;
   private IdPath mySecondAffectedIdPath;
 

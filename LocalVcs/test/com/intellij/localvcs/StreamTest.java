@@ -310,16 +310,53 @@ public class StreamTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testPutLabelChange() throws IOException {
+    RootEntry r = new RootEntry();
+    r.createDirectory(1, "dir");
+
+    Change c = new PutLabelChange(123, "name");
+    c.applyTo(r);
+
+    os.writeChange(c);
+    Change read = is.readChange();
+
+    assertEquals(PutLabelChange.class, read.getClass());
+    assertEquals(123, read.getTimestamp());
+    assertEquals("name", read.getName());
+    assertTrue(read.affects(r.getEntry("dir")));
+  }
+
+  @Test
+  public void testPutEntryLabelChange() throws IOException {
+    RootEntry r = new RootEntry();
+    r.createDirectory(1, "dir");
+
+    Change c = new PutEntryLabelChange(123, "name", "dir");
+    c.applyTo(r);
+
+    os.writeChange(c);
+    Change read = is.readChange();
+
+    assertEquals(PutEntryLabelChange.class, read.getClass());
+    assertEquals(123, read.getTimestamp());
+    assertEquals("name", read.getName());
+    assertTrue(read.affects(r.getEntry("dir")));
+  }
+
+  @Test
   public void testChangeSet() throws IOException {
     ChangeSet cs = cs(123, "label", new CreateFileChange(1, "file", new UnavailableContent(), -1));
 
     cs.applyTo(new RootEntry());
 
-    os.writeChangeSet(cs);
-    ChangeSet result = is.readChangeSet();
+    os.writeChange(cs);
+    Change read = is.readChange();
+    assertTrue(read.getClass().equals(ChangeSet.class));
 
-    assertEquals("label", result.getName());
-    assertEquals(123L, result.getTimestamp());
+    ChangeSet result = (ChangeSet)read;
+
+    assertEquals("label", read.getName());
+    assertEquals(123L, read.getTimestamp());
     assertEquals(1, result.getChanges().size());
     assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
   }
@@ -328,8 +365,8 @@ public class StreamTest extends LocalVcsTestCase {
   public void testChangeSetWithoutLabel() throws IOException {
     ChangeSet cs = cs((String)null);
 
-    os.writeChangeSet(cs);
-    ChangeSet result = is.readChangeSet();
+    os.writeChange(cs);
+    Change result = is.readChange();
 
     assertNull(result.getName());
   }
@@ -341,7 +378,7 @@ public class StreamTest extends LocalVcsTestCase {
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();
 
-    assertTrue(result.getChangeSets().isEmpty());
+    assertTrue(result.getChanges().isEmpty());
   }
 
   @Test
@@ -349,12 +386,12 @@ public class StreamTest extends LocalVcsTestCase {
     ChangeList c = new ChangeList();
     ChangeSet cs = cs(new CreateFileChange(1, "file", new UnavailableContent(), -1));
     cs.applyTo(new RootEntry());
-    c.addChangeSet(cs);
+    c.addChange(cs);
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();
 
-    assertEquals(1, result.getChangeSets().size());
-    assertEquals(1, result.getChangeSets().get(0).getChanges().size());
+    assertEquals(1, result.getChanges().size());
+    assertEquals(1, ((ChangeSet)result.getChanges().get(0)).getChanges().size());
   }
 }

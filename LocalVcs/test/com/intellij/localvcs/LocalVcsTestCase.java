@@ -60,6 +60,10 @@ public abstract class LocalVcsTestCase extends Assert {
     }
   }
 
+  protected void assertEquals(long expected, long actual) {
+    assertEquals((Object)expected, (Object)actual);
+  }
+
   private static String notEqualsMessage(Object expected, Object actual) {
     return "elements are not equal:\n" + "\texpected: " + expected + "\n" + "\tactual: " + actual;
   }

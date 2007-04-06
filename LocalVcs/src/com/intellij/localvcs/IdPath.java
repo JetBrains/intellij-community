@@ -25,7 +25,7 @@ public class IdPath {
     }
   }
 
-  public int getName() {
+  public int getId() {
     return myParts[myParts.length - 1];
   }
 
@@ -49,6 +49,14 @@ public class IdPath {
       if (part == id) return true;
     }
     return false;
+  }
+
+  public boolean startsWith(IdPath p) {
+    if (myParts.length < p.myParts.length) return false;
+    for (int i = 0; i < p.myParts.length; i++) {
+      if (myParts[i] != p.myParts[i]) return false;
+    }
+    return true;
   }
 
   public boolean rootEquals(int id) {

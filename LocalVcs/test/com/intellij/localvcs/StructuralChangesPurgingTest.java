@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class ChangesPurgingTest extends LocalVcsTestCase {
+public class StructuralChangesPurgingTest extends LocalVcsTestCase {
   private RootEntry root = new RootEntry();
 
   @Test

@@ -29,14 +29,14 @@ public class StorageTest extends TempDirTestCase {
 
     assertTrue(m.myRoot.getChildren().isEmpty());
     assertEquals(0, m.myEntryCounter);
-    assertTrue(m.myChangeList.getChangeSets().isEmpty());
+    assertTrue(m.myChangeList.getChanges().isEmpty());
   }
 
   @Test
   public void testSaving() {
     ChangeSet cs = cs(new CreateDirectoryChange(1, "dir"));
     cs.applyTo(m.myRoot);
-    m.myChangeList.addChangeSet(cs);
+    m.myChangeList.addChange(cs);
     m.myEntryCounter = 11;
 
     s.store(m);
@@ -46,7 +46,7 @@ public class StorageTest extends TempDirTestCase {
 
     assertEquals(1, m.myRoot.getChildren().size());
     assertEquals(11, m.myEntryCounter);
-    assertEquals(1, m.myChangeList.getChangeSets().size());
+    assertEquals(1, m.myChangeList.getChanges().size());
   }
 
   @Test

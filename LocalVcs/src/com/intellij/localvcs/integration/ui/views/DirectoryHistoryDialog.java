@@ -101,9 +101,15 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       super("Revert selection", "/actions/rollback.png");
     }
 
+    @Override
     protected void performOn(DirectoryDifferenceNode n) {
       if (!myModel.revert(n.getModel())) return;
       close(0);
+    }
+
+    @Override
+    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+      return myModel.canRevert();
     }
   }
 
@@ -115,12 +121,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       myIcon = IconLoader.getIcon(iconName);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       performOn(getSelectedNode());
     }
 
     protected abstract void performOn(DirectoryDifferenceNode n);
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setIcon(myIcon);

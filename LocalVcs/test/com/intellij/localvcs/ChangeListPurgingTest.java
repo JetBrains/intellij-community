@@ -13,37 +13,37 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
     ChangeSet cs2 = cs(2, new CreateFileChange(2, "f2", null, -1));
     ChangeSet cs3 = cs(3, new CreateFileChange(3, "f3", null, -1));
     ChangeSet cs4 = cs(4, new CreateFileChange(4, "f4", null, -1));
-    cl.addChangeSet(cs1);
-    cl.addChangeSet(cs2);
-    cl.addChangeSet(cs3);
-    cl.addChangeSet(cs4);
+    cl.addChange(cs1);
+    cl.addChange(cs2);
+    cl.addChange(cs3);
+    cl.addChange(cs4);
 
     cl.purgeUpTo(3);
 
-    assertEquals(2, cl.getChangeSets().size());
-    assertSame(cs4, cl.getChangeSets().get(0));
-    assertSame(cs3, cl.getChangeSets().get(1));
+    assertEquals(2, cl.getChanges().size());
+    assertSame(cs4, cl.getChanges().get(0));
+    assertSame(cs3, cl.getChanges().get(1));
   }
 
   @Test
   public void testPurgeUpToNearestUpperChangeSet() {
     ChangeSet cs1 = cs(1, new CreateFileChange(1, "f1", null, -1));
     ChangeSet cs2 = cs(5, new CreateFileChange(2, "f2", null, -1));
-    cl.addChangeSet(cs1);
-    cl.addChangeSet(cs2);
+    cl.addChange(cs1);
+    cl.addChange(cs2);
 
     cl.purgeUpTo(3);
 
-    assertEquals(1, cl.getChangeSets().size());
-    assertSame(cs2, cl.getChangeSets().get(0));
+    assertEquals(1, cl.getChanges().size());
+    assertSame(cs2, cl.getChanges().get(0));
   }
 
   @Test
   public void testPurgingToEmpty() {
-    cl.addChangeSet(cs(1, new CreateFileChange(1, "f", null, -1)));
+    cl.addChange(cs(1, new CreateFileChange(1, "f", null, -1)));
 
     cl.purgeUpTo(10);
-    assertTrue(cl.getChangeSets().isEmpty());
+    assertTrue(cl.getChanges().isEmpty());
   }
 
   @Test
@@ -62,9 +62,9 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
     cs2.applyTo(r);
     cs3.applyTo(r);
 
-    cl.addChangeSet(cs1);
-    cl.addChangeSet(cs2);
-    cl.addChangeSet(cs3);
+    cl.addChange(cs1);
+    cl.addChange(cs2);
+    cl.addChange(cs3);
 
     List<Content> contents = cl.purgeUpTo(10);
 

@@ -4,15 +4,15 @@ public class Label {
   protected Entry myEntry;
   protected RootEntry myRoot;
   protected ChangeList myChangeList;
-  protected ChangeSet myChangeSet;
+  protected Change myChange;
   private String myName;
   private long myTimestamp;
 
-  public Label(Entry e, RootEntry r, ChangeList cl, ChangeSet cs, String name, long timestamp) {
+  public Label(Entry e, RootEntry r, ChangeList cl, Change c, String name, long timestamp) {
     myEntry = e;
     myRoot = r;
     myChangeList = cl;
-    myChangeSet = cs;
+    myChange = c;
     myName = name;
     myTimestamp = timestamp;
   }
@@ -27,7 +27,7 @@ public class Label {
 
   public Entry getEntry() {
     RootEntry copy = myRoot.copy();
-    myChangeList.revertUpToChangeSet(copy, myChangeSet);
+    myChangeList.revertUpTo(copy, myChange);
     return copy.getEntry(myEntry.getId());
   }
 

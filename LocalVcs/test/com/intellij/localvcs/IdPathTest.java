@@ -17,8 +17,8 @@ public class IdPathTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testName() {
-    assertEquals(3, new IdPath(1, 2, 3).getName());
+  public void testId() {
+    assertEquals(3, new IdPath(1, 2, 3).getId());
   }
 
   @Test
@@ -36,6 +36,15 @@ public class IdPathTest extends LocalVcsTestCase {
     assertTrue(p.contains(2));
 
     assertFalse(p.contains(3));
+  }
+
+  @Test
+  public void testStartsWith() {
+    assertTrue(new IdPath(1, 2, 3).startsWith(new IdPath(1, 2)));
+    assertTrue(new IdPath(1, 2, 3).startsWith(new IdPath(1, 2, 3)));
+
+    assertFalse(new IdPath(1, 2, 3).startsWith(new IdPath(1, 3)));
+    assertFalse(new IdPath(1, 2, 3).startsWith(new IdPath(1, 2, 3, 4)));
   }
 
   @Test

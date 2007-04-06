@@ -2,10 +2,9 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class ChangeSet {
+public class ChangeSet extends Change {
   private String myName;
   private long myTimestamp;
   private List<Change> myChanges;
@@ -22,15 +21,9 @@ public class ChangeSet {
     myTimestamp = s.readLong();
 
     int count = s.readInteger();
-    if (count > 0) {
-      myChanges = new ArrayList<Change>(count);
-      while (count-- > 0) {
-        myChanges.add(s.readChange());
-      }
-    }
-    else {
-      // todo get rid of this. normally change set can't be empty
-      myChanges = Collections.emptyList();
+    myChanges = new ArrayList<Change>(count);
+    while (count-- > 0) {
+      myChanges.add(s.readChange());
     }
   }
 
@@ -44,10 +37,12 @@ public class ChangeSet {
     }
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public long getTimestamp() {
     return myTimestamp;
   }
@@ -57,26 +52,14 @@ public class ChangeSet {
     return myChanges;
   }
 
-  public boolean hasChangesFor(Entry e) {
-    for (Change c : myChanges) {
-      if (c.affects(e)) return true;
-    }
-    return false;
-  }
-
-  public boolean isCreationalFor(Entry e) {
-    for (Change c : myChanges) {
-      if (c.isCreationalFor(e)) return true;
-    }
-    return false;
-  }
-
+  @Override
   public void applyTo(RootEntry r) {
     for (Change c : myChanges) {
       c.applyTo(r);
     }
   }
 
+  @Override
   public void revertOn(RootEntry e) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       Change c = myChanges.get(i);
@@ -84,6 +67,23 @@ public class ChangeSet {
     }
   }
 
+  @Override
+  public boolean affects(Entry e) {
+    for (Change c : myChanges) {
+      if (c.affects(e)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isCreationalFor(Entry e) {
+    for (Change c : myChanges) {
+      if (c.isCreationalFor(e)) return true;
+    }
+    return false;
+  }
+
+  @Override
   public List<Content> getContentsToPurge() {
     List<Content> result = new ArrayList<Content>();
     for (Change c : myChanges) {

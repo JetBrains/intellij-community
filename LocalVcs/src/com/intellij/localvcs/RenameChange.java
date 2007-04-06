@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public class RenameChange extends Change {
+public class RenameChange extends StructuralChange {
   private String myOldName;
   private String myNewName;
 
