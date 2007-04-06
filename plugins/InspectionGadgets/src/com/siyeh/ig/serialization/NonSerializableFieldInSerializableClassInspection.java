@@ -19,20 +19,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.JComponent;
 
 public class NonSerializableFieldInSerializableClassInspection
-        extends BaseInspection {
-
-    /** @noinspection PublicField*/
-    public boolean ignoreSerializableDueToInheritance = true;
+        extends SerializableInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -43,13 +36,6 @@ public class NonSerializableFieldInSerializableClassInspection
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.serializable.field.in.serializable.class.problem.descriptor");
-    }
-
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "non.serializable.field.in.serializable.ignore.option"), this,
-                "ignoreSerializableDueToInheritance");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -65,11 +51,7 @@ public class NonSerializableFieldInSerializableClassInspection
                 return;
             }
             final PsiClass aClass = field.getContainingClass();
-            if (ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
-                    return;
-                }
-            } else if (!SerializationUtils.isSerializable(aClass)) {
+            if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
             if (SerializationUtils.isProbablySerializable(field.getType())) {
@@ -79,6 +61,11 @@ public class NonSerializableFieldInSerializableClassInspection
                     SerializationUtils.hasWriteObject(aClass);
             if (hasWriteObject) {
                 return;
+            }
+            for (String superClassName : superClassList) {
+                if (ClassUtils.isSubclass(aClass, superClassName)) {
+                    return;
+                }
             }
             registerFieldError(field);
         }

@@ -19,19 +19,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-
 public class SerializableHasSerializationMethodsInspection
-        extends BaseInspection {
-
-    /** @noinspection PublicField */
-    public boolean m_ignoreSerializableDueToInheritance = true;
+        extends SerializableInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -55,18 +49,11 @@ public class SerializableHasSerializationMethodsInspection
         }
     }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "serializable.has.serialization.methods.ignore.option"),
-                this, "m_ignoreSerializableDueToInheritance");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesMethodsVisitor();
+        return new SerializableHasSerializationMethodsVisitor();
     }
 
-    private class SerializableDefinesMethodsVisitor
+    private class SerializableHasSerializationMethodsVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
@@ -79,11 +66,7 @@ public class SerializableHasSerializationMethodsInspection
                     aClass instanceof PsiEnumConstantInitializer) {
                 return;
             }
-            if (m_ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
-                    return;
-                }
-            } else if (!SerializationUtils.isSerializable(aClass)) {
+            if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
             final boolean hasReadObject =
@@ -92,6 +75,11 @@ public class SerializableHasSerializationMethodsInspection
                     SerializationUtils.hasWriteObject(aClass);
             if (hasWriteObject && hasReadObject) {
                 return;
+            }
+            for (String superClassName : superClassList) {
+                if (ClassUtils.isSubclass(aClass, superClassName)) {
+                    return;
+                }
             }
             registerClassError(aClass, Boolean.valueOf(hasReadObject),
                     Boolean.valueOf(hasWriteObject));

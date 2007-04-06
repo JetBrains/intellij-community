@@ -18,31 +18,18 @@ package com.siyeh.ig.serialization;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-
 public class SerializableInnerClassWithNonSerializableOuterClassInspection
-        extends BaseInspection {
-
-    /** @noinspection PublicField */
-    public boolean m_ignoreSerializableDueToInheritance = true;
+        extends SerializableInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.inner.class.with.non.serializable.outer.class.display.name");
-    }
-
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "serializable.inner.class.with.non.serializable.outer.class.ignore.option"),
-                this, "m_ignoreSerializableDueToInheritance");
     }
 
     @NotNull
@@ -52,15 +39,13 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesSerialVersionUIDVisitor();
+        return new SerializableInnerClassWithNonSerializableOuterClassVisitor();
     }
 
-    private class SerializableDefinesSerialVersionUIDVisitor
+    private class SerializableInnerClassWithNonSerializableOuterClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {
                 return;
@@ -72,15 +57,16 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
             if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if (m_ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
-                    return;
-                }
-            } else if (!SerializationUtils.isSerializable(aClass)) {
+            if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
             if (SerializationUtils.isSerializable(containingClass)) {
                 return;
+            }
+            for (String superClassName : superClassList) {
+                if (ClassUtils.isSubclass(aClass, superClassName)) {
+                    return;
+                }
             }
             registerClassError(aClass);
         }

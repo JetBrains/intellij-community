@@ -21,21 +21,15 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-
 public class SerializableInnerClassHasSerialVersionUIDFieldInspection
-        extends BaseInspection {
-
-    /** @noinspection PublicField */
-    public boolean m_ignoreSerializableDueToInheritance = true;
+        extends SerializableInspection {
 
     @NotNull
     public String getID() {
@@ -58,18 +52,11 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
         return new AddSerialVersionUIDFix();
     }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "serializable.inner.class.has.serial.version.uid.field.ignore.option"),
-                this, "m_ignoreSerializableDueToInheritance");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesSerialVersionUIDVisitor();
+        return new SerializableInnerClassHasSerialVersionUIDFieldVisitor();
     }
 
-    private class SerializableDefinesSerialVersionUIDVisitor
+    private class SerializableInnerClassHasSerialVersionUIDFieldVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
@@ -88,12 +75,13 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
             if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if (m_ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
+            if (!SerializationUtils.isSerializable(aClass)) {
+                return;
+            }
+            for (String superClassName : superClassList) {
+                if (ClassUtils.isSubclass(aClass, superClassName)) {
                     return;
                 }
-            } else if (!SerializationUtils.isSerializable(aClass)) {
-                return;
             }
             registerClassError(aClass);
         }

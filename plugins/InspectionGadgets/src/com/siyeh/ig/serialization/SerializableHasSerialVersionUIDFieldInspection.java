@@ -18,24 +18,18 @@ package com.siyeh.ig.serialization;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-
 public class SerializableHasSerialVersionUIDFieldInspection
-        extends BaseInspection {
-    
-    /** @noinspection PublicField*/
-    public boolean m_ignoreSerializableDueToInheritance = true;
+        extends SerializableInspection {
 
     @NotNull
-    public String getID(){
+    public String getID() {
         return "serial";
     }
 
@@ -55,12 +49,6 @@ public class SerializableHasSerialVersionUIDFieldInspection
         return new AddSerialVersionUIDFix();
     }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "serializable.class.without.serialversionuid.ignore.option"),
-                this, "m_ignoreSerializableDueToInheritance");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableHasSerialVersionUIDFieldVisitor();
     }
@@ -74,26 +62,27 @@ public class SerializableHasSerialVersionUIDFieldInspection
                     aClass.isEnum()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiEnumConstantInitializer){
+            if (aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiEnumConstantInitializer) {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
             boolean hasSerialVersionUID = false;
-            for(final PsiField field : fields){
-                if(isSerialVersionUID(field)){
+            for (final PsiField field : fields) {
+                if (isSerialVersionUID(field)) {
                     hasSerialVersionUID = true;
                 }
             }
-            if(hasSerialVersionUID){
+            if (hasSerialVersionUID) {
                 return;
             }
-            if (m_ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
+            if (!SerializationUtils.isSerializable(aClass)) {
+                return;
+            }
+            for (String superClassName : superClassList) {
+                if (ClassUtils.isSubclass(aClass, superClassName)) {
                     return;
                 }
-            } else if (!SerializationUtils.isSerializable(aClass)) {
-                return;
             }
             registerClassError(aClass);
         }
