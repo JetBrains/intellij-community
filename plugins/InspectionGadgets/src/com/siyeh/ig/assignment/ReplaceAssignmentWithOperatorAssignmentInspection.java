@@ -18,6 +18,7 @@ package com.siyeh.ig.assignment;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -76,12 +77,13 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     static String calculateReplacementExpression(
             PsiAssignmentExpression expression){
-        final PsiBinaryExpression rhs =
-                (PsiBinaryExpression) expression.getRExpression();
+        final PsiExpression rhs = expression.getRExpression();
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
         final PsiExpression lhs = expression.getLExpression();
-        assert rhs != null;
-        final PsiJavaToken sign = rhs.getOperationSign();
-        final PsiExpression rhsRhs = rhs.getROperand();
+        assert binaryExpression != null;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final PsiExpression rhsRhs = binaryExpression.getROperand();
         assert rhsRhs != null;
         String signText = sign.getText();
         if("&&".equals(signText)){
@@ -109,10 +111,11 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         private ReplaceAssignmentWithOperatorAssignmentFix(
                 PsiAssignmentExpression expression){
             super();
-            final PsiBinaryExpression rhs =
-                    (PsiBinaryExpression) expression.getRExpression();
-            assert rhs != null;
-            final PsiJavaToken sign = rhs.getOperationSign();
+            final PsiExpression rhs = expression.getRExpression();
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) PsiUtil.deparenthesizeExpression(rhs);
+            assert binaryExpression != null;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
             String signText = sign.getText();
             if("&&".equals(signText)){
                 signText = "&";
@@ -157,7 +160,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
                 return;
             }
             final PsiExpression lhs = assignment.getLExpression();
-            final PsiExpression rhs = assignment.getRExpression();
+            final PsiExpression rhs = PsiUtil.deparenthesizeExpression(
+                    assignment.getRExpression());
             if(!(rhs instanceof PsiBinaryExpression)){
                 return;
             }
