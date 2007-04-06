@@ -11,10 +11,13 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CreatePropertyFix implements IntentionAction {
+public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private final PsiElement myElement;
   private final String myKey;
@@ -37,8 +40,23 @@ public class CreatePropertyFix implements IntentionAction {
   }
 
   @NotNull
+  public String getName() {
+    return NAME;
+  }
+
+  @NotNull
   public String getFamilyName() {
     return getText();
+  }
+
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement psiElement = descriptor.getPsiElement();
+    try {
+      new CreatePropertyFix(psiElement, myKey, myPropertiesFiles).invoke(project, null, psiElement.getContainingFile());
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @NotNull
@@ -68,7 +86,10 @@ public class CreatePropertyFix implements IntentionAction {
         }
         ArrayList<String> list = new ArrayList<String>();
         for (PropertiesFile propertiesFile : myPropertiesFiles) {
-          list.add(propertiesFile.getVirtualFile().getPath());
+          final VirtualFile virtualFile = propertiesFile.getVirtualFile();
+          if (virtualFile != null) {
+            list.add(virtualFile.getPath());
+          }
         }
         return list;
       }

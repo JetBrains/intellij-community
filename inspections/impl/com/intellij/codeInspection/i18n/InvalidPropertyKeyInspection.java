@@ -11,28 +11,23 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * @author max
  */
 public class InvalidPropertyKeyInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection");
 
   @NotNull
   public String getGroupDisplayName() {
@@ -113,41 +108,6 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static class CreatePropertyQuickFix implements LocalQuickFix {
-    private final String myKey;
-    private final List<PropertiesFile> myPropertiesFiles;
-
-    public CreatePropertyQuickFix(String key, String bundleName, PsiElement context) {
-      myKey = key;
-      myPropertiesFiles = I18nUtil.propertiesFilesByBundleName(bundleName, context);
-    }
-
-    public CreatePropertyQuickFix(final String key, final PropertiesFile propertiesFile) {
-      myKey = key;
-      myPropertiesFiles = Collections.singletonList(propertiesFile);
-    }
-
-    @NotNull
-    public String getName() {
-      return CreatePropertyFix.NAME;
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
-      try {
-        new CreatePropertyFix(literalExpression, myKey, myPropertiesFiles).invoke(project, null, literalExpression.getContainingFile());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-  }
-
   private static class UnresolvedPropertyVisitor extends PsiRecursiveElementVisitor {
     private InspectionManager myManager;
     private List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
@@ -176,9 +136,11 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       Ref<String> resourceBundleName = new Ref<String>();
       if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
+        final String bundleName = resourceBundleName.get();
+        final List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(bundleName, expression);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description,
-                                                                            new CreatePropertyQuickFix(key,resourceBundleName.get(),expression),
+                                                                            new CreatePropertyFix(expression, key, propertiesFiles),
                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         myProblems.add(problem);
       }
