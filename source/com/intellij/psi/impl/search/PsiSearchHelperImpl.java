@@ -505,7 +505,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        final StringSearcher searcher,
                                                        final short searchContext,
                                                        final boolean caseSensitively) {
-
+    LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();
@@ -515,7 +515,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     try {
       String[] words = StringUtil.getWordsIn(searcher.getPattern()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-      if(words.length == 0) return true;
+      if (words.length == 0) return true;
 
       Set<PsiFile> fileSet = new THashSet<PsiFile>();
       final Application application = ApplicationManager.getApplication();
@@ -541,7 +541,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       final AtomicInteger counter = new AtomicInteger(0);
       final AtomicBoolean canceled = new AtomicBoolean(false);
-      final Job<?> processFilesJob = JobScheduler.getInstance().createJob("Process usages in files", Job.DEFAULT_PRIORITY); // TODO: Better name
+      final Job<?> processFilesJob =
+        JobScheduler.getInstance().createJob("Process usages in files", Job.DEFAULT_PRIORITY); // TODO: Better name
       for (final PsiFile file : files) {
         processFilesJob.addTask(new Runnable() {
           public void run() {
@@ -554,7 +555,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                       for (PsiElement psiRoot : psiRoots) {
                         if (CachesBasedRefSearcher.DEBUG) {
-                          System.out.println("Scanning root:" + psiRoot+" lang:"+psiRoot.getLanguage()+" file:"+psiRoot.getContainingFile().getName());
+                          System.out.println("Scanning root:" + psiRoot + " lang:" + psiRoot.getLanguage() + " file:" +
+                                             psiRoot.getContainingFile().getName());
                         }
                         ProgressManager.getInstance().checkCanceled();
                         if (!processed.add(psiRoot)) continue;
