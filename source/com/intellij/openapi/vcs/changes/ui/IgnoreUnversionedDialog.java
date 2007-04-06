@@ -14,12 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -66,7 +66,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
 
   private void updateFileTextField() {
     myIgnoreFileTextField.setEnabled(myIgnoreSpecifiedFileRadioButton.isSelected() &&
-                                     (myFilesToIgnore == null || myFilesToIgnore.size() == 1));
+                                     (myFilesToIgnore == null || (myFilesToIgnore.size() == 1 && !myFilesToIgnore.get(0).isDirectory())));
   }
 
   @Nullable
@@ -86,6 +86,14 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       myIgnoreFileTextField.setText(VcsBundle.message("ignored.edit.multiple.files", virtualFiles.size()));
     }
     updateFileTextField();
+
+    for(VirtualFile file: virtualFiles) {
+      if (file.isDirectory()) {
+        myIgnoreAllFilesUnderRadioButton.setSelected(true);
+        myIgnoreSpecifiedFileRadioButton.setEnabled(false);
+        myIgnoreFileTextField.setEnabled(false);
+      }
+    }
 
     final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
     if (ancestors.length > 0) {

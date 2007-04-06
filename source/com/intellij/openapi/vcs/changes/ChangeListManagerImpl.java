@@ -1048,11 +1048,22 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (filePath != null) {
           filePath = FileUtil.toSystemIndependentName(filePath);
         }
+        if (file.isDirectory()) {
+          filePath += "/";
+        }
       }
       for(IgnoredFileBean bean: myFilesToIgnore) {
         if (filePath != null) {
           final String prefix = bean.getPath();
-          if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
+          if ("./".equals(prefix)) {
+            // special case for ignoring the project base dir (IDEADEV-16056)
+            final String basePath = FileUtil.toSystemIndependentName(baseDir.getPath());
+            final String fileAbsPath = FileUtil.toSystemIndependentName(file.getPath());
+            if (StringUtil.startsWithIgnoreCase(fileAbsPath, basePath)) {
+              return true;
+            }
+          }
+          else if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
             return true;
           }
         }
