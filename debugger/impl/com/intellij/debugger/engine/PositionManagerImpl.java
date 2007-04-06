@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +17,6 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -216,16 +216,13 @@ public class PositionManagerImpl implements PositionManager {
             LOG.assertTrue(false, "The name of a parent of a local (anonymous) class is null");
             return Collections.emptyList();
           }
-          final List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
-          final List<ReferenceType> result = new ArrayList<ReferenceType>();
-          findNested(outer, classPosition, result);
-          if (result.size() == 0) {
-            // no executable code found at this line in any class
-            for (ReferenceType refType : outer) {
-              final ReferenceType closest = findClosestClassAt(refType, classPosition, psiClass);
-              if (closest != null) {
-                result.add(closest);
-              }
+          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
+          final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
+          
+          for (ReferenceType outer : outers) {
+            final ReferenceType nested = findNested(outer, psiClass, classPosition);
+            if (nested != null) {
+              result.add(nested);
             }
           }
           return result;
@@ -241,53 +238,35 @@ public class PositionManagerImpl implements PositionManager {
     });
   }
 
-  private void findNested(List<ReferenceType> outer, SourcePosition classPosition, final List<ReferenceType> result) {
-    if (outer.size() == 0) {
-      return;
-    }
-    for (ReferenceType referenceType : outer) {
-      if (referenceType.isPrepared()) {
-        final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(referenceType);
-        findNested(nested, classPosition, result);
-
-        try {
-          final int lineNumber = classPosition.getLine() + 1;
-          if (referenceType.locationsOfLine(lineNumber).size() > 0) {
-            result.add(referenceType);
-          }
-        }
-        catch (AbsentInformationException e) {
-        }
-      }
-    }
-  }
-
   @Nullable
-  private ReferenceType findClosestClassAt(final ReferenceType from, final SourcePosition classPosition, @NotNull final PsiClass psiClass) {
-    if(from.isPrepared()) {
-      final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(from);
-      for (ReferenceType nestedType : nested) {
-        final ReferenceType foundType = findClosestClassAt(nestedType, classPosition, psiClass);
-        if (foundType != null) {
-          return foundType;
+  private ReferenceType findNested(ReferenceType fromClass, final PsiClass classToFind, SourcePosition classPosition) {
+    final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
+    if (fromClass.isPrepared()) {
+      
+      final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
+      
+      for (ReferenceType nested : nestedTypes) {
+        final ReferenceType found = findNested(nested, classToFind, classPosition);
+        if (found != null) {
+          return found;
         }
       }
 
       try {
         final int lineNumber = classPosition.getLine() + 1;
-        final List<Location> locations = from.allLineLocations();
-        boolean isGreater = false;
-        boolean isLess = false;
-        for (Location location : locations) {
-          isGreater |= location.lineNumber() <= lineNumber;
-          isLess |=  lineNumber <= location.lineNumber();
-          if (isGreater && isLess) {
-            final SourcePosition position = SourcePosition.createFromLine(psiClass.getContainingFile(), location.lineNumber() - 1);
-            return psiClass.equals(JVMNameUtil.getClassAt(position))? from : null;
+        if (fromClass.locationsOfLine(lineNumber).size() > 0) {
+          return fromClass;
+        }
+        //noinspection LoopStatementThatDoesntLoop
+        for (Location location : fromClass.allLineLocations()) {
+          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(classToFind.getContainingFile(), location.lineNumber() - 1);
+          if (classToFind.equals(JVMNameUtil.getClassAt(candidateFirstPosition))) {
+            return fromClass;
           }
+          break; // check only the first location
         }
       }
-      catch (AbsentInformationException e) {
+      catch (AbsentInformationException ignored) {
       }
     }
     return null;
