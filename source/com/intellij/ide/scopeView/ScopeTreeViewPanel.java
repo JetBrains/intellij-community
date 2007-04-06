@@ -209,7 +209,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         return packageSet.contains(file, holder);
       }
     }, settings);
-    myTree.setModel(myBuilder.build(myProject, showProgress));
+    myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
     TreeModelBuilder.clearCaches(myProject);
@@ -282,9 +282,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       if (getSelectedModules() != null){
         return myDeleteModuleProvider;
       }
-      if (getSelectedPsiElements() != null){
-        return myDeletePSIElementProvider;
-      }
+      return myDeletePSIElementProvider;
     }
     return null;
   }
@@ -312,13 +310,23 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private void reload(final DefaultMutableTreeNode rootToReload) {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     if (rootToReload != null) {
-      TreeUtil.sort(rootToReload, new DependencyNodeComparator());
+      TreeUtil.sort(rootToReload, getNodeComparator());
       collapseExpand(rootToReload);
     }
     else {
-      TreeUtil.sort(treeModel, new DependencyNodeComparator());
+      TreeUtil.sort(treeModel, getNodeComparator());
       treeModel.reload();
     }
+  }
+
+  private DependencyNodeComparator getNodeComparator() {
+    return new DependencyNodeComparator(ProjectView.getInstance(myProject).isSortByType(ScopeViewPane.ID));
+  }
+
+  public void setSortByType() {
+    myTreeExpansionMonitor.freeze();
+    reload(null);
+    myTreeExpansionMonitor.restore();
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -535,7 +543,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     if (!myTree.isCollapsed(path)){
       myTree.collapsePath(path);
       myTree.expandPath(path);
-      TreeUtil.sort(node, new DependencyNodeComparator());
+      TreeUtil.sort(node, getNodeComparator());
     }
   }
 

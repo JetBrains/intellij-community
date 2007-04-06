@@ -99,7 +99,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(classNode);
         }
       }
-      TreeUtil.sort(node, new DependencyNodeComparator());
+      TreeUtil.sort(node, getNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
   }
@@ -129,9 +129,13 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(fileNode);
         }
       }
-      TreeUtil.sort(node, new DependencyNodeComparator());
+      TreeUtil.sort(node, getNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
+  }
+
+  private DependencyNodeComparator getNodeComparator() {
+    return new DependencyNodeComparator(ProjectView.getInstance(myProject).isSortByType(ScopeViewPane.ID));
   }
 
   private void commitDocument(final PsiFile file) {

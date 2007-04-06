@@ -218,6 +218,10 @@ public class TreeModelBuilder {
   }
 
   public TreeModel build(final Project project, boolean showProgress) {
+    return build(project, showProgress, false);
+  }
+
+  public TreeModel build(final Project project, final boolean showProgress, final boolean sortByType) {
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
@@ -250,7 +254,7 @@ public class TreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependencyNodeComparator());
+    TreeUtil.sort(myRoot, new DependencyNodeComparator(sortByType));
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 

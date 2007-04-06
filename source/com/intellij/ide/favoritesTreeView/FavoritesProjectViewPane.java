@@ -74,6 +74,11 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     return ID;
   }
 
+  public void installComparator() {
+    final ProjectView projectView = ProjectView.getInstance(myProject);
+    myTreeBuilder.setNodeDescriptorComparator(new FavoritesComparator(projectView.isSortByType(ID)));
+  }
+
   public JComponent createComponent() {
     if (myViewPanel != null) {
       myViewPanel.dispose();
@@ -83,6 +88,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     myTree = myViewPanel.getTree();
     myTreeBuilder = myViewPanel.getBuilder();
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();
+    installComparator();
     return myViewPanel;
   }
 

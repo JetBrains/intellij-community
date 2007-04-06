@@ -8,17 +8,11 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -36,7 +30,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
@@ -52,79 +45,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
                                   final String name) {
     super(project, tree, treeModel, treeStructure, null);
     myListName = name;
-    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
-    setNodeDescriptorComparator(new Comparator<NodeDescriptor>(){
-      private int getWeight(NodeDescriptor descriptor) {
-        FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;
-        Object value = favoritesTreeNodeDescriptor.getElement().getValue();
-        if (value instanceof SmartPsiElementPointer){
-          value = ((SmartPsiElementPointer)value).getElement();
-        }
-        if (value instanceof ModuleGroup){
-          return 0;
-        }
-        if (value instanceof Module){
-          return 1;
-        }
-        if (value instanceof PsiDirectory || value instanceof PackageElement){
-          return 2;
-        }
-        if (value instanceof PsiFile){
-          return 4;
-        }
-        if (value instanceof PsiClass){
-          return 5;
-        }
-        if (value instanceof PsiField){
-          return 6;
-        }
-        if (value instanceof PsiMethod){
-          return 7;
-        }
-        if (value instanceof PsiElement){
-          return 8;
-        }
-        if (value instanceof LibraryGroupElement){
-          return 10;
-        }
-        if (value instanceof NamedLibraryElement){
-          return 11;
-        }
-        for(FavoriteNodeProvider provider: nodeProviders) {
-          int weight = provider.getElementWeight(value);
-          if (weight != -1) return weight;
-        }
-        return 12;
-      }
-
-      public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
-        if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor){
-          FavoritesTreeNodeDescriptor fd1 = (FavoritesTreeNodeDescriptor)nd1;
-          FavoritesTreeNodeDescriptor fd2 = (FavoritesTreeNodeDescriptor)nd2;
-          int weight1 = getWeight(fd1);
-          int weight2 = getWeight(fd2);
-          if (weight1 != weight2) {
-            return weight1 - weight2;
-          }
-          String s1 = fd1.toString();
-          String s2 = fd2.toString();
-          if (s1 == null) return s2 == null ? 0 : -1;
-          if (s2 == null) return +1;
-          if (!s1.equals(s2)) {
-            return s1.compareToIgnoreCase(s2);
-          }
-          else {
-            s1 = fd1.getLocation();
-            s2 = fd2.getLocation();
-            if (s1 == null) return s2 == null ? 0 : -1;
-            if (s2 == null) return +1;
-            return s1.compareToIgnoreCase(s2);
-          }
-        }
-        return 0;
-      }
-    });
-
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
       protected DefaultMutableTreeNode getRootNode() {

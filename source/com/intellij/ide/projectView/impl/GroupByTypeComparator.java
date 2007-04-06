@@ -1,17 +1,17 @@
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.ide.projectView.impl.nodes.*;
-import com.intellij.lang.properties.projectView.ResourceBundleNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.projectView.ResourceBundleNode;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 
-import java.util.Comparator;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author cdr
@@ -95,7 +95,7 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
     return false;
   }
 
-  private static int getClassPosition(final PsiClass aClass) {
+  public static int getClassPosition(final PsiClass aClass) {
     if (aClass == null || !aClass.isValid()) {
       return 0;
     }

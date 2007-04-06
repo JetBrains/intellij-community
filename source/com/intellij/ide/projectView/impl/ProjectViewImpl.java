@@ -1583,8 +1583,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      presentation.setVisible(pane != null && (PackageViewPane.ID.equals(pane.getId()) || ProjectViewPane.ID.equals(pane.getId())));
+      presentation.setVisible(getCurrentProjectViewPane() != null);
     }
   }
 

@@ -59,7 +59,7 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public int getWeight() {
-    return 4;
+    return 5;
   }
 
   public int getContainingFiles() {
