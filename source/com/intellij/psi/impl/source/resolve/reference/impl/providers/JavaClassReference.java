@@ -220,27 +220,31 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    if (!myJavaClassReferenceSet.getElement().isValid()) return JavaResolveResult.EMPTY;
 
-    final String elementText = getElement().getText();
+    final PsiElement psiElement = getElement();
 
-    if (isStaticClassReference(elementText)) {
-      final PsiElement psiElement = myJavaClassReferenceSet.getReferences()[myIndex - 1].resolve();
+    if (!psiElement.isValid()) return JavaResolveResult.EMPTY;
 
-      if (psiElement instanceof PsiClass) {
-        final PsiClass psiClass = ((PsiClass)psiElement).findInnerClassByName(getCanonicalText(), false);
-        if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, myJavaClassReferenceSet.getElement());
-        return JavaResolveResult.EMPTY;
+    final String elementText = psiElement.getText();
+
+    final PsiElement context = getContext();
+    if (context instanceof PsiClass) {
+      if (isStaticClassReference(elementText)) {
+          final PsiClass psiClass = ((PsiClass)context).findInnerClassByName(getCanonicalText(), false);
+          if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, psiElement);
+          return JavaResolveResult.EMPTY;
+      } else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames() ) {
+        return JavaResolveResult.EMPTY;        
       }
     }
 
     String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
 
-    PsiManager manager = myJavaClassReferenceSet.getElement().getManager();
+    PsiManager manager = psiElement.getManager();
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
-      final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(myJavaClassReferenceSet.getElement().getProject()));
+      final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(psiElement.getProject()));
       if (aClass != null) {
-        return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, myJavaClassReferenceSet.getElement());
+        return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, psiElement);
       } else {
         final Boolean value = JavaClassReferenceProvider.RESOLVE_ONLY_CLASSES.getValue(getOptions());
         if (value != null && value.booleanValue()) {
@@ -250,13 +254,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     PsiElement resolveResult = manager.findPackage(qName);
     if (resolveResult == null) {
-      resolveResult = manager.findClass(qName, GlobalSearchScope.allScope(myJavaClassReferenceSet.getElement().getProject()));
+      resolveResult = manager.findClass(qName, GlobalSearchScope.allScope(psiElement.getProject()));
     }
     if (myInStaticImport && resolveResult == null) {
       resolveResult = resolveMember(qName, manager, getElement().getResolveScope());
     }
     if (resolveResult == null) {
-      PsiFile containingFile = myJavaClassReferenceSet.getElement().getContainingFile();
+      PsiFile containingFile = psiElement.getContainingFile();
 
       if (containingFile instanceof PsiJavaFile) {
         if (containingFile instanceof JspFile) {
@@ -264,8 +268,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           if (containingFile == null) return JavaResolveResult.EMPTY;
         }
 
-        final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myJavaClassReferenceSet.getElement());
-        containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myJavaClassReferenceSet.getElement());
+        final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement);
+        containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, psiElement);
 
         if (processor.getResult().length == 1) {
           final JavaResolveResult javaResolveResult = processor.getResult()[0];
@@ -287,7 +291,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     return resolveResult != null
-           ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, myJavaClassReferenceSet.getElement())
+           ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, psiElement)
            : JavaResolveResult.EMPTY;
   }
 

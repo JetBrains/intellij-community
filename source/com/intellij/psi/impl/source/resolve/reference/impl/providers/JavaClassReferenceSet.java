@@ -55,7 +55,7 @@ class JavaClassReferenceSet {
     final List<JavaClassReference> referencesList = new ArrayList<JavaClassReference>();
     int currentDot = -1;
     int referenceIndex = 0;
-    boolean allowDollarInNames = isAllowDollarInNames(element);
+    boolean allowDollarInNames = isAllowDollarInNames();
     boolean allowGenerics = false;
     boolean allowGenericsCalculated = false;
     boolean parsingClassNames = true;
@@ -172,8 +172,8 @@ class JavaClassReferenceSet {
     myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
   }
 
-  protected boolean isAllowDollarInNames(final PsiElement element) {
-    return element.getLanguage() instanceof XMLLanguage;
+  protected boolean isAllowDollarInNames() {
+    return myElement.getLanguage() instanceof XMLLanguage;
   }
 
   void reparse(PsiElement element, final TextRange range) {
