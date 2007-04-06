@@ -76,8 +76,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private final FilePath myFilePath;
   private final DualView myDualView;
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-
+  private final Alarm myUpdateAlarm;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
 
@@ -190,6 +189,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myComments.setRows(5);
     myComments.setEditable(false);
 
+    myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);      
+
     HistoryAsTreeProvider treeHistoryProvider = provider.getTreeHistoryProvider();
 
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
@@ -218,7 +219,26 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         myUpdateAlarm.addRequest(this, 10000);
 
         if(refresh) {
-          refresh();
+          final VcsHistorySession session;
+          try {
+            session = getHistoryProvider().createSessionFor(myFilePath);
+          }
+          catch (VcsException e) {
+            LOG.info(e);
+            return;
+          }
+          if (session != null) {
+            if (myHistorySession.allowAsyncRefresh()) {
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  refresh(session);
+                }
+              });
+            }
+            else {
+              refresh(session);
+            }
+          }
         }
       }
     }, 10000);

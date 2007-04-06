@@ -61,6 +61,10 @@ public abstract class VcsHistorySession {
     return !Comparing.equal(oldValue, myCachedRevisionNumber);
   }
 
+  public boolean allowAsyncRefresh() {
+    return false;
+  }
+
   public boolean isContentAvailable(VcsFileRevision revision) {
     return true;
   }
