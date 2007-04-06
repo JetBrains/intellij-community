@@ -234,15 +234,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if  (stateStorage instanceof XmlElementStorage) {
         XmlElementStorage xmlElementStorage = (XmlElementStorage)stateStorage;
         Document doc = xmlElementStorage.getDocument();
-        final Element element = doc.getRootElement();
-        final List attributes = element.getAttributes();
-        for (Object attribute : attributes) {
-          Attribute attr = (Attribute)attribute;
-          final String optionName = attr.getName();
-          final @NonNls String optionValue = attr.getValue();
+        if (doc != null) {
+          final Element element = doc.getRootElement();
+          final List attributes = element.getAttributes();
+          for (Object attribute : attributes) {
+            Attribute attr = (Attribute)attribute;
+            final String optionName = attr.getName();
+            final @NonNls String optionValue = attr.getValue();
 
-          if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
-            setSavePathsRelative(true);
+            if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
+              setSavePathsRelative(true);
+            }
           }
         }
       }
