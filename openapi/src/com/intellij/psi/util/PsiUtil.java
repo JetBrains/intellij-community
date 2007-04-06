@@ -44,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -969,12 +969,6 @@ public final class PsiUtil {
       if(root == psiRoots[i]) return i;
     }
     throw new RuntimeException("invalid element");
-  }
-
-  public static int getRootsCount(final Language lang) {
-    if(lang == StdLanguages.JSP) return 4;
-    if(lang == StdLanguages.JSPX) return 4;
-    return 1;
   }
 
   public static boolean isJspLanguage(final Language baseLanguage) {

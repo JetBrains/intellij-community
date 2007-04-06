@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -12,7 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,13 +37,14 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final int index = PsiUtil.getRootIndex(root);
 
     if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index){
-      fileHighlighingSettings = getDefaults(containingFile.getViewProvider().getBaseLanguage());
+      fileHighlighingSettings = getDefaults(containingFile);
     }
     return fileHighlighingSettings[index];
   }
 
-  public FileHighlighingSetting[] getDefaults(Language lang){
-    final FileHighlighingSetting[] fileHighlighingSettings = new FileHighlighingSetting[PsiUtil.getRootsCount(lang)];
+  public static FileHighlighingSetting[] getDefaults(PsiFile file){
+    final int rootsCount = file.getViewProvider().getPrimaryLanguages().size();
+    final FileHighlighingSetting[] fileHighlighingSettings = new FileHighlighingSetting[rootsCount];
     for (int i = 0; i < fileHighlighingSettings.length; i++) {
       fileHighlighingSettings[i] = FileHighlighingSetting.FORCE_HIGHLIGHTING;
     }
@@ -55,7 +56,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
-    if(defaults == null) defaults = getDefaults(containingFile.getViewProvider().getBaseLanguage()).clone();
+    if(defaults == null) defaults = getDefaults(containingFile).clone();
     defaults[PsiUtil.getRootIndex(root)] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {
