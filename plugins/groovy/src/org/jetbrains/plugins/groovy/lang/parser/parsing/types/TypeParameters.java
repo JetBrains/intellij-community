@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  */
 public class TypeParameters implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    return WRONGWAY;
+//    PsiBuilder.Marker tpMarker = builder.mark();
+      return WRONGWAY;    
   }
 }

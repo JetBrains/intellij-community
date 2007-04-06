@@ -4,6 +4,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
@@ -23,16 +24,16 @@ public class EnumConstant implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mLCURLY)) {
-      EnumConstantBlock.parse(builder);
-    } else {
-      ArgumentList.parse(builder, mRCURLY);
+    if (ParserUtils.getToken(builder, mLPAREN)) {
+      ArgumentList.parse(builder, mRPAREN);
 
-      if (!ParserUtils.getToken(builder, mRCURLY)) {
-        builder.error(GroovyBundle.message("rcurly.expected"));
+      if (!ParserUtils.getToken(builder, mRPAREN)) {
+        builder.error(GroovyBundle.message("rparen.expected"));
         ecMarker.rollbackTo();
         return WRONGWAY;
       }
+    } else if (ParserUtils.getToken(builder, mLCURLY)) {
+      ClassBlock.parse(builder);
     }
 
     ecMarker.done(ENUM_CONSTANT);

@@ -40,6 +40,11 @@ public class EnumBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
+    IElementType seps;
+    do {
+      seps = Separators.parse(builder);
+    } while(!WRONGWAY.equals(seps));
+
     if (parseEnumConstantStart(builder)) {
       EnumConstants.parse(builder);
     } else {

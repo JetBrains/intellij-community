@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class ArgumentList implements GroovyElementTypes
-{
+public class ArgumentList implements GroovyElementTypes {
 
   /**
    * Parsing argument list
@@ -38,43 +37,34 @@ public class ArgumentList implements GroovyElementTypes
    * @param closingBrace
    * @return
    */
-  public static GroovyElementType parse(PsiBuilder builder, IElementType closingBrace)
-  {
+  public static GroovyElementType parse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, mCOMMA))
-    {
+    if (ParserUtils.getToken(builder, mCOMMA)) {
       marker.done(ARGUMENTS);
       return ARGUMENTS;
     }
 
     GroovyElementType result = argumentParse(builder, closingBrace);
-    if (result.equals(WRONGWAY))
-    {
-      if (!closingBrace.equals(builder.getTokenType()))
-      {
+    if (result.equals(WRONGWAY)) {
+      if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       if (!mCOMMA.equals(builder.getTokenType()) &&
-              !closingBrace.equals(builder.getTokenType()))
-      {
+          !closingBrace.equals(builder.getTokenType())) {
         builder.advanceLexer();
       }
     }
-    while (!builder.eof() && !closingBrace.equals(builder.getTokenType()))
-    {
+    while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       ParserUtils.getToken(builder, mNLS);
-      if (argumentParse(builder, closingBrace).equals(WRONGWAY))
-      {
-        if (!closingBrace.equals(builder.getTokenType()))
-        {
+      if (argumentParse(builder, closingBrace).equals(WRONGWAY)) {
+        if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         if (!mCOMMA.equals(builder.getTokenType()) &&
-                !closingBrace.equals(builder.getTokenType()))
-        {
+            !closingBrace.equals(builder.getTokenType())) {
           builder.advanceLexer();
         }
       }
@@ -91,47 +81,37 @@ public class ArgumentList implements GroovyElementTypes
    * @param builder
    * @return
    */
-  private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace)
-  {
+  private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker argMarker = builder.mark();
     boolean labeled = argumentLabelStartCheck(builder);
     boolean expansed = ParserUtils.getToken(builder, mSTAR);
-    if (labeled)
-    {
+    if (labeled) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     }
     GroovyElementType result = StrictContextExpression.parse(builder);
 
     // If expression is wrong...
-    if (labeled && result.equals(WRONGWAY))
-    {
+    if (labeled && result.equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     while (!builder.eof() && labeled && result.equals(WRONGWAY) &&
-            !mCOMMA.equals(builder.getTokenType()) &&
-            !closingBrace.equals(builder.getTokenType()))
-    {
+        !mCOMMA.equals(builder.getTokenType()) &&
+        !closingBrace.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("expression.expected"));
       builder.advanceLexer();
       result = StrictContextExpression.parse(builder);
     }
 
-    if (labeled || expansed)
-    {
+    if (labeled || expansed) {
       argMarker.done(ARGUMENT);
-    }
-    else
-    {
+    } else {
       argMarker.drop();
     }
 
-    if (labeled || !result.equals(WRONGWAY))
-    {
+    if (labeled || !result.equals(WRONGWAY)) {
       return ARGUMENT;
-    }
-    else
-    {
+    } else {
       return WRONGWAY;
     }
   }
@@ -143,52 +123,38 @@ public class ArgumentList implements GroovyElementTypes
    * @param builder
    * @return
    */
-  public static boolean argumentLabelStartCheck(PsiBuilder builder)
-  {
+  public static boolean argumentLabelStartCheck(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.lookAhead(builder, mSTAR, mCOLON))
-    {
+    if (ParserUtils.lookAhead(builder, mSTAR, mCOLON)) {
       builder.advanceLexer();
       marker.done(ARGUMENT_LABEL);
       return true;
-    }
-    else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
-            TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType()) ||
-            mNUM_INT.equals(builder.getTokenType()) ||
-            mSTRING_LITERAL.equals(builder.getTokenType()) ||
-            mGSTRING_LITERAL.equals(builder.getTokenType())
-            )
-    {
+    } else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
+        TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType()) ||
+        mNUM_INT.equals(builder.getTokenType()) ||
+        mSTRING_LITERAL.equals(builder.getTokenType()) ||
+        mGSTRING_LITERAL.equals(builder.getTokenType())
+        ) {
       builder.advanceLexer();
       boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
-      if (isArgumentLabel)
-      {
+      if (isArgumentLabel) {
         marker.done(ARGUMENT_LABEL);
-      }
-      else
-      {
+      } else {
         marker.rollbackTo();
       }
       return isArgumentLabel;
-    }
-    else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType()) ||
-            mLPAREN.equals(builder.getTokenType()))
-    {
+    } else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType()) ||
+        mLPAREN.equals(builder.getTokenType())) {
       PrimaryExpression.parse(builder);
       boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
-      if (isArgumentLabel)
-      {
+      if (isArgumentLabel) {
         marker.done(ARGUMENT_LABEL);
-      }
-      else
-      {
+      } else {
         marker.rollbackTo();
       }
       return isArgumentLabel;
-    }
-    else
-    {
+    } else {
       marker.drop();
       return false;
     }

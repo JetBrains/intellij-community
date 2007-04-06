@@ -15,7 +15,7 @@ public class EnumConstants implements GroovyElementTypes {
 
     EnumConstant.parse(builder);
 
-    while (ParserUtils.getToken(builder, mCOMMA)) {
+    while (ParserUtils.getToken(builder, mCOMMA) || ParserUtils.getToken(builder, mSEMI)) {
       ParserUtils.getToken(builder, mNLS);
 
       EnumConstant.parse(builder);
