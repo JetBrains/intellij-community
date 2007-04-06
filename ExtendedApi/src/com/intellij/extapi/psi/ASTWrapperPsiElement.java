@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -33,10 +33,10 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     myNode = node;
   }
 
-  public PsiManager getManager() {
+  public PsiManagerEx getManager() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
-    return parent.getManager();
+    return (PsiManagerEx)parent.getManager();
   }
 
   @NotNull

@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -21,11 +21,11 @@ public class FileElement extends RepositoryTreeElement{
     super(type);
   }
 
-  public PsiManager getManager() {
-    final PsiManager manager = getUserData(MANAGER_KEY);
+  public PsiManagerEx getManager() {
+    final PsiManagerEx manager = getUserData(MANAGER_KEY);
     if (manager == null) {
       if(parent != null) return parent.getManager();
-      else return SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
+      else return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
     }
     else {
       return manager;

@@ -17,13 +17,12 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a reference found in Java code (either an identifier or a sequence of identifiers
  * separated by periods, optionally with generic type arguments).
  */
-public interface PsiJavaCodeReferenceElement extends PsiElement, PsiJavaReference {
+public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualifiedReference {
   /**
    * The empty array of PSI Java code references which can be reused to avoid unnecessary allocations.
    */
@@ -55,15 +54,6 @@ public interface PsiJavaCodeReferenceElement extends PsiElement, PsiJavaReferenc
   PsiType[] getTypeParameters();
 
   /**
-   * Returns the qualifier of the reference (the element representing the content up to the
-   * last period).
-   *
-   * @return the qualifier, or null if the reference is not qualified.
-   */
-  @Nullable
-  PsiElement getQualifier();
-
-  /**
    * Checks if the reference is qualified (consists of elements separated with periods).
    *
    * @return true if the reference is qualified, false otherwise.
@@ -77,12 +67,4 @@ public interface PsiJavaCodeReferenceElement extends PsiElement, PsiJavaReferenc
    */
   String getQualifiedName();
 
-  /**
-   * Returns the text of the reference not including its qualifier.
-   *
-   * @return the non-qualified text of the reference, or null if the reference
-   * element is incomplete.
-   */
-  @Nullable @NonNls
-  String getReferenceName();
 }

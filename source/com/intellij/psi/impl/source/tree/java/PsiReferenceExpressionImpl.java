@@ -125,7 +125,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     super.clearCaches();
   }
 
-  private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver {
+  private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     public static JavaResolveResult[] _resolve(PsiJavaReference ref, boolean incompleteCode) {
@@ -139,8 +139,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return result;
     }
 
-    public JavaResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve((PsiJavaReference)ref, incompleteCode);
+    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
@@ -553,10 +553,6 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
 
   public boolean isQualified() {
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
-  }
-
-  public void dequalify() {
-    SourceUtil.dequalifyImpl(this);
   }
 
   private String getCachedTextSkipWhiteSpaceAndComments() {

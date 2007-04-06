@@ -4,9 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -19,7 +19,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public volatile TreeElement prev = null;
   public volatile CompositeElement parent = null;
 
-  public static final Key<PsiManager> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
+  public static final Key<PsiManagerEx> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("Element.PsiElement");
 
   public Object clone() {
@@ -38,7 +38,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     return ChangeUtil.copyElement(this, table);
   }
 
-  public PsiManager getManager() {
+  public PsiManagerEx getManager() {
     TreeElement element;
     for (element = this; element.getTreeParent() != null; element = element.getTreeParent()) {
     }

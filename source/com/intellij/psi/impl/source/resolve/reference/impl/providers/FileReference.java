@@ -339,11 +339,11 @@ public class FileReference
     return result.toArray(new LocalQuickFix[result.size()]);
   }
 
-  static class MyResolver implements ResolveCache.PolyVariantResolver {
+  static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {
     static MyResolver INSTANCE = new MyResolver();
 
-    public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
-      return ((FileReference)ref).innerResolve();
+    public ResolveResult[] resolve(FileReference ref, boolean incompleteCode) {
+      return ref.innerResolve();
     }
   }
 }

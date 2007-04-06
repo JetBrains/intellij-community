@@ -73,7 +73,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     if (ref == null) return null;
     TreeUtil.addChildren(holderElement, ref);
 
-    return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref));
+    return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)ref.getPsi());
   }
 
   public PsiVariable resolveReferencedVariable(String referenceText, PsiElement context) {

@@ -29,10 +29,10 @@ public class SyntaxTableCompletionData extends CompletionData{
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     final String[] empty = {};
 
-    variant.addCompletion((String[])mySyntaxTable.getKeywords1().toArray(empty), TailType.NONE);
-    variant.addCompletion((String[])mySyntaxTable.getKeywords2().toArray(empty), TailType.NONE);
-    variant.addCompletion((String[])mySyntaxTable.getKeywords3().toArray(empty), TailType.NONE);
-    variant.addCompletion((String[])mySyntaxTable.getKeywords4().toArray(empty), TailType.NONE);
+    variant.addCompletion(mySyntaxTable.getKeywords1().toArray(empty), TailType.NONE);
+    variant.addCompletion(mySyntaxTable.getKeywords2().toArray(empty), TailType.NONE);
+    variant.addCompletion(mySyntaxTable.getKeywords3().toArray(empty), TailType.NONE);
+    variant.addCompletion(mySyntaxTable.getKeywords4().toArray(empty), TailType.NONE);
 
     registerVariant(variant);
   }

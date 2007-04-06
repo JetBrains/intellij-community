@@ -205,7 +205,7 @@ public class CreateFromUsageUtils {
       parameter = (PsiParameter) parameterList.add(parameter);
 
       ExpectedTypeInfo info = ExpectedTypesProvider.getInstance(psiManager.getProject()).createInfo(argType,
-                                                                                                    ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
+                                                                                                    ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE.getOldTailType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
@@ -521,7 +521,7 @@ public class CreateFromUsageUtils {
 
     if (expectedTypes == null || expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[] {provider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
+      expectedTypes = new ExpectedTypeInfo[] {provider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE.getOldTailType())};
     }
 
     return expectedTypes;
@@ -662,7 +662,7 @@ public class CreateFromUsageUtils {
         else {
           type = factory.createType(aClass);
         }
-        l.add(provider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+        l.add(provider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE.getOldTailType()));
       }
     }
 

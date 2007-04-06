@@ -26,15 +26,15 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public int kind;
 
   public int getTailType() {
-    return tailType;
+    return tailType.getOldTailType();
   }
 
-  public int tailType;
+  public TailType tailType;
 
   public String expectedName;
 
 
-  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, int tailType) {
+  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, TailType tailType) {
     this.type = type;
     this.kind = kind;
     this.defaultType = defaultType;

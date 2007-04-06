@@ -28,5 +28,4 @@ public interface SourceJavaCodeReference {
 
   PsiElement getQualifier();
 
-  void dequalify();
 }

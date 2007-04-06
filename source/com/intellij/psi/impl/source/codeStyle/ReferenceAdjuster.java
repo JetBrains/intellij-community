@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
@@ -14,22 +15,27 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-class ReferenceAdjuster implements Constants {
-  private final CodeStyleSettings mySettings;
+public class ReferenceAdjuster implements Constants {
   private final boolean myUseFqClassnamesInJavadoc;
   private final boolean myUseFqClassNames;
 
-  public ReferenceAdjuster(CodeStyleSettings settings, boolean useFqInJavadoc, boolean useFqInCode) {
-    mySettings = settings;
+  public ReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode) {
     myUseFqClassnamesInJavadoc = useFqInJavadoc;
     myUseFqClassNames = useFqInCode;
   }
 
+  public ReferenceAdjuster(Project project) {
+    this(CodeStyleSettingsManager.getSettings(project));
+  }
+
   public ReferenceAdjuster(CodeStyleSettings settings) {
-    this(settings, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    this(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
 
   public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
@@ -158,69 +164,54 @@ class ReferenceAdjuster implements Constants {
     }
   }
 
-  private ASTNode makeShortReference(
-      CompositeElement reference,
-      PsiClass refClass,
-      boolean addImports
-  ) {
+  private ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
+    @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
+    final PsiQualifiedReference reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
+    return reference1 != null ? replaceReferenceWithShort(reference1) : reference;
+  }
+
+  @Nullable
+  public static PsiQualifiedReference getClassReferenceToShorten(@NotNull final PsiClass refClass,
+                                                                 final boolean addImports,
+                                                                 @NotNull final PsiQualifiedReference reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
-      PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(reference);
       PsiManager manager = parentClass.getManager();
       final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-      if (resolveHelper.isAccessible(refClass, psiReference, null)) {
-        final PsiClass resolved = resolveHelper.resolveReferencedClass(psiReference.getReferenceName(), reference.getPsi());
-        if (manager.areElementsEquivalent(resolved, refClass)) {
-          return replaceReferenceWithShort(reference);
-        }
-      }
-
-      if (!mySettings.INSERT_INNER_CLASS_IMPORTS) {
-        final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
-        if (qualifier != null &&
-          (qualifier.getElementType() == JAVA_CODE_REFERENCE || qualifier.getElementType() == REFERENCE_EXPRESSION)) {
-
-          makeShortReference((CompositeElement)qualifier, parentClass, addImports);
-        }
+      if (resolveHelper.isAccessible(refClass, reference, null) &&
+          isSafeToShortenReference(reference.getReferenceName(), reference, refClass)) {
         return reference;
       }
+
+      if (!CodeStyleSettingsManager.getSettings(reference.getProject()).INSERT_INNER_CLASS_IMPORTS) {
+        final PsiElement qualifier = reference.getQualifier();
+        if (qualifier instanceof PsiQualifiedReference) {
+          return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReference)qualifier);
+        }
+        return null;
+      }
     }
 
-    PsiImportHolder file = (PsiImportHolder) SourceTreeToPsiMap.treeElementToPsi(reference).getContainingFile();
-    PsiManager manager = file.getManager();
-    PsiResolveHelper helper = manager.getResolveHelper();
-    if (addImports) {
-      if (!file.importClass(refClass)) {
-        return reference;
-      }
-      if (isSafeToShortenReference(reference, refClass, helper)) {
-        reference = replaceReferenceWithShort(reference);
-      }
-    }
-    else {
-      PsiClass curRefClass = helper.resolveReferencedClass(
-        refClass.getName(),
-        SourceTreeToPsiMap.treeElementToPsi(reference)
-      );
-      if (manager.areElementsEquivalent(refClass, curRefClass)) {
-        reference = replaceReferenceWithShort(reference);
-      }
-    }
+    if (addImports && !((PsiImportHolder) reference.getContainingFile()).importClass(refClass)) return null;
+    if (!isSafeToShortenReference(reference, refClass)) return null;
     return reference;
   }
 
-  private static boolean isSafeToShortenReference(ASTNode reference, PsiClass refClass, PsiResolveHelper helper) {
-    PsiClass newRefClass = helper.resolveReferencedClass(
-      refClass.getName(),
-      SourceTreeToPsiMap.treeElementToPsi(reference)
-    );
-    return refClass.getManager().areElementsEquivalent(refClass, newRefClass);
+  private static boolean isSafeToShortenReference(@NotNull PsiElement psiReference, @NotNull PsiClass refClass) {
+    return isSafeToShortenReference(refClass.getName(), psiReference, refClass);
   }
 
-  private static CompositeElement replaceReferenceWithShort(CompositeElement reference) {
-      ((SourceJavaCodeReference)reference).dequalify();
+  private static boolean isSafeToShortenReference(final String referenceText, final PsiElement psiReference, final PsiClass refClass) {
+    final PsiManager manager = refClass.getManager();
+    return manager.areElementsEquivalent(refClass, manager.getResolveHelper().resolveReferencedClass(referenceText, psiReference));
+  }
 
-    return reference;
+  @NotNull
+  private static ASTNode replaceReferenceWithShort(PsiQualifiedReference reference) {
+    final ASTNode node = reference.getNode();
+    assert node != null;
+    SourceUtil.dequalifyImpl((CompositeElement)node);
+    return node;
   }
 
   private static ASTNode replaceReferenceWithFQ(ASTNode reference, PsiClass refClass) {

@@ -213,11 +213,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
-    if (!canChangeWhiteSpacesOnly) {
-      return postProcessElement(formatted);
-    } else {
-      return formatted;
-    }
+    return !canChangeWhiteSpacesOnly ? postProcessElement(formatted) : formatted;
   }
 
   public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -226,33 +222,23 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
 
   public PsiElement shortenClassReferences(@NotNull PsiElement element, int flags) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
-    {
-      return element;
-    }
+    if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
-    boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
-    boolean uncompleteCode = (flags & UNCOMPLETE_CODE) != 0;
     return SourceTreeToPsiMap.treeElementToPsi(
-      new ReferenceAdjuster(getSettings()).process((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), addImports,
-                                                   uncompleteCode));
+      new ReferenceAdjuster(myProject).process((TreeElement)element.getNode(), (flags & DO_NOT_ADD_IMPORTS) == 0,
+                                               (flags & UNCOMPLETE_CODE) != 0));
   }
 
   public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
-    {
-      return;
+    if (SourceTreeToPsiMap.hasTreeElement(element)) {
+      new ReferenceAdjuster(myProject).processRange((TreeElement)element.getNode(), startOffset, endOffset);
     }
-    new ReferenceAdjuster(getSettings()).processRange((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), startOffset,
-                                                      endOffset);
   }
 
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    return SourceTreeToPsiMap.treeElementToPsi(
-      new ReferenceAdjuster(getSettings(), true, true).process((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), false,
-                                                               false));
+    return SourceTreeToPsiMap.treeElementToPsi(new ReferenceAdjuster(true, true).process((TreeElement)element.getNode(), false, false));
   }
 
   public void optimizeImports(@NotNull PsiFile file) throws IncorrectOperationException {

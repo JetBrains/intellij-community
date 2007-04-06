@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.openapi.project.Project;
@@ -9,8 +10,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -125,15 +126,13 @@ public class LookupItem implements Comparable{
     return (InsertHandler)getAttribute(INSERT_HANDLER_ATTR);
   }
 
-  public int getTailType(){
-    final Integer tailType = (Integer) getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
-    if(tailType != null)
-      return tailType.intValue();
-    return -1;
+  public TailType getTailType(){
+    final TailType tailType = (TailType) getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+    return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  public void setTailType(int type){
-    setAttribute(CompletionUtil.TAIL_TYPE_ATTR, Integer.valueOf(type));
+  public void setTailType(TailType type){
+    setAttribute(CompletionUtil.TAIL_TYPE_ATTR, type);
   }
 
   public int compareTo(Object o){

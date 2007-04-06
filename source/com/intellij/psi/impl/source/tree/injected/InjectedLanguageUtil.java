@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -83,7 +84,7 @@ public class InjectedLanguageUtil {
     if (parserDefinition == null) return null;
     PsiFile hostFile = host.getContainingFile();
     if (hostFile == null) return null;
-    PsiManager psiManager = host.getManager();
+    PsiManagerEx psiManager = (PsiManagerEx)host.getManager();
     final Project project = psiManager.getProject();
 
     final String hostText = host.getText();
@@ -361,7 +362,7 @@ public class InjectedLanguageUtil {
       return result;
     }
   }
-   
+
   private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(final T host) {
     return host.isPhysical()
            ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host)

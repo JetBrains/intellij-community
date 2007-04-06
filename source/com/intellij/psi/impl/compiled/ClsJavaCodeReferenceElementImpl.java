@@ -155,11 +155,11 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return myCanonicalText;
   }
 
-  private static class Resolver implements ResolveCache.PolyVariantResolver {
+  private static class Resolver implements ResolveCache.PolyVariantResolver<ClsJavaCodeReferenceElementImpl> {
     public static Resolver INSTANCE = new Resolver();
 
-    public JavaResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
-      final JavaResolveResult resolveResult = ((ClsJavaCodeReferenceElementImpl)ref).advancedResolveImpl();
+    public JavaResolveResult[] resolve(ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
+      final JavaResolveResult resolveResult = ref.advancedResolveImpl();
       return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }
   }

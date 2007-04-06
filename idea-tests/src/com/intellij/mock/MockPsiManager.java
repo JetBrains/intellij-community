@@ -18,6 +18,7 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -118,7 +119,11 @@ public class MockPsiManager extends PsiManagerEx {
     if (qName == null) return declaration;
 
     String superName = StringUtil.getPackageName(qName);
-    final PsiPackage superPackage = findPackage(superName);
+    PsiPackage superPackage = findPackage(superName);
+    if (superPackage == null && StringUtil.isNotEmpty(qName)) {
+      superPackage = addPackage(superName);
+    }
+
     if (superPackage instanceof MockPsiPackage) {
       ((MockPsiPackage)superPackage).addDeclaration(declaration);
     }
@@ -214,7 +219,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiResolveHelper getResolveHelper() {
-    return new MockResolveHelper() {
+    return new MockResolveHelper(this) {
       public boolean isAccessible(final PsiMember member, final PsiModifierList modifierList, final PsiElement place,
                                   final PsiClass accessObjectClass, final PsiElement currentFileResolveScope) {
         return true;
@@ -297,7 +302,9 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
-    return false;
+    PsiFile file1 = ResolveUtil.getContextFile(element1);
+    PsiFile file2 = ResolveUtil.getContextFile(element2);
+    return Comparing.equal(file1, file2);
   }
 
   public boolean isInProject(PsiElement element) {

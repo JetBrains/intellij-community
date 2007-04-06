@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 
 public class CompletionVariant {
-  protected static short DEFAULT_TAIL_TYPE = TailType.SPACE;
+  protected static TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
 
   private final Set<Scope> myScopeClasses = new HashSet<Scope>();
   private ElementFilter myPosition;
@@ -126,11 +126,11 @@ public class CompletionVariant {
     addCompletionFilterOnElement(filter, TailType.NONE);
   }
 
-  public void addCompletionFilterOnElement(ElementFilter filter, int tailType){
+  public void addCompletionFilterOnElement(ElementFilter filter, TailType tailType){
     addCompletion(new ElementExtractorFilter(filter), tailType);
   }
 
-  public void addCompletionFilter(ElementFilter filter, int tailType){
+  public void addCompletionFilter(ElementFilter filter, TailType tailType){
     addCompletion(filter, tailType);
   }
 
@@ -142,7 +142,7 @@ public class CompletionVariant {
     addCompletion(keyword, DEFAULT_TAIL_TYPE);
   }
 
-  public void addCompletion(@NonNls String keyword, int tailType){
+  public void addCompletion(@NonNls String keyword, TailType tailType){
     addCompletion((Object)keyword, tailType);
   }
 
@@ -150,7 +150,7 @@ public class CompletionVariant {
     addCompletion(chooser, DEFAULT_TAIL_TYPE);
   }
 
-  public void addCompletion(KeywordChooser chooser, int tailType){
+  public void addCompletion(KeywordChooser chooser, TailType tailType){
     addCompletion((Object)chooser, tailType);
   }
 
@@ -158,11 +158,11 @@ public class CompletionVariant {
     addCompletion(chooser, DEFAULT_TAIL_TYPE);
   }
 
-  public void addCompletion(ContextGetter chooser, int tailType){
+  public void addCompletion(ContextGetter chooser, TailType tailType){
     addCompletion((Object)chooser, tailType);
   }
 
-  private void addCompletion(Object completion, int tail){
+  private void addCompletion(Object completion, TailType tail){
     myCompletionsList.add(new CompletionVariantItem(completion, tail));
   }
 
@@ -170,7 +170,7 @@ public class CompletionVariant {
     addCompletion(keywordList, DEFAULT_TAIL_TYPE);
   }
 
-  public void addCompletion(String[] keywordList, int tailType){
+  public void addCompletion(String[] keywordList, TailType tailType){
     for (String aKeywordList : keywordList) {
       addCompletion(aKeywordList, tailType);
     }
@@ -390,9 +390,9 @@ public class CompletionVariant {
 
   protected static class CompletionVariantItem{
     public Object myCompletion;
-    public int myTailType;
+    public TailType myTailType;
 
-    public CompletionVariantItem(Object completion, int tailtype){
+    public CompletionVariantItem(Object completion, TailType tailtype){
       myCompletion = completion;
       myTailType = tailtype;
     }

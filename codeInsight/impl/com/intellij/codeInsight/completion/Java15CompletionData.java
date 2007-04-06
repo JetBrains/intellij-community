@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.*;
+import com.intellij.codeInsight.TailType;
 
 /**
  * @author ven
@@ -61,7 +61,7 @@ public class Java15CompletionData extends JavaCompletionData {
           }, 2)
       )));
       final CompletionVariant variant = new CompletionVariant(PsiReferenceExpression.class, position);
-      variant.addCompletionFilterOnElement(new ClassFilter(PsiEnumConstant.class), ':');
+      variant.addCompletionFilterOnElement(new ClassFilter(PsiEnumConstant.class), TailType.getSimpleTailType(':'));
       registerVariant(variant);
     }
   }

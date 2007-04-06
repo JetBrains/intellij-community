@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CompletionUtil {
-  public static final Key TAIL_TYPE_ATTR = Key.create("tailType"); // one of constants defined in TailType interface
+  public static final Key TAIL_TYPE_ATTR = Key.create("tailType"); // one of constants defined in SimpleTailType interface
 
   private static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR =
     Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"

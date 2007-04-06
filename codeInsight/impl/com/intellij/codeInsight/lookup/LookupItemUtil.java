@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -29,12 +29,12 @@ public class LookupItemUtil{
 
   @Nullable
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix) {
-    return addLookupItem(set, object, prefix, -1);
+    return addLookupItem(set, object, prefix, TailType.UNKNOWN);
   }
 
   @Nullable
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, InsertHandler handler) {
-    LookupItem item = addLookupItem(set, object, prefix, -1);
+    LookupItem item = addLookupItem(set, object, prefix, TailType.UNKNOWN);
     if (item != null) {
       item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, handler);
     }
@@ -42,7 +42,7 @@ public class LookupItemUtil{
   }
 
   @Nullable
-  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, int tailType) {
+  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, TailType tailType) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {
@@ -60,7 +60,7 @@ public class LookupItemUtil{
     String text = item.getLookupString();
     if (CompletionUtil.startsWith(text, prefix)) {
       item.setLookupString(text);
-      if (tailType >= 0) {
+      if (tailType != TailType.UNKNOWN) {
         item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
       }
       return set.add(item) ? item : null;
@@ -110,7 +110,7 @@ public class LookupItemUtil{
       }
       s = PsiUtil.getName(element);
     }
-    int tailType = TailType.NONE;
+    TailType tailType = TailType.NONE;
     if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;
       s = method.getName();

@@ -41,10 +41,10 @@ public class ResolveCache {
   private final PsiManagerEx myManager;
 
 
-  public static interface AbstractResolver<Ref,Result> {
+  public static interface AbstractResolver<Ref extends PsiReference,Result> {
     Result resolve(Ref ref, boolean incompleteCode);
   }
-  public static interface PolyVariantResolver extends AbstractResolver<PsiPolyVariantReference,ResolveResult[]> {
+  public static interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
   }
 
   public static interface Resolver extends AbstractResolver<PsiReference,PsiElement>{
@@ -115,7 +115,7 @@ public class ResolveCache {
 
   private <Ref extends PsiReference, Result> Result resolve(Ref ref,
                                         AbstractResolver<Ref, Result> resolver,
-                                        Map<Ref,Reference<Result>>[] maps,
+                                        Map<? super Ref,Reference<Result>>[] maps,
                                         boolean needToPreventRecursion,
                                         boolean incompleteCode) {
     ProgressManager.getInstance().checkCanceled();
@@ -149,8 +149,8 @@ public class ResolveCache {
     return result;
   }
 
-  public ResolveResult[] resolveWithCaching(PsiPolyVariantReference ref,
-                                            PolyVariantResolver resolver,
+   public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(T ref,
+                                            PolyVariantResolver<T> resolver,
                                             boolean needToPreventRecursion,
                                             boolean incompleteCode) {
     ResolveResult[] result = resolve(ref, resolver, myPolyVariantResolveMaps, needToPreventRecursion, incompleteCode);
@@ -211,13 +211,13 @@ public class ResolveCache {
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
   }
 
-  private static <Ref,Result>Result getCached(Ref ref, Map<Ref,Reference<Result>>[] maps, boolean physical, boolean ic){
+  private static <Ref,Result>Result getCached(Ref ref, Map<? super Ref,Reference<Result>>[] maps, boolean physical, boolean ic){
     int index = getIndex(physical, ic);
     Reference<Result> reference = maps[index].get(ref);
     if(reference == null) return null;
     return reference.get();
   }
-  private <Ref,Result> void cache(Ref ref, Result result, Map<Ref,Reference<Result>>[] maps, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
+  private <Ref,Result> void cache(Ref ref, Result result, Map<? super Ref,Reference<Result>>[] maps, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
     if (clearCountOnStart != myClearCount.intValue() && result != null) return;
 
     int index = getIndex(physical, incompleteCode);

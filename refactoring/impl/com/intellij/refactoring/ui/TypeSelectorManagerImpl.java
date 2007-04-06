@@ -94,7 +94,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes != null && expectedTypes.length > 0) {
           final ExpectedTypeInfo
-              typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+              typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE.getOldTailType());
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);

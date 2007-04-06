@@ -3,6 +3,7 @@ package com.intellij.mock;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   }
 
   public PomModel getModel() {
-    return getComponent(PomModel.class);
+    return ServiceManager.getService(this, PomModel.class);
   }
 
   public boolean isDummy() {

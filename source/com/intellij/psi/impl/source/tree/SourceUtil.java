@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -30,13 +31,11 @@ public class SourceUtil implements Constants {
     if (element instanceof LeafElement) {
       return ((LeafElement)element).copyTo(buffer, offset);
     }
-    else {
-      int curOffset = offset;
-      for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
-        curOffset = toBuffer(child, buffer, curOffset, skipTypes);
-      }
-      return curOffset;
+    int curOffset = offset;
+    for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
+      curOffset = toBuffer(child, buffer, curOffset, skipTypes);
     }
+    return curOffset;
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
@@ -115,9 +114,10 @@ public class SourceUtil implements Constants {
     }
   }
 
-  public static void dequalifyImpl(CompositeElement reference) {
+  public static void dequalifyImpl(@NotNull CompositeElement reference) {
     final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
-    if (qualifier == null) return;
-    reference.deleteChildInternal(qualifier);
+    if (qualifier != null) {
+      reference.deleteChildInternal(qualifier);
+    }
   }
 }

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.TailType;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -401,7 +401,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, true);
       variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, '{');
+      variant.addCompletion(PsiKeyword.FINALLY, TailType.getSimpleTailType('{'));
       variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -420,7 +420,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, false);
       variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, '{');
+      variant.addCompletion(PsiKeyword.FINALLY, TailType.getSimpleTailType('{'));
       //variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -522,7 +522,7 @@ public class JavaCompletionData extends CompletionData{
               ))))));
       variant.includeScopeClass(PsiSwitchStatement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
-      variant.addCompletion(PsiKeyword.DEFAULT, ':');
+      variant.addCompletion(PsiKeyword.DEFAULT, TailType.getSimpleTailType(':'));
       registerVariant(variant);
     }
 
@@ -584,7 +584,7 @@ public class JavaCompletionData extends CompletionData{
     {
       // null completion
       final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
-      variant.addCompletion(PsiKeyword.NULL,TailType.NONE);
+      variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
       variant.includeScopeClass(PsiExpressionList.class);
       registerVariant(variant);
     }
@@ -607,7 +607,7 @@ public class JavaCompletionData extends CompletionData{
     addPrimitiveTypes(variant, CompletionVariant.DEFAULT_TAIL_TYPE);
   }
 
-  private static void addPrimitiveTypes(CompletionVariant variant, int tailType){
+  private static void addPrimitiveTypes(CompletionVariant variant, TailType tailType){
     variant.addCompletion(new String[]{
       PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
       PsiKeyword.DOUBLE, PsiKeyword.LONG,
@@ -620,7 +620,7 @@ public class JavaCompletionData extends CompletionData{
     variant.addCompletion(PsiKeyword.SWITCH, TailType.LPARENTH);
     variant.addCompletion(PsiKeyword.WHILE, TailType.LPARENTH);
     variant.addCompletion(PsiKeyword.FOR, TailType.LPARENTH);
-    variant.addCompletion(PsiKeyword.TRY, '{');
+    variant.addCompletion(PsiKeyword.TRY, TailType.getSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);

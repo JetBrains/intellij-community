@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -232,7 +231,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
+    return getManager().getFileManager().getResolveScope(this);
   }
 
   @NotNull

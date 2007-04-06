@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.TailType;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.impl.Pattern;

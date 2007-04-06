@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -10,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -20,23 +21,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +59,17 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   public void handleInsert(final CompletionContext context,
                            int startOffset, LookupData data, LookupItem item,
                            final boolean signatureSelected, final char completionChar) {
+    if (!(item instanceof SimpleLookupItem)) {
+      if (item.getObject() instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)item.getObject();
+        SimpleLookupItem simpleItem = new SimpleLookupItem(method, item.getLookupString()).setInsertHandler(SimpleInsertHandlerFactory.createMethodInsertHandler(method));
+        simpleItem.setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR));
+        simpleItem.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR));
+        ((InsertHandler) simpleItem.getAttribute(LookupItem.INSERT_HANDLER_ATTR)).handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);
+        return;
+      }
+    }
+
     DefaultInsertHandler delegate = this;
 
     if (isTemplateToBeCompleted(item)) {
@@ -117,7 +127,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         return false;
     }
 
-    int tailType = getTailType(completionChar);
+    TailType tailType = getTailType(completionChar);
 
     adjustContextAfterLookupStringInsertion();
     myState = new InsertHandlerState(myContext.selectionEndOffset, myContext.selectionEndOffset);
@@ -212,7 +222,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
            && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
   }
 
-  private int modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, int tailType) {
+  private TailType modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, TailType tailType) {
     Object completion = myLookupItem.getObject();
     if(completion instanceof PsiMethod){
       final PsiMethod method = ((PsiMethod)completion);
@@ -254,7 +264,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private void handleParenses(final boolean hasParams, final boolean needParenth, int tailType){
+  private void handleParenses(final boolean hasParams, final boolean needParenth, TailType tailType){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
     boolean insertRightParenth = !settings.INSERT_SINGLE_PARENTH
@@ -262,7 +272,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                                  || generateAnonymousBody
                                  || (tailType != TailType.NONE && tailType != TailType.LPARENTH);
 
-//    if(tailType == TailType.LPARENTH) tailType = TailType.NONE; //???
+//    if(tailType == SimpleTailType.LPARENTH) tailType = SimpleTailType.NONE; //???
     if (needParenth){
       if (myContext.lparenthOffset >= 0){
         myState.tailOffset = myContext.argListEndOffset;
@@ -304,8 +314,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
               myState.caretOffset += 2;
             }
             else {
-              myState.caretOffset++;
               myState.tailOffset++;
+              myState.caretOffset++;
             }
           }
         }
@@ -322,7 +332,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private boolean isToInsertParenth(int tailType){
+  private boolean isToInsertParenth(TailType tailType){
     boolean needParens = false;
     if (tailType == TailType.LPARENTH){
       needParens = true;
@@ -434,9 +444,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private boolean insertingAnnotation() {
     final Object obj = myLookupItem.getObject();
-    if (!(obj instanceof PsiClass)) return false;
-    final PsiClass aClass = ((PsiClass)obj);
-    return aClass.isAnnotationType();
+    return obj instanceof PsiClass && ((PsiClass)obj).isAnnotationType();
   }
 
   private boolean hasOverloads() {
@@ -467,43 +475,24 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private int getTailType(final char completionChar){
-    final Integer attr = (Integer)myLookupItem.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
-    int tailType = attr != null ? attr.intValue() : TailType.NONE;
+  private TailType getTailType(final char completionChar){
+    return getTailType(completionChar, myLookupItem);
+  }
 
+  @NotNull
+  public static TailType getTailType(final char completionChar, final LookupItem item) {
     switch(completionChar){
-      case '.':
-        tailType = TailType.DOT;
-        break;
-      case ',':
-        tailType = TailType.COMMA;
-        break;
-      case ';':
-        tailType = TailType.SEMICOLON;
-        break;
-      case '=':
-        tailType = TailType.EQ;
-        break;
-      case ' ':
-        tailType = TailType.SPACE;
-        break;
-      case ':':
-        tailType = TailType.CASE_COLON; //?
-        break;
-      case '(':
-        tailType = TailType.LPARENTH;
-        break;
-      case '<':
-        tailType = '<';
-        break;
-      case '>':
-        tailType = '>';
-        break;
-      case '[':
-        tailType = '[';
-        break;
+      case '.': return TailType.DOT;
+      case ',': return TailType.COMMA;
+      case ';': return TailType.SEMICOLON;
+      case '=': return TailType.EQ;
+      case ' ': return TailType.SPACE;
+      case ':': return TailType.CASE_COLON; //?
+      case '(': return TailType.LPARENTH;
+      case '<': case '>': case '[': return TailType.getSimpleTailType(completionChar);
     }
-    return tailType;
+    final TailType attr = (TailType)item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+    return attr != null ? attr : TailType.NONE;
   }
 
   private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){
@@ -536,312 +525,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     );
   }
 
-  private int processTail(int tailType, int caretOffset, int tailOffset) {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    int textLength = myDocument.getTextLength();
-    CharSequence chars = myDocument.getCharsSequence();
-
-    switch(tailType){
-      case TailType.NONE:
-        break;
-      case TailType.SEMICOLON:
-        if (tailOffset == textLength || chars.charAt(tailOffset) != ';'){
-          myDocument.insertString(tailOffset, ";");
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-        break;
-      case TailType.COMMA:
-        if (styleSettings.SPACE_BEFORE_COMMA){
-          if (tailOffset == textLength || chars.charAt(tailOffset) != ' '){
-            myDocument.insertString(tailOffset, " ");
-          }
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-        }
-
-        if (tailOffset == textLength || chars.charAt(tailOffset) != ','){
-          myDocument.insertString(tailOffset, ",");
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-
-        if (styleSettings.SPACE_AFTER_COMMA){
-          if (tailOffset == textLength || chars.charAt(tailOffset) != ' '){
-            myDocument.insertString(tailOffset, " ");
-          }
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-        }
-        break;
-
-      case TailType.SPACE:
-        if (tailOffset == textLength || chars.charAt(tailOffset) != ' '){
-          myDocument.insertString(tailOffset, " ");
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-        break;
-
-      case TailType.DOT:
-        if (tailOffset == textLength || chars.charAt(tailOffset) != '.'){
-          myDocument.insertString(tailOffset, ".");
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-        break;
-
-      case TailType.CAST_RPARENTH:
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.casting");
-        // no breaks over here!!!
-      case TailType.CALL_RPARENTH:
-      case TailType.IF_RPARENTH:
-      case TailType.WHILE_RPARENTH:
-      case TailType.CALL_RPARENTH_SEMICOLON:
-        caretOffset = processRparenthTail(tailType, caretOffset, tailOffset);
-        break;
-
-      case TailType.COND_EXPR_COLON:
-        if (tailOffset < textLength - 1 && chars.charAt(tailOffset) == ' ' && chars.charAt(tailOffset + 1) == ':'){
-          if (caretOffset == tailOffset){
-            caretOffset += 2;
-          }
-          tailOffset += 2;
-        }
-        else if (tailOffset < textLength && chars.charAt(tailOffset) == ':'){
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-        }
-        else{
-          myDocument.insertString(tailOffset, " : ");
-          if (caretOffset == tailOffset){
-            caretOffset += 3;
-          }
-          tailOffset += 3;
-        }
-        break;
-
-      case TailType.EQ:
-        if (tailOffset < textLength - 1 && chars.charAt(tailOffset) == ' ' && chars.charAt(tailOffset + 1) == '='){
-          if (caretOffset == tailOffset){
-            caretOffset += 2;
-          }
-          tailOffset += 2;
-        }
-        else if (tailOffset < textLength && chars.charAt(tailOffset) == '='){
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-        }
-        else{
-          if (styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS){
-            myDocument.insertString(tailOffset, " =");
-            textLength+=2;
-            if (caretOffset == tailOffset){
-              caretOffset += 2;
-            }
-            tailOffset += 2;
-          }
-          else{
-            myDocument.insertString(tailOffset, "=");
-            textLength++;
-            if (caretOffset == tailOffset){
-              caretOffset++;
-            }
-            tailOffset++;
-          }
-        }
-        if (styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS){
-          if (tailOffset == textLength || chars.charAt(tailOffset) != ' '){
-            myDocument.insertString(tailOffset, " ");
-          }
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-        }
-        break;
-      case TailType.CASE_COLON:
-        if (tailOffset == textLength || chars.charAt(tailOffset) != ':'){
-          myDocument.insertString(tailOffset, ":");
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-        break;
-
-      default:
-        if (tailOffset == textLength || chars.charAt(tailOffset) != tailType){
-          myDocument.insertString(tailOffset, "" + (char)tailType);
-        }
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-        break;
-      case TailType.UNKNOWN:
-      case TailType.LPARENTH:
-    }
-    return caretOffset;
-  }
-
-  private int processRparenthTail(int tailType, int caretOffset, int tailOffset) {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    CharSequence chars = myDocument.getCharsSequence();
-    int textLength = myDocument.getTextLength();
-
-    EditorHighlighter highlighter = ((EditorEx) myEditor).getHighlighter();
-
-    int existingRParenthOffset = -1;
-    for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
-      final IElementType tokenType = iterator.getTokenType();
-
-      if (tokenType instanceof IJavaElementType && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType) ||
-          tokenType == TokenType.WHITE_SPACE) {
-        continue;
-      }
-
-      if (tokenType == JavaTokenType.RPARENTH){
-        existingRParenthOffset = iterator.getStart();
-      }
-      break;
-    }
-
-    if (existingRParenthOffset >= 0){
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      TextRange range = getRangeToCheckParensBalance(myFile, myDocument, myStartOffset);
-      int balance = calcParensBalance(myDocument, highlighter, range.getStartOffset(), range.getEndOffset());
-      if (balance > 0){
-        existingRParenthOffset = -1;
-      }
-    }
-
-    boolean spaceWithinParens;
-    switch(tailType){
-      case TailType.CALL_RPARENTH:
-      case TailType.CALL_RPARENTH_SEMICOLON:
-        spaceWithinParens = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
-        break;
-
-      case TailType.IF_RPARENTH:
-        spaceWithinParens = styleSettings.SPACE_WITHIN_IF_PARENTHESES;
-        break;
-
-      case TailType.WHILE_RPARENTH:
-        spaceWithinParens = styleSettings.SPACE_WITHIN_WHILE_PARENTHESES;
-        break;
-
-      case TailType.CAST_RPARENTH:
-        spaceWithinParens = styleSettings.SPACE_WITHIN_CAST_PARENTHESES;
-        caretOffset = tailOffset;
-        break;
-
-      default:
-        spaceWithinParens = false;
-        LOG.assertTrue(false);
-    }
-
-    if (existingRParenthOffset < 0){
-      if (spaceWithinParens){
-        myDocument.insertString(tailOffset, " ");
-        if (caretOffset == tailOffset){
-          caretOffset++;
-        }
-        tailOffset++;
-      }
-      myDocument.insertString(tailOffset, ")");
-      if (caretOffset == tailOffset){
-        caretOffset++;
-      }
-      tailOffset++;
-    }
-    else{
-      if (spaceWithinParens){
-        if (tailOffset == existingRParenthOffset){
-          myDocument.insertString(tailOffset, " ");
-          if (caretOffset == tailOffset){
-            caretOffset++;
-          }
-          tailOffset++;
-          existingRParenthOffset++;
-        }
-      }
-      if (caretOffset == tailOffset){
-        caretOffset = existingRParenthOffset + 1;
-      }
-      tailOffset = existingRParenthOffset + 1;
-    }
-
-    if (tailType == TailType.CAST_RPARENTH && styleSettings.SPACE_AFTER_TYPE_CAST){
-      if (tailOffset == textLength || chars.charAt(tailOffset) != ' '){
-        myDocument.insertString(tailOffset, " ");
-      }
-      if (caretOffset == tailOffset){
-        caretOffset++;
-      }
-      tailOffset++;
-    }
-
-    if (tailType == TailType.CALL_RPARENTH_SEMICOLON){
-      if (tailOffset == textLength || chars.charAt(tailOffset) != ';'){
-        myDocument.insertString(tailOffset, ";");
-      }
-      if (caretOffset == tailOffset){
-        caretOffset++;
-      }
-      tailOffset++;
-    }
-
-    return caretOffset;
-  }
-
-  private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
-    PsiElement element = file.findElementAt(startOffset);
-    while(element != null){
-      if (element instanceof PsiStatement) break;
-
-      element = element.getParent();
-    }
-
-    if (element == null) return new TextRange(0, document.getTextLength());
-
-    return element.getTextRange();
-  }
-
-  private static int calcParensBalance(Document document, EditorHighlighter highlighter, int rangeStart, int rangeEnd){
-    LOG.assertTrue(0 <= rangeStart);
-    LOG.assertTrue(rangeStart <= rangeEnd);
-    LOG.assertTrue(rangeEnd <= document.getTextLength());
-
-    HighlighterIterator iterator = highlighter.createIterator(rangeStart);
-    int balance = 0;
-    while(!iterator.atEnd() && iterator.getStart() < rangeEnd){
-      IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LPARENTH){
-        balance++;
-      }
-      else if (tokenType == JavaTokenType.RPARENTH){
-        balance--;
-      }
-      iterator.advance();
-    }
-    return balance;
+  private int processTail(TailType tailType, int caretOffset, int tailOffset) {
+    myEditor.getCaretModel().moveToOffset(caretOffset);
+    tailType.processTail(myEditor, tailOffset);
+    return myEditor.getCaretModel().getOffset();
   }
 
   private void generateAnonymousBody(){
