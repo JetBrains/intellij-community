@@ -351,6 +351,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       if (parent != null) {
         parent.registerCustomType(def);
       }
+      else {
+        antFile.registerCustomType(def);
+      }
       if (antFile != null) {
         for (final AntTypeId typeId : def.getNestedElements()) {
           final String nestedClassName = def.getNestedClassName(typeId);
@@ -358,9 +361,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
           if (nestedDef == null) {
             nestedDef = loadClass(antFile, nestedClassName, typeId.getName(), uri, null);
             if (nestedDef != null) {
-              nestedDef.setDefiningElement(this);
               def.registerNestedType(nestedDef.getTypeId(), nestedDef.getClassName());
-              antFile.registerCustomType(nestedDef);
             }
           }
         }
