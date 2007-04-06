@@ -1,0 +1,35 @@
+try {foo}
+catch  (Exception1 e1 {}
+finally{ doNothing }
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      Reference expression
+        PsiElement(identifier)('foo')
+      PsiElement(})('}')
+    PsiElement(new line)('\n')
+    PsiElement(catch)('catch')
+    PsiWhiteSpace('  ')
+    PsiElement(()('(')
+    PsiErrorElement:Parameter expected
+      <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(identifier)('Exception1')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('e1')
+    PsiWhiteSpace(' ')
+    PsiElement({)('{')
+    PsiElement(})('}')
+  PsiElement(new line)('\n')
+  PsiErrorElement:'finally' without 'try'
+    PsiElement(finally)('finally')
+  PsiErrorElement:';' or new line expected
+    PsiElement({)('{')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('doNothing')
+    PsiWhiteSpace(' ')
+    PsiElement(})('}')
