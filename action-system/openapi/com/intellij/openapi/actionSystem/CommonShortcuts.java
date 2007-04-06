@@ -58,4 +58,8 @@ public class CommonShortcuts {
   public static ShortcutSet getRename() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RENAME));
   }
+
+  public static ShortcutSet getDiff() {
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+  }
 }

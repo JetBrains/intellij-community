@@ -204,9 +204,7 @@ private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalTool
       }
     };
 
-    diffAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
-      myViewer);
+    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
     toolBarGroup.add(diffAction);
   }
 

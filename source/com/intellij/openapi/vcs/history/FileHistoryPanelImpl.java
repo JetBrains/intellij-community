@@ -50,7 +50,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -495,7 +494,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     final MyDiffAction diffAction = new MyDiffAction();
-    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), this);
+    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     result.add(diffAction);
     MyDiffWithCurrentAction diffWithCurrent = new MyDiffWithCurrentAction();
     if (!popup) {
