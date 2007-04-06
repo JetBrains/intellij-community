@@ -259,7 +259,11 @@ public abstract class BaseRefactoringProcessor {
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {
         final Set<Usage> excludedUsageInfos = getExcludedUsages(usageView);
-        doRefactoring(usageView.getUsages(), excludedUsageInfos);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            doRefactoring(usageView.getUsages(), excludedUsageInfos);
+          }
+        });
       }
     };
 
@@ -281,6 +285,8 @@ public abstract class BaseRefactoringProcessor {
   }
 
   private void doRefactoring(Collection<Usage> usagesSet, Set<Usage> excludedUsages) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     final Set<UsageInfo> usageInfoSet = new HashSet<UsageInfo>();
     if (usagesSet != null) {
       usagesSet.removeAll(excludedUsages);
@@ -302,19 +308,15 @@ public abstract class BaseRefactoringProcessor {
 
     final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          RefactoringListenerManagerImpl listenerManager =
-              (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
-          myTransaction = listenerManager.startTransaction();
-          Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
-          performRefactoring(usages);
-          removeRedundantImports(touchedJavaFiles);
-          myTransaction.commit();
-          performPsiSpoilingRefactoring();
-        }
-      });
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      RefactoringListenerManagerImpl listenerManager =
+          (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
+      myTransaction = listenerManager.startTransaction();
+      Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
+      performRefactoring(usages);
+      removeRedundantImports(touchedJavaFiles);
+      myTransaction.commit();
+      performPsiSpoilingRefactoring();
     }
     finally {
         LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
