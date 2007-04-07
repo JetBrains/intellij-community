@@ -1,0 +1,19 @@
+C.foo{println it}
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('C')
+    PsiElement(.)('.')
+    Property selector
+      PsiElement(identifier)('foo')
+    Open block
+      PsiElement({)('{')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('it')
+      PsiElement(})('}')
