@@ -508,7 +508,6 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
     public void projectClosing(Project project) {
       myIsApplicationExitingOrProjectClosing = true;
-      ProjectManagerEx.getInstanceEx().removeProjectManagerListener(myProject, this);
     }
   }
 }
