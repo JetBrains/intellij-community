@@ -425,7 +425,7 @@ public class DependencyProcessor {
   }
 
   private boolean isDependentOnChangedMembers(Dependency dependency) {
-    MemberInfo[] usedMembers = dependency.getUsedMembers();
+    final MemberInfo[] usedMembers = dependency.getUsedMembers();
     for (final MemberInfo usedMember : usedMembers) {
       if (myChangedMembers.contains(usedMember)) {
         if (usedMember instanceof MethodInfo) {
@@ -509,7 +509,7 @@ public class DependencyProcessor {
           return true;
         }
 
-        int subclassId = oldCache.getClassId(subclassQName);
+        final int subclassId = oldCache.getClassId(subclassQName);
         if (subclassId == Cache.UNKNOWN) {
           return true;
         }
@@ -547,6 +547,7 @@ public class DependencyProcessor {
           }
         }
 
+        final int subclassDeclarationId = oldCache.getClassDeclarationId(subclassQName);
         // process added members
         for (final MemberInfo member : myAddedMembers) {
           if (member instanceof MethodInfo) {
@@ -562,7 +563,7 @@ public class DependencyProcessor {
               return true;
             }
             if (!method.isPrivate()) {
-              int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
+              int derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, method.getDescriptor(symbolTable), symbolTable);
               if (derivedMethod != Cache.UNKNOWN) {
                 if (!method.getReturnTypeDescriptor(symbolTable).equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
                   if (myDependencyCache.markClass(subclassQName)) {
@@ -604,7 +605,7 @@ public class DependencyProcessor {
             }
           }
           else if (member instanceof FieldInfo) {
-            if (oldCache.findFieldByName(oldCache.getClassDeclarationId(subclassQName), member.getName()) != Cache.UNKNOWN) {
+            if (oldCache.findFieldByName(subclassDeclarationId, member.getName()) != Cache.UNKNOWN) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
@@ -632,7 +633,10 @@ public class DependencyProcessor {
                 return true;
               }
             }
-            int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
+            
+            final String oldMethodDescriptor = oldMethod.getDescriptor(symbolTable);
+            
+            final int derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, oldMethodDescriptor, symbolTable);
             if (derivedMethod != Cache.UNKNOWN) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
@@ -641,6 +645,26 @@ public class DependencyProcessor {
               }
               return true;
             }
+            // now check if the changed method is compatible with methods declared in implemented interfaces of subclasses
+            myDependencyCache.getCacheNavigator().walkSuperInterfaces(subclassQName, new ClassInfoProcessor() {
+              boolean found = false;
+              public boolean process(final int ifaceQName) throws CacheCorruptedException {
+                if (found) {
+                  return false;
+                }
+                final int implementee = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(ifaceQName), oldMethodDescriptor, symbolTable);
+                if (implementee != Cache.UNKNOWN) {
+                  found = true;
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method, implementing corresponding method inherited from an interface" + oldMethod);
+                    }
+                  }
+                }
+                return !found;
+              }
+            });
+
           }
         }
 

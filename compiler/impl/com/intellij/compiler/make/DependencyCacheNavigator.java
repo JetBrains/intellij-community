@@ -47,6 +47,23 @@ public class DependencyCacheNavigator {
     }
   }
 
+  public void walkSuperInterfaces(int classQName, ClassInfoProcessor processor) throws CacheCorruptedException {
+    final int classId = myCache.getClassId(classQName);
+    if (classId == Cache.UNKNOWN) {
+      return;
+    }
+
+    final int[] superInterfaces = myCache.getSuperInterfaces(classId);
+    for (int superInterfaceQName : superInterfaces) {
+      int superInfoId = myCache.getClassId(superInterfaceQName);
+      if (superInfoId != Cache.UNKNOWN) {
+        if (processor.process(superInterfaceQName)) {
+          walkSuperInterfaces(superInterfaceQName, processor);
+        }
+      }
+    }
+  }
+
   public void walkSubClasses(int fromClassQName, ClassInfoProcessor processor) throws CacheCorruptedException {
     final int[] subclasses = myCache.getSubclasses(myCache.getClassId(fromClassQName));
     for (int subQName : subclasses) {
