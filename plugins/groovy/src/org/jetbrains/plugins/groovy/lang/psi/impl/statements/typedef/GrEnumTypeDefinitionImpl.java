@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -31,5 +32,9 @@ public class GrEnumTypeDefinitionImpl extends GroovyPsiElementImpl implements Gr
 
   public String toString() {
     return "Enumeration definition";
+  }
+
+  public GrBody getBody() {
+    return null;
   }
 }

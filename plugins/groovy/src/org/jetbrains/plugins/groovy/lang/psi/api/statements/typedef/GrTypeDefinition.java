@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
 public interface GrTypeDefinition extends GroovyPsiElement {
+
+  public GrBody getBody();
+
 }

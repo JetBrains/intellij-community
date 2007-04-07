@@ -93,16 +93,18 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
+/*
       //if there is no OpenOrClosableBlock, nls haven'to be eaten
       PsiBuilder.Marker nlsMarker = builder.mark();
-
       if (mNLS.equals(NlsWarn.parse(builder)) && !ParserUtils.lookAhead(builder, mLPAREN)) {
         nlsMarker.rollbackTo();
       } else {
         nlsMarker.drop();
       }
+*/
+      ParserUtils.getToken(builder, mNLS);
 
-      OpenOrClosableBlock.parse(builder);
+      OpenOrClosableBlock.parseOpenBlock(builder);
 
       if (isEnumConstantMember) {
 //        varMarker.done(ENUM_CONSTANT_MEMBER);

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -34,5 +35,9 @@ public class GrConstructorDefinitionImpl extends GroovyPsiElementImpl implements
   public String toString()
   {
     return "Constructor";
+  }
+
+  public GrOpenBlock getBody() {
+    return this.findChildByClass(GrOpenBlock.class);
   }
 }

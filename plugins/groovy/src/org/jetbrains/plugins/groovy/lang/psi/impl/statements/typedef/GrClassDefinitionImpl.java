@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -31,8 +32,11 @@ public class GrClassDefinitionImpl extends GroovyPsiElementImpl implements GrCla
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString(){
     return "Class definition";
+  }
+
+  public GrBody getBody() {
+    return this.findChildByClass(GrBody.class);
   }
 }
