@@ -26,7 +26,7 @@ public class CreatePackageTestAction extends AnAction
         event.getPresentation().setEnabled(pkg != null);
         if (pkg != null) {
             event.getPresentation().setText("Create \"Tests in '" + pkg.getQualifiedName() + "'\"...");
-            module = (Module) event.getDataContext().getData(DataConstants.MODULE);
+            module = (Module) event.getDataContext().getData(DataKeys.MODULE.getName());
         } else {
             module = null;
         }
@@ -42,7 +42,7 @@ public class CreatePackageTestAction extends AnAction
     }
 
     PsiPackage getSelectedPackage(DataContext context) {
-        final PsiElement element = (PsiElement) context.getData(DataConstants.PSI_ELEMENT);
+        final PsiElement element = (PsiElement) context.getData(DataKeys.PSI_ELEMENT.getName());
         if (element == null) {
             return null;
         }

@@ -7,7 +7,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import com.intellij.execution.junit2.ui.PoolOfTestIcons;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -56,19 +56,19 @@ public class TestTreeView extends Tree implements DataProvider
     }
 
     public Object getData(String dataId) {
-        if (dataId.equals(DataConstants.PROJECT) || dataId.equals(DataConstants.PROJECT_CONTEXT)) return project;
+        if (dataId.equals(DataKeys.PROJECT.getName()) || dataId.equals(DataKeys.PROJECT_CONTEXT.getName())) return project;
         TreePath treepath = getSelectionPath();
         if (treepath == null)
             return null;
         TestProxy proxy = getObject(treepath);
         if (proxy == null)
             return null;
-        if (dataId.equals(DataConstants.PSI_ELEMENT)) return proxy.getPsiElement();
-        if (dataId.equals(DataConstants.PSI_FILE) && proxy.getPsiElement() != null)
+        if (dataId.equals(DataKeys.PSI_ELEMENT.getName())) return proxy.getPsiElement();
+        if (dataId.equals(DataKeys.PSI_FILE.getName()) && proxy.getPsiElement() != null)
             return proxy.getPsiElement().getContainingFile();
-        if (dataId.equals(DataConstants.VIRTUAL_FILE) && proxy.getPsiElement() != null && proxy.getPsiElement().getContainingFile() != null)
+        if (dataId.equals(DataKeys.VIRTUAL_FILE.getName()) && proxy.getPsiElement() != null && proxy.getPsiElement().getContainingFile() != null)
             return proxy.getPsiElement().getContainingFile().getVirtualFile();
-        if (dataId.equals(DataConstants.NAVIGATABLE) || dataId.equals(DataConstants.NAVIGATABLE_ARRAY)) {
+        if (dataId.equals(DataKeys.NAVIGATABLE.getName()) || dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) {
             PsiElement element = proxy.getPsiElement();
             Navigatable item = null;
             if (element instanceof PsiClass) {
@@ -78,7 +78,7 @@ public class TestTreeView extends Tree implements DataProvider
                                               ((PsiMethod) element).getBody().getLBrace().getTextRange().getEndOffset());
             }
             if (item == null) return null;
-            if (dataId.equals(DataConstants.NAVIGATABLE)) {
+            if (dataId.equals(DataKeys.NAVIGATABLE.getName())) {
                 return item;
             } else {
                 return new Navigatable[] {item};
