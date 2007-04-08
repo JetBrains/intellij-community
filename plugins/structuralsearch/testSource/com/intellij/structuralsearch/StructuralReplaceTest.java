@@ -7,11 +7,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 4, 2004
- * Time: 9:18:10 PM
- * To change this template use File | Settings | File Templates.
+ * @by Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
@@ -1713,6 +1709,45 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(
       "Replacing jsp expressions",
       jspResultExpected,
+      actualResult
+    );
+  }
+
+  public void testTryCatchInLoop() throws Exception {
+    String code = "for (int i = 0; i < MIMEHelper.MIME_MAP.length; i++)\n" +
+                "{\n" +
+                "  String s = aFileNameWithOutExtention + MIMEHelper.MIME_MAP[i][0][0];\n" +
+                "  try\n" +
+                "  {\n" +
+                "    if (ENABLE_Z107_READING)\n" +
+                "    { in = aFileNameWithOutExtention.getClass().getResourceAsStream(s); }\n" +
+                "    else\n" +
+                "    { data = ResourceHelper.readResource(s); }\n" +
+                "    mime = MIMEHelper.MIME_MAP[i][1][0];\n" +
+                "    break;\n" +
+                "  }\n" +
+                "  catch (final Exception e)\n" +
+                "  { continue; }\n" +
+                "}";
+    String toFind = "try { 'TryStatement*; } catch(Exception 'ExceptionDcl) { 'CatchStatement*; }";
+    String replacement = "try { $TryStatement$; }\n" + "catch(Throwable $ExceptionDcl$) { $CatchStatement$; }";
+    String expectedResult = "for (int i = 0; i < MIMEHelper.MIME_MAP.length; i++)\n" +
+                            "{\n" +
+                            "  String s = aFileNameWithOutExtention + MIMEHelper.MIME_MAP[i][0][0];\n" +
+                            "  try { if (ENABLE_Z107_READING)\n" +
+                            "    { in = aFileNameWithOutExtention.getClass().getResourceAsStream(s); }\n" +
+                            "    else\n" +
+                            "    { data = ResourceHelper.readResource(s); }\n" +
+                            "mime = MIMEHelper.MIME_MAP[i][1][0];\n" +
+                            "break; }\n" +
+                            "catch(final  Throwable e) { continue; }\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(code,toFind,replacement,options);
+
+    assertEquals(
+      "Replacing try/catch in loop",
+      expectedResult,
       actualResult
     );
   }

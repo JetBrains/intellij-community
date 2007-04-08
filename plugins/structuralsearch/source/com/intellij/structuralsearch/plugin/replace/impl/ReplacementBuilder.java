@@ -292,6 +292,8 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
           ( element instanceof PsiReturnStatement ||
             element instanceof PsiDeclarationStatement ||
             element instanceof PsiAssertStatement ||
+            element instanceof PsiBreakStatement ||
+            element instanceof PsiContinueStatement ||
             element instanceof PsiMember ||
             false //( element instanceof PsiComment &&
             //  ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT
