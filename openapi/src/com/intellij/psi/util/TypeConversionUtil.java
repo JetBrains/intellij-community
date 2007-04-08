@@ -163,9 +163,11 @@ public class TypeConversionUtil {
       return bound == null || isNarrowingReferenceConversionAllowed(fromType, bound);
     }
 
-    if (toType instanceof PsiCapturedWildcardType) return false;
+    if (toType instanceof PsiCapturedWildcardType) {
+      return isNarrowingReferenceConversionAllowed(toType, ((PsiCapturedWildcardType)toType).getWildcard());
+    }
     if (fromType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getUpperBound(), toType);
+      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getWildcard(), toType);
     }
 
     if (isAssignable(fromType, toType)) return true;
