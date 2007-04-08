@@ -419,10 +419,12 @@ public class AnalysisScope {
       PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         public void run() {
           file.accept(visitor);
+          psiManager.dropResolveCaches();
         }
       });
     } else {
       file.accept(visitor);
+      psiManager.dropResolveCaches();
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
