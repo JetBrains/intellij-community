@@ -95,29 +95,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                     return;
                 }
                 final PsiType parameter = parameters[0];
-                final PsiType type;
                 final PsiType componentType = arrayType.getComponentType();
-                if (parameter instanceof PsiWildcardType) {
-                    final PsiWildcardType wildcardType = (PsiWildcardType)parameter;
-                    type = wildcardType.getBound();
-                } else if (parameter instanceof PsiClassType) {
-                    final PsiClassType classType = (PsiClassType)parameter;
-                    final String classTypeText = classType.getCanonicalText();
-                    final String componentTypeText =
-                            componentType.getCanonicalText();
-                    // compare text because in build #6795
-                    // PsiType: List<?> is not equal to PsiType: List<?>
-                    type = classType.rawType();
-                    if (!type.equals(componentType) &&
-                            !classTypeText.equals(componentTypeText)) {
-                        registerError(argument, classType);
-                    }
-                    return;
-                } else {
-                    type = parameter;
-                }
-                if (!type.equals(componentType)) {
-                    registerError(argument, type);
+                if (!componentType.isAssignableFrom(parameter)) {
+                    registerError(argument, parameter);
                 }
             } else {
                 final PsiElement parent = expression.getParent();
