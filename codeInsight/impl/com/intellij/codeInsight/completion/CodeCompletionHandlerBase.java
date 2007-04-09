@@ -405,7 +405,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private void lookupItemSelected(final CompletionContext context,
+  final void lookupItemSelected(final CompletionContext context,
                                   final int startOffset,
                                   final LookupData data,
                                   @NotNull final LookupItem item,

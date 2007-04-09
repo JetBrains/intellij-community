@@ -167,7 +167,8 @@ public class ReferenceAdjuster implements Constants {
   private ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
     @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReference reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
-    return reference1 != null ? replaceReferenceWithShort(reference1) : reference;
+    if (reference1 != null) replaceReferenceWithShort(reference1);
+    return reference;
   }
 
   @Nullable
