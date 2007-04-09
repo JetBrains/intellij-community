@@ -40,10 +40,11 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     TreeElement child = getFirstChildNode();
     if (child instanceof ChameleonElement) {
       child = (TreeElement)child.getTransformedFirstOrSelf();
+      if (child == null) {
+        child = getFirstChildNode();
+      }
     }
     if (child == null) return null;
-    if (child instanceof PsiElement) return (PsiElement)child;
-
     return child.getPsi();
   }
 
@@ -52,23 +53,10 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    TreeElement childNode = firstChild;
-    while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-        childNode = (TreeElement)childNode.getTransformedFirstOrSelf();
-        if (childNode == null) break;
-      }
-
-      final PsiElement psi;
-      if (childNode instanceof PsiElement) {
-        psi = (PsiElement)childNode;
-      }
-      else {
-        psi = childNode.getPsi();
-      }
-
-      psi.accept(visitor);
-      childNode = childNode.next;
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      child.accept(visitor);
+      child = child.getNextSibling();
     }
   }
 
@@ -80,14 +68,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement getNextSibling() {
-    TreeElement treeNext = getTreeNext();
-    if (treeNext instanceof ChameleonElement) {
-      treeNext = (TreeElement)treeNext.getTransformedFirstOrSelf();
-    }
-    if (treeNext == null) return null;
-    if (treeNext instanceof PsiElement) return (PsiElement)treeNext;
-
-    return treeNext.getPsi();
+    return SharedImplUtil.getNextSibling(this);
   }
 
   public PsiElement getPrevSibling() {

@@ -23,22 +23,32 @@ public class SharedImplUtil {
 
   public static PsiElement getFirstChild(ASTNode element) {
     final TreeElement firstChild = (TreeElement)element.getFirstChildNode();
-    return firstChild != null ? SourceTreeToPsiMap.treeElementToPsi(firstChild.getTransformedFirstOrSelf()) : null;
+    if (firstChild == null) return null;
+    ASTNode transformed = firstChild.getTransformedFirstOrSelf();
+    if (transformed == null) {
+      transformed = element.getFirstChildNode();
+    }
+    return SourceTreeToPsiMap.treeElementToPsi(transformed);
   }
 
   public static PsiElement getLastChild(ASTNode element) {
     final TreeElement lastChild = (TreeElement)element.getLastChildNode();
-    return lastChild != null ? lastChild.getTransformedLastOrSelf().getPsi() : null;
+    return lastChild == null ? null : lastChild.getTransformedLastOrSelf().getPsi();
   }
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
     final TreeElement treeNext = ((TreeElement)thisElement).next;
-    return treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
+    if (treeNext == null) return null;
+    ASTNode transformed = treeNext.getTransformedFirstOrSelf();
+    if (transformed == null) {
+      transformed = ((TreeElement)thisElement).next;
+    }
+    return SourceTreeToPsiMap.treeElementToPsi(transformed);
   }
 
   public static PsiElement getPrevSibling(ASTNode thisElement) {
     final TreeElement treePrev = ((TreeElement)thisElement).prev;
-    return treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
+    return treePrev == null ? null : SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf());
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {

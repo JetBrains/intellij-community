@@ -5,14 +5,12 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
@@ -41,39 +39,17 @@ public class ASTWrapperPsiElement extends PsiElementBase {
 
   @NotNull
   public PsiElement[] getChildren() {
-    final PsiElement psiChild = getFirstChild();
+    PsiElement psiChild = getFirstChild();
     if (psiChild == null) return EMPTY_ARRAY;
 
     List<PsiElement> result = new ArrayList<PsiElement>();
-    ASTNode childNode = psiChild.getNode();
-    while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-        childNode = ((TreeElement)childNode).getTransformedFirstOrSelf();
-        if (childNode == null) break;
+    while (psiChild != null) {
+      if (psiChild.getNode() instanceof CompositeElement) {
+        result.add(psiChild);
       }
-
-      if (childNode instanceof CompositeElement) {
-        result.add(childNode.getPsi());
-      }
-      childNode = childNode.getTreeNext();
+      psiChild = psiChild.getNextSibling();
     }
     return result.toArray(new PsiElement[result.size()]);
-  }
-
-  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    final PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return;
-
-    ASTNode childNode = psiChild.getNode();
-    while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-        childNode = ((TreeElement)childNode).getTransformedFirstOrSelf();
-        if (childNode == null) break;
-      }
-
-      childNode.getPsi().accept(visitor);
-      childNode = childNode.getTreeNext();
-    }
   }
 
   public PsiElement getParent() {
@@ -158,7 +134,7 @@ public class ASTWrapperPsiElement extends PsiElementBase {
   }
 
   protected PsiElement findChildByType(TokenSet type) {
-    ASTNode node = com.intellij.psi.impl.source.tree.TreeUtil.findChild(getNode(), type);
+    ASTNode node = TreeUtil.findChild(getNode(), type);
     return node == null ? null : node.getPsi();
   }
 

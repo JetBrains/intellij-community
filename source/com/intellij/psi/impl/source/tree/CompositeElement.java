@@ -29,7 +29,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private int myModificationsCount = 0;
   private int myCachedLength = -1;
   private int myHC = -1;
-  private PsiElement myWrapper = null;
+  private volatile PsiElement myWrapper = null;
 
   public CompositeElement(@NotNull IElementType type) {
     this.type = type;
@@ -58,9 +58,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private void recalcStartOffset(final int parentModificationsCount) {
     if(parentModificationsCount == myParentModifications || parent == null) return;
 
-      // recalc on parent if needed
-      final int parentParentModificationsCount = parentModificationsCount - parent.getModificationCount();
-      parent.recalcStartOffset(parentParentModificationsCount);
+    // recalc on parent if needed
+    final int parentParentModificationsCount = parentModificationsCount - parent.getModificationCount();
+    parent.recalcStartOffset(parentParentModificationsCount);
 
     CompositeElement lastKnownStart = null;
 
