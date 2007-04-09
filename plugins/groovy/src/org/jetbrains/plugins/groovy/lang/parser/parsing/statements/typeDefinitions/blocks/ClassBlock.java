@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 public class ClassBlock implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
+    //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {

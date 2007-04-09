@@ -1,6 +1,6 @@
 //full
 enum a implements A.B.C {
-  @NotNull @Property item1 (def a, String b) {
+  @NotNull @Property item1 (a, b) {
     def class a {}
     {a = 2}
     native def String a = b = 4
@@ -34,103 +34,50 @@ Groovy script
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
-      Method
-        Modifiers
-          Annotation
-            PsiElement(@)('@')
-            Qualified identifier
-              PsiElement(identifier)('NotNull')
+      Enumeration constants
+        Enumeration constant
+          Modifiers
+            Annotation
+              PsiElement(@)('@')
+              Qualified identifier
+                PsiElement(identifier)('NotNull')
+            PsiWhiteSpace(' ')
+            Annotation
+              PsiElement(@)('@')
+              Qualified identifier
+                PsiElement(identifier)('Property')
           PsiWhiteSpace(' ')
-          Annotation
-            PsiElement(@)('@')
-            Qualified identifier
-              PsiElement(identifier)('Property')
-        PsiWhiteSpace(' ')
-        PsiElement(identifier)('item1')
-        PsiWhiteSpace(' ')
-        PsiElement(()('(')
-        Parameter list
-          Parameter
-            Parameter modifiers
-              PsiElement(def)('def')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('a')
-          PsiElement(,)(',')
+          PsiElement(identifier)('item1')
           PsiWhiteSpace(' ')
-          Parameter
-            Parameter modifiers
-              <empty list>
-            Class type
-              PsiElement(identifier)('String')
+          PsiElement(()('(')
+          Arguments
+            Reference expression
+              PsiElement(identifier)('a')
+            PsiElement(,)(',')
             PsiWhiteSpace(' ')
-            PsiElement(identifier)('b')
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
-        Open block
-          PsiElement({)('{')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('    ')
-          Class definition
-            Modifiers
-              PsiElement(def)('def')
-            PsiWhiteSpace(' ')
-            PsiElement(class)('class')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('a')
-            PsiWhiteSpace(' ')
-            Class body
-              PsiElement({)('{')
-              PsiElement(})('}')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('    ')
-          Open block
+            Reference expression
+              PsiElement(identifier)('b')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          Class body
             PsiElement({)('{')
-            Assignment expression
-              Reference expression
-                PsiElement(identifier)('a')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('    ')
+            Class definition
+              Modifiers
+                PsiElement(def)('def')
               PsiWhiteSpace(' ')
-              PsiElement(=)('=')
+              PsiElement(class)('class')
               PsiWhiteSpace(' ')
-              Literal
-                PsiElement(number)('2')
-            PsiElement(})('}')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('    ')
-          Variable definitions
-            Modifiers
-              PsiElement(native)('native')
+              PsiElement(identifier)('a')
               PsiWhiteSpace(' ')
-              PsiElement(def)('def')
-            PsiWhiteSpace(' ')
-            Class type
-              PsiElement(identifier)('String')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('a')
-            PsiWhiteSpace(' ')
-            PsiElement(=)('=')
-            PsiWhiteSpace(' ')
-            Assignment expression
-              Reference expression
-                PsiElement(identifier)('b')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              Literal
-                PsiElement(number)('4')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('     ')
-          Method
-            Class type
-              PsiElement(identifier)('Integer')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('getNumber')
-            PsiElement(()('(')
-            PsiElement())(')')
-            PsiWhiteSpace(' ')
+              Class body
+                PsiElement({)('{')
+                PsiElement(})('}')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('    ')
             Open block
               PsiElement({)('{')
-              PsiElement(new line)('\n')
-              PsiWhiteSpace('       ')
               Assignment expression
                 Reference expression
                   PsiElement(identifier)('a')
@@ -138,13 +85,59 @@ Groovy script
                 PsiElement(=)('=')
                 PsiWhiteSpace(' ')
                 Literal
-                  PsiElement(number)('3')
-              PsiElement(new line)('\n')
-              PsiWhiteSpace('     ')
+                  PsiElement(number)('2')
               PsiElement(})('}')
-          PsiWhiteSpace(' ')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('  ')
-          PsiElement(})('}')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('    ')
+            Variable definitions
+              Modifiers
+                PsiElement(native)('native')
+                PsiWhiteSpace(' ')
+                PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              Class type
+                PsiElement(identifier)('String')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Assignment expression
+                Reference expression
+                  PsiElement(identifier)('b')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                Literal
+                  PsiElement(number)('4')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('     ')
+            Method
+              Class type
+                PsiElement(identifier)('Integer')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('getNumber')
+              PsiElement(()('(')
+              PsiElement())(')')
+              PsiWhiteSpace(' ')
+              Open block
+                PsiElement({)('{')
+                PsiElement(new line)('\n')
+                PsiWhiteSpace('       ')
+                Assignment expression
+                  Reference expression
+                    PsiElement(identifier)('a')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  Literal
+                    PsiElement(number)('3')
+                PsiElement(new line)('\n')
+                PsiWhiteSpace('     ')
+                PsiElement(})('}')
+            PsiWhiteSpace(' ')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('  ')
+            PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

@@ -1,0 +1,124 @@
+enum a implements B {
+  @Nullable foo (a, "bar") {
+    def b = 3;
+  },
+
+  @Nullable bar ("foo", (Long) new Integer(8)) {
+  },
+
+  { a = 7 }
+}
+-----
+Groovy script
+  Enumeration definition
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Implements clause
+      PsiElement(implements)('implements')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('B')
+    PsiWhiteSpace(' ')
+    Enumeration body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Enumeration constants
+        Enumeration constant
+          Modifiers
+            Annotation
+              PsiElement(@)('@')
+              Qualified identifier
+                PsiElement(identifier)('Nullable')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('foo')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Arguments
+            Reference expression
+              PsiElement(identifier)('a')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Gstring)('"bar"')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          Class body
+            PsiElement({)('{')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('    ')
+            Variable definitions
+              Modifiers
+                PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('b')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Literal
+                PsiElement(number)('3')
+            PsiElement(;)(';')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('  ')
+            PsiElement(})('}')
+        PsiElement(,)(',')
+        Enumeration constant
+          PsiElement(new line)('\n\n')
+          PsiWhiteSpace('  ')
+          Modifiers
+            Annotation
+              PsiElement(@)('@')
+              Qualified identifier
+                PsiElement(identifier)('Nullable')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('bar')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Arguments
+            Literal
+              PsiElement(Gstring)('"foo"')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Typecast expression
+              PsiElement(()('(')
+              Class type
+                PsiElement(identifier)('Long')
+              PsiElement())(')')
+              PsiWhiteSpace(' ')
+              NEW expression
+                PsiElement(new)('new')
+                PsiWhiteSpace(' ')
+                Class type
+                  PsiElement(identifier)('Integer')
+                PsiElement(()('(')
+                Arguments
+                  Literal
+                    PsiElement(number)('8')
+                PsiElement())(')')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          Class body
+            PsiElement({)('{')
+            PsiElement(new line)('\n')
+            PsiWhiteSpace('  ')
+            PsiElement(})('}')
+        PsiElement(,)(',')
+      PsiElement(new line)('\n\n')
+      PsiWhiteSpace('  ')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        Assignment expression
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(number)('7')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

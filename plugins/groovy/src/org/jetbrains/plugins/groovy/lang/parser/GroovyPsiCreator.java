@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrAnnotationBodyImplType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrClassBodyImpl;
@@ -150,7 +151,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CONSTRUCTOR_BODY)) return new GrConstructorBodyImpl(node);
 
     //enum
-    if (elem.equals(ENUM_CONSTANTS)) return new GrEnumConstantImpl(node);
+    if (elem.equals(ENUM_CONSTANTS)) return new GrEnumConstantsImpl(node);
     if (elem.equals(ENUM_CONSTANT)) return new GrEnumConstantImpl(node);
     if (elem.equals(ENUM_CONSTANT_BODY)) return new GrEnumConstantBodyImpl(node);
     if (elem.equals(ENUM_CONSTANT_MEMBER)) return new GrEnumConstantMemberImpl(node);

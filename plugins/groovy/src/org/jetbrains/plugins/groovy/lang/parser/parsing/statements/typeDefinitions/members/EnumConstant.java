@@ -16,6 +16,7 @@ import com.intellij.lang.PsiBuilder;
 public class EnumConstant implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker ecMarker = builder.mark();
+    ParserUtils.getToken(builder, mNLS);
 
     Annotation.parseAnnotationOptional(builder);
 
@@ -32,7 +33,9 @@ public class EnumConstant implements GroovyElementTypes {
         ecMarker.rollbackTo();
         return WRONGWAY;
       }
-    } else if (ParserUtils.getToken(builder, mLCURLY)) {
+    }
+
+    if (ParserUtils.lookAhead(builder, mLCURLY)) {
       ClassBlock.parse(builder);
     }
 
