@@ -42,7 +42,7 @@
       <action id="Grails.Script" class="org.jetbrains.plugins.groovy.actions.NewGrailsScriptAction"
               text="Grails Script" description="Create new Grails script">
       </action>
-      <action id="Grails.TagLib" class="org.jetbrains.plugins.groovy.actions.NewGrailstagLibAction"
+      <action id="Grails.TagLib" class="org.jetbrains.plugins.groovy.actions.NewGrailsTagLibAction"
               text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
