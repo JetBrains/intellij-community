@@ -290,6 +290,9 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNMethodOverridesNN.addActionListener(actionListener);
       myNNParameterOverridesN.addActionListener(actionListener);
       myNAParameterOverridesNN.addActionListener(actionListener);
+      myReportNotAnnotatedSetterParameter.addActionListener(actionListener);
+      myReportNotAnnotatedGetter.addActionListener(actionListener);
+      myReportAnnotationNotPropagated.addActionListener(actionListener);
       reset();
     }
 
