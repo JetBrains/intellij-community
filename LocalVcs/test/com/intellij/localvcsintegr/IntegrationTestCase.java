@@ -2,8 +2,8 @@ package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.Clock;
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.Label;
 import com.intellij.localvcs.Paths;
+import com.intellij.localvcs.Revision;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -141,8 +141,8 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     return getVcs().getEntry(f.getPath()).getContent().getBytes();
   }
 
-  protected List<Label> getVcsLabelsFor(VirtualFile f) {
-    return getVcs().getLabelsFor(f.getPath());
+  protected List<Revision> getVcsRevisionsFor(VirtualFile f) {
+    return getVcs().getRevisionsFor(f.getPath());
   }
 
   protected VirtualFile addContentRoot() {

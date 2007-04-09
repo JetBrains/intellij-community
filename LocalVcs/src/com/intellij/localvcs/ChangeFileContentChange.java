@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChangeFileContentChange extends StructuralChange {
-  private Content myNewContent;
+  private Content myNewContent; // transient
   private Content myOldContent;
-  private long myNewTimestamp;
+  private long myNewTimestamp; // transient
   private long myOldTimestamp;
 
   public ChangeFileContentChange(String path, Content newContent, long timestamp) {
@@ -18,31 +18,19 @@ public class ChangeFileContentChange extends StructuralChange {
 
   public ChangeFileContentChange(Stream s) throws IOException {
     super(s);
-    myNewContent = s.readContent();
     myOldContent = s.readContent();
-    myNewTimestamp = s.readLong();
     myOldTimestamp = s.readLong();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeContent(myNewContent);
     s.writeContent(myOldContent);
-    s.writeLong(myNewTimestamp);
     s.writeLong(myOldTimestamp);
-  }
-
-  public Content getNewContent() {
-    return myNewContent;
   }
 
   public Content getOldContent() {
     return myOldContent;
-  }
-
-  public long getNewTimestamp() {
-    return myNewTimestamp;
   }
 
   public long getOldTimestamp() {

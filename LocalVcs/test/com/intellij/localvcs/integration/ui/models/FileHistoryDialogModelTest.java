@@ -1,7 +1,7 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcsTestCase;
+import com.intellij.localvcs.Revision;
 import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
@@ -19,18 +19,18 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   private FileHistoryDialogModel m;
 
   @Test
-  public void testIncludingUnsavedVersionInLabels() {
+  public void testIncludingUnsavedVersionInRevisions() {
     vcs.beginChangeSet();
     vcs.createFile("f", b("old"), -1);
     vcs.endChangeSet("1");
 
     initModelFor("f", "new");
 
-    List<Label> ll = m.getLabels();
+    List<Revision> rr = m.getRevisions();
 
-    assertEquals(2, ll.size());
-    assertEquals("not saved", ll.get(0).getName());
-    assertEquals("1", ll.get(1).getName());
+    assertEquals(2, rr.size());
+    assertEquals("not saved", rr.get(0).getName());
+    assertEquals("1", rr.get(1).getCauseAction());
   }
 
   @Test
@@ -41,10 +41,10 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     setCurrentTimestamp(456);
     initModelFor("f", "new");
 
-    assertEquals(456L, m.getLabels().get(0).getTimestamp());
+    assertEquals(456L, m.getRevisions().get(0).getTimestamp());
 
     setCurrentTimestamp(789);
-    assertEquals(456L, m.getLabels().get(0).getTimestamp());
+    assertEquals(456L, m.getRevisions().get(0).getTimestamp());
   }
 
   @Test
@@ -53,11 +53,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
     initModelFor("f", "one\ntwo\n");
 
-    assertEquals(1, m.getLabels().size());
+    assertEquals(1, m.getRevisions().size());
   }
 
   @Test
-  public void testLabelsListAfterPurgeContainsCurrentVersion() {
+  public void testRevisionsListAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
     vcs.createFile("f", b(""), -1);
     vcs.purgeUpTo(20);
@@ -65,11 +65,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
 
     setCurrentTimestamp(20);
-    List<Label> ll = m.getLabels();
+    List<Revision> rr = m.getRevisions();
     setCurrentTimestamp(30);
 
-    assertEquals(1, ll.size());
-    assertEquals(20L, ll.get(0).getTimestamp());
+    assertEquals(1, rr.size());
+    assertEquals(20L, rr.get(0).getTimestamp());
   }
 
   @Test
@@ -78,7 +78,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.rename("old", "new");
 
     initModelFor("new");
-    m.selectLabels(0, 1);
+    m.selectRevisions(0, 1);
 
     FileDifferenceModel dm = m.getDifferenceModel();
     assertTrue(dm.getLeftTitle().endsWith(" - old"));
@@ -91,18 +91,18 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.changeFileContent("f", b("new"), -1);
 
     initModelFor("f");
-    m.selectLabels(0, 1);
+    m.selectRevisions(0, 1);
 
     assertDifferenceModelContents("old", "new");
   }
 
   @Test
-  public void testContentsWhenOnlyOneLabelSelected() {
+  public void testContentsWhenOnlyOneRevisionSelected() {
     vcs.createFile("f", b("old"), -1);
     vcs.changeFileContent("f", b("new"), -1);
 
     initModelFor("f");
-    m.selectLabels(1, 1);
+    m.selectRevisions(1, 1);
 
     assertDifferenceModelContents("old", "new");
   }
@@ -112,7 +112,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.createFile("f", b("old"), -1);
 
     initModelFor("f", "unsaved");
-    m.selectLabels(0, 1);
+    m.selectRevisions(0, 1);
 
     assertDifferenceModelContents("old", "unsaved");
   }
@@ -124,7 +124,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
     setCurrentTimestamp(new Date(2003, 01, 01).getTime());
     initModelFor("dir/f", "unsaved");
-    m.selectLabels(0, 1);
+    m.selectRevisions(0, 1);
 
     FileDifferenceModel dm = m.getDifferenceModel();
     assertEquals("dir/f", dm.getTitle());

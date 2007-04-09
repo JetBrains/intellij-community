@@ -27,13 +27,13 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testPurging() {
-    assertEquals(4, vcs.getLabelsFor("file").size());
+    assertEquals(4, vcs.getRevisionsFor("file").size());
 
     vcs.purgeUpTo(35);
 
-    List<Label> ll = vcs.getLabelsFor("file");
-    assertEquals(2, ll.size());
-    assertEquals(40L, ll.get(0).getTimestamp());
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(2, rr.size());
+    assertEquals(40L, rr.get(0).getTimestamp());
   }
 
   @Test
@@ -62,14 +62,14 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   public void testPurgingOnSave() {
     vcs.setPurgingInterval(30);
 
-    assertLabelsCountAfterPurgeOnSave(59, 3);
-    assertLabelsCountAfterPurgeOnSave(61, 2);
+    assertRevisionsCountAfterPurgeOnSave(59, 3);
+    assertRevisionsCountAfterPurgeOnSave(61, 2);
   }
 
-  private void assertLabelsCountAfterPurgeOnSave(long timestamp, int count) {
+  private void assertRevisionsCountAfterPurgeOnSave(long timestamp, int count) {
     setCurrentTimestamp(timestamp);
     vcs.save();
-    assertEquals(count, vcs.getLabelsFor("file").size());
+    assertEquals(count, vcs.getRevisionsFor("file").size());
   }
 
   @Test

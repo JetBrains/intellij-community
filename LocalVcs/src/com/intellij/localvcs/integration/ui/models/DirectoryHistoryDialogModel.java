@@ -16,11 +16,11 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   public DirectoryDifferenceModel getRootDifferenceNodeModel() {
-    Difference d = getLeftLabel().getDifferenceWith(getRightLabel());
+    Difference d = getLeftRevision().getDifferenceWith(getRightRevision());
     return new DirectoryDifferenceModel(d);
   }
 
   public boolean revert(DirectoryDifferenceModel m) {
-    return Reverter.revert(myGateway, getLeftLabel(), m.getEntry(0), m.getEntry(1));
+    return Reverter.revert(myGateway, getLeftRevision(), m.getEntry(0), m.getEntry(1));
   }
 }

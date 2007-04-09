@@ -1,6 +1,6 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.Label;
+import com.intellij.localvcs.Revision;
 import com.intellij.localvcs.integration.CacheUpdaterHelper;
 import com.intellij.localvcs.integration.TestFileFilter;
 import com.intellij.localvcs.integration.TestVirtualFile;
@@ -116,11 +116,11 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingDifference() {
     buildVcsTree();
-    final List<Label> labels = vcs.getLabelsFor("root");
+    final List<Revision> revisions = vcs.getRevisionsFor("root");
 
     assertExecutionTime(1200, new Task() {
       public void execute() {
-        labels.get(0).getDifferenceWith(labels.get(0));
+        revisions.get(0).getDifferenceWith(revisions.get(0));
       }
     });
   }

@@ -3,9 +3,9 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class CreateFileChange extends StructuralChange {
-  private int myId;
-  private Content myContent;
-  private long myTimestamp;
+  private int myId; // transient
+  private Content myContent; // transient
+  private long myTimestamp; // transient
 
   public CreateFileChange(int id, String path, Content content, long timestamp) {
     super(path);
@@ -16,29 +16,6 @@ public class CreateFileChange extends StructuralChange {
 
   public CreateFileChange(Stream s) throws IOException {
     super(s);
-    myId = s.readInteger();
-    myContent = s.readContent();
-    myTimestamp = s.readLong();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeInteger(myId);
-    s.writeContent(myContent);
-    s.writeLong(myTimestamp);
-  }
-
-  public int getId() {
-    return myId;
-  }
-
-  public Content getContent() {
-    return myContent;
-  }
-
-  public long getTimestamp() {
-    return myTimestamp;
   }
 
   @Override

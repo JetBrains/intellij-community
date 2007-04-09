@@ -52,13 +52,17 @@ public class ChangeList {
     myChanges.add(c);
   }
 
-  public void revertUpTo(RootEntry r, Change target) {
+  public void revertUpTo(RootEntry r, Change target, boolean revertTargetChange) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       Change c = myChanges.get(i);
+
+      if (!revertTargetChange && c == target) return;
       c.revertOn(r);
+
       if (c == target) return;
     }
   }
+
 
   public List<Content> purgeUpTo(long timestamp) {
     List<Change> newChanges = new ArrayList<Change>();

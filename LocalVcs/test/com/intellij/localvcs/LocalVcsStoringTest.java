@@ -42,7 +42,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.save();
     initVcs();
 
-    assertEquals(2, vcs.getLabelsFor("file").size());
+    assertEquals(2, vcs.getRevisionsFor("file").size());
   }
 
   @Test

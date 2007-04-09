@@ -1,8 +1,8 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Revision;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -44,7 +44,7 @@ public class BasicsTest extends IntegrationTestCase {
       }
     }, "name", null);
 
-    assertEquals(1, getVcsLabelsFor(f[0]).size());
+    assertEquals(1, getVcsRevisionsFor(f[0]).size());
   }
 
   public void testActions() throws Exception {
@@ -57,7 +57,7 @@ public class BasicsTest extends IntegrationTestCase {
 
     assertEquals(0, getVcsContentOf(f)[0]);
 
-    LocalVcsAction a = getVcsComponent().startAction("label");
+    LocalVcsAction a = getVcsComponent().startAction("name");
     assertEquals(1, getVcsContentOf(f)[0]);
 
     setDocumentTextFor(f, new byte[]{2});
@@ -65,9 +65,9 @@ public class BasicsTest extends IntegrationTestCase {
     a.finish();
     assertEquals(2, getVcsContentOf(f)[0]);
 
-    List<Label> l = getVcsLabelsFor(f);
-    assertEquals("label", l.get(0).getName());
-    assertNull(l.get(1).getName());
+    List<Revision> rr = getVcsRevisionsFor(f);
+    assertEquals("name", rr.get(0).getCauseAction());
+    assertNull(rr.get(1).getName());
   }
 
   public void testUpdatingOnFileTypesChange() throws Exception {

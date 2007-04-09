@@ -3,10 +3,10 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class PutEntryLabelChange extends PutLabelChange {
-  private String myPath;
+  private String myPath; // transient
   private IdPath myAffectedIdPath;
 
-  protected PutEntryLabelChange(long timestamp, String name, String path) {
+  protected PutEntryLabelChange(String path, long timestamp, String name) {
     super(timestamp, name);
     myPath = path;
   }

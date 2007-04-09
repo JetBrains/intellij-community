@@ -23,4 +23,8 @@ public abstract class Change {
   public abstract boolean isCreationalFor(Entry e);
 
   public abstract List<Content> getContentsToPurge();
+
+  public boolean isLabel() {
+    return false;
+  }
 }

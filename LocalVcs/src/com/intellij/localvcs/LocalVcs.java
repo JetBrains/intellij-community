@@ -15,7 +15,6 @@ public class LocalVcs implements ILocalVcs {
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
-    // todo try to get rid of need to pass the parameter
     myStorage = s;
     load();
   }
@@ -71,9 +70,9 @@ public class LocalVcs implements ILocalVcs {
     myInnerChangeSetCounter++;
   }
 
-  public void endChangeSet(String label) {
+  public void endChangeSet(String name) {
     // todo hack. remove after moving update into service state
-    if (myInnerChangeSetCounter == 1) registerChangeSet(label);
+    if (myInnerChangeSetCounter == 1) registerChangeSet(name);
     myInnerChangeSetCounter--;
     if (!isInChangeSet()) doPostpondedSave();
   }
@@ -123,6 +122,19 @@ public class LocalVcs implements ILocalVcs {
     applyChange(new DeleteChange(path));
   }
 
+  public void putLabel(String name) {
+    applyLabel(new PutLabelChange(getCurrentTimestamp(), name));
+  }
+
+  public void putLabel(String path, String name) {
+    applyLabel(new PutEntryLabelChange(path, getCurrentTimestamp(), name));
+  }
+
+  private void applyLabel(Change c) {
+    c.applyTo(myRoot);
+    myChangeList.addChange(c);
+  }
+
   private void applyChange(Change c) {
     c.applyTo(myRoot);
     myPendingChanges.add(c);
@@ -131,11 +143,11 @@ public class LocalVcs implements ILocalVcs {
     if (!isInChangeSet()) registerChangeSet(null);
   }
 
-  private void registerChangeSet(String label) {
+  private void registerChangeSet(String name) {
     if (myPendingChanges.isEmpty()) return;
 
-    ChangeSet cs = new ChangeSet(getCurrentTimestamp(), label, myPendingChanges);
-    myChangeList.addChange(cs);
+    Change c = new ChangeSet(getCurrentTimestamp(), name, myPendingChanges);
+    myChangeList.addChange(c);
     clearPendingChanges();
   }
 
@@ -155,33 +167,31 @@ public class LocalVcs implements ILocalVcs {
     return Clock.getCurrentTimestamp();
   }
 
-  public List<Label> getLabelsFor(String path) {
+  public List<Revision> getRevisionsFor(String path) {
     Entry e = getEntry(path);
 
     List<Change> cc = myChangeList.getChangesFor(myRoot, e.getPath());
 
-    // todo this hack with names and timestamps is here
-    // todo until I separate revisions from changesets.
-
     if (cc.isEmpty()) {
-      CurrentLabel l = new CurrentLabel(e, null, getCurrentTimestamp());
-      return Collections.<Label>singletonList(l);
+      Revision r = new CurrentRevision(e, getCurrentTimestamp());
+      return Collections.singletonList(r);
     }
 
-    List<Label> result = new ArrayList<Label>();
-
-    Change next = cc.get(0);
-    result.add(new CurrentLabel(e, next.getName(), next.getTimestamp()));
-
-    for (int i = 0; i < cc.size() - 1; i++) {
-      Change c = cc.get(i);
-      next = cc.get(i + 1);
-      result.add(new Label(e, myRoot, myChangeList, c, next.getName(), next.getTimestamp()));
+    List<Revision> result = new ArrayList<Revision>();
+    for (Change c : cc) {
+      Revision r;
+      if (c.isLabel()) {
+        r = new LabeledRevision(e, myRoot, myChangeList, c);
+      }
+      else {
+        r = new RevisionAfterChange(e, myRoot, myChangeList, c);
+      }
+      result.add(r);
     }
 
-    Change last = cc.get(cc.size() - 1);
-    if (!last.isCreationalFor(e)) {
-      result.add(new Label(e, myRoot, myChangeList, last, null, last.getTimestamp()));
+    Change lastChange = cc.get(cc.size() - 1);
+    if (!lastChange.isLabel() && !lastChange.isCreationalFor(e)) {
+      result.add(new RevisionBeforeChange(e, myRoot, myChangeList, lastChange));
     }
 
     return result;

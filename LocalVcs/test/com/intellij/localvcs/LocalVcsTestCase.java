@@ -27,16 +27,16 @@ public abstract class LocalVcsTestCase extends Assert {
     return cs(null, changes);
   }
 
-  protected static ChangeSet cs(String label, Change... changes) {
-    return cs(0, label, changes);
+  protected static ChangeSet cs(String name, Change... changes) {
+    return cs(0, name, changes);
   }
 
   protected static ChangeSet cs(long timestamp, Change... changes) {
     return cs(timestamp, null, changes);
   }
 
-  protected static ChangeSet cs(long timestamp, String label, Change... changes) {
-    return new ChangeSet(timestamp, label, Arrays.asList(changes));
+  protected static ChangeSet cs(long timestamp, String name, Change... changes) {
+    return new ChangeSet(timestamp, name, Arrays.asList(changes));
   }
 
   protected void setCurrentTimestamp(long t) {

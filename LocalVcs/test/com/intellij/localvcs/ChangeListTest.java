@@ -9,18 +9,34 @@ public class ChangeListTest extends LocalVcsTestCase {
   private ChangeList cl = new ChangeList();
 
   @Test
-  public void testRevertion() {
+  public void testRevertionUpToInclusively() {
     applyAndAddChange(cs("1", new CreateFileChange(1, "file1", null, -1)));
     applyAndAddChange(cs("2", new CreateFileChange(2, "file2", null, -1)));
 
     RootEntry copy = r.copy();
-    cl.revertUpTo(copy, cl.getChanges().get(0));
+    cl.revertUpTo(copy, cl.getChanges().get(0), true);
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
 
     copy = r.copy();
-    cl.revertUpTo(copy, cl.getChanges().get(1));
+    cl.revertUpTo(copy, cl.getChanges().get(1), true);
     assertFalse(copy.hasEntry("file1"));
+    assertFalse(copy.hasEntry("file2"));
+  }
+
+  @Test
+  public void testRevertionUpToExclusively() {
+    applyAndAddChange(cs("1", new CreateFileChange(1, "file1", null, -1)));
+    applyAndAddChange(cs("2", new CreateFileChange(2, "file2", null, -1)));
+
+    RootEntry copy = r.copy();
+    cl.revertUpTo(copy, cl.getChanges().get(0), false);
+    assertTrue(copy.hasEntry("file1"));
+    assertTrue(copy.hasEntry("file2"));
+
+    copy = r.copy();
+    cl.revertUpTo(copy, cl.getChanges().get(1), false);
+    assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
   }
 

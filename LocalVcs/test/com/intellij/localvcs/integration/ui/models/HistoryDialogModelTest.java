@@ -30,74 +30,74 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testLabelsList() {
-    List<Label> ll = m.getLabels();
+  public void testRevisionsList() {
+    List<Revision> rr = m.getRevisions();
 
-    assertEquals(3, ll.size());
-    assertEquals("3", ll.get(0).getName());
-    assertEquals("2", ll.get(1).getName());
-    assertEquals("1", ll.get(2).getName());
+    assertEquals(3, rr.size());
+    assertEquals("3", rr.get(0).getCauseAction());
+    assertEquals("2", rr.get(1).getCauseAction());
+    assertEquals("1", rr.get(2).getCauseAction());
   }
 
   @Test
-  public void testDoesNotRecomputeLabelsEachTime() {
-    assertEquals(3, m.getLabels().size());
+  public void testDoesNotRecomputeRevisionsEachTime() {
+    assertEquals(3, m.getRevisions().size());
 
     vcs.changeFileContent("f", null, -1);
 
-    assertEquals(3, m.getLabels().size());
+    assertEquals(3, m.getRevisions().size());
   }
 
   @Test
-  public void testSelectingLastLabelByDefault() {
-    assertEquals("3", m.getLeftLabel().getName());
-    assertEquals("3", m.getRightLabel().getName());
+  public void testSelectingLastRevisionByDefault() {
+    assertEquals("3", m.getLeftRevision().getCauseAction());
+    assertEquals("3", m.getRightRevision().getCauseAction());
   }
 
   @Test
-  public void testSelectingOnlyOneLabelSetsRightToLastOne() {
-    m.selectLabels(0, 0);
-    assertEquals("3", m.getLeftLabel().getName());
-    assertEquals("3", m.getRightLabel().getName());
+  public void testSelectingOnlyOneRevisionSetsRightToLastOne() {
+    m.selectRevisions(0, 0);
+    assertEquals("3", m.getLeftRevision().getCauseAction());
+    assertEquals("3", m.getRightRevision().getCauseAction());
 
-    m.selectLabels(1, 1);
-    assertEquals("2", m.getLeftLabel().getName());
-    assertEquals("3", m.getRightLabel().getName());
+    m.selectRevisions(1, 1);
+    assertEquals("2", m.getLeftRevision().getCauseAction());
+    assertEquals("3", m.getRightRevision().getCauseAction());
   }
 
   @Test
-  public void testSelectingTwoLabels() {
-    m.selectLabels(0, 1);
-    assertEquals("2", m.getLeftLabel().getName());
-    assertEquals("3", m.getRightLabel().getName());
+  public void testSelectingTwoRevisions() {
+    m.selectRevisions(0, 1);
+    assertEquals("2", m.getLeftRevision().getCauseAction());
+    assertEquals("3", m.getRightRevision().getCauseAction());
 
-    m.selectLabels(1, 2);
-    assertEquals("1", m.getLeftLabel().getName());
-    assertEquals("2", m.getRightLabel().getName());
+    m.selectRevisions(1, 2);
+    assertEquals("1", m.getLeftRevision().getCauseAction());
+    assertEquals("2", m.getRightRevision().getCauseAction());
   }
 
   @Test
-  public void testClearingSelectionSetsLabelsToLastOnes() {
-    m.selectLabels(-1, -1);
-    assertEquals("3", m.getLeftLabel().getName());
-    assertEquals("3", m.getRightLabel().getName());
+  public void testClearingSelectionSetsRevisionsToLastOnes() {
+    m.selectRevisions(-1, -1);
+    assertEquals("3", m.getLeftRevision().getCauseAction());
+    assertEquals("3", m.getRightRevision().getCauseAction());
   }
 
   @Test
   public void testCanRevert() {
-    m.selectLabels(1, 1);
+    m.selectRevisions(1, 1);
     assertTrue(m.canRevert());
 
-    m.selectLabels(2, 2);
+    m.selectRevisions(2, 2);
     assertTrue(m.canRevert());
 
-    m.selectLabels(0, 0);
+    m.selectRevisions(0, 0);
     assertFalse(m.canRevert());
 
-    m.selectLabels(-1, -1);
+    m.selectRevisions(-1, -1);
     assertFalse(m.canRevert());
 
-    m.selectLabels(1, 2);
+    m.selectRevisions(1, 2);
     assertFalse(m.canRevert());
   }
 

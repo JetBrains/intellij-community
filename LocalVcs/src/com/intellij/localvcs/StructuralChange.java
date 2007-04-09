@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class StructuralChange extends Change {
-  protected String myPath;
+  protected String myPath; // transient
   protected IdPath myAffectedIdPath;
 
   protected StructuralChange(String path) {

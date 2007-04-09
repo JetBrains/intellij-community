@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class MoveChange extends StructuralChange {
-  private String myNewParentPath;
+  private String myNewParentPath; // transient
   private IdPath mySecondAffectedIdPath;
 
   public MoveChange(String path, String newParentPath) {

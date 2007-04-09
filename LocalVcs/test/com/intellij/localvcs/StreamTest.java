@@ -197,10 +197,6 @@ public class StreamTest extends LocalVcsTestCase {
     CreateFileChange result = (CreateFileChange)read;
 
     assertEquals(a(idp(1)), result.getAffectedIdPaths());
-
-    assertEquals(1, result.getId());
-    assertEquals(c("content"), result.getContent());
-    assertEquals(777L, result.getTimestamp());
   }
 
   @Test
@@ -215,7 +211,6 @@ public class StreamTest extends LocalVcsTestCase {
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
     assertEquals(a(idp(2)), result.getAffectedIdPaths());
-    assertEquals(2, result.getId());
   }
 
   @Test
@@ -233,10 +228,6 @@ public class StreamTest extends LocalVcsTestCase {
     ChangeFileContentChange result = (ChangeFileContentChange)read;
 
     assertEquals(a(idp(1)), result.getAffectedIdPaths());
-
-    assertEquals(c("new content"), result.getNewContent());
-    assertEquals(2L, result.getNewTimestamp());
-
     assertEquals(c("old content"), result.getOldContent());
     assertEquals(1L, result.getOldTimestamp());
   }
@@ -285,9 +276,7 @@ public class StreamTest extends LocalVcsTestCase {
     RenameChange result = ((RenameChange)read);
 
     assertEquals(a(idp(1)), result.getAffectedIdPaths());
-
     assertEquals("old name", result.getOldName());
-    assertEquals("new name", result.getNewName());
   }
 
   @Test
@@ -331,7 +320,7 @@ public class StreamTest extends LocalVcsTestCase {
     RootEntry r = new RootEntry();
     r.createDirectory(1, "dir");
 
-    Change c = new PutEntryLabelChange(123, "name", "dir");
+    Change c = new PutEntryLabelChange("dir", 123, "name");
     c.applyTo(r);
 
     os.writeChange(c);
@@ -345,7 +334,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet cs = cs(123, "label", new CreateFileChange(1, "file", new UnavailableContent(), -1));
+    ChangeSet cs = cs(123, "name", new CreateFileChange(1, "file", new UnavailableContent(), -1));
 
     cs.applyTo(new RootEntry());
 
@@ -355,14 +344,14 @@ public class StreamTest extends LocalVcsTestCase {
 
     ChangeSet result = (ChangeSet)read;
 
-    assertEquals("label", read.getName());
+    assertEquals("name", read.getName());
     assertEquals(123L, read.getTimestamp());
     assertEquals(1, result.getChanges().size());
     assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
   }
 
   @Test
-  public void testChangeSetWithoutLabel() throws IOException {
+  public void testChangeSetWithoutName() throws IOException {
     ChangeSet cs = cs((String)null);
 
     os.writeChange(cs);

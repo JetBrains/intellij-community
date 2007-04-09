@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Label;
+import com.intellij.localvcs.Revision;
 import org.junit.Test;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
     dir.addChild(one);
     dir.addChild(two);
 
-    LocalVcsAction a = service.startAction("label");
+    LocalVcsAction a = service.startAction("name");
     fileManager.fireFileCreated(one);
     fileManager.fireFileCreated(two);
     a.finish();
@@ -24,9 +24,9 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
     assertTrue(vcs.hasEntry("dir/one"));
     assertTrue(vcs.hasEntry("dir/two"));
 
-    List<Label> ll = vcs.getLabelsFor("dir");
-    assertEquals(2, ll.size());
-    assertEquals("label", ll.get(0).getName());
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(2, rr.size());
+    assertEquals("name", rr.get(0).getCauseAction());
   }
 
   @Test
@@ -41,9 +41,9 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
     assertTrue(vcs.hasEntry("file"));
     assertEquals(c("def"), vcs.getEntry("file").getContent());
 
-    List<Label> ll = vcs.getLabelsFor("file");
-    assertEquals(1, ll.size());
-    assertEquals("command", ll.get(0).getName());
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(1, rr.size());
+    assertEquals("command", rr.get(0).getCauseAction());
   }
 
   @Test

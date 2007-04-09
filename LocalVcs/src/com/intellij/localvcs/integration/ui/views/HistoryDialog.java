@@ -1,12 +1,11 @@
 package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.Label;
-import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
+import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
@@ -20,12 +19,10 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
-import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
@@ -50,11 +47,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   @Override
   protected JComponent createCenterPanel() {
     JComponent diff = createDiffPanel();
-    JComponent labels = createLabelsList();
+    JComponent revisions = createRevisionsList();
 
     mySplitter = new Splitter(true);
     mySplitter.setFirstComponent(diff);
-    mySplitter.setSecondComponent(labels);
+    mySplitter.setSecondComponent(revisions);
 
     mySplitter.setPreferredSize(new Dimension(700, 600));
     mySplitter.setProportion(0.7f);
@@ -71,11 +68,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract JComponent createDiffPanel();
 
-  private JComponent createLabelsList() {
-    ActionGroup actions = createLabelsActions();
+  private JComponent createRevisionsList() {
+    ActionGroup actions = createRevisionsActions();
 
-    ActionToolbar tb = createLabelsToolbar(actions);
-    JComponent t = createLabelsTable(actions);
+    ActionToolbar tb = createRevisionsToolbar(actions);
+    JComponent t = createRevisionsTable(actions);
 
     JPanel result = new JPanel(new BorderLayout());
     result.add(tb.getComponent(), BorderLayout.NORTH);
@@ -84,30 +81,22 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return result;
   }
 
-  private ActionGroup createLabelsActions() {
+  private ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
     return result;
   }
 
-  private ActionToolbar createLabelsToolbar(ActionGroup actions) {
+  private ActionToolbar createRevisionsToolbar(ActionGroup actions) {
     ActionManager am = ActionManager.getInstance();
     return am.createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
   }
 
-  private JComponent createLabelsTable(ActionGroup actions) {
-    JTable t = new Table();
-    t.setModel(new LabelsTableModel());
+  private JComponent createRevisionsTable(ActionGroup actions) {
+    JTable t = new RevisionsTable(myModel);
 
     addPopupMenuToComponent(t, actions);
     addSelectionListener(t);
-
-    t.getColumnModel().getColumn(0).setMinWidth(150);
-    t.getColumnModel().getColumn(0).setMaxWidth(150);
-
-    t.getColumnModel().getColumn(0).setResizable(false);
-    t.getColumnModel().getColumn(1).setResizable(false);
-
 
     return ScrollPaneFactory.createScrollPane(t);
   }
@@ -119,7 +108,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
         if (e.getValueIsAdjusting()) return;
         int first = selectionModel.getMinSelectionIndex();
         int last = selectionModel.getMaxSelectionIndex();
-        myModel.selectLabels(first, last);
+        myModel.selectRevisions(first, last);
         updateDiffs();
       }
     });
@@ -179,34 +168,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   protected Action[] createActions() {
     // removes ok/cancel buttons
     return new Action[0];
-  }
-
-  private class LabelsTableModel extends AbstractTableModel {
-    public int getColumnCount() {
-      return 2;
-    }
-
-    public int getRowCount() {
-      return myModel.getLabels().size();
-    }
-
-    @Override
-    public String getColumnName(int column) {
-      if (column == 0) return "Date";
-      if (column == 1) return "Label";
-      return null;
-    }
-
-    public Object getValueAt(int row, int column) {
-      if (column == 0) {
-        return FormatUtil.formatTimestamp(getLabelFor(row).getTimestamp());
-      }
-      return getLabelFor(row).getName();
-    }
-
-    private Label getLabelFor(int row) {
-      return myModel.getLabels().get(row);
-    }
   }
 
   private class RevertAction extends AnAction {

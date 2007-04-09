@@ -34,7 +34,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertTrue(hasVcsEntry(path1));
     assertTrue(hasVcsEntry(path2));
 
-    assertEquals(2, getVcsLabelsFor(root).size());
+    assertEquals(2, getVcsRevisionsFor(root).size());
   }
 
   public void testRefreshDuringCommand() {

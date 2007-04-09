@@ -14,9 +14,9 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  protected void addNotSavedVersionTo(List<Label> l) {
+  protected void addNotSavedVersionTo(List<Revision> rr) {
     if (hasModifiedUnsavedContent()) return;
-    l.add(new NotSavedLabel());
+    rr.add(new NotSavedRevision());
   }
 
   private boolean hasModifiedUnsavedContent() {
@@ -47,9 +47,21 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return new FileDifferenceModel(getLeftEntry(), getRightEntry());
   }
 
-  private class NotSavedLabel extends Label {
-    public NotSavedLabel() {
-      super(null, null, null, null, "not saved", Clock.getCurrentTimestamp());
+  private class NotSavedRevision extends Revision {
+    private long myTimestamp;
+
+    public NotSavedRevision() {
+      myTimestamp = Clock.getCurrentTimestamp();
+    }
+
+    @Override
+    public String getName() {
+      return "not saved";
+    }
+
+    @Override
+    public long getTimestamp() {
+      return myTimestamp;
     }
 
     @Override

@@ -1,37 +1,9 @@
 package com.intellij.localvcs;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalVcsBasicsTest extends LocalVcsTestCase {
-  // todo clean up LocalVcs tests
-  private LocalVcs vcs = new TestLocalVcs();
-
-  @Test
-  public void testClearingChangesOnEachChange() {
-    vcs.createFile("file", b("content"), -1);
-    assertTrue(vcs.isClean());
-  }
-
-  @Test
-  public void testClearingChangesAfterChangeSetFinifhed() {
-    vcs.beginChangeSet();
-
-    vcs.createFile("file", b("content"), -1);
-    assertFalse(vcs.isClean());
-
-    vcs.endChangeSet(null);
-    assertTrue(vcs.isClean());
-  }
-
-  @Test
-  public void testApplyingChangesRightAfterChange() {
-    vcs.createFile("file", b("content"), -1);
-    assertEquals(c("content"), vcs.getEntry("file").getContent());
-
-    vcs.changeFileContent("file", b("new content"), -1);
-    assertEquals(c("new content"), vcs.getEntry("file").getContent());
-  }
+  LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testIncrementingIdOnEntryCreation() {
@@ -42,29 +14,6 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     int id2 = vcs.getEntry("file").getId();
 
     assertTrue(id2 > id1);
-  }
-
-  @Test
-  @Ignore("unignore when service states will be completed")
-  public void testStartingShangeSetTwiceThrowsException() {
-    vcs.beginChangeSet();
-    try {
-      vcs.beginChangeSet();
-      fail();
-    }
-    catch (IllegalStateException e) {
-    }
-  }
-
-  @Test
-  @Ignore("unignore when service states will be completed")
-  public void testFinishingChangeSetWithoutStartingItThrowsException() {
-    try {
-      vcs.endChangeSet(null);
-      fail();
-    }
-    catch (IllegalStateException e) {
-    }
   }
 
   @Test
@@ -104,17 +53,6 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createFile("dir/file", null, -1);
 
     assertTrue(vcs.hasEntry("dir/file"));
-  }
-
-  @Test
-  public void testAskingForCreatedFileDuringChangeSet() {
-    vcs.beginChangeSet();
-    vcs.createFile("file", b("content"), -1);
-
-    Entry e = vcs.findEntry("file");
-
-    assertNotNull(e);
-    assertEquals(c("content"), e.getContent());
   }
 
   @Test

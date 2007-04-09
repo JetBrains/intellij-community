@@ -1,292 +1,112 @@
 package com.intellij.localvcs;
 
-import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
 import java.util.List;
 
 public class LocalVcsLabelsTest extends LocalVcsTestCase {
-  // todo difference on root does not work!!!
-  TestLocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new TestLocalVcs();
 
   @Test
-  public void testLabelingEmptyLocalVcsThrowsException() {
-    // todo is it true?
-    try {
-      vcs.putLabel("label");
-      fail();
-    }
-    catch (AssertionError e) {
-    }
+  public void testLabels() {
+    vcs.createFile("file", null, -1);
+    vcs.putLabel("file", "1");
+    vcs.changeFileContent("file", null, -1);
+    vcs.putLabel("file", "2");
+
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(4, rr.size());
+
+    assertEquals("2", rr.get(0).getName());
+    assertNull(rr.get(1).getName());
+    assertEquals("1", rr.get(2).getName());
+    assertNull(rr.get(3).getName());
   }
 
   @Test
-  public void testNamedAndUnnamedLables() {
-    vcs.createFile("file", null, null);
-    vcs.apply();
-    vcs.putLabel("label");
+  public void testDoesNotIncludeLabelsForAnotherEntry() {
+    vcs.createFile("one", null, -1);
+    vcs.createFile("two", null, -1);
+    vcs.putLabel("one", "one");
+    vcs.putLabel("two", "two");
 
-    vcs.changeFileContent("file", null, null);
-    vcs.apply();
+    List<Revision> rr = vcs.getRevisionsFor("one");
+    assertEquals(2, rr.size());
+    assertEquals("one", rr.get(0).getName());
 
-    List<Label> ll = vcs.getLabelsFor("file");
-    assertEquals(2, ll.size());
-
-    assertNull(ll.get(0).getName());
-    assertEquals("label", ll.get(1).getName());
+    rr = vcs.getRevisionsFor("two");
+    assertEquals(2, rr.size());
+    assertEquals("two", rr.get(0).getName());
   }
 
   @Test
-  public void testIncludingCurrentVersionAfterPurge() {
+  public void testEntryLabelTimestamps() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
-    vcs.apply();
-    vcs.purgeUpTo(20);
-
-    List<Label> ll = vcs.getLabelsFor("file");
-    assertEquals(1, ll.size());
-
-    assertEquals("file", ll.get(0).getEntry().getName());
-  }
-
-  @Test
-  public void testTakingTimestampForCurrentLabelAtMomentOfGettingLabels() {
-    setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
-    vcs.apply();
-    vcs.purgeUpTo(20);
-
+    vcs.createFile("file", null, -1);
     setCurrentTimestamp(20);
-    List<Label> ll = vcs.getLabelsFor("file");
-
+    vcs.putLabel("file", "1");
     setCurrentTimestamp(30);
-    assertEquals(20L, ll.get(0).getTimestamp());
+    vcs.putLabel("file", "1");
+
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(30, rr.get(0).getTimestamp());
+    assertEquals(20, rr.get(1).getTimestamp());
+    assertEquals(10, rr.get(2).getTimestamp());
   }
 
   @Test
-  public void testLabelsTimestamp() {
+  public void testContent() {
+    vcs.createFile("file", b("old"), -1);
+    vcs.putLabel("file", "");
+    vcs.changeFileContent("file", b("new"), -1);
+    vcs.putLabel("file", "");
+
+    List<Revision> rr = vcs.getRevisionsFor("file");
+
+    assertEquals(c("new"), rr.get(0).getEntry().getContent());
+    assertEquals(c("old"), rr.get(2).getEntry().getContent());
+  }
+
+  @Test
+  public void testLabelsAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
-    vcs.apply();
-
+    vcs.createFile("file", null, -1);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", null, null);
-    vcs.apply();
+    vcs.putLabel("file", "l");
 
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(20L, labels.get(0).getTimestamp());
-    assertEquals(10L, labels.get(1).getTimestamp());
+    vcs.purgeUpTo(15);
+
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(1, rr.size());
+    assertEquals("l", rr.get(0).getName());
   }
 
   @Test
-  public void testDoesNotIncludeLabelsForAnotherEntries() {
-    vcs.createFile("file1", null, null);
-    vcs.apply();
+  public void testGlobalLabels() {
+    vcs.createFile("one", null, -1);
     vcs.putLabel("1");
-
-    vcs.createFile("file2", null, null);
-    vcs.apply();
+    vcs.createFile("two", null, -1);
     vcs.putLabel("2");
 
-    List<Label> labels = vcs.getLabelsFor("file2");
-    assertEquals(1, labels.size());
-    assertEquals("2", labels.get(0).getName());
+    List<Revision> rr = vcs.getRevisionsFor("one");
+    assertEquals(3, rr.size());
+    assertEquals("2", rr.get(0).getName());
+    assertEquals("1", rr.get(1).getName());
+
+    rr = vcs.getRevisionsFor("two");
+    assertEquals(2, rr.size());
+    assertEquals("2", rr.get(0).getName());
   }
 
   @Test
-  public void testTreatingDeletedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile("file", b("old"), null);
-    vcs.apply();
+  public void testGlobalLabelTimestamps() {
+    setCurrentTimestamp(10);
+    vcs.createFile("file", null, -1);
+    setCurrentTimestamp(20);
+    vcs.putLabel("");
 
-    vcs.delete("file");
-    vcs.createFile("file", b("new"), null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(1, labels.size());
-
-    Entry e = labels.get(0).getEntry();
-    assertEquals("file", e.getName());
-    assertEquals(c("new"), e.getContent());
-  }
-
-  @Test
-  public void testTreatingRenamedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile("file1", b("content1"), null);
-    vcs.apply();
-
-    vcs.rename("file1", "file2");
-    vcs.createFile("file1", b("content2"), null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file1");
-    assertEquals(1, labels.size());
-
-    Entry e = labels.get(0).getEntry();
-    assertEquals("file1", e.getName());
-    assertEquals(c("content2"), e.getContent());
-
-    labels = vcs.getLabelsFor("file2");
-    assertEquals(2, labels.size());
-
-    e = labels.get(0).getEntry();
-    assertEquals("file2", e.getName());
-    assertEquals(c("content1"), e.getContent());
-
-    e = labels.get(1).getEntry();
-    assertEquals("file1", e.getName());
-    assertEquals(c("content1"), e.getContent());
-  }
-
-  @Test
-  public void testGettingEntryFromLabel() {
-    vcs.createFile("file", b("content"), 123L);
-    vcs.apply();
-
-    vcs.changeFileContent("file", b("new content"), 456L);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file");
-
-    Entry e = labels.get(0).getEntry();
-    assertEquals("file", e.getName());
-    assertEquals(c("new content"), e.getContent());
-    assertEquals(456L, e.getTimestamp());
-
-    e = labels.get(1).getEntry();
-    assertEquals("file", e.getName());
-    assertEquals(c("content"), e.getContent());
-    assertEquals(123L, e.getTimestamp());
-  }
-
-  @Test
-  public void testGettingEntryFromLabelInRenamedDir() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/file", null, null);
-    vcs.apply();
-
-    vcs.rename("dir", "newDir");
-    vcs.apply();
-
-    vcs.changeFileContent("newDir/file", null, null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("newDir/file");
-    assertEquals(2, labels.size());
-
-    assertEquals("newDir/file", labels.get(0).getEntry().getPath());
-    assertEquals("dir/file", labels.get(1).getEntry().getPath());
-  }
-
-  @Test
-  public void testGettingEntryFromLabelDoesNotChangeRootEntry() {
-    vcs.createFile("file", b("content"), null);
-    vcs.apply();
-    vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file");
-
-    assertEquals(c("content"), labels.get(1).getEntry().getContent());
-    assertEquals(c("new content"), vcs.getEntry("file").getContent());
-  }
-
-  @Test
-  public void testGettingDifferenceBetweenLablels() {
-    vcs.createFile("file", b("content"), null);
-    vcs.apply();
-
-    vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file");
-
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
-
-    Difference d = prev.getDifferenceWith(recent);
-    assertEquals(MODIFIED, d.getKind());
-    assertEquals(c("content"), d.getLeft().getContent());
-    assertEquals(c("new content"), d.getRight().getContent());
-  }
-
-  @Test
-  public void testNoDifferenceBetweenLabels() {
-    vcs.createFile("file", b("content"), null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("file");
-
-    Label one = labels.get(0);
-    Label two = labels.get(0);
-
-    Difference d = one.getDifferenceWith(two);
-    assertFalse(d.hasDifference());
-  }
-
-  @Test
-  public void testDifferenceForDirectory() {
-    vcs.createDirectory("dir", null);
-    vcs.apply();
-
-    vcs.createFile("dir/file", null, null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("dir");
-    assertEquals(2, labels.size());
-
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
-
-    Difference d = prev.getDifferenceWith(recent);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
-
-    d = d.getChildren().get(0);
-    assertEquals(CREATED, d.getKind());
-    assertNull(d.getLeft());
-    assertEquals("file", d.getRight().getName());
-  }
-
-  @Test
-  public void testNoDifferenceForDirectoryWithRestoredContent() {
-    vcs.createDirectory("dir", null);
-    vcs.apply();
-
-    vcs.createFile("dir/file", null, null);
-    vcs.apply();
-
-    vcs.delete("dir/file");
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("dir");
-
-    Difference d = labels.get(0).getDifferenceWith(labels.get(2));
-    assertFalse(d.hasDifference());
-  }
-
-  @Test
-  public void testDoesNotIncludeNotModifiedDifferences() {
-    vcs.createDirectory("dir1", null);
-    vcs.createDirectory("dir1/dir2", null);
-    vcs.createFile("dir1/dir2/file", b(""), null);
-    vcs.createDirectory("dir1/dir3", null);
-    vcs.apply();
-
-    vcs.createFile("dir1/dir3/file", null, null);
-    vcs.apply();
-
-    List<Label> labels = vcs.getLabelsFor("dir1");
-    Label recent = labels.get(0);
-    Label prev = labels.get(1);
-
-    Difference d = prev.getDifferenceWith(recent);
-
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
-
-    assertEquals("dir3", d.getLeft().getName());
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
+    List<Revision> rr = vcs.getRevisionsFor("file");
+    assertEquals(20, rr.get(0).getTimestamp());
+    assertEquals(10, rr.get(1).getTimestamp());
   }
 }

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public class RenameChange extends StructuralChange {
   private String myOldName;
-  private String myNewName;
+  private String myNewName; // transient
 
   public RenameChange(String path, String newName) {
     super(path);
@@ -14,22 +14,16 @@ public class RenameChange extends StructuralChange {
   public RenameChange(Stream s) throws IOException {
     super(s);
     myOldName = s.readString();
-    myNewName = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
     s.writeString(myOldName);
-    s.writeString(myNewName);
   }
 
   public String getOldName() {
     return myOldName;
-  }
-
-  public String getNewName() {
-    return myNewName;
   }
 
   @Override

@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class CreateDirectoryChange extends StructuralChange {
-  private int myId;
+  private int myId; // transient
 
   public CreateDirectoryChange(int id, String path) {
     super(path);
@@ -12,17 +12,6 @@ public class CreateDirectoryChange extends StructuralChange {
 
   public CreateDirectoryChange(Stream s) throws IOException {
     super(s);
-    myId = s.readInteger();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeInteger(myId);
-  }
-
-  public int getId() {
-    return myId;
   }
 
   @Override

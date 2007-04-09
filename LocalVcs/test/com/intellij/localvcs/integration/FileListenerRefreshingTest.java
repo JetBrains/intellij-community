@@ -13,7 +13,7 @@ public class FileListenerRefreshingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("root/two", null, -1));
     l.afterRefreshFinish(false);
 
-    assertEquals(2, vcs.getLabelsFor("root").size());
+    assertEquals(2, vcs.getRevisionsFor("root").size());
   }
 
   @Test
@@ -25,7 +25,7 @@ public class FileListenerRefreshingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("root/one", null, -1));
     fireCreated(new TestVirtualFile("root/two", null, -1));
 
-    assertEquals(3, vcs.getLabelsFor("root").size());
+    assertEquals(3, vcs.getRevisionsFor("root").size());
   }
 
   @Test
@@ -63,6 +63,6 @@ public class FileListenerRefreshingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("root/four", null, -1));
     l.afterRefreshFinish(false);
 
-    assertEquals(2, vcs.getLabelsFor("root").size());
+    assertEquals(2, vcs.getRevisionsFor("root").size());
   }
 }

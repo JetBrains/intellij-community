@@ -11,16 +11,16 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
     fireContentChanged(new TestVirtualFile("file", null, -1));
     l.commandFinished(null);
 
-    assertEquals(1, vcs.getLabelsFor("file").size());
+    assertEquals(1, vcs.getRevisionsFor("file").size());
   }
 
   @Test
-  public void testLabeling() {
-    l.commandStarted(createCommandEvent("label"));
+  public void testNamedCommands() {
+    l.commandStarted(createCommandEvent("name"));
     fireCreated(new TestVirtualFile("file", null, -1));
     l.commandFinished(null);
 
-    assertEquals("label", vcs.getLabelsFor("file").get(0).getName());
+    assertEquals("name", vcs.getRevisionsFor("file").get(0).getCauseAction());
   }
 
   @Test
@@ -45,7 +45,7 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("root/one", null, -1));
     fireCreated(new TestVirtualFile("root/two", null, -1));
 
-    assertEquals(3, vcs.getLabelsFor("root").size());
+    assertEquals(3, vcs.getRevisionsFor("root").size());
   }
 
   @Test
@@ -61,7 +61,7 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("root/four", null, -1));
     l.commandFinished(null);
 
-    assertEquals(2, vcs.getLabelsFor("root").size());
+    assertEquals(2, vcs.getRevisionsFor("root").size());
   }
 
   @Test

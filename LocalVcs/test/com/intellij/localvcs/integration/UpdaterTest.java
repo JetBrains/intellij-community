@@ -473,7 +473,7 @@ public class UpdaterTest extends LocalVcsTestCase {
     dir2.addChild(new TestVirtualFile("file2", null, -1));
 
     updateWith(root);
-    assertEquals(1, vcs.getLabelsFor("root").size());
+    assertEquals(1, vcs.getRevisionsFor("root").size());
   }
 
   private String myPhysicalContent;

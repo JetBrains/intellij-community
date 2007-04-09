@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.Label;
+import com.intellij.localvcs.Revision;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,9 +14,9 @@ public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
-  private int myRightLabel;
-  private int myLeftLabel;
-  private List<Label> myLabelsCache;
+  private int myRightRevision;
+  private int myLeftRevision;
+  private List<Revision> myRevisionsCache;
 
   public HistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
@@ -24,52 +24,52 @@ public abstract class HistoryDialogModel {
     myGateway = gw;
   }
 
-  public List<Label> getLabels() {
-    if (myLabelsCache == null) initLabelsCache();
-    return myLabelsCache;
+  public List<Revision> getRevisions() {
+    if (myRevisionsCache == null) initRevisionsCache();
+    return myRevisionsCache;
   }
 
-  private void initLabelsCache() {
-    myLabelsCache = new ArrayList<Label>();
-    addNotSavedVersionTo(myLabelsCache);
-    myLabelsCache.addAll(myVcs.getLabelsFor(myFile.getPath()));
+  private void initRevisionsCache() {
+    myRevisionsCache = new ArrayList<Revision>();
+    addNotSavedVersionTo(myRevisionsCache);
+    myRevisionsCache.addAll(myVcs.getRevisionsFor(myFile.getPath()));
   }
 
-  protected void addNotSavedVersionTo(List<Label> l) {
+  protected void addNotSavedVersionTo(List<Revision> rr) {
   }
 
-  protected Label getLeftLabel() {
-    return getLabels().get(myLeftLabel);
+  protected Revision getLeftRevision() {
+    return getRevisions().get(myLeftRevision);
   }
 
-  protected Label getRightLabel() {
-    return getLabels().get(myRightLabel);
+  protected Revision getRightRevision() {
+    return getRevisions().get(myRightRevision);
   }
 
   protected Entry getLeftEntry() {
-    return getLeftLabel().getEntry();
+    return getLeftRevision().getEntry();
   }
 
   protected Entry getRightEntry() {
-    return getRightLabel().getEntry();
+    return getRightRevision().getEntry();
   }
 
-  public void selectLabels(int first, int second) {
+  public void selectRevisions(int first, int second) {
     if (first == second) {
-      myRightLabel = 0;
-      myLeftLabel = first == -1 ? 0 : first;
+      myRightRevision = 0;
+      myLeftRevision = first == -1 ? 0 : first;
     }
     else {
-      myRightLabel = first;
-      myLeftLabel = second;
+      myRightRevision = first;
+      myLeftRevision = second;
     }
   }
 
   public boolean revert() {
-    return Reverter.revert(myGateway, getLeftLabel(), getLeftEntry(), getRightEntry());
+    return Reverter.revert(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
   }
 
   public boolean canRevert() {
-    return myLeftLabel > 0 && myRightLabel == 0;
+    return myLeftRevision > 0 && myRightRevision == 0;
   }
 }

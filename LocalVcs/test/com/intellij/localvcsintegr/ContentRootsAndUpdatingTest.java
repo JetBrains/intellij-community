@@ -25,7 +25,7 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   @Test
   public void testTreatingAllChangesDuringUpdateAsOne() {
     VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
-    assertEquals(1, getVcsLabelsFor(root).size());
+    assertEquals(1, getVcsRevisionsFor(root).size());
   }
 
   public void testDeletingContentRoot() throws Exception {

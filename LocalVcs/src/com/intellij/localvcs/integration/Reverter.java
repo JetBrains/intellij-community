@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.Label;
 import com.intellij.localvcs.Paths;
+import com.intellij.localvcs.Revision;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -11,17 +11,17 @@ import java.util.concurrent.Callable;
 public class Reverter {
   private IdeaGateway myGateway;
   private VirtualFile myFile;
-  private Label myLabel;
+  private Revision myRevision;
   private Entry myLeftEntry;
   private Entry myRightEntry;
 
-  public static boolean revert(IdeaGateway gw, Label l, Entry left, Entry right) {
-    return new Reverter(gw, l, left, right).revert();
+  public static boolean revert(IdeaGateway gw, Revision r, Entry left, Entry right) {
+    return new Reverter(gw, r, left, right).revert();
   }
 
-  private Reverter(IdeaGateway gw, Label l, Entry left, Entry right) {
+  private Reverter(IdeaGateway gw, Revision r, Entry left, Entry right) {
     myGateway = gw;
-    myLabel = l;
+    myRevision = r;
 
     myLeftEntry = left;
     myRightEntry = right;
@@ -174,7 +174,7 @@ public class Reverter {
   }
 
   private String formatCommandName() {
-    return "Reverted to " + FormatUtil.formatTimestamp(myLabel.getTimestamp());
+    return "Reverted to " + FormatUtil.formatTimestamp(myRevision.getTimestamp());
   }
 
   // todo HACK: remove after introducing GhostDirectoryEntry

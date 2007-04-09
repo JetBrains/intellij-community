@@ -77,7 +77,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
     assertTrue(vcs.hasEntry("dir/one"));
     assertTrue(vcs.hasEntry("dir/two"));
 
-    assertEquals(1, vcs.getLabelsFor("dir").size());
+    assertEquals(1, vcs.getRevisionsFor("dir").size());
   }
 
   @Test

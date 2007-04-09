@@ -53,4 +53,9 @@ public class PutLabelChange extends Change {
   public List<Content> getContentsToPurge() {
     return Collections.emptyList();
   }
+
+  @Override
+  public boolean isLabel() {
+    return true;
+  }
 }

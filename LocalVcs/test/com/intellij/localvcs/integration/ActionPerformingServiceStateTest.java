@@ -23,7 +23,7 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(456L, vcs.getEntry("file").getTimestamp());
 
-    assertEquals(2, vcs.getLabelsFor("file").size());
+    assertEquals(2, vcs.getRevisionsFor("file").size());
   }
 
   @Test
@@ -38,7 +38,7 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     gw.addUnsavedDocument("dir/two", "two", -1);
     initState();
 
-    assertEquals(2, vcs.getLabelsFor("dir").size());
+    assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     vcs.changeFileContent("f", b("three"), -1);
     s.goToState(null);
 
-    assertEquals(3, vcs.getLabelsFor("f").size());
+    assertEquals(3, vcs.getRevisionsFor("f").size());
   }
 
   @Test
@@ -66,7 +66,7 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(789L, vcs.getEntry("file").getTimestamp());
 
-    assertEquals(2, vcs.getLabelsFor("file").size());
+    assertEquals(2, vcs.getRevisionsFor("file").size());
   }
 
   @Test
@@ -84,7 +84,7 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     gw.addUnsavedDocument("dir/two", "two", -1);
     s.goToState(null);
 
-    assertEquals(2, vcs.getLabelsFor("dir").size());
+    assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
 
   @Test
