@@ -68,11 +68,13 @@ public class EventDispatcher <T extends EventListener>{
   }
 
   private void dispatch(final Method method, final Object[] args) {
+    method.setAccessible(true);
+
     for (T listener : myListeners) {
       try {
         method.invoke(listener, args);
       }
-      catch(AbstractMethodError e) {
+      catch (AbstractMethodError e) {
         //Do nothing. This listener just does not implement something newly added yet.
       }
       catch (RuntimeException e) {
