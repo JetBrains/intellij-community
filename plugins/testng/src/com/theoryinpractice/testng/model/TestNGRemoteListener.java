@@ -36,6 +36,7 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
     }
 
     public void onFinish(TestMessage tm) {
+        console.rebuildTree();
     }
 
     public void onTestSuccess(TestResultMessage trm) {

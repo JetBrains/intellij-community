@@ -79,9 +79,8 @@ public class TestNGResults
         openSourceListener = new OpenSourceSelectionListener(structure, console);
         tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
         progress.setColor(ColorProgressBar.GREEN);
-        splitPane.setDividerLocation(0.33);
         GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
-        splitPane.setDividerLocation(0.33);
+        splitPane.setDividerLocation(200);
     }
 
     private void updateLabel(JLabel label) {
@@ -276,6 +275,7 @@ public class TestNGResults
 
     public void rebuildTree() {
         treeBuilder.updateFromRoot();
+        tree.invalidate();
     }
 
     public void dispose() {
