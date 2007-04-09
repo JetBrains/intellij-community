@@ -40,7 +40,23 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class DeclarationStart implements GroovyElementTypes {
+  /*
+   * @deprecated
+   */
+
   public static boolean parse(PsiBuilder builder) {
+    PsiBuilder.Marker declStartMarker = builder.mark();
+
+    if (!WRONGWAY.equals(Declaration.parse(builder))){
+      declStartMarker.rollbackTo();
+      return true;
+    } else {
+      declStartMarker.rollbackTo();
+      return false;
+    }
+  }
+
+  public static boolean parseDeclarationStart(PsiBuilder builder) {
     PsiBuilder.Marker declStartMarker = builder.mark();
     IElementType elementType;
 

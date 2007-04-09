@@ -19,8 +19,8 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -93,7 +93,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
-/*
+
       //if there is no OpenOrClosableBlock, nls haven'to be eaten
       PsiBuilder.Marker nlsMarker = builder.mark();
       if (mNLS.equals(NlsWarn.parse(builder)) && !ParserUtils.lookAhead(builder, mLPAREN)) {
@@ -101,16 +101,16 @@ public class VariableDefinitions implements GroovyElementTypes {
       } else {
         nlsMarker.drop();
       }
-*/
-      ParserUtils.getToken(builder, mNLS);
+
+//      ParserUtils.getToken(builder, mNLS);
 
       OpenOrClosableBlock.parseOpenBlock(builder);
 
-      if (isEnumConstantMember) {
+//      if (isEnumConstantMember) {
 //        varMarker.done(ENUM_CONSTANT_MEMBER);
-        varMarker.drop();
-        return ENUM_CONSTANT_MEMBER;
-      }
+//        varMarker.drop();
+//        return ENUM_CONSTANT_MEMBER;
+//      }
 
       varMarker.drop();
       return METHOD_DEFINITION;
@@ -152,9 +152,9 @@ public class VariableDefinitions implements GroovyElementTypes {
     return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
   }
 
-  public static GroovyElementType parseEnumConstantMember(PsiBuilder builder) {
-    return parseDefinitions(builder, true, false);
-  }
+//  public static GroovyElementType parseEnumConstantMember(PsiBuilder builder) {
+//    return parseDefinitions(builder, true, false);
+//  }
 
   public static GroovyElementType parseAnnotationMameber(PsiBuilder builder) {
     return parseDefinitions(builder, false, true);

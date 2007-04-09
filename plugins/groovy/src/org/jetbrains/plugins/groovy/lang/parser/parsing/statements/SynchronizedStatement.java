@@ -32,10 +32,12 @@ public class SynchronizedStatement implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     ParserUtils.getToken(builder, kSYNCHRONIZED);
-    
+
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      marker.done(SYNCHRONIZED_STATEMENT);
-      return SYNCHRONIZED_STATEMENT;
+      marker.drop();
+      return WRONGWAY;
+//      marker.done(SYNCHRONIZED_STATEMENT);
+//      return SYNCHRONIZED_STATEMENT;
     }
 
     if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
@@ -57,7 +59,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
     GroovyElementType result = WRONGWAY;
     if (mLCURLY.equals(builder.getTokenType())) {
       result = OpenOrClosableBlock.parseOpenBlock(builder);
-    } 
+    }
     if (result.equals(WRONGWAY) || result.equals(IMPORT_STATEMENT)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("block.expression.expected"));

@@ -25,32 +25,26 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
-public class TypeArguments implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class TypeArguments implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker taMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLT))
-    {
+    if (!ParserUtils.getToken(builder, mLT)) {
       taMarker.rollbackTo();
       return WRONGWAY;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(TypeArgument.parse(builder)))
-    {
+    if (WRONGWAY.equals(TypeArgument.parse(builder))) {
       taMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ParserUtils.getToken(builder, mCOMMA))
-    {
+    while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(TypeArgument.parse(builder)))
-      {
+      if (WRONGWAY.equals(TypeArgument.parse(builder))) {
         taMarker.done(TYPE_ARGUMENTS);
         return TYPE_ARGUMENTS;
       }
@@ -59,7 +53,7 @@ public class TypeArguments implements GroovyElementTypes
     PsiBuilder.Marker rb = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
-    if (ParserUtils.getToken(builder, mGT)){
+    if (ParserUtils.getToken(builder, mGT)) {
       rb.drop();
       ParserUtils.getToken(builder, mNLS);
     } else {

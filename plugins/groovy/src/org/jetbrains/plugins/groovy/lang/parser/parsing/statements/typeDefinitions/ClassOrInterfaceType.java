@@ -26,15 +26,25 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 
-public class ClassOrInterfaceType implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class ClassOrInterfaceType implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    return parse(builder, false);
+  }
+
+  public static GroovyElementType parse(PsiBuilder builder, boolean isUpper) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
     PsiBuilder.Marker secondInternalTypeMarker;
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    char firstChar;
+    if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
+    else return WRONGWAY;
+
+    if (isUpper && !Character.isUpperCase(firstChar)) {
+      internalTypeMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       internalTypeMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -45,10 +55,8 @@ public class ClassOrInterfaceType implements GroovyElementTypes
     internalTypeMarker.done(CLASS_INTERFACE_TYPE);
     internalTypeMarker = secondInternalTypeMarker;
 
-    while (ParserUtils.getToken(builder, mDOT))
-    {
-      if (!ParserUtils.getToken(builder, mIDENT))
-      {
+    while (ParserUtils.getToken(builder, mDOT)) {
+      if (!ParserUtils.getToken(builder, mIDENT)) {
         internalTypeMarker.rollbackTo();
         return WRONGWAY;
       }

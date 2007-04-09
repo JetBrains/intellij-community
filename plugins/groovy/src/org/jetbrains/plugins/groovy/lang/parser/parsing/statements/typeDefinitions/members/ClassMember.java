@@ -18,15 +18,14 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -50,12 +49,17 @@ public class ClassMember implements GroovyElementTypes {
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    if (DeclarationStart.parse(builder)) {
+    GroovyElementType declType = Declaration.parse(builder);
+    if (WRONGWAY.equals(declType)) {
       declMarker.rollbackTo();
-      return Declaration.parse(builder);
+    } else {
+      declMarker.drop();
+      return declType;
     }
-
-    declMarker.rollbackTo();
+//    if (DeclarationStart.parse(builder)) {
+//      declMarker.rollbackTo();
+//      return Declaration.parse(builder);
+//    }
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();

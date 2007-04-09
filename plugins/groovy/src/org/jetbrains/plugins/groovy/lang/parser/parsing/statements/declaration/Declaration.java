@@ -43,7 +43,7 @@ public class Declaration implements GroovyElementTypes {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (WRONGWAY.equals(TypeSpec.parse(builder))) { //if type wasn't recognized trying poarse VaribleDeclaration
+      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) { //if type wasn't recognized trying poarse VaribleDeclaration
         checkMarker.rollbackTo();
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
@@ -77,7 +77,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
     } else {
-      if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
         builder.error(GroovyBundle.message("type.specification.expected"));
         declmMarker.rollbackTo();
         return WRONGWAY;

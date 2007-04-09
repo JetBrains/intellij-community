@@ -30,7 +30,9 @@ public class AnnotationMember implements GroovyElementTypes {
 
 
     PsiBuilder.Marker varDefMarker = builder.mark();
+
     //typized var definition
+    //todo: check for upper case type specification 
     if (WRONGWAY.equals(TypeSpec.parse(builder))) {
       varDefMarker.rollbackTo();
       return WRONGWAY;

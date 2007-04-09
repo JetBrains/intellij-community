@@ -1,5 +1,5 @@
 class b {
- a (def a, final b) {}
+ String a (def a, final b) {}
 }
 -----
 Groovy script
@@ -13,6 +13,9 @@ Groovy script
       PsiElement(new line)('\n')
       PsiWhiteSpace(' ')
       Method
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
@@ -31,7 +34,7 @@ Groovy script
             PsiElement(identifier)('b')
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Method body
+        Open block
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n')

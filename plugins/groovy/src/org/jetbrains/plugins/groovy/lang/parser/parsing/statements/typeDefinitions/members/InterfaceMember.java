@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -32,11 +32,21 @@ public class InterfaceMember implements GroovyElementTypes {
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    if (DeclarationStart.parse(builder)) {
+    GroovyElementType declType = Declaration.parse(builder);
+    if (WRONGWAY.equals(declType)) {
       declMarker.rollbackTo();
-      return Declaration.parse(builder);
+    } else {
+      declMarker.drop();
+      return declType;
     }
-    declMarker.rollbackTo();
+
+    //declaration
+//    PsiBuilder.Marker declMarker = builder.mark();
+//    if (DeclarationStart.parse(builder)) {
+//      declMarker.rollbackTo();
+//      return Declaration.parse(builder);
+//    }
+//    declMarker.rollbackTo();
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();

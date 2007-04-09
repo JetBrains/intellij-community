@@ -1,0 +1,54 @@
+interface a {
+  def a ()
+
+  def b ();
+  String c () {};;
+}
+-----
+Groovy script
+  Interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Interface block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(new line)('\n\n')
+      PsiWhiteSpace('  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Method
+        Class type
+          PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('c')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
