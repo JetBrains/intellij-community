@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *      (	( nlsWarn openBlock ) | )
  */
 
-
 public class VariableDefinitions implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     return parseDefinitions(builder, false, false);
@@ -106,12 +105,6 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       OpenOrClosableBlock.parseOpenBlock(builder);
 
-//      if (isEnumConstantMember) {
-//        varMarker.done(ENUM_CONSTANT_MEMBER);
-//        varMarker.drop();
-//        return ENUM_CONSTANT_MEMBER;
-//      }
-
       varMarker.drop();
       return METHOD_DEFINITION;
     } else {
@@ -151,10 +144,6 @@ public class VariableDefinitions implements GroovyElementTypes {
   private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
   }
-
-//  public static GroovyElementType parseEnumConstantMember(PsiBuilder builder) {
-//    return parseDefinitions(builder, true, false);
-//  }
 
   public static GroovyElementType parseAnnotationMameber(PsiBuilder builder) {
     return parseDefinitions(builder, false, true);

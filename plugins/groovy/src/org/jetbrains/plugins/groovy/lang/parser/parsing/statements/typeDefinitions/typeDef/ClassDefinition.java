@@ -49,15 +49,13 @@ public class ClassDefinition implements GroovyElementTypes {
 
     TypeParameters.parse(builder);
 
-    if (kEXTENDS.equals(builder.getTokenType()))
-      if (WRONGWAY.equals(SuperClassClause.parse(builder))) {
-//      return WRONGWAY;
-      }
+    if (kEXTENDS.equals(builder.getTokenType())) {
+      SuperClassClause.parse(builder);
+    }
 
-    if (kIMPLEMENTS.equals(builder.getTokenType()))
-      if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
-//      return WRONGWAY;
-      }
+    if (kIMPLEMENTS.equals(builder.getTokenType())) {
+      ImplementsClause.parse(builder);
+    }
 
     if (mLCURLY.equals(builder.getTokenType())) {
       if (WRONGWAY.equals(ClassBlock.parse(builder))) {

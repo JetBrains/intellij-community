@@ -22,22 +22,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.InterfaceBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class InterfaceDefinition implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, kINTERFACE))
-    {
+public class InterfaceDefinition implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, kINTERFACE)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
@@ -45,13 +42,10 @@ public class InterfaceDefinition implements GroovyElementTypes
 
     TypeParameters.parse(builder);
 
-    if (WRONGWAY.equals(InterfaceExtends.parse(builder)))
-    {
-      return WRONGWAY;
-    }
+    InterfaceExtends.parse(builder);
 
-    if (WRONGWAY.equals(InterfaceBlock.parse(builder)))
-    {
+    if (WRONGWAY.equals(InterfaceBlock.parse(builder))) {
+      builder.error(GroovyBundle.message("interface.body.expected"));
       return WRONGWAY;
     }
 
