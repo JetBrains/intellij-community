@@ -480,7 +480,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     projectAttrs.put(DEFAULT_ATTR, AntAttributeType.STRING);
     projectAttrs.put(BASEDIR_ATTR, AntAttributeType.STRING);
     final AntTypeDefinition def = getTargetDefinition();
-    myProjectElements.put(def.getTypeId(), def.getClassName());
+    if (def != null) {
+      myProjectElements.put(def.getTypeId(), def.getClassName());
+    }
     return new AntTypeDefinitionImpl(new AntTypeId(PROJECT_TAG), Project.class.getName(), false, projectAttrs, myProjectElements);
   }
 
