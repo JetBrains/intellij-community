@@ -41,8 +41,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private LookupItemPreferencePolicy myPreferencePolicy = null;
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
+    final Document document = editor.getDocument();
+    if (editor.isViewer()) {
+      document.fireReadOnlyModificationAttempt();
+      return;
+    }
     if (!file.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
         return;
       }
     }
@@ -153,7 +158,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
       }
 
-      editor.getDocument().replaceString(offset1 - prefix.length(), offset1, uniqueText);
+      document.replaceString(offset1 - prefix.length(), offset1, uniqueText);
       final int offset = offset1 - prefix.length() + uniqueText.length();
       editor.getCaretModel().moveToOffset(offset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -177,7 +182,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      final RangeMarker startOffsetMarker = editor.getDocument().createRangeMarker(startOffset, startOffset);
+      final RangeMarker startOffsetMarker = document.createRangeMarker(startOffset, startOffset);
       final Lookup lookup = showLookup(project, editor, items, prefix, data, file);
 
       if (lookup != null) {
