@@ -39,4 +39,6 @@ public interface StatusBar {
    * look noisy. See {@link com.intellij.ui.LightColors} for convinient colors
    */
   void fireNotificationPopup(JComponent content, final Color backgroundColor);
+
+  void removeCustomIndicationComponent(final JComponent c);
 }

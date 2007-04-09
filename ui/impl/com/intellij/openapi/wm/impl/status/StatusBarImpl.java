@@ -188,6 +188,13 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myCustomIndicationsPanel.add(c, gbConstraints);
   }
 
+  public void removeCustomIndicationComponent(final JComponent component) {
+    myCustomIndicationsPanel.remove(component);
+    if (myCustomIndicationsPanel.getComponentCount() == 0) {
+      myCustomIndicationsPanel.setVisible(false);
+    }
+  }
+
   public final void setStatusEnabled(final boolean enabled) {
     myStatusPanel.setEnabled(enabled);
   }

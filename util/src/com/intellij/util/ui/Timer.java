@@ -38,15 +38,20 @@ public abstract class Timer implements Disposable {
     };
   }
 
+  public final int getSpan() {
+    return mySpan;
+  }
+
   public final void start() {
     assert !myThread.isAlive();
     myThread.start();
   }
 
-  protected abstract void onTimer();
+  protected abstract void onTimer() throws InterruptedException;
 
   public final void suspend() {
-    assert !myDisposed;
+    if (myDisposed) return;
+
     if (myThread.isAlive()) {
       myRunning = false;
     }
@@ -86,5 +91,9 @@ public abstract class Timer implements Disposable {
 
   public boolean isRunning() {
     return myRunning;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 }

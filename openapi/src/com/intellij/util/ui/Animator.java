@@ -11,29 +11,64 @@ public abstract class Animator {
 
   private int myCurrentFrame = 0;
   private int myQueuedFrames = 0;
+
   private boolean myRepeatable;
 
-  public Animator(final String name, final int totalFrames, final int cycleLength, boolean repeatable) {
+  private int myRepeatCount;
+
+  private boolean myLastAnimated;
+
+  public Animator(final String name,
+                  final int totalFrames,
+                  final int cycleLength,
+                  boolean repeatable,
+                  final int interCycleGap,
+                  final int maxRepeatCount) {
     myName = name;
     myTotalFrames = totalFrames;
     myCycleLength = cycleLength;
     myRepeatable = repeatable;
 
     myTimer = new Timer(myName, myCycleLength / myTotalFrames) {
-      protected void onTimer() {
-        if (myQueuedFrames > myTotalFrames) return;
-
+      protected void onTimer() throws InterruptedException {
         boolean repaint = true;
-        if (myCurrentFrame + 1 < myTotalFrames) {
-          myCurrentFrame++;
-        }
-        else {
-          if (myRepeatable) {
+        if (!isAnimated()) {
+          if (myLastAnimated) {
             myCurrentFrame = 0;
+            myQueuedFrames = 0;
+            myLastAnimated = false;
           }
           else {
             repaint = false;
-            suspend();
+          }
+        } else {
+          myLastAnimated = true;
+
+          if (myQueuedFrames > myTotalFrames) return;
+
+          if (myCurrentFrame + 1 < myTotalFrames) {
+            myCurrentFrame++;
+          }
+          else {
+            if (myRepeatable) {
+              if (maxRepeatCount > 0 && myRepeatCount < maxRepeatCount) {
+                myRepeatCount++;
+                myCurrentFrame = 0;
+                if (interCycleGap > 0) {
+                  Thread.sleep(interCycleGap - getSpan());
+                }
+              }
+              else {
+                repaint = false;
+                suspend();
+                myRepeatCount = 0;
+                onAnimationMaxCycleReached();
+              }
+            }
+            else {
+              repaint = false;
+              suspend();
+            }
           }
         }
 
@@ -48,6 +83,10 @@ public abstract class Animator {
         }
       }
     };
+  }
+
+  protected void onAnimationMaxCycleReached() throws InterruptedException {
+
   }
 
   public void suspend() {
@@ -65,6 +104,19 @@ public abstract class Animator {
   }
 
   public boolean isRunning() {
-    return myTimer.isRunning();
+    return myTimer.isRunning() && myLastAnimated;
+  }
+
+  public boolean isAnimated() {
+    return true;
+  }
+
+  public void reset() {
+    myCurrentFrame = 0;
+    myRepeatCount = 0;
+  }
+
+  public boolean isDisposed() {
+    return myTimer.isDisposed();
   }
 }

@@ -29,8 +29,6 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void releaseFrame(IdeFrameImpl frame);
 
-  public abstract IdeFrameImpl[] getAllFrames();
-
   /**
    * @return focus owner of the specified window.
    * @exception IllegalArgumentException if <code>window</code> is <code>null</code>.

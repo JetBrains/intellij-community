@@ -56,4 +56,6 @@ public abstract class WindowManager {
    * The method properly works in mutlimonitor configuration.
    */
   public abstract boolean isInsideScreenBounds(int x,int y);
+
+  public abstract IdeFrame[] getAllFrames();
 }
