@@ -353,24 +353,26 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
-  @NotNull
+  @Nullable /*will return null in case ant installation is not properly configured*/
   public AntTypeDefinition getTargetDefinition() {
     getBaseTypeDefinition(null);
     synchronized (PsiLock.LOCK) {
       if (myTargetDefinition == null) {
         final Class targetClass = ReflectedProject.getProject(getClassLoader()).myTargetClass;
         final AntTypeDefinition targetDef = createTypeDefinition(new AntTypeId(TARGET_TAG), targetClass, false);
-        for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
-          final AntTypeId id = def.getTypeId();
-          if ((def.isTask() || isDataDype(def)) && isProjectNestedElement(def)) { 
-            // if type definition is a task _and_ is visible at the project level
-            // custom tasks can define nested types with the same typeId (e.g. "property") but different implementation class
-            // such nested types can be used only inside tasks which defined them, but not at a project level
-            targetDef.registerNestedType(id, def.getClassName());
+        if (targetDef != null) {
+          for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
+            final AntTypeId id = def.getTypeId();
+            if ((def.isTask() || isDataDype(def)) && isProjectNestedElement(def)) { 
+              // if type definition is a task _and_ is visible at the project level
+              // custom tasks can define nested types with the same typeId (e.g. "property") but different implementation class
+              // such nested types can be used only inside tasks which defined them, but not at a project level
+              targetDef.registerNestedType(id, def.getClassName());
+            }
           }
+          myTargetDefinition = targetDef;
+          registerCustomType(targetDef);
         }
-        myTargetDefinition = targetDef;
-        registerCustomType(targetDef);
       }
       return myTargetDefinition;
     }

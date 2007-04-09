@@ -82,7 +82,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       final AntFile file = getAntFile();
       if (file != null) {
         final AntTypeDefinition targetDef = file.getTargetDefinition();
-        final String className = targetDef.getNestedClassName(id);
+        final String className = targetDef != null? targetDef.getNestedClassName(id) : null; 
         if (className != null) {
           myDefinition = file.getBaseTypeDefinition(className);
         }

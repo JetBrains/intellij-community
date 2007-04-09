@@ -9,9 +9,9 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
@@ -100,15 +100,20 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
             final String elementClassName = thisClassName + '$' + name;
             AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(elementClassName);
             if (nestedDef == null) {
-              nestedDef = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)file.getTargetDefinition());
+              final AntTypeDefinitionImpl targetDef = (AntTypeDefinitionImpl)file.getTargetDefinition();
+              if (targetDef != null) {
+                nestedDef = new AntTypeDefinitionImpl(targetDef);
+              }
             }
-            final AntTypeId typeId = new AntTypeId(name);
-            nestedDef.setTypeId(typeId);
-            nestedDef.setClassName(elementClassName);
-            nestedDef.setIsTask(false);
-            nestedDef.setDefiningElement(child);
-            file.registerCustomType(nestedDef);
-            nestedElements.put(typeId, nestedDef.getClassName());
+            if (nestedDef != null) {
+              final AntTypeId typeId = new AntTypeId(name);
+              nestedDef.setTypeId(typeId);
+              nestedDef.setClassName(elementClassName);
+              nestedDef.setIsTask(false);
+              nestedDef.setDefiningElement(child);
+              file.registerCustomType(nestedDef);
+              nestedElements.put(typeId, nestedDef.getClassName());
+            }
           }
         }
       }

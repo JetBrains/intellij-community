@@ -23,7 +23,7 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
   @Nullable
   AntTypeDefinition getBaseTypeDefinition(final String taskClassName);
 
-  @NotNull
+  @Nullable /* will return null in case ant installation was not properly configured*/
   AntTypeDefinition getTargetDefinition();
 
   void registerCustomType(final AntTypeDefinition def);
