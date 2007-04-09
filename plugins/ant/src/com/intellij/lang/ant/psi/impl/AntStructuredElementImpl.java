@@ -174,7 +174,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public void unregisterCustomType(final AntTypeDefinition def) {
     synchronized (PsiLock.LOCK) {
       if (myDefinition != null && myDefinitionCloned) {
-        myDefinition.unregisterNestedType(def.getTypeId());
+        final AntTypeId typeId = def.getTypeId();
+        // for the same typeId there might be different classes registered
+        // so unregister only that type that is really registered as a nested within this element
+        final String registeredClassName = myDefinition.getNestedClassName(typeId);
+        if (registeredClassName != null && registeredClassName.equals(def.getClassName())) {
+          myDefinition.unregisterNestedType(typeId);
+        }
       }
       getAntFile().unregisterCustomType(def);
     }

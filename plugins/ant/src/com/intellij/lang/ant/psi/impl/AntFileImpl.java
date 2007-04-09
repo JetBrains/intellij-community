@@ -417,7 +417,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
       myTypeDefinitions.remove(classname);
-      myProjectElements.remove(def.getTypeId());
+      final String registeredClassName = myProjectElements.get(def.getTypeId());
+      if (registeredClassName != null && registeredClassName.equals(classname)) {
+        myProjectElements.remove(def.getTypeId());
+      }
       if (myTargetDefinition != null && myTargetDefinition != def) {
         myTargetDefinition = null;
       }
