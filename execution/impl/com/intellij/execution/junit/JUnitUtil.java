@@ -4,8 +4,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -19,7 +19,11 @@ import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class JUnitUtil {
@@ -121,6 +125,17 @@ public class JUnitUtil {
     if (modifierList.findAnnotation("org.junit.runner.RunWith") != null) return true;
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isTestAnnotated(method)) return true;
+    }
+    return false;
+  }
+
+  public static boolean isJUnit4TestClass(final Class aClass) {
+    final int modifiers = aClass.getModifiers();
+    if ((modifiers & Modifier.ABSTRACT) != 0) return false;
+    if ((modifiers & Modifier.PUBLIC) == 0) return false;
+    if (aClass.isAnnotationPresent(RunWith.class)) return true;
+    for (Method method : aClass.getMethods()) {
+      if (method.isAnnotationPresent(Test.class)) return true;
     }
     return false;
   }

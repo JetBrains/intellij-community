@@ -8,6 +8,7 @@
  */
 package com.intellij;
 
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,18 +19,15 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ProfilingUtil;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-import junit.framework.TestSuite;
+import junit.framework.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Iterator;
 import java.util.List;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class TestAll implements Test {
 
   static {
@@ -46,7 +44,6 @@ public class TestAll implements Test {
   private String myLastTestClass;
   private int myRunTests = -1;
   private boolean mySavingMemorySnapshot;
-  private static final long MAX_MEMORY_SIZE = 128000000L;
 
   private static int SAVE_MEMORY_SNAPSHOT = 1;
   private static int START_GUARD = 2;
@@ -63,8 +60,8 @@ public class TestAll implements Test {
 
     int count = 0;
 
-    for (Iterator i = classes.iterator(); i.hasNext();) {
-      Class testCaseClass = (Class)i.next();
+    for (final Object aClass : classes) {
+      Class testCaseClass = (Class)aClass;
       Test test = getTest(testCaseClass);
       if (test != null) count += test.countTestCases();
     }
@@ -91,7 +88,7 @@ public class TestAll implements Test {
                 long secondsSpent = (currTime - myLastTestStartTime) / 1000L;
                 Thread currentThread = getCurrentThread();
                 if (!mySavingMemorySnapshot) {
-                  if (secondsSpent > (IdeaTestCase.ourTestTime * myLastTestTestMethodCount)) {
+                  if (secondsSpent > IdeaTestCase.ourTestTime * myLastTestTestMethodCount) {
                     System.out.println("Interrupting current Test (out of time)! Test class: "+ myLastTestClass +" Seconds spent = " + secondsSpent);
                     myInterruptedByOutOfTime = true;
                     if (currentThread != null) {
@@ -119,7 +116,7 @@ public class TestAll implements Test {
     myStartTime = System.currentTimeMillis();
   }
 
-  private Thread getCurrentThread() {
+  private static Thread getCurrentThread() {
     if (IdeaTestCase.ourTestThread != null) {
       return IdeaTestCase.ourTestThread;
     }
@@ -146,8 +143,8 @@ public class TestAll implements Test {
   public void run(final TestResult testResult) {
     List classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
-    for (Iterator i = classes.iterator(); i.hasNext();) {
-      runNextTest(testResult, totalTests, (Class)i.next());
+    for (final Object aClass : classes) {
+      runNextTest(testResult, totalTests, (Class)aClass);
       if (testResult.shouldStop()) break;
     }
     tryGc(10);
@@ -165,7 +162,7 @@ public class TestAll implements Test {
       return;
     }
     if (myStartTime == 0) {
-      boolean ourClassLoader = this.getClass().getClassLoader().getClass().getName().startsWith("com.intellij.");
+      boolean ourClassLoader = getClass().getClassLoader().getClass().getName().startsWith("com.intellij.");
       if (!ourClassLoader) {
         beforeFirstTest();
       }
@@ -193,65 +190,64 @@ public class TestAll implements Test {
     LOG.info("Running " + testCaseClass.getName());
     final Test test = getTest(testCaseClass);
 
-    if (test != null) {
-      myLastTestClass = null;
+    if (test == null) return;
 
-      
-      myLastTestClass = testCaseClass.getName();
-      myLastTestStartTime = System.currentTimeMillis();
-      myLastTestTestMethodCount = test.countTestCases();
+    myLastTestClass = null;
 
+    myLastTestClass = testCaseClass.getName();
+    myLastTestStartTime = System.currentTimeMillis();
+    myLastTestTestMethodCount = test.countTestCases();
+
+    try {
       try {
-        try {
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        test.run(testResult);
-        try {
-          final Application app = ApplicationManager.getApplication();
-          if (app != null) {
-            app.invokeAndWait(new Runnable() {
-              public void run() {
-                try {
-                  app.runWriteAction(new Runnable() {
-                    public void run() {
-                      //todo[myakovlev] is it necessary?
-                      FileDocumentManager manager = FileDocumentManager.getInstance();
-                      if (manager instanceof FileDocumentManagerImpl) {
-                        ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-                      }
+        Thread.sleep(100);
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      test.run(testResult);
+      try {
+        final Application app = ApplicationManager.getApplication();
+        if (app != null) {
+          app.invokeAndWait(new Runnable() {
+            public void run() {
+              try {
+                app.runWriteAction(new Runnable() {
+                  public void run() {
+                    //todo[myakovlev] is it necessary?
+                    FileDocumentManager manager = FileDocumentManager.getInstance();
+                    if (manager instanceof FileDocumentManagerImpl) {
+                      ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
                     }
-                  });
-                }
-                catch (Throwable e) {
-                  e.printStackTrace(System.err);
-                }
+                  }
+                });
               }
-            }, ModalityState.NON_MODAL);
-          }
-        }
-        catch (Exception e) {
-          e.printStackTrace();
+              catch (Throwable e) {
+                e.printStackTrace(System.err);
+              }
+            }
+          }, ModalityState.NON_MODAL);
         }
       }
-      catch (Throwable t) {
-        if (t instanceof OutOfMemoryError) {
-          if ((ourMode & SAVE_MEMORY_SNAPSHOT) != 0) {
-            try {
-              mySavingMemorySnapshot = true;
-              System.out.println("OutOfMemoryError detected. Saving memory snapshot started");
-              ProfilingUtil.captureMemorySnapshot("allTests");
-            }
-            finally {
-              System.out.println("Saving memory snapshot finished");
-              mySavingMemorySnapshot = false;
-            }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    catch (Throwable t) {
+      if (t instanceof OutOfMemoryError) {
+        if ((ourMode & SAVE_MEMORY_SNAPSHOT) != 0) {
+          try {
+            mySavingMemorySnapshot = true;
+            System.out.println("OutOfMemoryError detected. Saving memory snapshot started");
+            ProfilingUtil.captureMemorySnapshot("allTests");
+          }
+          finally {
+            System.out.println("Saving memory snapshot finished");
+            mySavingMemorySnapshot = false;
           }
         }
-        testResult.addError(test, t);
       }
+      testResult.addError(test, t);
     }
   }
 
@@ -276,7 +272,7 @@ public class TestAll implements Test {
     return !possibleOutOfMemoryError;
   }
 
-  private boolean possibleOutOfMemory(int neededMemory) {
+  private static boolean possibleOutOfMemory(int neededMemory) {
     Runtime runtime = Runtime.getRuntime();
     long maxMemory = runtime.maxMemory();
     long realFreeMemory = runtime.freeMemory() + (maxMemory - runtime.totalMemory());
@@ -286,7 +282,7 @@ public class TestAll implements Test {
     return possibleOutOfMemoryError;
   }
 
-  private Test getTest(Class testCaseClass) {
+  private static Test getTest(Class testCaseClass) {
     if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) return null;
 
     try {
@@ -294,12 +290,15 @@ public class TestAll implements Test {
       return (Test)suiteMethod.invoke(null, new Class[0]);
     }
     catch (NoSuchMethodException e) {
+      if (JUnitUtil.isJUnit4TestClass(testCaseClass)) {
+        return new JUnit4TestAdapter(testCaseClass);
+      }
       return new TestSuite(testCaseClass){
         public void addTest(Test test) {
           if (!(test instanceof TestCase))  {
             super.addTest(test);
           } else {
-            Method method = findTestMethod(((TestCase)test));
+            Method method = findTestMethod((TestCase)test);
             if (method == null || !TestCaseLoader.isBombed(method)) {
               super.addTest(test);
             }
@@ -333,12 +332,12 @@ public class TestAll implements Test {
     this(packageRoot, getClassRoots());
   }
 
-  public TestAll(String packageRoot, String[] classRoots) throws IOException, ClassNotFoundException {
+  public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
     myTestCaseLoader = new TestCaseLoader((ourMode & FILTER_CLASSES) != 0 ? "tests/testGroups.properties" : "");
     myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
 
-    for (int i = 0; i < classRoots.length; i++) {
-      ClassFinder classFinder = new ClassFinder(new File(classRoots[i]), packageRoot);
+    for (String classRoot : classRoots) {
+      ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);
       myTestCaseLoader.loadTestCases(classFinder.getClasses());
     }
 
@@ -356,9 +355,10 @@ public class TestAll implements Test {
       catch (InterruptedException e) {
         e.printStackTrace();
       }
-      java.lang.System.gc();
+      System.gc();
       //long mem = Runtime.getRuntime().totalMemory();
       System.out.println("Runtime.getRuntime().totalMemory() = " + Runtime.getRuntime().totalMemory());
     }
   }
+
 }

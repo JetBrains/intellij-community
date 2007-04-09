@@ -10,11 +10,12 @@ package com.intellij;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class ClassFinder {
-  private final Vector classNameList = new Vector();
+  private final List<String> classNameList = new ArrayList<String>();
   private final int startPackageName;
 
   public ClassFinder(final File classPathRoot, final String packageRoot) throws IOException {
@@ -25,31 +26,30 @@ public class ClassFinder {
 
   private String computeClassName(final File file) {
     String absPath = file.getAbsolutePath();
-    String packageBase = absPath.substring(startPackageName, absPath.length() - 6);
-    return packageBase.replace(File.separatorChar, '.');
+    if (absPath.endsWith("Test.class")) {
+      String packageBase = absPath.substring(startPackageName, absPath.length() - ".class".length());
+      return packageBase.replace(File.separatorChar, '.');
+    }
+    else {
+      return null;
+    }
   }
 
-  private void findAndStoreTestClasses(final File currentDirectory) throws IOException {
-    String[] files = currentDirectory.list();
-    if (files == null) return;
-    for (int i = 0; i < files.length; i++) {
-      File file = new File(currentDirectory, files[i]);
-      String fileName = file.getName();
-      String suffix = "Test.class";
-      int idx = fileName.indexOf(suffix);
-
-      if (idx != -1 && (fileName.length() - idx) == suffix.length()) {
-        String className = computeClassName(file);
+  private void findAndStoreTestClasses(final File current) throws IOException {
+    if (current.isDirectory()) {
+      for (File file : current.listFiles()) {
+        findAndStoreTestClasses(file);
+      }
+    }
+    else {
+      String className = computeClassName(current);
+      if (className != null) {
         classNameList.add(className);
-      } else {
-        if (file.isDirectory()) {
-          findAndStoreTestClasses(file);
-        }
       }
     }
   }
 
-  public Iterator getClasses() {
-    return classNameList.iterator();
+  public Collection<String> getClasses() {
+    return classNameList;
   }
 }

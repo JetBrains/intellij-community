@@ -7,12 +7,15 @@ import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.localvcs.integration.Updater;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.idea.Bombed;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Calendar;
 
+@Bombed(month = Calendar.APRIL, day=31, user = "anton")
 public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingTree() {

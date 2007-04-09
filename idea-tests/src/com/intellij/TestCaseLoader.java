@@ -8,6 +8,7 @@
  */
 package com.intellij;
 
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
 import junit.framework.Test;
@@ -20,16 +21,12 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class TestCaseLoader {
-  public static final String TEST_NAME_SUFFIX = "Test";
-  /**
-   * If <code>true</code> only loads tests that have a corresponding class without ``Test'' suffix.
-   */
-  public static boolean USE_ADVANCED_LOGIC = false;
   private final List<Class> myClassList = new ArrayList<Class>();
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
@@ -70,50 +67,32 @@ public class TestCaseLoader {
     }
   }
 
-  /*
+  /**
    * Determine if we should load this test case.
    */
   private boolean shouldAddTestCase(final Class testCaseClass) {
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
-    boolean shouldAdd = false;
     if (shouldExcludeTestClass(testCaseClass)) return false;
 
-    if ((TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) &&
-        testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
-      if (USE_ADVANCED_LOGIC) {
-        String name = testCaseClass.getName().substring(0, testCaseClass.getName().length() - TEST_NAME_SUFFIX.length());
-        //noinspection EmptyCatchBlock
-        try {
-          Class.forName(name);
-          shouldAdd = true;
-        } catch (ClassNotFoundException ignored) { }
-      }
-      else {
-        shouldAdd = true;
-      }
+    if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
+      return true;
     }
-    else if (testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
-      //noinspection EmptyCatchBlock
-      try {
-        final Method suiteMethod = testCaseClass.getMethod("suite");
-        if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
-          System.out.println("testCaseClass = " + testCaseClass);
-          shouldAdd = true;
-        }
-      } catch (NoSuchMethodException e) { }
-    }
+    try {
+      final Method suiteMethod = testCaseClass.getMethod("suite");
+      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+        //System.out.println("testCaseClass = " + testCaseClass);
+        return true;
+      }
+    } catch (NoSuchMethodException e) { }
 
-    return shouldAdd;
+    return JUnitUtil.isJUnit4TestClass(testCaseClass);
   }
 
   /*
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    if (!myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName)) {
-     return true;
-    }
-    return isBombed(testCaseClass);
+    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass);
   }
 
   public static boolean isBombed(final Method method) {
@@ -138,12 +117,14 @@ public class TestCaseLoader {
     return !IdeaTestUtil.bombExplodes(bombedAnnotation);
   }
 
-  public void loadTestCases(final Iterator classNamesIterator) {
-    while (classNamesIterator.hasNext()) {
-      String className = (String)classNamesIterator.next();
+  public void loadTestCases(final Collection<String> classNamesIterator) {
+    for (String className : classNamesIterator) {
       try {
         Class candidateClass = Class.forName(className);
         addClassIfTestCase(candidateClass);
+      }
+      catch (UnsatisfiedLinkError e) {
+        //ignore
       }
       catch (ClassNotFoundException e) {
         e.printStackTrace();
@@ -161,7 +142,7 @@ public class TestCaseLoader {
     }
   }
 
-  public List getClasses() {
+  public List<Class> getClasses() {
     return Collections.unmodifiableList(myClassList);
   }
 
