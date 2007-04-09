@@ -734,23 +734,25 @@ public class TypeConversionUtil {
                                              boolean allowUncheckedConversion) {
     PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
     PsiClass leftClass = leftResult.getElement();
-    if (!leftClass.hasTypeParameters()) return true;
-    final PsiSubstitutor substitutor;
-
     PsiClass rightClass = rightResult.getElement();
-    if (leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
-      substitutor = rightSubstitutor;
-    }
-    else {
-      substitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
+
+    if (!leftClass.hasTypeParameters()) return true;
+    PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
+
+    if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
+      rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
+      rightClass = leftClass;
     }
 
-    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(leftClass);
-    while (iterator.hasNext()) {
-      PsiTypeParameter parameter = iterator.next();
-      final PsiType typeLeft = leftResult.getSubstitutor().substitute(parameter);
+    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
+    Iterator<PsiTypeParameter> ri = PsiUtil.typeParametersIterator(rightClass);
+    while (li.hasNext()) {
+      if (!ri.hasNext()) return false;
+      PsiTypeParameter lp = li.next();
+      PsiTypeParameter rp = ri.next();
+      final PsiType typeLeft = leftSubstitutor.substitute(lp);
       if (typeLeft == null) continue;
-      final PsiType typeRight = substitutor.substituteWithBoundsPromotion(parameter);
+      final PsiType typeRight = rightSubstitutor.substituteWithBoundsPromotion(rp);
       if (typeRight == null) {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
