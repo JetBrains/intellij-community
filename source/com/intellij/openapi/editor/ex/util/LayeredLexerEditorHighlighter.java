@@ -76,8 +76,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
 
     public void removeAll() {
+      if (mySegmentCount != 0) {
+        Arrays.fill(myRanges, null);
+      }
+
       super.removeAll();
-      Arrays.fill(myRanges, null);
     }
 
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
