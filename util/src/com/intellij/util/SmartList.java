@@ -18,15 +18,12 @@
  */
 package com.intellij.util;
 
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings({"unchecked"})
 public class SmartList<E> extends AbstractList<E> {
   private int mySize = 0;
-  private Object myElem = null;
+  private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, E[2] if mySize==2, ArrayList<E> if mySize>2
 
   public SmartList() {
   }
@@ -109,8 +106,6 @@ public class SmartList<E> extends AbstractList<E> {
     if (index < 0 || index >= mySize) {
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
     }
-    //ArrayList<E> old = new ArrayList<E>(this);
-
     final E oldValue;
     if (mySize == 1) {
       oldValue = (E)myElem;
@@ -136,14 +131,6 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = list.remove(index);
     }
     mySize--;
-    //{
-    //  List<E> list = new ArrayList<E>(subList(0, index));
-    //  list.add(oldValue);
-    //  list.addAll(subList(index, mySize));
-    //  if (!list.equals(old)) {
-    //    int i = 0;
-    //  }
-    //}
     return oldValue;
   }
 }

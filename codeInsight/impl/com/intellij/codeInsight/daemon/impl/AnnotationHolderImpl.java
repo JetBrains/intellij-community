@@ -76,8 +76,4 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   public boolean hasAnnotations() {
     return size() > 0;
   }
-
-  public Annotation[] getResult() {
-    return toArray(new Annotation[size()]);
-  }
 }

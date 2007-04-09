@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
-  private VirtualFile myFile;
+  private VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private boolean myPhysical;
   private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
@@ -64,7 +64,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical) {
     myManager = manager;
-    myFile = virtualFile;
+    myVirtualFile = virtualFile;
     myEventSystemEnabled = physical;
     myBaseLanguage = calcBaseLanguage(virtualFile);
     setContent(new VirtualFileContent());
@@ -294,7 +294,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     assert parserDefinition != null;
     //noinspection HardCodedStringLiteral
     Method m = parserDefinition.getClass().getMethod("createFile", Project.class, VirtualFile.class);
-    PsiFile file = (PsiFile)m.invoke(parserDefinition, myManager.getProject(), myFile);
+    PsiFile file = (PsiFile)m.invoke(parserDefinition, myManager.getProject(), myVirtualFile);
     if (file instanceof PsiFileImpl) {
       ((PsiFileImpl)file).setViewProvider(this);
       return file;
@@ -313,11 +313,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @NotNull
   public VirtualFile getVirtualFile() {
-    return myFile;
+    return myVirtualFile;
   }
 
   public void setVirtualFile(final VirtualFile file) {
-    myFile = file;
+    myVirtualFile = file;
     myDocument.clear();
     myPsiFile.set(null);
     myBaseLanguage = calcBaseLanguage(file);
@@ -471,7 +471,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public long getModificationStamp() {
       Document document = myDocument != null ? myDocument.get() : null;
       if (document != null) return document.getModificationStamp();
-      return myFile.getModificationStamp();
+      return myVirtualFile.getModificationStamp();
     }
   }
 

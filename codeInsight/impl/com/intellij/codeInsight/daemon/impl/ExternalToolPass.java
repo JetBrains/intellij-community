@@ -71,9 +71,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   public List<HighlightInfo> getHighlights() {
-    Annotation[] annotations = myAnnotationHolder.getResult();
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    for (Annotation annotation : annotations) {
+    for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightUtil.convertToHighlightInfo(annotation));
     }
     return infos;

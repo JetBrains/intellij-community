@@ -173,14 +173,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     final FileViewProvider viewProvider = getViewProvider();
     // load document outside lock for better performance
     final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
-    synchronized (PsiLock.LOCK) {
+    //synchronized (PsiLock.LOCK) {
       treeElement = createFileElement(viewProvider.getContents());
       if (document != null) {
         treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
       }
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
-    }
+    //}
 
     if (getViewProvider().isEventSystemEnabled()) {
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
@@ -244,7 +244,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     getViewProvider().rootChanged(this);
   }
 
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
     FileViewProvider provider = getViewProvider().clone();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
