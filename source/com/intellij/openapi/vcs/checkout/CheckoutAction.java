@@ -1,13 +1,16 @@
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.project.Project;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.oro.io.GlobFilenameFilter;
 
 import java.io.File;
@@ -27,6 +30,18 @@ public class CheckoutAction extends AnAction {
   }
 
   private static boolean processProject(final Project project, final File directory) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final VirtualFile vDir = lfs.refreshAndFindFileByIoFile(directory);
+        assert vDir != null;
+        final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
+        assert watchRequest != null;
+        vDir.refresh(false, true);
+        lfs.removeWatchedRoot(watchRequest);
+      }
+    });
+
     //noinspection HardCodedStringLiteral
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*.ipr"));
     if (files != null && files.length > 0) {
