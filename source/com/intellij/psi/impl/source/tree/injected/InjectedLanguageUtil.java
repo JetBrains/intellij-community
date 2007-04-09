@@ -23,6 +23,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -61,6 +62,7 @@ public class InjectedLanguageUtil {
       CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = provider.compute();
       if (result == null) return null;
       cachedPsi = host.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      ((CachedValueImpl<List<Pair<PsiElement, TextRange>>>)cachedPsi).setValue(result);
       ((UserDataHolderEx)host).putUserDataIfAbsent(INJECTED_PSI, cachedPsi);
       return result.getValue();
     }
@@ -433,7 +435,7 @@ public class InjectedLanguageUtil {
       if (oldTextRange.intersects(textRange)) {
         if (!injectedNode.getText().equals(oldFileNode.getText())) {
           // replace psi
-          FileElement newFileElement = (FileElement)injectedNode.copyElement();
+          FileElement newFileElement = (FileElement)injectedNode;//.copyElement();
           FileElement oldFileElement = oldFile.getTreeElement();
 
           if (oldFileElement.getFirstChildNode() != null) {

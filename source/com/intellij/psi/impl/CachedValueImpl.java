@@ -10,9 +10,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -224,5 +222,21 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   public CachedValueProvider<T> getValueProvider() {
     return myProvider;
+  }
+
+  public T setValue(final CachedValueProvider.Result<T> result) {
+    w.lock();
+
+    try {
+      T value = result.getValue();
+      myValue = new SoftReference<T>(value == null ? (T) NULL : value);
+      computeTimeStamps(result.getDependencyItems());
+
+      myComputed = true;
+      return value;
+    }
+    finally {
+      w.unlock();
+    }
   }
 }
