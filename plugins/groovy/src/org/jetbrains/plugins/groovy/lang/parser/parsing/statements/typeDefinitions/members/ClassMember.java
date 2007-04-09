@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -38,7 +39,7 @@ public class ClassMember implements GroovyElementTypes {
     PsiBuilder.Marker constructorMarker = builder.mark();
     ModifiersOptional.parse(builder);
 
-    IElementType constructorDef = ConstructorDefinition.parse(builder);
+    GroovyElementType constructorDef = ConstructorDefinition.parse(builder);
 
     if (WRONGWAY.equals(constructorDef)) {
       constructorMarker.rollbackTo();

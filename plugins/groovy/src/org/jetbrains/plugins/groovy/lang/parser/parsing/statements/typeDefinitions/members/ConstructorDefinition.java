@@ -30,6 +30,7 @@ import com.intellij.lang.PsiBuilder;
  * @author: Dmitry.Krasilschikov
  * @date: 23.03.2007
  */
+
 public class ConstructorDefinition implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, mIDENT)) {
