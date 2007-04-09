@@ -137,6 +137,8 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
   }
 
   public boolean closeActivePopup() {
+    if (myStack.isEmpty()) return false;
+
     final JBPopupImpl popup = myStack.pop();
     if (popup != null && popup.isVisible()){
       popup.cancel();

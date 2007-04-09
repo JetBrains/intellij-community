@@ -136,6 +136,8 @@ public class DnDEnabler implements Activatable, Disposable {
       if (event instanceof MouseEvent) {
         MouseEvent e = (MouseEvent)event;
 
+        if (e.getID() != MouseEvent.MOUSE_PRESSED) return;
+
         Component comp = myDnDSource.getComponent();
         if (e.getComponent() != comp) return;
 
