@@ -166,10 +166,12 @@
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
 
     <group id="LocalVcsGroup" class="com.intellij.localVcs.actions.LocalVcsGroup" popup="true">
+      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
+      <action id="NewLocalVcs.PutLabel" class="com.intellij.localvcs.integration.ui.actions.PutLabelAction"/>
+      <separator/>
       <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction"/>
       <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction"/>
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
-      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
     </group>
 
     <group id="VcsGroups" popup="true">

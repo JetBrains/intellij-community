@@ -5,24 +5,16 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class ShowHistoryAction extends AnAction {
+public class ShowHistoryAction extends LocalVcsAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VirtualFile f = getFile(e);
-    Project p = getProject(e);
-
-    IdeaGateway gw = new IdeaGateway(p);
-    DialogWrapper d = f.isDirectory() ? new DirectoryHistoryDialog(f, gw) : new FileHistoryDialog(f, gw);
-    d.show();
+  protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f) {
+    return f.isDirectory() ? new DirectoryHistoryDialog(gw, f) : new FileHistoryDialog(f, gw);
   }
 
   @Override
@@ -50,11 +42,4 @@ public class ShowHistoryAction extends AnAction {
     return ff.isAllowedAndUnderContentRoot(f);
   }
 
-  private VirtualFile getFile(AnActionEvent e) {
-    return e.getData(DataKeys.VIRTUAL_FILE);
-  }
-
-  private Project getProject(AnActionEvent e) {
-    return e.getData(DataKeys.PROJECT);
-  }
 }

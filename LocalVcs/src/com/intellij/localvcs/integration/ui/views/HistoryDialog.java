@@ -26,19 +26,19 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
-  protected IdeaGateway myIdeaGateway;
+  protected IdeaGateway myGateway;
   protected Splitter mySplitter;
   protected T myModel;
 
-  protected HistoryDialog(VirtualFile f, IdeaGateway gw) {
+  protected HistoryDialog(IdeaGateway gw, VirtualFile f) {
     super(gw.getProject(), true);
-    myIdeaGateway = gw;
+    myGateway = gw;
     initModel(f);
     init();
   }
 
   private void initModel(VirtualFile f) {
-    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myIdeaGateway.getProject());
+    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myGateway.getProject());
     myModel = createModelFor(f, vcs);
   }
 
@@ -134,7 +134,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     FileTypeManager tm = FileTypeManager.getInstance();
     EditorFactory ef = EditorFactory.getInstance();
 
-    SimpleDiffRequest r = new SimpleDiffRequest(myIdeaGateway.getProject(), m.getTitle());
+    SimpleDiffRequest r = new SimpleDiffRequest(myGateway.getProject(), m.getTitle());
     r.setContents(m.getLeftDiffContent(tm, ef), m.getRightDiffContent(tm, ef));
     r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
 

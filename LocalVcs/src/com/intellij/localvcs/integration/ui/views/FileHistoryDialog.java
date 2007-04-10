@@ -15,7 +15,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffPanel myDiffPanel;
 
   public FileHistoryDialog(VirtualFile f, IdeaGateway gw) {
-    super(f, gw);
+    super(gw, f);
   }
 
   @Override
@@ -26,12 +26,12 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new FileHistoryDialogModel(f, vcs, myIdeaGateway);
+    return new FileHistoryDialogModel(f, vcs, myGateway);
   }
 
   @Override
   protected JComponent createDiffPanel() {
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myIdeaGateway.getProject());
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myGateway.getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
     updateDiffs();

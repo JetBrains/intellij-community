@@ -21,14 +21,14 @@ import java.awt.*;
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private CheckinPanelTreeTable myDiffTree;
 
-  public DirectoryHistoryDialog(VirtualFile f, IdeaGateway gw) {
-    super(f, gw);
+  public DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f) {
+    super(gw, f);
     setTitle(myModel.getTitle());
   }
 
   @Override
   protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new DirectoryHistoryDialogModel(f, vcs, myIdeaGateway);
+    return new DirectoryHistoryDialogModel(f, vcs, myGateway);
   }
 
   @Override
@@ -50,7 +50,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     DirectoryDifferenceModel m = myModel.getRootDifferenceNodeModel();
     DirectoryDifferenceNode n = new DirectoryDifferenceNode(m);
 
-    myDiffTree = CheckinPanelTreeTable.createOn(myIdeaGateway.getProject(), n);
+    myDiffTree = CheckinPanelTreeTable.createOn(myGateway.getProject(), n);
 
     myDiffTree.getFirstTreeColumn().setName(n.getPresentableText(0));
     myDiffTree.getSecondTreeColumn().setName(n.getPresentableText(1));
