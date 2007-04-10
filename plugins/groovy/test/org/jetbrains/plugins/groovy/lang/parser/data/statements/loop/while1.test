@@ -12,7 +12,7 @@ Groovy script
     PsiElement())(')')
     Open block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       Method call
         Property selection
           Reference expression

@@ -13,7 +13,7 @@ Groovy script
     PsiElement(=)('=')
     Open block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       WHILE statement
         PsiElement(while)('while')
         PsiWhiteSpace(' ')

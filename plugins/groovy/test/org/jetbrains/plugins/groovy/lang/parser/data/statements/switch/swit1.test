@@ -13,7 +13,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Case block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')

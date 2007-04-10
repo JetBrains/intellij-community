@@ -7,7 +7,7 @@ Groovy script
     Reference expression
       PsiElement(identifier)('foo')
     PsiElement(()('(')
-    PsiElement(new line)('\n')
+    PsiWhiteSpace('\n')
     Arguments
       Assignment expression
         Reference expression

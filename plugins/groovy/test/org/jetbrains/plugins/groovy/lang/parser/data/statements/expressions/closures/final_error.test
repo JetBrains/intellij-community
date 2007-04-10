@@ -11,7 +11,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Closable block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       Parameter list
         Parameter
           Parameter modifiers

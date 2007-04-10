@@ -12,8 +12,7 @@ Groovy script
     PsiElement())(')')
     Open block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       For statement
         PsiElement(for)('for')
         PsiWhiteSpace(' ')

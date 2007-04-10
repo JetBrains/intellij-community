@@ -15,8 +15,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
