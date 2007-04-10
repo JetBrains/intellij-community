@@ -276,7 +276,7 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public Content[] getSelectedContents() {
-    return myContents.toArray(new Content[myContents.size()]);
+    return mySelection.toArray(new Content[mySelection.size()]);
   }
 
   @Nullable
@@ -290,6 +290,7 @@ public class ContentManagerImpl implements ContentManager {
     for (Content each : old) {
       removeSelectedContent(each);
     }
+    mySelection.clear();
 
     addSelectedContent(content);
   }
