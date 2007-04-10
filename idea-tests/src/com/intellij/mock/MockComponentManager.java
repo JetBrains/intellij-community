@@ -97,4 +97,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
+
+  public ComponentConfig getConfig(Class componentImplementation) {
+    throw new UnsupportedOperationException("Method getConfig not implemented in " + getClass());
+  }
 }

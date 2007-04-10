@@ -41,11 +41,10 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
-  private static final Icon JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
-  private static final Icon JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
-  private static final Icon JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
-  //private static final Icon JAVA_MODULE_ICON_NORMAL = IconLoader.getIcon("/nodes/javaModule.png");
-  private static final Icon WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
+  private static Icon JAVA_MODULE_ICON;
+  private static Icon JAVA_MODULE_NODE_ICON_OPEN;
+  private static Icon JAVA_MODULE_NODE_ICON_CLOSED;
+  private static Icon WIZARD_ICON;
 
   public JavaModuleType() {
     this("JAVA_MODULE");
@@ -68,19 +67,50 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   public Icon getBigIcon() {
-    return JAVA_MODULE_ICON;
+    return getJavaModuleIcon();
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return isOpened ? JAVA_MODULE_NODE_ICON_OPEN : JAVA_MODULE_NODE_ICON_CLOSED;
+    return isOpened ? getJavaModuleNodeIconOpen() : getJavaModuleNodeIconClosed();
   }
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, JavaModuleBuilder moduleBuilder,
                                               ModulesProvider modulesProvider) {
-    final NameLocationStep nameLocationStep = new NameLocationStep(wizardContext, moduleBuilder, modulesProvider, WIZARD_ICON,
+    final NameLocationStep nameLocationStep = new NameLocationStep(wizardContext, moduleBuilder, modulesProvider, getWizardIcon(),
                                                                    "project.creatingModules.page2");
     final ModuleWizardStep[] wizardSteps = new ModuleWizardStep[]{nameLocationStep,
-      new SourcePathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page3"),};
+      new SourcePathsStep(nameLocationStep, moduleBuilder, getWizardIcon(), "project.creatingModules.page3"),};
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
+  }
+
+  private static Icon getJavaModuleIcon() {
+    if (JAVA_MODULE_ICON == null) {
+      JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
+    }
+
+    return JAVA_MODULE_ICON;
+  }
+
+  private static Icon getJavaModuleNodeIconOpen() {
+    if (JAVA_MODULE_NODE_ICON_OPEN == null) {
+      JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
+    }
+    return JAVA_MODULE_NODE_ICON_OPEN;
+  }
+
+  private static Icon getJavaModuleNodeIconClosed() {
+    if (JAVA_MODULE_NODE_ICON_CLOSED == null) {
+      JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
+    }
+
+    return JAVA_MODULE_NODE_ICON_CLOSED;
+  }
+
+  private static Icon getWizardIcon() {
+    if (WIZARD_ICON == null) {
+      WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
+    }
+
+    return WIZARD_ICON;
   }
 }

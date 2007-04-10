@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.io.fs.IFile;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import org.jdom.*;
@@ -151,6 +152,7 @@ public class JDOMUtil {
     }
   }
 
+
   private static class EmptyTextFilter implements Filter {
     public boolean matches(Object obj) {
       if (obj instanceof Text) {
@@ -230,6 +232,11 @@ public class JDOMUtil {
   public static Document loadDocument(File file) throws JDOMException, IOException {
     return loadDocument(new BufferedInputStream(new FileInputStream(file)));
   }
+
+  public static Document loadDocument(final IFile iFile) throws IOException, JDOMException {
+    return loadDocument(new BufferedInputStream(iFile.openStream()));
+  }
+
 
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     SAXBuilder saxBuilder = ourSaxBuilder.get();

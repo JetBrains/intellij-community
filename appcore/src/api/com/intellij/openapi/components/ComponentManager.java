@@ -95,4 +95,6 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   Object getComponent(final ComponentConfig componentConfig);
 
   <T> T[] getExtensions(ExtensionPointName<T> extensionPointName);
+
+  ComponentConfig getConfig(Class componentImplementation);
 }

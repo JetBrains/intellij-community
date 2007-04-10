@@ -24,7 +24,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @NonNls private static final String PROJECT = "project";
 
   public DefaultProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
-    super(componentManager, project, projectManager);
+    super(project);
     myProjectManager = projectManager;
 
     myElement = projectManager.getDefaultProjectRootElement();
@@ -89,5 +89,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.save();
       }
     };
+  }
+
+  public void setStorageFormat(final StorageFormat storageFormat) {
+    throw new UnsupportedOperationException("Method setStorageFormat not implemented in " + getClass());
   }
 }

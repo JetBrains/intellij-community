@@ -4,8 +4,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 class IoFile implements IFile {
   private final File myFile;
@@ -21,6 +20,10 @@ class IoFile implements IFile {
 
   public byte[] loadBytes() throws IOException {
     return FileUtil.loadFileBytes(myFile);
+  }
+
+  public InputStream openStream() throws FileNotFoundException {
+    return new FileInputStream(myFile);
   }
 
   public boolean delete() {
@@ -59,5 +62,9 @@ class IoFile implements IFile {
         return null;
       }
     }
+  }
+
+  public long length() {
+    return myFile.length();
   }
 }

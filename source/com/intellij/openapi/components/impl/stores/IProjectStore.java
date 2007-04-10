@@ -22,9 +22,15 @@ public interface IProjectStore extends IComponentStore {
 
   void setSavePathsRelative(final boolean b);
 
-
   @Nullable
   VirtualFile getProjectBaseDir();
+
+
+  void setStorageFormat(StorageFormat storageFormat);
+
+  enum StorageFormat {
+    FILE_BASED, DIRECTORY_BASED
+  }
 
   //------ This methods should be got rid of
   void loadProject() throws IOException, JDOMException, InvalidDataException;

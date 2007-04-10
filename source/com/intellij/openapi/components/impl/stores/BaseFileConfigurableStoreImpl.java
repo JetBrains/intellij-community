@@ -1,9 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
@@ -29,18 +29,18 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls static final String ELEMENT_COMPONENT = "component";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  private ComponentManagerImpl myComponentManager;
+  private ComponentManager myComponentManager;
   private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
   private DefaultsStateStorage myDefaultsStateStorage;
   private StateStorageManager myStateStorageManager;
 
 
-  protected BaseFileConfigurableStoreImpl(final ComponentManagerImpl componentManager) {
+  protected BaseFileConfigurableStoreImpl(final ComponentManager componentManager) {
     myComponentManager = componentManager;
     myDefaultsStateStorage = new DefaultsStateStorage(PathMacroManager.getInstance(myComponentManager));
   }
 
-  public synchronized ComponentManagerImpl getComponentManager() {
+  public synchronized ComponentManager getComponentManager() {
     return myComponentManager;
   }
 

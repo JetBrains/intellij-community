@@ -42,6 +42,10 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getProjectBaseDir is not yet implemented in " + getClass().getName());
   }//------ This methods should be got rid of
 
+  public void setStorageFormat(final StorageFormat storageFormat) {
+    throw new UnsupportedOperationException("Method setStorageFormat not implemented in " + getClass());
+  }
+
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
     throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
   }

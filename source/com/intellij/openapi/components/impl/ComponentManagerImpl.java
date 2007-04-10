@@ -58,7 +58,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   //todo[mike] there are several init* methods. Make it just 1
   public void init() {
-    getStateStore().initStore();
     initComponents();
   }
 

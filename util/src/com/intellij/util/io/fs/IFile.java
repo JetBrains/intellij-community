@@ -1,11 +1,15 @@
 package com.intellij.util.io.fs;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface IFile {
   boolean exists();
 
   byte[] loadBytes() throws IOException;
+
+  InputStream openStream() throws FileNotFoundException;
 
   boolean delete();
 
@@ -20,4 +24,6 @@ public interface IFile {
   String getPath();
 
   String getCanonicalPath();
+
+  long length();
 }

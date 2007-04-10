@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IComponentStore {
-  void initStore();
   void initComponent(Object component);
 
   void commit();

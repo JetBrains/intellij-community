@@ -32,6 +32,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return false;
   }
 
+  @NotNull
   public PomModel getModel() {
     return ServiceManager.getService(this, PomModel.class);
   }
@@ -43,6 +44,17 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   @NotNull
   public IProjectStore getStateStore() {
     return new MockProjectStore();
+  }
+
+  public void init() {
+  }
+
+  public boolean isOptimiseTestLoadSpeed() {
+    return false;
+  }
+
+  public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
+    throw new UnsupportedOperationException("Method setOptimiseTestLoadSpeed not implemented in " + getClass());
   }
 
   public boolean isOpen() {

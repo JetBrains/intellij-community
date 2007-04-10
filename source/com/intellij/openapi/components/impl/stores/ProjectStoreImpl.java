@@ -10,13 +10,13 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
@@ -28,6 +28,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.fs.FileSystem;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -36,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -47,7 +48,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls private static final String DIRECTORY_STORE_FOLDER = ".idea";
 
-  private ProjectImpl myProject;
+  private ProjectEx myProject;
 
   @NonNls private static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
   @NonNls private static final String WS_FILE_MACRO = "WORKSPACE_FILE";
@@ -58,8 +59,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private Set<String> myTrackingSet = new TreeSet<String>();
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
-    super(componentManager);
+  public ProjectStoreImpl(final ProjectEx project) {
+    super(project);
     myProject = project;
   }
 
@@ -177,6 +178,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           if (!file.isWritable()) readonlyFiles.add(file);
         }
 
+        if (readonlyFiles.isEmpty()) return new ReadonlyStatusHandler.OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY); 
+
         return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
       }
     });
@@ -196,7 +199,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   protected boolean optimizeTestLoading() {
-    return myProject.myOptimiseTestLoadSpeed;
+    return myProject.isOptimiseTestLoadSpeed();
   }
 
   public void setProjectFilePath(final String filePath) {
@@ -214,6 +217,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public VirtualFile getProjectBaseDir() {
     final VirtualFile projectFile = getProjectFile();
     return projectFile != null ? projectFile.getParent() : null;
+  }
+
+  public void setStorageFormat(final StorageFormat storageFormat) {
   }
 
 
@@ -257,7 +263,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   private boolean checkMacros(Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = getProjectFilePath();
-    Document document = JDOMUtil.loadDocument(new File(projectFilePath));
+
+    final IFile iFile = FileSystem.FILE_SYSTEM.createFile(projectFilePath);
+
+    Document document = JDOMUtil.loadDocument(iFile);
     Element root = document.getRootElement();
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
 

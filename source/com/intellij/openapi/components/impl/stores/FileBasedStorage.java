@@ -19,7 +19,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -30,14 +29,14 @@ public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
 
   private final String myFilePath;
-  private final File myFile;
+  private final IFile myFile;
   protected final String myRootElementName;
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
     myRootElementName = rootElementName;
     myFilePath = filePath;
-    myFile = new File(myFilePath);
+    myFile = FILE_SYSTEM.createFile(myFilePath);
   }
 
   public void doSave() throws StateStorage.StateStorageException {
