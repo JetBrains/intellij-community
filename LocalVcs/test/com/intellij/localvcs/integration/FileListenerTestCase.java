@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.LocalVcsTestCase;
-import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;

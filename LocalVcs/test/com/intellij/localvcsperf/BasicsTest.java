@@ -1,21 +1,21 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.Revision;
+import com.intellij.idea.Bombed;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.CacheUpdaterHelper;
 import com.intellij.localvcs.integration.TestFileFilter;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.localvcs.integration.Updater;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.idea.Bombed;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Calendar;
+import java.util.List;
 
-@Bombed(month = Calendar.APRIL, day=31, user = "anton")
+@Bombed(month = Calendar.APRIL, day = 31, user = "anton")
 public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingTree() {

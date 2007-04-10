@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Revision;
+import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Test;
 
 import java.util.List;

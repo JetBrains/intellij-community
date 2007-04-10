@@ -1,9 +1,9 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Clock;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.LocalVcsTestCase;
-import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.core.Clock;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
 import org.junit.Test;
 
 public class ActionPerformingServiceStateTest extends LocalVcsTestCase {

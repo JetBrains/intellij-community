@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Paths;
+import com.intellij.localvcs.core.Paths;
 import com.intellij.mock.MockFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;

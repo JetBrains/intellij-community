@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration.ui.views;
 
-import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.DirectoryHistoryDialogModel;

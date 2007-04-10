@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 

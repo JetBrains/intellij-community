@@ -1,6 +1,6 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.TempDirTestCase;
+import com.intellij.localvcs.core.TempDirTestCase;
 
 import java.util.Random;
 

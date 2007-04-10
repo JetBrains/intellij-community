@@ -1,6 +1,10 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.*;
+import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;

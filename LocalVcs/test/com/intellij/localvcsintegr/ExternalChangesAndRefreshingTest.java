@@ -1,7 +1,7 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.Paths;
+import com.intellij.localvcs.core.Paths;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;

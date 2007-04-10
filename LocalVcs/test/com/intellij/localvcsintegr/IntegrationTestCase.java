@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.Clock;
-import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.Paths;
-import com.intellij.localvcs.Revision;
+import com.intellij.localvcs.core.Clock;
+import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;

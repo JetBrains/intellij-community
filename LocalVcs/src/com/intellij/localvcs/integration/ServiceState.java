@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

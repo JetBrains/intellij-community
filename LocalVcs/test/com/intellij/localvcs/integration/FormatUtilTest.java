@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.LocalVcsTestCase;
+import com.intellij.localvcs.core.LocalVcsTestCase;
 import junit.framework.Assert;
 import org.junit.Test;
 

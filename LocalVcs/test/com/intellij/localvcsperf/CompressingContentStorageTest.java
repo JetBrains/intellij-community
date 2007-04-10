@@ -1,15 +1,15 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.CompressingContentStorage;
-import com.intellij.localvcs.IContentStorage;
 import com.intellij.idea.Bombed;
+import com.intellij.localvcs.core.storage.CompressingContentStorage;
+import com.intellij.localvcs.core.storage.IContentStorage;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Calendar;
 
-@Bombed(month = Calendar.APRIL, day=31, user = "anton")
+@Bombed(month = Calendar.APRIL, day = 31, user = "anton")
 public class CompressingContentStorageTest extends PerformanceTestCase {
   CompressingContentStorage s;
 

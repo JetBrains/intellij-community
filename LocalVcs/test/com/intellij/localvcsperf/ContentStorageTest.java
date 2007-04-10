@@ -1,7 +1,7 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.ContentStorage;
 import com.intellij.idea.Bombed;
+import com.intellij.localvcs.core.storage.ContentStorage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,10 +9,10 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Calendar;
+import java.util.List;
 
-@Bombed(month = Calendar.APRIL, day=31, user = "anton")
+@Bombed(month = Calendar.APRIL, day = 31, user = "anton")
 public class ContentStorageTest extends PerformanceTestCase {
   int ITERATIONS_COUNT = 1000;
   int MAX_RECORD_SIZE = 20 * 1024;

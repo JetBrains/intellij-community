@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.LocalVcsTestCase;
-import com.intellij.localvcs.Revision;
-import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockEditorFactory;

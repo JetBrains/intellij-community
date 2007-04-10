@@ -1,10 +1,10 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.LocalVcsTestCase;
-import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
+import static com.intellij.localvcs.core.revisions.Difference.Kind.CREATED;
+import static com.intellij.localvcs.core.revisions.Difference.Kind.NOT_MODIFIED;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import org.junit.Test;
 

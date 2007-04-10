@@ -1,7 +1,7 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Before;

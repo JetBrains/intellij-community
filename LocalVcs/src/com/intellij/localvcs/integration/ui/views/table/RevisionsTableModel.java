@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration.ui.views.table;
 
-import com.intellij.localvcs.Revision;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 

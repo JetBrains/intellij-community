@@ -2,9 +2,9 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.LocalVcsTestCase;
-import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.integration.stubs.StubCommandProcessor;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;

@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.IContentStorage;
-import com.intellij.localvcs.Paths;
+import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.core.storage.IContentStorage;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;

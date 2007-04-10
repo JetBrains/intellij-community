@@ -1,6 +1,10 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.*;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.revisions.Difference;
+import com.intellij.localvcs.core.tree.DirectoryEntry;
+import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.core.tree.FileEntry;
 import com.intellij.localvcs.integration.stubs.StubFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;

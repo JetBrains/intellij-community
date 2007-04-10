@@ -1,9 +1,9 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
-import com.intellij.localvcs.TempDirTestCase;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.TempDirTestCase;
+import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.openapi.project.Project;
 import static org.easymock.classextension.EasyMock.*;

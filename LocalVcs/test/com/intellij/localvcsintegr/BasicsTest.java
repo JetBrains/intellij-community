@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Revision;
-import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;

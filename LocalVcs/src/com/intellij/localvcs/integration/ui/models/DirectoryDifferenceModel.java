@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.Difference;
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.Revision;
+import com.intellij.localvcs.core.revisions.Difference;
+import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.fileTypes.FileTypeManager;

@@ -1,7 +1,7 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.junit.Test;

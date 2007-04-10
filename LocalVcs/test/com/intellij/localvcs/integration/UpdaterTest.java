@@ -1,6 +1,10 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.*;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.core.TestLocalVcs;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 

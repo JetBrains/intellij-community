@@ -1,10 +1,10 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
-import com.intellij.localvcs.ThreadSafeLocalVcs;
+import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.ThreadSafeLocalVcs;
+import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;

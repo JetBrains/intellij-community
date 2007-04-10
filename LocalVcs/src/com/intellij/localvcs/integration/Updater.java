@@ -2,8 +2,8 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 

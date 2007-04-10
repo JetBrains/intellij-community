@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.EditorFactory;

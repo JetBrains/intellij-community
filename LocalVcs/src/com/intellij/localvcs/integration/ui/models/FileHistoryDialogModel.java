@@ -1,6 +1,12 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.*;
+import com.intellij.localvcs.core.Clock;
+import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.storage.ByteContent;
+import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.core.tree.FileEntry;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
