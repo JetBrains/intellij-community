@@ -15,5 +15,5 @@ Groovy script
     PsiWhiteSpace(' ')
     Class body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       PsiElement(})('}')

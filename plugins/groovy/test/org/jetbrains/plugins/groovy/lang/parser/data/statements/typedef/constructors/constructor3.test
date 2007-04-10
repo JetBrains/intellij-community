@@ -5,35 +5,62 @@ interface s {
 }
 -----
 Groovy script
-  Interface definition
-    PsiElement(interface)('interface')
+  Class definition
+    PsiElement(class)('class')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('s')
+    PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    Interface block
+    Class body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Method
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('s')
+        PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Class type
+              PsiElement(identifier)('String')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('s')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Built in type
+              PsiElement(int)('int')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('B')
         PsiElement())(')')
         PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('    ')
-          Method call
-            Reference expression
-              PsiElement(this)('this')
-            PsiElement(()('(')
-            PsiElement())(')')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiElement(this)('this')
+          PsiElement(()('(')
+          Arguments
+            <empty list>
+          PsiElement())(')')
+          PsiElement(;)(';')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

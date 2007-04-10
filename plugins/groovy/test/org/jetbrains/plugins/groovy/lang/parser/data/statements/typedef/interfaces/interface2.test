@@ -9,5 +9,5 @@ Groovy script
     PsiWhiteSpace(' ')
     Interface block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       PsiElement(})('}')

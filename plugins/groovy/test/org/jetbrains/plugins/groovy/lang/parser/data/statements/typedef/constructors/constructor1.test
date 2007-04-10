@@ -12,8 +12,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Class body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Constructor
         Modifiers
           PsiElement(def)('def')
@@ -25,8 +24,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Constructor body
           PsiElement({)('{')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
           PsiElement(this)('this')
           PsiWhiteSpace(' ')
           PsiElement(()('(')
