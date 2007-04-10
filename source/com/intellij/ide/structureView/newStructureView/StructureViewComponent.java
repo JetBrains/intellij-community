@@ -247,10 +247,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public StructureViewState getState() {
-    LOG.assertTrue(getTree() != null);
     StructureViewState structureViewState = new StructureViewState();
-    structureViewState.setExpandedElements(getExpandedElements());
-    structureViewState.setSelectedElements(getSelectedElements());
+    if (getTree() != null) {
+      structureViewState.setExpandedElements(getExpandedElements());
+      structureViewState.setSelectedElements(getSelectedElements());
+    }
     return structureViewState;
   }
 

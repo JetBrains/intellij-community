@@ -120,6 +120,8 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
     }
 
     protected void processMouseEvent(MouseEvent e) {
+      if (Patches.MAC_AQUA_TABS_HACK && myTabbedPane != null && myTabbedPane.getTabCount() == 0) return;
+
       // First of all we have to hide showing popup menu (if any)
       if (MouseEvent.MOUSE_PRESSED == e.getID()) {
         final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
