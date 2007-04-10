@@ -43,6 +43,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     ParameterDeclarationList.parse(builder, mRPAREN);
 
+    ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {
       ParserUtils.waitNextRCurly(builder);
 

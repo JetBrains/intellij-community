@@ -72,6 +72,7 @@ public class ArgumentList implements GroovyElementTypes {
     }
 
     marker.done(ARGUMENTS);
+    ParserUtils.getToken(builder, mNLS);
     return ARGUMENTS;
   }
 

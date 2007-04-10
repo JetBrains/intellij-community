@@ -28,6 +28,7 @@ public class EnumConstant implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mLPAREN)) {
       ArgumentList.parse(builder, mRPAREN);
 
+      ParserUtils.getToken(builder, mNLS);
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         builder.error(GroovyBundle.message("rparen.expected"));
         ecMarker.rollbackTo();

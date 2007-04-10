@@ -23,6 +23,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.formatting.FormattingModelBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.groovy.highlighter.GroovyCommenter;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
+import org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder;
 
 /**
  * All main properties for Groovy language
@@ -57,6 +59,11 @@ public class GroovyLanguage extends Language {
   @Nullable
   public Commenter getCommenter() {
     return new GroovyCommenter();
+  }
+
+  @Nullable
+  public FormattingModelBuilder getFormattingModelBuilder() {
+    return new GroovyFormattingModelBuilder();
   }
 
   @Nullable

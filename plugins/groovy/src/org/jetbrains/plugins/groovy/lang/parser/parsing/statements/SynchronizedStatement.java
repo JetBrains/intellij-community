@@ -46,6 +46,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
       return SYNCHRONIZED_STATEMENT;
     }
 
+    ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       marker.done(SYNCHRONIZED_STATEMENT);
       return SYNCHRONIZED_STATEMENT;

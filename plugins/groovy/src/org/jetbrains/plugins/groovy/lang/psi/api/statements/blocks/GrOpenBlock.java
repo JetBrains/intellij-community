@@ -24,6 +24,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrOpenBlock extends GrCodeBlock
-{
+public interface GrOpenBlock extends GrCodeBlock{
 }

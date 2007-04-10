@@ -98,6 +98,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       return;
     }
 
+    ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       return;
     }

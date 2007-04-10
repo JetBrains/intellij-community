@@ -78,6 +78,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       boolean isEmptyParamDeclList = NONE.equals(paramDeclList);
 
+      ParserUtils.getToken(builder, mNLS);
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         ParserUtils.waitNextRCurly(builder);
         builder.error(GroovyBundle.message("rparen.expected"));

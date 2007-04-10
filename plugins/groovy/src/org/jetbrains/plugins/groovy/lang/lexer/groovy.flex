@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
   private Stack <IElementType> blockStack = new Stack<IElementType>();
 
   private int afterComment = YYINITIAL;
+  private int afterNls = YYINITIAL;
 
   private void clearStacks(){
     gStringStack.clear();
@@ -58,7 +59,7 @@ import org.jetbrains.annotations.NotNull;
 
 mONE_NL = \r | \n | \r\n                                    // NewLines
 mWS = " " | \t | \f | \\ {mONE_NL}                          // Whitespaces
-mNLS = {mONE_NL}+
+mNLS = {mONE_NL}//({mONE_NL}|{mWS})*
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Comments ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,6 +198,9 @@ mGSTRING_LITERAL = \"\"
 
 // Not to separate NewLine sequence by comments
 %xstate NLS_AFTER_COMMENT
+// Special hacks for IDEA formatter
+%xstate NLS_AFTER_LBRACE
+%xstate NLS_AFTER_NLS
 
 %%
 <NLS_AFTER_COMMENT>{
@@ -204,12 +208,27 @@ mGSTRING_LITERAL = \"\"
   {mSL_COMMENT}                             {  return mSL_COMMENT; }
   {mML_COMMENT}                             {  return mML_COMMENT; }
 
-  {mNLS}                                    {  yybegin(afterComment);
+  ({mNLS}|{mWS})+                           {  yybegin(afterComment);
                                                return mWS; }
 
   [^]                                       { yypushback(yytext().length());
                                               yybegin(afterComment);  }
 }
+<NLS_AFTER_LBRACE>{
+
+  ({mNLS}|{mWS})+                           { return mWS; }
+
+  [^]                                       { yypushback(yytext().length());
+                                              yybegin(WAIT_FOR_REGEX);  }
+}
+<NLS_AFTER_NLS>{
+
+  ({mNLS}|{mWS})+                           { return mWS; }
+
+  [^]                                       { yypushback(yytext().length());
+                                              yybegin(NLS_AFTER_COMMENT);  }
+}
+
 
 // Single double-quoted GString
 <IN_SINGLE_IDENT>{
@@ -230,13 +249,13 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
-                                             yybegin(WAIT_FOR_REGEX);
+                                             yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
-  {mNLS}                                  {  yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
+  {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
                                              clearStacks();
                                              return mNLS;}
 }
@@ -255,8 +274,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL; }
   {mNLS}                                  {  clearStacks();
-                                             yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
+                                             yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
                                              return mNLS; }
 }
 
@@ -267,7 +286,7 @@ mGSTRING_LITERAL = \"\"
 
 <IN_INNER_BLOCK>{
   "{"                                     {  blockStack.push(mLCURLY);
-                                             yybegin(WAIT_FOR_REGEX);
+                                             yybegin(NLS_AFTER_LBRACE);
                                              return(mLCURLY);  }
 
   "}"                                     {  if (!blockStack.isEmpty()) {
@@ -293,8 +312,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_NLS>{
-  {mNLS}{mWS}*                            {  yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = IN_TRIPLE_IDENT; //yybegin(IN_TRIPLE_IDENT);
+  {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
+                                             afterComment = IN_TRIPLE_IDENT;
                                              return mNLS;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_TRIPLE_IDENT);  }
@@ -305,7 +324,7 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLBRACK);
-                                             yybegin(WAIT_FOR_REGEX);
+                                             yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   [^{[:jletter:]](. | mONE_NL)*           {  clearStacks();
                                              return mWRONG_GSTRING_LITERAL; }
@@ -377,13 +396,13 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDIV);
-                                             yybegin(WAIT_FOR_REGEX);
+                                             yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL;  }
-  {mNLS}                                  {  yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
+  {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
                                              clearStacks();
                                              return mNLS;}
 }
@@ -402,8 +421,8 @@ mGSTRING_LITERAL = \"\"
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL; }
   {mNLS}                                  {  clearStacks();
-                                             yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = YYINITIAL; //yybegin(YYINITIAL);
+                                             yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
                                              return mNLS; }
 }
 
@@ -418,8 +437,8 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mWS}                                     {  return mWS; }
-{mNLS}                                    {  yybegin(NLS_AFTER_COMMENT);
-                                             afterComment = WAIT_FOR_REGEX; //yybegin(WAIT_FOR_REGEX);
+{mNLS}                                    {  yybegin(NLS_AFTER_NLS);
+                                             afterComment = WAIT_FOR_REGEX;
                                              return mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,13 +486,13 @@ mGSTRING_LITERAL = \"\"
 "/"                                       {  return(mDIV);  } 
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mDIV_ASSIGN);  }
-"("                                       {  yybegin(WAIT_FOR_REGEX);
+"("                                       {  yybegin(NLS_AFTER_LBRACE);
                                              return(mLPAREN);  }
 ")"                                       {  return(mRPAREN);  }
-"["                                       {  yybegin(WAIT_FOR_REGEX);
+"["                                       {  yybegin(NLS_AFTER_LBRACE);
                                              return(mLBRACK);  }
 "]"                                       {  return(mRBRACK);  }
-"{"                                       {  yybegin(WAIT_FOR_REGEX);
+"{"                                       {  yybegin(NLS_AFTER_LBRACE);
                                              return(mLCURLY);  }
 ":"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mCOLON);  }
@@ -513,20 +532,14 @@ mGSTRING_LITERAL = \"\"
                                              return(mMOD);  }
 "%="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mMOD_ASSIGN);  }
-// ">>"                                      {  yybegin(WAIT_FOR_REGEX);
-//                                              return(mSR);  }
 ">>="                                     {  yybegin(WAIT_FOR_REGEX);
                                              return(mSR_ASSIGN);  }
-// ">>>"                                     {  yybegin(WAIT_FOR_REGEX);
-//                                              return(mBSR);  }
 ">>>="                                    {  yybegin(WAIT_FOR_REGEX);
                                              return(mBSR_ASSIGN);  }
 ">="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mGE);  }
 ">"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mGT);  }
-// "<<"                                      {  yybegin(WAIT_FOR_REGEX);
-//                                              return(mSL);  }
 "<<="                                     {  yybegin(WAIT_FOR_REGEX);
                                              return(mSL_ASSIGN);  }
 "<="                                      {  yybegin(WAIT_FOR_REGEX);

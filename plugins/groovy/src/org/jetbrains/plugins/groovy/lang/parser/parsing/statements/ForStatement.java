@@ -46,6 +46,7 @@ public class ForStatement implements GroovyElementTypes {
       marker.done(FOR_STATEMENT);
       return FOR_STATEMENT;
     }
+    ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       marker.done(FOR_STATEMENT);
       return FOR_STATEMENT;
@@ -92,6 +93,7 @@ public class ForStatement implements GroovyElementTypes {
                     ParserUtils.getToken(builder, mSEMI))) {
       StrictContextExpression.parse(builder);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
+      ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
         controlExpressionListParse(builder);
       }
@@ -102,6 +104,7 @@ public class ForStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       StrictContextExpression.parse(builder);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
+      ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
         controlExpressionListParse(builder);
       }
@@ -132,6 +135,7 @@ public class ForStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
       result = StrictContextExpression.parse(builder);
       if (result.equals(WRONGWAY)) {
+        ParserUtils.getToken(builder, mNLS);
         if (!mRPAREN.equals(builder.getTokenType()) &&
                 !mSEMI.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
