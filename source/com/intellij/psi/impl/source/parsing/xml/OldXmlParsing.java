@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CharTable;
+import com.intellij.xml.XmlBundle;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -481,7 +482,12 @@ public class OldXmlParsing implements ElementType {
     addToken(decl, lexer);
 
     if (!parseName(decl, lexer)) {
-      return decl;
+      if (lexer.getTokenType() == XML_LEFT_PAREN) {
+        parseGroup(decl, lexer);
+      } else {
+        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
+        return decl;
+      }
     }
 
     parseElementContentSpec(decl, lexer);
@@ -512,20 +518,71 @@ public class OldXmlParsing implements ElementType {
     CompositeElement spec = Factory.createCompositeElement(XML_ELEMENT_CONTENT_SPEC);
     TreeUtil.addChildren(parent, spec);
 
-    while (
-      lexer.getTokenType() != null &&
-      lexer.getTokenType() != XML_TAG_END &&
-      lexer.getTokenType() != XML_START_TAG_START &&
-      lexer.getTokenType() != XML_ELEMENT_DECL_START) {
-      if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(spec, parseEntityRef(lexer));
-      }
-      else {
-        addToken(spec, lexer);
-      }
-    }
+    parseElementContentSpecInner(lexer, spec);
 
     return spec;
+  }
+
+  private boolean parseElementContentSpecInner(final Lexer lexer, final CompositeElement spec) {
+    IElementType tokenType = lexer.getTokenType();
+
+    while (
+      tokenType != null &&
+      tokenType != XML_TAG_END &&
+      tokenType != XML_START_TAG_START &&
+      tokenType != XML_ELEMENT_DECL_START &&
+      tokenType != XML_RIGHT_PAREN
+    ) {
+      if (tokenType == XML_LEFT_PAREN) {
+        if (!parseGroup(spec, lexer)) return false;
+      } else
+      if (tokenType == XML_ENTITY_REF_TOKEN) {
+        TreeUtil.addChildren(spec, parseEntityRef(lexer));
+      } else if (tokenType == XML_NAME ||
+                 tokenType == XML_CONTENT_EMPTY ||
+                 tokenType == XML_CONTENT_ANY ||
+                 tokenType == XML_PCDATA
+                 ) {
+        addToken(spec, lexer);
+      }
+      else {
+        TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
+        return false;
+      }
+
+      tokenType = lexer.getTokenType();
+
+      if (tokenType == XML_STAR ||
+          tokenType == XML_PLUS ||
+          tokenType == XML_QUESTION
+         ) {
+        addToken(spec, lexer);
+        tokenType = lexer.getTokenType();
+
+        if (tokenType == XML_PLUS) {
+          addToken(spec, lexer);
+          tokenType = lexer.getTokenType();
+        }
+      }
+      if (tokenType == XML_BAR || tokenType == XML_COMMA) {
+        addToken(spec, lexer);
+        tokenType = lexer.getTokenType();
+      }
+    }
+    return true;
+  }
+
+  private boolean parseGroup(final CompositeElement spec, final Lexer lexer) {
+    addToken(spec, lexer);
+    boolean b = parseElementContentSpecInner(lexer, spec);
+    if (b && lexer.getTokenType() == XML_RIGHT_PAREN) {
+      addToken(spec, lexer);
+      return true;
+    } else if (b) {
+      TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.rbrace.expected")));
+      return false;
+    }
+    return b;
   }
 
   private TreeElement parseAttlistDecl(Lexer lexer) {
@@ -538,10 +595,15 @@ public class OldXmlParsing implements ElementType {
     addToken(decl, lexer);
 
     if (lexer.getTokenType() != XML_NAME) {
-      return decl;
+      if (lexer.getTokenType() == XML_LEFT_PAREN) {
+        parseGroup(decl, lexer);
+      } else {
+        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
+        return decl;
+      }
+    } else {
+      addToken(decl, lexer);
     }
-
-    addToken(decl, lexer);
 
     parseAttlistContent(decl, lexer);
 
