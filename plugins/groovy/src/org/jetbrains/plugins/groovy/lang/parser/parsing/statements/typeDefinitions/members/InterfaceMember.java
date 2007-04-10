@@ -20,8 +20,12 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -29,6 +33,20 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
  */
 public class InterfaceMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
+
+    //constructor
+    PsiBuilder.Marker constructorMarker = builder.mark();
+    ModifiersOptional.parse(builder);
+
+    GroovyElementType constructorDef = ConstructorDefinition.parse(builder);
+
+    if (WRONGWAY.equals(constructorDef)) {
+      constructorMarker.rollbackTo();
+    } else {
+      constructorMarker.done(constructorDef);
+      builder.error(GroovyBundle.message("interface.must.has.no.constructor"));
+      return constructorDef;
+    }
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
@@ -60,6 +78,22 @@ public class InterfaceMember implements GroovyElementTypes {
       return typeDef;
     }
     typeDeclStartMarker.rollbackTo();
+
+     //static compound statement
+    if (ParserUtils.getToken(builder, kSTATIC)) {
+      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
+        builder.error(GroovyBundle.message("interface.must.has.no.static.compound.statemenet"));
+        return STATIC_COMPOUND_STATEMENT;
+      } else {
+        builder.error(GroovyBundle.message("compound.statemenet.expected"));
+        return WRONGWAY;
+      }
+    }
+
+    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
+      builder.error(GroovyBundle.message("interface.must.has.no.compound.statemenet"));
+      return COMPOUND_STATEMENT;
+    }
     
     return WRONGWAY;
   }

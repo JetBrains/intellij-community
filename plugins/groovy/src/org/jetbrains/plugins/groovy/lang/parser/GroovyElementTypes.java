@@ -51,6 +51,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
   GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
+  GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
   GroovyElementType ENUM_CONSTANT_BODY = new GroovyElementType("Enumeration constant block");
   GroovyElementType ENUM_CONSTANT_MEMBER = new GroovyElementType("Enumeration constant member");
 
@@ -120,6 +121,11 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration");
 
+  GroovyElementType CLASS_DEFINITION_ERROR = new GroovyElementType("class definition error");
+  GroovyElementType INTERFACE_DEFINITION_ERROR = new GroovyElementType("interface definition error");
+  GroovyElementType ENUM_DEFINITION_ERROR = new GroovyElementType("enumeration definition error");
+  GroovyElementType ANNOTATION_DEFINITION_ERROR = new GroovyElementType("annotation definition error");
+
   GroovyElementType CLASS_DEFINITION = new GroovyElementType("class definition");
   GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition");
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition");
@@ -147,6 +153,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   //bodies
 //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
+  GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
   GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
 
   //throws
@@ -190,6 +197,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STATIC_COMPOUND_STATEMENT = new GroovyElementType("static compound statement");
   GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 
+  GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
   GroovyElementType VARIABLE_INITIALIZER = new GroovyElementType("variable initializer");
 

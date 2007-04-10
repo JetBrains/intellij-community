@@ -15,16 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -54,9 +53,9 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     NlsWarn.parse(builder);
 
-    IElementType methodBody = ConstructorBody.parse(builder);
+    GroovyElementType methodBody = ConstructorBody.parse(builder);
 
-    if (CONSTRUCTOR_BODY.equals(methodBody)) {
+    if (!WRONGWAY.equals(methodBody)) {
       return CONSTRUCTOR_DEFINITION;
     } else {
       return WRONGWAY;

@@ -19,11 +19,11 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstants;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
@@ -59,10 +59,18 @@ public class EnumBlock implements GroovyElementTypes {
       sep = Separators.parse(builder);
     }
 
-    ParserUtils.waitNextRCurly(builder);
+//    ParserUtils.waitNextRCurly(builder);
+//    if (!ParserUtils.getToken(builder, mRCURLY)) {
+//      builder.error(GroovyBundle.message("rcurly.expected"));
+//    }
 
-    if (!ParserUtils.getToken(builder, mRCURLY)) {
+    if (!ParserUtils.lookAhead(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
+    }
+
+    while(!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)){
+      ClassMember.parse(builder);
+      builder.advanceLexer();
     }
 
     ebMarker.done(ENUM_BLOCK);

@@ -1,0 +1,82 @@
+class d {
+  def int[][][] foo = for
+
+  {if (true) {
+
+  @Property def a () {}
+  }
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('d')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Array type
+          Array type
+            Array type
+              Built in type
+                PsiElement(int)('int')
+              PsiElement([)('[')
+              PsiElement(])(']')
+            PsiElement([)('[')
+            PsiElement(])(']')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiErrorElement:identifier or string literal expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(for)('for')
+      PsiElement(new line)('\n\n')
+      PsiWhiteSpace('  ')
+      Open block
+        PsiElement({)('{')
+        IF statement
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Literal
+            PsiElement(true)('true')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          Open block
+            PsiElement({)('{')
+            PsiElement(new line)('\n\n')
+            PsiWhiteSpace('  ')
+            Method
+              Modifiers
+                Annotation
+                  PsiElement(@)('@')
+                  Qualified identifier
+                    PsiElement(identifier)('Property')
+                PsiWhiteSpace(' ')
+                PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(()('(')
+              PsiElement())(')')
+              PsiWhiteSpace(' ')
+              Open block
+                PsiElement({)('{')
+                PsiElement(})('}')
+                PsiElement(new line)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(})('}')
+                PsiElement(new line)('\n')
+                PsiElement(})('}')
+                PsiErrorElement:'}' expected
+                  <empty list>

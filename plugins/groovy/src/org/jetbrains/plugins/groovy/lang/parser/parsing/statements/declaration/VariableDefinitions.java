@@ -63,7 +63,9 @@ public class VariableDefinitions implements GroovyElementTypes {
     //eaten one of these tokens
     boolean eaten = ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL) || ParserUtils.getToken(builder, mGSTRING_LITERAL);
 
-    if (eaten && ParserUtils.getToken(builder, mLPAREN)) {
+    if (!eaten) return WRONGWAY;
+
+    if (ParserUtils.getToken(builder, mLPAREN)) {
       GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
 
       if (isEnumConstantMember && !isStringName) {
@@ -121,7 +123,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         return VARIABLE_DEFINITION;
       } else {
         builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
-        return WRONGWAY;
+        return VARIABLE_DEFINITION_ERROR;
       }
     }
   }

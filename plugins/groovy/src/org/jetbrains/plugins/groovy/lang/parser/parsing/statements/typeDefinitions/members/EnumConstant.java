@@ -31,7 +31,7 @@ public class EnumConstant implements GroovyElementTypes {
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         builder.error(GroovyBundle.message("rparen.expected"));
         ecMarker.rollbackTo();
-        return WRONGWAY;
+        return ENUM_CONSTANT_ERROR;
       }
     }
 

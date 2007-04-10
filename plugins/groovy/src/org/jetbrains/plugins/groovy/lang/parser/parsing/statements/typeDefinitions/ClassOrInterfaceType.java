@@ -71,5 +71,4 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
 
     return CLASS_INTERFACE_TYPE;
   }
-
 }

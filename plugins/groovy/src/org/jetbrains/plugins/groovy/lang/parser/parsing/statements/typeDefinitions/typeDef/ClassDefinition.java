@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.SuperClassClause;
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ClassDefinition implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kCLASS)) {
       return WRONGWAY;
     }
@@ -59,10 +59,11 @@ public class ClassDefinition implements GroovyElementTypes {
 
     if (mLCURLY.equals(builder.getTokenType())) {
       if (WRONGWAY.equals(ClassBlock.parse(builder))) {
-        return WRONGWAY;
+        return CLASS_DEFINITION_ERROR;
       }
     } else {
       builder.error(GroovyBundle.message("lcurly.expected"));
+      return CLASS_DEFINITION_ERROR;
     }
 
     return CLASS_DEFINITION;

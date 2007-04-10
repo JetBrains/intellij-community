@@ -127,13 +127,13 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
-    if (elem.equals(VARIABLE_DEFINITION)) return new GrVariableDefinitionsImpl(node);
+    if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR)) return new GrVariableDefinitionsImpl(node);
 
     //type definitions
-    if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
-    if (elem.equals(INTERFACE_DEFINITION)) return new GrInterfaceDefinitionImpl(node);
-    if (elem.equals(ENUM_DEFINITION)) return new GrEnumTypeDefinitionImpl(node);
-    if (elem.equals(ANNOTATION_DEFINITION)) return new GrAnnotationTypeDefinitionImpl(node);
+    if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
+    if (elem.equals(INTERFACE_DEFINITION) || elem.equals(INTERFACE_DEFINITION_ERROR)) return new GrInterfaceDefinitionImpl(node);
+    if (elem.equals(ENUM_DEFINITION) || elem.equals(ENUM_DEFINITION_ERROR)) return new GrEnumTypeDefinitionImpl(node);
+    if (elem.equals(ANNOTATION_DEFINITION) || elem.equals(ANNOTATION_DEFINITION_ERROR)) return new GrAnnotationTypeDefinitionImpl(node);
 
     if (elem.equals(CLASS_INTERFACE_TYPE)) return new GrClassInterfaceTypeImpl(node);
 

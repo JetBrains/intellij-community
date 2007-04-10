@@ -68,6 +68,7 @@ public class ClassMember implements GroovyElementTypes {
 
       IElementType typeDef = TypeDefinition.parse(builder);
       if (WRONGWAY.equals(typeDef)) {
+        builder.error(GroovyBundle.message("type.definition.expected"));
         return WRONGWAY;
       }
       return typeDef;

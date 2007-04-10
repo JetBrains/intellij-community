@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.EnumBlock;
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class EnumDefinition implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kENUM)) {
       return WRONGWAY;
     }
@@ -37,11 +37,11 @@ public class EnumDefinition implements GroovyElementTypes {
     }
 
     if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
-      return WRONGWAY;
+      return ENUM_DEFINITION_ERROR;
     }
 
     if (WRONGWAY.equals(EnumBlock.parse(builder))) {
-      return WRONGWAY;
+      return ENUM_DEFINITION_ERROR;
     }
 
     return ENUM_DEFINITION;

@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.InterfaceExtends;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.InterfaceBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
 public class InterfaceDefinition implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kINTERFACE)) {
       return WRONGWAY;
     }
@@ -46,7 +46,7 @@ public class InterfaceDefinition implements GroovyElementTypes {
 
     if (WRONGWAY.equals(InterfaceBlock.parse(builder))) {
       builder.error(GroovyBundle.message("interface.body.expected"));
-      return WRONGWAY;
+      return INTERFACE_DEFINITION_ERROR;
     }
 
     return INTERFACE_DEFINITION;

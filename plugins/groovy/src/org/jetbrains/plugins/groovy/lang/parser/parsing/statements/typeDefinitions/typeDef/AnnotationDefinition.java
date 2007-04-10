@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.AnnotationBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class AnnotationDefinition implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, mAT)) {
       return WRONGWAY;
     }

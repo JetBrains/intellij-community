@@ -1,0 +1,22 @@
+class a {
+  class b
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Class definition
+        PsiElement(class)('class')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiElement(new line)('\n')
+        PsiErrorElement:'{' expected
+          <empty list>
+      PsiElement(})('}')

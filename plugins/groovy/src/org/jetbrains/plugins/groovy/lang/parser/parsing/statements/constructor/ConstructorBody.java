@@ -15,22 +15,22 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor;
 
+import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
 public class ConstructorBody implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -47,17 +47,13 @@ public class ConstructorBody implements GroovyElementTypes {
     }
 
     //explicit constructor invocation
-    if (!WRONGWAY.equals(Separators.parse(builder))) {
-      if (WRONGWAY.equals(OpenOrClosableBlock.parseBlockBody(builder))) {
-        cbMarker.rollbackTo();
-        return WRONGWAY;
-      }
-    }
+    Separators.parse(builder);
+    OpenOrClosableBlock.parseBlockBody(builder);
 
     if (!ParserUtils.getToken(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
       cbMarker.rollbackTo();
-      return WRONGWAY;
+      return CONSTRUCTOR_BODY_ERROR;
     }
 
     cbMarker.done(CONSTRUCTOR_BODY);

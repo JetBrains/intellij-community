@@ -49,6 +49,7 @@ public class ParameterDeclarationList implements GroovyElementTypes {
     while (!builder.eof() &&
         ParserUtils.getToken(builder, mCOMMA) &&
         result.equals(PARAMETER)) {
+
       ParserUtils.getToken(builder, mNLS);
       result = ParameterDeclaration.parse(builder, ending);
     }
