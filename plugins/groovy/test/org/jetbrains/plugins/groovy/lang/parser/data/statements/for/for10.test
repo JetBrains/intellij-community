@@ -6,12 +6,11 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Traditional FOR clause
-      Built in type
-        PsiElement(int)('int')
-      PsiWhiteSpace(' ')
-      Assignment expression
-        Reference expression
-          PsiElement(identifier)('i')
+      Variable definitions
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('i')
         PsiElement(=)('=')
         Literal
           PsiElement(number)('0')

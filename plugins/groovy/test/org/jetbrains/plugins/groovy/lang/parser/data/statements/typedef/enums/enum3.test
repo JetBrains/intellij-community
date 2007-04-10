@@ -32,8 +32,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Enumeration constants
         Enumeration constant
           Modifiers
@@ -61,8 +60,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Class body
             PsiElement({)('{')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('    ')
+            PsiWhiteSpace('\n    ')
             Class definition
               Modifiers
                 PsiElement(def)('def')
@@ -122,8 +120,7 @@ Groovy script
               PsiWhiteSpace(' ')
               Open block
                 PsiElement({)('{')
-                PsiElement(new line)('\n')
-                PsiWhiteSpace('       ')
+                PsiWhiteSpace('\n       ')
                 Assignment expression
                   Reference expression
                     PsiElement(identifier)('a')

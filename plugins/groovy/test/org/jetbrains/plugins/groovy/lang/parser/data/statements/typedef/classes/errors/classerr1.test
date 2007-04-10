@@ -12,8 +12,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Class body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -21,10 +20,10 @@ Groovy script
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
-        PsiElement(new line)('\n\n')
+        PsiElement(new line)('\n')
         PsiErrorElement:identifier or string literal expected
           <empty list>
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')

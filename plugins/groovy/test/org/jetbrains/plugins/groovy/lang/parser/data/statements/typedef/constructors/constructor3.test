@@ -5,62 +5,35 @@ interface s {
 }
 -----
 Groovy script
-  Class definition
-    PsiElement(class)('class')
+  Interface definition
+    PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    PsiElement(identifier)('s')
     PsiWhiteSpace(' ')
-    Class body
+    Interface block
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Method
-        Modifiers
-          PsiElement(def)('def')
-        PsiWhiteSpace(' ')
-        PsiElement(identifier)('a')
-        PsiWhiteSpace(' ')
-        PsiElement(()('(')
-        Parameter list
-          Parameter
-            Parameter modifiers
-              <empty list>
-            Class type
-              PsiElement(identifier)('String')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('s')
-          PsiElement(,)(',')
-          PsiWhiteSpace(' ')
-          Parameter
-            Parameter modifiers
-              <empty list>
-            Built in type
-              PsiElement(int)('int')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('B')
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
-        Open block
-          PsiElement({)('{')
-          PsiElement(})('}')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
       Constructor
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('b')
+        PsiElement(identifier)('s')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         PsiElement())(')')
         PsiWhiteSpace(' ')
         Constructor body
           PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
           PsiElement(this)('this')
           PsiElement(()('(')
           Arguments
             <empty list>
           PsiElement())(')')
-          PsiElement(;)(';')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
           PsiElement(})('}')
+      PsiErrorElement:interface must have no constructor
+        <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

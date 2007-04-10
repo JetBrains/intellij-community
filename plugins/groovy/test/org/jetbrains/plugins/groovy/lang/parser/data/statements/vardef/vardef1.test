@@ -1,2 +1,10 @@
 Map 5
 -----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('Map')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Literal
+        PsiElement(number)('5')

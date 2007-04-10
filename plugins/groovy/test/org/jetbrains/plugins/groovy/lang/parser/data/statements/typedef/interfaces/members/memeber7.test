@@ -13,8 +13,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Interface block
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Method
         Modifiers
           PsiElement(def)('def')
@@ -23,8 +22,8 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         PsiElement())(')')
-      PsiElement(new line)('\n\n')
-      PsiWhiteSpace('  ')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n  ')
       Method
         Modifiers
           PsiElement(def)('def')

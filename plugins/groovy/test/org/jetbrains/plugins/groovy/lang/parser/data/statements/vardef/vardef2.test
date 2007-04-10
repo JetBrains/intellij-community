@@ -1,2 +1,13 @@
-Map a.toInt()
+Map i+i
 -----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('Map')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        PsiElement(identifier)('i')
+      PsiElement(+)('+')
+      Reference expression
+        PsiElement(identifier)('i')

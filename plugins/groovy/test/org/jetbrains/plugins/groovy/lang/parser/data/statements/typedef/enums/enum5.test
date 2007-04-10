@@ -12,8 +12,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiWhiteSpace('\n  ')
       Enumeration constants
         Enumeration constant
           PsiElement(identifier)('foo')
@@ -23,8 +22,8 @@ Groovy script
             <empty list>
           PsiElement())(')')
         PsiElement(,)(',')
-      PsiElement(new line)('\n\n')
-      PsiWhiteSpace('  ')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
