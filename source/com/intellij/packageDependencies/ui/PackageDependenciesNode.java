@@ -23,7 +23,7 @@ import java.util.Set;
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
 
-  private Set<PsiFile> myRegisteredFiles = new HashSet<PsiFile>();
+  private Set<PsiFile> myRegisteredFiles = null;
   private boolean myHasUnmarked = false;
   private boolean myHasMarked = false;
   private boolean myEquals;
@@ -37,7 +37,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
-    for (PsiFile psiFile : myRegisteredFiles) {
+    for (PsiFile psiFile : getRegisteredFiles()) {
       if (psiFile != null && psiFile.isValid()) {
         set.add(psiFile);
       }
@@ -45,7 +45,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   public void addFile(PsiFile file, boolean isMarked) {
-    myRegisteredFiles.add(file);
+    getRegisteredFiles().add(file);
     updateMarked(!isMarked, isMarked);
   }
 
@@ -161,5 +161,12 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public boolean isValid() {
     return true;
+  }
+
+  public Set<PsiFile> getRegisteredFiles() {
+    if (myRegisteredFiles == null) {
+      myRegisteredFiles = new HashSet<PsiFile>();
+    }
+    return myRegisteredFiles;
   }
 }
