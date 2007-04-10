@@ -179,6 +179,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Point myLastBackgroundPosition = null;
   private Color myLastBackgroundColor = null;
   private int myLastBackgroundWidth;
+  private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -269,7 +270,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ourIsUnitTestMode) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myScrollingModel.disableAnimation();
@@ -1871,7 +1872,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public Dimension getPreferredSize() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+    if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return new Dimension(1,1);
     }
 
@@ -2645,7 +2646,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void updateCaretCursor() {
-    if (!IJSwingUtilities.hasFocus(getContentComponent())) {
+    if (!ourIsUnitTestMode && !IJSwingUtilities.hasFocus(getContentComponent())) {
       stopOptimizedScrolling();
     }
 
