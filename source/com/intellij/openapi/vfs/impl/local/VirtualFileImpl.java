@@ -472,7 +472,7 @@ public class VirtualFileImpl extends VirtualFile {
     return getPhysicalFile().lastModified();
   }
 
-  void refresh(final boolean asynchronous, final boolean recursive, final boolean noFileWatcher, final Runnable postRunnable) {
+  public void refresh(final boolean asynchronous, final boolean recursive, final boolean noFileWatcher, final Runnable postRunnable) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
