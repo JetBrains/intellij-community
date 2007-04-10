@@ -1,0 +1,38 @@
+interface a {
+  static def a ()
+  def b = 3
+}
+-----
+Groovy script
+  Interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Interface block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(static)('static')
+          PsiWhiteSpace(' ')
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
