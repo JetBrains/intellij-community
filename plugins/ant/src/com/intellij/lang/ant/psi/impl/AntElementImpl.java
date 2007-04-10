@@ -183,8 +183,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       if (myProperties == null) {
         myProperties = new HashMap<String, AntProperty>();
       }
-      myProperties.put(name, element);
-      myPropertiesArray = null;
+      if (!myProperties.containsKey(name)) {
+        myProperties.put(name, element);
+        myPropertiesArray = null;
+      }
     }
   }
 

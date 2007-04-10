@@ -41,4 +41,7 @@ public interface AntProject extends AntStructuredElement {
   boolean isEnvironmentProperty(@NotNull final String propName);
 
   List<String> getEnvironmentPrefixes();
+  
+  @NotNull
+  AntProperty[] getPredefinedProperties();
 }

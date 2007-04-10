@@ -97,18 +97,19 @@ public class AntPropertyReference extends AntGenericReference {
   public Object[] getVariants() {
     final AntElement currentElement = getElement();
     final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();
+    final Set<String> definedProperties = StringSetSpinAllocator.alloc();
     try {
       final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
       try {
         final AntProject project = currentElement.getAntProject();
-        for (final AntProperty property : project.getProperties()) {
+        for (final AntProperty property : project.getPredefinedProperties()) {
           if (currentElement != property) {
-            addAntProperties(property, variants);
+            addAntProperties(property, variants, definedProperties);
           }
         }
-        getVariants(project, variants, elementsDepthStack);
+        getVariants(project, variants, elementsDepthStack, definedProperties);
         for (final AntFile imported : project.getImportedFiles()) {
-          getVariants(imported.getAntProject(), variants, elementsDepthStack);
+          getVariants(imported.getAntProject(), variants, elementsDepthStack, definedProperties);
         }
       }
       finally {
@@ -118,6 +119,7 @@ public class AntPropertyReference extends AntGenericReference {
     }
     finally {
       PsiElementSetSpinAllocator.dispose(variants);
+      StringSetSpinAllocator.dispose(definedProperties);
     }
   }
 
@@ -150,19 +152,19 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private void getVariants(final AntStructuredElement element, final Set<PsiElement> variants, final Set<PsiElement> elementsDepthStack) {
+  private void getVariants(final AntStructuredElement element, final Set<PsiElement> variants, final Set<PsiElement> elementsDepthStack, final Set<String> definedProperties) {
     if (elementsDepthStack.contains(element)) return;
     elementsDepthStack.add(element);
     final AntElement currentElement = getElement();
     try {
       for (final PsiElement child : element.getChildren()) {
         if (child instanceof AntStructuredElement) {
-          getVariants((AntStructuredElement)child, variants, elementsDepthStack);
+          getVariants((AntStructuredElement)child, variants, elementsDepthStack, definedProperties);
           if (child instanceof AntImport) {
             AntImport antImport = (AntImport)child;
             final AntFile imported = antImport.getImportedFile();
             if (imported != null) {
-              getVariants(imported.getAntProject(), variants, elementsDepthStack);
+              getVariants(imported.getAntProject(), variants, elementsDepthStack, definedProperties);
             }
           }
           else if (child instanceof AntProperty) {
@@ -170,12 +172,16 @@ public class AntPropertyReference extends AntGenericReference {
             final PropertiesFile propertiesFile = property.getPropertiesFile();
             if (propertiesFile == null) {
               if (currentElement != property) {
-                addAntProperties(property, variants);
+                addAntProperties(property, variants, definedProperties);
               }
             }
             else {
               for (final Property importedProp : propertiesFile.getProperties()) {
-                variants.add(importedProp);
+                final String propName = importedProp.getName();
+                if (!definedProperties.contains(propName)) {
+                  variants.add(importedProp);
+                  definedProperties.add(propName);
+                }
               }
             }
           }
@@ -187,12 +193,15 @@ public class AntPropertyReference extends AntGenericReference {
     }
   }
 
-  private static void addAntProperties(final AntProperty property, final Set<PsiElement> variants) {
+  private static void addAntProperties(final AntProperty property, final Set<PsiElement> variants, final Set<String> definedProperties) {
     final String[] names = property.getNames();
     if (names != null) {
       final Project project = property.getProject();
       for (final String name : names) {
-        variants.add(new AntElementCompletionWrapper(name, project, AntElementRole.PROPERTY_ROLE));
+        if (!definedProperties.contains(name)) {
+          variants.add(new AntElementCompletionWrapper(name, project, AntElementRole.PROPERTY_ROLE));
+          definedProperties.add(name);
+        }
       }
     }
   }

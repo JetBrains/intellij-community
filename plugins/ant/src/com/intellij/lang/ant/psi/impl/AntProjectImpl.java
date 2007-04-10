@@ -37,6 +37,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private Set<String> myImportsDependentProperties;
     
   private volatile List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
+  private volatile AntProperty[] myPredefinedPropsArray;
   private volatile Map<String, AntElement> myReferencedElements;
   private volatile String[] myRefIdsArray;
   private volatile AntProject myFakeProject; // project that holds predefined properties
@@ -366,6 +367,19 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
+  @NotNull
+  public AntProperty[] getPredefinedProperties() {
+    synchronized (PsiLock.LOCK) {
+      if (getParent() == null || myPredefinedProps == null) {
+        return AntProperty.EMPTY_ARRAY;
+      }
+      if (myPredefinedPropsArray == null) {
+        myPredefinedPropsArray = myPredefinedProps.toArray(new AntProperty[myPredefinedProps.size()]); 
+      }
+      return myPredefinedPropsArray;
+    }
+  }
+
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
     final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
@@ -468,24 +482,21 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           }
         };
         myPredefinedProps.add(property);
+        myPredefinedPropsArray = null;
       }
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-    setPredefinedProperties();
-  }
-
-  private void setPredefinedProperties() {
-    for (final AntProperty property : myPredefinedProps) {
-      setProperty(property.getName(), property);
-    }
+    checkPropertiesMap();
   }
 
   private void checkPropertiesMap() {
     if (myProperties == null) {
       myProperties = new HashMap<String, AntProperty>(myPredefinedProps.size());
-      setPredefinedProperties();
+      for (final AntProperty property : myPredefinedProps) {
+        setProperty(property.getName(), property);
+      }
     }
   }
 
