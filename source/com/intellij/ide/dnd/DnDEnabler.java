@@ -12,6 +12,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.MouseDragGestureRecognizer;
 import java.awt.event.AWTEventListener;
@@ -19,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -46,6 +48,8 @@ public class DnDEnabler implements Activatable, Disposable {
       }
     }
   };
+  private MouseListener myTooltipListener1;
+  private MouseListener myTooltipListener2;
 
   public DnDEnabler(@NotNull final DnDAware source, Disposable parent) {
     myDnDSource = source;
@@ -94,6 +98,25 @@ public class DnDEnabler implements Activatable, Disposable {
         return false;
       }
     };
+
+    readTooltipListeners();
+  }
+
+  private void readTooltipListeners() {
+    final ToolTipManager manager = ToolTipManager.sharedInstance();
+
+    myTooltipListener1 = manager;
+    try {
+
+//todo kirillk to detach mouseMotion listeners as well
+      final Field moveBefore = manager.getClass().getDeclaredField("moveBeforeEnterListener");
+      if (!MouseListener.class.isAssignableFrom(moveBefore.getType())) return;
+      moveBefore.setAccessible(true);
+      myTooltipListener2 = (MouseListener)moveBefore.get(manager);
+    }
+    catch (Exception e) {
+      return;
+    }
   }
 
   private static void dispatchMouseEvent(MouseListener listener, MouseEvent e) {
@@ -136,8 +159,6 @@ public class DnDEnabler implements Activatable, Disposable {
       if (event instanceof MouseEvent) {
         MouseEvent e = (MouseEvent)event;
 
-        if (e.getID() != MouseEvent.MOUSE_PRESSED) return;
-
         Component comp = myDnDSource.getComponent();
         if (e.getComponent() != comp) return;
 
@@ -147,6 +168,14 @@ public class DnDEnabler implements Activatable, Disposable {
         //}
 
         if (e.getComponent() == comp) {
+          boolean shouldProcessTooltipManager = true;
+          if (e.getComponent() instanceof JComponent) {
+            final JComponent c = (JComponent)e.getComponent();
+            if (c.getToolTipText() == null) {
+              shouldProcessTooltipManager = false;
+            }
+          }
+
           if (isPressedToSelection(e)) {
             if (myDnDSource.getComponent().isFocusable()) {
               myDnDSource.getComponent().requestFocus();
@@ -159,9 +188,16 @@ public class DnDEnabler implements Activatable, Disposable {
               final EventListener[][] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()][]);
               for (EventListener[] listeners : eventListeners) {
                 for (EventListener each : listeners) {
+                  if (!shouldProcessTooltipManager) {
+                    if (each == myTooltipListener1 || each == myTooltipListener2) continue;
+                  }
                   dispatchMouseEvent((MouseListener)each, e);
                   if (e.isConsumed()) break;
                 }
+              }
+
+              if (shouldProcessTooltipManager) {
+                ((JComponent)e.getComponent()).setToolTipText(null);
               }
             }
           }
