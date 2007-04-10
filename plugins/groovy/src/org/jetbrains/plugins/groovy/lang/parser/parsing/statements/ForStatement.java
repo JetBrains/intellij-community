@@ -46,7 +46,9 @@ public class ForStatement implements GroovyElementTypes {
       marker.done(FOR_STATEMENT);
       return FOR_STATEMENT;
     }
-    ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)){
+      ParserUtils.getToken(builder, mNLS);
+    }
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       marker.done(FOR_STATEMENT);
       return FOR_STATEMENT;

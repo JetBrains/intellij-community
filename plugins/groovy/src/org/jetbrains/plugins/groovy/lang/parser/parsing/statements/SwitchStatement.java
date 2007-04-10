@@ -45,7 +45,9 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return SWITCH_STATEMENT;
     }
-    ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)){
+      ParserUtils.getToken(builder, mNLS);
+    }
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       marker.done(SWITCH_STATEMENT);
       return SWITCH_STATEMENT;
