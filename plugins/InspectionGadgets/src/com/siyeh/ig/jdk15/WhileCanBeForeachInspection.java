@@ -120,10 +120,10 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             final String contentTypeString;
             if (parameters.length == 1) {
                 final PsiType parameterType = parameters[0];
-                if (parameterType instanceof PsiWildcardType) {
-                    final PsiWildcardType wildcardType =
-                            (PsiWildcardType)parameterType;
-                    final PsiType bound = wildcardType.getBound();
+                if (parameterType instanceof PsiCapturedWildcardType) {
+                    final PsiCapturedWildcardType wildcardType =
+                            (PsiCapturedWildcardType)parameterType;
+                    final PsiType bound = wildcardType.getUpperBound();
                     if (bound == null) {
                         contentTypeString = "java.lang.Object";
                     } else {

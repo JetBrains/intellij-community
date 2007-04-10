@@ -89,21 +89,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                 return;
             }
             final PsiArrayType arrayType = (PsiArrayType)argumentType;
-            if (collectionType.hasParameters()) {
-                final PsiType[] parameters = collectionType.getParameters();
-                if (parameters.length != 1) {
-                    return;
-                }
-                final PsiType parameter = parameters[0];
-                final PsiType componentType = arrayType.getComponentType();
-                if (!componentType.isAssignableFrom(parameter)) {
-                    registerError(argument, parameter);
-                }
-            } else {
-                final PsiElement parent = expression.getParent();
-                if (!(parent instanceof PsiTypeCastExpression)) {
-                    return;
-                }
+            final PsiType componentType = arrayType.getComponentType();
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiTypeCastExpression) {
                 final PsiTypeCastExpression castExpression =
                         (PsiTypeCastExpression)parent;
                 final PsiTypeElement castTypeElement =
@@ -114,6 +102,18 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                 final PsiType castType = castTypeElement.getType();
                 if (!castType.equals(arrayType)) {
                     registerError(argument, arrayType.getComponentType());
+                }
+            } else {
+                if (!collectionType.hasParameters()) {
+                    return;
+                }
+                final PsiType[] parameters = collectionType.getParameters();
+                if (parameters.length != 1) {
+                    return;
+                }
+                final PsiType parameter = parameters[0];
+                if (!componentType.isAssignableFrom(parameter)) {
+                    registerError(argument, parameter);
                 }
             }
         }
