@@ -12,7 +12,7 @@ public class RevisionsTableCellRenderer extends DefaultTableCellRenderer {
     if (!isSelected) {
       Color c = t.getBackground();
 
-      if (column == 1) {
+      if (column == 0 || column == 1) {
         if (hasValueAt(t, row, 1) || hasValueAt(t, row, 2)) c = new Color(230, 230, 250);
       }
       if (column == 2 && hasValueAt(t, row, 2)) c = new Color(255, 235, 205);

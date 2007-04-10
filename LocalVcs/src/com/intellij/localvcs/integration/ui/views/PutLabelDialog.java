@@ -30,6 +30,11 @@ public class PutLabelDialog extends DialogWrapper {
     updateOkStatus();
   }
 
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
+
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -88,9 +93,9 @@ public class PutLabelDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myGateway.getProject());
-    if (myFileButton.isSelected()) {
+    if (myFile != null && myFileButton.isSelected()) {
       vcs.putLabel(myFile.getPath(), getLabelName());
     }
     else {
