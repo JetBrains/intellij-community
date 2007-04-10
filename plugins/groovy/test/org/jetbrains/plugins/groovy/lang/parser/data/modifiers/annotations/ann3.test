@@ -56,5 +56,5 @@ Groovy script
             Literal
               PsiElement(number)('5')
         PsiElement())(')')
-        PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
