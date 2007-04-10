@@ -1,11 +1,12 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.LocalVcsTestCase;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Date;
 
-public class FormatUtilTest {
+public class FormatUtilTest extends LocalVcsTestCase {
   @Test
   public void testFormatting() {
     Date d = new Date(2003, 01, 01, 12, 30);

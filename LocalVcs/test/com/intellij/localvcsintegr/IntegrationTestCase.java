@@ -18,9 +18,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 public abstract class IntegrationTestCase extends IdeaTestCase {
+  private Locale myDefaultLocale;
+
   String EXCLUDED_DIR_NAME = "CVS";
   VirtualFile root;
 
@@ -29,6 +32,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     super.setUp();
     Clock.useRealClock();
     Paths.useSystemCaseSensitivity();
+
+    myDefaultLocale = Locale.getDefault();
+    Locale.setDefault(new Locale("ru", "RU"));
+
     runWriteAction(new Runnable() {
       public void run() {
         root = addContentRoot();
@@ -38,6 +45,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    Locale.setDefault(myDefaultLocale);
     Clock.useRealClock();
     Paths.useSystemCaseSensitivity();
     super.tearDown();

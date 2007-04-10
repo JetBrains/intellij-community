@@ -1,12 +1,28 @@
 package com.intellij.localvcs;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 public abstract class LocalVcsTestCase extends Assert {
+  private Locale myDefaultLocale;
+
+  @Before
+  public void setUpLocale() {
+    myDefaultLocale = Locale.getDefault();
+    Locale.setDefault(new Locale("ru", "RU"));
+  }
+
+  @After
+  public void restoreLocale() {
+    Locale.setDefault(myDefaultLocale);
+  }
+
   protected static Content c(String data) {
     return new ByteContent(b(data));
   }
