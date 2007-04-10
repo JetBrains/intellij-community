@@ -15,5 +15,5 @@ Groovy script
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       PsiElement(})('}')
