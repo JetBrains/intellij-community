@@ -379,6 +379,16 @@ public class VcsUtil
     return false;
   }
 
+  /**
+   * File is considered to be a valid vcs file if it resides under the
+   * content root controlled by given vcs.
+   */
+  public static boolean isFileForVcs( VirtualFile file, Project project, AbstractVcs host )
+  {
+    ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+    return mgr.getVcsFor( file ) == host;
+  }
+
   public static FilePath getFilePath( String path ) {
     return getFilePath( new File( path ) ); 
   }
