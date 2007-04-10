@@ -1,6 +1,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -36,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -354,6 +356,35 @@ public class XmlUtil {
       }
     }
     return null;
+  }
+
+  public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
+                                           final HashMap<String, T> presentNames,
+                                           DuplicationInfoProvider<T> provider,
+                                           final Validator.ValidationHost host) {
+    for(T t:elements) {
+      final String name = provider.getName( t );
+      if (name == null) continue;
+
+      final String nameKey = provider.getNameKey(t,name);
+
+      if (presentNames.containsKey(nameKey)) {
+        final T psiElement = presentNames.get(nameKey);
+        final String message = XmlBundle.message("duplicated.declaration", nameKey);
+
+        if (psiElement != null) {
+          presentNames.put(nameKey,null);
+
+          host.addMessage(
+            provider.getNodeForMessage(psiElement), message, Validator.ValidationHost.ERROR
+          );
+        }
+
+        host.addMessage(provider.getNodeForMessage(t), message, Validator.ValidationHost.ERROR);
+      } else {
+        presentNames.put(nameKey,t);
+      }
+    }
   }
 
   private static class XmlElementProcessor {
@@ -1280,5 +1311,11 @@ public class XmlUtil {
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
     return detect(CharsetToolkit.getUtf8Bytes(text));
+  }
+
+  public interface DuplicationInfoProvider<T extends PsiElement> {
+    @Nullable String getName(T t);
+    @NotNull String getNameKey(T t, String name);
+    @NotNull PsiElement getNodeForMessage(T t);
   }
 }

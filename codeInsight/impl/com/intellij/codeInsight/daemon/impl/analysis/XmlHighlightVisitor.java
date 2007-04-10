@@ -20,6 +20,7 @@ import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReference
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -613,6 +615,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName, attribute);
 
         QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
+      }
+    }
+  }
+
+  public void visitXmlDocument(final XmlDocument document) {
+    if (document.getLanguage() == StdLanguages.DTD) {
+      final PsiMetaData psiMetaData = document.getMetaData();
+      if (psiMetaData instanceof Validator) {
+        ((Validator)psiMetaData).validate(document, this);
       }
     }
   }

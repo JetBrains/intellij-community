@@ -6,7 +6,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,11 +49,52 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
+  private static XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
+    public String getName(final XmlTag t) {
+      return t.getAttributeValue("name");
+    }
+
+    public String getNameKey(final XmlTag t, String name) {
+      return name;
+    }
+
+    @NotNull
+    public PsiElement getNodeForMessage(final XmlTag t) {
+      return t.getAttribute("name", null).getValueElement();
+    }
+  };
+
+  private static final Validator ELEMENT_AND_ATTR_VALIDATOR = new Validator() {
+    public void validate(PsiElement context, ValidationHost host) {
+      final XmlTag tag = ((XmlTag)context);
+      final String nsPrefix = tag.getNamespacePrefix();
+      final XmlTag[] attrDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "attribute");
+
+      XmlUtil.doDuplicationCheckForElements(
+        attrDeclTags,
+        new HashMap<String, XmlTag>(attrDeclTags.length),
+        SCHEMA_ATTR_DUP_INFO_PROVIDER,
+        host
+      );
+
+      final XmlTag[] elementDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "element");
+
+      XmlUtil.doDuplicationCheckForElements(
+        elementDeclTags,
+        new HashMap<String, XmlTag>(elementDeclTags.length),
+        SCHEMA_ATTR_DUP_INFO_PROVIDER,
+        host
+      );
+    }
+  };
+
   protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
     final XmlElementDescriptor descriptor = super.createElementDescriptor(tag);
     String localName = tag.getAttributeValue("name");
     if (ELEMENT_TAG_NAME.equals(localName)) {
       ((XmlElementDescriptorImpl)descriptor).setValidator(ELEMENT_VALIDATOR);
+    } else if (COMPLEX_TYPE_TAG_NAME.equals(localName) || SCHEMA_TAG_NAME.equals(localName) || SEQUENCE_TAG_NAME.equals(localName)) {
+      ((XmlElementDescriptorImpl)descriptor).setValidator(ELEMENT_AND_ATTR_VALIDATOR);
     }
     return descriptor;
   }

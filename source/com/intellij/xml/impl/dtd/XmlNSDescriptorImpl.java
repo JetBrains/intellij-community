@@ -2,6 +2,7 @@ package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
@@ -10,17 +11,17 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Mike
@@ -45,6 +46,21 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   };
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
+  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
+    public String getName(final XmlElementDecl psiElement) {
+      return psiElement.getName();
+    }
+
+    @NotNull
+    public String getNameKey(final XmlElementDecl psiElement, final String name) {
+      return name;
+    }
+
+    @NotNull
+    public PsiElement getNodeForMessage(final XmlElementDecl psiElement) {
+      return psiElement.getNameElement();
+    }
+  };
 
   public XmlNSDescriptorImpl() {
   }
@@ -169,6 +185,23 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public void validate(PsiElement context, ValidationHost host) {
+    if (context instanceof XmlDocument && context.getLanguage() == StdLanguages.DTD) {
+      final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
+
+      XmlUtil.processXmlElements((XmlDocument)context, new PsiElementProcessor() {
+        public boolean execute(final PsiElement element) {
+          if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
+          return true;
+        }
+      }, false);
+      XmlUtil.doDuplicationCheckForElements(
+        decls.toArray(new XmlElementDecl[decls.size()]),
+        new HashMap<String, XmlElementDecl>(decls.size()),
+        XML_ELEMENT_DECL_PROVIDER,
+        host
+      );
+      return;
+    }
     ExternalDocumentValidator.doValidation(context,host);
   }
 }

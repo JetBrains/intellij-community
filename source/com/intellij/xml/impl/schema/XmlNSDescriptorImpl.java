@@ -35,7 +35,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private String myTargetNamespace;
   @NonNls
   public static final String XSD_PREFIX = "xsd";
+  
   @NonNls static final String ELEMENT_TAG_NAME = "element";
+  @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
+  @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
+  @NonNls static final String SCHEMA_TAG_NAME = "schema";
 
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
