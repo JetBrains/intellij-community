@@ -116,7 +116,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
 
     GroovyElementType result = Statement.parse(builder);
     while (!result.equals(WRONGWAY) &&
-        (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
+            (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
       result = Statement.parse(builder);
       cleanAfterError(builder);
@@ -134,10 +134,10 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
     while (!builder.eof() &&
-        !(mNLS.equals(builder.getTokenType()) ||
-            mRCURLY.equals(builder.getTokenType()) ||
-            mSEMI.equals(builder.getTokenType()))
-        ) {
+            !(mNLS.equals(builder.getTokenType()) ||
+                    mRCURLY.equals(builder.getTokenType()) ||
+                    mSEMI.equals(builder.getTokenType()))
+            ) {
       builder.advanceLexer();
       i++;
     }
