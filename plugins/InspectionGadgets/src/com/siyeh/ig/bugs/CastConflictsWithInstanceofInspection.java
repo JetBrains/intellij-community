@@ -86,7 +86,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
             private final PsiReferenceExpression referenceExpression;
             private final PsiType castType;
-            private boolean inElse = true;
+            private boolean inElse = false;
             private boolean conflictingInstanceof = false;
             private boolean agreeingInstanceof = false;
 
@@ -107,11 +107,13 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
                         expression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (tokenType == JavaTokenType.ANDAND) {
+                    inElse = false;
                     final PsiExpression lhs = expression.getLOperand();
                     checkExpression(lhs);
                     final PsiExpression rhs = expression.getROperand();
                     checkExpression(rhs);
                 } else if (tokenType == JavaTokenType.OROR) {
+                    inElse = true;
                     final PsiExpression lhs = expression.getLOperand();
                     checkExpression(lhs);
                 }
@@ -141,6 +143,24 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
                     }
                 }
                 PsiExpression condition = ifStatement.getCondition();
+                condition = PsiUtil.deparenthesizeExpression(condition);
+                if (condition instanceof PsiBinaryExpression) {
+                    final PsiBinaryExpression binaryExpression =
+                            (PsiBinaryExpression)condition;
+                    visitBinaryExpression(binaryExpression);
+                } else {
+                    checkExpression(condition);
+                }
+            }
+
+            public void visitConditionalExpression(
+                    PsiConditionalExpression expression) {
+                final PsiExpression elseExpression =
+                        expression.getElseExpression();
+                inElse = elseExpression != null &&
+                        PsiTreeUtil.isAncestor(elseExpression,
+                                referenceExpression, true);
+                PsiExpression condition = expression.getCondition();
                 condition = PsiUtil.deparenthesizeExpression(condition);
                 if (condition instanceof PsiBinaryExpression) {
                     final PsiBinaryExpression binaryExpression =
@@ -206,45 +226,27 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
                 return child;
             }
 
-            public void visitConditionalExpression(
-                    PsiConditionalExpression expression) {
-                final PsiExpression elseExpression =
-                        expression.getElseExpression();
-                inElse = elseExpression != null &&
-                        PsiTreeUtil.isAncestor(elseExpression,
-                                referenceExpression, true);
-                PsiExpression condition = expression.getCondition();
-                condition = PsiUtil.deparenthesizeExpression(condition);
-                if (condition instanceof PsiBinaryExpression) {
-                    final PsiBinaryExpression binaryExpression =
-                            (PsiBinaryExpression)condition;
-                    visitBinaryExpression(binaryExpression);
-                } else {
-                    checkExpression(condition);
-                }
-            }
-
-            private void checkExpression(PsiExpression lhs) {
-                lhs = PsiUtil.deparenthesizeExpression(lhs);
+            private void checkExpression(PsiExpression expression) {
+                expression = PsiUtil.deparenthesizeExpression(expression);
                 if (inElse) {
-                    if (lhs instanceof PsiPrefixExpression) {
+                    if (expression instanceof PsiPrefixExpression) {
                         final PsiPrefixExpression prefixExpression =
-                                (PsiPrefixExpression)lhs;
+                                (PsiPrefixExpression)expression;
                         final IElementType tokenType =
                                 prefixExpression.getOperationTokenType();
                         if (tokenType != JavaTokenType.EXCL) {
                             return;
                         }
-                        lhs = PsiUtil.deparenthesizeExpression(
+                        expression = PsiUtil.deparenthesizeExpression(
                                 prefixExpression.getOperand());
-                        checkInstanceOfExpression(lhs);
+                        checkInstanceOfExpression(expression);
                     }
                 } else {
-                    checkInstanceOfExpression(lhs);
+                    checkInstanceOfExpression(expression);
                 }
-                if (lhs instanceof PsiBinaryExpression) {
+                if (expression instanceof PsiBinaryExpression) {
                     final PsiBinaryExpression binaryExpression =
-                            (PsiBinaryExpression)lhs;
+                            (PsiBinaryExpression)expression;
                     visitBinaryExpression(binaryExpression);
                 }
             }

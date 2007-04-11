@@ -1,20 +1,19 @@
 package com.siyeh.igtest.bugs;
 
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import java.lang.*;
-import java.lang.Object;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.AbstractList;
 import java.awt.Component;
 import java.awt.Frame;
+import java.lang.Object;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CastConflictsWithInstanceofInspection {
+    
     public void foo() {
         Number x = bar();
 
@@ -72,5 +71,13 @@ public class CastConflictsWithInstanceofInspection {
             return (String)o; // no warn
         }
         return null;
+    }
+
+    public void test(Object arg) {
+        if (arg instanceof Byte ||
+                arg instanceof Short && ((Short)arg).shortValue() == 0) { 
+            // no warn
+            // ...
+        }
     }
 }
