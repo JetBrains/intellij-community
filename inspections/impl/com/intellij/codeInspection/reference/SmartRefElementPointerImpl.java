@@ -8,20 +8,23 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
+  @NonNls public static final String FQNAME_ATTR = "FQNAME";
+  @NonNls public static final String TYPE_ATTR = "TYPE";
+  @NonNls public static final String ENTRY_POINT = "entry_point";
 
   private final boolean myIsPersistent;
   private RefEntity myRefElement;
   private String myFQName;
   private String myType;
-    @NonNls
-    public static final String FQNAME_ATTR = "FQNAME";
-    @NonNls
-    public static final String TYPE_ATTR = "TYPE";
-  @NonNls public static final String ENTRY_POINT = "entry_point";
+  private static final Logger LOG = Logger.getInstance("#" + SmartRefElementPointerImpl.class.getName());
 
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
       myIsPersistent = isPersistent;
@@ -117,26 +120,43 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     if (myRefElement != null) {
       final RefEntity entity = myRefElement.getOwner();
       if (entity instanceof RefElement) {
-        new SmartRefElementPointerImpl(entity, myIsPersistent).writeExternal(element);
+        final RefElement elementOwner = findSyntheticJSP((RefElement)entity);
+        if (elementOwner.isSyntheticJSP()) {
+          final PsiFile psiFile = PsiUtil.getJspFile(elementOwner.getElement());
+          if (psiFile != null) {
+            final VirtualFile virtualFile = psiFile.getVirtualFile();
+            LOG.assertTrue(virtualFile != null);
+            new SmartRefElementPointerImpl(FILE, virtualFile.getUrl(), elementOwner.getRefManager()).writeExternal(parentNode);
+            return;
+          }
+        }
+        else {
+          new SmartRefElementPointerImpl(entity, myIsPersistent).writeExternal(element);
+        }
       }
     }
     parentNode.addContent(element);
   }
 
+  private static RefElement findSyntheticJSP(RefElement refElement) {
+    if (refElement.isSyntheticJSP()) return refElement;
+    final RefEntity entity = refElement.getOwner();
+    if (entity instanceof RefElement) {
+      return findSyntheticJSP((RefElement)entity);
+    }
+    return refElement;
+  }
+
   public boolean resolve(RefManager manager) {
     if (myRefElement != null) {
-      if (myRefElement instanceof RefElement && ((RefElement)myRefElement).isValid()) return true;
+      if (myRefElement instanceof RefElement && myRefElement.isValid()) return true;
       return false;
     }
 
     if (METHOD.equals(myType)) {
       myRefElement = RefMethodImpl.methodFromExternalName(manager, getFQName());
     } else if (CLASS.equals(myType)) {
-      RefClass refClass= RefClassImpl.classFromExternalName(manager, getFQName());
-      if (refClass != null) {
-        myRefElement = refClass.getDefaultConstructor();
-        if (myRefElement == null) myRefElement = refClass;
-      }
+      myRefElement = RefClassImpl.classFromExternalName(manager, getFQName());
     } else if (FIELD.equals(myType)) {
       myRefElement = RefFieldImpl.fieldFromExternalName(manager, getFQName());
     } else if (FILE.equals(myType)) {

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -61,13 +62,19 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     LOG.assertTrue(psiClass != null);
 
     PsiElement psiParent = psiClass.getParent();
-    if (psiParent instanceof PsiFile) {
-      PsiJavaFile psiFile = (PsiJavaFile) psiParent;
-      String packageName = psiFile.getPackageName();
-      if (!"".equals(packageName)) {
-        ((RefPackageImpl)getRefManager().getPackage(packageName)).add(this);
+    if (psiParent instanceof PsiFile) {      
+      if (isSyntheticJSP()) {
+        final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(PsiUtil.getJspFile(psiClass));
+        LOG.assertTrue(refFile != null);
+        refFile.add(this);
       } else {
-        ((RefPackageImpl)getRefManager().getRefProject().getDefaultPackage()).add(this);
+        PsiJavaFile psiFile = (PsiJavaFile) psiParent;
+        String packageName = psiFile.getPackageName();
+        if (!"".equals(packageName)) {
+          ((RefPackageImpl)getRefManager().getPackage(packageName)).add(this);
+        } else {
+          ((RefPackageImpl)getRefManager().getRefProject().getDefaultPackage()).add(this);
+        }
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
       LOG.assertTrue(module != null);
