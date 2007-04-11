@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
@@ -44,26 +45,50 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
   @NotNull
   public static Indent getChildIndent(@NotNull final GroovyBlock parent, @Nullable final ASTNode prevChildNode, @NotNull final ASTNode child) {
     final PsiElement psiParent = parent.getNode().getPsi();
-    final PsiElement psiChild = child.getPsi();
 
+    // For Groovy file
     if (psiParent instanceof GroovyFile) {
       return Indent.getNoneIndent();
     }
 
+    // For 'case' block
+    if (psiParent instanceof GrCaseBlock) {
+      return indentForCaseBlock(child);
+    }
+
+/*
     if (psiParent instanceof BlockedIndent) {
+      // For braces
       if (mLCURLY.equals(child.getElementType()) || mRCURLY.equals(child.getElementType())) {
+        if (psiParent.getParent() instanceof GrCaseBlock) {
+          return blockInsideCaseBlock(psiParent, psiChild);
+        }
         return Indent.getNoneIndent();
-      } else if (psiParent instanceof GrCaseBlock) { // Inside case block
+      }
+      // Inside case block
+      if (psiParent instanceof GrCaseBlock) {
         if (psiChild instanceof GrCaseLabel) {
           return Indent.getNormalIndent();
         } else {
-          return Indent.getNormalIndent(); //Indent.getSpaceIndent(4);
+          return Indent.getSpaceIndent(4);
         }
       } else {
         return Indent.getNormalIndent();
       }
     }
+*/
     /********  Default Indent *********/
+    return Indent.getNoneIndent();
+  }
+
+  /**
+   * @param child     child of case block
+   * @return
+   */
+  private static Indent indentForCaseBlock(ASTNode child) {
+    if (mLCURLY.equals(child.getElementType()) || mRCURLY.equals(child.getElementType())) {
+      return Indent.getNormalIndent();
+    }
     return Indent.getNoneIndent();
   }
 

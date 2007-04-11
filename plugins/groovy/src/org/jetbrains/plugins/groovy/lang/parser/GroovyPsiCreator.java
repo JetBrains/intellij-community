@@ -211,6 +211,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
     if (elem.equals(PARENTHSIZED_EXPRESSION)) return new GrParenthesizedExprImpl(node);
     if (elem.equals(NEW_EXPRESSION)) return new GrNewExprImpl(node);
+    if (elem.equals(ARRAY_DECLARATOR)) return new GrArrayDeclarationImpl(node);
 
     //Paths
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
