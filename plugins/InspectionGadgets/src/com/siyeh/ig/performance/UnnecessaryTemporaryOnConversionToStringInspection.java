@@ -74,13 +74,14 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         if(expressions.length < 1) {
             return null;
         }
-        final PsiExpression arg = expressions[0];
         final PsiType type = newExpression.getType();
         if(type == null) {
             return null;
         }
+        final PsiExpression argument = expressions[0];
+        final String argumentText = argument.getText();
         final String qualifierType = type.getPresentableText();
-        return qualifierType + ".toString(" + arg.getText() + ')';
+        return qualifierType + ".toString(" + argumentText + ')';
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -161,8 +162,14 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             if (argumentList == null) {
                 return;
             }
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            if (expressions.length < 1) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length < 1) {
+                return;
+            }
+            final PsiExpression argument = arguments[0];
+            final PsiType argumentType = argument.getType();
+            if (argumentType != null &&
+                    argumentType.equalsToText("java.lang.String")) {
                 return;
             }
             final PsiType type = qualifier.getType();
