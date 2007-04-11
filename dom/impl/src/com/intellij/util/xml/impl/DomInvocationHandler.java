@@ -530,7 +530,9 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     r.lock();
     try {
       final IndexedElementInvocationHandler handler = myFixedChildren.get(info);
-      LOG.assertTrue(handler != null, this + " " + info.toString());
+      if (handler == null) {
+        LOG.assertTrue(false, this + " " + info.toString());
+      }
       return handler;
     }
     finally {

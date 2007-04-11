@@ -61,7 +61,7 @@ public class CommittableUtil {
       myCommitting = old;
     }
     if (!myCommitting) {
-      flushResetQueue();
+      //flushResetQueue();
     }
   }
 
