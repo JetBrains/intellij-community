@@ -1,0 +1,56 @@
+interface q {
+  def a () {   }
+
+  public q () {
+    this()
+  }
+}
+-----
+Groovy script
+  Interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('q')
+    PsiWhiteSpace(' ')
+    Interface block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('   ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n  ')
+      Constructor
+        Modifiers
+          PsiElement(public)('public')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('q')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Constructor body
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          PsiElement(this)('this')
+          PsiElement(()('(')
+          Arguments
+            <empty list>
+          PsiElement())(')')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(})('}')
+      PsiErrorElement:interface must have no constructor
+        <empty list>
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
