@@ -36,10 +36,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
 
-  protected static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
-  protected static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
-  protected static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
-  protected static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
+  public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
+  public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
+  public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
 
 
   public JavaClassReferenceProvider(String extendClassName, boolean instantiatable) {

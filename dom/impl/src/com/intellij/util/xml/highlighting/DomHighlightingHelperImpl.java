@@ -9,11 +9,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
@@ -84,53 +88,84 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   @NotNull
   public List<DomElementProblemDescriptor> checkExtendClass(GenericDomValue element, final DomElementAnnotationHolder holder) {
     final Class genericValueParameter = DomUtil.getGenericValueParameter(element.getDomElementType());
-    if (genericValueParameter == null || !PsiClass.class.isAssignableFrom(genericValueParameter)) {
+    if (genericValueParameter == null || !ReflectionCache.isAssignable(genericValueParameter, PsiClass.class)) {
       return Collections.emptyList();
     }
 
-    PsiClass value = (PsiClass)element.getValue();
-    if (value != null) {
+    final Object valueObject = element.getValue();
+    if (valueObject instanceof PsiClass) {
       ExtendClass extend = element.getAnnotation(ExtendClass.class);
       if (extend != null) {
-        Project project = element.getManager().getProject();
-        final String name = extend.value();
-        PsiClass extendClass = PsiManager.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
-        if (extendClass != null) {
-          final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
-          if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
-            String message = IdeBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());
-            list.add(holder.createProblem(element, message));
-          } else if (extend.instantiatable()) {
-            if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              list.add(holder.createProblem(element, IdeBundle.message("class.is.not.concrete", value.getQualifiedName())));
-            } else if (!value.hasModifierProperty(PsiModifier.PUBLIC)) {
-              list.add(holder.createProblem(element, IdeBundle.message("class.is.not.public", value.getQualifiedName())));
-            } else if (!hasDefaultConstructor(value)) {
-              if (extend.canBeDecorator()) {
-                boolean hasConstructor = false;
-
-                for (PsiMethod method : value.getConstructors()) {
-                  final PsiParameterList psiParameterList = method.getParameterList();
-                  if (psiParameterList.getParametersCount() != 1) continue;
-                  final PsiType psiType = psiParameterList.getParameters()[0].getTypeElement().getType();
-                  if (psiType instanceof PsiClassType) {
-                    final PsiClass psiClass = ((PsiClassType)psiType).resolve();
-                    if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
-                      hasConstructor = true;
-                      break;
-                    }
-                  }
-                } if (!hasConstructor) {
-                list.add(holder.createProblem(element, IdeBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
-              }
-              } else {
-                list.add(holder.createProblem(element, IdeBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+        return checkExtendClass(element, (PsiClass)valueObject, extend.value(), extend.instantiatable(), extend.canBeDecorator(), holder);
+      }
+      else {
+        final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element));
+        for (PsiReference reference : references) {
+          if (reference instanceof JavaClassReference) {
+            final PsiReferenceProvider psiReferenceProvider = ((JavaClassReference)reference).getProvider();
+            final String[] value = psiReferenceProvider instanceof JavaClassReferenceProvider ? JavaClassReferenceProvider.EXTEND_CLASS_NAMES
+              .getValue(((JavaClassReferenceProvider)psiReferenceProvider).getOptions()) : null;
+            if (value != null && value.length != 0) {
+              for (String className : value) {
+                final List<DomElementProblemDescriptor> problemDescriptors =
+                  checkExtendClass(element, ((PsiClass)valueObject), className, false, false, holder);
+                if (!problemDescriptors.isEmpty()) {
+                  return problemDescriptors;
+                }
               }
             }
           }
-          return list;
         }
       }
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element, final PsiClass value, final String name, final boolean instantiatable,
+                                                            final boolean canBeDecorator,
+                                                            final DomElementAnnotationHolder holder) {
+    final Project project = element.getManager().getProject();
+    PsiClass extendClass = PsiManager.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    if (extendClass != null) {
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
+        String message = IdeBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());
+        list.add(holder.createProblem(element, message));
+      }
+      else if (instantiatable) {
+        if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          list.add(holder.createProblem(element, IdeBundle.message("class.is.not.concrete", value.getQualifiedName())));
+        }
+        else if (!value.hasModifierProperty(PsiModifier.PUBLIC)) {
+          list.add(holder.createProblem(element, IdeBundle.message("class.is.not.public", value.getQualifiedName())));
+        }
+        else if (!hasDefaultConstructor(value)) {
+          if (canBeDecorator) {
+            boolean hasConstructor = false;
+
+            for (PsiMethod method : value.getConstructors()) {
+              final PsiParameterList psiParameterList = method.getParameterList();
+              if (psiParameterList.getParametersCount() != 1) continue;
+              final PsiType psiType = psiParameterList.getParameters()[0].getTypeElement().getType();
+              if (psiType instanceof PsiClassType) {
+                final PsiClass psiClass = ((PsiClassType)psiType).resolve();
+                if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
+                  hasConstructor = true;
+                  break;
+                }
+              }
+            }
+            if (!hasConstructor) {
+              list.add(holder.createProblem(element, IdeBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
+            }
+          }
+          else {
+            list.add(holder.createProblem(element, IdeBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+          }
+        }
+      }
+      return list;
     }
     return Collections.emptyList();
   }
@@ -153,10 +188,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       if (!hasBadResolve && !hasDomValueReference && element.getConverter() instanceof ResolvingConverter) {
         final GenericDomValueReference reference = new GenericDomValueReference(element);
         if (hasBadResolve(element, reference)) {
+          hasBadResolve = true;
           list.add(holder.createResolveProblem(element, reference));
         }
       }
-      if (psiReferences.length == 0 && element.getValue() == null) {
+      if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null) {
         final String errorMessage = element.getConverter()
           .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
         list.add(holder.createProblem(element, errorMessage));
