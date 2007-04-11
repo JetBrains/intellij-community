@@ -53,6 +53,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   private volatile Boolean myIsDeprecated = null;
   private volatile PsiDocComment myDocComment = null;
   private volatile ClsAnnotationImpl[] myAnnotations = null;
+  private volatile Boolean myCachedIsInterface = null;
+  private volatile Boolean myCachedIsAnnotationType = null;
 
   public ClsClassImpl(PsiManagerImpl manager, ClsElementImpl parent, final ClassFileData classFileData) {
     super(manager, -1);
@@ -495,7 +497,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiField[] getFields() {
-    if (myFields == null) {
+    PsiField[] fields = myFields;
+    if (fields == null) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         try {
@@ -521,24 +524,24 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             ptr.offset += 6;
             ClsUtil.skipAttributes(ptr);
           }
-          myFields = array.toArray(new PsiField[array.size()]);
+          fields = array.isEmpty() ? PsiField.EMPTY_ARRAY : array.toArray(new PsiField[array.size()]);
         }
         catch (ClsFormatException e) {
-          myFields = PsiField.EMPTY_ARRAY;
+          fields = PsiField.EMPTY_ARRAY;
         }
       }
       else {
         long[] fieldIds = getRepositoryManager().getClassView().getFields(repositoryId);
-        PsiField[] fields = new PsiField[fieldIds.length];
+        fields = fieldIds.length == 0 ? PsiField.EMPTY_ARRAY : new PsiField[fieldIds.length];
         RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
         for (int i = 0; i < fieldIds.length; i++) {
           long id = fieldIds[i];
           fields[i] = (PsiField)repositoryElementsManager.findOrCreatePsiElementById(id);
         }
-        myFields = fields;
       }
+      myFields = fields;
     }
-    return myFields;
+    return fields;
   }
 
   private boolean isEnumField(int ptrOffset) {
@@ -561,7 +564,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiMethod[] getMethods() {
-    if (myMethods == null) {
+    PsiMethod[] methods = myMethods;
+    if (methods == null) {
       long repositoryId = getRepositoryId();
 
       if (repositoryId < 0) {
@@ -588,24 +592,24 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             ptr.offset += 6;
             ClsUtil.skipAttributes(ptr);
           }
-          myMethods = array.toArray(new PsiMethod[array.size()]);
+          methods = array.toArray(new PsiMethod[array.size()]);
         }
         catch (ClsFormatException e) {
-          myMethods = PsiMethod.EMPTY_ARRAY;
+          methods = PsiMethod.EMPTY_ARRAY;
         }
       }
       else {
         long[] methodIds = getRepositoryManager().getClassView().getMethods(repositoryId);
-        PsiMethod[] methods = new PsiMethod[methodIds.length];
+        methods = methodIds.length == 0 ? PsiMethod.EMPTY_ARRAY : new PsiMethod[methodIds.length];
         RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
         for (int i = 0; i < methodIds.length; i++) {
           long id = methodIds[i];
           methods[i] = (PsiMethod)repositoryElementsManager.findOrCreatePsiElementById(id);
         }
-        myMethods = methods;
       }
+      myMethods = methods;
     }
-    return myMethods;
+    return methods;
   }
 
   @NotNull
@@ -656,7 +660,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiClassInitializer[] getInitializers() {
-    //Diagnostic.methodNotImplemented();
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
@@ -805,7 +808,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     }
   }
 
-  private @NonNls String obtainSourceFileNameFromClassFileName() {
+  @NonNls
+  private String obtainSourceFileNameFromClassFileName() {
     final String name = getContainingFile().getName();
     int i = name.indexOf('$');
     if (i < 0) {
@@ -844,23 +848,33 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isInterface() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
+    Boolean isInterface = myCachedIsInterface;
+    if (isInterface == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        isInterface = (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
+      }
+      else {
+        isInterface = getRepositoryManager().getClassView().isInterface(repositoryId);
+      }
+      myCachedIsInterface = isInterface;
     }
-    else {
-      return getRepositoryManager().getClassView().isInterface(repositoryId);
-    }
+    return isInterface;
   }
 
   public boolean isAnnotationType() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
+    Boolean isAnnotationType = myCachedIsAnnotationType;
+    if (isAnnotationType == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        isAnnotationType = (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
+      }
+      else {
+        isAnnotationType = getRepositoryManager().getClassView().isAnnotationType(repositoryId);
+      }
+      myCachedIsAnnotationType = isAnnotationType;
     }
-    else {
-      return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
-    }
+    return isAnnotationType;
   }
 
   public boolean isEnum() {
@@ -906,8 +920,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
                 int innerNameOffset = classFileData.getOffsetInConstantPool(innerNameIdx);
                 String innerName = ClsUtil.convertClassName(ClsUtil.readUtf8Info(classFileData.getData(), innerNameOffset), true);
                 if (getName().equals(innerName)) {
-                  int accessFlags = ClsUtil.readU2(ptr1);
-                  flags = accessFlags;
+                  flags = ClsUtil.readU2(ptr1);
                   break;
                 }
               }
@@ -926,7 +939,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     }
   }
 
-  public void appendMirrorText(final int indentLevel, final @NonNls StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       docComment.appendMirrorText(indentLevel, buffer);
@@ -937,7 +950,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
     ((ClsTypeParametersListImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
     buffer.append(' ');
-    if (!isEnum() & !isAnnotationType()) {
+    if (!isEnum() && !isAnnotationType()) {
       ((ClsElementImpl)getExtendsList()).appendMirrorText(indentLevel, buffer);
       buffer.append(' ');
     }
