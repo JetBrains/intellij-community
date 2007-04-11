@@ -66,7 +66,11 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
         });
       }
     }, null, null);
-    return psiFile.getText();
+    String text = psiFile.getText();
+    System.out.println("------------------------ " + testName + " ------------------------");
+    System.out.println(text);
+    System.out.println("");
+    return text;
   }
 
 
