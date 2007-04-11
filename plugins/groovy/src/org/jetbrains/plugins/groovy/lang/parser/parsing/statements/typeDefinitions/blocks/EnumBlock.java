@@ -59,11 +59,6 @@ public class EnumBlock implements GroovyElementTypes {
       sep = Separators.parse(builder);
     }
 
-//    ParserUtils.waitNextRCurly(builder);
-//    if (!ParserUtils.getToken(builder, mRCURLY)) {
-//      builder.error(GroovyBundle.message("rcurly.expected"));
-//    }
-
     if (!ParserUtils.lookAhead(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
     }
@@ -89,5 +84,4 @@ public class EnumBlock implements GroovyElementTypes {
     checkMarker.rollbackTo();
     return result;
   }
-
 }

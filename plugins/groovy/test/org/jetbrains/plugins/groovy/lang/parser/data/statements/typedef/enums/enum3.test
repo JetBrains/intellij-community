@@ -96,18 +96,19 @@ Groovy script
               Class type
                 PsiElement(identifier)('String')
               PsiWhiteSpace(' ')
-              PsiElement(identifier)('a')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              Assignment expression
-                Reference expression
-                  PsiElement(identifier)('b')
+              Variable
+                PsiElement(identifier)('a')
                 PsiWhiteSpace(' ')
                 PsiElement(=)('=')
                 PsiWhiteSpace(' ')
-                Literal
-                  PsiElement(number)('4')
+                Assignment expression
+                  Reference expression
+                    PsiElement(identifier)('b')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  Literal
+                    PsiElement(number)('4')
             PsiElement(new line)('\n')
             PsiWhiteSpace('     ')
             Method

@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
  */
-public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrWhileStatement
-{
-  public GrVariableDefinitionsImpl(@NotNull ASTNode node)
-  {
+public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrWhileStatement {
+  public GrVariableDefinitionsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Variable definitions";
   }
 }

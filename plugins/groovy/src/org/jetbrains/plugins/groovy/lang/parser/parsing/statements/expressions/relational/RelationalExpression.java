@@ -27,34 +27,30 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 /**
  * @author Ilya.Sergey
  */
-public class RelationalExpression implements GroovyElementTypes
-{
+public class RelationalExpression implements GroovyElementTypes {
 
   private static TokenSet RELATIONS = TokenSet.create(
-          mLT,
-          mGT,
-          mLE,
-          mGE,
-          kIN
+      mLT,
+      mGT,
+      mLE,
+      mGE,
+      kIN
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     GroovyElementType result = ShiftExpression.parse(builder);
-    if (!result.equals(WRONGWAY))
-    {
+    if (!result.equals(WRONGWAY)) {
       if (ParserUtils.getToken(builder, RELATIONS) ||
-              getCompositeSign(builder))
-      {
+          getCompositeSign(builder)) {
         result = RELATIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder);
         marker.done(RELATIONAL_EXPRESSION);
       } else if (kINSTANCEOF.equals(builder.getTokenType()) ||
-              kAS.equals(builder.getTokenType())) {
+          kAS.equals(builder.getTokenType())) {
         builder.advanceLexer();
         PsiBuilder.Marker rb = builder.mark();
         ParserUtils.getToken(builder, mNLS);
@@ -65,14 +61,10 @@ public class RelationalExpression implements GroovyElementTypes
           rb.drop();
         }
         marker.done(RELATIONAL_EXPRESSION);
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
 
@@ -85,20 +77,15 @@ public class RelationalExpression implements GroovyElementTypes
    * @param builder
    * @return
    */
-  private static boolean getCompositeSign(PsiBuilder builder)
-  {
-    if (ParserUtils.lookAhead(builder, mGT, mASSIGN))
-    {
+  private static boolean getCompositeSign(PsiBuilder builder) {
+    if (ParserUtils.lookAhead(builder, mGT, mASSIGN)) {
       PsiBuilder.Marker marker = builder.mark();
-      for (int i = 0; i < 2; i++)
-      {
+      for (int i = 0; i < 2; i++) {
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
       return true;
-    }
-    else
-    {
+    } else {
       return false;
     }
   }

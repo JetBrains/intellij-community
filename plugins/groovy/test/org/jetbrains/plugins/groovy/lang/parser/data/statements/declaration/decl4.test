@@ -5,12 +5,14 @@ Groovy script
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    Variable
+      PsiElement(identifier)('a')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('b')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    Literal
-      PsiElement(Gstring)('"foo"')
+    Variable
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Gstring)('"foo"')

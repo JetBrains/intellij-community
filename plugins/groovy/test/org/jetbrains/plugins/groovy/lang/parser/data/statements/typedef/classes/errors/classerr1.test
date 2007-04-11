@@ -17,12 +17,13 @@ Groovy script
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('a')
-        PsiWhiteSpace(' ')
-        PsiElement(=)('=')
-        PsiElement(new line)('\n')
-        PsiErrorElement:identifier or string literal expected
-          <empty list>
+        Variable
+          PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiElement(new line)('\n')
+          PsiErrorElement:Expression expected
+            <empty list>
       PsiWhiteSpace('\n  ')
       Variable definitions
         Modifiers
@@ -31,6 +32,7 @@ Groovy script
         Class type
           PsiElement(identifier)('String')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('str')
+        Variable
+          PsiElement(identifier)('str')
       PsiElement(new line)('\n')
       PsiElement(})('}')

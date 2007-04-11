@@ -27,42 +27,36 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class AssignmentExpression implements GroovyElementTypes
-{
+public class AssignmentExpression implements GroovyElementTypes {
 
   private static final TokenSet ASSIGNMENTS = TokenSet.create(
-          mASSIGN,
-          mPLUS_ASSIGN,
-          mMINUS_ASSIGN,
-          mSTAR_ASSIGN,
-          mDIV_ASSIGN,
-          mMOD_ASSIGN,
-          mSL_ASSIGN,
-          mBAND_ASSIGN,
-          mBOR_ASSIGN,
-          mBXOR_ASSIGN,
-          mSTAR_STAR_ASSIGN,
-          mSR_ASSIGN,
-          mBSR_ASSIGN
+      mASSIGN,
+      mPLUS_ASSIGN,
+      mMINUS_ASSIGN,
+      mSTAR_ASSIGN,
+      mDIV_ASSIGN,
+      mMOD_ASSIGN,
+      mSL_ASSIGN,
+      mBAND_ASSIGN,
+      mBOR_ASSIGN,
+      mBXOR_ASSIGN,
+      mSTAR_STAR_ASSIGN,
+      mSR_ASSIGN,
+      mBSR_ASSIGN
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
     Marker marker = builder.mark();
     GroovyElementType result = ConditionalExpression.parse(builder);
-    if (ParserUtils.getToken(builder, ASSIGNMENTS))
-    {
+    if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
       ParserUtils.getToken(builder, mNLS);
       result = parse(builder);
-      if (result.equals(WRONGWAY))
-      {
+      if (result.equals(WRONGWAY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       marker.done(ASSIGNMENT_EXPRESSION);
       return ASSIGNMENT_EXPRESSION;
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
 

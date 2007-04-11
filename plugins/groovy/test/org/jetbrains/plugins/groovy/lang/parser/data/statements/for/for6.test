@@ -10,10 +10,11 @@ Groovy script
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('i')
-        PsiElement(=)('=')
-        Literal
-          PsiElement(number)('1')
+        Variable
+          PsiElement(identifier)('i')
+          PsiElement(=)('=')
+          Literal
+            PsiElement(number)('1')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
       Relational expression

@@ -5,4 +5,5 @@ Groovy script
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    Variable
+      PsiElement(identifier)('a')

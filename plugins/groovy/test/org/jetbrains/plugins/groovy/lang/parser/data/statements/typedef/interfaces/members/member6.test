@@ -21,6 +21,7 @@ Groovy script
           PsiElement([)('[')
           PsiElement(])(']')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('a')
+        Variable
+          PsiElement(identifier)('a')
       PsiElement(new line)('\n')
       PsiElement(})('}')

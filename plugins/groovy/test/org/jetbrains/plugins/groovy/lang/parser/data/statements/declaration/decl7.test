@@ -12,15 +12,18 @@ Groovy script
     Class type
       PsiElement(identifier)('String')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    Variable
+      PsiElement(identifier)('a')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('b')
+    Variable
+      PsiElement(identifier)('b')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('c')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    Literal
-      PsiElement(Gstring)('"foo"')
+    Variable
+      PsiElement(identifier)('c')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Gstring)('"foo"')

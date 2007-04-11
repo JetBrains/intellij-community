@@ -38,12 +38,13 @@ Groovy script
             Modifiers
               PsiElement(def)('def')
             PsiWhiteSpace(' ')
-            PsiElement(identifier)('a')
-            PsiWhiteSpace(' ')
-            PsiElement(=)('=')
-            PsiWhiteSpace(' ')
-            Literal
-              PsiElement(number)('3.7')
+            Variable
+              PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Literal
+                PsiElement(number)('3.7')
           PsiElement(new line)('\n')
           PsiWhiteSpace('  ')
           PsiElement(})('}')

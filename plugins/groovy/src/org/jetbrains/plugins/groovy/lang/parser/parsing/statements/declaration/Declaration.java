@@ -19,8 +19,10 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 
 /**
@@ -47,6 +49,8 @@ public class Declaration implements GroovyElementTypes {
         checkMarker.rollbackTo();
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
+        if (IDENTIFIER.equals(varDecl)) varDecl = VARIABLE_DEFINITION;
+
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
           declmMarker.rollbackTo();
@@ -58,10 +62,14 @@ public class Declaration implements GroovyElementTypes {
 
       } else {  //type was recognezed
         GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder);
+        if (IDENTIFIER.equals(varDeclarationTop)) varDeclarationTop = VARIABLE_DEFINITION;
+
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
 
           GroovyElementType varDecl = VariableDefinitions.parse(builder);
+          if (IDENTIFIER.equals(varDeclarationTop)) varDecl = VARIABLE_DEFINITION;
+
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
             declmMarker.rollbackTo();
@@ -77,21 +85,105 @@ public class Declaration implements GroovyElementTypes {
         }
       }
     } else {
+
+      //if definition starts with lower case letter than it can be just call expression
+
+      if (!builder.eof()
+          && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
+          && Character.isLowerCase(builder.getTokenText().charAt(0))) {
+        GroovyElementType exprType = ExpressionStatement.parse(builder);
+        if (EXPRESSION_STATEMENT.equals(exprType)) {
+          declmMarker.drop();
+          return exprType;
+        } else {
+          declmMarker.drop();
+          return WRONGWAY;
+        }
+      }
+
+//      PsiBuilder.Marker methCallMarker = builder.mark();
+      //type specification starts with upper case letter
       if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
         builder.error(GroovyBundle.message("type.specification.expected"));
+//        methCallMarker.drop();
         declmMarker.rollbackTo();
         return WRONGWAY;
       }
 
+      PsiBuilder.Marker varDefMarker = builder.mark();
       GroovyElementType varDef = VariableDefinitions.parse(builder);
-      if (WRONGWAY.equals(varDef)) {
-        builder.error(GroovyBundle.message("variable.definitions.expected"));
-        declmMarker.rollbackTo();
-        return WRONGWAY;
+      varDefMarker.rollbackTo();
+
+
+      PsiBuilder.Marker exprStmtMarker = builder.mark();
+      GroovyElementType exprType = ExpressionStatement.parse(builder); //todo: check it
+      exprStmtMarker.rollbackTo();
+
+      if (IDENTIFIER.equals(varDef) && REFERENCE_EXPRESSION.equals(exprType)) {
+        VariableDefinitions.parse(builder);
+        declmMarker.done(VARIABLE_DEFINITION);
+        return VARIABLE_DEFINITION;
       }
 
-      declmMarker.done(varDef);
-      return varDef;
+      //handle "A a = "
+      if (IDENTIFIER.equals(varDef) && ASSIGNMENT_EXPRESSION.equals(exprType)) {
+        VariableDefinitions.parse(builder);
+        declmMarker.done(VARIABLE_DEFINITION);
+        return VARIABLE_DEFINITION;
+      }
+
+      if (!IDENTIFIER.equals(varDef) && !WRONGWAY.equals(varDef)) {
+        varDef = VariableDefinitions.parse(builder);
+        declmMarker.done(varDef);
+        return varDef;
+      }
+
+//      if (!IDENTIFIER.equals(exprType) && !WRONGWAY.equals(exprType)) {
+//        ExpressionStatement.parse(builder);
+//        declmMarker.drop();
+//        return REFERENCE_EXPRESSION;
+//      }
+
+      return WRONGWAY;
     }
+
+//      if (VARIABLE_DEFINITION_OR_METHOD_CALL.equals(varDef)) {
+//        methCallMarker.rollbackTo();
+//
+//        GroovyElementType exprType = ExpressionStatement.parse(builder);
+//        if (!WRONGWAY.equals(exprType) && !IDENTIFIER.equals(exprType)) {
+//          declmMarker.done(EXPRESSION_STATEMENT);
+//          return EXPRESSION_STATEMENT;
+//        }
+//
+//        declmMarker.done(VARIABLE_DEFINITION_OR_METHOD_CALL);
+//        return VARIABLE_DEFINITION_OR_METHOD_CALL;
+//
+//      } else {
+//        methCallMarker.drop();
+//
+//        if (WRONGWAY.equals(varDef)) {
+//          builder.error(GroovyBundle.message("variable.definitions.expected"));
+//          declmMarker.rollbackTo();
+//          return WRONGWAY;
+//        }
+//
+//        declmMarker.done(varDef);
+//        return varDef;
+//      }
+//    }
+  }
+
+  private static GroovyElementType wrapVariableIfNeeds(PsiBuilder builder) {
+    PsiBuilder.Marker identMarker = builder.mark();
+    GroovyElementType varDecl = VariableDefinitions.parse(builder);
+
+    if (IDENTIFIER.equals(varDecl)) {
+      varDecl = VARIABLE_DEFINITION;
+      identMarker.done(VARIABLE);
+    } else {
+      identMarker.drop();
+    }
+    return varDecl;
   }
 }

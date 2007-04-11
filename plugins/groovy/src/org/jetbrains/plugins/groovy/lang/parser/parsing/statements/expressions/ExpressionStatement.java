@@ -26,30 +26,22 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
  *
  * @author Ilya.Sergey
  */
-public class ExpressionStatement implements GroovyElementTypes
-{
+public class ExpressionStatement implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     GroovyElementType result = AssignmentExpression.parse(builder);
-    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType()))
-    {
+    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
       GroovyElementType res = CommandArguments.parse(builder);
-      if (!res.equals(WRONGWAY))
-      {
+      if (!res.equals(WRONGWAY)) {
         marker.done(EXPRESSION_STATEMENT);
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-      return EXPRESSION_STATEMENT;
-    }
-    else
-    {
+      return result;
+    } else {
       marker.drop();
       return result;
     }
@@ -61,11 +53,9 @@ public class ExpressionStatement implements GroovyElementTypes
    * @param builder - Given builder
    * @return type of parsing result
    */
-  public static GroovyElementType argParse(PsiBuilder builder)
-  {
+  public static GroovyElementType argParse(PsiBuilder builder) {
     GroovyElementType result = AssignmentExpression.parse(builder);
-    if (!WRONGWAY.equals(result))
-    {
+    if (!WRONGWAY.equals(result)) {
       return EXPRESSION_STATEMENT;
     }
     return result;
@@ -78,8 +68,7 @@ public class ExpressionStatement implements GroovyElementTypes
    * @param builder given Builder
    * @return true begin symbols are valid
    */
-  public static boolean suspiciousExpressionStatementStart(PsiBuilder builder)
-  {
+  public static boolean suspiciousExpressionStatementStart(PsiBuilder builder) {
     return TokenSets.SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET.contains(builder.getTokenType());
   }
 
@@ -89,8 +78,7 @@ public class ExpressionStatement implements GroovyElementTypes
    * @param builder given builder
    * @return true if it is expression really
    */
-  public static boolean checkSuspiciousExpressionStatement(PsiBuilder builder)
-  {
+  public static boolean checkSuspiciousExpressionStatement(PsiBuilder builder) {
     // TODO realize me!
     return true;
   }

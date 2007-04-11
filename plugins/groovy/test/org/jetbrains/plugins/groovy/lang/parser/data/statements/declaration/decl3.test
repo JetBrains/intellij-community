@@ -5,9 +5,10 @@ Groovy script
     Modifiers
       PsiElement(static)('static')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('b')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    Literal
-      PsiElement(null)('null')
+    Variable
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(null)('null')

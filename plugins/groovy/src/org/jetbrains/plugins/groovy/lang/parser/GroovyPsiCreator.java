@@ -128,6 +128,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR)) return new GrVariableDefinitionsImpl(node);
+    if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
+    if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
@@ -226,7 +228,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
-    if (elem.equals(DECLARATION)) return new GrDeclarationStatementImpl(node);
+//    if (elem.equals(DECLARATION)) return new GrDeclarationStatementImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

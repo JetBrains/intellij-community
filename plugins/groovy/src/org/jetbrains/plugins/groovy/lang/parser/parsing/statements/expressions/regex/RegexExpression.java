@@ -26,71 +26,54 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class RegexExpression implements GroovyElementTypes
-{
+public class RegexExpression implements GroovyElementTypes {
 
   private static TokenSet REGEX_DO = TokenSet.create(
-          mREGEX_FIND,
-          mREGEX_MATCH
+      mREGEX_FIND,
+      mREGEX_MATCH
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = EqualityExpression.parse(builder);
 
-    if (!result.equals(WRONGWAY))
-    {
-      if (ParserUtils.getToken(builder, REGEX_DO))
-      {
+    if (!result.equals(WRONGWAY)) {
+      if (ParserUtils.getToken(builder, REGEX_DO)) {
         ParserUtils.getToken(builder, mNLS);
         result = EqualityExpression.parse(builder);
-        if (result.equals(WRONGWAY))
-        {
+        if (result.equals(WRONGWAY)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(REGEX_EXPRESSION);
         result = REGEX_EXPRESSION;
-        if (REGEX_DO.contains(builder.getTokenType()))
-        {
+        if (REGEX_DO.contains(builder.getTokenType())) {
           subParse(builder, newMarker);
-        }
-        else
-        {
+        } else {
           newMarker.drop();
         }
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
     return result;
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker)
-  {
+  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, REGEX_DO);
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = EqualityExpression.parse(builder);
-    if (result.equals(WRONGWAY))
-    {
+    if (result.equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(REGEX_EXPRESSION);
-    if (REGEX_DO.contains(builder.getTokenType()))
-    {
+    if (REGEX_DO.contains(builder.getTokenType())) {
       subParse(builder, newMarker);
-    }
-    else
-    {
+    } else {
       newMarker.drop();
     }
     return REGEX_EXPRESSION;

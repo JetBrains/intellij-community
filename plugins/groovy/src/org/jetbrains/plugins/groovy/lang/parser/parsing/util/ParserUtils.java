@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * Utility classdef, that contains various useful methods for
@@ -164,7 +165,7 @@ public abstract class ParserUtils {
    * @param elem    Node element
    * @return elem type
    */
-  public static IElementType eatElement(PsiBuilder builder, IElementType elem) {
+  public static GroovyElementType eatElement(PsiBuilder builder, GroovyElementType elem) {
     Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(elem);

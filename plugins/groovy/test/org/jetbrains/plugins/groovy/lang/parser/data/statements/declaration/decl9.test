@@ -5,4 +5,5 @@ Groovy script
     Class type
       PsiElement(identifier)('Map')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('map')
+    Variable
+      PsiElement(identifier)('map')

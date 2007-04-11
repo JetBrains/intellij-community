@@ -5,25 +5,26 @@ Groovy script
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('foo')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        Parameter
-          Parameter modifiers
-            <empty list>
-          PsiElement(identifier)('it')
+    Variable
+      PsiElement(identifier)('foo')
       PsiWhiteSpace(' ')
-      PsiElement(->)('->')
+      PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      BREAK statement
-        PsiElement(break)('break')
-      PsiWhiteSpace(' ')
-      PsiElement(;)(';')
-      PsiWhiteSpace(' ')
-      Literal
-        PsiElement(number)('3')
-      PsiElement(})('}')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            PsiElement(identifier)('it')
+        PsiWhiteSpace(' ')
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        BREAK statement
+          PsiElement(break)('break')
+        PsiWhiteSpace(' ')
+        PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(number)('3')
+        PsiElement(})('}')

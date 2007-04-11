@@ -32,11 +32,12 @@ Groovy script
           PsiElement([)('[')
           PsiElement(])(']')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('foo')
-        PsiWhiteSpace(' ')
-        PsiElement(=)('=')
-        PsiErrorElement:identifier or string literal expected
-          <empty list>
+        Variable
+          PsiElement(identifier)('foo')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiErrorElement:Expression expected
+            <empty list>
       PsiWhiteSpace(' ')
       PsiElement(for)('for')
       PsiElement(new line)('\n')

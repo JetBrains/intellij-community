@@ -95,7 +95,6 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
-
       //if there is no OpenOrClosableBlock, nls haven'to be eaten
       PsiBuilder.Marker nlsMarker = builder.mark();
       if (mNLS.equals(NlsWarn.parse(builder)) && !ParserUtils.lookAhead(builder, mLPAREN)) {
@@ -114,41 +113,77 @@ public class VariableDefinitions implements GroovyElementTypes {
       varMarker.rollbackTo();
 
       // a = b, c = d
-      if (parseVariableDeclarator(builder)) {
-        while (ParserUtils.getToken(builder, mCOMMA)) {
-          ParserUtils.getToken(builder, mNLS);
+      PsiBuilder.Marker varAssMarker = builder.mark();
+      if (ParserUtils.getToken(builder, mIDENT)) {
 
-          parseVariableDeclarator(builder);
+        if (parseAssignment(builder)) { // a = b, c = d
+          varAssMarker.done(VARIABLE);
+          while (ParserUtils.getToken(builder, mCOMMA)) {
+            ParserUtils.getToken(builder, mNLS);
+
+            if (WRONGWAY.equals(parseVariableDeclarator(builder))) return VARIABLE_DEFINITION_ERROR; //parse b = d
+          }
+          return VARIABLE_DEFINITION;
+        } else {
+          varAssMarker.done(VARIABLE);
+//          varAssMarker.drop();
+          boolean isManyDef = false;
+          while (ParserUtils.getToken(builder, mCOMMA)) {// a, b = d, c = d
+            ParserUtils.getToken(builder, mNLS);
+
+            if (WRONGWAY.equals(parseVariableDeclarator(builder))) return VARIABLE_DEFINITION_ERROR;
+            isManyDef = true;
+          }
+
+          if (isManyDef) {
+            return VARIABLE_DEFINITION;
+          } else {
+            return IDENTIFIER;
+          }
+
+//          return VARIABLE_DEFINITION_OR_METHOD_CALL;
         }
-
-        return VARIABLE_DEFINITION;
       } else {
-        builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
+        varAssMarker.drop();
+        builder.error(GroovyBundle.message("identifier.expected"));
         return VARIABLE_DEFINITION_ERROR;
       }
+
     }
   }
 
   //a, a = b
-  private static boolean parseVariableDeclarator(PsiBuilder builder) {
-    if (!(ParserUtils.getToken(builder, mIDENT))) {
-      return false;
+  private static GroovyElementType parseVariableDeclarator(PsiBuilder builder) {
+    PsiBuilder.Marker varAssMarker = builder.mark();
+    if (ParserUtils.getToken(builder, mIDENT)) {
+      parseAssignment(builder);
+      varAssMarker.done(VARIABLE);
+      return VARIABLE;
+    } else {
+      varAssMarker.drop();
+      return WRONGWAY;
     }
+  }
 
+  private static boolean parseAssignment(PsiBuilder builder) {
     if (ParserUtils.getToken(builder, mASSIGN)) {
       ParserUtils.getToken(builder, mNLS);
+
       if (WRONGWAY.equals(AssignmentExpression.parse(builder))) {
+        builder.error(GroovyBundle.message("expression.expected"));
         return false;
+      } else {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
   }
 
-  public static GroovyElementType parseAnnotationMameber(PsiBuilder builder) {
+  public static GroovyElementType parseAnnotationMember(PsiBuilder builder) {
     return parseDefinitions(builder, false, true);
   }
 }

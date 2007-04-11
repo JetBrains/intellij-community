@@ -18,10 +18,12 @@ Groovy script
               PsiElement(identifier)('String')
           PsiElement(>)('>')
       PsiWhiteSpace(' ')
-      PsiElement(identifier)('map')
+      Variable
+        PsiElement(identifier)('map')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      PsiElement(identifier)('c')
+      Variable
+        PsiElement(identifier)('c')
     PsiElement(new line)('\n')
     RETURN statement
       PsiElement(return)('return')

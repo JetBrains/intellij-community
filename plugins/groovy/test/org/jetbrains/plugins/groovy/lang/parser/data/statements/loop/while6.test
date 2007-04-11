@@ -8,33 +8,34 @@ Groovy script
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('f')
-    PsiWhiteSpace(' ')
-    PsiElement(=)('=')
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace('\n')
-      WHILE statement
-        PsiElement(while)('while')
-        PsiWhiteSpace(' ')
-        PsiElement(()('(')
-        Equality expression
-          Reference expression
-            PsiElement(identifier)('a')
-          PsiElement(==)('==')
-          Literal
-            PsiElement(number)('1')
-        PsiElement())(')')
-        PsiErrorElement:Expression expected
-          <empty list>
-      PsiElement(new line)('\n')
-      PsiErrorElement:Imports are not allowed in such block
-        PsiElement(import)('import')
-        PsiWhiteSpace(' ')
-        PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(identifier)('b')
-        PsiElement(.)('.')
-        PsiElement(identifier)('c')
-      PsiElement(new line)('\n')
-      PsiElement(})('}')
+    Variable
+      PsiElement(identifier)('f')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n')
+        WHILE statement
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          Equality expression
+            Reference expression
+              PsiElement(identifier)('a')
+            PsiElement(==)('==')
+            Literal
+              PsiElement(number)('1')
+          PsiElement())(')')
+          PsiErrorElement:Expression expected
+            <empty list>
+        PsiElement(new line)('\n')
+        PsiErrorElement:Imports are not allowed in such block
+          PsiElement(import)('import')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('a')
+          PsiElement(.)('.')
+          PsiElement(identifier)('b')
+          PsiElement(.)('.')
+          PsiElement(identifier)('c')
+        PsiElement(new line)('\n')
+        PsiElement(})('}')

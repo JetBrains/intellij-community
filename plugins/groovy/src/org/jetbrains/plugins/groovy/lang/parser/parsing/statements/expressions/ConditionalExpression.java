@@ -25,39 +25,29 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class ConditionalExpression implements GroovyElementTypes
-{
+public class ConditionalExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = LogicalOrExpression.parse(builder);
-    if (!result.equals(WRONGWAY))
-    {
-      if (ParserUtils.getToken(builder, mQUESTION))
-      {
+    if (!result.equals(WRONGWAY)) {
+      if (ParserUtils.getToken(builder, mQUESTION)) {
         result = CONDITIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
         GroovyElementType res = AssignmentExpression.parse(builder);
-        if (res.equals(WRONGWAY))
-        {
+        if (res.equals(WRONGWAY)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
-        if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected")))
-        {
+        if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
           ParserUtils.getToken(builder, mNLS);
           parse(builder);
         }
         marker.done(CONDITIONAL_EXPRESSION);
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
     return result;
