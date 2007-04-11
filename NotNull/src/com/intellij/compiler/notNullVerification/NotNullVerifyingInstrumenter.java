@@ -58,6 +58,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       private ArrayList myNotNullParams = new ArrayList();
       private boolean myIsNotNull = false;
       public Label myThrowLabel;
+      private Label myStartGeneratedCodeLabel;
 
       public AnnotationVisitor visitParameterAnnotation(
         final int parameter,
@@ -86,6 +87,10 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       }
 
       public void visitCode() {
+        if (myNotNullParams.size() > 0) {
+          myStartGeneratedCodeLabel = new Label();
+          mv.visitLabel(myStartGeneratedCodeLabel);
+        }
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & Opcodes.ACC_STATIC) == 0) ? 1 : 0;
           int param = ((Integer)myNotNullParams.get(p)).intValue();
@@ -112,6 +117,13 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
           generateThrow("java/lang/IllegalStateException", "@NotNull method " + myClassName + "." + name + " must not return null",
                         codeStart);
         }
+      }
+
+      public void visitLocalVariable(final String name, final String desc, final String signature, final Label start, final Label end,
+                                     final int index) {
+        final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+        final boolean isParameter = isStatic ? index < args.length : index <= args.length;
+        mv.visitLocalVariable(name, desc, signature, (isParameter && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start, end, index);
       }
 
       public void visitInsn(int opcode) {

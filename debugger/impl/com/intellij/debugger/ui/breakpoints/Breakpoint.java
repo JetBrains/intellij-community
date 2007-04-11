@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
@@ -194,40 +195,45 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
     if (LOG_ENABLED || LOG_EXPRESSION_ENABLED) {
-      final StringBuilder buf = new StringBuilder(128);
-      if (LOG_ENABLED) {
-        buf.append(getEventMessage(event));
-        buf.append("\n");
+      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        if (LOG_ENABLED) {
+          buf.append(getEventMessage(event));
+          buf.append("\n");
+        }
+        final DebugProcessImpl debugProcess = context.getDebugProcess();
+        if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage().getText())) {
+          if(!debugProcess.isAttached()) {
+            return;
+          }
+  
+          try {
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+              public ExpressionEvaluator compute() throws EvaluateException {
+                return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context));
+              }
+            });
+            String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
+            buf.append(getLogMessage());
+            buf.append(" = ");
+            buf.append(result);
+          }
+          catch (EvaluateException e) {
+            buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
+            buf.append("\"");
+            buf.append(getLogMessage());
+            buf.append("\"");
+            buf.append(" : ");
+            buf.append(e.getMessage());
+          }
+          buf.append("\n");
+        }
+        if (buf.length() > 0) {
+          debugProcess.printToConsole(buf.toString());
+        }
       }
-      final DebugProcessImpl debugProcess = context.getDebugProcess();
-      if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage().getText())) {
-        if(!debugProcess.isAttached()) {
-          return;
-        }
-
-        try {
-          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
-            public ExpressionEvaluator compute() throws EvaluateException {
-              return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context));
-            }
-          });
-          String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
-          buf.append(getLogMessage());
-          buf.append(" = ");
-          buf.append(result);
-        }
-        catch (EvaluateException e) {
-          buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
-          buf.append("\"");
-          buf.append(getLogMessage());
-          buf.append("\"");
-          buf.append(" : ");
-          buf.append(e.getMessage());
-        }
-        buf.append("\n");
-      }
-      if (buf.length() > 0) {
-        debugProcess.printToConsole(buf.toString());
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
       }
     }
   }
