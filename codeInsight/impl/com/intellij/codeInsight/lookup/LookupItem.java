@@ -131,8 +131,9 @@ public class LookupItem implements Comparable{
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  public void setTailType(TailType type){
+  public LookupItem setTailType(TailType type){
     setAttribute(CompletionUtil.TAIL_TYPE_ATTR, type);
+    return this;
   }
 
   public int compareTo(Object o){

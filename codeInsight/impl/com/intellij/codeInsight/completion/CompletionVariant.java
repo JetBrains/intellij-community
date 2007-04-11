@@ -195,7 +195,7 @@ public class CompletionVariant {
       ret.setAttribute(LookupItem.INSERT_HANDLER_ATTR, getInsertHandler());
       ret.setTailType(TailType.UNKNOWN);
     }
-    else {
+    else if (element.myTailType != TailType.NONE) {
       ret.setTailType(element.myTailType);
     }
 
