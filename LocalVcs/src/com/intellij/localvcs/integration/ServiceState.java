@@ -15,8 +15,6 @@ public abstract class ServiceState {
     myHolder = h;
     myGateway = gw;
     myVcs = vcs;
-
-    afterEnteringState();
   }
 
   public void startRefreshing() {

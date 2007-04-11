@@ -1,24 +1,20 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.Clock;
-import com.intellij.localvcs.core.LocalVcs;
-import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Test;
 
-public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
-  TestIdeaGateway gw = new TestIdeaGateway();
-  ActionPerformingServiceSate s;
+import java.util.List;
 
+public class FileListenerActionPerformingTest extends FileListenerTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringState() {
     vcs.createFile("file", b("old"), 123L);
 
     Clock.setCurrentTimestamp(456);
-    gw.addUnsavedDocument("file", "new", -1);
+    gateway.addUnsavedDocument("file", "new", -1);
 
-    initState();
+    l.startAction(null);
 
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(456L, vcs.getEntry("file").getTimestamp());
@@ -34,9 +30,9 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
-    gw.addUnsavedDocument("dir/one", "one", -1);
-    gw.addUnsavedDocument("dir/two", "two", -1);
-    initState();
+    gateway.addUnsavedDocument("dir/one", "one", -1);
+    gateway.addUnsavedDocument("dir/two", "two", -1);
+    l.startAction(null);
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
@@ -45,10 +41,10 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
     vcs.createFile("f", b("one"), -1);
 
-    gw.addUnsavedDocument("f", "two", -1);
-    initState();
+    gateway.addUnsavedDocument("f", "two", -1);
+    l.startAction(null);
     vcs.changeFileContent("f", b("three"), -1);
-    s.goToState(null);
+    l.finishAction();
 
     assertEquals(3, vcs.getRevisionsFor("f").size());
   }
@@ -56,12 +52,12 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeExitingState() {
     vcs.createFile("file", b("old"), 123L);
-    initState();
+    l.startAction(null);
 
     Clock.setCurrentTimestamp(789);
-    gw.addUnsavedDocument("file", "new", -1);
+    gateway.addUnsavedDocument("file", "new", -1);
 
-    s.goToState(null);
+    l.finishAction();
 
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(789L, vcs.getEntry("file").getTimestamp());
@@ -77,12 +73,12 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
     vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
-    initState();
+    l.startAction(null);
     vcs.createFile("dir/three", null, -1);
 
-    gw.addUnsavedDocument("dir/one", "one", -1);
-    gw.addUnsavedDocument("dir/two", "two", -1);
-    s.goToState(null);
+    gateway.addUnsavedDocument("dir/one", "one", -1);
+    gateway.addUnsavedDocument("dir/two", "two", -1);
+    l.finishAction();
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
@@ -90,20 +86,52 @@ public class ActionPerformingServiceStateTest extends LocalVcsTestCase {
   @Test
   public void testFilteringDocuments() {
     TestFileFilter ff = new TestFileFilter();
-    gw.setFileFilter(ff);
+    gateway.setFileFilter(ff);
 
     vcs.createFile("f", b("old"), -1);
 
     TestVirtualFile f = new TestVirtualFile("f", "new", -1);
     ff.setFilesNotUnderContentRoot(f);
 
-    initState();
+    l.startAction(null);
 
     assertEquals(c("old"), vcs.getEntry("f").getContent());
   }
 
-  private void initState() {
-    s = new ActionPerformingServiceSate("name", new ServiceStateHolder(), vcs, gw) {
-    };
+  @Test
+  public void testPuttingLabel() {
+    l.startAction("label");
+    vcs.createDirectory("dir");
+    l.finishAction();
+
+    assertEquals("label", vcs.getRevisionsFor("dir").get(0).getCauseAction());
+  }
+
+  @Test
+  public void testActionInsideCommand() {
+    vcs.createFile("f", b("1"), -1);
+
+    l.commandStarted(createCommandEvent("command"));
+    vcs.changeFileContent("f", b("2"), -1);
+    gateway.addUnsavedDocument("f", "3", -1);
+
+    l.startAction("action");
+    vcs.changeFileContent("f", b("4"), -1);
+    gateway.addUnsavedDocument("f", "5", -1);
+    l.finishAction();
+
+    vcs.changeFileContent("f", b("6"), -1);
+    l.commandFinished(null);
+
+    List<Revision> rr = vcs.getRevisionsFor("f");
+    assertEquals(3, rr.size());
+
+    assertEquals(c("6"), rr.get(0).getEntry().getContent());
+    assertEquals(c("3"), rr.get(1).getEntry().getContent());
+    assertEquals(c("1"), rr.get(2).getEntry().getContent());
+
+    assertEquals("command", rr.get(0).getCauseAction());
+    assertNull(rr.get(1).getCauseAction());
+    assertNull(rr.get(2).getCauseAction());
   }
 }

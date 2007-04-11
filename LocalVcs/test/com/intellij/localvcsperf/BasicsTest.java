@@ -117,6 +117,18 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   }
 
   @Test
+  public void testBuildingRevisionsList() {
+    buildVcsTree();
+    updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
+
+    assertExecutionTime(1, new Task() {
+      public void execute() {
+        vcs.getRevisionsFor("root");
+      }
+    });
+  }
+
+  @Test
   public void testBuildingDifference() {
     buildVcsTree();
     final List<Revision> revisions = vcs.getRevisionsFor("root");

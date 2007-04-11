@@ -67,7 +67,9 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   public void addUnsavedDocument(String name, String content, long timestamp) {
-    myUnsavedDocuments.add(new MyDocument(name, content, timestamp));
+    MyDocument d = new MyDocument(name, content, timestamp);
+    myUnsavedDocuments.remove(d);
+    myUnsavedDocuments.add(d);
   }
 
   @Override
@@ -93,6 +95,11 @@ public class TestIdeaGateway extends IdeaGateway {
 
     public VirtualFile getFile() {
       return new TestVirtualFile(myName, null, myTimestamp);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return myName.equals(((MyDocument)o).myName);
     }
   }
 }
