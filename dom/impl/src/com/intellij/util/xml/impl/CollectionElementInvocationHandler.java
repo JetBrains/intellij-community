@@ -57,7 +57,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   }
 
   public <T extends DomElement> T createStableCopy() {
-    final DomElement parent = findCallerProxy(CREATE_STABLE_COPY_METHOD).getParent();
+    final DomElement parent = getParent();
     final DomElement parentCopy = parent.createStableCopy();
     final EvaluatedXmlName tagName = getXmlName();
     final int index = DomImplUtil.findSubTags(parent.getXmlTag(), tagName, this).indexOf(getXmlTag());

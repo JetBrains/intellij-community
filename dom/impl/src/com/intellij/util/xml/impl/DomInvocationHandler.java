@@ -6,7 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -348,22 +347,12 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myTagName;
   }
 
-  protected final DomElement findCallerProxy(Method method) {
-    final Object o = InvocationStack.INSTANCE.findDeepestInvocation(method, new Condition<Object>() {
-      public boolean value(final Object object) {
-        return ModelMergerUtil.getImplementation(object, DomElement.class) == null;
-      }
-    });
-    final DomElement element = ModelMergerUtil.getImplementation(o, DomElement.class);
-    return element == null ? getProxy() : element;
-  }
-
   public void accept(final DomElementVisitor visitor) {
-    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, findCallerProxy(ACCEPT_METHOD));
+    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
-    final DomElement element = ModelMergerUtil.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
+    final DomElement element = getProxy();
     for (final DomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       for (final DomElement value : description.getValues(element)) {
         value.accept(visitor);
@@ -561,14 +550,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   @Nullable
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      InvocationStack.INSTANCE.push(method, null);
       return doInvoke(JavaMethodSignature.getSignature(method), args);
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
-    }
-    finally {
-      InvocationStack.INSTANCE.pop();
     }
   }
 

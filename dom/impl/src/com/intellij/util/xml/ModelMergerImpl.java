@@ -261,17 +261,11 @@ public class ModelMergerImpl implements ModelMerger {
     }
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      InvocationStack.INSTANCE.push(method, proxy);
       try {
-        try {
-          return findStrategy(proxy, method).invokeMethod(getJavaMethod(method), proxy, args, myImplementations);
-        }
-        catch (InvocationTargetException e) {
-          throw e.getCause();
-        }
+        return findStrategy(proxy, method).invokeMethod(getJavaMethod(method), proxy, args, myImplementations);
       }
-      finally {
-        InvocationStack.INSTANCE.pop();
+      catch (InvocationTargetException e) {
+        throw e.getCause();
       }
     }
 

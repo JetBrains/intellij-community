@@ -464,7 +464,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  public List<DomChildDescriptionImpl> getChildrenDescriptions() {
+  public final List<DomChildDescriptionImpl> getChildrenDescriptions() {
     final ArrayList<DomChildDescriptionImpl> result = new ArrayList<DomChildDescriptionImpl>();
     result.addAll(getAttributeChildrenDescriptions());
     result.addAll(getFixedChildrenDescriptions());
