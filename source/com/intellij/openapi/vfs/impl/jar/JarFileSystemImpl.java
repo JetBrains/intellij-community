@@ -9,13 +9,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
@@ -23,9 +26,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   final Object LOCK = new Object();
 
-  private HashMap<String, JarFileInfo> myPathToFileInfoMap = new HashMap<String, JarFileInfo>();
-  private HashSet<String> myNoCopyJarPaths = new HashSet<String>();
-  private HashSet<String> myContentChangingJars = new HashSet<String>();
+  private ConcurrentMap<String, JarFileInfo> myPathToFileInfoMap = new ConcurrentHashMap<String, JarFileInfo>();
+  private Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
+  private Set<String> myContentChangingJars = new ConcurrentHashSet<String>();
 
   private VirtualFileManagerEx myManager;
   @NonNls private static final String JARS_FOLDER = "jars";
@@ -33,7 +36,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @NonNls private static final String IDEA_JAR = "idea.jar";
 
   public JarFileSystemImpl(LocalFileSystem localFileSystem) {
-
     localFileSystem.addVirtualFileListener(
       new VirtualFileAdapter() {
         public void contentsChanged(VirtualFileEvent event) {
@@ -78,6 +80,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     );
   }
 
+  @NotNull
   public String getComponentName() {
     return "JarFileSystem";
   }
@@ -101,10 +104,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   boolean isValid(JarFileInfo info) {
     String path = info.getFile().getPath();
-    synchronized (LOCK) {
-      JarFileInfo info1 = myPathToFileInfoMap.get(path);
-      return info1 == info;
-    }
+    JarFileInfo info1 = myPathToFileInfoMap.get(path);
+    return info1 == info;
   }
 
   public VirtualFile getVirtualFileForJar(VirtualFile entryVFile) {
@@ -114,9 +115,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public ZipFile getJarFile(VirtualFile entryVFile) throws IOException {
-    synchronized (LOCK) {
-      return ((VirtualFileImpl)entryVFile).getFileInfo().getZipFile();
-    }
+    return ((VirtualFileImpl)entryVFile).getFileInfo().getZipFile();
   }
 
   public String getProtocol() {
@@ -129,45 +128,43 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     String jarPath = path.substring(0, index);
     String relPath = path.substring(index + JAR_SEPARATOR.length());
 
-    synchronized (LOCK) {
-      JarFileInfo info = myPathToFileInfoMap.get(jarPath);
-      if (info == null) {
-        if (myContentChangingJars.contains(jarPath)) return null;
-        File file = new File(jarPath);
-        try {
-          jarPath = file.getCanonicalPath();
-        }
-        catch (IOException e) {
-          LOG.info("Could not fetch canonical path for " + jarPath);
-          return null;
-        }
-
-        if (jarPath == null) {
-          LOG.info("Canonical path is null for " + file.getPath());
-          return null;
-        }
-
-        file = new File(jarPath);
-        info = myPathToFileInfoMap.get(jarPath);
-        if (info != null) {
-          return info.findFile(relPath);
-        }
-
-        if (myContentChangingJars.contains(jarPath)) return null;
-
-        if (!file.exists()) {
-          LOG.info("Jar file " + file.getPath() + " not found");
-          return null;
-        }
-
-        File mirrorFile = getMirrorFile(file);
-        info = new JarFileInfo(this, file, mirrorFile);
-
-        myPathToFileInfoMap.put(jarPath, info);
+    JarFileInfo info = myPathToFileInfoMap.get(jarPath);
+    if (info == null) {
+      if (myContentChangingJars.contains(jarPath)) return null;
+      File file = new File(jarPath);
+      try {
+        jarPath = file.getCanonicalPath();
+      }
+      catch (IOException e) {
+        LOG.info("Could not fetch canonical path for " + jarPath);
+        return null;
       }
 
-      return info.findFile(relPath);
+      if (jarPath == null) {
+        LOG.info("Canonical path is null for " + file.getPath());
+        return null;
+      }
+
+      info = myPathToFileInfoMap.get(jarPath);
+      if (info != null) {
+        return info.findFile(relPath);
+      }
+
+      if (myContentChangingJars.contains(jarPath)) return null;
+
+      file = new File(jarPath);
+      if (!file.exists()) {
+        LOG.info("Jar file " + file.getPath() + " not found");
+        return null;
+      }
+
+      File mirrorFile = getMirrorFile(file);
+      info = new JarFileInfo(this, file, mirrorFile);
+
+      info = ConcurrencyUtil.cacheOrGet(myPathToFileInfoMap, jarPath, info);
     }
+
+    return info.findFile(relPath);
   }
 
   public String extractPresentableUrl(String path) {
@@ -179,13 +176,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public void refresh(final boolean asynchronous) {
-    JarFileInfo[] infos;
-    synchronized (LOCK) {
-      infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
-    }
-    if (infos.length == 0) {
-      return;
-    }
+    JarFileInfo[] infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
+    if (infos.length == 0) return;
 
     final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
     final VirtualFileManagerEx manager = getManager();
@@ -203,7 +195,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             }
           }
         });
-      } else {
+      }
+      else {
         refreshInfo(info, asynchronous, false);
         postAfterRefreshFinishWhenAllJoined(joinCount, manager, asynchronous, modalityState);
       }
@@ -246,9 +239,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         new Runnable() {
           public void run() {
             fireBeforeFileDeletion(null, rootFile);
-            synchronized (LOCK) {
-              myPathToFileInfoMap.remove(info.getFile().getPath());
-            }
+            myPathToFileInfoMap.remove(info.getFile().getPath());
             info.close();
             fireFileDeleted(null, rootFile, rootFile.getName(), null);
           }
@@ -267,15 +258,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             if (!rootFile.isValid()) return;
             fireBeforeFileDeletion(null, rootFile);
             final String path = info.getFile().getPath();
-            synchronized (LOCK) {
-              myPathToFileInfoMap.remove(path);
-              myContentChangingJars.add(path);
-            }
+            myPathToFileInfoMap.remove(path);
+            myContentChangingJars.add(path);
             info.close();
             fireFileDeleted(null, rootFile, rootFile.getName(), null);
-            synchronized (LOCK) {
-              myContentChangingJars.remove(path);
-            }
+            myContentChangingJars.remove(path);
             fireFileCreated(null, findFileByPath(path + JAR_SEPARATOR));
           }
         },
@@ -327,7 +314,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   public VirtualFileManagerEx getManager() {
     if (myManager == null) {
-      myManager = (VirtualFileManagerEx)VirtualFileManagerEx.getInstance();
+      myManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     }
     return myManager;
   }
