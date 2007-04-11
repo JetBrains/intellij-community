@@ -160,7 +160,11 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     protected final GenericDomValue<List<T>> myGenericDomValue;
 
     public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue) {
-      super(element, range);
+      this(element, range, context, genericDomValue, false);
+    }
+
+    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue, boolean soft) {
+      super(element, range, soft);
       myContext = context;
       myGenericDomValue = genericDomValue;
     }
