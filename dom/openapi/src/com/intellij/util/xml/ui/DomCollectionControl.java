@@ -79,20 +79,22 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private AnAction myEditAction = new AnAction(ApplicationBundle.message("action.edit"), null, EDIT_ICON) {
     public void actionPerformed(AnActionEvent e) {
       doEdit();
+      reset();
     }
 
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(isEditable());
-      e.getPresentation().setEnabled(DomCollectionControl.this.getComponent().getTable().getSelectedRowCount() == 1);
+      e.getPresentation().setEnabled(getComponent().getTable().getSelectedRowCount() == 1);
     }
   };
   private AnAction myRemoveAction = new AnAction(ApplicationBundle.message("action.remove"), null, REMOVE_ICON) {
     public void actionPerformed(AnActionEvent e) {
       doRemove();
+      reset();
     }
 
     public void update(AnActionEvent e) {
-      final JTable table = DomCollectionControl.this.getComponent().getTable();
+      final JTable table = getComponent().getTable();
       e.getPresentation().setEnabled(table != null && table.getSelectedRowCount() > 0);
     }
   };
