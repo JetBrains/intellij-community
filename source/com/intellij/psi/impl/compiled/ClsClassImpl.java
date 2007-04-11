@@ -181,14 +181,14 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       PsiTypeParameterList typeParameters = null;
       if (repositoryId < 0) {
         if (!parseViaGenericSignature()) {
-          typeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+          typeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
         }
       }
       else {
         ClassView classView = getRepositoryManager().getClassView();
         int count = classView.getParametersListSize(repositoryId);
         if (count == 0) {
-          typeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+          typeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
         }
         else {
           StringBuilder compiledParams = new StringBuilder();
@@ -287,7 +287,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       else {
         ClassView classView = getRepositoryManager().getClassView();
         String[] refTexts = classView.getExtendsList(repositoryId);
-        ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+        ClsJavaCodeReferenceElementImpl[] refs = refTexts.length == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[refTexts.length];
         for (int i = 0; i < refTexts.length; i++) {
           refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
         }
@@ -386,7 +386,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
         else {
           ClassView classView = getRepositoryManager().getClassView();
           String[] refTexts = classView.getImplementsList(repositoryId);
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+          ClsJavaCodeReferenceElementImpl[] refs = refTexts.length == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[refTexts.length];
           for (int i = 0; i < refTexts.length; i++) {
             refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
           }
@@ -479,7 +479,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     if (offset + count * 2 > data.length) {
       throw new ClsFormatException();
     }
-    ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[count];
+    ClsJavaCodeReferenceElementImpl[] refs = count == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[count];
     for (int i = 0; i < count; i++) {
       b1 = data[offset++] & 0xFF;
       b2 = data[offset++] & 0xFF;

@@ -37,7 +37,7 @@ public class JavaLexer extends LexerBase {
   private int myTokenEndOffset;
 
   private final static class HashTable {
-    static final int NUM_ENTRIES = 9999;
+    static final int NUM_ENTRIES = 999;
     private static final Logger LOG = Logger.getInstance("com.intellij.Lexer.JavaLexer");
 
     final char[][] myTable = new char[NUM_ENTRIES][];
@@ -189,7 +189,7 @@ public class JavaLexer extends LexerBase {
     _locateToken();
   }
 
-  private final void _locateToken() {
+  private void _locateToken() {
 
     if (myTokenEndOffset == myBufferEndOffset) {
       myTokenType = null;

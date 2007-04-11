@@ -38,7 +38,7 @@ public class IElementType {
 
   private static short ourCounter = 0;
   private static final short MAX_INDEXED_TYPES = 10000;
-  private static final IElementType[] ourRegistry = new IElementType[MAX_INDEXED_TYPES];
+  private static final List<IElementType> ourRegistry = new ArrayList<IElementType>(700);
   private final short myIndex;
 
   /**
@@ -47,7 +47,7 @@ public class IElementType {
    * @see #enumerate(com.intellij.psi.tree.IElementType.Predicate)
    */
 
-  public final static Predicate TRUE = new Predicate() {
+  public static final Predicate TRUE = new Predicate() {
     public boolean matches(IElementType type) {
       return true;
     }
@@ -59,7 +59,7 @@ public class IElementType {
 
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   private final String myDebugName;
-  private final @NotNull Language myLanguage;
+  @NotNull private final Language myLanguage;
 
   /**
    * Enumerates all registered token types which match the specified predicate.
@@ -95,7 +95,7 @@ public class IElementType {
     if (register) {
       myIndex = ourCounter++;
       LOG.assertTrue(ourCounter < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
-      ourRegistry[myIndex] = this;
+      ourRegistry.add(this);
     }
     else {
       myIndex = -1;
@@ -108,7 +108,8 @@ public class IElementType {
    * @return the associated language.
    */
 
-  public @NotNull Language getLanguage() {
+  @NotNull
+  public Language getLanguage() {
     return myLanguage;
   }
 
@@ -135,7 +136,7 @@ public class IElementType {
    */
 
   public static IElementType find(short idx) {
-    return ourRegistry[idx];
+    return ourRegistry.get(idx);
   }
 
   /**

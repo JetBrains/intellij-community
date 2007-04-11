@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -159,6 +160,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private String[] calcUrls() {
+    if (myList.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
     final ArrayList<String> result = new ArrayList<String>();
     for (VirtualFilePointer smartVirtualFilePointer : myList) {
       result.add(smartVirtualFilePointer.getUrl());
@@ -175,6 +177,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private VirtualFile[] calcFiles() {
+    if (myList.isEmpty()) return VirtualFile.EMPTY_ARRAY;
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFilePointer smartVirtualFilePointer : myList) {
       final VirtualFile file = smartVirtualFilePointer.getFile();
@@ -193,6 +196,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private VirtualFile[] calcDirectories() {
+    if (myList.isEmpty()) return VirtualFile.EMPTY_ARRAY;
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFilePointer smartVirtualFilePointer : myList) {
       final VirtualFile file = smartVirtualFilePointer.getFile();
@@ -201,7 +205,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
   }
 
   @Nullable

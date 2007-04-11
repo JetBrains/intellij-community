@@ -92,7 +92,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
             importStatements.add((PsiImportStatementImpl)repositoryImport);
           }
         }
-        repositoryClassImports = myRepositoryClassImports = importStatements.toArray(new PsiImportStatementImpl[importStatements.size()]);
+        repositoryClassImports = myRepositoryClassImports = importStatements.isEmpty() ? PsiImportStatementImpl.EMPTY_ARRAY : importStatements.toArray(new PsiImportStatementImpl[importStatements.size()]);
       }
       return repositoryClassImports;
     }
@@ -113,7 +113,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
             importStatements.add((PsiImportStaticStatementImpl)repositoryImport);
           }
         }
-        repositoryStaticImports = myRepositoryStaticImports = importStatements.toArray(new PsiImportStaticStatementImpl[importStatements.size()]);
+        repositoryStaticImports = myRepositoryStaticImports = importStatements.isEmpty() ? PsiImportStaticStatementImpl.EMPTY_ARRAY : importStatements.toArray(new PsiImportStaticStatementImpl[importStatements.size()]);
       }
       return repositoryStaticImports;
     }
@@ -138,7 +138,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       final FileView fileView = getRepositoryManager().getFileView();
       final long repositoryId = getRepositoryId();
       int count = fileView.getImportStatementsCount(repositoryId);
-      repositoryImports = new PsiImportStatementBaseImpl[count];
+      repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
       for (int i = 0; i < repositoryImports.length; i++) {
         if (fileView.isImportStatic(repositoryId, i)) {
           repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
@@ -151,7 +151,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
     else {
       final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
       int count = imports.length;
-      repositoryImports = new PsiImportStatementBaseImpl[count];
+      repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
       for (int i = 0; i < repositoryImports.length; i++) {
         final IElementType type = imports[i].getElementType();
         if (type == IMPORT_STATEMENT) {

@@ -63,8 +63,8 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
       }
     }
 
-    myBoundsList = new ClsReferenceListImpl(this, bounds.toArray(
-                                              new PsiJavaCodeReferenceElement[bounds.size()]), PsiKeyword.EXTENDS);
+    PsiJavaCodeReferenceElement[] references = bounds.isEmpty() ? PsiJavaCodeReferenceElement.EMPTY_ARRAY : bounds.toArray(new PsiJavaCodeReferenceElement[bounds.size()]);
+    myBoundsList = new ClsReferenceListImpl(this, references, PsiKeyword.EXTENDS);
     final int endIndex = signature.getIndex();
     mySignature = parentSignatureAttribute.substring(signatureBeginIndex, endIndex);
   }

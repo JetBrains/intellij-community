@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @see FoldingModel#getAllFoldRegions()
  */
 public interface FoldRegion extends RangeMarker {
+  FoldRegion[] EMPTY_ARRAY = new FoldRegion[0];
   /**
    * Checks if the fold region is currently expanded.
    *

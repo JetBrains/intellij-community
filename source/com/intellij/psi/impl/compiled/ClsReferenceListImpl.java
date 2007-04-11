@@ -50,7 +50,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     PsiClassType[] types = myTypes;
     if (types == null) {
       final PsiElementFactory factory = getManager().getElementFactory();
-      types = new PsiClassType[myReferences.length];
+      types = myReferences.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[myReferences.length];
       for (int i = 0; i < myReferences.length; i++) {
         PsiJavaCodeReferenceElement reference = myReferences[i];
         types[i] = factory.createType(reference);

@@ -3,12 +3,13 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
+  public static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeImpl");
   static final char VARIANCE_NONE = '\0';
   static final char VARIANCE_EXTENDS = '+';
@@ -23,8 +24,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private boolean myChildSet = false;
   private PsiType myCachedType;
   private char myVariance;
-  private static final @NonNls String VARIANCE_EXTENDS_PREFIX = "? extends ";
-  private static final @NonNls String VARIANCE_SUPER_PREFIX = "? super ";
+  @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
+  @NonNls private static final String VARIANCE_SUPER_PREFIX = "? super ";
 
   public ClsTypeElementImpl(PsiElement parent, String typeText, char variance) {
     myParent = parent;
@@ -78,13 +79,13 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   public void setMirror(TreeElement element){
     LOG.assertTrue(myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.TYPE);
+    LOG.assertTrue(element.getElementType() == JavaElementType.TYPE);
     myMirror = element;
 
     loadChild();
 
     if (myChild != null) {
-      myChild.setMirror((TreeElement)element.getFirstChildNode());
+      myChild.setMirror(element.getFirstChildNode());
     }
   }
 

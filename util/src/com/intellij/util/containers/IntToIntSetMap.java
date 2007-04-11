@@ -3,12 +3,12 @@ package com.intellij.util.containers;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author max
  */
 public class IntToIntSetMap {
-  private static final int[] EMPTY_INTS = new int[0];
   private TIntIntHashMap mySingle;
   private TIntObjectHashMap<TIntHashSet> myMulti;
 
@@ -56,7 +56,7 @@ public class IntToIntSetMap {
       return new int[]{mySingle.get(key)};
     }
     TIntHashSet items = myMulti.get(key);
-    if (items == null) return EMPTY_INTS;
+    if (items == null) return ArrayUtil.EMPTY_INT_ARRAY;
     return items.toArray();
   }
 }

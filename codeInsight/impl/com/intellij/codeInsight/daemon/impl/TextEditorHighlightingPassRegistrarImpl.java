@@ -43,7 +43,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     private final boolean runIntentionsPassAfter;
 
     public PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory, boolean runIntentionsPassAfter, @NotNull int[] completionPredecessorIds,
-                      final int[] startingPredecessorIds) {
+                      @NotNull int[] startingPredecessorIds) {
       this.runIntentionsPassAfter = runIntentionsPassAfter;
       this.completionPredecessorIds = completionPredecessorIds;
       this.startingPredecessorIds = startingPredecessorIds;
@@ -74,8 +74,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     assert !checkedForCycles;
     if (runAfterCompletionOf == null) runAfterCompletionOf = ArrayUtil.EMPTY_INT_ARRAY;
     PassConfig info = new PassConfig(factory, runIntentionsPassAfter,
-                                     runAfterCompletionOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
-                                     runAfterOfStartingOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
+                                     runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
+                                     runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
     myRegisteredPassFactories.put(passId, info);
     return passId;
@@ -103,12 +103,12 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           for (int id : passConfig.completionPredecessorIds) {
             if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
           }
-          pass.setCompletionPredecessorIds(ids.toNativeArray());
+          pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
           ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
           for (int id : passConfig.startingPredecessorIds) {
             if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
           }
-          pass.setStartingPredecessorIds(ids.toNativeArray());
+          pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
           pass.setId(passId);
           id2Pass.put(passId, pass);
           if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {

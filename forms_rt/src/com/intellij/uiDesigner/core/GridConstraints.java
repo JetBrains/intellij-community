@@ -22,6 +22,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class GridConstraints implements Cloneable {
+  public static final GridConstraints[] EMPTY_ARRAY = new GridConstraints[0];
   public static final int FILL_NONE = 0;
   public static final int FILL_HORIZONTAL = 1;
   public static final int FILL_VERTICAL = 2;

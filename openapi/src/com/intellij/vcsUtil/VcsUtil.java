@@ -62,7 +62,6 @@ import java.util.*;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
 {
-  protected static final VirtualFile[] EMPTY_VF_ARRAY = new VirtualFile[]{};
 
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
@@ -525,7 +524,7 @@ public class VcsUtil
   public static VirtualFile[] getVirtualFiles( AnActionEvent e )
   {
     VirtualFile[] files = e.getData( DataKeys.VIRTUAL_FILE_ARRAY );
-    return (files == null) ? EMPTY_VF_ARRAY : files;
+    return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
   }
 
   /**

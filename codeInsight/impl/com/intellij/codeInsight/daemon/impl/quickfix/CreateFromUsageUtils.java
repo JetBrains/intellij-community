@@ -712,7 +712,7 @@ public class CreateFromUsageUtils {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       PsiElement elementAt = file.findElementAt(offset);
       PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) return new LookupItem[0];
+      if (parameterList == null) return LookupItem.EMPTY_ARRAY;
 
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 

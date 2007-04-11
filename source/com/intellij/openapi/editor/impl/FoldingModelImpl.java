@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -73,9 +74,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myIsFoldingEnabled = isEnabled;
   }
 
-  public FoldRegion addFoldRegion(int startOffset, int endOffset, String placeholderText) {
+  public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(placeholderText != null);
     FoldRegion range = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholderText);
     if (isFoldingEnabled()) {
       if (!myIsBatchFoldingProcessing) {
@@ -348,7 +348,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         }
       }
 
-      myCachedTopLevelRegions = topLevels.toArray(new FoldRegion[topLevels.size()]);
+      myCachedTopLevelRegions = topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
 
       Arrays.sort(myCachedTopLevelRegions, new Comparator<FoldRegion>() {
         public int compare(FoldRegion r1, FoldRegion r2) {
@@ -399,15 +399,22 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
           }
         }
 
-        int sum = 0;
-
-        if (myCachedEndOffsets == null || myCachedEndOffsets.length != myCachedTopLevelRegions.length) {
-          myCachedEndOffsets = new int[myCachedTopLevelRegions.length];
-          myCachedStartOffsets = new int[myCachedTopLevelRegions.length];
-          myCachedFoldedLines = new int[myCachedTopLevelRegions.length];
+        int length = myCachedTopLevelRegions.length;
+        if (myCachedEndOffsets == null || myCachedEndOffsets.length != length) {
+          if (length != 0) {
+            myCachedEndOffsets = new int[length];
+            myCachedStartOffsets = new int[length];
+            myCachedFoldedLines = new int[length];
+          }
+          else {
+            myCachedEndOffsets = ArrayUtil.EMPTY_INT_ARRAY;
+            myCachedStartOffsets = ArrayUtil.EMPTY_INT_ARRAY;
+            myCachedFoldedLines = ArrayUtil.EMPTY_INT_ARRAY;
+          }
         }
 
-        for (int i = 0; i < myCachedTopLevelRegions.length; i++) {
+        int sum = 0;
+        for (int i = 0; i < length; i++) {
           FoldRegion region = myCachedTopLevelRegions[i];
           myCachedStartOffsets[i] = region.getStartOffset();
           myCachedEndOffsets[i] = region.getEndOffset() - 1;
@@ -490,7 +497,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return outer.getStartOffset() < inner.getStartOffset() && outer.getEndOffset() > inner.getStartOffset();
     }
 
-    private final boolean intersects(FoldRegion r1, FoldRegion r2) {
+    private boolean intersects(FoldRegion r1, FoldRegion r2) {
       final int s1 = r1.getStartOffset();
       final int s2 = r2.getStartOffset();
       final int e1 = r1.getEndOffset();

@@ -59,8 +59,7 @@ public class ClsAnnotationsUtil {
     }
     else if (element instanceof PsiAnnotation) {
       PsiAnnotation psiAnnotation = (PsiAnnotation)element;
-      ClsJavaCodeReferenceElementImpl ref = new ClsJavaCodeReferenceElementImpl(null,
-                                                                                psiAnnotation.getNameReferenceElement().getCanonicalText());
+      ClsJavaCodeReferenceElementImpl ref = new ClsJavaCodeReferenceElementImpl(null, psiAnnotation.getNameReferenceElement().getCanonicalText());
       ClsAnnotationImpl result = new ClsAnnotationImpl(ref, parent);
       ref.setParent(result);
       ClsAnnotationParameterListImpl list = new ClsAnnotationParameterListImpl(result);
@@ -140,10 +139,9 @@ public class ClsAnnotationsUtil {
     else {
       DeclarationView view = (DeclarationView)element.getRepositoryManager().getItemView(id);
       String[] annotationTexts = view.getAnnotations(id);
-      ClsAnnotationImpl[] result = new ClsAnnotationImpl[annotationTexts.length];
+      ClsAnnotationImpl[] result = annotationTexts.length == 0 ? ClsAnnotationImpl.EMPTY_ARRAY : new ClsAnnotationImpl[annotationTexts.length];
       for (int i = 0; i < annotationTexts.length; i++) {
-        result[i] =
-          (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
+        result[i] = (ClsAnnotationImpl)createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
       }
 
       return result;

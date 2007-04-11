@@ -30,7 +30,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   protected MethodSignatureBase(PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
     mySubstitutor = substitutor;
-    myParameterTypes = new PsiType[parameterTypes.length];
+    myParameterTypes = parameterTypes.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameterTypes.length];
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
       if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType) type).toArrayType();
@@ -44,7 +44,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     mySubstitutor = substitutor;
     if (parameterList != null) {
       final PsiParameter[] parameters = parameterList.getParameters();
-      myParameterTypes = new PsiType[parameters.length];
+      myParameterTypes = parameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
         PsiType type = parameters[i].getType();
         if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();

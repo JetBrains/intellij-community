@@ -152,7 +152,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   private MarkupModelListener[] getCachedListeners() {
     if (myCachedListeners == null) {
-      myCachedListeners = myListeners.toArray(new MarkupModelListener[myListeners.size()]);
+      myCachedListeners = myListeners.isEmpty() ? MarkupModelListener.EMPTY_ARRAY : myListeners.toArray(new MarkupModelListener[myListeners.size()]);
     }
 
     return myCachedListeners;

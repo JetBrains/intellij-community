@@ -56,7 +56,6 @@ import java.awt.event.KeyEvent;
  */
 abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
-  private static final VirtualFile[] ourEmptyArray = new VirtualFile[]{};
 
   protected Project myProject;
   private final TodoPanelSettings mySettings;
@@ -309,7 +308,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return new VirtualFile[]{file.getVirtualFile()};
       }
       else {
-        return ourEmptyArray;
+        return VirtualFile.EMPTY_ARRAY;
       }
     }
     else if (DataConstants.HELP_ID.equals(dataId)) {

@@ -12,8 +12,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
-import com.intellij.ui.SideBorder2;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
@@ -30,14 +30,9 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.ComponentEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.lang.reflect.Field;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 /**
  * @author Eugene Belyaev
@@ -493,7 +488,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("Menu.maxGutterIconWidth", 18);
       defaults.put("MenuItem.maxGutterIconWidth", 18);
       // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
-      defaults.put("MenuItem.acceleratorDelimiter", new String("-"));
+      defaults.put("MenuItem.acceleratorDelimiter", "-");
 
       defaults.put("TitledBorder.titleColor",IdeaBlueMetalTheme.primary1);
       ColorUIResource col = new ColorUIResource(230, 230, 230);

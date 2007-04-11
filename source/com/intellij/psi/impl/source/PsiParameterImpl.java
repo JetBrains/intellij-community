@@ -18,7 +18,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   private String myCachedName = null;
   private PatchedSoftReference<PsiType> myCachedType = null;
   private Boolean myCachedIsVarArgs = null;
-  private PsiAnnotation[] myCachedAnnotations = null;
+  private volatile PsiAnnotation[] myCachedAnnotations = null;
 
   public PsiParameterImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -176,26 +176,27 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedAnnotations = null;
-      return getModifierList().getAnnotations();
-    }
-    else {
-      if (myCachedAnnotations == null) {
+    if (treeElement == null) {
+      PsiAnnotation[] cachedAnnotations = myCachedAnnotations;
+      if (cachedAnnotations == null) {
         String[] annotationStrings = getRepositoryManager().getMethodView().getParameterAnnotations(getRepositoryId())[getIndex()];
-        PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
+        cachedAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
-            temp[i] = getManager().getParserFacade().createAnnotationFromText(annotationStrings[i], this);
-            LOG.assertTrue(temp[i] != null);
+            cachedAnnotations[i] = getManager().getParserFacade().createAnnotationFromText(annotationStrings[i], this);
+            LOG.assertTrue(cachedAnnotations[i] != null);
           }
           catch (IncorrectOperationException e) {
             LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
           }
         }
-        myCachedAnnotations = temp;
+        myCachedAnnotations = cachedAnnotations;
       }
-      return myCachedAnnotations;
+      return cachedAnnotations;
+    }
+    else {
+      myCachedAnnotations = null;
+      return getModifierList().getAnnotations();
     }
   }
 

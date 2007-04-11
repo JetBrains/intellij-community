@@ -25,7 +25,7 @@ class ConstantNode implements Expression {
   }
 
   public LookupItem[] calculateLookupItems(ExpressionContext context) {
-    return new LookupItem[0];
+    return LookupItem.EMPTY_ARRAY;
   }
 
 }

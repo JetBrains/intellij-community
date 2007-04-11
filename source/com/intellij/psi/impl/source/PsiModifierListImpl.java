@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -19,8 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiModifierListImpl");
-
   private static Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
 
   static{
@@ -55,7 +52,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   }
 
   private int myCachedModifiers = -1;
-  private PsiAnnotation[] myRepositoryAnnotations = null;
+  private volatile PsiAnnotation[] myRepositoryAnnotations = null;
 
   public PsiModifierListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
@@ -78,7 +75,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         myCachedModifiers = ((DeclarationView)getRepositoryManager().getItemView(repositoryId)).getModifiers(repositoryId);
       }
       int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
-      assert (flag != 0);
+      assert flag != 0;
       return (myCachedModifiers & flag) != 0;
     }
     else {
@@ -190,13 +187,16 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     CompositeElement treeElement = calcTreeElement();
     ASTNode parentTreeElement = treeElement.getTreeParent();
     if (value){
-      if (parentTreeElement.getElementType() == ElementType.FIELD && parentTreeElement.getTreeParent().getElementType() == ElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      if (parentTreeElement.getElementType() == JavaElementType.FIELD && parentTreeElement.getTreeParent().getElementType() ==
+                                                                         JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
         if (type == PUBLIC_KEYWORD || type == STATIC_KEYWORD || type == FINAL_KEYWORD) return;
       }
-      else if (parentTreeElement.getElementType() == ElementType.METHOD  && parentTreeElement.getTreeParent().getElementType() == ElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      else if (parentTreeElement.getElementType() == JavaElementType.METHOD && parentTreeElement.getTreeParent().getElementType() ==
+                                                                               JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
         if (type == PUBLIC_KEYWORD || type == ABSTRACT_KEYWORD) return;
       }
-      else if (parentTreeElement.getElementType() == ElementType.CLASS && parentTreeElement.getTreeParent().getElementType() == ElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      else if (parentTreeElement.getElementType() == JavaElementType.CLASS && parentTreeElement.getTreeParent().getElementType() ==
+                                                                              JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
         if (type == PUBLIC_KEYWORD) return;
       }
 
@@ -243,16 +243,17 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     if (getRepositoryId() >= 0) {
-      if (myRepositoryAnnotations != null) return myRepositoryAnnotations;
+      PsiAnnotation[] repositoryAnnotations = myRepositoryAnnotations;
+      if (repositoryAnnotations != null) return repositoryAnnotations;
       long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
       DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
       String[] annotationStrings = view.getAnnotations(parentId);
-      PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
+      repositoryAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
       for (int i = 0; i < annotationStrings.length; i++) {
-        temp[i] = new PsiAnnotationImpl(myManager, this, i);
+        repositoryAnnotations[i] = new PsiAnnotationImpl(myManager, this, i);
       }
-      myRepositoryAnnotations = temp;
-      return myRepositoryAnnotations;
+      myRepositoryAnnotations = repositoryAnnotations;
+      return repositoryAnnotations;
     }
     else {
       return calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
@@ -271,13 +272,14 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     return "PsiModifierList:" + getText();
   }
 
-public void setOwner(SrcRepositoryPsiElement owner) {
+  public void setOwner(SrcRepositoryPsiElement owner) {
     super.setOwner(owner);
 
     if (myOwner == null) {
-      if (myRepositoryAnnotations != null) {
-        for (int i = 0; i < myRepositoryAnnotations.length; i++) {
-          PsiAnnotationImpl ref = (PsiAnnotationImpl)myRepositoryAnnotations[i];
+      PsiAnnotation[] repositoryAnnotations = myRepositoryAnnotations;
+      if (repositoryAnnotations != null) {
+        for (int i = 0; i < repositoryAnnotations.length; i++) {
+          PsiAnnotationImpl ref = (PsiAnnotationImpl)repositoryAnnotations[i];
           ref.setOwnerAndIndex(this, i);
         }
       }
@@ -286,4 +288,5 @@ public void setOwner(SrcRepositoryPsiElement owner) {
     else {
       myRepositoryAnnotations = (PsiAnnotation[])bindIndexedSlaves(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
     }
-  }}
+  }
+}

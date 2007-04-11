@@ -152,9 +152,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myProjectComponents = pluginBean.projectComponents;
     myModuleComponents = pluginBean.moduleComponents;
 
-    if (myAppComponents == null) myAppComponents = new ComponentConfig[0];
-    if (myProjectComponents == null) myProjectComponents = new ComponentConfig[0];
-    if (myModuleComponents == null) myModuleComponents = new ComponentConfig[0];
+    if (myAppComponents == null) myAppComponents = ComponentConfig.EMPTY_ARRAY;
+    if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
+    if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
     if (pluginBean.extensions != null) {
       myExtensions = new ArrayList<Element>();

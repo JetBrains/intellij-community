@@ -46,10 +46,10 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   public boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
 
-  private static final @NonNls String FILTER_OPTION_NAME = "filter";
-  private static final @NonNls String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
-  private static final @NonNls String INSTANCE_ID_OPTION_NAME = "instance_id";
-  private static final @NonNls String CONDITION_OPTION_NAME = "CONDITION";
+  @NonNls private static final String FILTER_OPTION_NAME = "filter";
+  @NonNls private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
+  @NonNls private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
+  @NonNls private static final String CONDITION_OPTION_NAME = "CONDITION";
   protected final Project myProject;
 
   public FilteredRequestor(Project project) {
@@ -120,7 +120,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       catch (Exception e) {
       }
     }
-    myInstanceFilters = iFilters.toArray(new InstanceFilter[iFilters.size()]);
+    myInstanceFilters = iFilters.isEmpty() ? InstanceFilter.EMPTY_ARRAY : iFilters.toArray(new InstanceFilter[iFilters.size()]);
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {

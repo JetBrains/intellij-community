@@ -42,7 +42,7 @@ class CurrentPackageMacro implements Macro {
   }
 
   public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
-    return new LookupItem[0];
+    return LookupItem.EMPTY_ARRAY;
   }
 
 

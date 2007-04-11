@@ -15,6 +15,7 @@ import java.lang.ref.Reference;
  * @author dsl
  */
 public abstract class PsiImportStatementBaseImpl extends IndexedRepositoryPsiElement implements PsiImportStatementBase{
+  public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
   private Reference myCachedMirrorReference = null;
   private Boolean myCachedIsOnDemand = null;
 

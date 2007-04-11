@@ -15,7 +15,6 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -81,7 +80,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   }
 
   public void setPlainProxyPassword (String password) {
-    PROXY_PASSWORD_CRYPT = new String(new Base64().encode(new String(password).getBytes()));
+    PROXY_PASSWORD_CRYPT = new String(new Base64().encode(password.getBytes()));
   }
 
   private Authenticator getAuthenticator () {

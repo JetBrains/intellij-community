@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
+  static final ClsJavaCodeReferenceElementImpl[] EMPTY_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl");
 
   private PsiElement myParent;
@@ -31,15 +32,15 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private final String myQualifiedName;
   private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
   private PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
-  private static final @NonNls String EXTENDS_PREFIX = "?extends";
-  private static final @NonNls String SUPER_PREFIX = "?super";
+  @NonNls private static final String EXTENDS_PREFIX = "?extends";
+  @NonNls private static final String SUPER_PREFIX = "?super";
 
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;
 
     myCanonicalText = canonicalText;
     final String[] classParametersText = PsiNameHelper.getClassParametersText(canonicalText);
-    myTypeParameters = new ClsTypeElementImpl[classParametersText.length];
+    myTypeParameters = classParametersText.length == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[classParametersText.length];
     for (int i = 0; i < classParametersText.length; i++) {
       String s = classParametersText[classParametersText.length - i - 1];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
@@ -106,7 +107,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
     myCanonicalText = canonicalText.toString();
     final int nParams = typeParameters.size();
-    myTypeParameters = new ClsTypeElementImpl[nParams];
+    myTypeParameters = nParams == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[nParams];
     for (int i = nParams - 1; i >= 0; i--) {
       myTypeParameters[nParams - i - 1] = typeParameters.get(i);
     }
@@ -278,7 +279,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.JAVA_CODE_REFERENCE);
+    LOG.assertTrue(element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
     myMirror = element;
   }
 
@@ -305,7 +306,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public PsiType[] getTypeParameters() {
     if (myTypeParametersCachedTypes == null) {
-      PsiType[] types = new PsiType[myTypeParameters.length];
+      PsiType[] types = myTypeParameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[myTypeParameters.length];
       for (int i = 0; i < types.length; i++) {
         types[types.length - i - 1] = myTypeParameters[i].getType();
       }

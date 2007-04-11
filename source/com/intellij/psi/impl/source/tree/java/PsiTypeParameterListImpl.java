@@ -8,7 +8,7 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
@@ -28,7 +28,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   };
 
   private PsiTypeParameter[] myRepositoryClassParameters;
-  private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(ElementType.TYPE_PARAMETER);
+  private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(JavaElementType.TYPE_PARAMETER);
 
   public PsiTypeParameterListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -84,7 +84,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
           count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
         }
 
-        PsiTypeParameter[] typeParameters = new PsiTypeParameter[count];
+        PsiTypeParameter[] typeParameters = count == 0 ? PsiTypeParameter.EMPTY_ARRAY : new PsiTypeParameter[count];
         for (int i = 0; i < typeParameters.length; i++) {
           typeParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
         }

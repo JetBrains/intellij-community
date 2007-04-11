@@ -46,10 +46,11 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * Vertical gap between rows. This parameter is used only by GridLayoutManager.
    */
   private int myVGap;
+  private static final Component[] COMPONENT_EMPTY_ARRAY = new Component[0];
 
   public AbstractLayout(){
-    myComponents = new Component[0];
-    myConstraints = new GridConstraints[0];
+    myComponents = COMPONENT_EMPTY_ARRAY;
+    myConstraints = GridConstraints.EMPTY_ARRAY;
     myMargin = new Insets(0,0,0,0);
     myHGap = -1;
     myVGap = -1;
@@ -192,15 +193,25 @@ public abstract class AbstractLayout implements LayoutManager2 {
       throw new IllegalArgumentException("component was not added: " + comp);
     }
 
-    final Component[] newComponents = new Component[myComponents.length - 1];
-    System.arraycopy(myComponents, 0, newComponents, 0, i);
-    System.arraycopy(myComponents, i + 1, newComponents, i, myComponents.length - i - 1);
-    myComponents = newComponents;
+    if (myComponents.length == 1) {
+      myComponents = COMPONENT_EMPTY_ARRAY;
+    }
+    else {
+      final Component[] newComponents = new Component[myComponents.length - 1];
+      System.arraycopy(myComponents, 0, newComponents, 0, i);
+      System.arraycopy(myComponents, i + 1, newComponents, i, myComponents.length - i - 1);
+      myComponents = newComponents;
+    }
 
-    final GridConstraints[] newConstraints = new GridConstraints[myConstraints.length - 1];
-    System.arraycopy(myConstraints, 0, newConstraints, 0, i);
-    System.arraycopy(myConstraints, i + 1, newConstraints, i, myConstraints.length - i - 1);
-    myConstraints = newConstraints;
+    if (myConstraints.length == 1) {
+      myConstraints = GridConstraints.EMPTY_ARRAY;
+    }
+    else {
+      final GridConstraints[] newConstraints = new GridConstraints[myConstraints.length - 1];
+      System.arraycopy(myConstraints, 0, newConstraints, 0, i);
+      System.arraycopy(myConstraints, i + 1, newConstraints, i, myConstraints.length - i - 1);
+      myConstraints = newConstraints;
+    }
   }
 
   public GridConstraints getConstraintsForComponent(Component comp) {

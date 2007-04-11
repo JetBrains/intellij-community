@@ -56,6 +56,6 @@ public class ErrorReportConfigurable implements JDOMExternalizable, ApplicationC
   }
 
   public void setPlainItnPassword (String password) {
-    ITN_PASSWORD_CRYPT = new String(new Base64().encode(new String(password).getBytes()));
+    ITN_PASSWORD_CRYPT = new String(new Base64().encode(password.getBytes()));
   }
 }

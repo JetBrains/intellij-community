@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
 
-  private PsiParameterImpl[] myRepositoryParameters = null;
+  private volatile PsiParameter[] myRepositoryParameters = null;
 
   private static final PsiElementArrayConstructor PARAMETER_IMPL_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor() {
     public PsiElement[] newPsiElementArray(int length) {
@@ -41,9 +41,10 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     super.setOwner(owner);
 
     if (myOwner == null){
-      if (myRepositoryParameters != null){
-        for(int i = 0; i < myRepositoryParameters.length; i++){
-          PsiParameterImpl parm = myRepositoryParameters[i];
+      PsiParameter[] repositoryParameters = myRepositoryParameters;
+      if (repositoryParameters != null){
+        for(int i = 0; i < repositoryParameters.length; i++){
+          PsiParameterImpl parm = (PsiParameterImpl)repositoryParameters[i];
           parm.setOwnerAndIndex(this, i);
         }
       }
@@ -58,7 +59,8 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
   public PsiParameter[] getParameters(){
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0) {
-      if (myRepositoryParameters == null) {
+      PsiParameter[] repositoryParameters = myRepositoryParameters;
+      if (repositoryParameters == null) {
         int count;
         CompositeElement treeElement = getTreeElement();
         if (treeElement != null) {
@@ -67,13 +69,13 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
         else {
           count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
         }
-        PsiParameterImpl[] temp = new PsiParameterImpl[count];
+        repositoryParameters = count == 0 ? PsiParameter.EMPTY_ARRAY : new PsiParameterImpl[count];
         for (int i = 0; i < count; i++) {
-          temp[i] = new PsiParameterImpl(myManager, this, i);
+          repositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
         }
-        myRepositoryParameters = temp;
+        myRepositoryParameters = repositoryParameters;
       }
-      return myRepositoryParameters;
+      return repositoryParameters;
     }
     else{
       return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
@@ -88,7 +90,8 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
   public int getParametersCount() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0) {
-      if (myRepositoryParameters == null) {
+      PsiParameter[] repositoryParameters = myRepositoryParameters;
+      if (repositoryParameters == null) {
         CompositeElement treeElement = getTreeElement();
         if (treeElement != null) {
           return treeElement.countChildren(PARAMETER_BIT_SET);
@@ -96,9 +99,8 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
         else {
           return getRepositoryManager().getMethodView().getParameterCount(repositoryId);
         }
-
       }
-      return myRepositoryParameters.length;
+      return repositoryParameters.length;
     }
     else{
       return calcTreeElement().countChildren(PARAMETER_BIT_SET);

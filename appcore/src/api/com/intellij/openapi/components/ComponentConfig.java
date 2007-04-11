@@ -11,6 +11,7 @@ import java.util.Map;
 
 @Tag("component")
 public class ComponentConfig {
+  public static final ComponentConfig[] EMPTY_ARRAY = new ComponentConfig[0];
   @Tag("implementation-class")
   public String implementationClass;
 

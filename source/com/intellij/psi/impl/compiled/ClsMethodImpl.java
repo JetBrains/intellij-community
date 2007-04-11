@@ -52,9 +52,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   private Boolean myIsDeprecated = null;
   private PsiTypeParameterList myTypeParameters = null;
   private PsiAnnotationMemberValue[] myDefaultValue = null;
-  private ClsAnnotationImpl[] myAnnotations = null;
-  private ClsAnnotationImpl[][] myParameterAnnotations = null;
-  private static final @NonNls String SYNTHETIC_INIT_METHOD = "<init>";
+  private volatile ClsAnnotationImpl[] myAnnotations = null;
+  private volatile ClsAnnotationImpl[][] myParameterAnnotations = null;
+  @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
 
   public ClsMethodImpl(ClsClassImpl parent, int startOffset) {
@@ -166,6 +166,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }
 
+  @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
@@ -218,7 +219,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
@@ -279,7 +280,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return myModifierList;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -384,7 +385,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       for (int i = 0; i < parameterAnnotations.length; i++) {
         String[] annotations = parameterAnnotations[i];
         ClsParameterImpl parameter = (ClsParameterImpl)myParameterList.getParameters()[i];
-        result[i] = new ClsAnnotationImpl[annotations.length];
+        result[i] = annotations.length == 0 ? ClsAnnotationImpl.EMPTY_ARRAY : new ClsAnnotationImpl[annotations.length];
         for (int j = 0; j < annotations.length; j++) {
           result[i][j] = (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotations[j], myManager,
                                                                                          (ClsElementImpl)parameter.getModifierList());
@@ -398,12 +399,13 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   @NotNull private ClsAnnotationImpl[][] readParameterAnnotations(BytePointer pointer, ClsParameterImpl[] parameters) throws ClsFormatException {
     pointer.offset += 4;
     int numParameters = ClsUtil.readU1(pointer);
-    ClsAnnotationImpl[][] result = new ClsAnnotationImpl[parameters.length][];
-    for (int i = 0; i < Math.min(numParameters, parameters.length); i++) {
+    ClsAnnotationImpl[][] result = parameters.length == 0 ? ClsAnnotationImpl.EMPTY_2D_ARRAY : new ClsAnnotationImpl[parameters.length][];
+    int limit = Math.min(numParameters, parameters.length);
+    for (int i = 0; i < limit; i++) {
       result[i] = myParent.getClassFileData().readAnnotations(parameters[i], pointer);
     }
 
-    for (int i = Math.min(numParameters, parameters.length); i < parameters.length; i++) {
+    for (int i = limit; i < parameters.length; i++) {
       result[i] = ClsAnnotationImpl.EMPTY_ARRAY;
     }
 
@@ -429,7 +431,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
             throw new ClsFormatException();
           }
 
-          ArrayList<String> types = null;
           if (myConstructorFlag && myParent.getParent() instanceof PsiClass &&
               !myParent.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
             //Then there is presumably a synthetic field in the class, that is instantiated in the constructor
@@ -444,6 +445,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
             }
           }
 
+          ArrayList<String> types = null;
           while (data[offset] != ')') {
             String typeText = ClsUtil.getTypeText(data, offset);
             offset = ClsUtil.getTypeEndOffset(data, offset);
@@ -501,7 +503,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
               if (ptr != null) {
                 ptr.offset += 4; // skip length
                 int exceptionCount = ClsUtil.readU2(ptr);
-                ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[exceptionCount];
+                ClsJavaCodeReferenceElementImpl[] refs = exceptionCount == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[exceptionCount];
                 int jj = 0;
                 for (int j = 0; j < exceptionCount; j++) {
                   int index = ClsUtil.readU2(ptr);
@@ -524,14 +526,14 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
             catch (ClsFormatException e) {
             }
             if (myThrowsList == null) {
-              myThrowsList = new ClsReferenceListImpl(this, new ClsJavaCodeReferenceElementImpl[0], PsiKeyword.THROWS);
+              myThrowsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.THROWS);
             }
           }
         }
         else {
           MethodView methodView = getRepositoryManager().getMethodView();
           String[] refTexts = methodView.getThrowsList(repositoryId);
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+          ClsJavaCodeReferenceElementImpl[] refs = refTexts.length == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[refTexts.length];
           for (int i = 0; i < refTexts.length; i++) {
             refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
           }
@@ -803,17 +805,17 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         long repositoryId = getRepositoryId();
         if (repositoryId < 0) {
           if (!parseViaGenericSignature()) {
-            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+            myTypeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
           }
         }
         else {
           MethodView methodView = getRepositoryManager().getMethodView();
           int count = methodView.getTypeParametersCount(repositoryId);
           if (count == 0) {
-            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+            myTypeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
           }
           else {
-            StringBuffer compiledParams = new StringBuffer();
+            StringBuilder compiledParams = new StringBuilder();
             compiledParams.append('<');
             for (int i = 0; i < count; i++) {
               compiledParams.append(methodView.getTypeParameterText(repositoryId, i));
@@ -844,7 +846,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
-    if (myAnnotations == null) {
+    ClsAnnotationImpl[] annotations = myAnnotations;
+    if (annotations == null) {
       ClsAnnotationsUtil.AttributeReader reader = new ClsAnnotationsUtil.AttributeReader() {
         public BytePointer readAttribute(String attributeName) {
           try {
@@ -859,17 +862,18 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           return myParent.getClassFileData();
         }
       };
-      myAnnotations = ClsAnnotationsUtil.getAnnotationsImpl(this, reader, myModifierList);
+      myAnnotations = annotations = ClsAnnotationsUtil.getAnnotationsImpl(this, reader, myModifierList);
     }
 
-    return myAnnotations;
+    return annotations;
   }
 
   @NotNull public ClsAnnotationImpl[] getParameterAnnotations(int paramIdx) {
-    if (myParameterAnnotations == null) {
-      myParameterAnnotations = calcParameterAnnotations();
+    ClsAnnotationImpl[][] parameterAnnotations = myParameterAnnotations;
+    if (parameterAnnotations == null) {
+      myParameterAnnotations = parameterAnnotations = calcParameterAnnotations();
     }
-    return paramIdx >= myParameterAnnotations.length ? ClsAnnotationImpl.EMPTY_ARRAY : myParameterAnnotations[paramIdx];
+    return paramIdx >= parameterAnnotations.length ? ClsAnnotationImpl.EMPTY_ARRAY : parameterAnnotations[paramIdx];
   }
 
   public ItemPresentation getPresentation() {

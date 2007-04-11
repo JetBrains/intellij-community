@@ -318,7 +318,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       completionData = getCompletionData(context, lastElement);
     }
 
-    if (completionData == null) return new LookupData(new LookupItem[0], context.getPrefix());
+    if (completionData == null) return new LookupData(LookupItem.EMPTY_ARRAY, context.getPrefix());
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);

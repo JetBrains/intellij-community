@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStatement {
+  public static final PsiImportStatementImpl[] EMPTY_ARRAY = new PsiImportStatementImpl[0];
 
   public PsiImportStatementImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
