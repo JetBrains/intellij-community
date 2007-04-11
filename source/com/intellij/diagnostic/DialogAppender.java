@@ -9,6 +9,7 @@ import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,51 +24,55 @@ public class DialogAppender extends AppenderSkeleton {
   private Runnable myDialogRunnable = null;
 
   protected synchronized void append(final LoggingEvent event) {
-    List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
-    loggers.add(DEFAULT_LOGGER);
+    if (!event.level.isGreaterOrEqual(Priority.WARN)) return;
 
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      if (application.isHeadlessEnvironment() || application.isDisposed()) return;
-      loggers.addAll(Arrays.asList(application.getComponents(ErrorLogger.class)));
-    }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
+        loggers.add(DEFAULT_LOGGER);
 
-    appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
+        Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          if (application.isHeadlessEnvironment() || application.isDisposed()) return;
+          loggers.addAll(Arrays.asList(application.getComponents(ErrorLogger.class)));
+        }
+
+        appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
+      }
+    });
   }
 
   void appendToLoggers(final LoggingEvent event, ErrorLogger[] errorLoggers) {
+    if (myDialogRunnable != null) {
+      return;
+    }
 
-    if (event.level.isGreaterOrEqual(Priority.WARN)) {
-      if (myDialogRunnable != null) {
-        return;
-      }
-      ThrowableInformation throwable = event.getThrowableInformation();
-      if (throwable == null) {
-        return;
-      }
+    ThrowableInformation throwable = event.getThrowableInformation();
+    if (throwable == null) {
+      return;
+    }
 
-      final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent((String)event.getMessage(), throwable.getThrowable());
-      for (int i = errorLoggers.length - 1; i >= 0; i--) {
+    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent((String)event.getMessage(), throwable.getThrowable());
+    for (int i = errorLoggers.length - 1; i >= 0; i--) {
 
-        final ErrorLogger logger = errorLoggers[i];
-        if (logger.canHandle(ideaEvent)) {
+      final ErrorLogger logger = errorLoggers[i];
+      if (logger.canHandle(ideaEvent)) {
 
-          //noinspection HardCodedStringLiteral
-          myDialogRunnable = new Runnable() {
-            public void run() {
-              try {
-                logger.handle(ideaEvent);
-              }
-              finally {
-                myDialogRunnable = null;
-              }
+        //noinspection HardCodedStringLiteral
+        myDialogRunnable = new Runnable() {
+          public void run() {
+            try {
+              logger.handle(ideaEvent);
             }
-          };
+            finally {
+              myDialogRunnable = null;
+            }
+          }
+        };
 
-          ApplicationManager.getApplication().executeOnPooledThread(myDialogRunnable);
+        ApplicationManager.getApplication().executeOnPooledThread(myDialogRunnable);
 
-          break;
-        }
+        break;
       }
     }
   }
