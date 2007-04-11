@@ -20,5 +20,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrTryCatchStatement extends GroovyPsiElement {
+public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
 }

@@ -16,14 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStarStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrStarStatement {
+public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrStatement {
   public GrLabeledStatementImpl(@NotNull ASTNode node) {
     super(node);
   }

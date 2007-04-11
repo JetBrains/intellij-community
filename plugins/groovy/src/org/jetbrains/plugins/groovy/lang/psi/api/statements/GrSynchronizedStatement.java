@@ -21,5 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrSynchronizedStatement extends GroovyPsiElement {
+public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement {
 }

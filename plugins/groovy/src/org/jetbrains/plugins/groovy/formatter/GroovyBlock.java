@@ -40,13 +40,13 @@ import java.util.ArrayList;
  */
 public class GroovyBlock implements Block, GroovyElementTypes {
 
-  final private ASTNode myNode;
-  final private Alignment myAlignment;
-  final private Indent myIndent;
-  private Wrap myWrap;
-  final private CodeStyleSettings mySettings;
+  final protected ASTNode myNode;
+  final protected Alignment myAlignment;
+  final protected Indent myIndent;
+  final protected Wrap myWrap;
+  final protected CodeStyleSettings mySettings;
 
-  private List<Block> mySubBlocks = null;
+  protected List<Block> mySubBlocks = null;
 
   public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings) {
     myNode = node;
@@ -74,7 +74,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = generateSubBlocks();
+      mySubBlocks = GroovyBlockGenerator.generateSubBlocks(myNode, myAlignment, myWrap, mySettings, this);
     }
     return mySubBlocks;
   }
@@ -115,6 +115,9 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     if (psiParent instanceof BlockedIndent) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
+    if (this instanceof LargeGroovyBlock) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }
 
@@ -146,30 +149,6 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     return myNode.getFirstChildNode() == null;
   }
 
-  /**
-   * @param node Tree node
-   * @return true, if the current node can be block node, else otherwise
-   */
-  private static boolean canBeCorrectBlock(@NotNull final ASTNode node) {
-    return (node.getText().trim().length() > 0);
-  }
 
-  private List<Block> generateSubBlocks() {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    ASTNode children[] = myNode.getChildren(null);
-    int childNumber = children.length;
-    if (childNumber == 0) {
-      return subBlocks;
-    }
-    ASTNode prevChildNode = null;
-    for (ASTNode childNode : children) {
-      if (canBeCorrectBlock(childNode)) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(this, prevChildNode, childNode);
-        subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
-        prevChildNode = childNode;
-      }
-    }
-    return subBlocks;
-  }
 
 }

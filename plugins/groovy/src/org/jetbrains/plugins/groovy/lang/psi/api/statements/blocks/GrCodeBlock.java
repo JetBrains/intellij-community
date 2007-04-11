@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 
 /**
  * @author Ilya.Sergey
  */
-public interface GrCodeBlock extends GroovyPsiElement, BlockedIndent {
+public interface GrCodeBlock extends GroovyPsiElement, BlockedIndent, GrStatement {
 }
