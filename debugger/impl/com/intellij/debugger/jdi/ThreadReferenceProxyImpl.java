@@ -28,7 +28,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public static Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
     public int compare(ThreadReferenceProxyImpl th1, ThreadReferenceProxyImpl th2) {
-      return th1.name().compareTo(th2.name());
+      return th1.name().compareToIgnoreCase(th2.name());
     }
   };
 
