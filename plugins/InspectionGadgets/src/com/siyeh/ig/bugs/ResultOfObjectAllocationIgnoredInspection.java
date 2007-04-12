@@ -17,7 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -49,11 +48,12 @@ public class ResultOfObjectAllocationIgnoredInspection
         public void visitExpressionStatement(
                 @NotNull PsiExpressionStatement statement) {
             super.visitExpressionStatement(statement);
-            if (!(statement.getExpression() instanceof PsiNewExpression)) {
+            final PsiExpression expression = statement.getExpression();
+            if (!(expression instanceof PsiNewExpression)) {
                 return;
             }
             final PsiNewExpression newExpression =
-                    (PsiNewExpression) statement.getExpression();
+                    (PsiNewExpression) expression;
             final PsiExpression[] arrayDimensions =
                     newExpression.getArrayDimensions();
             if (arrayDimensions.length != 0) {
@@ -62,12 +62,7 @@ public class ResultOfObjectAllocationIgnoredInspection
             if (newExpression.getArrayInitializer() != null) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classReference =
-                    newExpression.getClassReference();
-            if (classReference == null) {
-                return;
-            }
-            registerError(classReference);
+            registerNewExpressionError(newExpression);
         }
     }
 }
