@@ -6,8 +6,11 @@ package com.theoryinpractice.testng.model;
 public class TreeRootNode extends TestProxy
 {
     private boolean inProgress;
-    
+    private boolean isStarted;
+
     public TreeRootNode() {
+        inProgress = false;
+        isStarted = false;
     }
 
     @Override
@@ -17,5 +20,13 @@ public class TreeRootNode extends TestProxy
 
     public void setInProgress(boolean inProgress) {
         this.inProgress = inProgress;
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public void setStarted(boolean started) {
+        isStarted = started;
     }
 }

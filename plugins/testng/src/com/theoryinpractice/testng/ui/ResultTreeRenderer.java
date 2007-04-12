@@ -7,7 +7,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.junit2.ui.PoolOfTestIcons;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.openapi.util.IconLoader;
 import com.theoryinpractice.testng.model.*;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -31,13 +30,17 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             if (node == tree.getModel().getRoot()) {
                 TreeRootNode root = (TreeRootNode) proxy;
                 if (node.getChildCount() == 0) {
-                    if (root.isInProgress()) {
-                        setIcon(Animator.getCurrentFrame());
+                    if ((root.isStarted() && root.isInProgress()) || (root.isInProgress() && !root.isStarted())) {
+                        setIcon(PoolOfTestIcons.NOT_RAN);
                         append("Instantiating tests... ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                    } else {
+                    } else if (root.isStarted() && !root.isInProgress()) {
                         setIcon(PoolOfTestIcons.PASSED_ICON);
                         append("All Tests Passed.", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                    } else {
+                        setIcon(PoolOfTestIcons.NOT_RAN);
+                        append("No Test Results.", SimpleTextAttributes.REGULAR_ATTRIBUTES);
                     }
+
                 } else {
                     setIcon(root.isInProgress() ? Animator.getCurrentFrame() : getIcon(proxy));
                     append(root.isInProgress() ? "Running tests..." : "Test Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);

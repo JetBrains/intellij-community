@@ -27,8 +27,8 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.theoryinpractice.testng.TestNGConsoleView;
 import com.theoryinpractice.testng.Printable;
+import com.theoryinpractice.testng.TestNGConsoleView;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.actions.ScrollToTestSourceAction;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -79,8 +79,8 @@ public class TestNGResults
         openSourceListener = new OpenSourceSelectionListener(structure, console);
         tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
         progress.setColor(ColorProgressBar.GREEN);
+        splitPane.setDividerLocation(0.2);
         GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
-        splitPane.setDividerLocation(200);
     }
 
     private void updateLabel(JLabel label) {
@@ -246,6 +246,7 @@ public class TestNGResults
         this.start = System.currentTimeMillis();
         tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
         rootNode.setInProgress(true);
+        rootNode.setStarted(true);
     }
 
     public void finish() {
