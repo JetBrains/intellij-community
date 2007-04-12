@@ -12,10 +12,6 @@ public class StubStartupManagerEx extends StartupManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void runPostStartup(Runnable runnable) {
-    throw new UnsupportedOperationException();
-  }
-
   public void runWhenProjectIsInitialized(Runnable runnable) {
     throw new UnsupportedOperationException();
   }
