@@ -13,6 +13,11 @@ import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
@@ -158,6 +163,12 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     };
   }
 
+  public Property[] getComponentProperties(final Project project, final RadComponent component) {
+    return new Property[] {
+      BorderSideProperty.INSTANCE
+    };
+  }
+
   @Override public void createSnapshotLayout(final SnapshotContext context,
                                              final JComponent parent,
                                              final RadContainer container,
@@ -247,6 +258,60 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
+    }
+  }
+
+  private static class BorderSideProperty extends Property<RadComponent, String> {
+    private LabelPropertyRenderer<String> myRenderer = null;
+    private BorderSideEditor myEditor = null;
+
+    public static BorderSideProperty INSTANCE = new BorderSideProperty();
+
+    public BorderSideProperty() {
+      super(null, "Border Side");
+    }
+
+    public String getValue(RadComponent component) {
+      return (String) component.getCustomLayoutConstraints();
+    }
+
+    protected void setValueImpl(RadComponent component, String value) throws Exception {
+      if (!value.equals(component.getCustomLayoutConstraints())) {
+        if (component.getParent().findComponentWithConstraints(value) != null) {
+          throw new Exception("There is already another component at location " + value);
+        }
+        component.changeCustomLayoutConstraints(value);
+      }
+    }
+
+    @NotNull
+    public PropertyRenderer<String> getRenderer() {
+      if (myRenderer == null) {
+        myRenderer = new LabelPropertyRenderer<String>();
+      }
+      return myRenderer;
+    }
+
+    public PropertyEditor<String> getEditor() {
+      if (myEditor == null) {
+        myEditor = new BorderSideEditor();
+      }
+      return myEditor;
+    }
+  }
+
+  private static class BorderSideEditor extends ComboBoxPropertyEditor<String> {
+    public BorderSideEditor() {
+      String[] sides = new String[] {
+        BorderLayout.CENTER, BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.WEST, BorderLayout.EAST,
+        BorderLayout.PAGE_START, BorderLayout.PAGE_END, BorderLayout.LINE_START, BorderLayout.LINE_END
+      };
+      myCbx.setModel(new DefaultComboBoxModel(sides));
+    }
+
+    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
+      myCbx.setSelectedItem(value);
+      return myCbx;
     }
   }
 }

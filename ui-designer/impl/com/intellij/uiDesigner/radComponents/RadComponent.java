@@ -312,6 +312,19 @@ public abstract class RadComponent implements IComponent {
     myCustomLayoutConstraints = customConstraints;
   }
 
+  public void changeCustomLayoutConstraints(final Object constraints) {
+    setCustomLayoutConstraints(constraints);
+    // update constraints in CardLayout
+    final JComponent parent = getParent().getDelegee();
+    for (int i = 0; i < parent.getComponentCount(); i++) {
+      if (parent.getComponent(i) == getDelegee()) {
+        parent.remove(i);
+        parent.add(getDelegee(), constraints, i);
+        break;
+      }
+    }
+  }
+
   public final boolean hasDragger(){
     return myHasDragger;
   }

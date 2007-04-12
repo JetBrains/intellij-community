@@ -656,6 +656,16 @@ public class RadContainer extends RadComponent implements IContainer {
     return (RadAbstractGridLayoutManager) myLayoutManager;
   }
 
+  @Nullable
+  public RadComponent findComponentWithConstraints(final Object constraints) {
+    for(RadComponent component: getComponents()) {
+      if (constraints.equals(component.getCustomLayoutConstraints())) {
+        return component;
+      }
+    }
+    return null;
+  }
+
   private final class MyBorderTitleProperty extends Property<RadContainer, StringDescriptor> {
     private final StringEditor myEditor;
 

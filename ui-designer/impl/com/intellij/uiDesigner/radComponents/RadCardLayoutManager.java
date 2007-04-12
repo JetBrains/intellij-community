@@ -155,15 +155,6 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
   }
 
-  private static boolean cardExists(final RadContainer container, final String s) {
-    for(RadComponent component: container.getComponents()) {
-      if (s.equals(component.getCustomLayoutConstraints())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private static class CardDropLocation implements ComponentDropLocation {
     private RadContainer myContainer;
     @NonNls private static final String CARD_NAME_PREFIX = "Card";
@@ -190,7 +181,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
                             GridConstraints[] constraintsToAdjust,
                             ComponentDragObject dragObject) {
       int cardIndex = 1;
-      while(cardExists(myContainer, CARD_NAME_PREFIX + cardIndex)) {
+      while(myContainer.findComponentWithConstraints(CARD_NAME_PREFIX + cardIndex) != null) {
         cardIndex++;
       }
       components [0].setCustomLayoutConstraints(CARD_NAME_PREFIX + cardIndex);
@@ -228,21 +219,13 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
     protected void setValueImpl(final RadComponent component, final String value) throws Exception {
       if (!value.equals(component.getCustomLayoutConstraints())) {
-        if (cardExists(component.getParent(), value)) {
+        if (component.getParent().findComponentWithConstraints(value) != null) {
           throw new Exception(UIDesignerBundle.message("error.card.already.exists", value));
         }
-        component.setCustomLayoutConstraints(value);
-        // update constraints in CardLayout
+        component.changeCustomLayoutConstraints(value);
         final JComponent parent = component.getParent().getDelegee();
-        for(int i=0; i<parent.getComponentCount(); i++) {
-          if (parent.getComponent(i) == component.getDelegee()) {
-            parent.remove(i);
-            parent.add(component.getDelegee(), value, i);
-            CardLayout layout = (CardLayout) parent.getLayout();
-            layout.show(parent, value);
-            break;
-          }
-        }
+        CardLayout layout = (CardLayout) parent.getLayout();
+        layout.show(parent, value);
       }
     }
 
