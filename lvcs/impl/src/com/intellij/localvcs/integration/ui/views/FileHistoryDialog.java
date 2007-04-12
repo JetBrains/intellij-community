@@ -34,7 +34,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected JComponent createDiffPanel() {
     myCanNotShowDifferenceLabel = new JLabel(
-      "<HTML><CENTER><B><FONT color='red'>The difference cannot be shown<br>because one of the selected revisions has very long file content</FONT></B></CENTER></HTML>");
+      "<HTML><CENTER><B><FONT color='red'>The difference cannot be shown<br>because one of the selected revisions has very long file content</FONT></B></CENTER></HTML>",
+      JLabel.CENTER);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myGateway.getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
@@ -46,20 +47,19 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     panel.add(myDiffPanel.getComponent());
     panel.add(myCanNotShowDifferenceLabel);
 
-    connect(myCanNotShowDifferenceLabel, VERTICAL_CENTER, panel, l);
-    connect(myCanNotShowDifferenceLabel, HORIZONTAL_CENTER, panel, l);
-    connect(myDiffPanel.getComponent(), WEST, panel, l);
-    connect(myDiffPanel.getComponent(), EAST, panel, l);
-    connect(myDiffPanel.getComponent(), NORTH, panel, l);
-    connect(myDiffPanel.getComponent(), SOUTH, panel, l);
+    align(myCanNotShowDifferenceLabel, panel, l);
+    align(myDiffPanel.getComponent(), panel, l);
 
     updateDiffs();
 
     return panel;
   }
 
-  private void connect(JComponent c, String edge, JComponent to, SpringLayout l) {
-    l.putConstraint(edge, c, 0, edge, to);
+  private void align(JComponent c, JComponent to, SpringLayout l) {
+    l.putConstraint(WEST, c, 0, WEST, to);
+    l.putConstraint(EAST, c, 0, EAST, to);
+    l.putConstraint(NORTH, c, 0, NORTH, to);
+    l.putConstraint(SOUTH, c, 0, SOUTH, to);
   }
 
   @Override
