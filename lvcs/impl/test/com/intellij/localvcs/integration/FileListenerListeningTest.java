@@ -292,6 +292,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   }
 
   private void configureToReturnPhysicalContent(String c) {
-    gateway.setPhysicalContane(c);
+    gateway.setPhysicalContent(c);
   }
 }

@@ -47,18 +47,8 @@ public class TestIdeaGateway extends IdeaGateway {
     return myPhysicalContent.getBytes();
   }
 
-  public void setPhysicalContane(String c) {
+  public void setPhysicalContent(String c) {
     myPhysicalContent = c;
-  }
-
-  @Override
-  public byte[] getDocumentByteContent(VirtualFile f) {
-    try {
-      return f.contentsToByteArray();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
