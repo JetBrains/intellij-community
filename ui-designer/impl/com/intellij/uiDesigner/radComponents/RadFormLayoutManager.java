@@ -574,7 +574,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       formLayout.setRowGroups(groupIndices);
       formLayout.removeRow(cellIndex+1);
       updateGridConstraintsFromCellConstraints(grid);
-      if (formLayout.getRowCount() % 2 == 0) {
+      if (formLayout.getRowCount() > 0 && formLayout.getRowCount() % 2 == 0) {
         int gapRowIndex = (cellIndex >= grid.getGridRowCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isRowEmpty(grid, gapRowIndex)) {
           formLayout.removeRow(gapRowIndex+1);
@@ -589,7 +589,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       formLayout.setColumnGroups(groupIndices);
       formLayout.removeColumn(cellIndex+1);
       updateGridConstraintsFromCellConstraints(grid);
-      if (formLayout.getColumnCount() % 2 == 0) {
+      if (formLayout.getColumnCount() > 0 && formLayout.getColumnCount() % 2 == 0) {
         int gapColumnIndex = (cellIndex >= grid.getGridColumnCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isColumnEmpty(grid, gapColumnIndex)) {
           formLayout.removeColumn(gapColumnIndex+1);
@@ -843,6 +843,10 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     FormLayout layout = (FormLayout) component.getParent().getLayout();
     layout.setConstraints(component.getDelegee(), gridToCellConstraints(component));
     component.getParent().revalidate();
+  }
+
+  public int getMinCellCount() {
+    return 0;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

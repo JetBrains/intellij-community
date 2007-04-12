@@ -445,10 +445,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         return false;
       }
       int[] selection = getSelectedCells(null);
-      if (myIsRow) {
-        return mySelectedContainer.getGridRowCount() > selection.length;
-      }
-      return mySelectedContainer.getGridColumnCount() > selection.length;
+      return mySelectedContainer.getGridCellCount(myIsRow) - selection.length >= mySelectedContainer.getGridLayoutManager().getMinCellCount();
     }
   }
 

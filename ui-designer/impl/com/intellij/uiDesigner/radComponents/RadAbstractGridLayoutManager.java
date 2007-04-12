@@ -475,4 +475,8 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     constraints.setColSpan(getNewColSpan(c, colSpanDelta));
     c.fireConstraintsChanged(oldConstraints);
   }
+
+  public int getMinCellCount() {
+    return 1;
+  }
 }

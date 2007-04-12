@@ -106,10 +106,10 @@ public final class GridChangeUtil {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column
-    if(isRow && grid.getGridRowCount() < 2){
+    if(isRow && grid.getGridRowCount() <= grid.getGridLayoutManager().getMinCellCount()) {
       return CellStatus.Required;
     }
-    else if(!isRow && grid.getGridColumnCount() < 2){
+    else if(!isRow && grid.getGridColumnCount() <= grid.getGridLayoutManager().getMinCellCount()) {
       return CellStatus.Required;
     }
 

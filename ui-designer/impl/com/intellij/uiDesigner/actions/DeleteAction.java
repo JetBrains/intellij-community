@@ -48,10 +48,8 @@ public final class DeleteAction extends AnAction {
                            : UIDesignerBundle.message("action.delete.row"));
     }
 
-    if(selection.isRow() && selection.getContainer().getGridRowCount() <= selection.getSelection().length) {
-      presentation.setEnabled(false);
-    }
-    else if (!selection.isRow() && selection.getContainer().getGridColumnCount() <= selection.getSelection().length) {
+    int minCellCount = selection.getContainer().getGridLayoutManager().getMinCellCount();
+    if (selection.getContainer().getGridCellCount(selection.isRow()) - selection.getSelection().length < minCellCount) {
       presentation.setEnabled(false);
     }
     else if (selection.getFocusedIndex() < 0) {
