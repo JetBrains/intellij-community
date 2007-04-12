@@ -72,10 +72,10 @@ public class NullArgumentToVariableArgMethodInspection
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters.length != args.length){
+            if(parameterList.getParametersCount() != args.length){
                 return;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiParameter lastParameter =
                     parameters[parameters.length - 1];
             if(!lastParameter.isVarArgs()){

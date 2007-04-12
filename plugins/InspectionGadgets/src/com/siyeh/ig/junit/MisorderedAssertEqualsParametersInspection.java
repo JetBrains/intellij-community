@@ -115,8 +115,7 @@ public class MisorderedAssertEqualsParametersInspection
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length == 0) {
+            if (parameterList.getParametersCount() == 0) {
                 return;
             }
             final PsiManager psiManager = expression.getManager();
@@ -124,6 +123,7 @@ public class MisorderedAssertEqualsParametersInspection
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             final PsiType stringType =
                     PsiType.getJavaLangString(psiManager, scope);
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType1 = parameters[0].getType();
             final int expectedPosition;
             final int actualPosition;

@@ -70,11 +70,7 @@ public class MethodOverridesStaticMethodInspection extends BaseInspection {
             }
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null){
-                return;
-            }
-            final int numParameters = parameters.length;
+            final int parametersCount = parameterList.getParametersCount();
             PsiClass ancestorClass = aClass.getSuperClass();
             final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while(ancestorClass != null){
@@ -87,7 +83,7 @@ public class MethodOverridesStaticMethodInspection extends BaseInspection {
                     final PsiParameterList testParametersList =
                             testMethod.getParameterList();
                   final int numTestParameters = testParametersList.getParametersCount();
-                    if(numParameters != numTestParameters){
+                    if(parametersCount != numTestParameters){
                         continue;
                     }
                     if(testMethod.hasModifierProperty(PsiModifier.STATIC) &&

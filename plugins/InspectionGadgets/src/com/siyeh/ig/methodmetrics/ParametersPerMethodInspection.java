@@ -16,7 +16,6 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,14 +62,14 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length <= getLimit()) {
+            final int parametersCount = parameterList.getParametersCount();
+            if (parametersCount <= getLimit()) {
                 return;
             }
             if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
                 return;
             }
-            registerMethodError(method, Integer.valueOf(parameters.length));
+            registerMethodError(method, Integer.valueOf(parametersCount));
         }
     }
 }

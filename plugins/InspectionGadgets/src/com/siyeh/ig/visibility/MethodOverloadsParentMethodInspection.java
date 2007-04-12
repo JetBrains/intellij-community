@@ -107,10 +107,10 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
                         !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
                         !isOverriddenInClass(testMethod,
                                              method.getContainingClass())){
-                    final PsiParameterList testParameterList = testMethod
-                            .getParameterList();
-                    final PsiParameter[] testParameters = testParameterList
-                            .getParameters();
+                    final PsiParameterList testParameterList =
+                            testMethod.getParameterList();
+                    final PsiParameter[] testParameters =
+                            testParameterList.getParameters();
                     if(testParameters.length == parameters.length &&
                             !parametersAreCompatible(parameters,
                                                      testParameters)){
@@ -146,7 +146,6 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
                 final PsiType parameterType = parameter.getType();
                 final PsiParameter testParameter = testParameters[i];
                 final PsiType testParameterType = testParameter.getType();
-
                 if(!parameterType.isAssignableFrom(testParameterType)){
                     return false;
                 }

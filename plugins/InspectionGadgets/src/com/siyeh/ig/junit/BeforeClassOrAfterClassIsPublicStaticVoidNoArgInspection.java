@@ -51,7 +51,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
-            if (!AnnotationUtil.isAnnotated(method, 
+            if (!AnnotationUtil.isAnnotated(method,
                     "org.junit.BeforeClass", true) &&
                     !AnnotationUtil.isAnnotated(method,
                             "org.junit.AfterClass", true)) {
@@ -67,8 +67,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
             }
 
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length != 0) {
+            if (parameterList.getParametersCount() != 0) {
                 registerMethodError(method);
             } else if (!returnType.equals(PsiType.VOID)) {
                 registerMethodError(method);

@@ -498,15 +498,17 @@ public class ExpectedTypeUtils{
             }
             final PsiSubstitutor substitutor = result.getSubstitutor();
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
             if(parameterPosition < 0){
                 return null;
             }
-            if(parameterPosition >= parameters.length){
-                final int lastParameterPosition = parameters.length - 1;
+            final int parametersCount = parameterList.getParametersCount();
+            final PsiParameter[] parameters;
+            if(parameterPosition >= parametersCount){
+                final int lastParameterPosition = parametersCount - 1;
                 if(lastParameterPosition < 0){
                     return null;
                 }
+                parameters = parameterList.getParameters();
                 final PsiParameter lastParameter =
                         parameters[lastParameterPosition];
                 if(lastParameter.isVarArgs()){
@@ -515,6 +517,8 @@ public class ExpectedTypeUtils{
                     return substitutor.substitute(arrayType.getComponentType());
                 }
                 return null;
+            } else {
+                parameters = parameterList.getParameters();
             }
             final PsiParameter parameter = parameters[parameterPosition];
             final PsiType parameterType = parameter.getType();

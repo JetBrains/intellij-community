@@ -80,14 +80,14 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
             if (method == null) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
+            final PsiParameterList parameterList = method.getParameterList();
             @NonNls final String methodName = method.getName();
-            if (parameters.length < 2 && methodName.startsWith("assert")) {
+            final int parameterCount = parameterList.getParametersCount();
+            if (parameterCount < 2 && methodName.startsWith("assert")) {
                 registerMethodCallError(expression);
                 return;
             }
-            if (parameters.length < 1) {
+            if (parameterCount < 1) {
                 registerMethodCallError(expression);
                 return;
             }
@@ -96,11 +96,12 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             final PsiType stringType = PsiType.getJavaLangString(psiManager,
                     scope);
-            final PsiType paramType1 = parameters[0].getType();
-            if (paramType1.equals(stringType)) {
+            final PsiParameter[] parameters = parameterList.getParameters();
+            final PsiType parameterType1 = parameters[0].getType();
+            if (parameterType1.equals(stringType)) {
                 if (parameters.length == 2) {
-                    final PsiType paramType2 = parameters[1].getType();
-                    if (paramType2.equals(stringType)) {
+                    final PsiType parameterType2 = parameters[1].getType();
+                    if (parameterType2.equals(stringType)) {
                         registerMethodCallError(expression);
                     }
                 }

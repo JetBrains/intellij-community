@@ -424,8 +424,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length < 1) {
+        if (parameterList.getParametersCount() < 1) {
             return false;
         }
         final PsiManager psiManager = expression.getManager();
@@ -433,6 +432,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiType stringType =
                 PsiType.getJavaLangString(psiManager, scope);
+        final PsiParameter[] parameters = parameterList.getParameters();
         final PsiType paramType1 = parameters[0].getType();
         final int testPosition;
         if (paramType1.equals(stringType) && parameters.length > 1) {
@@ -458,8 +458,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length < 1) {
+        if (parameterList.getParametersCount() < 1) {
             return false;
         }
         final PsiManager psiManager = expression.getManager();
@@ -467,6 +466,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiType stringType =
                 PsiType.getJavaLangString(psiManager, scope);
+        final PsiParameter[] parameters = parameterList.getParameters();
         final PsiType paramType1 = parameters[0].getType();
         final int testPosition;
         if (paramType1.equals(stringType) && parameters.length > 1) {
@@ -492,8 +492,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length < 1) {
+        if (parameterList.getParametersCount() < 1) {
             return false;
         }
         final PsiManager psiManager = expression.getManager();
@@ -501,6 +500,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiType stringType =
                 PsiType.getJavaLangString(psiManager, scope);
+        final PsiParameter[] parameters = parameterList.getParameters();
         final PsiType paramType1 = parameters[0].getType();
         final int testPosition;
         if (paramType1.equals(stringType) && parameters.length > 1) {
@@ -531,8 +531,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length < 1) {
+        if (parameterList.getParametersCount() < 1) {
             return false;
         }
         final PsiManager psiManager = expression.getManager();
@@ -540,6 +539,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiType stringType =
                 PsiType.getJavaLangString(psiManager, scope);
+        final PsiParameter[] parameters = parameterList.getParameters();
         final PsiType paramType1 = parameters[0].getType();
         final int testPosition;
         if (paramType1.equals(stringType) && parameters.length > 1) {
@@ -573,8 +573,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length < 2) {
+        if (parameterList.getParametersCount() < 2) {
             return false;
         }
         final PsiManager psiManager = expression.getManager();
@@ -582,6 +581,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiType stringType =
                 PsiType.getJavaLangString(psiManager, scope);
+        final PsiParameter[] parameters = parameterList.getParameters();
         final PsiType paramType1 = parameters[0].getType();
         final int firstTestPosition;
         final int secondTestPosition;

@@ -122,9 +122,7 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
                 if (HardcodedMethodConstants.RUN.equals(methodName)) {
                     final PsiParameterList parameterList =
                             method.getParameterList();
-                    final PsiParameter[] parameters =
-                            parameterList.getParameters();
-                    if (parameters.length == 0) {
+                    if (parameterList.getParametersCount() == 0) {
                         return true;
                     }
                 }

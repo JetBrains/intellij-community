@@ -58,10 +58,8 @@ public class NotifyNotInSynchronizedContextInspection
             if (method == null) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            final int numParams = parameters.length;
-            if (numParams != 0) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParametersCount() != 0) {
                 return;
             }
             if (SynchronizationUtil.isInSynchronizedContext(expression)) {

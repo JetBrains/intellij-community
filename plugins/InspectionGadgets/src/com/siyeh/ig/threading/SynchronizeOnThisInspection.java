@@ -82,12 +82,12 @@ public class SynchronizeOnThisInspection extends BaseInspection {
             if (method == null) {
                 return false;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            final int numParams = parameters.length;
+            final PsiParameterList parameterList = method.getParameterList();
+            final int numParams = parameterList.getParametersCount();
             if (numParams > 2) {
                 return false;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             if (numParams > 0) {
                 final PsiType parameterType = parameters[0].getType();
                 if (!parameterType.equals(PsiType.LONG)) {
@@ -116,10 +116,8 @@ public class SynchronizeOnThisInspection extends BaseInspection {
             if (method == null) {
                 return false;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            final int numParams = parameters.length;
-            return numParams == 0;
+            final PsiParameterList parameterList = method.getParameterList();
+            return parameterList.getParametersCount() == 0;
         }
     }
 }

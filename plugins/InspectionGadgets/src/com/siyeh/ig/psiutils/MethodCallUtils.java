@@ -135,11 +135,11 @@ public class MethodCallUtils {
                                        PsiSubstitutor substitutorForMethod,
                                        PsiType[] types) {
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
         if (method.isVarArgs()) {
-            if (types.length < parameters.length - 1) {
+            if (types.length < parameterList.getParametersCount() - 1) {
                 return false;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiParameter lastParameter =
                     parameters[parameters.length - 1];
             PsiType lastParameterType = lastParameter.getType();
@@ -187,9 +187,10 @@ public class MethodCallUtils {
                 return false;
             }
         } else {
-            if (types.length != parameters.length) {
+            if (types.length != parameterList.getParametersCount()) {
                 return false;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             for (int i = 0; i < types.length; i++) {
                 final PsiType type = types[i];
                 if (type == null) {

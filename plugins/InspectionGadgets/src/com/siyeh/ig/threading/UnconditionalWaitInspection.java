@@ -94,19 +94,19 @@ public class UnconditionalWaitInspection extends BaseInspection {
                 if (method == null) {
                     continue;
                 }
-                final PsiParameterList paramList = method.getParameterList();
-                final PsiParameter[] parameters = paramList.getParameters();
-                final int numParams = parameters.length;
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                final int numParams = parameterList.getParametersCount();
                 if (numParams > 2) {
                     continue;
                 }
+                final PsiParameter[] parameters = parameterList.getParameters();
                 if (numParams > 0) {
                     final PsiType parameterType = parameters[0].getType();
                     if (!parameterType.equals(PsiType.LONG)) {
                         continue;
                     }
                 }
-
                 if (numParams > 1) {
                     final PsiType parameterType = parameters[1].getType();
                     if (!parameterType.equals(PsiType.INT)) {

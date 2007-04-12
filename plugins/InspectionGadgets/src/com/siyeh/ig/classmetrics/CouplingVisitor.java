@@ -73,8 +73,8 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         for(PsiParameter parameter : parameters){
-            final PsiType paramType = parameter.getType();
-            addDependency(paramType);
+            final PsiType parameterType = parameter.getType();
+            addDependency(parameterType);
         }
     }
 

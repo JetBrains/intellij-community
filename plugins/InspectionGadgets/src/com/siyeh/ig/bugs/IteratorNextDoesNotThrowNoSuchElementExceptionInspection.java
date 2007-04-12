@@ -62,9 +62,8 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if(parameters.length != 0){
+            final PsiParameterList parameterList = method.getParameterList();
+            if(parameterList.getParametersCount() != 0){
                 return;
             }
             final PsiClass aClass = method.getContainingClass();

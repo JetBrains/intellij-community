@@ -115,8 +115,7 @@ public class PublicConstructorInNonPublicClassInspection
             if (SerializationUtils.isExternalizable(containingClass)) {
                 final PsiParameterList parameterList =
                         method.getParameterList();
-                final PsiParameter[] parameters = parameterList.getParameters();
-                if (parameters.length == 0) {
+                if (parameterList.getParametersCount() == 0) {
                     return;
                 }
             }

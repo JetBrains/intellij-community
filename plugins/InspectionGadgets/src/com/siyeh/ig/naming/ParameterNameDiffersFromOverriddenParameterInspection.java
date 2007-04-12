@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -107,8 +106,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length == 0) {
+            if (parameterList.getParametersCount() == 0) {
                 return;
             }
             final Query<MethodSignatureBackedByPsiMethod> query =
@@ -120,6 +118,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
                 return;
             }
             final PsiMethod superMethod = methodSignature.getMethod();
+            final PsiParameter[] parameters = parameterList.getParameters();
             checkParameters(superMethod, parameters);
         }
 

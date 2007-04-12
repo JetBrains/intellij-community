@@ -72,10 +72,6 @@ public class TypeUtils {
                     return null;
                 }
                 final PsiMethod method = (PsiMethod) methodElement;
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                final PsiParameter[] parameters =
-                        parameterList.getParameters();
                 if (!(referenceElement instanceof PsiExpression)) {
                     return null;
                 }
@@ -85,6 +81,10 @@ public class TypeUtils {
                         (PsiExpressionList)referenceParent;
                 final int index =
                         getExpressionIndex(expression, expressionList);
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                final PsiParameter[] parameters =
+                        parameterList.getParameters();
                 final PsiParameter parameter = parameters[index];
                 final PsiType type = parameter.getType();
                 if (!(type instanceof PsiClassType)) {

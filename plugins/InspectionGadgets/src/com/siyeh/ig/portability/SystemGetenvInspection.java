@@ -62,11 +62,11 @@ public class SystemGetenvInspection extends BaseInspection {
             if (method == null) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 1) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParametersCount() != 1) {
                 return;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType = parameters[0].getType();
             if (!TypeUtils.isJavaLangString(parameterType)) {
                 return;

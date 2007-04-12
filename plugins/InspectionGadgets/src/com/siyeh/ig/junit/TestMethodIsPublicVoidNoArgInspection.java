@@ -69,9 +69,8 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
             final boolean takesArguments;
-            if (parameters.length == 0) {
+            if (parameterList.getParametersCount() == 0) {
                 takesArguments = false;
                 if (returnType.equals(PsiType.VOID) &&
                         method.hasModifierProperty(PsiModifier.PUBLIC)) {

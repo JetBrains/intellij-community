@@ -139,7 +139,6 @@ public class VarargParameterInspection extends BaseInspection {
             codeStyleManager.shortenClassReferences(argumentList);
             codeStyleManager.reformat(argumentList);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -150,10 +149,10 @@ public class VarargParameterInspection extends BaseInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length < 1) {
+            if (parameterList.getParametersCount() < 1) {
                 return;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiParameter lastParameter =
                     parameters[parameters.length - 1];
             if (lastParameter.isVarArgs()) {

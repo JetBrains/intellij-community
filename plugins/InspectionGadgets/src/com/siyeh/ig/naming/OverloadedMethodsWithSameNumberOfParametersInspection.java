@@ -17,7 +17,6 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -63,7 +62,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             final int parameterCount = calculateParamCount(method);
             for (PsiMethod sameNameMethod : sameNameMethods) {
                 if(!sameNameMethod.equals(method)) {
-                    final int testParameterCount = 
+                    final int testParameterCount =
                             calculateParamCount(sameNameMethod);
                     if(parameterCount == testParameterCount) {
                         registerMethodError(method);
@@ -73,9 +72,8 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
         }
 
         private static int calculateParamCount(PsiMethod method) {
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            return parameters.length;
+            final PsiParameterList parameterList = method.getParameterList();
+            return parameterList.getParametersCount();
         }
     }
 }

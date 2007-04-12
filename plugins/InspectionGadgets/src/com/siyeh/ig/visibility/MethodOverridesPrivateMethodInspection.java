@@ -68,11 +68,6 @@ public class MethodOverridesPrivateMethodInspection extends BaseInspection {
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null){
-                return;
-            }
             PsiClass ancestorClass = aClass.getSuperClass();
             final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while(ancestorClass != null){

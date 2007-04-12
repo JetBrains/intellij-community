@@ -72,11 +72,12 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
                 }
                 final PsiParameterList parameterList =
                         constructor.getParameterList();
-                final PsiParameter[] parameters = parameterList.getParameters();
-                if (parameters.length == 0) {
+                final int parametersCount = parameterList.getParametersCount();
+                if (parametersCount == 0) {
                     hasNoArgConstructor = true;
                 }
-                if (parameters.length == 1) {
+                if (parametersCount == 1) {
+                    final PsiParameter[] parameters = parameterList.getParameters();
                     final PsiType type = parameters[0].getType();
                     if (TypeUtils.typeEquals("java.lang.String", type)) {
                         hasStringConstructor = true;

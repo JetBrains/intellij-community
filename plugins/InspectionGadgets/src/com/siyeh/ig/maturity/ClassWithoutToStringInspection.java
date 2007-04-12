@@ -62,10 +62,9 @@ public class ClassWithoutToStringInspection extends BaseInspection {
             final PsiMethod[] methods = aClass.getMethods();
             for(final PsiMethod method : methods){
                 final String methodName = method.getName();
-                final PsiParameterList paramList = method.getParameterList();
-                final PsiParameter[] parameters = paramList.getParameters();
+                final PsiParameterList parameterList = method.getParameterList();
                 if(HardcodedMethodConstants.TO_STRING.equals(methodName) &&
-                        parameters.length == 0){
+                        parameterList.getParametersCount() == 0){
                     return;
                 }
             }

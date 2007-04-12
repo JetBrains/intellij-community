@@ -135,11 +135,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             }
             final PsiParameterList parameterList =
                     constructor.getParameterList();
-            final PsiParameter[] args = parameterList.getParameters();
-            if (args.length != 1) {
+            if (parameterList.getParametersCount() != 1) {
                 return;
             }
-            final PsiParameter arg = args[0];
+            final PsiParameter[] parameters = parameterList.getParameters();
+            final PsiParameter arg = parameters[0];
             final PsiType argumentType = arg.getType();
             final String argumentTypeText = argumentType.getCanonicalText();
             final String boxableConstructorType =

@@ -167,9 +167,8 @@ public class ObjectToStringInspection extends BaseInspection {
             if(!HardcodedMethodConstants.TO_STRING.equals(methodName)){
                 return false;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] params = paramList.getParameters();
-            return params.length == 0;
+            final PsiParameterList parameterList = method.getParameterList();
+            return parameterList.getParametersCount() == 0;
         }
     }
 }

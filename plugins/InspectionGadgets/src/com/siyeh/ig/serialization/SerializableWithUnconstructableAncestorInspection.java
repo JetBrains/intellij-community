@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -92,8 +91,9 @@ public class SerializableWithUnconstructableAncestorInspection
             for (final PsiMethod method : methods) {
                 if (method.isConstructor()) {
                     hasConstructor = true;
-                    final PsiParameterList params = method.getParameterList();
-                    if (params.getParametersCount() == 0 &&
+                    final PsiParameterList parameterList =
+                            method.getParameterList();
+                    if (parameterList.getParametersCount() == 0 &&
                             (method.hasModifierProperty(PsiModifier.PUBLIC) ||
                                     method.hasModifierProperty(
                                             PsiModifier.PROTECTED))) {

@@ -85,10 +85,10 @@ public class MethodUtils{
         }
         if (parameterTypes != null) {
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length != parameterTypes.length) {
+            if (parameterList.getParametersCount() != parameterTypes.length) {
                 return false;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             for (int i = 0; i < parameters.length; i++) {
                 final PsiParameter parameter = parameters[i];
                 final PsiType type = parameter.getType();
@@ -193,8 +193,7 @@ public class MethodUtils{
             return null;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 0){
+        if (parameterList.getParametersCount() != 0){
             return null;
         }
         @NonNls final String name = method.getName();
@@ -267,8 +266,7 @@ public class MethodUtils{
             return null;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 1){
+        if (parameterList.getParametersCount() != 1){
             return null;
         }
         @NonNls final String name = method.getName();

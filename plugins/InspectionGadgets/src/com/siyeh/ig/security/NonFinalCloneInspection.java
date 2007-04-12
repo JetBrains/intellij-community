@@ -48,8 +48,7 @@ public class NonFinalCloneInspection extends BaseInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length != 0) {
+            if (parameterList.getParametersCount() != 0) {
                 return;
             }
             if (method.hasModifierProperty(PsiModifier.FINAL)
