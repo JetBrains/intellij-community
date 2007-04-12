@@ -4,48 +4,46 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.wm.WindowManager;
 
 
 public class SynchronizeCurrentFileAction extends AnAction {
 
   public void update(AnActionEvent e) {
-    final VirtualFile[] files = getFiles(e);
+    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 0) {
+      String message = getMessage(files);
       e.getPresentation().setEnabled(true);
-      if (files.length == 1) {
-        e.getPresentation().setText(IdeBundle.message("action.synchronize.file", files[0].getName()));
-      } else {
-        e.getPresentation().setText(IdeBundle.message("action.synchronize.selected.files"));
-      }
-    } else {
+      e.getPresentation().setText(message);
+    }
+    else {
       e.getPresentation().setEnabled(false);
     }
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final VirtualFile[] files = getFiles(e);
-
-    final Project project = getProject(e);
-    for (VirtualFile file : files) {
-      if (file.isDirectory()) {
-        final int response = Messages.showYesNoDialog(project,
-                                                      IdeBundle.message("prompt.recursively.synchronize.directory"),
-                                                      IdeBundle.message("title.synchronize.files"),
-                                                      Messages.getQuestionIcon());
-        if (response == 1) {
-          return;
-        }
-      }
+  private static String getMessage(final VirtualFile[] files) {
+    String message;
+    if (files.length == 1) {
+      message = IdeBundle.message("action.synchronize.file", files[0].getName());
     }
+    else {
+      message = IdeBundle.message("action.synchronize.selected.files");
+    }
+    return message;
+  }
+
+  public void actionPerformed(final AnActionEvent e) {
+    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+
+    final Project project = e.getData(DataKeys.PROJECT);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -59,13 +57,7 @@ public class SynchronizeCurrentFileAction extends AnAction {
     for (VirtualFile file : files) {
       statusManager.fileStatusChanged(file);
     }
-  }
-
-  private static Project getProject(AnActionEvent event) {
-    return (Project)event.getDataContext().getData(DataConstants.PROJECT);
-  }
-
-  private static VirtualFile[] getFiles(final AnActionEvent e) {
-    return (VirtualFile[])e.getDataContext().getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
+    WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 }
