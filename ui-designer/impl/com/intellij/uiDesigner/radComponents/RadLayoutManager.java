@@ -6,6 +6,9 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -36,6 +39,7 @@ public abstract class RadLayoutManager {
   }
 
   public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    ensureChildrenVisible(container);    
     container.setLayoutManager(this);
   }
 
@@ -104,5 +108,17 @@ public abstract class RadLayoutManager {
   }
 
   public void moveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+  }
+
+  protected static void ensureChildrenVisible(final RadContainer container) {
+    if (container.getLayoutManager().areChildrenExclusive()) {
+      // ensure that components which were hidden by previous layout are visible (IDEADEV-16077)
+      for(RadComponent child: container.getComponents()) {
+        final IProperty property = FormInspectionUtil.findProperty(child, SwingProperties.VISIBLE);
+        if (property == null || property.getPropertyValue(child) == Boolean.TRUE) {
+          child.getDelegee().setVisible(true);
+        }
+      }
+    }
   }
 }

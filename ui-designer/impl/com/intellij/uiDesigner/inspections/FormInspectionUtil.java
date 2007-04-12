@@ -59,6 +59,7 @@ public class FormInspectionUtil {
     return null;
   }
 
+  @Nullable
   public static IProperty findProperty(final IComponent component, final String name) {
     IProperty[] props = component.getModifiedProperties();
     for(IProperty prop: props) {

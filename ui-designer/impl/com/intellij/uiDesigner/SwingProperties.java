@@ -16,6 +16,7 @@ public class SwingProperties {
   @NonNls public static final String PREFERRED_SIZE = "preferredSize";
   @NonNls public static final String MINIMUM_SIZE = "minimumSize";
   @NonNls public static final String MAXIMUM_SIZE = "maximumSize";
+  @NonNls public static final String VISIBLE = "visible";
 
   private SwingProperties() {
   }
