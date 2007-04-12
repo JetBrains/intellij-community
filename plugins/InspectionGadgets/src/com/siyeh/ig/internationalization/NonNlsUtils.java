@@ -1,0 +1,125 @@
+/*
+ * Copyright 2007 Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.siyeh.ig.internationalization;
+
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.codeInsight.AnnotationUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class NonNlsUtils {
+
+    private NonNlsUtils() {
+    }
+
+    public static boolean isNonNlsAnnotated(@Nullable PsiExpression expression) {
+        if (expression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) expression;
+            return isReferenceToNonNlsAnnotatedElement(referenceExpression);
+        } else if (expression instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            return isNonNlsAnnotatedModifierListOwner(method);
+        }
+        return false;
+    }
+
+    public static boolean isNonNlsAnnotatedUse(
+            @Nullable PsiExpression expression) {
+        final PsiElement element =
+                PsiTreeUtil.getParentOfType(expression,
+                        PsiExpressionList.class,
+                        PsiAssignmentExpression.class,
+                        PsiVariable.class);
+        if (element instanceof PsiExpressionList) {
+            final PsiExpressionList expressionList = (PsiExpressionList) element;
+            return isNonNlsAnnotatedParameter(expression, expressionList);
+        } else if (element instanceof PsiVariable) {
+            final PsiVariable variable = (PsiVariable) element;
+            return isNonNlsAnnotatedModifierListOwner(variable);
+        } else if (element instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression) element;
+            return isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
+        }
+        return false;
+    }
+
+    private static boolean isAssignmentToNonNlsAnnotatedVariable(
+            PsiAssignmentExpression assignmentExpression) {
+        final PsiExpression lhs = assignmentExpression.getLExpression();
+        if (!(lhs instanceof PsiReferenceExpression)) {
+            return false;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) lhs;
+        return isReferenceToNonNlsAnnotatedElement(referenceExpression);
+    }
+
+    private static boolean isReferenceToNonNlsAnnotatedElement(
+            PsiReferenceExpression referenceExpression) {
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiModifierListOwner)) {
+            return false;
+        }
+        final PsiModifierListOwner variable = (PsiModifierListOwner) target;
+        return isNonNlsAnnotatedModifierListOwner(variable);
+    }
+
+    private static boolean isNonNlsAnnotatedParameter(
+            PsiExpression expression,
+            PsiExpressionList expressionList) {
+        final PsiElement parent = expressionList.getParent();
+        if (!(parent instanceof PsiMethodCallExpression)) {
+            return false;
+        }
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) parent;
+        final PsiExpression[] expressions = expressionList.getExpressions();
+        int index = -1;
+        for (int i = 0; i < expressions.length; i++) {
+            final PsiExpression argument = expressions[i];
+            if (argument.equals(expression)) {
+                index = i;
+            }
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        final PsiParameter parameter;
+        if (index < parameters.length) {
+            parameter = parameters[index];
+        } else {
+            parameter = parameters[parameters.length - 1];
+        }
+        return isNonNlsAnnotatedModifierListOwner(parameter);
+    }
+
+    private static boolean isNonNlsAnnotatedModifierListOwner(
+            @NotNull PsiModifierListOwner variable) {
+        return AnnotationUtil.isAnnotated(variable,
+                AnnotationUtil.NON_NLS, false);
+    }
+}

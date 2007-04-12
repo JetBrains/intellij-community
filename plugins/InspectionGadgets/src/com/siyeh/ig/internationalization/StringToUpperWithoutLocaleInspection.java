@@ -62,7 +62,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
 
     private static class StringToUpperWithoutLocaleVisitor
             extends BaseInspectionVisitor {
-     
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -73,13 +73,15 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
                     !HardcodedMethodConstants.TO_LOWER_CASE.equals(methodName)) {
                 return;
             }
+            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+                return;
+            }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length == 1) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParametersCount() == 1) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
@@ -92,7 +94,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+            if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
                 return;
             }
             registerMethodCallError(expression);

@@ -72,6 +72,9 @@ public class MagicCharacterInspection extends BaseInspection {
             if (isDeclaredConstant(expression)) {
                 return;
             }
+            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+                return;
+            }
             registerError(expression);
         }
 

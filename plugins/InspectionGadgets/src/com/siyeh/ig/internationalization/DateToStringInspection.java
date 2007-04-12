@@ -50,13 +50,13 @@ public class DateToStringInspection extends BaseInspection {
     }
 
     private static class DateToStringVisitor extends BaseInspectionVisitor {
-      
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
             if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-              return;
+                return;
             }
             final PsiType targetType = MethodCallUtils.getTargetType(expression);
             if (!TypeUtils.typeEquals("java.util.Date", targetType)) {
@@ -64,6 +64,9 @@ public class DateToStringInspection extends BaseInspection {
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
             if (argumentList.getExpressions().length != 0) {
+                return;
+            }
+            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
             registerMethodCallError(expression);

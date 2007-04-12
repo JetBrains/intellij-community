@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,8 +56,8 @@ public class StringConcatenationInspection extends BaseInspection {
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(CodeInsightBundle.message(
-                "inspection.i18n.option.ignore.assert"),
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "string.concatenation.ignore.assert.option"),
                 "ignoreAsserts");
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "string.concatenation.ignore.system.out.option"),
@@ -79,7 +78,8 @@ public class StringConcatenationInspection extends BaseInspection {
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)) {
+            final PsiExpression rhs = expression.getROperand();
+            if(rhs == null) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -89,13 +89,13 @@ public class StringConcatenationInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiType lhsType = lhs.getType();
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs == null) {
-                return;
-            }
             final PsiType rhsType = rhs.getType();
             if(!TypeUtils.isJavaLangString(lhsType) &&
                !TypeUtils.isJavaLangString(rhsType)){
+                return;
+            }
+            if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
+                    NonNlsUtils.isNonNlsAnnotated(rhs)) {
                 return;
             }
             final PsiElement element =
@@ -123,6 +123,10 @@ public class StringConcatenationInspection extends BaseInspection {
                         "System.err.print".equals(canonicalText)) {
                     return;
                 }
+
+            }
+            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+                return;
             }
             registerError(sign);
         }

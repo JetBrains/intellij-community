@@ -90,11 +90,11 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
             if (method == null) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 1) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParametersCount() != 1) {
                 return;
             }
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType = parameters[0].getType();
             if (!TypeUtils.isJavaLangString(parameterType)) {
                 return;
@@ -109,7 +109,7 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+            if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -117,7 +117,7 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
             if (arguments.length != 1) {
                 return;
             }
-            if (InternationalizationUtil.isNonNlsAnnotated(arguments[0])) {
+            if (NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
             registerMethodCallError(expression);

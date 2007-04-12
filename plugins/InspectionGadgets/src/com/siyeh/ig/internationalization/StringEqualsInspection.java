@@ -103,7 +103,7 @@ public class StringEqualsInspection extends BaseInspection {
                     expression.getMethodExpression();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+            if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -111,7 +111,7 @@ public class StringEqualsInspection extends BaseInspection {
             if (arguments.length != 1) {
                 return;
             }
-            if (InternationalizationUtil.isNonNlsAnnotated(arguments[0])) {
+            if (NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
             registerMethodCallError(expression);

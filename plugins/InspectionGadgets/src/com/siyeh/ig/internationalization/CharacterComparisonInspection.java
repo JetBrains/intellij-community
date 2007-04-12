@@ -54,7 +54,8 @@ public class CharacterComparisonInspection extends BaseInspection {
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            final PsiExpression rhs = expression.getROperand();
+            if(!(rhs != null)){
                 return;
             }
             if(!ComparisonUtils.isComparison(expression)){
@@ -67,9 +68,11 @@ public class CharacterComparisonInspection extends BaseInspection {
             if (!isCharacter(lhs)) {
                 return;
             }
-            final PsiExpression rhs = expression.getROperand();
-
             if (!isCharacter(rhs)) {
+                return;
+            }
+            if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
+                NonNlsUtils.isNonNlsAnnotated(rhs)) {
                 return;
             }
             registerError(expression);

@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NumericToStringInspection extends BaseInspection {
-    
+
     @NotNull
     public String getID(){
         return "CallToNumericToString";
@@ -61,9 +61,8 @@ public class NumericToStringInspection extends BaseInspection {
             if(method == null){
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if(parameters.length != 0){
+            final PsiParameterList parameterList = method.getParameterList();
+            if(parameterList.getParametersCount() != 0){
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
@@ -72,6 +71,9 @@ public class NumericToStringInspection extends BaseInspection {
             }
             final String className = aClass.getQualifiedName();
             if(!TypeConversionUtil.isPrimitiveWrapper(className)){
+                return;
+            }
+            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
             registerMethodCallError(expression);

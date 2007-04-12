@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -61,7 +59,31 @@ public class StringTokenizerInspection extends BaseInspection {
             if (typeElement == null) {
                 return;
             }
+            final PsiExpression initializer = variable.getInitializer();
+            if (isTokenizingNonNlsAnnotatedElement(initializer)) {
+                return;
+            }
             registerError(typeElement);
+        }
+
+        private static boolean isTokenizingNonNlsAnnotatedElement(
+                PsiExpression initializer) {
+            if (!(initializer instanceof PsiNewExpression)) {
+                return false;
+            }
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression) initializer;
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if (argumentList == null) {
+                return false;
+            }
+            final PsiExpression[] expressions =
+                    argumentList.getExpressions();
+            if (expressions.length <= 0) {
+                return false;
+            }
+            return NonNlsUtils.isNonNlsAnnotated(expressions[0]);
         }
     }
 }

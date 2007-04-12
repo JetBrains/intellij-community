@@ -15,19 +15,18 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class StringCompareToInspection extends BaseInspection {
 
@@ -86,7 +85,7 @@ public class StringCompareToInspection extends BaseInspection {
                     expression.getMethodExpression();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+            if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -94,7 +93,7 @@ public class StringCompareToInspection extends BaseInspection {
             if (arguments.length != 1) {
                 return;
             }
-            if (InternationalizationUtil.isNonNlsAnnotated(arguments[0])) {
+            if (NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
             registerMethodCallError(expression);
@@ -109,8 +108,8 @@ public class StringCompareToInspection extends BaseInspection {
             if (!MethodUtils.isCompareTo(method)) {
                 return false;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType = parameters[0].getType();
             if (!TypeUtils.isJavaLangObject(parameterType) &&
                     !TypeUtils.isJavaLangString(parameterType)) {
