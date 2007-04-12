@@ -169,6 +169,51 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     };
   }
 
+  public boolean canMoveComponent(final RadComponent c, final int rowDelta, final int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    if (rowSpanDelta != 0 || colSpanDelta != 0) {
+      return false;
+    }
+    String side = (String) c.getCustomLayoutConstraints();
+    String adjSide = getAdjacentSide(side, rowDelta, colDelta);
+    return adjSide != null && c.getParent().findComponentWithConstraints(adjSide) == null;
+  }
+
+  public void moveComponent(final RadComponent c, final int rowDelta, final int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    String side = (String) c.getCustomLayoutConstraints();
+    String adjSide = getAdjacentSide(side, rowDelta, colDelta);
+    if (adjSide != null) {
+      c.changeCustomLayoutConstraints(adjSide);
+    }
+  }
+
+  @Nullable
+  private static String getAdjacentSide(final String side, final int rowDelta, final int colDelta) {
+    if (rowDelta == -1 && colDelta == 0) {
+      return getAdjacentSide(side, BorderLayout.NORTH, BorderLayout.SOUTH);
+    }
+    if (rowDelta == 1 && colDelta == 0) {
+      return getAdjacentSide(side, BorderLayout.SOUTH, BorderLayout.NORTH);
+    }
+    if (rowDelta == 0 && colDelta == -1) {
+      return getAdjacentSide(side, BorderLayout.WEST, BorderLayout.EAST);
+    }
+    if (rowDelta == 0 && colDelta == 1) {
+      return getAdjacentSide(side, BorderLayout.EAST, BorderLayout.WEST);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getAdjacentSide(final String side, final String toEdge, final String fromEdge) {
+    if (side.equals(toEdge)) {
+      return null;
+    }
+    if (side.equals(fromEdge)) {
+      return BorderLayout.CENTER;
+    }
+    return toEdge;
+  }
+
   @Override public void createSnapshotLayout(final SnapshotContext context,
                                              final JComponent parent,
                                              final RadContainer container,
@@ -257,6 +302,24 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
+      String side = null;
+      switch (direction) {
+        case LEFT:
+          side = getAdjacentSide(myQuadrant, 0, -1);
+          break;
+        case UP:
+          side = getAdjacentSide(myQuadrant, -1, 0);
+          break;
+        case RIGHT:
+          side = getAdjacentSide(myQuadrant, 0, 1);
+          break;
+        case DOWN:
+          side = getAdjacentSide(myQuadrant, 1, 0);
+          break;
+      }
+      if (side != null) {
+        return new MyDropLocation(myContainer, side);
+      }
       return null;
     }
   }
