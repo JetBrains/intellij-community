@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.revisions.Difference;
+import com.intellij.localvcs.core.storage.UnavailableContent;
 import com.intellij.localvcs.core.tree.DirectoryEntry;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.FileEntry;
@@ -65,8 +66,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanShowFileDifference() {
-    Entry left = new FileEntry(-1, "left", null, -1);
-    Entry right = new FileEntry(-1, "right", null, -1);
+    Entry left = new FileEntry(-1, "left", c(""), -1);
+    Entry right = new FileEntry(-1, "right", c(""), -1);
 
     Difference d1 = new Difference(true, null, left, right);
     Difference d2 = new Difference(true, null, null, right);
@@ -84,6 +85,18 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
     Difference d = new Difference(false, null, left, right);
     assertFalse(new DirectoryDifferenceModel(d).canShowFileDifference());
+  }
+
+  @Test
+  public void testCantShowDifferenceIfOneOfFileHasUnavailableContent() {
+    Entry e1 = new FileEntry(-1, "one", c("abc"), -1);
+    Entry e2 = new FileEntry(-1, "two", new UnavailableContent(), -1);
+
+    Difference d1 = new Difference(true, null, e1, e2);
+    Difference d2 = new Difference(true, null, e2, e1);
+
+    assertFalse(new DirectoryDifferenceModel(d1).canShowFileDifference());
+    assertFalse(new DirectoryDifferenceModel(d2).canShowFileDifference());
   }
 
   @Test

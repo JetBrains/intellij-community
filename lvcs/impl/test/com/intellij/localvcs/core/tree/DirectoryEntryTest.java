@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Difference;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.*;
+import com.intellij.localvcs.core.storage.UnavailableContent;
 import org.junit.Test;
 
 import java.util.List;
@@ -201,6 +202,22 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     Entry e = new DirectoryEntry(-1, "name");
     e.changeName("new name");
     assertEquals("new name", e.getName());
+  }
+
+  @Test
+  public void testHasUnavailableContent() {
+    Entry dir = new DirectoryEntry(-1, "dir");
+    assertFalse(dir.hasUnavailableContent());
+
+    dir.addChild(new FileEntry(1, "f", c("abc"), -1));
+    assertFalse(dir.hasUnavailableContent());
+
+    DirectoryEntry subDir = new DirectoryEntry(-1, "subDir");
+    subDir.addChild(new FileEntry(1, "f", new UnavailableContent(), -1));
+    dir.addChild(subDir);
+
+    assertTrue(dir.hasUnavailableContent());
+    assertTrue(subDir.hasUnavailableContent());
   }
 
   @Test

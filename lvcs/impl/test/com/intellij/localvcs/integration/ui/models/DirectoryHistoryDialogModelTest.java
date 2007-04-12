@@ -5,6 +5,7 @@ import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.CREATED;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.NOT_MODIFIED;
+import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import org.junit.Test;
 
@@ -28,10 +29,10 @@ public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     initModelFor("dir");
 
-    assertEquals(1, this.m.getRevisions().size());
+    assertEquals(1, m.getRevisions().size());
 
-    this.m.selectRevisions(0, 0);
-    DirectoryDifferenceModel nm = this.m.getRootDifferenceNodeModel();
+    m.selectRevisions(0, 0);
+    DirectoryDifferenceModel nm = m.getRootDifferenceNodeModel();
 
     assertEquals(NOT_MODIFIED, nm.getDifferenceKind());
     assertEquals(0, nm.getChildren().size());
@@ -55,6 +56,6 @@ public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   private void initModelFor(String path) {
-    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path), vcs, null);
+    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path), vcs, new TestIdeaGateway());
   }
 }

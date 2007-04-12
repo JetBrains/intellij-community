@@ -67,7 +67,10 @@ public class DirectoryDifferenceModel {
 
   public boolean canShowFileDifference() {
     if (!isFile()) return false;
-    return getEntry(0) != null && getEntry(1) != null;
+    if (getEntry(0) == null || getEntry(1) == null) return false;
+    if (getEntry(0).hasUnavailableContent()) return false;
+    if (getEntry(1).hasUnavailableContent()) return false;
+    return true;
   }
 
   public boolean revert(IdeaGateway gw, Revision r) {

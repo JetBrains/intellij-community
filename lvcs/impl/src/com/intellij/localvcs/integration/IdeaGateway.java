@@ -1,5 +1,7 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.Clock;
+import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -93,16 +95,19 @@ public class IdeaGateway {
     return getFileSystem().physicalContentsToByteArray(f);
   }
 
-  public byte[] getDocumentByteContent(VirtualFile f) {
-    // todo review charset conversion
-    return getDocManager().getDocument(f).getText().getBytes();
+  public void registerUnsavedDocuments(ILocalVcs vcs) {
+    for (Document d : getUnsavedDocuments()) {
+      VirtualFile f = getDocumentFile(d);
+      if (!getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
+      vcs.changeFileContent(f.getPath(), d.getText().getBytes(), Clock.getCurrentTimestamp());
+    }
   }
 
-  public Document[] getUnsavedDocuments() {
+  protected Document[] getUnsavedDocuments() {
     return getDocManager().getUnsavedDocuments();
   }
 
-  public VirtualFile getDocumentFile(Document d) {
+  protected VirtualFile getDocumentFile(Document d) {
     return getDocManager().getFile(d);
   }
 

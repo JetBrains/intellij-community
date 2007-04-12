@@ -5,12 +5,13 @@ import com.intellij.util.containers.IntObjectCache;
 import java.io.IOException;
 
 public class CachingContentStorage implements IContentStorage {
+  public static final int MAX_CACHED_CONTENT_LENGTH = 100 * 1024;
+
   private IContentStorage mySubject;
-  private IntObjectCache<byte[]> myCache;
+  private IntObjectCache<byte[]> myCache = new IntObjectCache<byte[]>(50);
 
   public CachingContentStorage(IContentStorage s) {
     mySubject = s;
-    myCache = new IntObjectCache<byte[]>(200);
   }
 
   public void close() {
@@ -23,7 +24,7 @@ public class CachingContentStorage implements IContentStorage {
 
   public int store(byte[] content) throws IOException {
     int id = mySubject.store(content);
-    myCache.cacheObject(id, content);
+    cacheContent(content, id);
     return id;
   }
 
@@ -32,7 +33,7 @@ public class CachingContentStorage implements IContentStorage {
     if (result != null) return result;
 
     result = mySubject.load(id);
-    myCache.cacheObject(id, result);
+    cacheContent(result, id);
     return result;
   }
 
@@ -47,5 +48,10 @@ public class CachingContentStorage implements IContentStorage {
 
   public boolean isRemoved(int id) {
     return mySubject.isRemoved(id);
+  }
+
+  private void cacheContent(byte[] content, int id) {
+    if (content.length > MAX_CACHED_CONTENT_LENGTH) return;
+    myCache.cacheObject(id, content);
   }
 }

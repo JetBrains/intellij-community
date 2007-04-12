@@ -1,10 +1,11 @@
 package com.intellij.localvcs.integration.ui.models;
 
-import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.storage.IContentStorage;
+import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
@@ -14,20 +15,21 @@ import java.util.List;
 
 public class HistoryDialogModelTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
+  TestIdeaGateway gw = new TestIdeaGateway();
   HistoryDialogModel m;
 
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    vcs.createFile("f", b(""), -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, -1);
+    vcs.changeFileContent("f", b(""), -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, -1);
+    vcs.changeFileContent("f", b(""), -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -48,8 +50,21 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertEquals(3, m.getRevisions().size());
 
     vcs.changeFileContent("f", null, -1);
-
     assertEquals(3, m.getRevisions().size());
+  }
+
+  @Test
+  public void testRegisteringUnsavedDocumentsBeforeBuildingRevisionsList() {
+    gw.addUnsavedDocument("f", "unsaved");
+    initModelFor("f");
+
+    List<Revision> rr = m.getRevisions();
+    assertEquals(4, rr.size());
+    assertEquals(c("unsaved"), rr.get(0).getEntry().getContent());
+
+    rr = vcs.getRevisionsFor("f");
+    assertEquals(4, rr.size());
+    assertEquals(c("unsaved"), rr.get(0).getEntry().getContent());
   }
 
   @Test
@@ -105,14 +120,18 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertFalse(m.canRevert());
   }
 
-  private void initModelFor(String name) {
-    VirtualFile f = new TestVirtualFile(name, null, -1);
-    m = new MyHistoryDialogModel(f, vcs);
+  @Test
+  public void testCantRevertIfRevisionHasUnavailableContent() {
+    vcs.changeFileContent("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+    vcs.changeFileContent("f", b("current"), -1);
+
+    m.selectRevisions(1, 1);
+    assertFalse(m.canRevert());
   }
 
-  private class MyHistoryDialogModel extends HistoryDialogModel {
-    public MyHistoryDialogModel(VirtualFile f, ILocalVcs vcs) {
-      super(f, vcs, null);
-    }
+  private void initModelFor(String name) {
+    VirtualFile f = new TestVirtualFile(name, null, -1);
+    m = new HistoryDialogModel(f, vcs, gw) {
+    };
   }
 }

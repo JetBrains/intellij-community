@@ -41,6 +41,11 @@ public class FileEntry extends Entry {
   }
 
   @Override
+  public boolean hasUnavailableContent() {
+    return !myContent.isAvailable();
+  }
+
+  @Override
   public FileEntry copy() {
     return new FileEntry(myId, myName, myContent, myTimestamp);
   }

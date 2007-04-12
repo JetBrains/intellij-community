@@ -4,16 +4,20 @@ import com.intellij.localvcs.core.LocalVcsTestCase;
 import org.junit.Test;
 
 public class UnavailableContentTest extends LocalVcsTestCase {
-  @Test
-  public void testContentAndLength() {
-    assertEquals("content is not available", new String(new UnavailableContent().getBytes()));
-    assertEquals(0, new UnavailableContent().getLength());
+  @Test(expected = RuntimeException.class)
+  public void testContentThrowsException() {
+    new UnavailableContent().getBytes();
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testLengthThrowsException() {
+    new UnavailableContent().getLength();
   }
 
   @Test
   public void testDoesNotEqualToAnyOtherContent() {
     final UnavailableContent u = new UnavailableContent();
-    ByteContent b = new ByteContent(u.getBytes());
+    ByteContent b = new ByteContent(b(""));
 
     assertFalse(u.equals(b));
     assertFalse(b.equals(u));

@@ -70,6 +70,10 @@ public abstract class Entry {
     throw new UnsupportedOperationException();
   }
 
+  public boolean hasUnavailableContent() {
+    return false;
+  }
+
   public DirectoryEntry getParent() {
     return myParent;
   }

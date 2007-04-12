@@ -17,12 +17,12 @@ public class UnavailableContent extends Content {
 
   @Override
   public byte[] getBytes() {
-    return "content is not available".getBytes();
+    throw new RuntimeException();
   }
 
   @Override
   public int getLength() {
-    return 0;
+    throw new RuntimeException();
   }
 
   @Override

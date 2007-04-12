@@ -4,6 +4,8 @@ import com.intellij.localvcs.core.LocalVcsTestCase;
 import static org.easymock.EasyMock.*;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class CachingContentStorageTest extends LocalVcsTestCase {
   IContentStorage subject = createMock(IContentStorage.class);
   IContentStorage s = new CachingContentStorage(subject);
@@ -41,6 +43,18 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
     assertEquals(b("content"), s.load(1));
     s.remove(1);
     assertEquals(b("content"), s.load(1));
+
+    verify(subject);
+  }
+
+  @Test
+  public void testDoesNotCacheBigContent() throws IOException {
+    byte[] b = new byte[CachingContentStorage.MAX_CACHED_CONTENT_LENGTH + 1];
+    expect(subject.load(1)).andReturn(b).times(2);
+    replay(subject);
+
+    s.load(1);
+    s.load(1);
 
     verify(subject);
   }

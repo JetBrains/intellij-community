@@ -4,7 +4,7 @@ import java.io.IOException;
 
 // todo get rid of isRemoved()
 public interface IContentStorage {
-  int MAX_CONTENT_LENGTH = 100 * 1024;
+  int MAX_CONTENT_LENGTH = 1024 * 1024;
 
   void close();
 

@@ -7,7 +7,6 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
@@ -30,12 +29,8 @@ public abstract class HistoryDialogModel {
   }
 
   private void initRevisionsCache() {
-    myRevisionsCache = new ArrayList<Revision>();
-    addNotSavedVersionTo(myRevisionsCache);
-    myRevisionsCache.addAll(myVcs.getRevisionsFor(myFile.getPath()));
-  }
-
-  protected void addNotSavedVersionTo(List<Revision> rr) {
+    myGateway.registerUnsavedDocuments(myVcs);
+    myRevisionsCache = myVcs.getRevisionsFor(myFile.getPath());
   }
 
   protected Revision getLeftRevision() {
@@ -70,6 +65,7 @@ public abstract class HistoryDialogModel {
   }
 
   public boolean canRevert() {
-    return myLeftRevision > 0 && myRightRevision == 0;
+    if (myRightRevision != 0 || myLeftRevision == 0) return false;
+    return !getLeftEntry().hasUnavailableContent();
   }
 }

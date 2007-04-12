@@ -4,9 +4,19 @@ import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Difference;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.*;
+import com.intellij.localvcs.core.storage.UnavailableContent;
 import org.junit.Test;
 
 public class FileEntryTest extends LocalVcsTestCase {
+  @Test
+  public void testHasUnavailableContent() {
+    Entry e1 = new FileEntry(1, null, c("abc"), -1);
+    Entry e2 = new FileEntry(2, null, new UnavailableContent(), -1);
+
+    assertFalse(e1.hasUnavailableContent());
+    assertTrue(e2.hasUnavailableContent());
+  }
+
   @Test
   public void testCopying() {
     FileEntry file = new FileEntry(33, "name", c("content"), 123L);

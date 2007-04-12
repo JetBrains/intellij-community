@@ -12,7 +12,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     vcs.createFile("file", b("old"), 123L);
 
     Clock.setCurrentTimestamp(456);
-    gateway.addUnsavedDocument("file", "new", -1);
+    gateway.addUnsavedDocument("file", "new");
 
     l.startAction(null);
 
@@ -30,8 +30,8 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
-    gateway.addUnsavedDocument("dir/one", "one", -1);
-    gateway.addUnsavedDocument("dir/two", "two", -1);
+    gateway.addUnsavedDocument("dir/one", "one");
+    gateway.addUnsavedDocument("dir/two", "two");
     l.startAction(null);
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
@@ -41,7 +41,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
     vcs.createFile("f", b("one"), -1);
 
-    gateway.addUnsavedDocument("f", "two", -1);
+    gateway.addUnsavedDocument("f", "two");
     l.startAction(null);
     vcs.changeFileContent("f", b("three"), -1);
     l.finishAction();
@@ -55,7 +55,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     l.startAction(null);
 
     Clock.setCurrentTimestamp(789);
-    gateway.addUnsavedDocument("file", "new", -1);
+    gateway.addUnsavedDocument("file", "new");
 
     l.finishAction();
 
@@ -76,26 +76,11 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     l.startAction(null);
     vcs.createFile("dir/three", null, -1);
 
-    gateway.addUnsavedDocument("dir/one", "one", -1);
-    gateway.addUnsavedDocument("dir/two", "two", -1);
+    gateway.addUnsavedDocument("dir/one", "one");
+    gateway.addUnsavedDocument("dir/two", "two");
     l.finishAction();
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
-  }
-
-  @Test
-  public void testFilteringDocuments() {
-    TestFileFilter ff = new TestFileFilter();
-    gateway.setFileFilter(ff);
-
-    vcs.createFile("f", b("old"), -1);
-
-    TestVirtualFile f = new TestVirtualFile("f", "new", -1);
-    ff.setFilesNotUnderContentRoot(f);
-
-    l.startAction(null);
-
-    assertEquals(c("old"), vcs.getEntry("f").getContent());
   }
 
   @Test
@@ -113,11 +98,11 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
 
     l.commandStarted(createCommandEvent("command"));
     vcs.changeFileContent("f", b("2"), -1);
-    gateway.addUnsavedDocument("f", "3", -1);
+    gateway.addUnsavedDocument("f", "3");
 
     l.startAction("action");
     vcs.changeFileContent("f", b("4"), -1);
-    gateway.addUnsavedDocument("f", "5", -1);
+    gateway.addUnsavedDocument("f", "5");
     l.finishAction();
 
     vcs.changeFileContent("f", b("6"), -1);

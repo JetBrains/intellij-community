@@ -80,6 +80,14 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
+  public boolean hasUnavailableContent() {
+    for (Entry e : myChildren) {
+      if (e.hasUnavailableContent()) return true;
+    }
+    return false;
+  }
+
+  @Override
   public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     for (Entry child : myChildren) {

@@ -66,8 +66,8 @@ public class TestIdeaGateway extends IdeaGateway {
     return myUnsavedDocuments.toArray(new Document[0]);
   }
 
-  public void addUnsavedDocument(String name, String content, long timestamp) {
-    MyDocument d = new MyDocument(name, content, timestamp);
+  public void addUnsavedDocument(String name, String content) {
+    MyDocument d = new MyDocument(name, content);
     myUnsavedDocuments.remove(d);
     myUnsavedDocuments.add(d);
   }
@@ -77,15 +77,23 @@ public class TestIdeaGateway extends IdeaGateway {
     return ((MyDocument)d).getFile();
   }
 
+  public VirtualFile[] getUnsavedDocumentFiles() {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (MyDocument d : myUnsavedDocuments) {
+      result.add(d.getFile());
+    }
+    return result.toArray(new VirtualFile[0]);
+  }
+
   private class MyDocument extends MockDocument {
     private String myName;
     private String myContent;
-    private long myTimestamp;
+    private VirtualFile myFile;
 
-    public MyDocument(String name, String content, long timestamp) {
+    public MyDocument(String name, String content) {
       myName = name;
       myContent = content;
-      myTimestamp = timestamp;
+      myFile = new TestVirtualFile(myName, null, -1);
     }
 
     @Override
@@ -94,7 +102,7 @@ public class TestIdeaGateway extends IdeaGateway {
     }
 
     public VirtualFile getFile() {
-      return new TestVirtualFile(myName, null, myTimestamp);
+      return myFile;
     }
 
     @Override

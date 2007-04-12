@@ -16,6 +16,11 @@ public class ByteContent extends Content {
   }
 
   @Override
+  public boolean isAvailable() {
+    return true;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o.getClass().equals(UnavailableContent.class)) return false;
     return Arrays.equals(myData, ((Content)o).getBytes());

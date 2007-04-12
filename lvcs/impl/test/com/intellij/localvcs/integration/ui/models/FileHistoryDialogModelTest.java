@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockEditorFactory;
@@ -11,50 +12,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.junit.Test;
 
-import java.util.Date;
 import java.util.List;
 
 public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   private TestLocalVcs vcs = new TestLocalVcs();
   private FileHistoryDialogModel m;
-
-  @Test
-  public void testIncludingUnsavedVersionInRevisions() {
-    vcs.beginChangeSet();
-    vcs.createFile("f", b("old"), -1);
-    vcs.endChangeSet("1");
-
-    initModelFor("f", "new");
-
-    List<Revision> rr = m.getRevisions();
-
-    assertEquals(2, rr.size());
-    assertEquals("not saved", rr.get(0).getName());
-    assertEquals("1", rr.get(1).getCauseAction());
-  }
-
-  @Test
-  public void testUnsavedVersionTimestampMemorizedTheModelCreationTime() {
-    setCurrentTimestamp(123);
-    vcs.createFile("f", b("old"), -1);
-
-    setCurrentTimestamp(456);
-    initModelFor("f", "new");
-
-    assertEquals(456L, m.getRevisions().get(0).getTimestamp());
-
-    setCurrentTimestamp(789);
-    assertEquals(456L, m.getRevisions().get(0).getTimestamp());
-  }
-
-  @Test
-  public void testDoesNotIncludeUnsavedVersionDifferentOnlyInLineSeparator() {
-    vcs.createFile("f", b("one\r\ntwo\r\n"), -1);
-
-    initModelFor("f", "one\ntwo\n");
-
-    assertEquals(1, m.getRevisions().size());
-  }
 
   @Test
   public void testRevisionsListAfterPurgeContainsCurrentVersion() {
@@ -70,6 +32,24 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
     assertEquals(1, rr.size());
     assertEquals(20L, rr.get(0).getTimestamp());
+  }
+
+  @Test
+  public void testCantShowDifferenceIfOneOfEntryHasUnavailableContent() {
+    vcs.createFile("f", b("abc"), -1);
+    vcs.changeFileContent("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+    vcs.changeFileContent("f", b("def"), -1);
+
+    initModelFor("f");
+
+    m.selectRevisions(0, 1);
+    assertFalse(m.canShowDifference());
+
+    m.selectRevisions(0, 2);
+    assertTrue(m.canShowDifference());
+
+    m.selectRevisions(1, 2);
+    assertFalse(m.canShowDifference());
   }
 
   @Test
@@ -105,30 +85,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     m.selectRevisions(1, 1);
 
     assertDifferenceModelContents("old", "new");
-  }
-
-  @Test
-  public void testContentsForUnsavedVersion() {
-    vcs.createFile("f", b("old"), -1);
-
-    initModelFor("f", "unsaved");
-    m.selectRevisions(0, 1);
-
-    assertDifferenceModelContents("old", "unsaved");
-  }
-
-  @Test
-  public void testTitlesForUnsavedEntry() {
-    vcs.createDirectory("dir");
-    vcs.createFile("dir/f", b("old"), -1);
-
-    setCurrentTimestamp(new Date(2003, 01, 01).getTime());
-    initModelFor("dir/f", "unsaved");
-    m.selectRevisions(0, 1);
-
-    FileDifferenceModel dm = m.getDifferenceModel();
-    assertEquals("dir/f", dm.getTitle());
-    assertEquals("01.02.03 0:00 - f", dm.getRightTitle());
   }
 
   private void assertDifferenceModelContents(String left, String right) {

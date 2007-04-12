@@ -17,7 +17,6 @@ public class TestVirtualFile extends VirtualFile {
   private String myName;
   private String myContent;
   private long myTimestamp;
-  //private Long myLength;
 
   private boolean myIsDirectory;
   private VirtualFile myParent;
@@ -28,16 +27,7 @@ public class TestVirtualFile extends VirtualFile {
     myContent = content;
     myTimestamp = timestamp;
     myIsDirectory = false;
-    //myLength = length;
   }
-
-  //public TestVirtualFile(String name, String content, Long timestamp, Long length) {
-  //  myName = name;
-  //  myContent = content;
-  //  myTimestamp = timestamp;
-  //  myIsDirectory = false;
-  //  myLength = length;
-  //}
 
   public TestVirtualFile(String name) {
     myName = name;
@@ -67,8 +57,6 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   public long getLength() {
-    //if (isDirectory()) throw new RuntimeException("getting length from directory!");
-    //return myLength == null ? 0 : myLength;
     throw new UnsupportedOperationException();
   }
 
