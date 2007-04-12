@@ -49,12 +49,18 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private PopupMenuListener myPopupListener;
   private JPopupMenu myActivePopup;
 
+  private boolean myHorizontalSide = true;
+
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
 
     myOwnGroup = new DefaultActionGroup();
-    myOwnGroup.add(new SelectNextAction());
-    myOwnGroup.add(new SelectPreviousAction());
+
+    if (myActionManager != null) {
+      myOwnGroup.add(new SelectNextAction());
+      myOwnGroup.add(new SelectPreviousAction());
+      myOwnGroup.add(new SwitchToolbar());
+    }
 
     UIUtil.addAwtListener(new AWTEventListener() {
       public void eventDispatched(final AWTEvent event) {
@@ -209,7 +215,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       if (group != null) {
         final String place = info.getPlace();
         final JComponent actionToolbar =
-          myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, true).getComponent();
+          myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myHorizontalSide).getComponent();
         add(actionToolbar, BorderLayout.CENTER);
       }
 
@@ -222,14 +228,26 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
   public void doLayout() {
     final JBTabs.Max max = computeMaxSize();
-    myHeaderFitSize = new Dimension(getSize().width, Math.max(max.myLabel.height, max.myToolbar.height));
+
+    myHeaderFitSize = new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
+
+    final TabInfo selected = getSelectedInfo();
+    final JComponent selectedToolbar = myInfo2Toolbar.get(selected);
+
+
     Insets insets = getInsets();
     if (insets == null) {
       insets = new Insets(0, 0, 0, 0);
     }
     int currentX = insets.left;
-    final TabInfo selected = getSelectedInfo();
+    int xAddin = 0;
+    if (!myHorizontalSide && selectedToolbar != null) {
+      xAddin = selectedToolbar.getPreferredSize().width + 1;
+    }
+
     mySelectedBounds = null;
+    final int yComp = myHeaderFitSize.height + insets.top;
+
     for (TabInfo eachInfo : myInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
       final Dimension eachSize = label.getPreferredSize();
@@ -238,8 +256,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
       final JComponent comp = eachInfo.getComponent();
       if (selected == eachInfo) {
-        comp.setBounds(insets.left + INNER, myHeaderFitSize.height + insets.top, getWidth() - insets.left - insets.right - INNER * 2,
-                       getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
+        comp.setBounds(insets.left + INNER + xAddin, yComp, getWidth() - insets.left - insets.right - INNER * 2 - xAddin,
+                         getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
         mySelectedBounds = label.getBounds();
       }
       else {
@@ -251,15 +269,18 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     }
 
-    final JComponent selectedToolbar = myInfo2Toolbar.get(selected);
     if (selectedToolbar != null) {
       final int toolbarInset = getArcSize() * 2;
-      if (currentX + selectedToolbar.getMinimumSize().width + toolbarInset < getWidth()) {
-        selectedToolbar.setBounds(currentX + toolbarInset, insets.top, getSize().width - currentX - insets.left - toolbarInset,
-                                  myHeaderFitSize.height - 1);
-      }
-      else {
-        selectedToolbar.setBounds(0, 0, 0, 0);
+      if (myHorizontalSide) {
+        if (currentX + selectedToolbar.getMinimumSize().width + toolbarInset < getWidth()) {
+          selectedToolbar.setBounds(currentX + toolbarInset, insets.top, getSize().width - currentX - insets.left - toolbarInset,
+                                    myHeaderFitSize.height - 1);
+        }
+        else {
+          selectedToolbar.setBounds(0, 0, 0, 0);
+        }
+      } else {
+        selectedToolbar.setBounds(insets.left + 1, yComp, selectedToolbar.getPreferredSize().width, getSize().height - yComp - insets.bottom - 1);
       }
     }
   }
@@ -295,7 +316,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     path.quadTo(rightX, topY, rightX, topY + arc);
     path.lineTo(rightX, bottomY - arc);
     path.quadTo(rightX, bottomY, rightX + arc, bottomY);
-    path.lineTo(getWidth() - insets.right, bottomY);
+    path.lineTo(getWidth() - insets.right - 1, bottomY);
     path.closePath();
 
     final Color from;
@@ -584,6 +605,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
+  private class SwitchToolbar extends ToggleAction {
+    public SwitchToolbar() {
+      super("Horizontal toolbar (experimental)");
+    }
+
+    public boolean isSelected(final AnActionEvent e) {
+      return myHorizontalSide;
+    }
+
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      setSideComponentVertical(!state);
+    }
+  }
+
   private class SelectPreviousAction extends BaseAction {
     public SelectPreviousAction() {
       super(IdeActions.ACTION_PREVIOUS_TAB);
@@ -605,6 +640,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
+  private void setSideComponentVertical(final boolean vertical) {
+    myHorizontalSide = !vertical;
+
+    for (TabInfo each : myInfos) {
+      each.getChangeSupport().firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2");
+    }
+
+    revalidate();
+    repaint();
+  }
+
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
@@ -620,13 +666,27 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     };
     frame.getContentPane().add(tabs, BorderLayout.CENTER);
+
+    JPanel south = new JPanel(new FlowLayout());
+
     final JCheckBox f = new JCheckBox("Focused");
     f.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         tabs.setFocused(f.isSelected());
       }
     });
-    frame.getContentPane().add(f, BorderLayout.SOUTH);
+    south.add(f);
+
+
+    final JCheckBox v = new JCheckBox("Vertical");
+    v.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setSideComponentVertical(v.isSelected());
+      }
+    });
+    south.add(v);
+
+    frame.getContentPane().add(south, BorderLayout.SOUTH);
 
     tabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -644,6 +704,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     frame.setBounds(200, 200, 300, 200);
     frame.show();
   }
+
 
 
 }
