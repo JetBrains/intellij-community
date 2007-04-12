@@ -579,22 +579,30 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyKeyListener extends KeyAdapter {
     @Override public void keyPressed(KeyEvent e) {
-      int cellCount = getCellCount();
-      int leadIndex = mySelectionModel.getLeadSelectionIndex();
       if (e.getKeyCode() == KeyEvent.VK_HOME) {
         mySelectionModel.setSelectionInterval(0, 0);
       }
       else if (e.getKeyCode() == KeyEvent.VK_END) {
+        int cellCount = getCellCount();
         mySelectionModel.setSelectionInterval(cellCount-1, cellCount-1);
       }
       else if (e.getKeyCode() == (myIsRow ? KeyEvent.VK_UP : KeyEvent.VK_LEFT)) {
-        if (leadIndex > 0) {
-          mySelectionModel.setSelectionInterval(leadIndex-1, leadIndex-1);
-        }
+        moveSelection(e, -1);
       }
       else if (e.getKeyCode() == (myIsRow ? KeyEvent.VK_DOWN : KeyEvent.VK_RIGHT)) {
-        if (leadIndex < cellCount-1) {
-          mySelectionModel.setSelectionInterval(leadIndex+1, leadIndex+1);
+        moveSelection(e, 1);
+      }
+    }
+
+    private void moveSelection(final KeyEvent e, final int delta) {
+      int leadIndex = mySelectionModel.getLeadSelectionIndex();
+      int newLeadIndex = leadIndex + delta;
+      if (newLeadIndex >= 0 && newLeadIndex < getCellCount()) {
+        if ((e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+          mySelectionModel.setSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), newLeadIndex);
+        }
+        else {
+          mySelectionModel.setSelectionInterval(newLeadIndex, newLeadIndex);
         }
       }
     }
