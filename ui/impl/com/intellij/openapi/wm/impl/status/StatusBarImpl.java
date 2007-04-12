@@ -183,6 +183,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
+    gbConstraints.insets = new Insets(0, 0, 0, 2);
 
     myCustomIndicationsPanel.setVisible(true);
     myCustomIndicationsPanel.add(c, gbConstraints);
