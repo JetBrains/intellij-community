@@ -44,23 +44,21 @@ public class FileBasedStorage extends XmlElementStorage {
       final Ref<IOException> refIOException = Ref.create(null);
       final byte[] text = printDocument();
 
-      final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
-
-      if (ioFile.exists()) {
-        final byte[] bytes = ioFile.loadBytes();
+      if (myFile.exists()) {
+        final byte[] bytes = myFile.loadBytes();
         if (Arrays.equals(bytes, text)) return;
         IFile backupFile = deleteBackup(myFilePath);
-        ioFile.renameTo(backupFile);
+        myFile.renameTo(backupFile);
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          if (!ioFile.exists()) {
-            ioFile.createParentDirs();
+          if (!myFile.exists()) {
+            myFile.createParentDirs();
           }
 
           try {
-            getOrCreateVirtualFile(ioFile).setBinaryContent(text);
+            getOrCreateVirtualFile(myFile).setBinaryContent(text);
           }
           catch (IOException e) {
             refIOException.set(e);
@@ -84,12 +82,11 @@ public class FileBasedStorage extends XmlElementStorage {
   public boolean needsSave() throws StateStorage.StateStorageException {
     sort();
     try {
-      final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
-      if (!ioFile.exists()) return true;
+      if (!myFile.exists()) return true;
 
       final byte[] text = printDocument();
 
-      if (Arrays.equals(ioFile.loadBytes(), text)) return false;
+      if (Arrays.equals(myFile.loadBytes(), text)) return false;
 
       return true;
     }
@@ -110,7 +107,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public List<VirtualFile> getAllStorageFiles() {
-    final VirtualFile virtualFile = getVirtualFile(FILE_SYSTEM.createFile(myFilePath));
+    final VirtualFile virtualFile = getVirtualFile(myFile);
     if (virtualFile != null) return Collections.singletonList(virtualFile);
     return Collections.emptyList();
   }
@@ -125,9 +122,13 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public VirtualFile getVirtualFile() {
-    return getVirtualFile(FILE_SYSTEM.createFile(myFilePath));
+    return getVirtualFile(myFile);
   }
 
+
+  public IFile getFile() {
+    return myFile;
+  }
 
   private VirtualFile getOrCreateVirtualFile(IFile ioFile) throws IOException {
     VirtualFile vFile = getVirtualFile(ioFile);

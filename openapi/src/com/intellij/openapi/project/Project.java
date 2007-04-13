@@ -68,6 +68,10 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   String getLocationHash();
 
 
+  @NotNull
+  @NonNls
+  String getLocation();
+
 
   void save();
 

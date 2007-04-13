@@ -46,6 +46,10 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method setStorageFormat not implemented in " + getClass());
   }
 
+  public String getLocation() {
+    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
+  }
+
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
     throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
   }

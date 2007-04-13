@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 
-public class MockFileSystem extends VirtualFileSystem {
+public class MockVirtualFileSystem extends VirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
 
@@ -74,7 +74,7 @@ public class MockFileSystem extends VirtualFileSystem {
 
     @NotNull
     public VirtualFileSystem getFileSystem() {
-      return MockFileSystem.this;
+      return MockVirtualFileSystem.this;
     }
 
     public MyVirtualFile getOrCreate(String name) {
@@ -91,7 +91,7 @@ public class MockFileSystem extends VirtualFileSystem {
     }
 
     public String getPath() {
-      final MockFileSystem.MyVirtualFile parent = getParent();
+      final MockVirtualFileSystem.MyVirtualFile parent = getParent();
       return parent == null ? getName() : parent.getPath() + "/" + getName();
     }
 

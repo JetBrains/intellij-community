@@ -1,7 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.Paths;
-import com.intellij.mock.MockFileSystem;
+import com.intellij.mock.MockVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public class TestVirtualFile extends VirtualFile {
 
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return new MockFileSystem() {
+    return new MockVirtualFileSystem() {
       @Override
       public boolean equals(Object o) {
         return true;

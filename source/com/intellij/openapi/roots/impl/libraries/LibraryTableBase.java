@@ -1,6 +1,9 @@
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -9,8 +12,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -19,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- *  @author dsl
- */
-public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTable, BaseComponent {
+public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
@@ -32,12 +30,19 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     return new LibraryModel(myModel);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    myModel.readExternal(element);
+  public Element getState() {
+    final Element element = new Element("state");
+    myModel.writeExternal(element);
+    return element;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    myModel.writeExternal(element);
+  public void loadState(final Element object) {
+    try {
+      myModel.readExternal(object);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -131,7 +136,16 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     myDispatcher.getMulticaster().afterLibraryRemoved(library);
   }
 
-  private class LibraryModel implements LibraryTable.ModifiableModel {
+  public void readExternal(final Element element) throws InvalidDataException {
+    myModel = new LibraryModel();
+    myModel.readExternal(element);
+  }
+
+  public void writeExternal(final Element element) throws WriteExternalException {
+    myModel.writeExternal(element);
+  }
+
+  public class LibraryModel implements LibraryTable.ModifiableModel, JDOMExternalizable {
     private final ArrayList<Library> myLibraries = new ArrayList<Library>();
     private boolean myWritable;
 
@@ -220,7 +234,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
       }
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       for (Library library : myLibraries) {
         if (library.getName() != null) {
           library.writeExternal(element);

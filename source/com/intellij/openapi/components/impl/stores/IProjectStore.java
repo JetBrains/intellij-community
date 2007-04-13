@@ -28,6 +28,8 @@ public interface IProjectStore extends IComponentStore {
 
   void setStorageFormat(StorageFormat storageFormat);
 
+  String getLocation();
+
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED
   }

@@ -37,7 +37,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   protected BaseFileConfigurableStoreImpl(final ComponentManager componentManager) {
     myComponentManager = componentManager;
-    myDefaultsStateStorage = new DefaultsStateStorage(PathMacroManager.getInstance(myComponentManager));
+    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(myComponentManager);
+    myDefaultsStateStorage = new DefaultsStateStorage(pathMacroManager);
   }
 
   public synchronized ComponentManager getComponentManager() {

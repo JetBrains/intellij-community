@@ -35,8 +35,8 @@ public interface StorageAnnotationsDefaultValues {
   }
 
   class NullStateStorageChooser implements StateStorageChooser {
-    public Storage selectStorage(Storage[] storages, Object component, final StateStorageOperation operation) {
-      throw new UnsupportedOperationException("Method selectStorage is not supported in " + getClass());
+    public Storage[] selectStorages(Storage[] storages, Object component, final StateStorageOperation operation) {
+      throw new UnsupportedOperationException("Method selectStorages is not supported in " + getClass());
     }
   }
 }

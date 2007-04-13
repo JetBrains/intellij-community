@@ -26,4 +26,8 @@ public interface IFile {
   String getCanonicalPath();
 
   long length();
+
+  IFile getChild(final String childName);
+
+  boolean isDirectory();
 }

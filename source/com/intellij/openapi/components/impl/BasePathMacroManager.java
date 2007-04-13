@@ -14,16 +14,23 @@ import java.util.Set;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros;
+  private boolean myUseUserMacroses;
 
+
+  public BasePathMacroManager(boolean useUserMacroses) {
+    myUseUserMacroses = useUserMacroses;
+  }
 
   public BasePathMacroManager() {
-    myPathMacros = PathMacrosImpl.getInstanceEx();
+    this(true);
   }
 
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     result.addMacroExpand(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    myPathMacros.addMacroExpands(result);
+    if (myUseUserMacroses) {
+      getPathMacros().addMacroExpands(result);
+    }
     return result;
   }
 
@@ -32,7 +39,9 @@ public class BasePathMacroManager extends PathMacroManager {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
 
     result.addMacroReplacement(PathManager.getHomePath(), PathMacrosImpl.APPLICATION_HOME_MACRO_NAME);
-    myPathMacros.addMacroReplacements(result);
+    if (myUseUserMacroses) {
+      getPathMacros().addMacroReplacements(result);
+    }
 
     return result;
   }
@@ -64,6 +73,14 @@ public class BasePathMacroManager extends PathMacroManager {
 
   public void collapsePaths(final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
+  }
+
+  public PathMacrosImpl getPathMacros() {
+    if (myPathMacros == null) {
+      myPathMacros = PathMacrosImpl.getInstanceEx();
+    }
+
+    return myPathMacros;
   }
 
 

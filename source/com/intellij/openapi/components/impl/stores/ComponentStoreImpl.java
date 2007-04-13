@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -126,14 +127,18 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private <T> void savePersistentComponent(final PersistentStateComponent<T> persistentStateComponent) {
     try {
-      Storage storageSpec = getComponentStorage(persistentStateComponent, StateStorageOperation.WRITE);
-      StateStorage stateStorage = getStateStorage(storageSpec);
-
-      if (stateStorage == null) return;
+      Storage[] storageSpecs = getComponentStorages(persistentStateComponent, StateStorageOperation.WRITE);
 
       final T state = persistentStateComponent.getState();
 
-      stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), state);
+      for (Storage storageSpec : storageSpecs) {
+        StateStorage stateStorage = getStateStorage(storageSpec);
+
+        if (stateStorage == null) continue;
+
+
+        stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), state);
+      }
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -240,12 +245,16 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     try {
-      Storage storageSpec = getComponentStorage(component, StateStorageOperation.READ);
-      StateStorage stateStorage = getStateStorage(storageSpec);
+      Storage[] storageSpecs = getComponentStorages(component, StateStorageOperation.READ);
 
-      if (stateStorage == null) return;
+      for (Storage storageSpec : storageSpecs) {
+        StateStorage stateStorage = getStateStorage(storageSpec);
+        if (stateStorage == null) continue;
+        if (!stateStorage.hasState(component, name, stateClass)) continue;
 
-      state = stateStorage.getState(component, name, stateClass, state);
+        state = stateStorage.getState(component, name, stateClass, state);
+        break;
+      }
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -296,35 +305,49 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
 
-  @Nullable
-  private static <T> Storage getComponentStorage(final PersistentStateComponent<T> persistentStateComponent,
+  @NotNull
+  private <T> Storage[] getComponentStorages(final PersistentStateComponent<T> persistentStateComponent,
                                                  final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
     final Storage[] storages = stateSpec.storages();
 
-    if (storages.length == 1) return storages[0];
+    if (storages.length == 1) return storages;
 
     assert storages.length > 0;
 
 
-    final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
-    assert storageChooserClass != StorageAnnotationsDefaultValues.NullStateStorageChooser.class : "State chooser not specified for: " + persistentStateComponent.getClass();
+    final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
+      StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
 
-    try {
-      //noinspection unchecked
-      final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
-      return storageChooser.selectStorage(storages, persistentStateComponent, operation);
+    final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
+    final StateStorageChooser defaultStateStorageChooser = getDefaultStateStorageChooser();
+    assert storageChooserClass != defaultClass || defaultStateStorageChooser != null: "State chooser not specified for: " + persistentStateComponent.getClass();
+
+    if (storageChooserClass == defaultClass) {
+      return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
-    catch (InstantiationException e) {
-      throw new StateStorage.StateStorageException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new StateStorage.StateStorageException(e);
+    else {
+      try {
+        //noinspection unchecked
+        final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
+        return storageChooser.selectStorages(storages, persistentStateComponent, operation);
+      }
+      catch (InstantiationException e) {
+        throw new StateStorage.StateStorageException(e);
+      }
+      catch (IllegalAccessException e) {
+        throw new StateStorage.StateStorageException(e);
+      }
     }
   }
 
   protected boolean optimizeTestLoading() {
     return false;
+  }
+
+  @Nullable
+  protected StateStorageChooser getDefaultStateStorageChooser() {
+    return null;
   }
 }

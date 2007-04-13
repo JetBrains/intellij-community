@@ -17,8 +17,10 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 
 /**
  *  @author dsl
@@ -60,4 +62,6 @@ public interface Library extends JDOMExternalizable {
     boolean isChanged();
   }
 
+  void readExternal(Element element) throws InvalidDataException;
+  void writeExternal(Element element);
 }

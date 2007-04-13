@@ -641,10 +641,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
-    public Storage selectStorage(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
+    public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
       final String id = ClasspathStorage.getStorageType(moduleRootManager.getModule());
       for (Storage storage : storages) {
-        if (storage.id().equals(id)) return storage;
+        if (storage.id().equals(id)) return new Storage[]{storage};
       }
       throw new IllegalArgumentException();
     }

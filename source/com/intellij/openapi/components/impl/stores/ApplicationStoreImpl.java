@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.Storage;
@@ -23,13 +24,14 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   private ApplicationImpl myApplication;
   private StateStorageManager myStateStorageManager;
   @NonNls private static final String APP_CONFIG_STORAGE_MACRO = "APP_CONFIG";
+  @NonNls private static final String OPTIONS_MACRO = "OPTIONS";
   private DefaultsStateStorage myDefaultsStateStorage;
 
 
   @SuppressWarnings({"UnusedDeclaration"}) //picocontainer
-  public ApplicationStoreImpl(final ApplicationImpl application) {
+  public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
     myApplication = application;
-    myStateStorageManager = new StateStorageManager(null, "application");
+    myStateStorageManager = new StateStorageManager(pathMacroManager, "application");
     myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 
@@ -71,6 +73,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   public void setConfigPath(final String path) {
     myStateStorageManager.addMacro(APP_CONFIG_STORAGE_MACRO, path);
+    myStateStorageManager.addMacro(OPTIONS_MACRO, path);
   }
 
   public static final String DEFAULT_STORAGE_SPEC = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;

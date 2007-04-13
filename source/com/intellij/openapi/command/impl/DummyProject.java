@@ -51,6 +51,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return "dummy";
   }
 
+  @NotNull
+  @NonNls
+  public String getLocation() {
+    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
+  }
+
   public String getProjectFilePath() {
     return null;
   }

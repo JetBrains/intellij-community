@@ -10,7 +10,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,8 +46,8 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    for (Iterator i=element.getChildren().iterator();i.hasNext();) {
-      Element e=(Element)i.next();
+    for (final Object o : element.getChildren()) {
+      Element e = (Element)o;
       if (ELEMENT_LAST_PROJECT.equals(e.getName())) {
         myLastProjectPath = e.getAttributeValue(ATTRIBUTE_PATH);
       }
@@ -76,8 +75,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
       e.setAttribute(ATTRIBUTE_PATH, myLastProjectPath);
       element.addContent(e);
     }
-    for (int i = 0; i < myRecentProjects.size(); i++) {
-      String path = myRecentProjects.get(i);
+    for (String path : myRecentProjects) {
       Element e = new Element(ELEMENT_PROJECT);
       e.setAttribute(ATTRIBUTE_PATH, path);
       element.addContent(e);
@@ -140,11 +138,10 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
 
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    outer: for (int i = 0; i < myRecentProjects.size(); i++) {
-      String projectPath = myRecentProjects.get(i).toString();
+    outer: for (String myRecentProject : myRecentProjects) {
+      String projectPath = myRecentProject.toString();
 
-      for (int j = 0; j < openProjects.length; j++) {
-        Project openProject = openProjects[j];
+      for (Project openProject : openProjects) {
         if (projectPath.equals(getProjectPath(openProject))) {
           continue outer;
         }
@@ -159,8 +156,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
     }
 
     ArrayList<AnAction> list = new ArrayList<AnAction>();
-    for (int i = 0; i < actions.size(); i++) {
-      AnAction action = actions.get(i);
+    for (AnAction action : actions) {
       list.add(action);
     }
     if (addClearListItem) {
@@ -209,10 +205,10 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   }
 
   private static String getProjectPath(Project project) {
-    return ((ProjectImpl)project).getStateStore().getProjectFilePath();
+    return project.getLocation();
   }
 
-  private class ReopenProjectAction extends AnAction {
+  private static class ReopenProjectAction extends AnAction {
     private final String myProjectPath;
 
     public ReopenProjectAction(String projectPath) {

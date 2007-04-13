@@ -6,10 +6,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
@@ -24,6 +21,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,17 +44,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
-  @NonNls private static final String DIRECTORY_STORE_FOLDER = ".idea";
+  @NonNls public static final String DIRECTORY_STORE_FOLDER = ".idea";
 
   private ProjectEx myProject;
 
   @NonNls private static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
   @NonNls private static final String WS_FILE_MACRO = "WORKSPACE_FILE";
+  @NonNls private static final String PROJECT_CONFIG_DIR = "PROJECT_CONFIG_DIR";
 
   private static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
   private static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
   private Set<String> myTrackingSet = new TreeSet<String>();
+  private StorageScheme myScheme = StorageScheme.DEFAULT;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public ProjectStoreImpl(final ProjectEx project) {
@@ -204,11 +204,23 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   public void setProjectFilePath(final String filePath) {
     if (filePath != null) {
-      getStateStorageManager().addMacro(PROJECT_FILE_MACRO, filePath);
+      final IFile iFile = FileSystem.FILE_SYSTEM.createFile(filePath);
+      final IFile dir_store = iFile.isDirectory() ? iFile.getChild(DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(DIRECTORY_STORE_FOLDER);
 
-      if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-        String workspacePath = filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
-        getStateStorageManager().addMacro(WS_FILE_MACRO, workspacePath);
+      if (dir_store.exists()) {
+        myScheme = StorageScheme.DIRECTORY_BASED;
+        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, dir_store.getChild("project.xml").getPath());
+        getStateStorageManager().addMacro(WS_FILE_MACRO, dir_store.getChild("workspace.xml").getPath());
+        getStateStorageManager().addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
+      }
+      else {
+        myScheme = StorageScheme.DEFAULT;
+        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, filePath);
+
+        if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+          String workspacePath = filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
+          getStateStorageManager().addMacro(WS_FILE_MACRO, workspacePath);
+        }
       }
     }
   }
@@ -216,10 +228,26 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Nullable
   public VirtualFile getProjectBaseDir() {
     final VirtualFile projectFile = getProjectFile();
-    return projectFile != null ? projectFile.getParent() : null;
+    if (projectFile != null) return  myScheme == StorageScheme.DEFAULT ? projectFile.getParent() : projectFile.getParent().getParent();
+
+    //we are not yet initialized completely
+    final StateStorage s = getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    if (!(s instanceof FileBasedStorage)) return null;
+    final FileBasedStorage storage = (FileBasedStorage)s;
+    if (storage == null) return null;
+    
+    final IFile file = storage.getFile();
+    if (file == null) return null;
+
+    return LocalFileSystem.getInstance().findFileByIoFile(myScheme == StorageScheme.DEFAULT ? file.getParentFile() : file.getParentFile().getParentFile());
   }
 
   public void setStorageFormat(final StorageFormat storageFormat) {
+  }
+
+  public String getLocation() {
+    if (myScheme == StorageScheme.DEFAULT) return getProjectFilePath();
+    else return getProjectBaseDir().getPath();
   }
 
 
@@ -265,6 +293,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     String projectFilePath = getProjectFilePath();
 
     final IFile iFile = FileSystem.FILE_SYSTEM.createFile(projectFilePath);
+
+    if (!iFile.exists()) return true;
 
     Document document = JDOMUtil.loadDocument(iFile);
     Element root = document.getRootElement();
@@ -439,6 +469,46 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     super.commit();
+  }
+
+  private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
+    public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
+      if (operation == StateStorageOperation.READ) {
+        Storage currentStorage = null;
+        Storage defaultStorage = null;
+
+        for (Storage storage : storages) {
+          if (storage.scheme() == myScheme) currentStorage = storage;
+        }
+
+        for (Storage storage : storages) {
+          if (storage.scheme() == StorageScheme.DEFAULT) defaultStorage = storage;
+        }
+
+        if (currentStorage != null && defaultStorage != null) return new Storage[]{currentStorage, defaultStorage};
+        else if (defaultStorage != null) return new Storage[]{defaultStorage};
+        else if (currentStorage != null) return new Storage[]{currentStorage};
+        else return new Storage[]{};
+      }
+      else if (operation == StateStorageOperation.WRITE) {
+        for (Storage storage : storages) {
+          if (storage.scheme() == myScheme) return new Storage[]{storage};
+        }
+
+        for (Storage storage : storages) {
+          if (storage.scheme() == StorageScheme.DEFAULT) return new Storage[]{storage};
+        }
+
+        return new Storage[]{};
+      }
+
+      return new Storage[]{};
+    }
+  };
+
+  @Nullable
+  protected StateStorageChooser getDefaultStateStorageChooser() {
+    return myStateStorageChooser;
   }
 }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -31,8 +32,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
@@ -117,6 +118,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
+    getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
   @NotNull

@@ -250,6 +250,11 @@ public class PathManager {
     return new File(getOptionsPath()+File.separatorChar+externalizable.getExternalFileName()+".xml");
   }
 
+  @NonNls
+  public static File getOptionsFile(String fileName) {
+    return new File(getOptionsPath()+File.separatorChar+fileName+".xml");
+  }
+
   /**
    * Attempts to detect classpath entry which contains given resource
    */

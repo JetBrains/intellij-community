@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
@@ -162,7 +161,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   }
 
 
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  public void writeExternal(Element rootElement) {
     Element element = new Element(ELEMENT);
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);

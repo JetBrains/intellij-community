@@ -40,6 +40,7 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,6 +69,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private boolean myDefault;
+  private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
+           "This method will cease to exist in IDEA 7.0 final release.\n" +
+           "Please contact plugin developers for plugin update.";
 
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
@@ -275,7 +279,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getProjectFilePath() {
-    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFilePath()", new Throwable());
+    LOG.warn(
+      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getProjectFilePath()"),
+      new Throwable());
     return getStateStore().getProjectFilePath();
   }
 
@@ -284,7 +290,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
    */
   @Nullable
   public VirtualFile getProjectFile() {
-    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFile()", new Throwable());
+    LOG.warn(
+      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getProjectFile()"),
+      new Throwable());
     return getStateStore().getProjectFile();
   }
 
@@ -325,12 +333,20 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getName() + Integer.toHexString(str.hashCode());
   }
 
+  @NotNull
+  @NonNls
+  public String getLocation() {
+    return getStateStore().getLocation();
+  }
+
   /**
    * @deprecated
    */
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getWorkspaceFile()", new Throwable());
+    LOG.warn(
+      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getWorkspaceFile()"),
+      new Throwable());
     return getStateStore().getWorkspaceFile();
   }
 

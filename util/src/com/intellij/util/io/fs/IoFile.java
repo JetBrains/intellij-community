@@ -67,4 +67,12 @@ class IoFile implements IFile {
   public long length() {
     return myFile.length();
   }
+
+  public IFile getChild(final String childName) {
+    return new IoFile(new File(myFile, childName)); 
+  }
+
+  public boolean isDirectory() {
+    return myFile.isDirectory();
+  }
 }

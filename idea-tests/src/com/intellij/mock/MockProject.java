@@ -93,6 +93,12 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return "mock";
   }
 
+  @NotNull
+  @NonNls
+  public String getLocation() {
+    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
+  }
+
   public String getProjectFilePath() {
     return null;
   }

@@ -1,15 +1,25 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 
 /**
  *  @author dsl
  */
+@State(
+  name = "libraryTable",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/libraries.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
 public class ProjectLibraryTable extends LibraryTableBase implements ProjectComponent {
   private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
