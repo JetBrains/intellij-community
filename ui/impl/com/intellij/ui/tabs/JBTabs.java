@@ -59,7 +59,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     if (myActionManager != null) {
       myOwnGroup.add(new SelectNextAction());
       myOwnGroup.add(new SelectPreviousAction());
-      myOwnGroup.add(new SwitchToolbar());
     }
 
     UIUtil.addAwtListener(new AWTEventListener() {
@@ -536,7 +535,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
           }
         }
       });
-      setBorder(new EmptyBorder(4, 8, 4, 8));
+      setBorder(new EmptyBorder(2, 8, 2, 8));
     }
 
     public void setText(final String text) {
@@ -605,20 +604,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
-  private class SwitchToolbar extends ToggleAction {
-    public SwitchToolbar() {
-      super("Horizontal toolbar (experimental)");
-    }
-
-    public boolean isSelected(final AnActionEvent e) {
-      return myHorizontalSide;
-    }
-
-    public void setSelected(final AnActionEvent e, final boolean state) {
-      setSideComponentVertical(!state);
-    }
-  }
-
   private class SelectPreviousAction extends BaseAction {
     public SelectPreviousAction() {
       super(IdeActions.ACTION_PREVIOUS_TAB);
@@ -640,7 +625,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
-  private void setSideComponentVertical(final boolean vertical) {
+  public void setSideComponentVertical(final boolean vertical) {
     myHorizontalSide = !vertical;
 
     for (TabInfo each : myInfos) {
@@ -649,6 +634,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     revalidate();
     repaint();
+  }
+
+  public boolean isSideComponentVertical() {
+    return !myHorizontalSide;
   }
 
   public static void main(String[] args) {

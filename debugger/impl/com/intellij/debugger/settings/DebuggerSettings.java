@@ -176,6 +176,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     private String mySelectedTab;
     private double mySplitProportion;
     private boolean myDetached;
+    private boolean myHorizontalToolbar;
 
     public ContentState(final String type) {
       myType = type;
@@ -190,6 +191,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
         mySplitProportion = Double.valueOf(split);
       }
       myDetached = "true".equalsIgnoreCase(element.getAttributeValue("detached"));
+      myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
     }
 
     public boolean write(final Element element) {
@@ -200,6 +202,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       }
       element.setAttribute("split", new Double(mySplitProportion).toString());
       element.setAttribute("detached", Boolean.valueOf(myDetached).toString());
+      element.setAttribute("horizontal", Boolean.valueOf(myHorizontalToolbar).toString());
       return true;
     }
 
@@ -237,6 +240,14 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
     public boolean isDetached() {
       return myDetached;
+    }
+
+    public boolean isHorizontalToolbar() {
+      return myHorizontalToolbar;
+    }
+
+    public void setHorizontalToolbar(final boolean horizontalToolbar) {
+      myHorizontalToolbar = horizontalToolbar;
     }
   }
 }

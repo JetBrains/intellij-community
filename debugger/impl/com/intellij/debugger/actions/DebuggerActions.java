@@ -40,5 +40,5 @@ public interface DebuggerActions {
   @NonNls String CUSTOMIZE_THREADS_VIEW = "Debugger.CustomizeThreadsView";
   @NonNls String INSPECT = "Debugger.Inspect";
   @NonNls String EXPORT_THREADS = "ExportThreads";
-  @NonNls String RESTORE_LAYOUT = "Debugger.RestoreLayout";
+  @NonNls String LAYOUT = "Debugger.Layout";
 }

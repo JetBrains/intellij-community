@@ -342,7 +342,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();
-    addActionToGroup(group, DebuggerActions.RESTORE_LAYOUT);
+    addActionToGroup(group, DebuggerActions.LAYOUT);
 
     group.addSeparator();
 
@@ -503,6 +503,10 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     myContentUI.restoreLayout();
   }
 
+  public DebuggerContentUI getContentUi() {
+    return myContentUI;
+  }
+
   private class MyDebuggerStateManager extends DebuggerStateManager {
     public void fireStateChanged(DebuggerContextImpl newContext, int event) {
       super.fireStateChanged(newContext, event);
@@ -602,4 +606,8 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private ContentFactory getContentFactory() {
     return PeerFactory.getInstance().getContentFactory();
   }
+
+
+
+
 }

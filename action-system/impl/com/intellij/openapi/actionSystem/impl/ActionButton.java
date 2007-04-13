@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.EmptyIcon;
@@ -97,8 +98,18 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       if (component != null && !component.isShowing()) {
         return;
       }
-      myAction.actionPerformed(event);
+      actionPerfomed(event);
       manager.queueActionPerformedEvent(myAction, dataContext);
+    }
+  }
+
+  private void actionPerfomed(final AnActionEvent event) {
+    if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
+      Presentation presentation = event.getPresentation();
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(event.getPlace(), ((ActionGroup)myAction));
+      popupMenu.getComponent().show(this, getWidth(), 0);
+    } else {
+      myAction.actionPerformed(event);
     }
   }
 

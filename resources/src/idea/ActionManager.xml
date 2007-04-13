@@ -725,8 +725,13 @@
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction"
               icon="/debugger/muteBreakpoints.png"/>
+
+      <group id="Debugger.Layout" icon="/debugger/restoreLayout.png" popup="true">
+        <action id="Debugger.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction" />
+        <action id="Debugger.ToggleToolbarLayout" class="com.intellij.debugger.actions.ToggleToolbarLayout"/>
+      </group>
+
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/debugger/addToWatch.png"/>
-      <action id="Debugger.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction" icon="/debugger/restoreLayout.png"/>
     </group>
 
     <group id="Debugger.Representation">
