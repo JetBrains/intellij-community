@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,11 +66,11 @@ public class MethodCallUtils {
     public static boolean isEqualsCall(PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final PsiElement element = methodExpression.resolve();
-        if (!(element instanceof PsiMethod)) {
+        final String name = methodExpression.getReferenceName();
+        if (!HardcodedMethodConstants.EQUALS.equals(name)) {
             return false;
         }
-        final PsiMethod method = (PsiMethod)element;
+        final PsiMethod method = expression.resolveMethod();
         return MethodUtils.isEquals(method);
     }
 

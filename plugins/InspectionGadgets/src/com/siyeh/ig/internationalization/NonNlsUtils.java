@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.AnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +98,7 @@ public class NonNlsUtils {
         int index = -1;
         for (int i = 0; i < expressions.length; i++) {
             final PsiExpression argument = expressions[i];
-            if (argument.equals(expression)) {
+            if (PsiTreeUtil.isAncestor(argument, expression, false)) {
                 index = i;
             }
         }

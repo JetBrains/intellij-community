@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.Query;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class MethodUtils{
         super();
     }
 
-    public static boolean isCompareTo(PsiMethod method){
+    public static boolean isCompareTo(@Nullable PsiMethod method){
         if (method == null) {
             return false;
         }
@@ -41,7 +41,7 @@ public class MethodUtils{
                 HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
     }
 
-    public static boolean isHashCode(PsiMethod method){
+    public static boolean isHashCode(@Nullable PsiMethod method){
         if (method == null) {
             return false;
         }

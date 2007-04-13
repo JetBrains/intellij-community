@@ -16,6 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -101,6 +102,12 @@ public class StringCompareToInspection extends BaseInspection {
 
         private static boolean isStringCompareTo(
                 PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String name = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {
+                return false;
+            }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return false;
