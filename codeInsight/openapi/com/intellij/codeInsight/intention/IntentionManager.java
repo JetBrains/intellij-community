@@ -32,7 +32,7 @@ public abstract class IntentionManager  {
   public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS = new ExtensionPointName<IntentionActionBean>("com.intellij.intentionAction");
 
   /**
-   * @deprecated User {@link #getInstance()} unstead.
+   * @deprecated Use {@link #getInstance()} unstead.
    * Returns instance of <code>IntentionManager</code> for given project.
    *
    * @param project the project for which the instance is returned.
