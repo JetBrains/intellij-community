@@ -69,7 +69,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
 
     // For case clause
     if (parent instanceof LargeGroovyBlock) {
-      if (child.getPsi() instanceof GrCodeBlock) {
+      if (child.getPsi() instanceof GrCaseLabel) {
         return  Indent.getNoneIndent();
       }
       return Indent.getNormalIndent();

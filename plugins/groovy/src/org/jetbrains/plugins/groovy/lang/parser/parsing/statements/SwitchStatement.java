@@ -45,7 +45,7 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return SWITCH_STATEMENT;
     }
-    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)){
+    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)) {
       ParserUtils.getToken(builder, mNLS);
     }
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
@@ -91,7 +91,12 @@ public class SwitchStatement implements GroovyElementTypes {
     while (kCASE.equals(builder.getTokenType()) ||
             kDEFAULT.equals(builder.getTokenType())) {
       parseCaseLabel(builder);
-      parseCaseList(builder);
+      if (ParserUtils.lookAhead(builder, mRCURLY) ||
+              ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
+        builder.error(GroovyBundle.message("expression.expected"));
+      } else {
+        parseCaseList(builder);
+      }
     }
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CASE_BLOCK);
