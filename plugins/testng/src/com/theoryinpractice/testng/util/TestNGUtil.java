@@ -103,7 +103,16 @@ public class TestNGUtil
     public static boolean hasTest(PsiModifierListOwner element) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-        if (AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false)) return true;
+        boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false);
+        if (hasAnnotation) {
+            PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
+            PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
+            for (PsiNameValuePair attrib : attribs) {
+                if(attrib.getName().equals("enabled") && attrib.getValue().textMatches("false"))
+                    return false;
+            }
+            return true;
+        }
         if (hasTestJavaDoc(element)) return true;
         //now we check all methods for the test annotation
         if (element instanceof PsiClass) {
@@ -115,7 +124,11 @@ public class TestNGUtil
         } else if (element instanceof PsiMethod) {
             //if it's a method, we check if the class it's in has a global @Test annotation
             PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-            if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false)) return true;
+            if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false)) {
+                //even if it has a global test, we ignore private methods
+                boolean isPrivate = element.getModifierList().hasModifierProperty(PsiModifier.PRIVATE);
+                return !isPrivate;
+            }
             if (hasTestJavaDoc(psiClass)) return true;
         }
         return false;
