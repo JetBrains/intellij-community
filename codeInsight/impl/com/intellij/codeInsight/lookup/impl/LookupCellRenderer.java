@@ -376,6 +376,9 @@ class LookupCellRenderer implements ListCellRenderer {
     else if (o instanceof LookupValueWithUIHint) {
       text = ((LookupValueWithUIHint)o).getTypeHint();
     }
+    else {
+      text = (String)item.getAttribute(LookupItem.TYPE_TEXT_ATTR); 
+    }
     return text;
   }
 

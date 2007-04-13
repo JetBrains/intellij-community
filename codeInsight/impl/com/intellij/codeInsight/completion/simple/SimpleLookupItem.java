@@ -3,13 +3,10 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.TailType;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -67,6 +64,12 @@ public class SimpleLookupItem extends LookupItem {
     setAttribute(LookupItem.ICON_ATTR, icon);
     return this;
   }
+
+  public SimpleLookupItem setTypeText(final String text) {
+    setAttribute(LookupItem.TYPE_TEXT_ATTR, text);
+    return this;
+  }
+
 
   private class MyInsertHandler implements InsertHandler {
     private final SimpleInsertHandler myHandler;

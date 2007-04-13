@@ -22,6 +22,7 @@ public class LookupItem implements Comparable{
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");
+  public static final Object TYPE_TEXT_ATTR = Key.create("typeText");
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
   public static final Object FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
