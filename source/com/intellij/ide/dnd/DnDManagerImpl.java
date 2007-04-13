@@ -20,6 +20,7 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.lang.ref.WeakReference;
 
 public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHighlightingType {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
@@ -34,7 +35,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
   private static DnDTarget NULL_TARGET = new NullTarget();
 
-  private DnDTarget myLastProcessedTarget = NULL_TARGET;
+  private WeakReference<DnDTarget> myLastProcessedTarget = new WeakReference<DnDTarget>(NULL_TARGET);
   private DragSourceContext myCurrentDragContext;
 
   private Component myLastProcessedOverComponent;
@@ -188,7 +189,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       hideCurrentHighlighter();
     }
 
-    boolean sameTarget = myLastProcessedTarget.equals(target);
+    boolean sameTarget = getLastProcessedTarget().equals(target);
     if (sameTarget) {
       if (myCurrentEvent.isDropPossible()) {
         if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
@@ -209,7 +210,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
     else {
       hideCurrentHighlighter();
-      myLastProcessedTarget.cleanUpOnLeave();
+      getLastProcessedTarget().cleanUpOnLeave();
       myCurrentEvent.clearDropHandler();
       restartTimer();
 
@@ -218,7 +219,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       }
     }
 
-    myLastProcessedTarget = target;
+    myLastProcessedTarget = new WeakReference<DnDTarget>(target);
     myLastProcessedPoint = myCurrentEvent.getPoint();
     myLastProcessedOverComponent = myCurrentEvent.getCurrentOverComponent();
     myLastProcessedAction = myCurrentEvent.getAction().getActionId();
@@ -413,6 +414,10 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     return null;
   }
 
+  private DnDTarget getLastProcessedTarget() {
+    return myLastProcessedTarget.get();
+  }
+
   private static class NullTarget implements DnDTarget {
     public boolean update(DnDEvent aEvent) {
       aEvent.setDropPossible(false, "You cannot drop anything here");
@@ -533,7 +538,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
       mySource.dragDropEnd();
-      myLastProcessedTarget.cleanUpOnLeave();
+      getLastProcessedTarget().cleanUpOnLeave();
       resetCurrentEvent("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
       Highlighters.hide(TEXT | ERROR_TEXT);
     }
@@ -606,7 +611,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       myCurrentDragContext.setCursor(null);
     }
 
-    myLastProcessedTarget.cleanUpOnLeave();
+    getLastProcessedTarget().cleanUpOnLeave();
     hideCurrentHighlighter();
     myHightlighterShowRequest = null;
   }
