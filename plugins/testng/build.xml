@@ -1,5 +1,6 @@
 <project name="testngrunner" default="dist">
 
+    <property file="build.properties" />
     <property name="src.dir" value="src"/>
     <property name="test.dir" value="tests"/>
     <property name="lib.dir" value="lib"/>
@@ -18,6 +19,7 @@
             <include name="bcel.jar"/>
             <include name="junit.jar"/>
             <include name="log4j.jar"/>
+            <include name="extensions.jar"/>
             <include name="picocontainer.jar"/>
             <include name="trove4j.jar"/>
         </fileset>

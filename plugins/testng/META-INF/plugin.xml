@@ -36,7 +36,9 @@
     </project-components>
     <change-notes>
         <![CDATA[
-            TESTNG-151 Final passing test result is not properly hidden
+            <li>TESTNG-151 Final passing test result is not properly hidden
+            <li>Fix method popup if test has class level @Test annotation
+            <li>Added auto-completion for method names in dependsOnMethods
         ]]>
     </change-notes>
 </idea-plugin>

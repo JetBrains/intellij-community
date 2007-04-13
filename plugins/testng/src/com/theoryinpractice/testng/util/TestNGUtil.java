@@ -100,6 +100,15 @@ public class TestNGUtil
         return false;
     }
 
+    public static boolean isTestNGAnnotation(PsiAnnotation annotation) {
+        String qName = annotation.getQualifiedName();
+        if(qName.equals(TEST_ANNOTATION_FQN)) return true;
+        for (String qn : CONFIG_ANNOTATIONS_FQN) {
+            if(qName.equals(qn)) return true;
+        }
+        return false;
+    }
+    
     public static boolean hasTest(PsiModifierListOwner element) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
