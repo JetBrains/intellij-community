@@ -21,7 +21,8 @@ import java.util.HashMap;
  */
 public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   @NonNls private static final String MIN_OCCURS_ATTR_NAME = "minOccurs";
-  @NonNls private static final String MAX_OCCURS_ATTR_NAME = "maxOccurs";
+  @NonNls private static final String MAX_OCCURS_ATTR_VALUE = "maxOccurs";
+  @NonNls private static final String MAX_OCCURS_ATTR_NAME = MAX_OCCURS_ATTR_VALUE;
   @NonNls private static final String ID_ATTR_NAME = "id";
   @NonNls private static final String REF_ATTR_NAME = "ref";
 
@@ -44,6 +45,26 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
               ValidationHost.ERROR
             );
           }
+        }
+      }
+
+      final String minOccursValue = tag.getAttributeValue("minOccurs");
+      final String maxOccursValue = tag.getAttributeValue(MAX_OCCURS_ATTR_VALUE);
+
+      if (minOccursValue != null && maxOccursValue != null) {
+        try {
+          final int minOccurs = Integer.parseInt(minOccursValue);
+          final int maxOccurs = Integer.parseInt(maxOccursValue);
+          if (maxOccurs < minOccurs) {
+            host.addMessage(
+              tag.getAttribute(MAX_OCCURS_ATTR_VALUE, null).getValueElement(),
+              XmlBundle.message("xml.schema.validation.max.occurs.should.be.not.less.than.min.occurs"),
+              Validator.ValidationHost.ERROR
+            );
+          }
+        }
+        catch (NumberFormatException e) {
+          // this schema will be reported by xerces validation
         }
       }
     }
