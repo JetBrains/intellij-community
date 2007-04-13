@@ -34,7 +34,7 @@ public abstract class SpeedSearch {
     if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
       backspace();
     }
-    else if (Character.isLetter(e.getKeyChar())) {
+    else if (Character.isLetterOrDigit(e.getKeyChar())) {
       type(Character.toString(e.getKeyChar()));
     }
 
