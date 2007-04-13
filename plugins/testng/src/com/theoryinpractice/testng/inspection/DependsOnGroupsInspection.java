@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class DependsOnGroupsInspection extends LocalInspectionTool
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+    private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
 
     @NotNull
     @Override
@@ -50,8 +51,6 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
     @Nullable
     public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
-        LOGGER.info("Looking for dependsOnGroups problems in " + psiClass.getName());
-
         if (!psiClass.getContainingFile().isWritable()) return null;
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
@@ -70,7 +69,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
             if (dep != null) {
                 if (dep.getValue() != null) {
                     LOGGER.info("Found dependsOnGroups with: " + dep.getValue().getText());
-                    Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
+                    Matcher matcher = PATTERN.matcher(dep.getValue().getText());
                     while (matcher.find()) {
                         String methodName = matcher.group(1);
                         checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
@@ -101,7 +100,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
 
     }
 
-    private class GroupNameQuickFix implements LocalQuickFix {
+    private static class GroupNameQuickFix implements LocalQuickFix {
 
         Project project;
         String groupName;

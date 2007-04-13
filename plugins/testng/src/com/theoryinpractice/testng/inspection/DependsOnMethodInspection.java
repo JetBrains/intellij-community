@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class DependsOnMethodInspection extends LocalInspectionTool
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+    private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
 
     @NotNull
     @Override
@@ -45,14 +46,13 @@ public class DependsOnMethodInspection extends LocalInspectionTool
     @Nullable
     public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
-        LOGGER.info("Looking for dependsOnMethods problems in " + psiClass.getName());
+        //LOGGER.info("Looking for dependsOnMethods problems in " + psiClass.getName());
 
         if (!psiClass.getContainingFile().isWritable()) return null;
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
         for (PsiAnnotation annotation : TestNGUtil.getTestNGAnnotations(psiClass)) {
-
             PsiNameValuePair dep = null;
             PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
             for (PsiNameValuePair param : params) {
@@ -64,7 +64,7 @@ public class DependsOnMethodInspection extends LocalInspectionTool
 
             if (dep != null) {
                 if (dep.getValue() != null) {
-                    Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
+                    Matcher matcher = PATTERN.matcher(dep.getValue().getText());
                     while (matcher.find()) {
                         String methodName = matcher.group(1);
                         checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
@@ -77,15 +77,15 @@ public class DependsOnMethodInspection extends LocalInspectionTool
     }
 
     private void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
-        LOGGER.info("Found dependsOnMethods with text: " + methodName);
-        if (methodName.endsWith("()")) {
+        LOGGER.debug("Found dependsOnMethods with text: " + methodName);
+        if (methodName.charAt(methodName.length() - 1) == ')') {
 
-            LOGGER.info("dependsOnMethods contains ()" + psiClass.getName());
+            LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
             // TODO Add quick fix for removing brackets on annotation
             ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                "Method '" + methodName + "' should not include () characters.",
                                                                (LocalQuickFix) null,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
             problemDescriptors.add(descriptor);
 
@@ -93,7 +93,7 @@ public class DependsOnMethodInspection extends LocalInspectionTool
             boolean methodExists = false;
             PsiMethod[] methods = psiClass.getMethods();
             for (PsiMethod method : methods) {
-                LOGGER.info("Checking method with name: " + method.getName());
+                LOGGER.debug("Checking method with name: " + method.getName());
                 if (method.getName().equals(methodName)) {
                     methodExists = true;
                     break;
@@ -101,11 +101,11 @@ public class DependsOnMethodInspection extends LocalInspectionTool
             }
 
             if (!methodExists) {
-                LOGGER.info("dependsOnMethods method doesn't exist:" + methodName);
+                LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                    "Method '" + methodName + "' unknown.",
                                                                    (LocalQuickFix) null,
-                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                 problemDescriptors.add(descriptor);
 
             }
