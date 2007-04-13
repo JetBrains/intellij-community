@@ -16,6 +16,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.lang.StdLanguages;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -73,7 +73,7 @@ import java.util.Set;
  */
 public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
-  private IdeView myIdeView = new  MyIdeView();
+  private IdeView myIdeView = new MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
   private DnDAwareTree myTree = new DnDAwareTree();
@@ -105,14 +105,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     Disposer.register(this, uiNotifyConnector);
   }
 
-  public void initListeners(){
+  public void initListeners() {
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
   }
 
-  public void dispose(){
+  public void dispose() {
     TreeModelBuilder.clearCaches(myProject);
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
@@ -173,12 +173,12 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   @NotNull
   private PsiElement[] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
-    if (treePaths != null){
+    if (treePaths != null) {
       Set<PsiElement> result = new HashSet<PsiElement>();
       for (TreePath path : treePaths) {
         PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         final PsiElement psiElement = node.getPsiElement();
-        if (psiElement != null && psiElement.isValid()){
+        if (psiElement != null && psiElement.isValid()) {
           result.add(psiElement);
         }
       }
@@ -234,31 +234,31 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   @Nullable
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.MODULE_CONTEXT)){
+    if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
       final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null){
+      if (selectionPath != null) {
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
-        if (node instanceof ModuleNode){
+        if (node instanceof ModuleNode) {
           return ((ModuleNode)node).getModule();
         }
       }
     }
-    if (dataId.equals(DataConstants.PSI_ELEMENT)){
+    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
       final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null){
+      if (selectionPath != null) {
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
         return node != null && node.isValid() ? node.getPsiElement() : null;
       }
     }
     final TreePath[] treePaths = myTree.getSelectionPaths();
-    if (treePaths != null){
+    if (treePaths != null) {
       if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
         Set<PsiElement> psiElements = new HashSet<PsiElement>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
           if (node.isValid()) {
             final PsiElement psiElement = node.getPsiElement();
-            if (psiElement != null){
+            if (psiElement != null) {
               psiElements.add(psiElement);
             }
           }
@@ -266,7 +266,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         return psiElements.isEmpty() ? null : psiElements.toArray(new PsiElement[psiElements.size()]);
       }
     }
-    if (dataId.equals(DataConstants.IDE_VIEW)){
+    if (dataId.equals(DataConstants.IDE_VIEW)) {
       return myIdeView;
     }
     if (DataConstants.CUT_PROVIDER.equals(dataId)) {
@@ -279,7 +279,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       return myCopyPasteDelegator.getPasteProvider();
     }
     if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-      if (getSelectedModules() != null){
+      if (getSelectedModules() != null) {
         return myDeleteModuleProvider;
       }
       return myDeletePSIElementProvider;
@@ -288,15 +288,16 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   @Nullable
-  private Module[] getSelectedModules(){
+  private Module[] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
-    if (treePaths != null){
+    if (treePaths != null) {
       Set<Module> result = new HashSet<Module>();
       for (TreePath path : treePaths) {
         PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-        if (node instanceof ModuleNode){
+        if (node instanceof ModuleNode) {
           result.add(((ModuleNode)node).getModule());
-        } else if (node instanceof ModuleGroupNode){
+        }
+        else if (node instanceof ModuleGroupNode) {
           final ModuleGroupNode groupNode = (ModuleGroupNode)node;
           final ModuleGroup moduleGroup = groupNode.getModuleGroup();
           result.addAll(moduleGroup.modulesInGroup(myProject, true));
@@ -330,7 +331,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         if (expanded) {
@@ -347,7 +354,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (node instanceof DirectoryNode) {
           final DirectoryNode directoryNode = (DirectoryNode)node;
           append(directoryNode.getDirName(), regularAttributes);
-          final String informationString = psiElement != null ? coverageDataManager.getDirCoverageInformationString((PsiDirectory)psiElement) : null;
+          final String informationString =
+            psiElement != null ? coverageDataManager.getDirCoverageInformationString((PsiDirectory)psiElement) : null;
           locationString = informationString != null ? informationString : directoryNode.getLocationString();
         }
         else {
@@ -380,7 +388,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PsiElement child = event.getChild();
       if (child == null) return;
       if (element instanceof PsiDirectory || element instanceof PsiPackage) {
-        queueUpdate(new Runnable(){
+        queueUpdate(new Runnable() {
           public void run() {
             if (!child.isValid()) return;
             processNodeCreation(child);
@@ -392,7 +400,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     private void processNodeCreation(final PsiElement psiElement) {
       if (psiElement instanceof PsiFile) {
         reload(myBuilder.addFileNode((PsiFile)psiElement));
-      } else if (psiElement instanceof PsiDirectory) {
+      }
+      else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
         for (PsiElement child : children) {
           processNodeCreation(child);
@@ -502,7 +511,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       LOG.assertTrue(packageSet != null);
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
         reload(myBuilder.getFileParentNode(file));
-      } else {
+      }
+      else {
         reload(myBuilder.removeNode(file, file.getParent()));
       }
     }
@@ -522,7 +532,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
             wrapped.run();
           }
         });
-      } else {
+      }
+      else {
         myUpdateQueue.queue(new Update(request) {
           public void run() {
             wrapped.run();
@@ -536,11 +547,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
   }
 
-  private void collapseExpand(DefaultMutableTreeNode node){
+  private void collapseExpand(DefaultMutableTreeNode node) {
     if (node == null) return;
     ((DefaultTreeModel)myTree.getModel()).reload(node);
     TreePath path = new TreePath(node.getPath());
-    if (!myTree.isCollapsed(path)){
+    if (!myTree.isCollapsed(path)) {
       myTree.collapsePath(path);
       myTree.expandPath(path);
       TreeUtil.sort(node, getNodeComparator());
@@ -584,7 +595,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
           }
-        } else {
+        }
+        else {
           ((PsiDirectory)element).navigate(true);
         }
       }
@@ -600,7 +612,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (!node.isValid()) return null;
         if (node instanceof DirectoryNode) {
           DirectoryNode directoryNode = (DirectoryNode)node;
-          while (directoryNode.getCompactedDirNode() != null){
+          while (directoryNode.getCompactedDirNode() != null) {
             directoryNode = directoryNode.getCompactedDirNode();
             LOG.assertTrue(directoryNode != null);
           }
@@ -647,7 +659,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
       final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
 
-      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
       try {
         DeleteHandler.deletePsiElement(elements, myProject);
       }
@@ -682,9 +694,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
     private void queueUpdate(final VirtualFile fileToRefresh, final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter) {
       AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
-      if (pane == null
-          || !ScopeViewPane.ID.equals(pane.getId())
-          || !DependencyValidationManager.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
+      if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
+          !DependencyValidationManager.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
         return;
       }
       myUpdateQueue.queue(new Update(fileToRefresh) {

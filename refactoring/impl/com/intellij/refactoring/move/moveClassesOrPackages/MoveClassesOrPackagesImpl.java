@@ -5,11 +5,11 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,15 +33,14 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MoveClassesOrPackagesImpl {
-  private static final Logger LOG = Logger.getInstance(
-                                      "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
 
   public static void doMove(final Project project,
                             PsiElement[] elements,
                             PsiElement initialTargetElement,
                             final MoveCallback moveCallback) {
     final PsiElement[] psiElements = adjustForMove(project, elements, initialTargetElement);
-    if ( psiElements == null ) {
+    if (psiElements == null) {
       return;
     }
 
@@ -58,18 +57,12 @@ public class MoveClassesOrPackagesImpl {
       PsiElement psiElement = psiElements[i];
       searchTextOccurences = RefactoringUtil.isSearchTextOccurencesEnabled(psiElement);
     }
-    final MoveClassesOrPackagesDialog moveDialog = new MoveClassesOrPackagesDialog(project,
-                                                                                   searchTextOccurences, psiElements, moveCallback);
+    final MoveClassesOrPackagesDialog moveDialog =
+      new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, moveCallback);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(
-      psiElements,
-      initialTargetPackageName,
-      initialTargetDirectory,
-      isTargetDirectoryFixed, searchInComments,
-      searchForTextOccurences,
-      HelpID.getMoveHelpID(psiElements[0])
-    );
+    moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, searchInComments,
+                       searchForTextOccurences, HelpID.getMoveHelpID(psiElements[0]));
     moveDialog.show();
   }
 
@@ -84,18 +77,17 @@ public class MoveClassesOrPackagesImpl {
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().length() == 0) { //is default package
           String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
-        if (!checkNesting (project, aPackage, targetElement)) return null;
+        if (!checkNesting(project, aPackage, targetElement)) return null;
         if (!checkMovePackage(project, aPackage)) return null;
         element = aPackage;
       }
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
-        if (!checkNesting (project, psiPackage, targetElement)) return null;
-        if ( !checkMovePackage(project, psiPackage) ) return null;
+        if (!checkNesting(project, psiPackage, targetElement)) return null;
+        if (!checkMovePackage(project, psiPackage)) return null;
       }
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
@@ -106,20 +98,18 @@ public class MoveClassesOrPackagesImpl {
         }
         if (!(aClass.getParent() instanceof PsiFile)) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
 
         final PsiFile file = aClass.getContainingFile();
-        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1 ?
-                      aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() :
-                      file.getName();
+        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1
+                      ? aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension()
+                      : file.getName();
         if (names.contains(name)) {
-           String message = RefactoringBundle.getCannotRefactorMessage(
-             RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
+          String message = RefactoringBundle
+            .getCannotRefactorMessage(RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
 
@@ -140,15 +130,14 @@ public class MoveClassesOrPackagesImpl {
       if (directories.length > 1) {
         RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
         message.append("\n\n");
-        String report = RefactoringBundle.message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed",
-                                                  aPackage.getQualifiedName());
+        String report = RefactoringBundle
+          .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());
         message.append(report);
       }
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      int ret = Messages.showYesNoDialog(project, message.toString(),
-                                         RefactoringBundle.message("warning.title"),
-                                         Messages.getWarningIcon());
+      int ret =
+        Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
       if (ret != 0) {
         return false;
       }
@@ -157,11 +146,11 @@ public class MoveClassesOrPackagesImpl {
   }
 
   private static boolean checkNesting(final Project project, final PsiPackage srcPackage, final PsiElement targetElement) {
-    final PsiPackage targetPackage = targetElement instanceof PsiPackage ? (PsiPackage)targetElement :
-                                     targetElement instanceof PsiDirectory ? ((PsiDirectory)targetElement).getPackage() :
-                                     null;
-    for ( PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage() ) {
-      if ( curPackage.equals(srcPackage)) {
+    final PsiPackage targetPackage = targetElement instanceof PsiPackage
+                                     ? (PsiPackage)targetElement
+                                     : targetElement instanceof PsiDirectory ? ((PsiDirectory)targetElement).getPackage() : null;
+    for (PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage()) {
+      if (curPackage.equals(srcPackage)) {
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
                                                RefactoringBundle.message("cannot.move.package.into.itself"),
                                                HelpID.getMoveHelpID(srcPackage), project);
@@ -255,8 +244,7 @@ public class MoveClassesOrPackagesImpl {
   }
 
 
-  private static PsiDirectory getInitialTargetDirectory(PsiElement initialTargetElement,
-                                                        final PsiElement[] movedElements) {
+  private static PsiDirectory getInitialTargetDirectory(PsiElement initialTargetElement, final PsiElement[] movedElements) {
     PsiDirectory initialTargetDirectory = getContainerDirectory(initialTargetElement);
     if (initialTargetDirectory == null) {
       if (movedElements != null) {
@@ -307,20 +295,19 @@ public class MoveClassesOrPackagesImpl {
     Runnable runnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                                                             public void run() {
-                                                               final LvcsAction lvcsAction =
-                                                               LvcsIntegration.checkinFilesBeforeRefactoring(project, commandDescription);
-                                                               try {
-                                                                 rearrangeDirectoriesToTarget(directories, selectedTarget);
-                                                               }
-                                                               catch (IncorrectOperationException e) {
-                                                                 ex.set(e);
-                                                               }
-                                                               finally {
-                                                                 LvcsIntegration.checkinFilesAfterRefactoring(project, lvcsAction);
-                                                               }
-                                                             }
-                                                           });
+          public void run() {
+            final LocalHistoryAction a = LvcsIntegration.checkinFilesBeforeRefactoring(project, commandDescription);
+            try {
+              rearrangeDirectoriesToTarget(directories, selectedTarget);
+            }
+            catch (IncorrectOperationException e) {
+              ex.set(e);
+            }
+            finally {
+              LvcsIntegration.checkinFilesAfterRefactoring(project, a);
+            }
+          }
+        });
       }
     };
     CommandProcessor.getInstance().executeCommand(project, runnable, commandDescription, null);

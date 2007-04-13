@@ -166,9 +166,9 @@
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
 
     <group id="LocalVcsGroup" class="com.intellij.localVcs.actions.LocalVcsGroup" popup="true">
-      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
-      <action id="NewLocalVcs.PutLabel" class="com.intellij.localvcs.integration.ui.actions.PutLabelAction"/>
-      <separator/>
+      <action id="LocalHistory.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
+      <action id="LocalHistory.PutLabel" class="com.intellij.localvcs.integration.ui.actions.PutLabelAction"/>
+
       <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction"/>
       <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction"/>
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
@@ -725,12 +725,6 @@
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction"
               icon="/debugger/muteBreakpoints.png"/>
-
-      <group id="Debugger.Layout" icon="/debugger/restoreLayout.png" popup="true">
-        <action id="Debugger.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction" />
-        <action id="Debugger.ToggleToolbarLayout" class="com.intellij.debugger.actions.ToggleToolbarLayout"/>
-      </group>
-
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/debugger/addToWatch.png"/>
     </group>
 

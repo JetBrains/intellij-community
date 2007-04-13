@@ -4,13 +4,13 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -20,8 +20,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractInterface.ExtractClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -58,12 +58,13 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     if (elements.length != 1) return;
 
     myProject = project;
-    mySubclass = (PsiClass) elements[0];
+    mySubclass = (PsiClass)elements[0];
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
     if (mySubclass.isInterface()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
       return;
     }
@@ -80,12 +81,12 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         return true;
       }
     }, false);
-    final String targetPackageName = (mySubclass.getContainingFile() instanceof PsiJavaFile)? ((PsiJavaFile) mySubclass.getContainingFile()).getPackageName() : null;
+    final String targetPackageName =
+      (mySubclass.getContainingFile() instanceof PsiJavaFile) ? ((PsiJavaFile)mySubclass.getContainingFile()).getPackageName() : null;
 
 
-    final ExtractSuperclassDialog dialog = new ExtractSuperclassDialog(
-            project, mySubclass, memberInfos, targetPackageName, ExtractSuperclassHandler.this
-    );
+    final ExtractSuperclassDialog dialog =
+      new ExtractSuperclassDialog(project, mySubclass, memberInfos, targetPackageName, ExtractSuperclassHandler.this);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
 
@@ -108,10 +109,12 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
       targetPackage = targetDirectory.getPackage();
-    } else {
+    }
+    else {
       targetPackage = null;
     }
-    String[] conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
+    String[] conflicts =
+      PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
     if (conflicts.length > 0) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
@@ -126,14 +129,15 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
     final JavaDocPolicy javaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
-    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-                                                                      getCommandName(subclass, superclassName));
+    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;
 
       try {
-        superclass = ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
-      } finally {
+        superclass =
+          ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
+      }
+      finally {
         LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
       }
 
@@ -141,7 +145,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       if (superclass != null) {
         ExtractClassUtil.askAndTurnRefsToSuper(project, subclass, superclass);
       }
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
 

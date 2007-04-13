@@ -16,6 +16,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +24,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -35,8 +35,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -94,33 +94,21 @@ public class CommanderPanel extends JPanel {
 
     ListScrollingUtil.installActions(myList);
 
-    myList.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          if (myBuilder == null) return;
-          myBuilder.buildRoot();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
-      JComponent.WHEN_FOCUSED
-    );
-
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-      ACTION_DRILL_DOWN
-    );
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
-      ACTION_DRILL_DOWN
-    );
-    myList.getActionMap().put(
-      ACTION_DRILL_DOWN,
-      new AbstractAction() {
-        public void actionPerformed(final ActionEvent e) {
-          drillDown();
-        }
+    myList.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        if (myBuilder == null) return;
+        myBuilder.buildRoot();
       }
-    );
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+
+    myList.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
+    myList.getInputMap(JComponent.WHEN_FOCUSED)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+    myList.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
+      public void actionPerformed(final ActionEvent e) {
+        drillDown();
+      }
+    });
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() == 2) {
@@ -128,68 +116,51 @@ public class CommanderPanel extends JPanel {
         }
       }
     });
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
-      ACTION_GO_UP
-    );
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
-      ACTION_GO_UP
-    );
-    myList.getActionMap().put(
-      ACTION_GO_UP,
-      new AbstractAction() {
-        public void actionPerformed(final ActionEvent e) {
-          goUp();
-        }
+    myList.getInputMap(JComponent.WHEN_FOCUSED)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_GO_UP);
+    myList.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
+    myList.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
+      public void actionPerformed(final ActionEvent e) {
+        goUp();
       }
-    );
+    });
 
     //noinspection HardCodedStringLiteral
-    myList.getActionMap().put(
-      "selectAll",
-      new AbstractAction() {
-        public void actionPerformed(final ActionEvent e) {
-        }
+    myList.getActionMap().put("selectAll", new AbstractAction() {
+      public void actionPerformed(final ActionEvent e) {
       }
-    );
+    });
 
 
-    myList.addMouseListener(
-      new PopupHandler() {
-        public void invokePopup(final Component comp, final int x, final int y) {
-          CommanderPanel.this.invokePopup(comp, x, y);
-        }
+    myList.addMouseListener(new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        CommanderPanel.this.invokePopup(comp, x, y);
       }
-    );
+    });
 
-    myList.addKeyListener(
-      new KeyAdapter() {
-        public void keyPressed(final KeyEvent e) {
-          if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-            if (e.isConsumed()) return;
-            final CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
-            final boolean[] isCopied = new boolean[1];
-            if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-              copyPasteManager.clear();
-              e.consume();
-            }
+    myList.addKeyListener(new KeyAdapter() {
+      public void keyPressed(final KeyEvent e) {
+        if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
+          if (e.isConsumed()) return;
+          final CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+          final boolean[] isCopied = new boolean[1];
+          if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
+            copyPasteManager.clear();
+            e.consume();
           }
         }
       }
-    );
+    });
 
-    myList.addFocusListener(
-      new FocusAdapter() {
-        public void focusGained(final FocusEvent e) {
-          setActive(true);
-        }
-
-        public void focusLost(final FocusEvent e) {
-          setActive(false);
-        }
+    myList.addFocusListener(new FocusAdapter() {
+      public void focusGained(final FocusEvent e) {
+        setActive(true);
       }
-    );
+
+      public void focusLost(final FocusEvent e) {
+        setActive(false);
+      }
+    });
 
     ListToolTipHandler.install(myList);
   }
@@ -218,7 +189,7 @@ public class CommanderPanel extends JPanel {
   }
 
   public void drillDown() {
-    if (topElementIsSelected()){
+    if (topElementIsSelected()) {
       goUp();
       return;
     }
@@ -264,7 +235,7 @@ public class CommanderPanel extends JPanel {
 
   private boolean topElementIsSelected() {
     int[] selectedIndices = myList.getSelectedIndices();
-    return selectedIndices.length == 1 && selectedIndices[0] == 0 && myModel.getElementAt(selectedIndices[0])instanceof TopLevelNode;
+    return selectedIndices.length == 1 && selectedIndices[0] == 0 && myModel.getElementAt(selectedIndices[0]) instanceof TopLevelNode;
   }
 
   public final void setBuilder(final AbstractListBuilder builder) {
@@ -321,7 +292,7 @@ public class CommanderPanel extends JPanel {
     return (PsiElement)(value instanceof PsiElement ? value : null);
   }
 
-  private AbstractTreeNode getSelectedNode(){
+  private AbstractTreeNode getSelectedNode() {
     if (myBuilder == null) return null;
     final int[] indices = myList.getSelectedIndices();
     if (indices.length != 1) return null;
@@ -330,7 +301,8 @@ public class CommanderPanel extends JPanel {
     Object elementAtIndex = myModel.getElementAt(index);
     return elementAtIndex instanceof AbstractTreeNode ? (AbstractTreeNode)elementAtIndex : null;
   }
-  private ArrayList<AbstractTreeNode> getSelectedNodes(){
+
+  private ArrayList<AbstractTreeNode> getSelectedNodes() {
     if (myBuilder == null) return null;
     final int[] indices = myList.getSelectedIndices();
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
@@ -344,7 +316,6 @@ public class CommanderPanel extends JPanel {
     }
     return result;
   }
-
 
 
   public Object getSelectedValue() {
@@ -369,7 +340,7 @@ public class CommanderPanel extends JPanel {
   private static Object getValueAtIndex(AbstractTreeNode node) {
     if (node == null) return null;
     Object value = node.getValue();
-    if (value instanceof TreeElement){
+    if (value instanceof TreeElement) {
       return ((StructureViewTreeElement)value).getValue();
     }
     return value;
@@ -395,7 +366,7 @@ public class CommanderPanel extends JPanel {
         myList.requestFocus();
       }
     }
-    else if (myList.getModel().getSize() > 0){
+    else if (myList.getModel().getSize() > 0) {
       // need this to generate SelectionChanged events so that listeners, added by Commander, will be notified
       myList.setSelectedIndices(selectedIndices);
     }
@@ -446,7 +417,7 @@ public class CommanderPanel extends JPanel {
     }
     else if (DataConstantsEx.PASTE_TARGET_PSI_ELEMENT.equals(dataId)) {
       final AbstractTreeNode parentNode = myBuilder.getParentNode();
-      final Object element = parentNode != null? parentNode.getValue() : null;
+      final Object element = parentNode != null ? parentNode.getValue() : null;
       return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
@@ -466,13 +437,17 @@ public class CommanderPanel extends JPanel {
     }
     else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
-    } else if (DataConstants.MODULE.equals(dataId)){
+    }
+    else if (DataConstants.MODULE.equals(dataId)) {
       return selectedValue instanceof Module ? selectedValue : null;
-    } else if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)){
+    }
+    else if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
       return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
-    } else if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
-      return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[] {(LibraryGroupElement)selectedValue} : null;
-    } else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
+    }
+    else if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
+      return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[]{(LibraryGroupElement)selectedValue} : null;
+    }
+    else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)) {
       return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
     }
 
@@ -500,7 +475,8 @@ public class CommanderPanel extends JPanel {
 
   }
 
-  @Nullable private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
+  @Nullable
+  private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
       return null;
     }
@@ -534,14 +510,14 @@ public class CommanderPanel extends JPanel {
       }
       super.setText(text);
       if (myPanel != null) {
-        myPanel.setToolTipText(text.trim().length() == 0? null : text);
+        myPanel.setToolTipText(text.trim().length() == 0 ? null : text);
       }
     }
   }
 
   private final class MyDeleteElementProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
-      final LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
+      final LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
       try {
         final PsiElement[] elements = getSelectedElements();
         DeleteHandler.deletePsiElement(elements, myProject);
@@ -586,14 +562,15 @@ public class CommanderPanel extends JPanel {
         final AbstractTreeNode parentNode = (AbstractTreeNode)parentElement;
         if (!(parentNode.getValue() instanceof PsiDirectory)) return null;
         return (PsiDirectory)parentNode.getValue();
-      } else {
+      }
+      else {
         return null;
       }
     }
 
     public PsiDirectory[] getDirectories() {
       PsiDirectory directory = getDirectory();
-      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[] {directory};
+      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }
 
     public PsiDirectory getOrChooseDirectory() {

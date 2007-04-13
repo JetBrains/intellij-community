@@ -1,8 +1,8 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,7 +32,8 @@ import java.util.*;
  * @author dsl
  */
 public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor");
+  private static final Logger LOG =
+    Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor");
   private PsiMethod myMethod;
   private PsiParameter myTargetParameter;
   private PsiClass myTargetClass;
@@ -54,8 +55,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetParameter.getType() instanceof PsiClassType);
     final PsiType type = myTargetParameter.getType();
     LOG.assertTrue(type instanceof PsiClassType);
-    myTargetClass = ((PsiClassType) type).resolve();
-    myOldVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList ());
+    myTargetClass = ((PsiClassType)type).resolve();
+    myOldVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     myNewVisibility = newVisibility;
   }
 
@@ -69,9 +70,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == 3);
-    myMethod = (PsiMethod) elements[0];
-    myTargetParameter = (PsiParameter) elements[1];
-    myTargetClass = (PsiClass) elements[2];
+    myMethod = (PsiMethod)elements[0];
+    myTargetParameter = (PsiParameter)elements[1];
+    myTargetClass = (PsiClass)elements[2];
   }
 
   @NotNull
@@ -120,13 +121,16 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final Set<PsiMember> methods = Collections.singleton(((PsiMember)myMethod));
     if (!myTargetClass.isInterface()) {
       final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
-      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), original)));
+      conflicts.addAll(
+        Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), original)));
     }
     else {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
-          conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
-            methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), new LinkedHashSet<String>(), PsiModifier.PUBLIC)));
+          conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods,
+                                                                                            ((ImplementingClassUsageInfo)usage).getPsiClass(),
+                                                                                            new LinkedHashSet<String>(),
+                                                                                            PsiModifier.PUBLIC)));
         }
       }
     }
@@ -140,10 +144,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           PsiExpression instanceValue = expressions[index];
           instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
           if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-            String message =
-              RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
-                                        ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
-                                        CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
+            String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
+                                                       CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
             conflicts.add(message);
           }
         }
@@ -180,11 +183,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         }
         if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(myMethod) : myNewVisibility;
-          String message =
-            RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
-                                      ConflictsUtil.getDescription(myMethod, true),
-                                      newVisibility,
-                                      ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true));
+          String message = RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
+                                                     ConflictsUtil.getDescription(myMethod, true), newVisibility,
+                                                     ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true));
           conflicts.add(message);
         }
       }
@@ -193,14 +194,14 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
-    final LvcsAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    final LocalHistoryAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       doRefactoring(usages);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    finally{
+    finally {
       LvcsIntegration.checkinFilesAfterRefactoring(myProject, lvcsAction);
     }
   }
@@ -270,7 +271,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     if (myTypeParameterReplacements == null) return newMethod;
     final Map<PsiTypeParameter, PsiTypeParameter> additionalReplacements;
     if (targetClass != myTargetClass) {
-      final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(myTargetClass, targetClass, PsiSubstitutor.EMPTY);
+      final PsiSubstitutor superClassSubstitutor =
+        TypeConversionUtil.getSuperClassSubstitutor(myTargetClass, targetClass, PsiSubstitutor.EMPTY);
       final Map<PsiTypeParameter, PsiTypeParameter> map = calculateReplacementMap(superClassSubstitutor, myTargetClass, targetClass);
       if (map == null) return newMethod;
       additionalReplacements = new HashMap<PsiTypeParameter, PsiTypeParameter>();
@@ -311,7 +313,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       referenceExpression.delete();
     }
     else {
-      final PsiExpression expression = myMethod.getManager().getElementFactory().createExpressionFromText("this" , null);
+      final PsiExpression expression = myMethod.getManager().getElementFactory().createExpressionFromText("this", null);
       referenceExpression.replace(expression);
     }
   }

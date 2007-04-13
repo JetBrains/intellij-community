@@ -8,13 +8,13 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -47,7 +47,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
+        String message = RefactoringBundle
+          .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
         return;
       }
@@ -71,17 +72,23 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     PsiElement aMember = null;
 
     if (element instanceof PsiClass) {
-      aClass = (PsiClass) element;
-    } else if (element instanceof PsiMethod) {
-      aClass = ((PsiMethod) element).getContainingClass();
+      aClass = (PsiClass)element;
+    }
+    else if (element instanceof PsiMethod) {
+      aClass = ((PsiMethod)element).getContainingClass();
       aMember = element;
-    } else if (element instanceof PsiField) {
-      aClass = ((PsiField) element).getContainingClass();
+    }
+    else if (element instanceof PsiField) {
+      aClass = ((PsiField)element).getContainingClass();
       aMember = element;
-    } else return;
+    }
+    else {
+      return;
+    }
 
-    if(aClass == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
+    if (aClass == null) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
       return;
     }
@@ -119,39 +126,34 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
     if (!dialog.isOK()) return;
 
-    CommandProcessor.getInstance().executeCommand(
-        myProject, new Runnable() {
-              public void run() {
-                final Runnable action = new Runnable() {
-                  public void run() {
-                    doRefactoring(dialog);
-                  }
-                };
-                ApplicationManager.getApplication().runWriteAction(action);
-              }
-            },
-        REFACTORING_NAME,
-        null
-    );
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        final Runnable action = new Runnable() {
+          public void run() {
+            doRefactoring(dialog);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+    }, REFACTORING_NAME, null);
 
   }
 
 
   private void doRefactoring(PullUpDialog dialog) {
-    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       try {
-        PullUpHelper helper = new PullUpHelper(mySubclass,
-                                               dialog.getSuperClass(),
-                                               dialog.getSelectedMemberInfos(),
-                                               new JavaDocPolicy(dialog.getJavaDocPolicy())
-        );
+        PullUpHelper helper = new PullUpHelper(mySubclass, dialog.getSuperClass(), dialog.getSelectedMemberInfos(),
+                                               new JavaDocPolicy(dialog.getJavaDocPolicy()));
         helper.moveMembersToBase();
         helper.moveFieldInitializations();
-      } finally {
+      }
+      finally {
         LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
       }
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }

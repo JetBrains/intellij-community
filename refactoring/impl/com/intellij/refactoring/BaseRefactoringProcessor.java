@@ -1,10 +1,10 @@
 package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -61,16 +61,19 @@ public abstract class BaseRefactoringProcessor {
   /**
    * Is called inside atomic action.
    */
-  @NotNull protected abstract UsageInfo[] findUsages();
+  @NotNull
+  protected abstract UsageInfo[] findUsages();
 
   /**
    * is called when usage search is re-run.
+   *
    * @param elements - refreshed elements that are returned by UsageViewDescriptor.getElements()
    */
   protected abstract void refreshElements(PsiElement[] elements);
 
   /**
    * Is called inside atomic action.
+   *
    * @param refUsages usages to be filtered
    * @return true if preprocessed successfully
    */
@@ -115,6 +118,7 @@ public abstract class BaseRefactoringProcessor {
   /**
    * If this method returns <code>true</code>, it means that element to rename is variable, and in the findUsages tree it
    * will be shown with read-access or write-access icons.
+   *
    * @return true if element to rename is variable(local, field, or parameter).
    */
   protected boolean isVariable() {
@@ -138,7 +142,9 @@ public abstract class BaseRefactoringProcessor {
     };
 
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) return;
+      .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) {
+      return;
+    }
 
     LOG.assertTrue(!refUsages.isNull());
     if (!preprocessUsages(refUsages)) return;
@@ -196,20 +202,16 @@ public abstract class BaseRefactoringProcessor {
   }
 
   void execute(final UsageInfo[] usages) {
-    CommandProcessor.getInstance().executeCommand(
-        myProject, new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                Collection<Usage> usagesSet = Arrays.<Usage>asList(UsageInfo2UsageAdapter.convert(usages));
-                doRefactoring(usagesSet, new HashSet<Usage>());
-              }
-            });
+            Collection<Usage> usagesSet = Arrays.<Usage>asList(UsageInfo2UsageAdapter.convert(usages));
+            doRefactoring(usagesSet, new HashSet<Usage>());
           }
-        },
-        getCommandName(),
-        null
-    );
+        });
+      }
+    }, getCommandName(), null);
   }
 
   private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor, final Usage[] usages) {
@@ -269,7 +271,8 @@ public abstract class BaseRefactoringProcessor {
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
-    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
+    usageView
+      .addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
   }
 
   private static Set<Usage> getExcludedUsages(final UsageView usageView) {
@@ -298,19 +301,19 @@ public abstract class BaseRefactoringProcessor {
           if (element != null && element.isWritable()) {
             usageInfoSet.add(((UsageInfo2UsageAdapter)elementUsage).getUsageInfo());
           }
-        } else {
+        }
+        else {
           LOG.error("Unknown usage!");
         }
       }
     }
 
-    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
 
     final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      RefactoringListenerManagerImpl listenerManager =
-          (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
+      RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
       Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
       performRefactoring(usages);
@@ -319,7 +322,7 @@ public abstract class BaseRefactoringProcessor {
       performPsiSpoilingRefactoring();
     }
     finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+      LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
     }
 
     if (usages != null) {
@@ -379,12 +382,15 @@ public abstract class BaseRefactoringProcessor {
       if (!ApplicationManager.getApplication().isDispatchThread()) {
         try {
           SwingUtilities.invokeAndWait(myPrepareSuccessfulSwingThreadCallback);
-        } catch (InterruptedException e) {
-          LOG.error(e);
-        } catch (InvocationTargetException e) {
+        }
+        catch (InterruptedException e) {
           LOG.error(e);
         }
-      } else {
+        catch (InvocationTargetException e) {
+          LOG.error(e);
+        }
+      }
+      else {
         myPrepareSuccessfulSwingThreadCallback.run();
       }
 //      ToolWindowManager.getInstance(myProject).invokeLater(myPrepareSuccessfulSwingThreadCallback);
@@ -417,7 +423,7 @@ public abstract class BaseRefactoringProcessor {
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
     if (!ensureElementsWritable(usages, descriptor)) return;
 
-    RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
+    RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
     myTransaction = listenerManager.startTransaction();
     Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
     performRefactoring(usages);

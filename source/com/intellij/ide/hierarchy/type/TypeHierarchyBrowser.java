@@ -9,12 +9,12 @@ import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -45,13 +45,13 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class TypeHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator  {
+public final class TypeHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
   @NonNls
   private final static String HELP_ID = "viewingStructure.classHierarchy";
   @NonNls
-  static final String TYPE_HIERARCHY_BROWSER_ID="TYPE_HIERARCHY_BROWSER_ID";
+  static final String TYPE_HIERARCHY_BROWSER_ID = "TYPE_HIERARCHY_BROWSER_ID";
 
   private Content myContent;
   private final Project myProject;
@@ -102,7 +102,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     while (keys.hasMoreElements()) {
       final Object key = keys.nextElement();
       final JTree tree = myTrees.get(key);
-      myOccurenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
+      myOccurenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Nullable
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           final Object userObject = node.getUserObject();
@@ -111,7 +111,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
           final PsiElement psiElement = nodeDescriptor.getPsiClass();
           if (psiElement == null || !psiElement.isValid()) return null;
           PsiElement navigationElement = psiElement.getNavigationElement();
-          return new OpenFileDescriptor(psiElement.getProject(), navigationElement.getContainingFile().getVirtualFile(), navigationElement.getTextOffset());
+          return new OpenFileDescriptor(psiElement.getProject(), navigationElement.getContainingFile().getVirtualFile(),
+                                        navigationElement.getTextOffset());
         }
 
         public String getNextOccurenceActionName() {
@@ -153,8 +154,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     });
 
     final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
-    baseOnThisTypeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(),
-                                                   tree);
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree);
 
     new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
@@ -173,21 +174,19 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   }
 
   private void restoreCursor() {
-    /*int n =*/ myAlarm.cancelAllRequests();
+    /*int n =*/
+    myAlarm.cancelAllRequests();
     //    if (n == 0) {
     setCursor(Cursor.getDefaultCursor());
     //    }
   }
 
   private void setWaitCursor() {
-    myAlarm.addRequest(
-      new Runnable() {
+    myAlarm.addRequest(new Runnable() {
       public void run() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
       }
-    },
-      100
-    );
+    }, 100);
   }
 
   public final void changeView(final String typeName) {
@@ -210,8 +209,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
       // create builder
       final JTree tree = myTrees.get(typeName);
-      final DefaultTreeModel model = /*(DefaultTreeModel)tree.getModel()*/ new DefaultTreeModel(
-          new DefaultMutableTreeNode(""));
+      final DefaultTreeModel model = /*(DefaultTreeModel)tree.getModel()*/ new DefaultTreeModel(new DefaultMutableTreeNode(""));
       tree.setModel(model);
 
       final HierarchyTreeStructure structure;
@@ -260,8 +258,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     actionGroup.add(new CloseAction());
     actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HELP_ID));
 
-    final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR,
-                                                                                  actionGroup, true);
+    final ActionToolbar toolBar =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR, actionGroup, true);
     return toolBar;
   }
 
@@ -389,7 +387,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   public final Object getData(final String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final PsiClass aClass = getSelectedClass();
-      return aClass != null && aClass.isValid()? aClass : null;
+      return aClass != null && aClass.isValid() ? aClass : null;
     }
     if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
@@ -440,8 +438,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
   private final class AlphaSortAction extends ToggleAction {
     public AlphaSortAction() {
-      super(IdeBundle.message("action.sort.alphabetically"),
-            IdeBundle.message("action.sort.alphabetically"), IconLoader.getIcon("/objectBrowser/sorted.png"));
+      super(IdeBundle.message("action.sort.alphabetically"), IdeBundle.message("action.sort.alphabetically"),
+            IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -468,8 +466,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   public static final class BaseOnThisTypeAction extends AnAction {
     public final void actionPerformed(final AnActionEvent event) {
       final DataContext dataContext = event.getDataContext();
-      final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)dataContext.getData(
-          TYPE_HIERARCHY_BROWSER_DATA_CONSTANT);
+      final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)dataContext.getData(TYPE_HIERARCHY_BROWSER_DATA_CONSTANT);
       if (browser == null) return;
 
       final PsiClass selectedClass = browser.getSelectedClass();
@@ -490,8 +487,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
-      registerCustomShortcutSet(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), null);
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), null);
 
       final DataContext dataContext = event.getDataContext();
       final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)dataContext.getData(TYPE_HIERARCHY_BROWSER_DATA_CONSTANT);
@@ -504,11 +500,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
       presentation.setVisible(true);
 
       final PsiClass selectedClass = browser.getSelectedClass();
-      if (selectedClass != null &&
-          !selectedClass.equals(browser.mySmartPsiElementPointer.getElement()) &&
-          !"java.lang.Object".equals(selectedClass.getQualifiedName()) &&
-          selectedClass.isValid()
-      ) {
+      if (selectedClass != null && !selectedClass.equals(browser.mySmartPsiElementPointer.getElement()) &&
+          !"java.lang.Object".equals(selectedClass.getQualifiedName()) && selectedClass.isValid()) {
         presentation.setText(selectedClass.isInterface()
                              ? IdeBundle.message("action.base.on.this.interface")
                              : IdeBundle.message("action.base.on.this.class"));
@@ -524,10 +517,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     public final void deleteElement(final DataContext dataContext) {
       final PsiClass aClass = getSelectedClass();
       if (aClass == null || aClass instanceof PsiAnonymousClass) return;
-      final LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-                                                                                                            IdeBundle.message(
-                                                                                                              "progress.deleting.class",
-                                                                                                              aClass.getQualifiedName()));
+      final LocalHistoryAction action =
+        LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting.class", aClass.getQualifiedName()));
       try {
         final PsiElement[] elements = new PsiElement[]{aClass};
         DeleteHandler.deletePsiElement(elements, myProject);

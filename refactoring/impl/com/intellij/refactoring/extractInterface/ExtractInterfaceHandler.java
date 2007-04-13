@@ -1,12 +1,12 @@
 package com.intellij.refactoring.extractInterface;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -15,8 +15,8 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
-import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -58,51 +58,47 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     if (elements.length != 1) return;
 
     myProject = project;
-    myClass = (PsiClass) elements[0];
+    myClass = (PsiClass)elements[0];
 
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
-    final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(
-            myProject,
-            myClass
-    );
+    final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
 
-    CommandProcessor.getInstance().executeCommand(
-        myProject, new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    myInterfaceName = dialog.getInterfaceName();
-                    mySelectedMembers = dialog.getSelectedMembers();
-                    myTargetDir = dialog.getTargetDirectory();
-                    myJavaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
-                    try {
-                      doRefactoring();
-                    } catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
-                  }
-                });
-              }
-            },
-        REFACTORING_NAME,
-        null
-    );
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            myInterfaceName = dialog.getInterfaceName();
+            mySelectedMembers = dialog.getSelectedMembers();
+            myTargetDir = dialog.getTargetDirectory();
+            myJavaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
+            try {
+              doRefactoring();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+    }, REFACTORING_NAME, null);
 
   }
 
 
   private void doRefactoring() throws IncorrectOperationException {
-    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     PsiClass anInterface = null;
     try {
       anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
-    } catch(IncorrectOperationException ex) {
+    }
+    catch (IncorrectOperationException ex) {
       throw ex;
-    } finally {
+    }
+    finally {
       LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
     }
 

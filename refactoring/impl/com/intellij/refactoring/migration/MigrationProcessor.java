@@ -1,14 +1,14 @@
 package com.intellij.refactoring.migration;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -17,10 +17,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -46,13 +45,13 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     if (!application.isUnitTestMode()) {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       LOG.assertTrue(progressIndicator != null);
-      application.invokeAndWait(
-          new Runnable() {
-          public void run() {
-            findOrCreateEntries(psiManager, migration, application);
-          }
-        }, progressIndicator.getModalityState());
-    } else {
+      application.invokeAndWait(new Runnable() {
+        public void run() {
+          findOrCreateEntries(psiManager, migration, application);
+        }
+      }, progressIndicator.getModalityState());
+    }
+    else {
       findOrCreateEntries(psiManager, migration, application);
     }
 
@@ -60,21 +59,19 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   private void findOrCreateEntries(final PsiManager psiManager, final PsiMigration migration, Application application) {
-    application.runWriteAction(
-        new Runnable() {
-        public void run() {
-          for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
-            MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
-            if (entry.getType() == MigrationMapEntry.PACKAGE) {
-              MigrationUtil.findOrCreatePackage(psiManager, migration,
-                                                entry.getOldName());
-            }
-            else {
-              MigrationUtil.findOrCreateClass(psiManager, migration, entry.getOldName());
-            }
+    application.runWriteAction(new Runnable() {
+      public void run() {
+        for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
+          MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
+          if (entry.getType() == MigrationMapEntry.PACKAGE) {
+            MigrationUtil.findOrCreatePackage(psiManager, migration, entry.getOldName());
+          }
+          else {
+            MigrationUtil.findOrCreateClass(psiManager, migration, entry.getOldName());
           }
         }
-      });
+      }
+    });
   }
 
   @NotNull
@@ -112,9 +109,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject,
-                               RefactoringBundle.message("migration.no.usages.found.in.the.project"),
-                               REFACTORING_NAME);
+      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), REFACTORING_NAME);
       return false;
     }
     setPreviewUsages(true);
@@ -124,7 +119,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     final PsiMigration psiMigration = psiManager.startMigration();
-    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
 
     try {
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {

@@ -3,13 +3,13 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -63,7 +63,7 @@ public class DeleteHandler {
       if (elements == null) return;
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       if (project == null) return;
-      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, IdeBundle.message("progress.deleting"));
       try {
         deletePsiElement(elements, project);
       }
@@ -96,8 +96,7 @@ public class DeleteHandler {
             }
           }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
         }
-      }
-      );
+      });
       dialog.show();
       if (!dialog.isOK()) return;
     }
@@ -123,112 +122,104 @@ public class DeleteHandler {
       }
 
       int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
-                                       new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()},
-                                       0, Messages.getQuestionIcon());
+                                       new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+                                       Messages.getQuestionIcon());
       if (result != 0) return;
     }
 
     final FileTypeManager ftManager = FileTypeManager.getInstance();
-    CommandProcessor.getInstance().executeCommand(
-      project, new Runnable() {
-        public void run() {
-          CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
 
-          for (final PsiElement elementToDelete : elements) {
-            if (!elementToDelete.isValid()) continue; //was already deleted
-            if (elementToDelete instanceof PsiDirectory) {
-              VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
-              if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
+        for (final PsiElement elementToDelete : elements) {
+          if (!elementToDelete.isValid()) continue; //was already deleted
+          if (elementToDelete instanceof PsiDirectory) {
+            VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
+            if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
 
-                ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-                getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
+              ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
+              getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
 
-                if (readOnlyFiles.size() > 0) {
-                  int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
-                                                                                       virtualFile.getPresentableUrl()),
-                                                                     IdeBundle.message("title.delete"), Messages.getQuestionIcon());
-                  if (_result != 0) continue;
+              if (readOnlyFiles.size() > 0) {
+                int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
+                                                                                  virtualFile.getPresentableUrl()),
+                                                                IdeBundle.message("title.delete"), Messages.getQuestionIcon());
+                if (_result != 0) continue;
 
-                  boolean success = true;
-                  for (VirtualFile file : readOnlyFiles) {
-                    success = clearReadOnlyFlag(file, project);
-                    if (!success) break;
-                  }
-                  if (!success) continue;
-
+                boolean success = true;
+                for (VirtualFile file : readOnlyFiles) {
+                  success = clearReadOnlyFlag(file, project);
+                  if (!success) break;
                 }
+                if (!success) continue;
 
               }
-            }
-            else if (!elementToDelete.isWritable()) {
-              final PsiFile file = elementToDelete.getContainingFile();
-              if (file != null) {
-                final VirtualFile virtualFile = file.getVirtualFile();
-                if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
-                  int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
-                    .setTitle(IdeBundle.message("title.delete"))
-                    .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
-                    .askYesNo();
-                  if (_result != 0) continue;
 
-                  boolean success = clearReadOnlyFlag(virtualFile, project);
-                  if (!success) continue;
-                }
-              }
             }
-
-            try {
-              elementToDelete.checkDelete();
-            }
-            catch (IncorrectOperationException ex) {
-              Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-              continue;
-            }
-
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                try {
-                  elementToDelete.delete();
-                }
-                catch (final IncorrectOperationException ex) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-                    }
-                  });
-                }
-              }
-            });
           }
+          else if (!elementToDelete.isWritable()) {
+            final PsiFile file = elementToDelete.getContainingFile();
+            if (file != null) {
+              final VirtualFile virtualFile = file.getVirtualFile();
+              if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
+                int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
+                  .setTitle(IdeBundle.message("title.delete"))
+                  .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
+                  .askYesNo();
+                if (_result != 0) continue;
+
+                boolean success = clearReadOnlyFlag(virtualFile, project);
+                if (!success) continue;
+              }
+            }
+          }
+
+          try {
+            elementToDelete.checkDelete();
+          }
+          catch (IncorrectOperationException ex) {
+            Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+            continue;
+          }
+
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              try {
+                elementToDelete.delete();
+              }
+              catch (final IncorrectOperationException ex) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+                  }
+                });
+              }
+            }
+          });
         }
-      },
-      RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(elements)),
-      null
-    );
+      }
+    }, RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(elements)), null);
   }
 
   private static boolean clearReadOnlyFlag(final VirtualFile virtualFile, final Project project) {
     final boolean[] success = new boolean[1];
-    CommandProcessor.getInstance().executeCommand(
-      project, new Runnable() {
-        public void run() {
-          Runnable action = new Runnable() {
-            public void run() {
-              try {
-                ReadOnlyAttributeUtil.setReadOnlyAttribute(virtualFile, false);
-                success[0] = true;
-              }
-              catch (IOException e1) {
-                Messages.showMessageDialog(project, e1.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-              }
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        Runnable action = new Runnable() {
+          public void run() {
+            try {
+              ReadOnlyAttributeUtil.setReadOnlyAttribute(virtualFile, false);
+              success[0] = true;
             }
-          };
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
-      },
-      "",
-      null
-    );
+            catch (IOException e1) {
+              Messages.showMessageDialog(project, e1.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+            }
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+    }, "", null);
     return success[0];
   }
 

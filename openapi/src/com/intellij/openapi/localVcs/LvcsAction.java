@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.localVcs;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 
 
 /**
  * author: lesya
  */
-public interface LvcsAction {
-  LvcsAction EMPTY = new LvcsAction(){
+public interface LvcsAction extends LocalHistoryAction {
+  LvcsAction EMPTY = new LvcsAction() {
     public void finish() {
     }
 
