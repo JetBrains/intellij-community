@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
@@ -38,7 +38,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void initModel(VirtualFile f) {
-    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myGateway.getProject());
+    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
     myModel = createModelFor(f, vcs);
   }
 

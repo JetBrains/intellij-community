@@ -17,8 +17,8 @@
       <implementation-class>com.intellij.openapi.localVcs.impl.LocalVcsServicesImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.localvcs.integration.ILocalVcsComponent</interface-class>
-      <implementation-class>com.intellij.localvcs.integration.LocalVcsComponent</implementation-class>
+      <interface-class>com.intellij.localvcs.integration.LocalHistory</interface-class>
+      <implementation-class>com.intellij.localvcs.integration.LocalHistoryComponent</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

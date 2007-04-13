@@ -1,5 +1,5 @@
 package com.intellij.localvcs.integration;
 
-public interface ILocalVcsAction {
+public interface LocalHistoryAction {
   void finish();
 }

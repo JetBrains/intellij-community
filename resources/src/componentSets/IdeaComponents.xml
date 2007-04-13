@@ -20,7 +20,7 @@
     </component>
   </module-components>
 
-  <xi:include href="Lvcs.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="LocalHistory.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="UILaf.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>

@@ -4,7 +4,7 @@ import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localVcs.impl.OldLvcsImplemetation;
-import com.intellij.localvcs.integration.ILocalVcsComponent;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -337,7 +337,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized VirtualFile[] getCoveredDirectories() {
     //TODO: filter out roots from JarFilesystem.
-    if (getProject().getComponent(ILocalVcsComponent.class).isEnabled()) {
+    if (getProject().getComponent(LocalHistory.class).isEnabled()) {
       return new VirtualFile[0];
     }
     else {

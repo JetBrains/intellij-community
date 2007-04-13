@@ -1,9 +1,9 @@
 <components xmlns:xi="http://www.w3.org/2001/XInclude"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.w3.org/2001/XInclude
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
 
-  <xi:include href="Lvcs.xml"/>
+  <xi:include href="LocalHistory.xml"/>
   <xi:include href="Core.xml"/>
   <xi:include href="CodeInspection.xml"/>
 

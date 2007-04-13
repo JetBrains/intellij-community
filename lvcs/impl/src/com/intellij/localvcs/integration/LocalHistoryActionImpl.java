@@ -1,12 +1,12 @@
 package com.intellij.localvcs.integration;
 
-public class LocalVcsAction implements ILocalVcsAction {
-  public static LocalVcsAction NULL = new Null(); // todo try to get rid of this
+public class LocalHistoryActionImpl implements LocalHistoryAction {
+  public static LocalHistoryAction NULL = new Null(); // todo try to get rid of this
 
   private String myName;
   private FileListener myListener;
 
-  public LocalVcsAction(FileListener l, String name) {
+  public LocalHistoryActionImpl(FileListener l, String name) {
     myName = name;
     myListener = l;
   }
@@ -19,7 +19,7 @@ public class LocalVcsAction implements ILocalVcsAction {
     myListener.finishAction();
   }
 
-  private static class Null extends LocalVcsAction {
+  private static class Null extends LocalHistoryActionImpl {
     public Null() {
       super(null, null);
     }

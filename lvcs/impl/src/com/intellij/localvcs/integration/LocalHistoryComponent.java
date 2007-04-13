@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-// todo get rid of all singletons
-public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
+public class LocalHistoryComponent extends LocalHistory implements ProjectComponent {
   private Project myProject;
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
@@ -32,15 +31,10 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
 
   // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
-    return ((LocalVcsComponent)getInstance(p)).getLocalVcs();
+    return ((LocalHistoryComponent)getInstance(p)).getLocalVcs();
   }
 
-  // todo try to get rid of this method (and use startActionFor(Project) instead
-  public static ILocalVcsComponent getInstance(Project p) {
-    return p.getComponent(ILocalVcsComponent.class);
-  }
-
-  public LocalVcsComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, CommandProcessor cp) {
+  public LocalHistoryComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, CommandProcessor cp) {
     myProject = p;
     myStartupManager = (StartupManagerEx)sm;
     myRootManager = rm;
@@ -118,12 +112,14 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     return myProject.isDefault();
   }
 
+  @Override
   public boolean isEnabled() {
     return System.getProperty("newlocalvcs.disabled") == null;
   }
 
-  public LocalVcsAction startAction(String name) {
-    if (!isEnabled()) return LocalVcsAction.NULL;
+  @Override
+  protected LocalHistoryAction startAction(String name) {
+    if (!isEnabled()) return LocalHistoryActionImpl.NULL;
     return myService.startAction(name);
   }
 

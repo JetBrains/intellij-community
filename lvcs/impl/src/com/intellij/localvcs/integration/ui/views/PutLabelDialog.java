@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -94,7 +94,7 @@ public class PutLabelDialog extends DialogWrapper {
 
   @Override
   public void doOKAction() {
-    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myGateway.getProject());
+    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
     if (myFile != null && myFileButton.isSelected()) {
       vcs.putLabel(myFile.getPath(), getLabelName());
     }

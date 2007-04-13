@@ -14,7 +14,7 @@ import java.io.File;
 
 public class LocalVcsComponentTest extends TempDirTestCase {
   private MyStartupManager sm;
-  private LocalVcsComponent c;
+  private LocalHistoryComponent c;
 
   @After
   public void tearDown() {
@@ -24,7 +24,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   @Test
   public void testStorageLocation() {
     Project p = createProject("projectLocationHash");
-    LocalVcsComponent c = new MyLocalVcsComponent("c:/idea/system", p, null);
+    LocalHistoryComponent c = new MyLocalHistoryComponent("c:/idea/system", p, null);
 
     File expected = new File("c:/idea/system/vcs_new/projectLocationHash");
     assertEquals(expected, c.getStorageDir());
@@ -48,7 +48,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   private void initComponent() {
     Project p = createProject("project");
     sm = new MyStartupManager();
-    c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
+    c = new MyLocalHistoryComponent(tempDir.getPath(), p, sm);
     c.initComponent();
   }
 
@@ -89,7 +89,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     expect(p.isDefault()).andStubReturn(true);
     replay(p);
 
-    LocalVcsComponent c = new LocalVcsComponent(p, sm, null, null, null) {
+    LocalHistoryComponent c = new LocalHistoryComponent(p, sm, null, null, null) {
       @Override
       public boolean isEnabled() {
         return true;
@@ -106,7 +106,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   @Test
   public void testCleaningOnDisposeInUnitTestMode() {
     final boolean[] isUnitTestMode = new boolean[]{true};
-    LocalVcsComponent c = new LocalVcsComponent(null, null, null, null, null) {
+    LocalHistoryComponent c = new LocalHistoryComponent(null, null, null, null, null) {
       @Override
       public File getStorageDir() {
         return new File(tempDir, "vcs");
@@ -167,11 +167,11 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     }
   }
 
-  private static class MyLocalVcsComponent extends LocalVcsComponent {
+  private static class MyLocalHistoryComponent extends LocalHistoryComponent {
     private String mySystemPath;
     private boolean isVcsInitialized;
 
-    public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
+    public MyLocalHistoryComponent(String systemPath, Project p, MyStartupManager sm) {
       super(p, sm, null, null, null);
       mySystemPath = systemPath;
     }

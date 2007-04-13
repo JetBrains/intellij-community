@@ -4,7 +4,7 @@ import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -129,12 +129,12 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     d.setText(t);
   }
 
-  protected LocalVcsComponent getVcsComponent() {
-    return (LocalVcsComponent)LocalVcsComponent.getInstance(myProject);
+  protected LocalHistoryComponent getVcsComponent() {
+    return (LocalHistoryComponent)LocalHistoryComponent.getInstance(myProject);
   }
 
   protected ILocalVcs getVcs() {
-    return LocalVcsComponent.getLocalVcsFor(myProject);
+    return LocalHistoryComponent.getLocalVcsFor(myProject);
   }
 
   protected boolean hasVcsEntry(VirtualFile f) {

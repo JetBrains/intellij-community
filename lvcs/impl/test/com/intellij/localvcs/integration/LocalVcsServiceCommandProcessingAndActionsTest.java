@@ -16,7 +16,7 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
     dir.addChild(one);
     dir.addChild(two);
 
-    LocalVcsAction a = service.startAction("name");
+    LocalHistoryAction a = service.startAction("name");
     fileManager.fireFileCreated(one);
     fileManager.fireFileCreated(two);
     a.finish();

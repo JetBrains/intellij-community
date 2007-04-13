@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration.ui.actions;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -23,7 +23,7 @@ public abstract class LocalVcsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (!LocalVcsComponent.getInstance(getProject(e)).isEnabled()) {
+    if (!LocalHistoryComponent.getInstance(getProject(e)).isEnabled()) {
       p.setVisible(false);
       return;
     }
@@ -35,7 +35,7 @@ public abstract class LocalVcsAction extends AnAction {
   }
 
   private ILocalVcs getVcs(AnActionEvent e) {
-    return LocalVcsComponent.getLocalVcsFor(getProject(e));
+    return LocalHistoryComponent.getLocalVcsFor(getProject(e));
   }
 
   private IdeaGateway getGateway(AnActionEvent e) {

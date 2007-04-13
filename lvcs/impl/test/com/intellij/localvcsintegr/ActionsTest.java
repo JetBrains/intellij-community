@@ -2,7 +2,8 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.LocalVcsAction;
+import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +22,7 @@ public class ActionsTest extends IntegrationTestCase {
 
     assertEquals(0, getVcsContentOf(f)[0]);
 
-    LocalVcsAction a = getVcsComponent().startAction("name");
+    LocalHistoryAction a = LocalHistory.startAction(myProject, "name");
     assertEquals(1, getVcsContentOf(f)[0]);
 
     setDocumentTextFor(f, new byte[]{2});
@@ -41,7 +42,7 @@ public class ActionsTest extends IntegrationTestCase {
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        LocalVcsAction a = getVcsComponent().startAction("action");
+        LocalHistoryAction a = LocalHistory.startAction(myProject, "action");
         setDocumentTextFor(f, new byte[]{2});
         a.finish();
       }
@@ -66,7 +67,7 @@ public class ActionsTest extends IntegrationTestCase {
           f.setBinaryContent(new byte[]{0});
           setDocumentTextFor(f, new byte[]{1});
 
-          LocalVcsAction a = getVcsComponent().startAction("action");
+          LocalHistoryAction a = LocalHistory.startAction(myProject, "action");
           setDocumentTextFor(f, new byte[]{2});
           a.finish();
 
