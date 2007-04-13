@@ -3,7 +3,10 @@
   <id>org.intellij.groovy</id>
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.GrailsConsole</implementation-class>
+      <implementation-class>org.jetbrains.plugins.grails.GrailsConsole</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
     </component>
   </project-components>
   <module-components>
@@ -12,7 +15,7 @@
     </component>
   </module-components>
   <actions>
-    <action id="Grails.GenerateController" class="org.jetbrains.plugins.groovy.actions.GenerateControllerAction"
+    <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
             text="Grails Controller" description="Generate Grails Controller">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
@@ -24,25 +27,25 @@
       <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
               text="Groovy Script" description="Create new Groovy script">
       </action>
-      <action id="Grails.NewApp" class="org.jetbrains.plugins.groovy.actions.NewGrailsAppAction"
+      <action id="Grails.NewApp" class="org.jetbrains.plugins.grails.actions.NewGrailsAppAction"
               text="Grails Application"
               description="Create new Grails application"/>
-      <action id="Grails.DomainClass" class="org.jetbrains.plugins.groovy.actions.NewGrailsDomainClassAction"
+      <action id="Grails.DomainClass" class="org.jetbrains.plugins.grails.actions.NewGrailsDomainClassAction"
               text="Grails Domain Class" description="Create new Grails domain class">
       </action>
-      <action id="Grails.Controller" class="org.jetbrains.plugins.groovy.actions.NewGrailsControllerAction"
+      <action id="Grails.Controller" class="org.jetbrains.plugins.grails.actions.NewGrailsControllerAction"
               text="Grails Controller" description="Create new Grails controller">
       </action>
-      <action id="Grails.Service" class="org.jetbrains.plugins.groovy.actions.NewGrailsServiceAction"
+      <action id="Grails.Service" class="org.jetbrains.plugins.grails.actions.NewGrailsServiceAction"
               text="Grails Service" description="Create new Grails service">
       </action>
-      <action id="Grails.Job" class="org.jetbrains.plugins.groovy.actions.NewGrailsJobAction"
+      <action id="Grails.Job" class="org.jetbrains.plugins.grails.actions.NewGrailsJobAction"
               text="Grails Job" description="Create new Grails job">
       </action>
-      <action id="Grails.Script" class="org.jetbrains.plugins.groovy.actions.NewGrailsScriptAction"
+      <action id="Grails.Script" class="org.jetbrains.plugins.grails.actions.NewGrailsScriptAction"
               text="Grails Script" description="Create new Grails script">
       </action>
-      <action id="Grails.TagLib" class="org.jetbrains.plugins.groovy.actions.NewGrailsTagLibAction"
+      <action id="Grails.TagLib" class="org.jetbrains.plugins.grails.actions.NewGrailsTagLibAction"
               text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
@@ -65,7 +68,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.grailsmodule.GrailsModuleType</implementation-class>
+      <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleType</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.fileType.GspFileType</implementation-class>
     </component>
   </application-components>
 
