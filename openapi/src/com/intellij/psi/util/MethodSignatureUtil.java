@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 
 public class MethodSignatureUtil {
@@ -127,8 +125,8 @@ public class MethodSignatureUtil {
   }
 
   @Nullable
-  public static PsiMethod findMethodInSuperClassBySignatureInDerived(final @NotNull PsiClass aClass, 
-                                                                     final @NotNull PsiClass superClass,
+  public static PsiMethod findMethodInSuperClassBySignatureInDerived(@NotNull final PsiClass aClass,
+                                                                     @NotNull final PsiClass superClass,
                                                                      final MethodSignature signature,
                                                                      final boolean checkDeep) {
     PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
@@ -309,7 +307,8 @@ public class MethodSignatureUtil {
     }
   }
 
-  public static @NotNull PsiMethod[] convertMethodSignaturesToMethods(List<MethodSignatureBackedByPsiMethod> sameNameMethodList) {
+  @NotNull
+  public static PsiMethod[] convertMethodSignaturesToMethods(List<MethodSignatureBackedByPsiMethod> sameNameMethodList) {
     final PsiMethod[] methods = new PsiMethod[sameNameMethodList.size()];
     for (int i = 0; i < sameNameMethodList.size(); i++) {
       methods[i] = sameNameMethodList.get(i).getMethod();

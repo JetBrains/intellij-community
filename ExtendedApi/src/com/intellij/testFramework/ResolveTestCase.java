@@ -7,13 +7,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
 public abstract class ResolveTestCase extends PsiTestCase {
-  public static final String MARKER = "<ref>";
+  protected static final String MARKER = "<ref>";
 
-  protected PsiReference configureByFile(String filePath) throws Exception{
+  protected PsiReference configureByFile(@NonNls String filePath) throws Exception{
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + filePath + " not found", vFile);
