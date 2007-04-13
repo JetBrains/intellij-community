@@ -25,6 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrUnaryExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement, GrStatement {
+public interface GrUnaryExpression extends GrExpression {
   public String toString();
 }

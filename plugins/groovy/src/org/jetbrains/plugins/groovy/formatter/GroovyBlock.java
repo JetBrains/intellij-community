@@ -25,6 +25,8 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -114,6 +116,9 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     }
     if (psiParent instanceof BlockedIndent) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
+    if (psiParent instanceof GrBinaryExpression) {
+      return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
     }
     if (this instanceof LargeGroovyBlock) {
       return new ChildAttributes(Indent.getNormalIndent(), null);

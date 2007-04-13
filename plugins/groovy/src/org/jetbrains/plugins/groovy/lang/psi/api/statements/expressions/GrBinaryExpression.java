@@ -25,5 +25,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrBinaryExpression extends GrStatement {
+public interface GrBinaryExpression extends GrExpression {
+
+  /**
+   *
+   * @return left operand of binary expression
+   */
+  public GrExpression getLeftOperand();
+
+  /**
+   *
+   * @return right operand of binary expression
+   */
+  public GrExpression getRightOperand();
+
 }

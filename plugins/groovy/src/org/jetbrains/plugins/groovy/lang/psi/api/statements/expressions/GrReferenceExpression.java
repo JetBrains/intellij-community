@@ -25,5 +25,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrReferenceExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement, GrStatement {
+public interface GrReferenceExpression extends GrExpression {
 }

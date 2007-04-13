@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +58,12 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     mySettings = _mySettings;
     myAlignment = _myAlignment;
     myBlock = _block;
+
+    //For binary expressions
+    if (myBlock.getNode().getPsi() instanceof GrBinaryExpression &&
+            !(myBlock.getNode().getPsi().getParent() instanceof GrBinaryExpression)) {
+      return generateForBinaryExpr();
+    }
 
     // For case block
     if (myBlock.getNode().getPsi() instanceof GrCaseBlock) {
@@ -101,7 +108,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     ASTNode prevChildNode = null;
     for (ASTNode childNode : children) {
       if (canBeCorrectBlock(childNode) &&
-              !(childNode.getPsi() instanceof GrStatement)) {
+              ((childNode.getPsi() instanceof GrCaseLabel) ||
+                      mLCURLY.equals(childNode.getElementType()) ||
+                      mRCURLY.equals(childNode.getElementType()))
+              ) {
         final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, prevChildNode, childNode);
         if (!(childNode.getPsi() instanceof GrCaseLabel)) {
           subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
@@ -147,6 +157,57 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    */
   private static boolean canBeCorrectBlock(final ASTNode node) {
     return (node.getText().trim().length() > 0);
+  }
+
+  /**
+   * Generates blocks for case block
+   *
+   * @return
+   */
+  private static List<Block> generateForBinaryExpr() {
+    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    GrBinaryExpression myExpr = (GrBinaryExpression) myNode.getPsi();
+    ASTNode children[] = myNode.getChildren(null);
+    if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
+      addChildrenRecursively(myExpr.getLeftOperand(), subBlocks, Indent.getContinuationWithoutFirstIndent());
+    }
+    for (ASTNode childNode : children) {
+      if (canBeCorrectBlock(childNode) &&
+              !(childNode.getPsi() instanceof GrBinaryExpression)) {
+        subBlocks.add(new GroovyBlock(childNode, myAlignment, Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings));
+      }
+    }
+    if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
+      addChildrenRecursively(myExpr.getRightOperand(), subBlocks, Indent.getContinuationWithoutFirstIndent());
+    }
+    return subBlocks;
+  }
+
+  /**
+   * Adds all children of specified element to given list
+   *
+   * @param elem
+   * @param list
+   */
+  private static void addChildrenRecursively(PsiElement elem, List<Block> list, Indent indent) {
+    ASTNode children[] = elem.getNode().getChildren(null);
+    // For binary expressions
+    if ((elem instanceof GrBinaryExpression)) {
+      GrBinaryExpression myExpr = ((GrBinaryExpression) elem);
+      if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
+        addChildrenRecursively(myExpr.getLeftOperand(), list, Indent.getContinuationWithoutFirstIndent());
+      }
+      for (ASTNode childNode : children) {
+        if (canBeCorrectBlock(childNode) &&
+                !(childNode.getPsi() instanceof GrBinaryExpression)) {
+          list.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
+        }
+      }
+      if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
+        addChildrenRecursively(myExpr.getRightOperand(), list, Indent.getContinuationWithoutFirstIndent());
+      }
+    }
+
   }
 
 

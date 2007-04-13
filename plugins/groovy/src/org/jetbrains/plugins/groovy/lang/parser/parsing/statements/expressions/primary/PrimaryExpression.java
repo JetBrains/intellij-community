@@ -95,6 +95,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
     StrictContextExpression.parse(builder);
+    ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       builder.error(GroovyBundle.message("rparen.expected"));
       while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mSEMI.equals(builder.getTokenType())

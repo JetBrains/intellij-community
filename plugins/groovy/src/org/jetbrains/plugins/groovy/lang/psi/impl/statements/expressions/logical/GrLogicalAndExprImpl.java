@@ -19,12 +19,12 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrLogicalAndExprImpl extends GroovyPsiElementImpl implements GrBinaryExpression
-{
+public class GrLogicalAndExprImpl extends GrBinaryExpressionImpl {
 
   public GrLogicalAndExprImpl(@NotNull ASTNode node)
   {
