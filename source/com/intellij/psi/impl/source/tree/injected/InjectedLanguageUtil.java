@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,11 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -48,6 +51,7 @@ import java.util.Map;
 public class InjectedLanguageUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtill");
   private static final Key<CachedValue<List<Pair<PsiElement, TextRange>>>> INJECTED_PSI = Key.create("injectedPsi");
+  private static final Key<List<Pair<IElementType, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   @Nullable
   public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull T host, @Nullable LiteralTextEscaper<T> textEscaper) {
@@ -114,6 +118,9 @@ public class InjectedLanguageUtil {
 
     final ASTNode parsedNode = psiFile.getNode();
     if (!(parsedNode instanceof FileElement)) return null;
+
+    List<Pair<IElementType, TextRange>> tokens = obtainHighlightTokensFromLexer(language, outChars, textEscaper, virtualFile, project, rangeInsideHost, documentRange);
+
     String sourceRawText = prefix + hostText.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     if (textEscaper != null) {
       patchLeafs(parsedNode, textEscaper, rangeInsideHost, hostText, prefix.length(), suffix.length());
@@ -130,11 +137,46 @@ public class InjectedLanguageUtil {
 
     ((MyFileViewProvider)psiFile.getViewProvider()).setVirtualFile(virtualFile);
     ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
+    psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
 
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentRange);
     PsiDocumentManagerImpl.checkConsistency(hostFile, documentRange.getDelegate());
 
     return psiFile;
+  }
+
+  public static List<Pair<IElementType, TextRange>> getHighlightTokens(PsiFile file) {
+    return file.getUserData(HIGHLIGHT_TOKENS);
+  }
+
+  private static <T extends PsiLanguageInjectionHost> List<Pair<IElementType, TextRange>> obtainHighlightTokensFromLexer(final Language language,
+                                                                                                                         final StringBuilder outChars,
+                                                                                                                         final LiteralTextEscaper<T> textEscaper,
+                                                                                                                         final VirtualFileDelegate virtualFile,
+                                                                                                                         final Project project,
+                                                                                                                         final TextRange rangeInsideHost,
+                                                                                                                         final DocumentRange documentRange) {
+    List<Pair<IElementType, TextRange>> tokens = new SmartList<Pair<IElementType, TextRange>>();
+    SyntaxHighlighter syntaxHighlighter = language.getSyntaxHighlighter(project, virtualFile);
+    Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+    lexer.start(outChars, 0, outChars.length(), 0);
+    for (IElementType tokenType; (tokenType = lexer.getTokenType()) != null; lexer.advance()) {
+      TextRange textRange = new TextRange(lexer.getTokenStart(), lexer.getTokenEnd());
+      TextRange editable = documentRange.intersectWithEditable(textRange);
+      if (editable == null || editable.getLength() == 0) continue;
+
+      TextRange rangeInHost;
+      if (textEscaper == null) {
+        rangeInHost = textRange;
+      }
+      else {
+        int startInHost = textEscaper.getOffsetInHost(editable.getStartOffset() - documentRange.getPrefix().length(), rangeInsideHost);
+        int endInHost = textEscaper.getOffsetInHost(editable.getEndOffset() - documentRange.getPrefix().length(), rangeInsideHost);
+        rangeInHost = new TextRange(startInHost, endInHost);
+      }
+      tokens.add(Pair.create(tokenType, rangeInHost));
+    }
+    return tokens;
   }
 
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
