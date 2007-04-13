@@ -31,7 +31,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public boolean add(HighlightInfo info) {
-    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this+"; info="+info);
+    if (!writable) throw new IllegalStateException("Update highlight holder after visit finished; "+this+"; info="+info);
     if (info == null || !accepted(info)) return false;
 
     HighlightSeverity severity = info.getSeverity();
@@ -56,7 +56,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public void clear() {
-    if (!writable) throw new UnsupportedOperationException("Clearing holder after visit finished; " + this);
+    if (!writable) throw new IllegalStateException("Clearing holder after visit finished; " + this);
 
     myErrorCount = 0;
     myWarningCount = 0;

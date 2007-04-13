@@ -1,8 +1,8 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,6 +31,7 @@ import java.util.Collection;
  * @author cdr
  */
 class PropertiesAnnotator implements Annotator {
+
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
     final Property property = (Property)element;
@@ -90,14 +90,14 @@ class PropertiesAnnotator implements Annotator {
                 return getText();
               }
 
-              public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+              public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
                 return property.isValid()
                        && property.getManager().isInProject(property)
                        && property.getContainingFile().getText().charAt(annotation.getStartOffset()) == '\\'
                   ;
               }
 
-              public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+              public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
                 if (!CodeInsightUtil.prepareFileForWrite(file)) return;
                 int offset = annotation.getStartOffset();
                 if (property.getContainingFile().getText().charAt(offset) == '\\') {
