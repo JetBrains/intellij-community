@@ -62,6 +62,7 @@ public class NanoXmlUtil {
       }
     }
     catch (IOException e) {
+      System.out.println("psiFile.isValid() = " + psiFile.isValid());
       LOG.error(e);
     }
   }
