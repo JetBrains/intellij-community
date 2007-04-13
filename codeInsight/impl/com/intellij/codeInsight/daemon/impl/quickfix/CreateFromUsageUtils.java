@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -643,6 +644,7 @@ public class CreateFromUsageUtils {
     PsiManager manager = expression.getManager();
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
     for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
+      ProgressManager.getInstance().checkCanceled();
       PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) continue;

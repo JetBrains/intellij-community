@@ -494,9 +494,8 @@ public class CompletionUtil {
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     boolean isExcluded = false;
-    //noinspection ForLoopReplaceableByForEach
-    for(int i=0; i<cis.EXCLUDED_PACKAGES.length; i++) {
-      if (name.startsWith(cis.EXCLUDED_PACKAGES [i])) {
+    for (String packages : cis.EXCLUDED_PACKAGES) {
+      if (name.startsWith(packages)) {
         isExcluded = true;
       }
     }

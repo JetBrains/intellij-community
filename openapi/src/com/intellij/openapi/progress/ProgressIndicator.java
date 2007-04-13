@@ -58,5 +58,5 @@ public interface ProgressIndicator {
 
   void setIndeterminate(boolean indeterminate);
 
-  void checkCanceled();
+  void checkCanceled() throws ProcessCanceledException;
 }

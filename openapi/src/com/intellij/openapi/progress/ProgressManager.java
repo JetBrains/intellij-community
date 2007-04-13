@@ -40,7 +40,7 @@ public abstract class ProgressManager {
 
   public abstract ProgressIndicator getProgressIndicator();
 
-  public abstract void checkCanceled();
+  public abstract void checkCanceled() throws ProcessCanceledException;
 
   public abstract void registerFunComponentProvider(ProgressFunComponentProvider provider);
   public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,11 +28,12 @@ import java.util.Vector;
 
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
-  private PsiMethodCallExpression myMethodCall;
-  private List<PsiMethod> candidates;
+  private final PsiMethodCallExpression myMethodCall;
+  private final List<PsiMethod> candidates;
 
   public StaticImportMethodFix(PsiMethodCallExpression methodCallExpression) {
     myMethodCall = methodCallExpression;
+    candidates = getMethodsToImport();
   }
 
   @NotNull
@@ -52,24 +54,18 @@ public class StaticImportMethodFix implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
-    if (myMethodCall == null || !myMethodCall.isValid()) return false;
-    if (!file.getManager().isInProject(file)) return false;
-
-    PsiManager manager = file.getManager();
-    if (myMethodCall.getMethodExpression().isQualified()) {
-      // TODO[cdr]: review
-      return false;
-    }
-
-    candidates = getMethodsToImport(manager);
-    return !candidates.isEmpty();
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) <= 0
+           && myMethodCall != null 
+           && myMethodCall.isValid()
+           && file.getManager().isInProject(file)
+           && !candidates.isEmpty()
+      ;
   }
 
   @NotNull
-  private List<PsiMethod> getMethodsToImport(PsiManager manager) {
-    PsiShortNamesCache cache = manager.getShortNamesCache();
+  private List<PsiMethod> getMethodsToImport() {
+    PsiShortNamesCache cache = myMethodCall.getManager().getShortNamesCache();
     PsiReferenceExpression reference = myMethodCall.getMethodExpression();
     PsiExpressionList argumentList = myMethodCall.getArgumentList();
     String name = reference.getReferenceName();
@@ -79,25 +75,25 @@ public class StaticImportMethodFix implements IntentionAction {
     PsiMethod[] methods = cache.getMethodsByName(name, scope);
     ArrayList<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
+      ProgressManager.getInstance().checkCanceled();
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && CompletionUtil.isInExcludedPackage(aClass)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
       PsiFile file = method.getContainingFile();
-      if (file instanceof PsiJavaFile) {
-        if (((PsiJavaFile)file).getPackageName().length() != 0) { //do not show methods from default package
-          if (PsiUtil.isAccessible(method, myMethodCall, aClass)) {
-            list.add(method);
-            if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, argumentList)) {
-              applicableList.add(method);
-            }
-          }
+      if (file instanceof PsiJavaFile
+          //do not show methods from default package
+          && ((PsiJavaFile)file).getPackageName().length() != 0
+          && PsiUtil.isAccessible(method, myMethodCall, aClass)) {
+        list.add(method);
+        if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, argumentList)) {
+          applicableList.add(method);
         }
       }
     }
     return applicableList.isEmpty() ? list : applicableList;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     if (candidates.size() == 1) {
       final PsiMethod toImport = candidates.get(0);
