@@ -506,6 +506,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
+  private static ThreadLocal<Boolean> ourGetNsByPrefixRecursionLock = new ThreadLocal<Boolean>();
+
   @NotNull
   public String getNamespaceByPrefix(String prefix){
     final PsiElement parent = getParent();
@@ -517,6 +519,29 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(parent instanceof XmlTag) return ((XmlTag)parent).getNamespaceByPrefix(prefix);
     //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
     if ("xml".equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
+
+    if (prefix.length() > 0 &&
+        !hasNamespaceDeclarations() &&
+        getNamespacePrefix().equals(prefix) &&
+        ourGetNsByPrefixRecursionLock.get() == null
+       ) {
+      // When there is no namespace declarations then qualified names should be just used in dtds
+      // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
+      ourGetNsByPrefixRecursionLock.set(Boolean.TRUE);
+
+      try {
+        final String nsFromEmptyPrefix = getNamespaceByPrefix("");
+        final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
+        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(this):null;
+        final String nameFromRealDescriptor = descriptor != null &&
+                                              descriptor.getDeclaration() != null &&
+                                              descriptor.getDeclaration().isPhysical()?descriptor.getName():"";
+        if (nameFromRealDescriptor.equals(getName())) return nsFromEmptyPrefix;
+      }
+      finally {
+        ourGetNsByPrefixRecursionLock.set(null);
+      }
+    }
     return XmlUtil.EMPTY_URI;
   }
 
