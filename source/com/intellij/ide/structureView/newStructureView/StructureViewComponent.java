@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -730,10 +731,14 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
       final Object o = unwrapValue(getValue());
       long currentStamp;
-      if (o instanceof PsiElement &&
-          ((PsiElement)o).getNode() instanceof CompositeElement &&
-          childrenStamp != (currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount())
-         ) {
+      if (( o instanceof PsiElement &&
+            ((PsiElement)o).getNode() instanceof CompositeElement &&
+            childrenStamp != (currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount())
+          ) ||
+          ( o instanceof ModificationTracker &&
+            childrenStamp != (currentStamp = ((ModificationTracker)o).getModificationCount())
+          )
+        ) {
         resetChildren();
         childrenStamp = currentStamp;
       }
