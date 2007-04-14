@@ -35,6 +35,7 @@ public class OldXmlParsing implements ElementType {
     TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
 
   private ParsingContext myContext;
+  private int myLastTokenEnd = -1;
 
   public OldXmlParsing(ParsingContext context) {
     myContext = context;
@@ -490,7 +491,7 @@ public class OldXmlParsing implements ElementType {
       }
     }
 
-    parseElementContentSpec(decl, lexer);
+    doParseContentSpec(decl, lexer, false);
 
     if (lexer.getTokenType() == XML_TAG_END) {
       addToken(decl, lexer);
@@ -515,6 +516,26 @@ public class OldXmlParsing implements ElementType {
   }
 
   public ASTNode parseElementContentSpec(CompositeElement parent, Lexer lexer) {
+    return doParseContentSpec(parent, lexer, true);
+  }
+
+  private ASTNode doParseContentSpec(final CompositeElement parent, final Lexer lexer, boolean topLevel) {
+    if (myLastTokenEnd == lexer.getTokenStart()) {
+      TreeUtil.addChildren(parent, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.whitespace.expected")));
+    } else if (!topLevel) {
+      final IElementType tokenType = lexer.getTokenType();
+      String tokenText;
+
+      if (tokenType != XML_LEFT_PAREN &&
+          tokenType != XML_ENTITY_REF_TOKEN &&
+          tokenType != XML_CONTENT_ANY &&
+          tokenType != XML_CONTENT_EMPTY &&
+          (tokenType != XML_NAME || ( !(tokenText = ParseUtil.getTokenText(lexer)).equals("-") && !tokenText.equals("O"))) // sgml compatibility
+        ) {
+        TreeUtil.addChildren(parent,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.left.paren.or.entityref.or.empty.or.any.expected")));
+      }
+    }
+
     CompositeElement spec = Factory.createCompositeElement(XML_ELEMENT_CONTENT_SPEC);
     TreeUtil.addChildren(parent, spec);
 
@@ -525,6 +546,7 @@ public class OldXmlParsing implements ElementType {
 
   private boolean parseElementContentSpecInner(final Lexer lexer, final CompositeElement spec) {
     IElementType tokenType = lexer.getTokenType();
+    boolean endedWithDelimiter = false;
 
     while (
       tokenType != null &&
@@ -535,15 +557,18 @@ public class OldXmlParsing implements ElementType {
     ) {
       if (tokenType == XML_LEFT_PAREN) {
         if (!parseGroup(spec, lexer)) return false;
+        endedWithDelimiter = false;
       } else
       if (tokenType == XML_ENTITY_REF_TOKEN) {
         TreeUtil.addChildren(spec, parseEntityRef(lexer));
+        endedWithDelimiter = false;
       } else if (tokenType == XML_NAME ||
                  tokenType == XML_CONTENT_EMPTY ||
                  tokenType == XML_CONTENT_ANY ||
                  tokenType == XML_PCDATA
                  ) {
         addToken(spec, lexer);
+        endedWithDelimiter = false;
       }
       else {
         TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
@@ -567,7 +592,12 @@ public class OldXmlParsing implements ElementType {
       if (tokenType == XML_BAR || tokenType == XML_COMMA) {
         addToken(spec, lexer);
         tokenType = lexer.getTokenType();
+        endedWithDelimiter = true;
       }
+    }
+
+    if (endedWithDelimiter && tokenType == XML_RIGHT_PAREN) {
+      TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
     }
     return true;
   }
@@ -594,8 +624,9 @@ public class OldXmlParsing implements ElementType {
 
     addToken(decl, lexer);
 
-    if (lexer.getTokenType() != XML_NAME) {
-      if (lexer.getTokenType() == XML_LEFT_PAREN) {
+    final IElementType tokenType = lexer.getTokenType();
+    if (tokenType != XML_NAME && tokenType != XML_ENTITY_REF_TOKEN) {
+      if (tokenType == XML_LEFT_PAREN) {
         parseGroup(decl, lexer);
       } else {
         TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
@@ -826,6 +857,7 @@ public class OldXmlParsing implements ElementType {
     final TreeElement element = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     if (element != null) {
       TreeUtil.addChildren(decl, element);
+      myLastTokenEnd = lexer.getTokenEnd();
       lexer.advance();
     }
     return element;
