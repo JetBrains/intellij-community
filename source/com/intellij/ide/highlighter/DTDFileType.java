@@ -31,17 +31,13 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DTDFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/dtd.png");
@@ -67,9 +63,5 @@ public class DTDFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
-    return null;
   }
 }

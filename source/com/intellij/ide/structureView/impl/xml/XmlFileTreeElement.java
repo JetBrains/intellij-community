@@ -33,9 +33,7 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,7 +51,33 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
       for (PsiElement element : document.getChildren())
         if (element instanceof XmlTag) rootTags.add((XmlTag)element);
     }
-    return getStructureViewTreeElements(rootTags.toArray(new XmlTag[rootTags.size()]) );
+
+    Collection<StructureViewTreeElement> structureViewTreeElements =
+      getStructureViewTreeElements(rootTags.toArray(new XmlTag[rootTags.size()]));
+
+    Collection<StructureViewTreeElement> dtdStructureViewTreeElements = null;
+    final XmlProlog prolog = document.getProlog();
+    if (prolog != null) {
+      final XmlDoctype doctype = prolog.getDoctype();
+
+      if (doctype != null) {
+        final XmlMarkupDecl xmlMarkupDecl = doctype.getMarkupDecl();
+        if (xmlMarkupDecl != null) {
+          dtdStructureViewTreeElements = DtdFileTreeElement.collectElements(xmlMarkupDecl);
+        }
+      }
+    }
+
+    if (dtdStructureViewTreeElements != null) {
+      final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(
+        dtdStructureViewTreeElements.size() + structureViewTreeElements.size()
+      );
+
+      result.addAll(dtdStructureViewTreeElements);
+      result.addAll(structureViewTreeElements);
+      structureViewTreeElements = result;
+    }
+    return structureViewTreeElements;
   }
 
   public String getPresentableText() {

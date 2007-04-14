@@ -37,12 +37,13 @@ import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
+  private static final Class[] myClasses = new Class[]{XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
 
   public XmlStructureViewTreeModel(XmlFile file) {
     super(file);
@@ -51,6 +52,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   public StructureViewTreeElement getRoot() {
+    if (myFile.getLanguage() == StdLanguages.DTD) return new DtdFileTreeElement(myFile);
     return new XmlFileTreeElement(myFile);
   }
 
@@ -75,6 +77,6 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   protected Class[] getSuitableClasses() {
-    return new Class[]{XmlTag.class, XmlFile.class};
+    return myClasses;
   }
 }
