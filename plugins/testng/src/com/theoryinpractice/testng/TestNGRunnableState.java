@@ -127,23 +127,11 @@ public class TestNGRunnableState extends JavaCommandLineState
         LOGGER.info("is15 is " + is15);
 
         // Add plugin jars first...
-
-        ClassLoader classLoader = getClass().getClassLoader();
-        try {
-            List<URL> urls = (List<URL>) classLoader.getClass().getMethod("getUrls", new Class[] {}).invoke(classLoader, new Object[0]);
-            for (URL url : urls) {
-                if (!is15 && url.getFile().endsWith("testng-jdk15.jar")) {
-                    File location = new File(PathManager.getPluginsPath(), "testngrunner/testng/testng-jdk14.jar");
-                    LOGGER.info("Adding legacy library to classpath: " + location.getPath());
-                    javaParameters.getClassPath().add(location.getPath());
-                } else {
-                    javaParameters.getClassPath().add(url.getFile());
-                }
-            }
-        } catch (Exception ex) {
-            LOGGER.error("Unable to determine plugin classpath from classloader " + classLoader, ex);
-            return null;
-        }
+        javaParameters.getClassPath().add(new File(PathManager.getPluginsPath(),
+                                                   "testngrunner/lib/testngrunner.jar").getPath());
+        javaParameters.getClassPath().add(new File(PathManager.getPluginsPath(), is15
+                ? "testngrunner/lib/testng-jdk15.jar"
+                : "testngrunner/testng/testng-jdk14.jar").getPath());
 
         // Configure rest of jars
         JavaParametersUtil.configureConfiguration(javaParameters, config);
