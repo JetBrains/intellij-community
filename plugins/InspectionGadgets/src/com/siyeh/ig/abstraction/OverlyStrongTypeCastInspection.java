@@ -138,9 +138,17 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
             if (expectedType instanceof PsiClassType) {
                 final PsiClassType expectedClassType =
                         (PsiClassType)expectedType;
-                final PsiClassType rawType = expectedClassType.rawType();
-                if (type.equals(rawType)) {
+                final PsiClassType expectedRawType =
+                        expectedClassType.rawType();
+                if (type.equals(expectedRawType)) {
                     return;
+                }
+                if (type instanceof PsiClassType) {
+                    final PsiClassType classType = (PsiClassType)type;
+                    final PsiClassType rawType = classType.rawType();
+                    if (rawType.equals(expectedRawType)) {
+                        return;
+                    }
                 }
                 if (type instanceof PsiArrayType) {
                     return;

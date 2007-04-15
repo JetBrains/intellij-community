@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.AbstractList;
 import java.lang.reflect.Array;
+import java.io.Serializable;
 
 interface TestInter{}
 
@@ -40,5 +41,15 @@ public class OverlyStrongTypeCastInspection
         ((SubClass2)testSub).doSmth();
     }
 }
-
-
+interface Task<T extends Serializable> extends Serializable {}
+interface ConcreteTask<T extends Serializable> extends Task<T> {
+    void aMethod();
+}
+class Test {
+    public void main(String[] argv) {
+        Task<?> t = new Task<String>() {};
+        if (t instanceof ConcreteTask)
+            // We get a warning here that the cast can be weakened to "ConcreteTask<? extends Serializable>".
+            ((ConcreteTask<? extends String>)t).aMethod();
+    }
+}
