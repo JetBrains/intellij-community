@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -141,6 +142,26 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       blockSuitableCommenter = myFile.getLanguage().getCommenter();
     }
 
+    if (blockSuitableCommenter == null && myFile.getFileType() instanceof CustomFileType) {
+      blockSuitableCommenter = new Commenter() {
+        final SyntaxTable mySyntaxTable = ((CustomFileType)myFile.getFileType()).getSyntaxTable();
+        @Nullable
+        public String getLineCommentPrefix() {
+          return mySyntaxTable.getLineComment();
+        }
+
+        @Nullable
+        public String getBlockCommentPrefix() {
+          return mySyntaxTable.getStartComment();
+        }
+
+        @Nullable
+        public String getBlockCommentSuffix() {
+          return mySyntaxTable.getEndComment();
+        }
+      };
+    }
+
     for (int line = myLine1; line <= myLine2; line++) {
       final Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
       if (commenter == null) return;
@@ -174,7 +195,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
           prefix = commenter.getLineCommentPrefix();
         }
-        final String suffix = commenter.getBlockCommentSuffix();
+
+        String suffix = commenter.getBlockCommentSuffix();
+        if (suffix == null && prefix != null) suffix = "";
+
         if (prefix != null && suffix != null) {
           final int suffixLen = suffix.length();
           final int prefixLen = prefix.length();
