@@ -43,4 +43,6 @@ Groovy script
         PsiElement(:)(':')
       PsiWhiteSpace(' ')
       PsiElement(new line)('\n')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(})('}')
