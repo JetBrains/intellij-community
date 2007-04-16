@@ -160,6 +160,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myScrollSupport.dispose();
     myData.dispose();
     myPanel.cancelScrollEditors();
+    JComponent component = myPanel.getBottomComponent();
+    if (component instanceof Disposable) {
+      ((Disposable) component).dispose();
+    }
+    myPanel.setBottomComponent(null);
   }
 
   public JComponent getComponent() {
@@ -289,6 +294,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
     data.customizeToolbar(myPanel.resetToolbar());
     myPanel.registerToolbarActions();
+    if (data.getBottomComponent() != null) {
+      myPanel.setBottomComponent(data.getBottomComponent());
+    }
   }
 
   private void setWindowTitle(Window window, String title) {

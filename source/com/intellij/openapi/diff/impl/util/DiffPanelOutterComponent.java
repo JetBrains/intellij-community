@@ -20,11 +20,15 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private DataProvider myDataProvider = null;
   private DeferScrollToFirstDiff myScrollState = NO_SCROLL_NEEDED;
   private ScrollingPanel myScrollingPanel = null;
+  private JPanel myBottomContainer;
+  private JComponent myBottomComponent;
 
   public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
     super(new BorderLayout());
     myStatusBar = new DiffStatusBar(diffTypes);
-    add(myStatusBar, BorderLayout.SOUTH);
+    myBottomContainer = new JPanel(new BorderLayout());
+    myBottomContainer.add(myStatusBar, BorderLayout.SOUTH);
+    add(myBottomContainer, BorderLayout.SOUTH);
     myDefaultActions = defaultActions;
     myToolbar = new DiffToolbarComponent(this);
     disableToolbar(false);
@@ -40,6 +44,20 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     setScrollingPanel(scrollingPanel);
   }
 
+  public JComponent getBottomComponent() {
+    return myBottomComponent;
+  }
+
+  public void setBottomComponent(JComponent component) {
+    if (myBottomComponent != null) {
+      myBottomContainer.remove(myBottomComponent);
+    }
+    myBottomComponent = component;
+    if (myBottomComponent != null) {
+      myBottomContainer.add(BorderLayout.CENTER, component);
+    }
+  }
+
   public void setDataProvider(DataProvider dataProvider) {
     myDataProvider = dataProvider;
   }
@@ -52,6 +70,13 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     if (DataConstantsEx.SOURCE_NAVIGATION_LOCKED.equals(dataId)) return Boolean.TRUE;
     if (myDataProvider == null) return null;
     if (dataId == DataConstants.EDITOR) {
+      if (myBottomComponent != null) {
+        // we don't want editor actions to be executed when the bottom component has focus
+        final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (myBottomComponent.isAncestorOf(focusOwner)) {
+          return null;
+        }
+      }
       FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.FOCUSED_DIFF_SIDE);
       if (side != null) return side.getEditor();
     }

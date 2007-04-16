@@ -24,6 +24,8 @@ import java.util.Collections;
 
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * Several {@link DiffContent}s to compare
  */
@@ -33,6 +35,7 @@ public abstract class DiffRequest {
   private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
   @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
+  private JComponent myBottomComponent = null;
 
   protected DiffRequest(Project project) {
     myProject = project;
@@ -106,5 +109,13 @@ public abstract class DiffRequest {
     };
 
     void customize(DiffToolbar toolbar);
+  }
+
+  public JComponent getBottomComponent() {
+    return myBottomComponent;
+  }
+
+  public void setBottomComponent(final JComponent bottomComponent) {
+    myBottomComponent = bottomComponent;
   }
 }

@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
@@ -15,9 +14,10 @@ import com.intellij.ui.SeparatorFactory;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -31,6 +31,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected JPanel myHeaderPanel;
   private DefaultActionGroup myToolBarGroup;
   private JPanel myListPanel;
+  private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
 
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
@@ -99,6 +100,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myToolBarGroup.add(group);
   }
 
+  public ShowDiffAction.DiffExtendUIFactory getDiffExtendUIFactory() {
+    return myDiffExtendUIFactory;
+  }
+
+  public void setDiffExtendUIFactory(final ShowDiffAction.DiffExtendUIFactory diffExtendUIFactory) {
+    myDiffExtendUIFactory = diffExtendUIFactory;
+  }
+
   public JPanel getHeaderPanel() {
     return myHeaderPanel;
   }
@@ -157,20 +166,25 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     int indexInSelection = changes.indexOf(leadSelection);
     if (indexInSelection >= 0) {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
-      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, new DiffToolbarActionsFactory(), isInFrame());
+      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory(), isInFrame());
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, myDiffExtendUIFactory, isInFrame());
     }
   }
 
-  public boolean isInFrame() {
+  private static boolean isInFrame() {
     return ModalityState.current().equals(ModalityState.NON_MODAL);
   }
 
-private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
+  private class DiffToolbarActionsFactory implements ShowDiffAction.DiffExtendUIFactory {
     public List<? extends AnAction> createActions(Change change) {
       return createDiffActions(change);
+    }
+
+    @Nullable
+    public JComponent createBottomComponent() {
+      return null;
     }
   }
 

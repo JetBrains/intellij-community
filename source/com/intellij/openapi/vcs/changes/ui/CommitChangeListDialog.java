@@ -16,12 +16,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -142,6 +144,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.addSelectedListChangeListener(new MultipleChangeListBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
+      }
+    });
+    myBrowser.setDiffExtendUIFactory(new ShowDiffAction.DiffExtendUIFactory() {
+      public List<? extends AnAction> createActions(final Change change) {
+        return myBrowser.createDiffActions(change);
+      }
+
+      @Nullable
+      public JComponent createBottomComponent() {
+        return new DiffCommitMessageEditor(CommitChangeListDialog.this);
       }
     });
 
@@ -470,7 +482,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void doCancelAction() {
     VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
-    super.doCancelAction();    //To change body of overridden methods use File | Settings | File Templates.
+    super.doCancelAction();
   }
 
   private void doCommit() {
@@ -585,11 +597,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result;
   }
 
-  private FilePath[] getPaths() {
-    Collection<FilePath> result = ChangesUtil.getPaths(getIncludedChanges());
-    return result.toArray(new FilePath[result.size()]);
-  }
-
   public Project getProject() {
     return myProject;
   }
@@ -698,6 +705,30 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     public void actionPerformed(ActionEvent e) {
       execute(myCommitExecutor);
+    }
+  }
+
+  private static class DiffCommitMessageEditor extends JPanel implements Disposable {
+    private CommitChangeListDialog myCommitDialog;
+    private JTextArea myArea = new JTextArea();
+
+    public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
+      super(new BorderLayout());
+      myArea.setText(dialog.getCommitMessage());
+      JScrollPane scrollPane = new JScrollPane(myArea);
+      setBorder(IdeBorderFactory.createTitledBorder("Commit Message"));
+      add(scrollPane, BorderLayout.CENTER);
+      myCommitDialog = dialog;
+    }
+
+    public void dispose() {
+      myCommitDialog.setCommitMessage(myArea.getText());
+      myCommitDialog = null;
+    }
+
+    public Dimension getPreferredSize() {
+      // we don't want to be squeezed to one line
+      return new Dimension(400, 120);
     }
   }
 }
