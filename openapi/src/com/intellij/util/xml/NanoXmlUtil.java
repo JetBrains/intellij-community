@@ -29,10 +29,7 @@ import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Properties;
 
 /**
@@ -58,11 +55,17 @@ public class NanoXmlUtil {
         parse(new CharSequenceReader(document.getCharsSequence()), builder);
       }
       else {
-        parse(virtualFile.getInputStream(), builder);
+        final InputStream inputStream;
+        try {
+          inputStream = virtualFile.getInputStream();
+        }
+        catch (FileNotFoundException e) {
+          return;
+        }
+        parse(inputStream, builder);
       }
     }
     catch (IOException e) {
-      System.out.println("psiFile.isValid() = " + psiFile.isValid());
       LOG.error(e);
     }
   }
