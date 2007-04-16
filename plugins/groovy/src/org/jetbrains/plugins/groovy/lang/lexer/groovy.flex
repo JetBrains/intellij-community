@@ -340,7 +340,7 @@ mGSTRING_LITERAL = \"\"
                                                yybegin(IN_INNER_BLOCK);
                                              }
                                              return mGSTRING_SINGLE_END; }
-  .                                       {  clearStacks();
+  (.|{mNLS})                               {  clearStacks();
                                              yybegin(WRONG_STRING);
                                              return mWRONG_GSTRING_LITERAL; }
 }
@@ -615,7 +615,7 @@ mGSTRING_LITERAL = \"\"
 "float"                                   {  return( kFLOAT );  }
 "long"                                    {  return( kLONG );  }
 "double"                                  {  return( kDOUBLE );  }
-"ident"                                     {  return( kIDENT );  }
+"ident"                                   {  return( kIDENT );  }
 "as"                                      {  return( kAS );  }
 "private"                                 {  return( kPRIVATE );  }
 "public"                                  {  return( kPUBLIC );  }
@@ -631,7 +631,8 @@ mGSTRING_LITERAL = \"\"
 "if"                                      {  return( kIF );  }
 "else"                                    {  return( kELSE );  }
 "while"                                   {  return( kWHILE );  }
-"use"                                     {  return( kUSE );  }  
+"with"                                    {  return( kWITH );  }
+"use"                                     {  return( kUSE );  }
 "switch"                                  {  return( kSWITCH );  }
 "for"                                     {  return( kFOR );  }
 "in"                                      {  return( kIN );  }
