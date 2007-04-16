@@ -27,7 +27,9 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   }
 
   protected final XmlTag setEmptyXmlTag() {
-    throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called");
+    throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called;" +
+                                            "\nparent=" + getParent() + ";\n" +
+                                            "xmlElementName=" + getXmlElementName());
   }
 
   public boolean isValid() {
