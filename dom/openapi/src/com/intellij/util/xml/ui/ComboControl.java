@@ -92,10 +92,6 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
             public DomElement getInvocationElement() {
               return reference;
             }
-
-            public PsiManager getPsiManager() {
-              return getFile().getManager();
-            }
           };
           final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
           final Collection<Object> variants = resolvingConverter.getVariants(context);
@@ -125,10 +121,6 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
             @NotNull
             public DomElement getInvocationElement() {
               return reference;
-            }
-
-            public PsiManager getPsiManager() {
-              return getFile().getManager();
             }
           });
 

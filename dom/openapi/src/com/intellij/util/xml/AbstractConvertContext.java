@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -58,5 +59,9 @@ public abstract class AbstractConvertContext extends ConvertContext {
 
   public Module getModule() {
     return getInvocationElement().getRoot().getRootElement().getModule();
+  }
+
+  public PsiManager getPsiManager() {
+    return getFile().getManager();
   }
 }
