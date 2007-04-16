@@ -347,10 +347,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();
   }
 
+  public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
+    changeList.DESCRIPTION = newName;
+    notifyStateChanged();
+  }
+
   public static List<FilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     return reader.readAllPatches();
   }
-
 }

@@ -92,9 +92,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer());
 
-    final CustomShortcutSet diffShortcut =
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
-    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, myTree);
+    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 
@@ -151,7 +149,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       myTree.setModel(buildChangesModel());
       if (myPostUpdateRunnable != null) {
         myPostUpdateRunnable.run();
-      }
+      }      
     }
     myPostUpdateRunnable = null;
   }

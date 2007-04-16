@@ -1471,6 +1471,8 @@
       <reference ref="ChangesView.Diff"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"/>
       <separator/>
+      <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
+        use-shortcut-of="RenameElement"/>
       <reference ref="$Delete"/>
     </group>
 
