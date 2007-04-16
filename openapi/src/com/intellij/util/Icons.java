@@ -69,6 +69,8 @@ public abstract class Icons {
   public static final Icon DATASOURCE_ICON = IconLoader.getIcon("/nodes/DataSource.png");
   public static final Icon DATASOURCE_DISABLED_ICON = IconLoader.getIcon("/nodes/DataSourceDisabled.png");
   public static final Icon DATASOURCE_TABLE_ICON = IconLoader.getIcon("/nodes/DataTables.png");
+  public static final Icon DATASOURCE_VIEW_ICON = IconLoader.getIcon("/nodes/dataView.png");
+  public static final Icon DATASOURCE_SEQUENCE_ICON = IconLoader.getIcon("/nodes/dataSequence.png");
   public static final Icon DATASOURCE_COLUMN_ICON = IconLoader.getIcon("/nodes/dataColumn.png");
   public static final Icon DATASOURCE_FK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataFkColumn.png");
   public static final Icon DATASOURCE_PK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataPkColumn.png");
