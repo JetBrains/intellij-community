@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,11 +30,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-public class CommittedChangesPanel extends JPanel {
+public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
 
   private CommittedChangesBrowser myBrowser;
@@ -58,6 +61,7 @@ public class CommittedChangesPanel extends JPanel {
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
+    myBrowser.setTableContextMenu(group);
   }
 
   public void setRoot(final VirtualFile root) {
@@ -142,6 +146,22 @@ public class CommittedChangesPanel extends JPanel {
     if (filterDialog.isOK()) {
       mySettings = filterDialog.getSettings();
       refreshChanges();
+    }
+  }
+
+  public void calcData(DataKey key, DataSink sink) {
+    if (key.equals(DataKeys.CHANGES)) {
+      final CommittedChangeList list = myBrowser.getSelectedChangeList();
+      if (list != null) {
+        final Collection<Change> changes = list.getChanges();
+        sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+      }
+    }
+    else if (key.equals(DataKeys.CHANGE_LISTS)) {
+      final CommittedChangeList list = myBrowser.getSelectedChangeList();
+      if (list != null) {
+        sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
+      }
     }
   }
 

@@ -11,6 +11,8 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class ShelvedChange {
@@ -97,6 +100,7 @@ public class ShelvedChange {
 
   private class PatchedContentRevision implements ContentRevision {
     private final FilePath myFilePath;
+    private String myContent;
 
     public PatchedContentRevision(final FilePath filePath) {
       myFilePath = filePath;
@@ -104,26 +108,34 @@ public class ShelvedChange {
 
     @Nullable
     public String getContent() throws VcsException {
-      try {
-        List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
-        for(FilePatch patch: filePatches) {
-          if (myBeforePath.equals(patch.getBeforeName())) {
-            if (patch.isNewFile()) {
-              return patch.getNewFileText();
-            }
-            if (patch.isDeletedFile()) {
-              return null;
-            }
-            StringBuilder newText = new StringBuilder();
-            patch.applyModifications(getBaseContent(), newText);
-            return newText.toString();
-          }
+      if (myContent == null) {
+        try {
+          myContent = loadContent();
+        }
+        catch (Exception e) {
+          throw new VcsException(e);
         }
       }
-      catch (Exception e) {
-        throw new VcsException(e);
-      }
 
+      return myContent;
+    }
+
+    @Nullable
+    private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
+      List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
+      for(FilePatch patch: filePatches) {
+        if (myBeforePath.equals(patch.getBeforeName())) {
+          if (patch.isNewFile()) {
+            return patch.getNewFileText();
+          }
+          if (patch.isDeletedFile()) {
+            return null;
+          }
+          StringBuilder newText = new StringBuilder();
+          patch.applyModifications(getBaseContent(), newText);
+          return newText.toString();
+        }
+      }
       return null;
     }
 

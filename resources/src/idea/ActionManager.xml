@@ -1469,7 +1469,8 @@
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <reference ref="ChangesView.Diff"/>
-      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"/>
+      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
+        icon="/nodes/property.png"/>
       <separator/>
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
         use-shortcut-of="RenameElement"/>
@@ -1481,6 +1482,7 @@
         icon="/vcs/refresh.png" use-shortcut-of="Rerun"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
         icon="/ant/filter.png"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>

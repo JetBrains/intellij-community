@@ -10,8 +10,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
@@ -110,5 +114,9 @@ public class CommittedChangesBrowser extends JPanel {
 
   public CommittedChangeList getSelectedChangeList() {
     return mySelectedChangeList;
+  }
+
+  public void setTableContextMenu(final ActionGroup group) {
+    PopupHandler.installPopupHandler(myChangeListsView, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 }
