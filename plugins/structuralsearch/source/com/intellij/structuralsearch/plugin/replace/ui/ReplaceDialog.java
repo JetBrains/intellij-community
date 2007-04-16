@@ -1,9 +1,9 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -80,13 +80,11 @@ public class ReplaceDialog extends SearchDialog {
 
   protected void buildOptions(JPanel searchOptions) {
     super.buildOptions(searchOptions);
-    searchOptions.add(
-      UIUtil.createOptionLine(shortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"), true))
-    );
+    searchOptions
+      .add(UIUtil.createOptionLine(shortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"), true)));
 
-    searchOptions.add(
-      UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox(SSRBundle.message("format.according.to.style.checkbox"), true))
-    );
+    searchOptions
+      .add(UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox(SSRBundle.message("format.according.to.style.checkbox"), true)));
 
   }
 
@@ -111,7 +109,7 @@ public class ReplaceDialog extends SearchDialog {
     final Runnable replaceRunnable = new Runnable() {
       public void run() {
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LvcsAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
+        LocalHistoryAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
 
         doReplace(replaceContext);
         replaceContext.getUsageView().close();
@@ -120,12 +118,8 @@ public class ReplaceDialog extends SearchDialog {
     };
 
     //noinspection HardCodedStringLiteral
-    replaceContext.getUsageView().addPerformOperationAction(
-      replaceRunnable,
-      "Replace All",
-      null,
-      SSRBundle.message("do.replace.all.button")
-    );
+    replaceContext.getUsageView()
+      .addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
 
     final Runnable replaceSelected = new Runnable() {
       public void run() {
@@ -133,7 +127,7 @@ public class ReplaceDialog extends SearchDialog {
         if (infos == null || infos.isEmpty()) return;
 
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LvcsAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
+        LocalHistoryAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
 
         for (final Usage info : infos) {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
@@ -156,10 +150,7 @@ public class ReplaceDialog extends SearchDialog {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(
-      replaceSelected,
-      SSRBundle.message("replace.selected.button")
-    );
+    replaceContext.getUsageView().addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
 
     final Runnable previewReplacement = new Runnable() {
       public void run() {
@@ -175,10 +166,7 @@ public class ReplaceDialog extends SearchDialog {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(
-      previewReplacement,
-      SSRBundle.message("preview.replacement.button")
-    );
+    replaceContext.getUsageView().addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
 
     super.configureActions(context);
   }
@@ -196,11 +184,7 @@ public class ReplaceDialog extends SearchDialog {
     boolean approved;
 
     if (doConfirm) {
-      ReplacementPreviewDialog wrapper = new ReplacementPreviewDialog(
-        project,
-        info.getUsageInfo(),
-        replacementInfo.getReplacement()
-      );
+      ReplacementPreviewDialog wrapper = new ReplacementPreviewDialog(project, info.getUsageInfo(), replacementInfo.getReplacement());
 
       wrapper.show();
       approved = wrapper.isOK();
@@ -263,13 +247,8 @@ public class ReplaceDialog extends SearchDialog {
       final ReplaceOptions options = config.getOptions();
       super.setValuesFromConfig(config);
 
-      UIUtil.setContent(
-        replaceCriteriaEdit,
-        config.getOptions().getReplacement(),
-        0,
-        replaceCriteriaEdit.getDocument().getTextLength(),
-        searchContext.getProject()
-      );
+      UIUtil.setContent(replaceCriteriaEdit, config.getOptions().getReplacement(), 0, replaceCriteriaEdit.getDocument().getTextLength(),
+                        searchContext.getProject());
 
       shortenFQN.setSelected(options.isToShortenFQN());
       formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
@@ -277,19 +256,14 @@ public class ReplaceDialog extends SearchDialog {
     else {
       super.setValuesFromConfig(configuration);
 
-      UIUtil.setContent(
-        replaceCriteriaEdit,
-        configuration.getMatchOptions().getSearchPattern(),
-        0,
-        replaceCriteriaEdit.getDocument().getTextLength(),
-        searchContext.getProject()
-      );
+      UIUtil.setContent(replaceCriteriaEdit, configuration.getMatchOptions().getSearchPattern(), 0,
+                        replaceCriteriaEdit.getDocument().getTextLength(), searchContext.getProject());
     }
   }
 
   protected void setValuesToConfig(Configuration config) {
     super.setValuesToConfig(config);
-    
+
     final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)config;
     final ReplaceOptions options = replaceConfiguration.getOptions();
 
@@ -313,15 +287,11 @@ public class ReplaceDialog extends SearchDialog {
     boolean result = true;
 
     try {
-      Replacer.checkSupportedReplacementPattern(
-        searchContext.getProject(),
-        searchCriteriaEdit.getDocument().getText(),
-        replaceCriteriaEdit.getDocument().getText(),
-        getCurrentFileType()
-      );
+      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), searchCriteriaEdit.getDocument().getText(),
+                                                replaceCriteriaEdit.getDocument().getText(), getCurrentFileType());
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("unsupported.replacement.pattern.message",replaceCriteriaEdit, ex.getPattern());
+      reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getPattern());
       result = false;
     }
 
@@ -329,10 +299,7 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   public void show() {
-    replaceCriteriaEdit.putUserData(
-      SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY,
-      model.getConfig()
-    );
+    replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, model.getConfig());
 
     super.show();
   }
