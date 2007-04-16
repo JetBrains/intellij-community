@@ -39,8 +39,12 @@ public class XmlAttributeValueGetter implements ContextGetter {
       if(descriptor != null) {
         String[] values = descriptor.getEnumeratedValues();
 
+        final String[] strings = addSpecificCompletions(context);
+
         if(values == null || values.length==0) {
-          values = addSpecificCompletions(context);
+          values = strings;
+        } else if (strings != null) {
+          values = ArrayUtil.mergeArrays(values, strings, String.class);
         }
 
         if(values == null || values.length==0) {

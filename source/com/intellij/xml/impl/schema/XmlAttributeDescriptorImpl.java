@@ -1,18 +1,17 @@
 package com.intellij.xml.impl.schema;
 
-import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.HashSet;
-
+import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
 
 /**
  * @author Mike
@@ -109,6 +108,11 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
       final EnumerationData data = getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
+      final String s = getDefaultValue();
+
+      if (s != null && s.length() > 0 && data == null) {
+        return new String[] {s};
+      }
       return data != null? data.enumeratedValues:ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
