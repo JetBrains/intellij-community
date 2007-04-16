@@ -16,7 +16,6 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,20 +33,19 @@ public class OverlyComplexArithmeticExpressionInspection
         extends BaseInspection {
 
     private static final int TERM_LIMIT = 6;
-    /**
-     * @noinspection PublicField
-     */
+
+    /** @noinspection PublicField */
     public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
-    private static final Set<IElementType> arithmeticTokens =
-            new HashSet<IElementType>(5);
+    private static final Set<String> arithmeticTokens =
+            new HashSet<String>(5);
 
     static {
-        arithmeticTokens.add(JavaTokenType.PLUS);
-        arithmeticTokens.add(JavaTokenType.MINUS);
-        arithmeticTokens.add(JavaTokenType.ASTERISK);
-        arithmeticTokens.add(JavaTokenType.DIV);
-        arithmeticTokens.add(JavaTokenType.PERC);
+        arithmeticTokens.add("+");
+        arithmeticTokens.add("-");
+        arithmeticTokens.add("*");
+        arithmeticTokens.add("/");
+        arithmeticTokens.add("%");
     }
 
     @NotNull
@@ -159,15 +157,15 @@ public class OverlyComplexArithmeticExpressionInspection
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)expression;
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
-                return arithmeticTokens.contains(tokenType);
+                final String signText = sign.getText();
+                return arithmeticTokens.contains(signText);
             }
             else if (expression instanceof PsiPrefixExpression) {
                 final PsiPrefixExpression prefixExpression =
                         (PsiPrefixExpression)expression;
                 final PsiJavaToken sign = prefixExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
-                return arithmeticTokens.contains(tokenType);
+                final String signText = sign.getText();
+                return arithmeticTokens.contains(signText);
             }
             else if (expression instanceof PsiParenthesizedExpression) {
                 final PsiParenthesizedExpression parenthesizedExpression =
