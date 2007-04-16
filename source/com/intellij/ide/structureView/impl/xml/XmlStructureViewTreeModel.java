@@ -36,10 +36,15 @@ import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.*;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
@@ -58,17 +63,33 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   public Grouper[] getGroupers() {
-    return Grouper.EMPTY_ARRAY;
+    List<Grouper> groupers = new ArrayList<Grouper>();
+    for (XmlStructureViewElementProvider provider : getProviders()) {
+      groupers.addAll(Arrays.asList(provider.getGroupers(myFile)));
+    }
+    return groupers.toArray(new Grouper[groupers.size()]);
+  }
+
+  private static XmlStructureViewElementProvider[] getProviders() {
+   return (XmlStructureViewElementProvider[])Extensions.getExtensions(XmlStructureViewElementProvider.EXTENSION_POINT_NAME);
   }
 
   @NotNull
   public Sorter[] getSorters() {
-    return Sorter.EMPTY_ARRAY;
+    List<Sorter> sorters = new ArrayList<Sorter>();
+    for (XmlStructureViewElementProvider provider : getProviders()) {
+      sorters.addAll(Arrays.asList(provider.getSorters(myFile)));
+    }
+    return sorters.toArray(new Sorter[sorters.size()]);
   }
 
   @NotNull
   public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
+    List<Filter> filters = new ArrayList<Filter>();
+    for (XmlStructureViewElementProvider provider : getProviders()) {
+      filters.addAll(Arrays.asList(provider.getFilters(myFile)));
+    }
+    return filters.toArray(new Filter[filters.size()]);
   }
 
   protected PsiFile getPsiFile() {
