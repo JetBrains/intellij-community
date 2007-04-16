@@ -17,14 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
  */
-public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrWhileStatement {
+public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrStatement {
   public GrVariableDefinitionsImpl(@NotNull ASTNode node) {
     super(node);
   }

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -50,6 +51,11 @@ public class Declaration implements GroovyElementTypes {
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
         if (IDENTIFIER.equals(varDecl)) varDecl = VARIABLE_DEFINITION;
+
+//        if (METHOD_DEFINITION.equals(varDecl)) {
+//          declmMarker.done(CONSTRUCTOR_DEFINITION);
+//          return CONSTRUCTOR_DEFINITION;
+//        }
 
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -101,13 +107,13 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-//      PsiBuilder.Marker methCallMarker = builder.mark();
-      //type specification starts with upper case letter
-      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
-        builder.error(GroovyBundle.message("type.specification.expected"));
-//        methCallMarker.drop();
-        declmMarker.rollbackTo();
-        return WRONGWAY;
+      if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
+        //type specification starts with upper case letter
+        if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
+          builder.error(GroovyBundle.message("type.specification.expected"));
+          declmMarker.rollbackTo();
+          return WRONGWAY;
+        }
       }
 
       PsiBuilder.Marker varDefMarker = builder.mark();
@@ -187,3 +193,4 @@ public class Declaration implements GroovyElementTypes {
     return varDecl;
   }
 }
+
