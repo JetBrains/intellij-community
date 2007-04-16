@@ -84,7 +84,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.ui.CommittedChangesViewManager</implementation-class>
+      <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

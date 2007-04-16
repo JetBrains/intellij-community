@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;

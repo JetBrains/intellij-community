@@ -2,12 +2,13 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.SeparatorFactory;

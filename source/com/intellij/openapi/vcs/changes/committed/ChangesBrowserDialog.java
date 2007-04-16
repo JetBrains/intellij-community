@@ -2,12 +2,14 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 
 import javax.swing.*;

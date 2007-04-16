@@ -8,7 +8,7 @@
  * Date: 03.10.2006
  * Time: 18:54:43
  */
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.changes.ChangeList;

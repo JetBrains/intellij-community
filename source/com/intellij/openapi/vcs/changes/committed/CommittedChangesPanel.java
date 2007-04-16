@@ -8,7 +8,7 @@
  * Date: 05.12.2006
  * Time: 19:39:22
  */
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommittedChangesPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommittedChangesPanel");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
 
   private CommittedChangesBrowser myBrowser;
   private final Project myProject;
