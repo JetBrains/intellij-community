@@ -1,0 +1,2 @@
+def builder = new org.jetbrains.gwtjet.groovy.GwtBuilder()
+-----

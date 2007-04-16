@@ -1,0 +1,15 @@
+myLabel:
+3+2
+-----
+Groovy script
+  Labeled statement
+    Label
+      PsiElement(identifier)('myLabel')
+    PsiElement(:)(':')
+    PsiElement(new line)('\n')
+    Additive expression
+      Literal
+        PsiElement(number)('3')
+      PsiElement(+)('+')
+      Literal
+        PsiElement(number)('2')

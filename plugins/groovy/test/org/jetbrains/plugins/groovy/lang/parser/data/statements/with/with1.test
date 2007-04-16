@@ -1,0 +1,23 @@
+with (A) {
+do()
+}
+-----
+Groovy script
+  WITH statement
+    PsiElement(with)('with')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('A')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      Method call
+        Reference expression
+          PsiElement(identifier)('do')
+        PsiElement(()('(')
+        PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

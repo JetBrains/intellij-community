@@ -6,7 +6,8 @@ Groovy script
     PsiElement(number)('1')
   PsiElement(new line)('\n')
   Labeled statement
-    PsiElement(identifier)('l')
+    Label
+      PsiElement(identifier)('l')
     PsiElement(:)(':')
     PsiWhiteSpace(' ')
     Open block
