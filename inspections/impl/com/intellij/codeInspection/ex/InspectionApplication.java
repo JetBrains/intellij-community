@@ -192,6 +192,7 @@ public class InspectionApplication {
         }
       }, new ProgressIndicatorBase() {
         private String lastPrefix = "";
+        private int myLastPercent = -1;
 
         public void setText(String text) {
           if (myVerboseLevel == 0) return;
@@ -210,17 +211,13 @@ public class InspectionApplication {
           }
 
           if (myVerboseLevel == 3) {
-            if (text.length() == 0) return;
-            final String prefix = getPrefix(text);
             final StringBuilder buf = StringBuilderSpinAllocator.alloc();
             try {
-              if (prefix == null) {
-                buf.append(text);
-              } else {
-                buf.append(prefix);
-              }
-              if (!isIndeterminate() && getFraction() > 0 && prefix != null && prefix.length() > 0) {
-                buf.append("... ").append((int)(getFraction() * 100)).append("%");
+              if (!isIndeterminate() && getFraction() > 0) {
+                final int percent = (int)(getFraction() * 100);
+                if (myLastPercent == percent) return;
+                myLastPercent = percent;
+                buf.append(InspectionsBundle.message("inspection.display.name")).append(" ").append(percent).append("%");
               }
               logMessageLn(2, buf.toString());
             } finally {
