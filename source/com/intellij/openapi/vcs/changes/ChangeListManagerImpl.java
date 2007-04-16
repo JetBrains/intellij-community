@@ -603,19 +603,20 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void removeChangeList(LocalChangeList list) {
     Collection<Change> changes;
+    LocalChangeListImpl realList = findRealByCopy(list);
     synchronized (myChangeLists) {
-      if (list.isDefault()) throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
+      if (realList.isDefault()) throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
 
-      changes = list.getChanges();
+      changes = realList.getChanges();
       for (Change change : changes) {
         myDefaultChangelist.addChange(change);
       }
     }
-    myListeners.getMulticaster().changesMoved(changes, list, myDefaultChangelist);
+    myListeners.getMulticaster().changesMoved(changes, realList, myDefaultChangelist);
     synchronized (myChangeLists) {
-      myChangeLists.remove(list);
+      myChangeLists.remove(realList);
     }
-    myListeners.getMulticaster().changeListRemoved(list);
+    myListeners.getMulticaster().changeListRemoved(realList);
   }
 
   public void setDefaultChangeList(@NotNull LocalChangeList list) {

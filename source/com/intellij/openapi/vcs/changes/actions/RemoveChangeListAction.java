@@ -22,13 +22,17 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class RemoveChangeListAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
     final boolean visible = canRemoveChangeLists(project, lists);
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
-        e.getPresentation().setVisible(visible);
+      e.getPresentation().setVisible(visible);
     else
       e.getPresentation().setEnabled(visible);
   }
@@ -38,7 +42,8 @@ public class RemoveChangeListAction extends AnAction {
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
-      if (localChangeList.isReadOnly() || localChangeList.isDefault()) return false;
+      if (localChangeList.isReadOnly()) return false;
+      if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeLists().size() <= lists.length) return false;
     }
     return true;
   }
@@ -48,6 +53,14 @@ public class RemoveChangeListAction extends AnAction {
     final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
     assert lists != null;
     int rc;
+
+    for(ChangeList list: lists) {
+      if (((LocalChangeList) list).isDefault()) {
+        removeActiveChangeList(project, lists);
+        return;
+      }
+    }
+
     if (lists.length == 1) {
       final LocalChangeList list = (LocalChangeList)lists[0];
       rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
@@ -67,6 +80,25 @@ public class RemoveChangeListAction extends AnAction {
       for(ChangeList list: lists) {
         ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
       }
+    }
+  }
+
+  private static void removeActiveChangeList(final Project project, final ChangeList[] lists) {
+    List<LocalChangeList> remainingLists = new ArrayList<LocalChangeList>(ChangeListManager.getInstance(project).getChangeLists());
+    remainingLists.removeAll(Arrays.asList(lists));
+    String[] names = new String[remainingLists.size()];
+    for(int i=0; i<remainingLists.size(); i++) {
+      names [i] = remainingLists.get(i).getName();
+    }
+    int nameIndex = Messages.showChooseDialog(project, VcsBundle.message("changes.remove.active.prompt"),
+                                              VcsBundle.message("changes.remove.active.title"),
+                                              Messages.getQuestionIcon(), names, names [0]);
+    if (nameIndex < 0) return;
+    ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists.get(nameIndex));
+    for(ChangeList list: lists) {
+      final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+      // we can't use findRealByCopy() because isDefault will differ between our copy and the real list
+      changeListManager.removeChangeList(changeListManager.findChangeList(list.getName()));
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ public class RenameShelvedChangeListAction extends AnAction {
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     assert changes != null;
     final ShelvedChangeList changeList = changes [0];
-    String newName = Messages.showInputDialog(project,
-                                              "Please enter a name for the changelist:", "Rename Shelved Changelist",
+    String newName = Messages.showInputDialog(project, VcsBundle.message("shelve.changes.rename.prompt"),
+                                              VcsBundle.message("shelve.changes.rename.title"),
                                               Messages.getQuestionIcon(), changeList.DESCRIPTION,
                                               new InputValidator() {
                                                 public boolean checkInput(final String inputString) {
