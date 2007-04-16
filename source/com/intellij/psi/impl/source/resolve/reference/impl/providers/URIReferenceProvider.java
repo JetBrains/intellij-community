@@ -9,10 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -129,11 +131,20 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return getElement();
+      final TextRange textRange = getRangeInElement();
+      final PsiElement elementToChange = myElement.findElementAt(textRange.getStartOffset());
+      final ElementManipulator<PsiElement> manipulator =
+        ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(elementToChange);
+      assert manipulator != null;
+      manipulator.handleContentChange(elementToChange, new TextRange(1, elementToChange.getTextLength() - 1),newElementName);
+      return myElement;
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-      return getElement();
+      // TODO: this should work!
+      assert element instanceof PsiFile;
+      handleElementRename(VfsUtil.fixIDEAUrl(((PsiFile)element).getVirtualFile().getPresentableUrl()));
+      return myElement;
     }
 
     public boolean isReferenceTo(PsiElement element) {
