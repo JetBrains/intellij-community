@@ -18,6 +18,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
 
+  @NonNls String JAVA_LANG_DEPRECATED = "java.lang.Deprecated";
+  @NonNls String JAVA_LANG_ANNOTATION_INHERITED = "java.lang.annotation.Inherited";
+
   @NonNls String JAVA_UTIL_MAP = "java.util.Map";
   @NonNls String JAVA_UTIL_LIST = "java.util.List";
   @NonNls String JAVA_UTIL_SET = "java.util.Set";
