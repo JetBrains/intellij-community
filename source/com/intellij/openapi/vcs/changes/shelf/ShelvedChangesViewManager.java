@@ -12,6 +12,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -66,6 +67,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
+  private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
@@ -146,7 +148,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
+      TreeState state = TreeState.createOn(myTree);
       myTree.setModel(buildChangesModel());
+      state.applyTo(myTree);
       if (myPostUpdateRunnable != null) {
         myPostUpdateRunnable.run();
       }      
@@ -155,7 +159,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private TreeModel buildChangesModel() {
-    myRoot = new DefaultMutableTreeNode();
+    myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
     for(ShelvedChangeList changeList: changeLists) {
