@@ -19,10 +19,7 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairImpl;
@@ -92,6 +89,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //Identifiers & literal
     if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
+    if (elem.equals(LABEL)) return new GrLabelImpl(node);
 
     //Lists, mapetc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
@@ -120,6 +118,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(FOR_IN_CLAUSE)) return new GrForInClauseImpl(node);
     if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrForTradClauseImpl(node);
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
+    if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStmtImpl(node);
     if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchroStmtImpl(node);
     if (elem.equals(USE_STATEMENT)) return new GrUseStatementImpl(node);

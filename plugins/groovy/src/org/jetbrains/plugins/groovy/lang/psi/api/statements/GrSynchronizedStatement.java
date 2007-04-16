@@ -17,9 +17,16 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 /**
  * @author Ilya.Sergey
  */
-public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement {
+public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement, GrControlStatement {
+
+  public GrExpression getMonitor();
+
+  public GrOpenBlock getBody();
+
 }

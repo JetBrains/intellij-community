@@ -15,9 +15,18 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @autor: Ilya Sergey
  */
-public interface GrForStatement extends GrStatement {
+public interface GrForStatement extends GrStatement, GrControlStatement {
+
+  public GrForClause getClause();
+
+  public GrStatement getBody();
+
+
+
+
 }

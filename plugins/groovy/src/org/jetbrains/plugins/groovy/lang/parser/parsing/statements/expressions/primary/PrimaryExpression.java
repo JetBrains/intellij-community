@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class PrimaryExpression implements GroovyElementTypes { 
+public class PrimaryExpression implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 

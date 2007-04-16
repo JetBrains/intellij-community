@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.ForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;

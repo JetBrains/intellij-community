@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov, Ilya Sergey
@@ -47,16 +48,26 @@ public class ParameterDeclarationList implements GroovyElementTypes {
     }
 
     while (!builder.eof() &&
-        ParserUtils.getToken(builder, mCOMMA) &&
-        result.equals(PARAMETER)) {
-
+            result.equals(PARAMETER) &&
+            mCOMMA.equals(builder.getTokenType())) {
+      PsiBuilder.Marker rb = builder.mark();
+      ParserUtils.getToken(builder, mCOMMA);
       ParserUtils.getToken(builder, mNLS);
       result = ParameterDeclaration.parse(builder, ending);
+      if (result.equals(PARAMETER)) {
+        rb.drop();
+      } else {
+        rb.rollbackTo();
+        if (mCOMMA.equals(builder.getTokenType())){
+          ParserUtils.getToken(builder, mCOMMA);
+          builder.error(GroovyBundle.message("param.expected"));
+        }
+      }
     }
 
     if ((ending.equals(mCLOSABLE_BLOCK_OP) &&
-        mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
-        || ending.equals(mRPAREN)) {
+            mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
+            || ending.equals(mRPAREN)) {
       pdlMarker.done(PARAMETERS_LIST);
       return PARAMETERS_LIST;
     } else {

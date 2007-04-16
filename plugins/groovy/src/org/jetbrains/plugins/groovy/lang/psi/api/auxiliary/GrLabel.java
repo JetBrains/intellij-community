@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
+package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author Ilya.Sergey
  */
-public interface ForClause extends GroovyPsiElement {
+public interface GrLabel extends GroovyPsiElement {
 }

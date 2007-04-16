@@ -16,14 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.ForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrForTradClauseImpl extends GroovyPsiElementImpl implements ForClause {
+public class GrForTradClauseImpl extends GroovyPsiElementImpl implements GrForClause {
   public GrForTradClauseImpl(@NotNull ASTNode node) {
     super(node);
   }

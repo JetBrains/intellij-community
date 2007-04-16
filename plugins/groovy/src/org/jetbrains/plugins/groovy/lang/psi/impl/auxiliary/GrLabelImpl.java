@@ -13,23 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
+package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrTypeCast;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel {
+public class GrLabelImpl extends GroovyPsiElementImpl implements GrLabel {
 
-  public GrCaseLabelImpl(@NotNull ASTNode node) {
+  public GrLabelImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Case label";
+    return "Label";
   }
 }

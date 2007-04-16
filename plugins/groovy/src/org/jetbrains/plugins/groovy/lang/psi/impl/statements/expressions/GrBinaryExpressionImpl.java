@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 /**
  * @author Ilya.Sergey
  */
-public class GrBinaryExpressionImpl  extends GroovyPsiElementImpl implements GrBinaryExpression {
+public class GrBinaryExpressionImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -34,7 +34,7 @@ public class GrBinaryExpressionImpl  extends GroovyPsiElementImpl implements GrB
   public GrExpression getLeftOperand() {
     PsiElement first = getFirstChild();
     if (first instanceof GrExpression) {
-      return (GrExpression)first;
+      return (GrExpression) first;
     } else {
       return null;
     }
@@ -43,7 +43,7 @@ public class GrBinaryExpressionImpl  extends GroovyPsiElementImpl implements GrB
   public GrExpression getRightOperand() {
     PsiElement last = getLastChild();
     if (last instanceof GrExpression) {
-      return (GrExpression)last;
+      return (GrExpression) last;
     } else {
       return null;
     }

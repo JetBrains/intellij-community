@@ -13,23 +13,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
+package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
+ * Label interface for condition statements
+ *
  * @author Ilya.Sergey
  */
-public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel {
-
-  public GrCaseLabelImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Case label";
-  }
+public interface GrCondition extends GroovyPsiElement {
 }

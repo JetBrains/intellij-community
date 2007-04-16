@@ -15,9 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrWhileStatement extends GrStatement {
+public interface GrWhileStatement extends GrStatement, GrControlStatement  {
+
+  public GrCondition getCondition();
+
+  public GrStatement getBody();
+
 }

@@ -15,9 +15,19 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @autor: Ilya Sergey
  */
-public interface GrIfStatement extends GrStatement {
+public interface GrIfStatement extends GrStatement, GrControlStatement  {
+
+  public GrCondition getCondition();
+
+  public GrStatement getThenBranch();
+
+  public GrStatement getElseBranch();
+
 }

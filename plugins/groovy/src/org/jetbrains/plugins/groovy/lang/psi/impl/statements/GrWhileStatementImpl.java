@@ -16,20 +16,42 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @autor: Ilya Sergey
  */
 public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhileStatement {
   public GrWhileStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-   public String toString() {
+  public String toString() {
     return "WHILE statement";
   }
+
+  public GrCondition getCondition() {
+    GroovyPsiElement condition = findChildByClass(GrCondition.class);
+    if (condition != null) {
+      return (GrCondition)condition;
+    }
+    return null;
+  }
+
+  public GrStatement getBody() {
+    GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
+    if (statements.length == 2 && (statements[1] instanceof GrStatement)) {
+      return (GrStatement)statements[1];
+    }
+    return null;
+  }
+
 }
