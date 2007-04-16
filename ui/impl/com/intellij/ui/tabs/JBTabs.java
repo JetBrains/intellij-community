@@ -515,27 +515,41 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
           if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1 && !e.isPopupTrigger()) {
             setSelected(info, true);
           }
-          else if (e.getClickCount() == 1 && e.isPopupTrigger()) {
-            String place = getPopupPlace();
-            place = place != null ? place : ActionPlaces.UNKNOWN;
-            myPopupInfo = myInfo;
-
-            final DefaultActionGroup toShow = new DefaultActionGroup();
-            if (getPopupGroup() != null) {
-              toShow.addAll(getPopupGroup());
-              toShow.addSeparator();
-            }
-            toShow.addAll(myOwnGroup);
-
-            myActivePopup = myActionManager.createActionPopupMenu(place, toShow).getComponent();
-            myActivePopup.addPopupMenuListener(myPopupListener);
-
-            myActivePopup.show(e.getComponent(), e.getX(), e.getY());
-            onPopup(myPopupInfo);
+          else {
+            handlePopup(e);
           }
+        }
+
+        public void mouseClicked(final MouseEvent e) {
+          handlePopup(e);
+        }
+
+        public void mouseReleased(final MouseEvent e) {
+          handlePopup(e);
         }
       });
       setBorder(new EmptyBorder(2, 8, 2, 8));
+    }
+
+    private void handlePopup(final MouseEvent e) {
+      if (e.getClickCount() != 1 || !e.isPopupTrigger()) return;
+
+      String place = getPopupPlace();
+      place = place != null ? place : ActionPlaces.UNKNOWN;
+      myPopupInfo = myInfo;
+
+      final DefaultActionGroup toShow = new DefaultActionGroup();
+      if (getPopupGroup() != null) {
+        toShow.addAll(getPopupGroup());
+        toShow.addSeparator();
+      }
+      toShow.addAll(myOwnGroup);
+
+      myActivePopup = myActionManager.createActionPopupMenu(place, toShow).getComponent();
+      myActivePopup.addPopupMenuListener(myPopupListener);
+
+      myActivePopup.show(e.getComponent(), e.getX(), e.getY());
+      onPopup(myPopupInfo);
     }
 
     public void setText(final String text) {
