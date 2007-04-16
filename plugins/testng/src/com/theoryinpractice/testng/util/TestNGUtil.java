@@ -351,6 +351,7 @@ public class TestNGUtil
             public boolean isAccepted(PsiElement element) {
                 if (!(element instanceof PsiAnnotation)) return false;
                 String name = ((PsiAnnotation) element).getQualifiedName();
+                if (null == name) return false;
                 if (name.startsWith("org.testng.annotations")) {
                     return true;
                 }
