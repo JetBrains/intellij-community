@@ -15,14 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 
 /**
  * @autor: Ilya Sergey
  */
-public interface GrIfStatement extends GrStatement, GrControlStatement  {
+public interface GrIfStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 

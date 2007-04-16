@@ -25,6 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrConditionalExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement, GrExpression {
-  String toString();
+public interface GrConditionalExpression extends GrExpression {
+
+  public GrExpression getCondition();
+
+  public GrExpression getThenBranch();
+
+  public GrExpression getElseBranch(); 
+
 }

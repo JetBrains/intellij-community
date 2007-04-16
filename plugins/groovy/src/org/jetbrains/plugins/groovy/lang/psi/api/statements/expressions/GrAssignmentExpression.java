@@ -27,4 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrAssignmentExpression extends GrExpression {
 
+  public GrExpression getLValue();
+
+  public GrExpression getRValue();
+
 }

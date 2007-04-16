@@ -19,26 +19,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.LargeGroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 import org.jetbrains.plugins.groovy.formatter.models.ContiniousIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.tree.IElementType;
-
-import java.lang.reflect.Method;
 
 /**
  * @author Ilya.Sergey
@@ -77,6 +72,10 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
       return getControlIndent(psiParent, child);
     }
 
+    if (psiParent instanceof GrExpression){
+      return getExpressionIndent(psiParent, child);
+    }
+
     //For parameter lists
     if (psiParent instanceof GrParameterList) {
       if (parent.getIndent() != null) {
@@ -84,7 +83,6 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
       }
       return Indent.getNoneIndent();
     }
-
 
     // For arguments
     if (psiParent instanceof ContiniousIndent) {
@@ -99,9 +97,28 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getNormalIndent();
     }
 
-    if (parent.getNode().getPsi() instanceof GrExpression) {
+    return Indent.getNoneIndent();
+  }
+
+  /**
+   *  Returns indent for simple expressions
+   * @param psiParent
+   * @param child
+   * @return
+   */
+  private static Indent getExpressionIndent(PsiElement psiParent, ASTNode child) {
+    // Assignment expression
+    if (psiParent instanceof GrAssignmentExpression &&
+            child.getPsi().equals(((GrAssignmentExpression) psiParent).getRValue())) {
       return Indent.getNormalIndent();
     }
+    // Conditional expression
+    if (psiParent instanceof GrConditionalExpression &&
+            (child.getPsi().equals(((GrConditionalExpression) psiParent).getThenBranch()) ||
+            child.getPsi().equals(((GrConditionalExpression) psiParent).getElseBranch()))) {
+      return Indent.getNormalIndent();
+    }
+    // Property selection
 
     return Indent.getNoneIndent();
   }

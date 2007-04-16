@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements;
+package org.jetbrains.plugins.groovy.lang.psi.api.formatter;
 
 /**
  * Label interface for control statements

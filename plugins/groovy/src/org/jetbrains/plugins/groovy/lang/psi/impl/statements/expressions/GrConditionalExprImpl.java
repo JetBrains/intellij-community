@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -34,5 +35,29 @@ public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrCon
   public String toString()
   {
     return "Conditional expression";
+  }
+
+  public GrExpression getCondition() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    if (exprs.length > 0){
+      return  exprs[0];
+    }
+    return null;
+  }
+
+  public GrExpression getThenBranch() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    if (exprs.length > 1){
+      return  exprs[1];
+    }
+    return null;
+  }
+
+  public GrExpression getElseBranch() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    if (exprs.length > 2){
+      return  exprs[2];
+    }
+    return null;
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 
 /**
  * @autor: Ilya Sergey

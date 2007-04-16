@@ -25,6 +25,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrRelationalExpression extends GrExpression {
-  public String toString();
+public interface GrRelationalExpression extends GrBinaryExpression {
 }

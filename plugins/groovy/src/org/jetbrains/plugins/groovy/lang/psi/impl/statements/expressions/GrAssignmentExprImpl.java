@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -34,5 +35,21 @@ public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssi
   public String toString()
   {
     return "Assignment expression";
+  }
+
+  public GrExpression getLValue() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    if (exprs.length > 0){
+      return  exprs[0];
+    }
+    return null;
+  }
+
+  public GrExpression getRValue() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    if (exprs.length > 1){
+      return  exprs[1];
+    }
+    return null;
   }
 }

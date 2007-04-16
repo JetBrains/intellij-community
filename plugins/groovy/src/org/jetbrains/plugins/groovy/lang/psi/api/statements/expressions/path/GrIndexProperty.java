@@ -21,9 +21,10 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
 
 /**
  * @author Ilya.Sergey
  */
-public interface GrIndexProperty extends GrExpression {
+public interface GrIndexProperty extends GrExpression, GrNested {
 }
