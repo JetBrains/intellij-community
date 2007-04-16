@@ -20,7 +20,7 @@ public interface PersistentStateComponent<T> {
    * This method is called when new component state is loaded. A component should expect this method
    * to be called at any moment of its lifecycle. The method can and will be called several times, if
    * config files were externally changed while IDEA running.
-   * @param object loaded component state
+   * @param state loaded component state
    */
-  void loadState(T object);
+  void loadState(T state);
 }
