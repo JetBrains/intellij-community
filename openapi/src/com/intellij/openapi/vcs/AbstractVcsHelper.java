@@ -16,8 +16,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.CodeSmellInfo;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -30,8 +30,8 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -51,9 +51,9 @@ public abstract class AbstractVcsHelper {
 
   public abstract void markFileAsUpToDate(VirtualFile file);
 
-  public abstract LvcsAction startVcsAction(String actionName);
+  public abstract LocalHistoryAction startVcsAction(String actionName);
 
-  public abstract void finishVcsAction(LvcsAction action);
+  public abstract void finishVcsAction(LocalHistoryAction action);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
@@ -78,21 +78,29 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file);
 
-  public abstract void showDifferences(final VcsFileRevision cvsVersionOn,
-                                       final VcsFileRevision cvsVersionOn1,
-                                       final File file);
+  public abstract void showDifferences(final VcsFileRevision cvsVersionOn, final VcsFileRevision cvsVersionOn1, final File file);
 
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
-  public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
-  public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title,
-                                          @Nullable final Component parent);
-  public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
-    
-  @Nullable public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
 
-  public abstract void openCommittedChangesTab(CommittedChangesProvider provider, VirtualFile root, ChangeBrowserSettings settings,
-                                               int maxCount, final String title);
+  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
+
+  public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
+
+  public abstract void showChangesBrowser(CommittedChangesProvider provider,
+                                          final VirtualFile root,
+                                          @Nls String title,
+                                          @Nullable final Component parent);
+
+  public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
+
+  @Nullable
+  public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
+
+  public abstract void openCommittedChangesTab(CommittedChangesProvider provider,
+                                               VirtualFile root,
+                                               ChangeBrowserSettings settings,
+                                               int maxCount,
+                                               final String title);
 
   @NotNull
   public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
@@ -114,8 +122,9 @@ public abstract class AbstractVcsHelper {
    * @since 5.1
    */
   public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
-    
+
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path);
+
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path);
 
   /**
@@ -126,12 +135,18 @@ public abstract class AbstractVcsHelper {
   public abstract void showRollbackChangesDialog(List<Change> changes);
 
   @Nullable
-  public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files, final String title, @Nullable final String prompt,
-                                                               final String singleFileTitle, final String singleFilePromptTemplate,
+  public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
+                                                               final String title,
+                                                               @Nullable final String prompt,
+                                                               final String singleFileTitle,
+                                                               final String singleFilePromptTemplate,
                                                                final VcsShowConfirmationOption confirmationOption);
 
   @Nullable
-  public abstract Collection<FilePath> selectFilePathsToProcess(List<FilePath> files, final String title, @Nullable final String prompt,
-                                                                final String singleFileTitle, final String singleFilePromptTemplate,
+  public abstract Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+                                                                final String title,
+                                                                @Nullable final String prompt,
+                                                                final String singleFileTitle,
+                                                                final String singleFilePromptTemplate,
                                                                 final VcsShowConfirmationOption confirmationOption);
 }

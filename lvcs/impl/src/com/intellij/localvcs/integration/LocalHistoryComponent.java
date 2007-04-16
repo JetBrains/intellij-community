@@ -114,6 +114,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   public boolean isEnabled() {
+    // see CommonLcs.isOldVcsEnabled.
     return System.getProperty("newlocalvcs.disabled") == null;
   }
 
@@ -121,6 +122,16 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   protected LocalHistoryAction startAction(String name) {
     if (!isEnabled()) return LocalHistoryActionImpl.NULL;
     return myService.startAction(name);
+  }
+
+  @Override
+  protected void putLabel(String name) {
+    myVcs.putLabel(name);
+  }
+
+  @Override
+  protected void putLabel(String path, String name) {
+    myVcs.putLabel(path, name);
   }
 
   @NonNls

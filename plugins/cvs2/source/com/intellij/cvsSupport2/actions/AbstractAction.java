@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -28,7 +29,7 @@ import java.awt.event.InputEvent;
 
 public abstract class AbstractAction extends AnAction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AbstractAction");
-  private LvcsAction myLvcsAction = LvcsAction.EMPTY;
+  private LocalHistoryAction myLvcsAction = LvcsAction.EMPTY;
   private final boolean myStartLvcsAction;
 
   public AbstractAction(boolean startLvcsAction) {
@@ -141,10 +142,7 @@ public abstract class AbstractAction extends AnAction {
   }
 
 
-  protected void onActionPerformed(CvsContext context,
-                                   CvsTabbedWindow tabbedWindow,
-                                   boolean successfully,
-                                   CvsHandler handler) {
+  protected void onActionPerformed(CvsContext context, CvsTabbedWindow tabbedWindow, boolean successfully, CvsHandler handler) {
     if (handler == CvsHandler.NULL) return;
     Refreshable refreshablePanel = context.getRefreshableDialog();
     if (refreshablePanel != null) {

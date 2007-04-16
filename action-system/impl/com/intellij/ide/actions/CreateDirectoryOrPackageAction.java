@@ -1,8 +1,10 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeView;
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,17 +16,15 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Icons;
-import com.intellij.CommonBundle;
+import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 import java.util.StringTokenizer;
 
 public class CreateDirectoryOrPackageAction extends AnAction {
   public CreateDirectoryOrPackageAction() {
-    super(IdeBundle.message("action.create.new.directory.or.package"),
-          IdeBundle.message("action.create.new.directory.or.package"), null);
+    super(IdeBundle.message("action.create.new.directory.or.package"), IdeBundle.message("action.create.new.directory.or.package"), null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -39,19 +39,18 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     boolean isDirectory = directory.getPackage() == null;
 
     MyInputValidator validator = new MyInputValidator(project, directory, isDirectory);
-    Messages.showInputDialog(project,
-                             isDirectory ? IdeBundle.message("prompt.enter.new.directory.name") : IdeBundle.message("prompt.enter.new.package.name"),
-                             isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
-                             Messages.getQuestionIcon(),
-                             "",
-                             validator);
+    Messages.showInputDialog(project, isDirectory
+                                      ? IdeBundle.message("prompt.enter.new.directory.name")
+                                      : IdeBundle.message("prompt.enter.new.package.name"),
+                                      isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
+                                      Messages.getQuestionIcon(), "", validator);
 
     if (validator.myCreatedElement == null) return;
 
     view.selectElement(validator.myCreatedElement);
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
@@ -70,7 +69,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     }
 
     final PsiDirectory[] directories = view.getDirectories();
-    if (directories.length == 0){
+    if (directories.length == 0) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
@@ -109,16 +108,16 @@ public class CreateDirectoryOrPackageAction extends AnAction {
       myIsDirectory = isDirectory;
     }
 
-    public boolean checkInput(String inputString){
+    public boolean checkInput(String inputString) {
       return true;
     }
 
-    public boolean canClose(String inputString){
+    public boolean canClose(String inputString) {
       final String subDirName = inputString;
 
       if (subDirName.length() == 0) {
-        Messages.showMessageDialog(myProject,IdeBundle.message("error.name.should.be.specified"),
-                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
+                                   Messages.getErrorIcon());
         return false;
       }
 
@@ -137,11 +136,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
           myDirectory.checkCreateSubdirectory(subDirName);
         }
         catch (IncorrectOperationException ex) {
-          Messages.showMessageDialog(
-            myProject,
-            CreateElementActionBase.filterMessage(ex.getMessage()),
-            CommonBundle.getErrorTitle(),
-            Messages.getErrorIcon());
+          Messages.showMessageDialog(myProject, CreateElementActionBase.filterMessage(ex.getMessage()), CommonBundle.getErrorTitle(),
+                                     Messages.getErrorIcon());
           return false;
         }
       }
@@ -150,12 +146,13 @@ public class CreateDirectoryOrPackageAction extends AnAction {
         public void run() {
           final Runnable run = new Runnable() {
             public void run() {
-              LvcsAction lvcsAction = LvcsAction.EMPTY;
+              LocalHistoryAction lvcsAction = LvcsAction.EMPTY;
               try {
-                String actionName = myIsDirectory ?
-                                    IdeBundle.message("progress.creating.directory", myDirectory.getVirtualFile().getPresentableUrl(),
-                                                      File.separator, subDirName)
-                    : IdeBundle.message("progress.creating.package", myDirectory.getPackage().getQualifiedName(), subDirName);
+                String actionName = myIsDirectory
+                                    ? IdeBundle
+                  .message("progress.creating.directory", myDirectory.getVirtualFile().getPresentableUrl(), File.separator, subDirName)
+                                    : IdeBundle
+                                      .message("progress.creating.package", myDirectory.getPackage().getQualifiedName(), subDirName);
 
                 String directoryPath = myDirectory.getVirtualFile().getPath() + "/" + subDirName;
 
@@ -168,7 +165,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                 else {
                   StringTokenizer tokenizer = new StringTokenizer(subDirName, ".");
                   PsiDirectory dir = myDirectory;
-                  while(tokenizer.hasMoreTokens()) {
+                  while (tokenizer.hasMoreTokens()) {
                     String packName = tokenizer.nextToken();
                     if (tokenizer.hasMoreTokens()) {
                       PsiDirectory existingDir = dir.findSubdirectory(packName);
@@ -185,17 +182,14 @@ public class CreateDirectoryOrPackageAction extends AnAction {
 
                 myCreatedElement = createdDir;
 
-              } catch (final IncorrectOperationException ex) {
-                ApplicationManager.getApplication().invokeLater(new Runnable(){
-                              public void run() {
-                                Messages.showMessageDialog(
-                                  myProject,
-                                  CreateElementActionBase.filterMessage(ex.getMessage()),
-                                  CommonBundle.getErrorTitle(),
-                                  Messages.getErrorIcon()
-                                );
-                              }
-                            });
+              }
+              catch (final IncorrectOperationException ex) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    Messages.showMessageDialog(myProject, CreateElementActionBase.filterMessage(ex.getMessage()),
+                                               CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+                  }
+                });
                 return;
               }
               finally {
@@ -206,8 +200,9 @@ public class CreateDirectoryOrPackageAction extends AnAction {
           ApplicationManager.getApplication().runWriteAction(run);
         }
       };
-      CommandProcessor.getInstance().executeCommand(myProject, command,
-                                                    myIsDirectory ? IdeBundle.message("command.create.directory") : IdeBundle.message("command.create.package"), null);
+      CommandProcessor.getInstance().executeCommand(myProject, command, myIsDirectory
+                                                                        ? IdeBundle.message("command.create.directory")
+                                                                        : IdeBundle.message("command.create.package"), null);
 
       return myCreatedElement != null;
     }

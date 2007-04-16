@@ -4,11 +4,11 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,21 +27,25 @@ import java.util.List;
 
 public class CommitHelper {
   private final Project myProject;
-  
-  
+
+
   private final ChangeList myChangeList;
   private final List<Change> myIncludedChanges;
-  
+
   private final String myActionName;
   private final String myCommitMessage;
-  
+
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
   private List<Document> myCommittingDocuments = new ArrayList<Document>();
 
 
-  public CommitHelper(final Project project, final ChangeList changeList, final List<Change> includedChanges, final String actionName, final String commitMessage,
+  public CommitHelper(final Project project,
+                      final ChangeList changeList,
+                      final List<Change> includedChanges,
+                      final String actionName,
+                      final String commitMessage,
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded,
                       final boolean synchronously) {
@@ -65,19 +69,18 @@ public class CommitHelper {
       return doesntContainErrors(vcsExceptions);
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName,
-        new Runnable() {
-          public void run() {
-            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-            vcsManager.startBackgroundVcsOperation();
-            try {
-              action.run();
-            }
-            finally {
-              vcsManager.stopBackgroundVcsOperation();
-            }
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName, new Runnable() {
+        public void run() {
+          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+          vcsManager.startBackgroundVcsOperation();
+          try {
+            action.run();
           }
-        }, null, null, VcsConfiguration.getInstance(myProject).getCommitOption());
+          finally {
+            vcsManager.stopBackgroundVcsOperation();
+          }
+        }
+      }, null, null, VcsConfiguration.getInstance(myProject).getCommitOption());
       return false;
     }
   }
@@ -89,7 +92,9 @@ public class CommitHelper {
     return true;
   }
 
-  private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
+  private Runnable checkinAction(final List<VcsException> vcsExceptions,
+                                 final List<Change> changesFailedToCommit,
+                                 final ChangeList changeList) {
     return new Runnable() {
       public void run() {
         performCommit(vcsExceptions, changesFailedToCommit, changeList);
@@ -128,8 +133,8 @@ public class CommitHelper {
         }
       });
 
-      final LvcsAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LvcsAction>() {
-        public LvcsAction compute() {
+      final LocalHistoryAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
+        public LocalHistoryAction compute() {
           return LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
         }
       });
@@ -145,12 +150,13 @@ public class CommitHelper {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
     }
     finally {
-      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, myCommitMessage);
+      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers,
+                      myCommitMessage);
     }
   }
 
   private void markCommittingDocuments() {
-    for(Change change: myIncludedChanges) {
+    for (Change change : myIncludedChanges) {
       Document doc = ChangesUtil.getFilePath(change).getDocument();
       if (doc != null) {
         doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, new Object());
@@ -160,7 +166,7 @@ public class CommitHelper {
   }
 
   private void unmarkCommittingDocuments() {
-    for(Document doc: myCommittingDocuments) {
+    for (Document doc : myCommittingDocuments) {
       doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, null);
     }
     myCommittingDocuments.clear();
@@ -188,7 +194,8 @@ public class CommitHelper {
         if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
           changeListManager.removeChangeList(localList);
         }
-        else if (config.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
+        else if (config.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
+                 localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(config);
@@ -240,17 +247,17 @@ public class CommitHelper {
   }
 
   public static void moveToFailedList(final ChangeList changeList,
-                                final String commitMessage,
-                                final List<Change> failedChanges,
-                                final String newChangelistName,
-                                final Project project) {
+                                      final String commitMessage,
+                                      final List<Change> failedChanges,
+                                      final String newChangelistName,
+                                      final Project project) {
     // No need to move since we'll get exactly the same changelist.
     if (failedChanges.containsAll(changeList.getChanges())) return;
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     int index = 1;
     String failedListName = newChangelistName;
-    while(changeListManager.findChangeList(failedListName) != null) {
+    while (changeListManager.findChangeList(failedListName) != null) {
       index++;
       failedListName = newChangelistName + " (" + index + ")";
     }
@@ -258,7 +265,7 @@ public class CommitHelper {
     final LocalChangeList failedList = changeListManager.addChangeList(failedListName, commitMessage);
     changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
   }
-  
+
   private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
     final ArrayList<VcsException> result = new ArrayList<VcsException>();
     for (VcsException vcsException : vcsExceptions) {

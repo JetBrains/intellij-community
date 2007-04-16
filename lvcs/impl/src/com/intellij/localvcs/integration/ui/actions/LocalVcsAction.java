@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui.actions;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,7 +24,7 @@ public abstract class LocalVcsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (!LocalHistoryComponent.getInstance(getProject(e)).isEnabled()) {
+    if (!LocalHistory.isEnabled(getProject(e))) {
       p.setVisible(false);
       return;
     }

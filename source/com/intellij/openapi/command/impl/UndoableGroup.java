@@ -1,6 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -36,8 +37,14 @@ class UndoableGroup {
   private Project myProject;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
 
-  public UndoableGroup(String commandName, boolean isComplex, Project project, EditorAndState stateBefore, EditorAndState stateAfter, int commandCounter,
-                       UndoConfirmationPolicy undoConfirmationPolicy, boolean transparentsOnly) {
+  public UndoableGroup(String commandName,
+                       boolean isComplex,
+                       Project project,
+                       EditorAndState stateBefore,
+                       EditorAndState stateAfter,
+                       int commandCounter,
+                       UndoConfirmationPolicy undoConfirmationPolicy,
+                       boolean transparentsOnly) {
     myCommandName = commandName;
     myComplex = isComplex;
     myCommandCounter = commandCounter;
@@ -78,14 +85,15 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(final boolean isUndo) {
-    LvcsAction actionStarted = LvcsAction.EMPTY;
+    LocalHistoryAction actionStarted = LvcsAction.EMPTY;
     if (myProject != null) {
       LocalVcs lvcs = LocalVcs.getInstance(myProject);
       if (isComplex() && lvcs != null) {
         final String lvcsActionName;
         if (isUndo) {
           lvcsActionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
-        } else {
+        }
+        else {
           lvcsActionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
         }
         actionStarted = lvcs.startAction(lvcsActionName, "", false);
@@ -93,7 +101,8 @@ class UndoableGroup {
     }
     try {
       performWritableUndoOrRedoAction(isUndo);
-    } finally {
+    }
+    finally {
       actionStarted.finish();
     }
   }
@@ -101,40 +110,43 @@ class UndoableGroup {
   private void performWritableUndoOrRedoAction(final boolean isUndo) {
     final Iterator<UndoableAction> each = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
 
-    ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            String title;
-            String message;
-            if (isUndo) {
-              title = CommonBundle.message("cannot.undo.dialog.title");
-              message = CommonBundle.message("cannot.undo.message");
-            } else {
-              title = CommonBundle.message("cannot.redo.dialog.title");
-              message = CommonBundle.message("cannot.redo.message");
-            }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        String title;
+        String message;
+        if (isUndo) {
+          title = CommonBundle.message("cannot.undo.dialog.title");
+          message = CommonBundle.message("cannot.undo.message");
+        }
+        else {
+          title = CommonBundle.message("cannot.redo.dialog.title");
+          message = CommonBundle.message("cannot.redo.message");
+        }
 
-            while (each.hasNext()) {
-              UndoableAction undoableAction = each.next();
-              try {
-                if (isUndo)
-                  undoableAction.undo();
-                else
-                  undoableAction.redo();
-              } catch (UnexpectedUndoException e) {
-                if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                  if (e.getMessage() != null) {
-                    message += ".\n" + e.getMessage();
-                  }
-                  Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
-                } else {
-                  LOG.error(e);
-                }
+        while (each.hasNext()) {
+          UndoableAction undoableAction = each.next();
+          try {
+            if (isUndo) {
+              undoableAction.undo();
+            }
+            else {
+              undoableAction.redo();
+            }
+          }
+          catch (UnexpectedUndoException e) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              if (e.getMessage() != null) {
+                message += ".\n" + e.getMessage();
               }
+              Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
+            }
+            else {
+              LOG.error(e);
             }
           }
         }
-    );
+      }
+    });
   }
 
   public void undo() {
@@ -185,11 +197,13 @@ class UndoableGroup {
   }
 
   public boolean askConfirmation() {
-    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION){
+    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) {
       return true;
-    } else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION){
+    }
+    else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) {
       return false;
-    } else {
+    }
+    else {
       return isComplex() || affectsMultiplePhysicalDocs();
     }
   }
@@ -216,7 +230,7 @@ class UndoableGroup {
 
   public String toString() {
     @NonNls StringBuilder result = new StringBuilder("UndoableGroup{ ");
-    for(UndoableAction action: myActions) {
+    for (UndoableAction action : myActions) {
       result.append(action).append(" ");
     }
     result.append("}");

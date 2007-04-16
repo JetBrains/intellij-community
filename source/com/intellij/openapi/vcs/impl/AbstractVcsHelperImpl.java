@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +16,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.localVcs.*;
+import com.intellij.openapi.localVcs.LocalVcs;
+import com.intellij.openapi.localVcs.LvcsFile;
+import com.intellij.openapi.localVcs.LvcsObject;
+import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -167,12 +171,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files, final String title, @Nullable final String prompt,
-                                                      final String singleFileTitle, final String singleFilePromptTemplate,
+  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files,
+                                                      final String title,
+                                                      @Nullable final String prompt,
+                                                      final String singleFileTitle,
+                                                      final String singleFilePromptTemplate,
                                                       final VcsShowConfirmationOption confirmationOption) {
     if (files.size() == 1 && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
-      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
+      if (ConfirmationDialog
+        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
         return files;
       }
       return null;
@@ -185,12 +193,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files, final String title, @Nullable final String prompt,
-                                                       final String singleFileTitle, final String singleFilePromptTemplate,
+  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files,
+                                                       final String title,
+                                                       @Nullable final String prompt,
+                                                       final String singleFileTitle,
+                                                       final String singleFilePromptTemplate,
                                                        final VcsShowConfirmationOption confirmationOption) {
     if (files.size() == 1 && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
-      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
+      if (ConfirmationDialog
+        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
         return files;
       }
       return null;
@@ -203,9 +215,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   protected void reportError(Exception exception) {
-        exception.printStackTrace();
-        Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
-    }
+    exception.printStackTrace();
+    Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"),
+                               Messages.getErrorIcon());
+  }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
@@ -241,7 +254,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
         }
-        
+
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
@@ -287,11 +300,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  public LvcsAction startVcsAction(String actionName) {
+  public LocalHistoryAction startVcsAction(String actionName) {
     return LocalVcs.getInstance(myProject).startAction(actionName, "", false);
   }
 
-  public void finishVcsAction(LvcsAction action) {
+  public void finishVcsAction(LocalHistoryAction action) {
     action.finish();
   }
 
@@ -422,7 +435,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     showChangesBrowser(new CommittedChangesTableModel(changelists), title, false, null);
   }
 
-  private void showChangesBrowser(CommittedChangesTableModel changelists, String title, boolean showSearchAgain,
+  private void showChangesBrowser(CommittedChangesTableModel changelists,
+                                  String title,
+                                  boolean showSearchAgain,
                                   @Nullable final Component parent) {
     final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
     final ChangesBrowserDialog dlg = parent != null
@@ -450,7 +465,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
-  public void showChangesBrowser(final CommittedChangesProvider provider, final VirtualFile root, @Nls String title, final Component parent) {
+  public void showChangesBrowser(final CommittedChangesProvider provider,
+                                 final VirtualFile root,
+                                 @Nls String title,
+                                 final Component parent) {
     final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
     boolean ok = true;
@@ -514,12 +532,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     catch (VcsException e) {
       return null;
     }
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject,
-                                                              new CommittedChangesTableModel((List<CommittedChangeList>)changes, provider.getColumns()),
-                                                              ChangesBrowserDialog.Mode.Choose);
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
+                                                                                                        provider.getColumns()),
+                                                                         ChangesBrowserDialog.Mode.Choose);
     dlg.show();
     if (dlg.isOK()) {
-      return (T) dlg.getSelectedChangeList();
+      return (T)dlg.getSelectedChangeList();
     }
     else {
       return null;
@@ -646,8 +664,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return result.toArray(new PsiFile[result.size()]);
   }
 
-  public void openCommittedChangesTab(final CommittedChangesProvider provider, final VirtualFile root, final ChangeBrowserSettings settings,
-                                      final int maxCount, String title) {
+  public void openCommittedChangesTab(final CommittedChangesProvider provider,
+                                      final VirtualFile root,
+                                      final ChangeBrowserSettings settings,
+                                      final int maxCount,
+                                      String title) {
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
     panel.setRoot(root);
     panel.setMaxCount(maxCount);

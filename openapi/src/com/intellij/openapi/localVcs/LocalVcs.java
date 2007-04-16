@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.localVcs;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -59,7 +60,7 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel addLabel(byte type, String name, String path);
 
-  public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
+  public abstract LocalHistoryAction startAction(String action, String path, boolean isExternalChanges);
 
   public abstract LvcsRevision[] getChanges(String path, LvcsLabel label);
 
@@ -77,7 +78,10 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel[] getAllLabels();
 
-  public abstract boolean rollbackToLabel(LvcsLabel label, boolean requestConfirmation, String confirmationMessage, String confirmationTitle);
+  public abstract boolean rollbackToLabel(LvcsLabel label,
+                                          boolean requestConfirmation,
+                                          String confirmationMessage,
+                                          String confirmationTitle);
 
   public abstract boolean rollbackToLabel(LvcsLabel label, boolean requestConfirmation);
 

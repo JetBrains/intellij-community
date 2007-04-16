@@ -2,13 +2,16 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Storage;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.List;
 
 public class BasicsTest extends IntegrationTestCase {
   public void testComponentInitialization() {
@@ -57,5 +60,24 @@ public class BasicsTest extends IntegrationTestCase {
     tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
 
     assertFalse(hasVcsEntry(f));
+  }
+
+  public void testPuttingLabel() throws IOException {
+    VirtualFile f = root.createChildData(null, "file.java");
+
+    assertEquals(1, getVcsRevisionsFor(f).size());
+    assertEquals(2, getVcsRevisionsFor(root).size());
+
+    LocalHistory.putLabel(myProject, f.getPath(), "file");
+    LocalHistory.putLabel(myProject, "global");
+
+    List<Revision> rr = getVcsRevisionsFor(f);
+    assertEquals(3, rr.size());
+    assertEquals("global", rr.get(0).getName());
+    assertEquals("file", rr.get(1).getName());
+
+    rr = getVcsRevisionsFor(root);
+    assertEquals(3, rr.size());
+    assertEquals("global", rr.get(0).getName());
   }
 }

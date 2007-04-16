@@ -1,24 +1,24 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author max
@@ -37,7 +37,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
-      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
+      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return;
     }
@@ -55,12 +55,16 @@ public class RollbackChangesDialog extends DialogWrapper {
     rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously);
   }
 
-  public static void rollback(final Project project, final List<LocalChangeList> changeLists, final List<Change> changes,
+  public static void rollback(final Project project,
+                              final List<LocalChangeList> changeLists,
+                              final List<Change> changes,
                               final boolean refreshSynchronously) {
     new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously).show();
   }
 
-  public RollbackChangesDialog(final Project project, List<LocalChangeList> changeLists, final List<Change> changes,
+  public RollbackChangesDialog(final Project project,
+                               List<LocalChangeList> changeLists,
+                               final List<Change> changes,
                                final boolean refreshSynchronously) {
     super(project, true);
 
@@ -72,7 +76,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     setTitle(VcsBundle.message("changes.action.rollback.title"));
 
     Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
-    for(Change c: changes) {
+    for (Change c : changes) {
       final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
       if (vcs != null) {
         // vcs may be null if we have turned off VCS integration and are in process of refreshing
@@ -80,7 +84,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     }
     if (affectedVcs.size() == 1) {
-      AbstractVcs vcs = (AbstractVcs) affectedVcs.toArray() [0];
+      AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
       if (vcs.getCheckinEnvironment() != null) {
         final String rollbackOperationName = vcs.getCheckinEnvironment().getRollbackOperationName();
         setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
@@ -88,7 +92,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     }
 
-    for(Change c: changes) {
+    for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {
         myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
         break;
@@ -130,7 +134,9 @@ public class RollbackChangesDialog extends DialogWrapper {
     return paths;
   }
 
-  public static void doRollback(final Project project, final Collection<Change> changes, final boolean deleteLocallyAddedFiles, 
+  public static void doRollback(final Project project,
+                                final Collection<Change> changes,
+                                final boolean deleteLocallyAddedFiles,
                                 final boolean refreshSynchronously) {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
@@ -148,7 +154,7 @@ public class RollbackChangesDialog extends DialogWrapper {
                 vcsExceptions.addAll(exceptions);
               }
               else if (deleteLocallyAddedFiles) {
-                for(Change c: changes) {
+                for (Change c : changes) {
                   if (c.getType() == Change.Type.NEW) {
                     ContentRevision rev = c.getAfterRevision();
                     assert rev != null;
@@ -168,8 +174,8 @@ public class RollbackChangesDialog extends DialogWrapper {
     };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true,
-                                                                        project);
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, project);
     }
     else {
       rollbackAction.run();
@@ -184,7 +190,8 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
-    final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
+    final LocalHistoryAction lvcsAction =
+      LocalVcs.getInstance(project).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
     VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
       public void run() {
         lvcsAction.finish();

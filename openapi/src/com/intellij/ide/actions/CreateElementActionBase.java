@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -36,14 +37,16 @@ public abstract class CreateElementActionBase extends AnAction {
   /**
    * @return created elements. Never null.
    */
-  @NotNull protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
+  @NotNull
+  protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
 
   protected abstract void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException;
 
   /**
    * @return created elements. Never null.
    */
-  @NotNull protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  @NotNull
+  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 
@@ -118,8 +121,8 @@ public abstract class CreateElementActionBase extends AnAction {
 
     public boolean canClose(final String inputString) {
       if (inputString.length() == 0) {
-        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"),
-                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
+                                   Messages.getErrorIcon());
         return false;
       }
 
@@ -127,12 +130,7 @@ public abstract class CreateElementActionBase extends AnAction {
         checkBeforeCreate(inputString, myDirectory);
       }
       catch (IncorrectOperationException e) {
-        Messages.showMessageDialog(
-          myProject,
-          filterMessage(e.getMessage()),
-          getErrorTitle(),
-          Messages.getErrorIcon()
-        );
+        Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
 
@@ -144,7 +142,7 @@ public abstract class CreateElementActionBase extends AnAction {
         public void run() {
           final Runnable run = new Runnable() {
             public void run() {
-              LvcsAction action = LvcsAction.EMPTY;
+              LocalHistoryAction action = LvcsAction.EMPTY;
               try {
                 action = lvcs.startAction(getActionName(myDirectory, inputString), "", false);
                 PsiElement[] psiElements = create(inputString, myDirectory);
@@ -170,14 +168,9 @@ public abstract class CreateElementActionBase extends AnAction {
       if (exception[0] != null) {
         String errorMessage = filterMessage(exception[0].getMessage());
         if (errorMessage == null || errorMessage.length() == 0) {
-          errorMessage = exception [0].toString();
+          errorMessage = exception[0].toString();
         }
-        Messages.showMessageDialog(
-          myProject,
-          errorMessage,
-          getErrorTitle(),
-          Messages.getErrorIcon()
-        );
+        Messages.showMessageDialog(myProject, errorMessage, getErrorTitle(), Messages.getErrorIcon());
 
       }
 
