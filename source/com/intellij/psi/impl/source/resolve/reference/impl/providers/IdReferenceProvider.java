@@ -4,19 +4,19 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.StdLanguages;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI );
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI2 );
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_LOGIC_URI );
+    for(String s:com.intellij.xml.util.XmlUtil.JSTL_CORE_URIS) ourNamespacesWithoutIdRefs.add( s );
     ourNamespacesWithoutIdRefs.add( "http://struts.apache.org/tags-tiles" );
     for(String s: MetaRegistry.SCHEMA_URIS) ourNamespacesWithoutIdRefs.add( s );
   }
@@ -75,15 +76,30 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
       final PsiElement parentElement = element.getParent();
       if (!(parentElement instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
       final String name = ((XmlAttribute)parentElement).getName();
+      final String ns = ((XmlAttribute)parentElement).getParent().getNamespace();
+      final boolean jsfNs = com.intellij.xml.util.XmlUtil.JSF_CORE_URI.equals(ns) || com.intellij.xml.util.XmlUtil.JSF_HTML_URI.equals(ns);
 
       if (FOR_ATTR_NAME.equals(name)) {
-        return new PsiReference[]{new IdRefReference(element, 1)};
+        return new PsiReference[]{
+          jsfNs && element.getText().indexOf(':') != -1 ? new IdRefReference(element, 1) {
+            public boolean isSoft() {
+              return true;
+            }
+          } :new IdRefReference(element, 1)
+        };
       }
       else if (ID_ATTR_NAME.equals(name) ||
                NAME_ATTR_NAME.equals(name) ||
                STYLE_ID_ATTR_NAME.equals(name)
               ) {
-        return new PsiReference[]{new GlobalAttributeValueSelfReference(element)};
+        final AttributeValueSelfReference attributeValueSelfReference;
+
+        if (jsfNs) {
+          attributeValueSelfReference = new AttributeValueSelfReference(element);
+        } else {
+          attributeValueSelfReference =  new GlobalAttributeValueSelfReference(element);
+        }
+        return new PsiReference[]{attributeValueSelfReference};
       }
     }
     return PsiReference.EMPTY_ARRAY;
