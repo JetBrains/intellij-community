@@ -35,7 +35,9 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -56,6 +58,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -163,6 +166,7 @@ import java.util.Map;
 
 
   private static void initProject(final ProjectJdk projectJDK) throws Exception {
+    final File projectFile = File.createTempFile("temp", ".ipr");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {
@@ -170,7 +174,7 @@ import java.util.Map;
           ProjectUtil.closeProject(ourProject);
         }
 
-        ourProject = ProjectManagerEx.getInstanceEx().newProject("LightIdeaTestCaseProject", false, false);
+        ourProject = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
 
@@ -519,7 +523,9 @@ import java.util.Map;
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
               if (ourProject != null) {
+                final File projectFile = VfsUtil.virtualToIoFile(ourProject.getProjectFile());
                 ProjectUtil.closeProject(ourProject);
+                FileUtil.delete(projectFile);
               }
             }
           });
