@@ -24,11 +24,16 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CommittedChangesViewManager implements ProjectComponent {
+  public static CommittedChangesViewManager getInstance(Project project) {
+    return project.getComponent(CommittedChangesViewManager.class);
+  }
+
   private ProjectLevelVcsManager myVcsManager;
   private ChangesViewContentManager myContentManager;
   private CommittedChangesPanel myComponent;
@@ -102,6 +107,15 @@ public class CommittedChangesViewManager implements ProjectComponent {
         myContentManager.addContent(myContent);
       }
     }
+  }
+
+  @Nullable
+  public CommittedChangesPanel getActivePanel() {
+    final Content content = myContentManager.getSelectedContent();
+    if (content != null && content.getComponent() instanceof CommittedChangesPanel) {
+      return (CommittedChangesPanel) content.getComponent();
+    }
+    return null;
   }
 
   private class MyVcsListener implements VcsListener {

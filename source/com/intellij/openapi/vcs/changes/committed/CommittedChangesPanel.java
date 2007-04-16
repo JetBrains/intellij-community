@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
@@ -29,6 +28,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class CommittedChangesPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -51,12 +53,8 @@ public class CommittedChangesPanel extends JPanel {
     add(myBrowser, BorderLayout.CENTER);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
-    DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    final RefreshAction refreshAction = new RefreshAction();
-    toolbarActionGroup.add(refreshAction);
-    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
-    toolbarActionGroup.add(new FilterAction());
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActionGroup, true);
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
@@ -138,32 +136,12 @@ public class CommittedChangesPanel extends JPanel {
     return false;
   }
 
-  private void setChangesFilter() {
+  public void setChangesFilter() {
     CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI(true), mySettings);
     filterDialog.show();
     if (filterDialog.isOK()) {
       mySettings = filterDialog.getSettings();
       refreshChanges();
-    }
-  }
-
-  private class RefreshAction extends AnAction {
-    public RefreshAction() {
-      super("Refresh", "Refresh the list of committed changes", IconLoader.getIcon("/vcs/refresh.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      refreshChanges();
-    }
-  }
-
-  private class FilterAction extends AnAction {
-    public FilterAction() {
-      super("Filter", "Change filtering criteria", IconLoader.getIcon("/ant/filter.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      setChangesFilter();
     }
   }
 

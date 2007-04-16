@@ -110,6 +110,11 @@ public class ChangesViewContentManager implements ProjectComponent {
     myContentManager.setSelectedContent(content);
   }
 
+  @Nullable
+  public Content getSelectedContent() {
+    return myContentManager.getSelectedContent();
+  }
+
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();

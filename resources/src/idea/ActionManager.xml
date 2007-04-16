@@ -1476,6 +1476,13 @@
       <reference ref="$Delete"/>
     </group>
 
+    <group id="CommittedChangesToolbar">
+      <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
+        icon="/vcs/refresh.png" use-shortcut-of="Rerun"/>
+      <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
+        icon="/ant/filter.png"/>
+    </group>
+
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
   </actions>
 </component>
