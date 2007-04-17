@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @see com.intellij.openapi.fileTypes.StdFileTypes
+ */
 public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
 
