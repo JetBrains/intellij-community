@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -37,7 +39,6 @@ import java.util.TreeMap;
  * Time: 4:39:46 PM
  */
 public class PropertiesComponent extends JPanel {
-
   public static final String ID = "SVN Properties";
   private JTable myTable;
   private JTextArea myTextArea;
@@ -46,6 +47,9 @@ public class PropertiesComponent extends JPanel {
   private SvnVcs myVcs;
   private JSplitPane mySplitPane;
   private static final String CONTEXT_ID = "context";
+  private CloseAction myCloseAction = new CloseAction();
+  private RefreshAction myRefreshAction = new RefreshAction();
+  private ActionGroup myPopupActionGroup;
 
   public PropertiesComponent() {
     // register toolwindow and add listener to the selection.
@@ -62,7 +66,7 @@ public class PropertiesComponent extends JPanel {
     mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, new JScrollPane(myTextArea));
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
-    myTable.setModel(new DefaultTableModel(createTableModel(new HashMap()), new Object[] {"Name", "Value"}));
+    myTable.setModel(new DefaultTableModel(createTableModel(new HashMap<String, String>()), new Object[] {"Name", "Value"}));
     myTable.setShowVerticalLines(true);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -80,12 +84,16 @@ public class PropertiesComponent extends JPanel {
         }
       }
     });
-    myTable.addMouseListener(new PopupAdapter());
-    scrollPane.addMouseListener(new PopupAdapter());
+    myPopupActionGroup = createPopup();
+    PopupHandler.installPopupHandler(myTable, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(scrollPane, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB);
+    myCloseAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), this);
+    myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 
   public void setFile(SvnVcs vcs, File file) {
-    final Map props = new TreeMap();
+    final Map<String, String> props = new TreeMap<String, String>();
     boolean firstTime = myFile == null;
     if (file != null) {
       myFile = file;
@@ -129,12 +137,11 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private Object[][] createTableModel(Map model) {
+  private static Object[][] createTableModel(Map<String, String> model) {
     Object[][] result = new Object[model.size()][2];
     int index = 0;
-    for (Iterator names = model.keySet().iterator(); names.hasNext();) {
-      String name = (String) names.next();
-      String value = (String) model.get(name);
+    for (final String name : model.keySet()) {
+      String value = model.get(name);
       if (value == null) {
         value = "";
       }
@@ -154,12 +161,12 @@ public class PropertiesComponent extends JPanel {
     group.add(new SetKeywordsAction());
     group.addSeparator();
     group.add(new FollowSelectionAction());
-    group.add(new RefreshAction());
-    group.add(new CloseAction());
+    group.add(myRefreshAction);
+    group.add(myCloseAction);
     return ActionManager.getInstance().createActionToolbar("", group, false).getComponent();
   }
 
-  private JPopupMenu createPopup() {
+  private DefaultActionGroup createPopup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddPropertyAction());
     group.add(new EditPropertyAction());
@@ -167,8 +174,8 @@ public class PropertiesComponent extends JPanel {
     group.addSeparator();
     group.add(new SetKeywordsAction());
     group.addSeparator();
-    group.add(new RefreshAction());
-    return ActionManager.getInstance().createActionPopupMenu(CONTEXT_ID, group).getComponent();
+    group.add(myRefreshAction);
+    return group;
   }
 
   private String getSelectedPropertyName() {
@@ -193,7 +200,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class CloseAction extends AnAction {
+  private static class CloseAction extends AnAction {
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
@@ -202,7 +209,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(ID);
     }
   }
@@ -380,26 +387,6 @@ public class PropertiesComponent extends JPanel {
           ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
         }
 
-      }
-    }
-  }
-
-  private class PopupAdapter extends MouseAdapter {
-    public void mouseClicked(MouseEvent e) {
-      showPopup(e);
-    }
-
-    public void mousePressed(MouseEvent e) {
-      showPopup(e);
-    }
-
-    public void mouseReleased(MouseEvent e) {
-      showPopup(e);
-    }
-
-    private void showPopup(MouseEvent e) {
-      if (e.isPopupTrigger()) {
-        createPopup().show(e.getComponent(), e.getX(), e.getY());
       }
     }
   }
