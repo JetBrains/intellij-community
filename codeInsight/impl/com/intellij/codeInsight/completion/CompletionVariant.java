@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.TailType;
@@ -191,7 +192,7 @@ public class CompletionVariant {
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;
 
-    if(getInsertHandler() != null){
+    if(getInsertHandler() != null && !(ret instanceof SimpleLookupItem)){
       ret.setAttribute(LookupItem.INSERT_HANDLER_ATTR, getInsertHandler());
       ret.setTailType(TailType.UNKNOWN);
     }
@@ -228,9 +229,17 @@ public class CompletionVariant {
         ret.setAttribute(key, myItemProperties.get(key));
       }
     }
-
+    final boolean itemCaseInsensitive = Boolean.TRUE.equals(ret.getAttribute(LookupItem.CASE_INSENSITIVE));
     final String lookupString = ret.getLookupString();
-    if(CompletionUtil.checkName(lookupString, context, caseInsensitive)){
+    if(CompletionUtil.checkName(lookupString, context, itemCaseInsensitive || caseInsensitive)){
+      if (itemCaseInsensitive) {
+        final String currentString = ret.getLookupString();
+        final String newString = handleCaseInsensitiveVariant(context.getPrefix(), currentString);
+        ret.setLookupString(newString);
+        if (ret.getObject() == currentString) {
+          ret.setObject(newString);
+        }
+      }
       set.add(ret);
       return ret;
     }
@@ -375,6 +384,24 @@ public class CompletionVariant {
       return hard.toArray(new PsiReference[hard.size()]);
     }
     return references;
+  }
+
+  private static String handleCaseInsensitiveVariant(final String prefix, final String uniqueText) {
+    final int length = prefix.length();
+    if (length == 0) return uniqueText;
+    boolean isAllLower = true;
+    boolean isAllUpper = true;
+    boolean sameCase = true;
+    for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
+      final char c = prefix.charAt(i);
+      isAllLower = isAllLower && Character.isLowerCase(c);
+      isAllUpper = isAllUpper && Character.isUpperCase(c);
+      sameCase = sameCase && Character.isLowerCase(c) == Character.isLowerCase(uniqueText.charAt(i)); 
+    }
+    if (sameCase) return uniqueText;
+    if (isAllLower) return uniqueText.toLowerCase();
+    if (isAllUpper) return uniqueText.toUpperCase();
+    return uniqueText;
   }
 
 

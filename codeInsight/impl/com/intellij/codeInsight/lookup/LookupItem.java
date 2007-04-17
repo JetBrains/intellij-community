@@ -43,6 +43,8 @@ public class LookupItem implements Comparable{
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
 
+  public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
+
   private Object myObject;
   private String myLookupString;
   private Map<Object,Object> myAttributes = null;

@@ -43,7 +43,8 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   @Nullable
   protected abstract String convertValue(@Nullable final T t, final ConvertContext context);
 
-  protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<T> genericDomValue);
+  protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<T> genericDomValue,
+                                                   final TextRange rangeInElement);
 
   @Nullable
   protected abstract PsiElement resolveReference(@Nullable final T t, final ConvertContext context);
@@ -134,7 +135,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     }
 
     public Object[] getVariants() {
-      return getReferenceVariants(myContext, myGenericDomValue);
+      return getReferenceVariants(myContext, myGenericDomValue, getRangeInElement());
     }
 
     public String getUnresolvedMessagePattern() {

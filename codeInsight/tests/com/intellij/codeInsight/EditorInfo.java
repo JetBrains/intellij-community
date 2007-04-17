@@ -18,11 +18,15 @@ public class EditorInfo {
   RangeMarker selEndMarker = null;
 
   public EditorInfo(String fileText) {
-    Document document = EditorFactory.getInstance().createDocument(fileText);
+    updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
+  }
 
-    int caretIndex = fileText.indexOf(CARET_MARKER);
-    int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-    int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+  public boolean updateCaretAndSelection(final Document document) {
+    newFileText = document.getText();
+
+    int caretIndex = newFileText.indexOf(CARET_MARKER);
+    int selStartIndex = newFileText.indexOf(SELECTION_START_MARKER);
+    int selEndIndex = newFileText.indexOf(SELECTION_END_MARKER);
 
     caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
     selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
@@ -39,6 +43,7 @@ public class EditorInfo {
     }
 
     newFileText = document.getText();
+    return caretMarker != null || selStartMarker != null || selEndMarker != null;
   }
 
   public String getNewFileText() {

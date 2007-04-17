@@ -70,6 +70,11 @@ public class SimpleLookupItem extends LookupItem {
     return this;
   }
 
+  public SimpleLookupItem setCaseInsensitive(final boolean caseInsensitive) {
+    setAttribute(LookupItem.CASE_INSENSITIVE, caseInsensitive);
+    return this;
+  }
+
 
   private class MyInsertHandler implements InsertHandler {
     private final SimpleInsertHandler myHandler;
