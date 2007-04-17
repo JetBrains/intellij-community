@@ -40,16 +40,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     if (SvnConfiguration.UPGRADE_NONE.equals(upgradeMode)) {
       // return all factories only if path or its wc root is already in 1.4 format,
       // otherwise return 1.3 factory
-      int format  = 0;
-      try {
-        // it is enough to check parent and this.
-        format = SVNAdminAreaFactory.checkWC(path, false);
-        if (format == 0 && path.getParentFile() != null) {
-          format = SVNAdminAreaFactory.checkWC(path.getParentFile(), false);
-        }
-      } catch (SVNException e) {
-        //
-      }
+      int format  = getWorkingCopyFormat(path);
       if (format == SVNAdminAreaFactory.WC_FORMAT_14) {
         return factories;
       }
@@ -65,16 +56,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       return factories;
     } else if (upgradeMode == null) {
       // ask user and change setting.
-      int format  = 0;
-      try {
-        // it is enough to check parent and this.
-        format = SVNAdminAreaFactory.checkWC(path, false);
-        if (format == 0 && path.getParentFile() != null) {
-          format = SVNAdminAreaFactory.checkWC(path.getParentFile(), false);
-        }
-      } catch (SVNException e) {
-        //
-      }
+      int format = getWorkingCopyFormat(path);
       // no need to ask about upgrade if there is already new format in WC.
       if (format == SVNAdminAreaFactory.WC_FORMAT_14) {
         return factories;
@@ -99,6 +81,25 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       return getFactories(newMode[0], path, factories, project, config);
     }
     return factories;
+  }
+
+  private static int getWorkingCopyFormat(final File path) {
+    int format  = 0;
+    try {
+      // it is enough to check parent and this.
+      format = SVNAdminAreaFactory.checkWC(path, false);
+    } catch (SVNException e) {
+      // ignore
+    }
+    if (format == 0 && path.getParentFile() != null) {
+      try {
+        format = SVNAdminAreaFactory.checkWC(path.getParentFile(), false);
+      }
+      catch(SVNException e) {
+        // ignore
+      }
+    }
+    return format;
   }
 
   private void displayUpgradeDialog(Project project, File path, String[] newMode) {
