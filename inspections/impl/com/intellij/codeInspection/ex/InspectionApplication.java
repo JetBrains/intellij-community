@@ -16,8 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
@@ -211,17 +211,18 @@ public class InspectionApplication {
           }
 
           if (myVerboseLevel == 3) {
-            final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-            try {
-              if (!isIndeterminate() && getFraction() > 0) {
+            if (!isIndeterminate() && getFraction() > 0) {
+              final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+              try {
                 final int percent = (int)(getFraction() * 100);
                 if (myLastPercent == percent) return;
                 myLastPercent = percent;
                 buf.append(InspectionsBundle.message("inspection.display.name")).append(" ").append(percent).append("%");
+                logMessageLn(2, buf.toString());
               }
-              logMessageLn(2, buf.toString());
-            } finally {
-              StringBuilderSpinAllocator.dispose(buf);
+              finally {
+                StringBuilderSpinAllocator.dispose(buf);
+              }
             }
             return;
           }

@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -423,123 +424,116 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final RefManager refManager = getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
-    final ProgressIndicator progress = myProgressIndicator == null ? null : new ProgressWrapper(myProgressIndicator);
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        final SearchScope searchScope = new GlobalSearchScope() {
-          public boolean contains(VirtualFile file) {
-            return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
-          }
+    final SearchScope searchScope = new GlobalSearchScope() {
+      public boolean contains(VirtualFile file) {
+        return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
+      }
 
-          public int compare(VirtualFile file1, VirtualFile file2) {
-            return 0;
-          }
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return 0;
+      }
 
-          public boolean isSearchInModuleContent(Module aModule) {
-            return true;
-          }
+      public boolean isSearchInModuleContent(Module aModule) {
+        return true;
+      }
 
-          public boolean isSearchInLibraries() {
-            return false;
-          }
-        };
+      public boolean isSearchInLibraries() {
+        return false;
+      }
+    };
 
-        if (myDerivedClassesRequests != null) {
-          List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
-          for (PsiElement sortedID : sortedIDs) {
-            final PsiClass psiClass = (PsiClass)sortedID;
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
+    if (myDerivedClassesRequests != null) {
+      List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
+      for (PsiElement sortedID : sortedIDs) {
+        final PsiClass psiClass = (PsiClass)sortedID;
+        incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-            final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
-            helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-              public boolean execute(PsiClass inheritor) {
-                if (scope.contains(inheritor)) return true;
-                DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-                for (DerivedClassesProcessor processor : processorsArrayed) {
-                  if (!processor.process(inheritor)) {
-                    processors.remove(processor);
-                  }
-                }
-                return !processors.isEmpty();
+        final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
+        helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+          public boolean execute(PsiClass inheritor) {
+            if (scope.contains(inheritor)) return true;
+            DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
+            for (DerivedClassesProcessor processor : processorsArrayed) {
+              if (!processor.process(inheritor)) {
+                processors.remove(processor);
               }
-            }, psiClass, searchScope, false);
+            }
+            return !processors.isEmpty();
           }
+        }, psiClass, searchScope, false);
+      }
 
-          myDerivedClassesRequests = null;
-        }
+      myDerivedClassesRequests = null;
+    }
 
-        if (myDerivedMethodsRequests != null) {
-          List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
-          for (PsiElement sortedID : sortedIDs) {
-            final PsiMethod psiMethod = (PsiMethod)sortedID;
-            final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
+    if (myDerivedMethodsRequests != null) {
+      List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
+      for (PsiElement sortedID : sortedIDs) {
+        final PsiMethod psiMethod = (PsiMethod)sortedID;
+        final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
+        incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
 
-            final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
-            helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-              public boolean execute(PsiMethod derivedMethod) {
-                if (scope.contains(derivedMethod)) return true;
-                DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-                for (DerivedMethodsProcessor processor : processorsArrayed) {
-                  if (!processor.process(derivedMethod)) {
-                    processors.remove(processor);
-                  }
-                }
-
-                return !processors.isEmpty();
+        final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
+        helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
+          public boolean execute(PsiMethod derivedMethod) {
+            if (scope.contains(derivedMethod)) return true;
+            DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
+            for (DerivedMethodsProcessor processor : processorsArrayed) {
+              if (!processor.process(derivedMethod)) {
+                processors.remove(processor);
               }
-            }, psiMethod, searchScope, true);
+            }
+
+            return !processors.isEmpty();
           }
+        }, psiMethod, searchScope, true);
+      }
 
-          myDerivedMethodsRequests = null;
-        }
+      myDerivedMethodsRequests = null;
+    }
 
-        if (myFieldUsagesRequests != null) {
-          List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
-          for (PsiElement sortedID : sortedIDs) {
-            final PsiField psiField = (PsiField)sortedID;
-            final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
+    if (myFieldUsagesRequests != null) {
+      List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
+      for (PsiElement sortedID : sortedIDs) {
+        final PsiField psiField = (PsiField)sortedID;
+        final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
-                                   RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
+        incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
 
-            helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
-          }
+        helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
+      }
 
-          myFieldUsagesRequests = null;
-        }
+      myFieldUsagesRequests = null;
+    }
 
-        if (myClassUsagesRequests != null) {
-          List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
-          for (PsiElement sortedID : sortedIDs) {
-            final PsiClass psiClass = (PsiClass)sortedID;
-            final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
+    if (myClassUsagesRequests != null) {
+      List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
+      for (PsiElement sortedID : sortedIDs) {
+        final PsiClass psiClass = (PsiClass)sortedID;
+        final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
+        incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-            helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
-          }
+        helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
+      }
 
-          myClassUsagesRequests = null;
-        }
+      myClassUsagesRequests = null;
+    }
 
-        if (myMethodUsagesRequests != null) {
-          List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
-          for (PsiElement sortedID : sortedIDs) {
-            final PsiMethod psiMethod = (PsiMethod)sortedID;
-            final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
+    if (myMethodUsagesRequests != null) {
+      List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
+      for (PsiElement sortedID : sortedIDs) {
+        final PsiMethod psiMethod = (PsiMethod)sortedID;
+        final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
-                                   RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
+        incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
 
-            helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
-          }
+        helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
+      }
 
-          myMethodUsagesRequests = null;
-        }
-       }
-    }, progress);
+      myMethodUsagesRequests = null;
+    }
   }
 
   private static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
@@ -824,8 +818,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       refManager.getEntryPointsManager().resolveEntryPoints(refManager);
       BUILD_GRAPH.setTotalAmount(scope.getFileCount());
       LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-      List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-      runTools(needRepeatSearchRequest, scope, manager);
+      final List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
+      ((ProgressManagerImpl)ProgressManager.getInstance())
+        .executeProcessUnderProgress(new Runnable() {  //to override current progress in order to hide useless messages/%
+          public void run() {
+            runTools(needRepeatSearchRequest, scope, manager);
+          }
+        }, myProgressIndicator != null ? new ProgressWrapper(myProgressIndicator) : null);
     }
     catch (ProcessCanceledException e) {
       cleanup((InspectionManagerEx)manager);
