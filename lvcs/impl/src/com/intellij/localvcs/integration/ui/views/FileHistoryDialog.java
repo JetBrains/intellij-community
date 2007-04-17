@@ -10,11 +10,15 @@ import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import static javax.swing.SpringLayout.*;
+import java.awt.*;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
+  private static final String DIFF_CARD = "DIFF_CARD";
+  private static final String MESSAGE_CARD = "MESSAGE_CARD";
+
   private DiffPanel myDiffPanel;
   private JLabel myCanNotShowDifferenceLabel;
+  private JPanel myPanel;
 
   public FileHistoryDialog(VirtualFile f, IdeaGateway gw) {
     super(gw, f);
@@ -41,34 +45,25 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
 
-    SpringLayout l = new SpringLayout();
-    JPanel panel = new JPanel(l);
+    CardLayout l = new CardLayout();
+    myPanel = new JPanel(l);
 
-    panel.add(myDiffPanel.getComponent());
-    panel.add(myCanNotShowDifferenceLabel);
-
-    align(myCanNotShowDifferenceLabel, panel, l);
-    align(myDiffPanel.getComponent(), panel, l);
+    myPanel.add(myDiffPanel.getComponent(), DIFF_CARD);
+    myPanel.add(myCanNotShowDifferenceLabel, MESSAGE_CARD);
 
     updateDiffs();
 
-    return panel;
-  }
-
-  private void align(JComponent c, JComponent to, SpringLayout l) {
-    l.putConstraint(WEST, c, 0, WEST, to);
-    l.putConstraint(EAST, c, 0, EAST, to);
-    l.putConstraint(NORTH, c, 0, NORTH, to);
-    l.putConstraint(SOUTH, c, 0, SOUTH, to);
+    return myPanel;
   }
 
   @Override
   protected void updateDiffs() {
-    boolean canShowDifference = myModel.canShowDifference();
-    if (canShowDifference) {
+    boolean cachedCanShowDiff = myModel.canShowDifference();
+    if (cachedCanShowDiff) {
       myDiffPanel.setDiffRequest(createDifference(myModel.getDifferenceModel()));
     }
-    myDiffPanel.getComponent().setVisible(canShowDifference);
-    myCanNotShowDifferenceLabel.setVisible(!canShowDifference);
+
+    String card = cachedCanShowDiff ? DIFF_CARD : MESSAGE_CARD;
+    ((CardLayout)myPanel.getLayout()).show(myPanel, card);
   }
 }
