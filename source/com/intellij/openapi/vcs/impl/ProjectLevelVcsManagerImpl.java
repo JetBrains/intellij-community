@@ -119,6 +119,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
   @NonNls private static final String ATTRIBUTE_VCS = "vcs";
+  @NonNls private static final String ATTRIBUTE_DEFAULT_PROJECT = "defaultProject";
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
@@ -926,16 +927,27 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void readDirectoryMappings(final Element element) {
     myDirectoryMappings.clear();
     final List list = element.getChildren(ELEMENT_MAPPING);
+    boolean haveNonEmptyMappings = false;
     for(Object childObj: list) {
       Element child = (Element) childObj;
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY),
-                                                            child.getAttributeValue(ATTRIBUTE_VCS));
+      final String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
+      if (vcs != null && vcs.length() > 0) {
+        haveNonEmptyMappings = true;
+      }
+      VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY), vcs);
       myDirectoryMappings.add(mapping);
     }
-    myMappingsLoaded = true;
+    boolean defaultProject = Boolean.TRUE.toString().equals(element.getAttributeValue(ATTRIBUTE_DEFAULT_PROJECT));
+    // run autodetection if there's no VCS in default project and 
+    if (haveNonEmptyMappings || !defaultProject) {
+      myMappingsLoaded = true;
+    }
   }
 
   public void writeDirectoryMappings(final Element element) {
+    if (myProject.isDefault()) {
+      element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
+    }
     for(VcsDirectoryMapping mapping: myDirectoryMappings) {
       Element child = new Element(ELEMENT_MAPPING);
       child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
@@ -946,7 +958,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   private AbstractVcs findVersioningVcs(VirtualFile file) {
-    for(AbstractVcs vcs: myVcss) {
+    for(AbstractVcs vcs: getAllVcss()) {
       if (vcs.isVersionedDirectory(file)) {
         return vcs;
       }
