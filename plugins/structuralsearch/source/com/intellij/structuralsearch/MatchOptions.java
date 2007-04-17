@@ -166,7 +166,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     element.setAttribute(TEXT_ATTRIBUTE_NAME,getSearchPattern());
     element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
     if (distinct) element.setAttribute(DISTINCT_ATTRIBUTE_NAME,String.valueOf(distinct));
-    if (!caseSensitiveMatch) element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
+    element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
 
     //@TODO serialize scope!
 
