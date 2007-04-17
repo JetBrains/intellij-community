@@ -35,10 +35,7 @@ public class NonNlsUtils {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) expression;
             final PsiMethod method = methodCallExpression.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            return isNonNlsAnnotatedModifierListOwner(method);
+            return method != null && isNonNlsAnnotatedModifierListOwner(method);
         }
         return false;
     }
@@ -49,7 +46,8 @@ public class NonNlsUtils {
                 PsiTreeUtil.getParentOfType(expression,
                         PsiExpressionList.class,
                         PsiAssignmentExpression.class,
-                        PsiVariable.class);
+                        PsiVariable.class,
+                        PsiReturnStatement.class);
         if (element instanceof PsiExpressionList) {
             final PsiExpressionList expressionList = (PsiExpressionList) element;
             return isNonNlsAnnotatedParameter(expression, expressionList);
@@ -60,6 +58,10 @@ public class NonNlsUtils {
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) element;
             return isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
+        } else if (element instanceof PsiReturnStatement) {
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+            return method != null && isNonNlsAnnotatedModifierListOwner(method);
         }
         return false;
     }
