@@ -70,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -542,6 +543,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
+        @NotNull public String getTextFor(final Object value) { return myModel.getPresentableText(value, null);}
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
           if (selectedValue instanceof PsiFile || selectedValue instanceof PsiClass) {
@@ -748,6 +750,27 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     myUpdateAlarm.cancelAllRequests();
+  }
+
+  public void cutBorder(final int rightOffset) {
+    myScrollablePanel.setBorder(new EtchedBorder() {
+      public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+        g.translate(x, y);
+
+        g.setColor(etchType == LOWERED ? getShadowColor(c) : getHighlightColor(c));
+        g.drawLine(0, height - 2, 0, 0);
+        g.drawLine(0, 0, width - rightOffset, 0);
+        g.drawLine(0, height - 2, width - 2, height - 2);
+        g.drawLine(width - 2, height - 2, width - 2, 0);
+
+        g.setColor(etchType == LOWERED ? getHighlightColor(c) : getShadowColor(c));
+        g.drawLine(1, height - 3, 1, 1);
+        g.drawLine(1, 1, width - 3, 1);
+        g.drawLine(0, height - 1, width - 1, height - 1);
+
+        g.translate(-x, -y);
+      }
+    });
   }
 
   public void addNotify() {

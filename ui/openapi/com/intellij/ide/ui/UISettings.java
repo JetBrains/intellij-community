@@ -42,7 +42,7 @@ public class UISettings implements PersistentStateComponent<UISettings> {
   public boolean SHOW_MEMORY_INDICATOR = true;
   public boolean SHOW_MAIN_TOOLBAR = true;
   public boolean SHOW_STATUS_BAR = true;
-  public boolean SHOW_NAVIGATION_BAR = false;
+  public boolean SHOW_NAVIGATION_BAR = true;
   public boolean ALWAYS_SHOW_WINDOW_BUTTONS = false;
   public boolean CYCLE_SCROLLING = true;
   public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = false;
