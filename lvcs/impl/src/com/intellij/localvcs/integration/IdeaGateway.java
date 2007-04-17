@@ -103,6 +103,10 @@ public class IdeaGateway {
     }
   }
 
+  public void saveAllUnsavedDocuments() {
+    getDocManager().saveAllDocuments();
+  }
+
   protected Document[] getUnsavedDocuments() {
     return getDocManager().getUnsavedDocuments();
   }

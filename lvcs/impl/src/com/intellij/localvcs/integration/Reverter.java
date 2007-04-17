@@ -45,6 +45,8 @@ public class Reverter {
   private boolean doRevert() throws IOException {
     if (!userAgreeWithPreconditions()) return false;
 
+    myGateway.saveAllUnsavedDocuments();
+
     if (!hasPreviousVersion()) {
       revertCreation();
     }
