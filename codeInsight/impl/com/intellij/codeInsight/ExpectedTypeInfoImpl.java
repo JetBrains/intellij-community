@@ -25,20 +25,20 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   public int kind;
 
-  public int getTailType() {
-    return tailType.getOldTailType();
+  public TailType getTailType() {
+    return myTailType;
   }
 
-  public TailType tailType;
+  public TailType myTailType;
 
   public String expectedName;
 
 
-  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, TailType tailType) {
+  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, TailType myTailType) {
     this.type = type;
     this.kind = kind;
     this.defaultType = defaultType;
-    this.tailType = tailType;
+    this.myTailType = myTailType;
     this.dimCount = dimCount;
   }
 
@@ -61,7 +61,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   public boolean equals (ExpectedTypeInfo obj) {
     ExpectedTypeInfoImpl info = (ExpectedTypeInfoImpl) obj;
-    return type.equals(info.type) && dimCount == info.dimCount && kind == info.kind && defaultType.equals(info.defaultType) && tailType == info.tailType;
+    return type.equals(info.type) && dimCount == info.dimCount && kind == info.kind && defaultType.equals(info.defaultType) && myTailType == info.myTailType;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

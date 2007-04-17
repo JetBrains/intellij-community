@@ -401,7 +401,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, true);
       variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, TailType.getSimpleTailType('{'));
+      variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
       variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -420,7 +420,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, false);
       variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, TailType.getSimpleTailType('{'));
+      variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
       //variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -522,7 +522,7 @@ public class JavaCompletionData extends CompletionData{
               ))))));
       variant.includeScopeClass(PsiSwitchStatement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
-      variant.addCompletion(PsiKeyword.DEFAULT, TailType.getSimpleTailType(':'));
+      variant.addCompletion(PsiKeyword.DEFAULT, TailType.createSimpleTailType(':'));
       registerVariant(variant);
     }
 
@@ -620,7 +620,7 @@ public class JavaCompletionData extends CompletionData{
     variant.addCompletion(PsiKeyword.SWITCH, TailType.LPARENTH);
     variant.addCompletion(PsiKeyword.WHILE, TailType.LPARENTH);
     variant.addCompletion(PsiKeyword.FOR, TailType.LPARENTH);
-    variant.addCompletion(PsiKeyword.TRY, TailType.getSimpleTailType('{'));
+    variant.addCompletion(PsiKeyword.TRY, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);

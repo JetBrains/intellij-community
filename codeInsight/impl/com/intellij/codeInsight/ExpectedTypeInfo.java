@@ -44,5 +44,5 @@ public interface ExpectedTypeInfo {
 
   boolean isArrayTypeInfo ();
 
-  int getTailType();
+  TailType getTailType();
 }

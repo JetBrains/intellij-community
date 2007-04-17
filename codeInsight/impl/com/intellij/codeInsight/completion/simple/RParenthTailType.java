@@ -23,9 +23,6 @@ import com.intellij.codeInsight.TailType;
  */
 public abstract class RParenthTailType extends TailType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.RParenthSimpleTailType");
-  public RParenthTailType(final int oldTailType) {
-    super(oldTailType);
-  }
 
   private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
     PsiElement element = file.findElementAt(startOffset);

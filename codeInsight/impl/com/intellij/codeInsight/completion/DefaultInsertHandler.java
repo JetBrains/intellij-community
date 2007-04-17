@@ -489,7 +489,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
       case '(': return TailType.LPARENTH;
-      case '<': case '>': case '[': return TailType.getSimpleTailType(completionChar);
+      case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
     }
     final TailType attr = (TailType)item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
     return attr != null ? attr : TailType.NONE;

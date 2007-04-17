@@ -61,7 +61,7 @@ public class Java15CompletionData extends JavaCompletionData {
           }, 2)
       )));
       final CompletionVariant variant = new CompletionVariant(PsiReferenceExpression.class, position);
-      variant.addCompletionFilterOnElement(new ClassFilter(PsiEnumConstant.class), TailType.getSimpleTailType(':'));
+      variant.addCompletionFilterOnElement(new ClassFilter(PsiEnumConstant.class), TailType.createSimpleTailType(':'));
       registerVariant(variant);
     }
   }
