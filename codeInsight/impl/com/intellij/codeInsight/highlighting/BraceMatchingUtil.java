@@ -88,7 +88,7 @@ public class BraceMatchingUtil {
     public int getTokenGroup(IElementType tokenType) {
       final BracePair[] pairs = myMatcher.getPairs();
       for (BracePair pair : pairs) {
-        if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return PAIRED_TOKEN_GROUP;
+        if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return myLanguage.hashCode();
       }
       return UNDEFINED_TOKEN_GROUP;
     }
