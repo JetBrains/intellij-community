@@ -88,7 +88,10 @@ public abstract class TextEditorHighlightingPassRegistrar extends AbstractProjec
         break;
       case LAST:
         //todo
-        ids = null;
+        ids = new int[]{Pass.UPDATE_ALL,
+          Pass.UPDATE_FOLDING, Pass.UPDATE_OVERRIDEN_MARKERS,
+          Pass.UPDATE_VISIBLE, Pass.EXTERNAL_TOOLS,
+          Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS, Pass.POST_UPDATE_ALL};
         break;
     }
     return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);
