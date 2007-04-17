@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -94,16 +93,4 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
 
-  @NonNls
-  public String getComponentName() {
-    return "QuickFixFactory";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
 }

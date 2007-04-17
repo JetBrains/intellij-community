@@ -33,10 +33,6 @@
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.intention.QuickFixFactory</interface-class>
-      <implementation-class>com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInspection.i18n.LastSelectedPropertiesFileStore</implementation-class>
     </component>
     <component>
@@ -86,11 +82,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.guess.GuessManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.guess.impl.GuessManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
       <skipForDummyProject/>
@@ -100,10 +91,6 @@
       <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
       <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>

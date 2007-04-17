@@ -17,8 +17,8 @@
 
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 20-Apr-2006
  */
-public abstract class TextEditorHighlightingPassRegistrar extends AbstractProjectComponent {
-  protected TextEditorHighlightingPassRegistrar(Project project) {
-    super(project);
-  }
+public abstract class TextEditorHighlightingPassRegistrar {
 
   /**
    * @deprecated
@@ -53,7 +50,7 @@ public abstract class TextEditorHighlightingPassRegistrar extends AbstractProjec
   }
 
   public static TextEditorHighlightingPassRegistrar getInstance(Project project){
-    return project.getComponent(TextEditorHighlightingPassRegistrar.class);
+    return ServiceManager.getService(project, TextEditorHighlightingPassRegistrar.class);
   }
 
   /**

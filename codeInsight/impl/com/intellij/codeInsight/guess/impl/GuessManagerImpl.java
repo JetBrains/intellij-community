@@ -3,7 +3,6 @@ package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -12,13 +11,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 
-public class GuessManagerImpl extends GuessManager implements ProjectComponent {
+public class GuessManagerImpl extends GuessManager {
 
   private MethodPatternMap myMethodPatternMap = new MethodPatternMap();
 
@@ -54,17 +52,6 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
 
   public GuessManagerImpl(Project project) {
     myProject = project;
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
   }
 
   public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
@@ -311,8 +298,4 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     return null;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "GuessManager";
-  }
 }

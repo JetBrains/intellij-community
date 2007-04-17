@@ -15,18 +15,17 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
-public abstract class QuickFixFactory implements ApplicationComponent {
+public abstract class QuickFixFactory {
   public static QuickFixFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(QuickFixFactory.class);
+    return ServiceManager.getService(QuickFixFactory.class);
   }
 
   public abstract IntentionAction createModifierListFix(PsiModifierList modifierList,

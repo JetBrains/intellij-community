@@ -18,9 +18,6 @@ import java.util.List;
  * Date: 21-Jun-2006
  */
 public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
-  protected TextEditorHighlightingPassRegistrarEx(Project project) {
-    super(project);
-  }
 
   public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {
     return (TextEditorHighlightingPassRegistrarEx)getInstance(project);

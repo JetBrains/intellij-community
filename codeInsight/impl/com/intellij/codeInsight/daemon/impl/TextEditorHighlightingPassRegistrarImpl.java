@@ -7,15 +7,14 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +30,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<PassConfig>();
   private int nextAvailableId = Pass.EXTERNAL_TOOLS+1;
   private boolean checkedForCycles;
+  private Project myProject;
 
-  protected TextEditorHighlightingPassRegistrarImpl(Project project) {
-    super(project);
+  public TextEditorHighlightingPassRegistrarImpl(Project project) {
+    myProject = project;
   }
 
   private static class PassConfig {
@@ -213,9 +213,4 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     });
   }
 
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "TextEditorHighlightingPassRegistrarImpl";
-  }
 }
