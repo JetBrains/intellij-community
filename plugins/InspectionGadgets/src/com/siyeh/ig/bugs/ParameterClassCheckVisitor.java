@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,14 +49,13 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         if(!HardcodedMethodConstants.GET_CLASS.equals(methodName)){
             return;
         }
-        final PsiExpressionList argList = expression.getArgumentList();
-        final PsiExpression[] args = argList.getExpressions();
-        if(args.length != 0){
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if(arguments.length != 0){
             return;
         }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
-
         if(isParameterReference(qualifier)){
             checked = true;
         }
@@ -73,6 +73,45 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
+    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        if(checked){
+            return;
+        }
+        super.visitTypeCastExpression(expression);
+        final PsiExpression operand = expression.getOperand();
+        if(!isParameterReference(operand)){
+            return;
+        }
+        final PsiTryStatement statement =
+                PsiTreeUtil.getParentOfType(expression, PsiTryStatement.class);
+        if(statement == null){
+            return;
+        }
+        final PsiParameter[] parameters = statement.getCatchBlockParameters();
+        if(parameters.length < 2){
+            return;
+        }
+        boolean nullPointerExceptionFound = false;
+        boolean classCastExceptionFound = false;
+        for(PsiParameter parameter : parameters){
+            final PsiType type = parameter.getType();
+            if(type.equalsToText("java.lang.NullPointerException")){
+                nullPointerExceptionFound = true;
+                if(classCastExceptionFound){
+                    break;
+                }
+            } else if(type.equalsToText("java.lang.ClassCastException")){
+                classCastExceptionFound = true;
+                if(nullPointerExceptionFound){
+                    break;
+                }
+            }
+        }
+        if(classCastExceptionFound && nullPointerExceptionFound){
+            checked = true;
+        }
+    }
+
     private boolean isParameterReference(PsiExpression operand){
         if(operand == null){
             return false;
@@ -80,11 +119,10 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         if(!(operand instanceof PsiReferenceExpression)){
             return false;
         }
-        final PsiElement referent = ((PsiReference) operand).resolve();
-        if(referent == null){
-            return false;
-        }
-        return referent.equals(parameter);
+        final PsiReferenceExpression expression =
+                (PsiReferenceExpression)operand;
+        final PsiElement referent = expression.resolve();
+        return referent != null && referent.equals(parameter);
     }
 
     public boolean isChecked(){

@@ -90,7 +90,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 572;
+    private static final int NUM_INSPECTIONS = 577;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList<Class<? extends InspectionProfileEntry>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
