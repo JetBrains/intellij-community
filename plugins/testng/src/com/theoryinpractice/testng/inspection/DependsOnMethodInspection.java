@@ -19,7 +19,8 @@ public class DependsOnMethodInspection extends LocalInspectionTool
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
     private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
-
+    private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
+    
     @NotNull
     @Override
     public String getGroupDisplayName() {
@@ -50,9 +51,11 @@ public class DependsOnMethodInspection extends LocalInspectionTool
 
         if (!psiClass.getContainingFile().isWritable()) return null;
 
+        PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
+        if(annotations.length == 0) return EMPTY;
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
-        for (PsiAnnotation annotation : TestNGUtil.getTestNGAnnotations(psiClass)) {
+        for (PsiAnnotation annotation : annotations) {
             PsiNameValuePair dep = null;
             PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
             for (PsiNameValuePair param : params) {
