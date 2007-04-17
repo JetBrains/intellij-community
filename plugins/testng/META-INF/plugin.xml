@@ -39,6 +39,8 @@
             <li>TESTNG-151 Final passing test result is not properly hidden
             <li>Fix method popup if test has class level @Test annotation
             <li>Added auto-completion for method names in dependsOnMethods
+            <li>Added auto-completion for group names in dependsOnGroups
+            <li>Fix for NPE on annotations without an annotation name (@ only).
         ]]>
     </change-notes>
 </idea-plugin>
