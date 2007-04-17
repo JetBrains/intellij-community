@@ -25,6 +25,7 @@ public class CreatePatchConfigurationPanel {
     myFileNameField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File(myFileNameField.getText()));
         if (fileChooser.showSaveDialog(myFileNameField) != JFileChooser.APPROVE_OPTION) {
           return;
         }

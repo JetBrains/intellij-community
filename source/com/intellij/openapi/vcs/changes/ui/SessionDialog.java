@@ -34,7 +34,12 @@ public class SessionDialog extends DialogWrapper {
     myChanges = changes;
     myCommitMessage = commitMessage;
     myConfigurationComponent = mySession.getAdditionalConfigurationUI();
-    setTitle(title);
+    if (title.endsWith("...")) {
+      setTitle(title.substring(0, title.length()-3));
+    }
+    else {
+      setTitle(title);
+    }
     init();
     updateButtons();
   }
