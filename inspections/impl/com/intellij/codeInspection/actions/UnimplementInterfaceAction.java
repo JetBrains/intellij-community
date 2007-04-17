@@ -1,6 +1,8 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -49,35 +51,39 @@ public class UnimplementInterfaceAction implements IntentionAction {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
-    if (psiReference == null) return;
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    new WriteCommandAction(project, "Unimplement Interface", file) {
+      protected void run(Result result) throws Throwable {
+        final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
+        if (psiReference == null) return;
 
-    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
-    if (referenceList == null) return;
+        final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
+        if (referenceList == null) return;
 
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
-    if (psiClass == null) return;
+        final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
+        if (psiClass == null) return;
 
-    if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
+        if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
 
-    final PsiElement target = psiReference.resolve();
-    if (target == null || !(target instanceof PsiClass)) return;
+        final PsiElement target = psiReference.resolve();
+        if (target == null || !(target instanceof PsiClass)) return;
 
-    if (ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
+        if (ReadonlyStatusHandler.getInstance(project)
+          .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
 
-    PsiClass targetClass = (PsiClass)target;
+        PsiClass targetClass = (PsiClass)target;
 
-    psiReference.getElement().delete();
+        psiReference.getElement().delete();
 
-    final PsiMethod[] psiMethods = targetClass.getAllMethods();
-    for (PsiMethod psiMethod : psiMethods) {
-      final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
-      for (PsiMethod implementingMethod : implementingMethods) {
-        implementingMethod.delete();
+        final PsiMethod[] psiMethods = targetClass.getAllMethods();
+        for (PsiMethod psiMethod : psiMethods) {
+          final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
+          for (PsiMethod implementingMethod : implementingMethods) {
+            implementingMethod.delete();
+          }
+        }
       }
-    }
+    }.execute();
   }
 
   public boolean startInWriteAction() {
