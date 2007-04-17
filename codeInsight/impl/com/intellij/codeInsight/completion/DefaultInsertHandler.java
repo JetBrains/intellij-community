@@ -138,8 +138,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
 
     final boolean needLeftParenth = isToInsertParenth(tailType);
-    final boolean hasParams = needLeftParenth && hasParams(signatureSelected);
-    tailType = modifyTailTypeBasedOnMethodReturnType(signatureSelected, tailType);
+    final boolean hasParams = needLeftParenth && hasParams();
 
     if (overwrite)
       removeEndOfIdentifier(needLeftParenth && hasParams);
@@ -173,8 +172,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     if (needLeftParenth && hasParams){
       // Invoke parameters popup
-      final PsiMethod method = myLookupItem.getObject() instanceof PsiMethod ? (PsiMethod)myLookupItem.getObject() : null;
-      AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, signatureSelected ? method : null);
+      AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
     }
 
     if (tailType == TailType.DOT){
@@ -220,29 +218,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static boolean isTemplateToBeCompleted(final LookupItem lookupItem) {
     return lookupItem.getObject() instanceof Template
            && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
-  }
-
-  private TailType modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, TailType tailType) {
-    Object completion = myLookupItem.getObject();
-    if(completion instanceof PsiMethod){
-      final PsiMethod method = ((PsiMethod)completion);
-      if (signatureSelected) {
-        if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment) && (myContext.file instanceof PsiJavaFile)) {
-          tailType = TailType.SEMICOLON;
-        }
-      }
-      else {
-        final boolean hasOverloads = hasOverloads();
-        if (!hasOverloads) {
-          if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment) && (myContext.file instanceof PsiJavaFile)) {
-            tailType = TailType.SEMICOLON;
-          }
-        }
-
-        // [dsl]todo[dsl,ven,ik]: need to write something better here
-      }
-    }
-    return tailType;
   }
 
   private void adjustContextAfterLookupStringInsertion(){
@@ -337,14 +312,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (tailType == TailType.LPARENTH){
       needParens = true;
     }
-    else if (myLookupItem.getObject() instanceof PsiMethod){
-      PsiElement place = myFile.findElementAt(myStartOffset);
-      if (myLookupItem.getObject() instanceof PsiAnnotationMethod) {
-        if (place instanceof PsiIdentifier && (place.getParent() instanceof PsiNameValuePair
-                                            || place.getParent().getParent() instanceof PsiNameValuePair)) return false;
-      }
-      needParens = place == null || !(place.getParent() instanceof PsiImportStaticReferenceElement);
-    }
     else if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       needParens = true;
@@ -367,16 +334,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return needParens;
   }
 
-  private boolean hasParams(boolean signatureSelected){
+  private boolean hasParams(){
     boolean hasParms = false;
-    if (myLookupItem.getObject() instanceof PsiMethod){
-      final PsiMethod method = (PsiMethod)myLookupItem.getObject();
-      hasParms = method.getParameterList().getParametersCount() > 0;
-      if (!signatureSelected){
-        hasParms = hasParms || hasOverloads();
-      }
-    }
-    else if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
+    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       final PsiClass aClass = (PsiClass)myLookupItem.getObject();
 
@@ -447,22 +407,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return obj instanceof PsiClass && ((PsiClass)obj).isAnnotationType();
   }
 
-  private boolean hasOverloads() {
-    boolean hasParms = false;
-    String name = ((PsiMethod)myLookupItem.getObject()).getName();
-    for (LookupItem item1 : myLookupData.items) {
-      if (myLookupItem == item1) continue;
-      if (item1.getObject() instanceof PsiMethod) {
-        String name1 = ((PsiMethod)item1.getObject()).getName();
-        if (name1.equals(name)) {
-          hasParms = true;
-          break;
-        }
-      }
-    }
-    return hasParms;
-  }
-
   protected void removeEndOfIdentifier(boolean needParenth){
     myContext.init();
     myDocument.deleteString(myContext.selectionEndOffset, myContext.identifierEndOffset);
@@ -498,8 +442,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){
     Template template = (Template)myLookupItem.getObject();
 
-    int offset1 = templateStartOffset;
-    final RangeMarker offsetRangeMarker = myContext.editor.getDocument().createRangeMarker(offset1, offset1);
+    final RangeMarker offsetRangeMarker = myContext.editor.getDocument().createRangeMarker(templateStartOffset, templateStartOffset);
 
     TemplateManager.getInstance(myProject).startTemplate(
       myContext.editor,

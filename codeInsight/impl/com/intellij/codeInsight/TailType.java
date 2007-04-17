@@ -153,10 +153,6 @@ public abstract class TailType {
   public abstract int processTail(final Editor editor, int tailOffset);
 
   public static TailType createSimpleTailType(final char c) {
-    return new TailType() {
-      public int processTail(final Editor editor, final int tailOffset) {
-        return insertChar(editor, tailOffset, c);
-      }
-    };
+    return new CharTailType(c);
   }
 }
