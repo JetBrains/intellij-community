@@ -64,7 +64,7 @@ public class SvnChangeProvider implements ChangeProvider {
           SvnChangedFile deletedFile = iterator.next();
           final SVNStatus deletedStatus = deletedFile.getStatus();
           if (copiedFile.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
-            builder.processChange(new Change(SvnContentRevision.create(deletedFile.getFilePath(), deletedStatus.getRevision()),
+            builder.processChange(new Change(SvnContentRevision.create(myVcs, deletedFile.getFilePath(), deletedStatus.getRevision()),
                                              CurrentContentRevision.create(copiedFile.getFilePath())));
             iterator.remove();
             foundRename = true;
@@ -85,7 +85,7 @@ public class SvnChangeProvider implements ChangeProvider {
           }
           if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
             final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
-            final SvnContentRevision beforeRevision = SvnContentRevision.create(filePath, status.getRevision());
+            final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getRevision());
             final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
             builder.processChange(new Change(beforeRevision, afterRevision));
             foundRename = true;
@@ -252,7 +252,7 @@ public class SvnChangeProvider implements ChangeProvider {
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(SvnContentRevision.create(filePath, status.getRevision()),
+        builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
                                          CurrentContentRevision.create(filePath), fStatus));
         checkSwitched(filePath, builder, status, parentStatus);
       }
@@ -260,7 +260,7 @@ public class SvnChangeProvider implements ChangeProvider {
         builder.processChange(new Change(null, CurrentContentRevision.create(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(SvnContentRevision.create(filePath, status.getRevision()), null, fStatus));
+        builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath);
@@ -271,7 +271,7 @@ public class SvnChangeProvider implements ChangeProvider {
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-          builder.processChange(new Change(SvnContentRevision.create(filePath, status.getRevision()),
+          builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
                                            CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
         }
         checkSwitched(filePath, builder, status, parentStatus);

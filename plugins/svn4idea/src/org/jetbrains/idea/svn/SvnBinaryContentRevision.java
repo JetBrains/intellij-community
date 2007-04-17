@@ -27,8 +27,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @author yole
 */
 class SvnBinaryContentRevision extends SvnContentRevision implements BinaryContentRevision {
-  public SvnBinaryContentRevision(@NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
-    super(file, revision, useBaseRevision);
+  public SvnBinaryContentRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
+    super(vcs, file, revision, useBaseRevision);
   }
 
   @Nullable

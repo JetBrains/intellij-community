@@ -24,6 +24,12 @@ import com.intellij.peer.PeerFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class SvnDiffProvider implements DiffProvider {
+  private SvnVcs myVcs;
+
+  public SvnDiffProvider(final SvnVcs vcs) {
+    myVcs = vcs;
+  }
+
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     return new SvnRevisionNumber(SVNRevision.BASE);
   }
@@ -35,6 +41,6 @@ public class SvnDiffProvider implements DiffProvider {
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
     final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
     FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(selectedFile);
-    return SvnContentRevision.createRemote(filePath, svnRevision);
+    return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
   }
 }

@@ -35,29 +35,31 @@ import java.io.ByteArrayOutputStream;
  * @author yole
 */
 class SvnContentRevision implements ContentRevision {
+  private final SvnVcs myVcs;
   private final FilePath myFile;
   private String myContent = null;
   private final SVNRevision myRevision;
   private boolean myUseBaseRevision;
 
-  protected SvnContentRevision(@NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
+  protected SvnContentRevision(SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
+    myVcs = vcs;
     myRevision = revision;
     myUseBaseRevision = useBaseRevision;
     myFile = file;
   }
 
-  public static SvnContentRevision create(@NotNull final FilePath file, final SVNRevision revision) {
+  public static SvnContentRevision create(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
     if (file.getFileType().isBinary()) {
-      return new SvnBinaryContentRevision(file, revision, true);
+      return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
-    return new SvnContentRevision(file, revision, true);
+    return new SvnContentRevision(vcs, file, revision, true);
   }
 
-  public static SvnContentRevision createRemote(@NotNull final FilePath file, final SVNRevision revision) {
+  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
     if (file.getFileType().isBinary()) {
-      return new SvnBinaryContentRevision(file, revision, false);
+      return new SvnBinaryContentRevision(vcs, file, revision, false);
     }
-    return new SvnContentRevision(file, revision, false);
+    return new SvnContentRevision(vcs, file, revision, false);
   }
 
   @Nullable
@@ -81,7 +83,7 @@ class SvnContentRevision implements ContentRevision {
       return null;
     }
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    SVNWCClient wcClient = SVNClientManager.newInstance().getWCClient();
+    SVNWCClient wcClient = myVcs.createWCClient();
     wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, myUseBaseRevision ? SVNRevision.BASE : myRevision, true, buffer);
     buffer.close();
     return buffer.toByteArray();

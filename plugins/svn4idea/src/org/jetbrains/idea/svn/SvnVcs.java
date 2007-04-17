@@ -313,7 +313,7 @@ public class SvnVcs extends AbstractVcs {
 
   public DiffProvider getDiffProvider() {
     if (mySvnDiffProvider == null) {
-      mySvnDiffProvider = new SvnDiffProvider();
+      mySvnDiffProvider = new SvnDiffProvider(this);
     }
     return mySvnDiffProvider;
   }
