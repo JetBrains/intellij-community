@@ -282,8 +282,10 @@ public class SvnChangeProvider implements ChangeProvider {
   private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status, final FileStatus parentStatus) {
     if (status.isSwitched() || parentStatus == FileStatus.SWITCHED) {
       final VirtualFile virtualFile = filePath.getVirtualFile();
+      if (virtualFile == null) return;
       final String switchUrl = status.getURL().toString();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
+      LOG.assertTrue(vcsRoot != null, "couldn't find VCS root for virtual file " + virtualFile);
       String baseUrl = null;
       try {
         baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);

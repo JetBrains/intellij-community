@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -70,7 +71,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
   @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
 
-  public SvnBranchConfiguration get(VirtualFile vcsRoot) throws VcsException {
+  public SvnBranchConfiguration get(@NotNull VirtualFile vcsRoot) throws VcsException {
     SvnBranchConfiguration configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
     if (configuration == null) {
       configuration = load(vcsRoot);
