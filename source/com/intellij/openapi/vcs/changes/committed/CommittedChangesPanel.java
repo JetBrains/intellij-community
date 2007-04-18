@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -128,10 +129,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
-  private static boolean changeListMatches(final CommittedChangeList changeList, final String[] filterWords) {
+  private static boolean changeListMatches(@NotNull final CommittedChangeList changeList, final String[] filterWords) {
     for(String word: filterWords) {
-      if (changeList.getComment().toLowerCase().indexOf(word) >= 0 ||
-          changeList.getCommitterName().toLowerCase().indexOf(word) >= 0 ||
+      final String comment = changeList.getComment();
+      final String committer = changeList.getCommitterName();
+      if ((comment != null && comment.toLowerCase().indexOf(word) >= 0) ||
+          (committer != null && committer.toLowerCase().indexOf(word) >= 0) ||
           Long.toString(changeList.getNumber()).indexOf(word) >= 0) {
         return true;
       }
