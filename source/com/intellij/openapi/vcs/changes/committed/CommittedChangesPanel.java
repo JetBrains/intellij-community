@@ -29,11 +29,8 @@ import com.intellij.ui.FilterComponent;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -62,6 +59,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
     myBrowser.setTableContextMenu(group);
+    final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
+    anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 
   public void setRoot(final VirtualFile root) {

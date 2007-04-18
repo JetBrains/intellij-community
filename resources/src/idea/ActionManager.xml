@@ -1479,7 +1479,7 @@
 
     <group id="CommittedChangesToolbar">
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
-        icon="/vcs/refresh.png" use-shortcut-of="Rerun"/>
+        icon="/vcs/refresh.png"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
         icon="/ant/filter.png"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
