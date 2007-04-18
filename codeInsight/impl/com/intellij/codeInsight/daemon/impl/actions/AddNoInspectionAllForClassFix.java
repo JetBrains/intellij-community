@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +48,7 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
     return InspectionsBundle.message("suppress.all.for.class");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
     LOG.assertTrue(container != null);
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
@@ -59,6 +60,7 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
       if (noInspectionTag != null) {
         String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
         noInspectionTag.replace(PsiManager.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
+        DaemonCodeAnalyzer.getInstance(project).restart();
         return;
       }
     }

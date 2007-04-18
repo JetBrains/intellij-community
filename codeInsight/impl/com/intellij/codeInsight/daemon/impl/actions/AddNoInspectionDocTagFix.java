@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -71,7 +72,7 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiDocCommentOwner container = getContainer();
     final boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) return false;
@@ -80,7 +81,7 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     return context != null && context.getManager().isInProject(context);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
     assert container != null;
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
@@ -93,18 +94,18 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
-      return;
-    }
-
-    PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
-    if (noInspectionTag != null) {
-      String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
-                       + noInspectionTag.getValueElement().getText() + ","+ myID;
-      noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
     } else {
-      String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
-      docComment.add(manager.getElementFactory().createDocTagFromText(tagText, null));
+      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+      if (noInspectionTag != null) {
+        String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
+                         + noInspectionTag.getValueElement().getText() + ","+ myID;
+        noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
+      } else {
+        String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
+        docComment.add(manager.getElementFactory().createDocTagFromText(tagText, null));
+      }
     }
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   public boolean startInWriteAction() {
