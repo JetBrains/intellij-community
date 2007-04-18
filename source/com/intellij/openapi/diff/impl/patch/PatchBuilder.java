@@ -23,8 +23,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -32,15 +34,25 @@ import java.util.List;
 
 public class PatchBuilder {
   private static final int CONTEXT_LINES = 3;
+  @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
 
   private PatchBuilder() {
   }
 
-  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean allowRename) throws VcsException {
+  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean allowRename,
+                                           final boolean reversePatch) throws VcsException {
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
-      final ContentRevision beforeRevision = c.getBeforeRevision();
-      final ContentRevision afterRevision = c.getAfterRevision();
+      final ContentRevision beforeRevision;
+      final ContentRevision afterRevision;
+      if (reversePatch) {
+        beforeRevision = c.getAfterRevision();
+        afterRevision = c.getBeforeRevision();
+      }
+      else {
+        beforeRevision = c.getBeforeRevision();
+        afterRevision = c.getAfterRevision();
+      }
       if (beforeRevision instanceof BinaryContentRevision || afterRevision instanceof BinaryContentRevision) {
         continue;
       }
@@ -196,7 +208,7 @@ public class PatchBuilder {
   private static String getRevisionName(final ContentRevision revision, final File ioFile) {
     String revisionName = revision.getRevisionNumber().asString();
     if (revisionName.length() > 0) {
-      return "(revision " + revisionName + ")";
+      return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
     return new Date(ioFile.lastModified()).toString();
   }

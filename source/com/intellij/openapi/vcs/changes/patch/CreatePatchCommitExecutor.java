@@ -48,6 +48,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
   private ChangeListManager myChangeListManager;
 
   public String PATCH_PATH = "";
+  public boolean REVERSE_PATCH = false;
 
   public static CreatePatchCommitExecutor getInstance(Project project) {
     return project.getComponent(CreatePatchCommitExecutor.class);
@@ -120,6 +121,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
           PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
         }
         myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
+        myPanel.setReversePatch(REVERSE_PATCH);
         myFileNameInitialized = true;
       }
       return true;
@@ -146,9 +148,10 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         final String fileName = myPanel.getFileName();
         final File file = new File(fileName).getAbsoluteFile();
         PATCH_PATH = file.getParent();
+        REVERSE_PATCH = myPanel.isReversePatch();
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
-          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), false);
+          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), false, REVERSE_PATCH);
           UnifiedDiffWriter.write(patches, writer);
         }
         finally {

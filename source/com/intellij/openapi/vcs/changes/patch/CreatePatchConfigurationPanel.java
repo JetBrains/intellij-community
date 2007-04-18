@@ -20,6 +20,7 @@ import java.io.File;
 public class CreatePatchConfigurationPanel {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myFileNameField;
+  private JCheckBox myReversePatchCheckbox;
 
   public CreatePatchConfigurationPanel() {
     myFileNameField.addActionListener(new ActionListener() {
@@ -44,5 +45,13 @@ public class CreatePatchConfigurationPanel {
 
   public void setFileName(final File file) {
     myFileNameField.setText(file.getPath());
+  }
+
+  public boolean isReversePatch() {
+    return myReversePatchCheckbox.isSelected();
+  }
+
+  public void setReversePatch(boolean reverse) {
+    myReversePatchCheckbox.setSelected(reverse);
   }
 }
