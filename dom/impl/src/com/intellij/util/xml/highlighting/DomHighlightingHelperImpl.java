@@ -210,10 +210,12 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       if (domElement != null) {
         final String typeName = ElementPresentationManager.getTypeNameForObject(element);
         final GenericDomValue genericDomValue = domElement.getGenericInfo().getNameDomElement(element);
-        return Arrays.asList(holder.createProblem(genericDomValue, domElement.getRoot().equals(element.getRoot())
-                                                                   ? IdeBundle.message("model.highlighting.identity", typeName)
-                                                                   : IdeBundle.message("model.highlighting.identity.in.other.file", typeName,
-                                                                                       domElement.getXmlTag().getContainingFile().getName())));
+        if (genericDomValue != null) {
+          return Arrays.asList(holder.createProblem(genericDomValue, domElement.getRoot().equals(element.getRoot())
+                                                                     ? IdeBundle.message("model.highlighting.identity", typeName)
+                                                                     : IdeBundle.message("model.highlighting.identity.in.other.file", typeName,
+                                                                                         domElement.getXmlTag().getContainingFile().getName())));
+        }
       }
     }
     return Collections.emptyList();
