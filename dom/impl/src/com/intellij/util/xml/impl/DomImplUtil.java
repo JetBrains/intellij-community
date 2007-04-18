@@ -4,18 +4,17 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import com.intellij.testFramework.LightVirtualFile;
-import org.apache.xerces.parsers.SAXParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,9 @@ import java.util.Set;
  */
 public class DomImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
-  private static final SAXParser ourParser = new SAXParser();
+
+  private DomImplUtil() {
+  }
 
   public static boolean isTagValueGetter(final JavaMethod method) {
     if (!isGetter(method)) {
