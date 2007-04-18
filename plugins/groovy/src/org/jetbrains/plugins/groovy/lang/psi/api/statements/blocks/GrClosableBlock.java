@@ -25,5 +25,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Ilya.Sergey
  */
-public interface GrClosableBlock extends GrCodeBlock, GrExpression {
+public interface GrClosableBlock extends GrExpression {
 }

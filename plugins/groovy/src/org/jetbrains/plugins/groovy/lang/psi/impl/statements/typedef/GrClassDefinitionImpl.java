@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class GrClassDefinitionImpl extends GroovyPsiElementImpl implements GrClassDefinition
+public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrClassDefinition
 {
   public GrClassDefinitionImpl(@NotNull ASTNode node)
   {
@@ -36,7 +35,7 @@ public class GrClassDefinitionImpl extends GroovyPsiElementImpl implements GrCla
     return "Class definition";
   }
 
-  public GrBody getBody() {
-    return this.findChildByClass(GrBody.class);
+  public GrTypeDefinitionBody getBody() {
+    return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 }

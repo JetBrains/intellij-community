@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * Implements all abstractionos related to Groovy file
@@ -39,6 +40,10 @@ public class GroovyFile extends PsiFileBase {
 
   public String toString() {
     return "Groovy script";
+  }
+
+  public GrTypeDefinition[] getTypeDefinitions() {
+    return findChildrenByClass(GrTypeDefinition.class);
   }
 }
 

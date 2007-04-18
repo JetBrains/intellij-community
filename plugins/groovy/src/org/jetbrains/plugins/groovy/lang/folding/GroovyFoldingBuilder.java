@@ -25,9 +25,8 @@ import java.util.ArrayList;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
@@ -63,7 +62,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
             node.getPsi() instanceof GrTypeDefinition &&
             !(node.getPsi().getParent() instanceof GroovyFile)) {
       GrTypeDefinition typeDef = (GrTypeDefinition) node.getPsi();
-      GrBody body = typeDef.getBody();
+      GrTypeDefinitionBody body = typeDef.getBody();
       if (body != null) {
         ASTNode myNode = body.getNode();
         if (myNode != null &&
@@ -89,7 +88,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
   }
 
   public String getPlaceholderText(ASTNode node) {
-    if (node.getPsi() instanceof GrCodeBlock) {
+    if (GroovyElementTypes.BLOCK_SET.contains(node.getElementType())) {
       return "{...}";
     }
     if (node.getElementType().equals(mML_COMMENT) &&

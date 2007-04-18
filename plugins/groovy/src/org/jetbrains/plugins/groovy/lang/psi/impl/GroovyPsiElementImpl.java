@@ -17,18 +17,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Ilya.Sergey
  */
-public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement
-{
+public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 
-  public GroovyPsiElementImpl(@NotNull ASTNode node)
-  {
+  public GroovyPsiElementImpl(@NotNull ASTNode node) {
     super(node);
   }
+
 
 }

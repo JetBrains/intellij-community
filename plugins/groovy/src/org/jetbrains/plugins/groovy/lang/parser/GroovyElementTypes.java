@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -223,4 +224,5 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType BALANCED_TOKENS = new GroovyElementType("balanced tokens in the brackts"); //not a node
 
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
+  TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK, OPEN_BLOCK, CLASS_BLOCK, INTERFACE_BLOCK, ANNOTATION_BLOCK, ENUM_BLOCK, CASE_BLOCK);
 }

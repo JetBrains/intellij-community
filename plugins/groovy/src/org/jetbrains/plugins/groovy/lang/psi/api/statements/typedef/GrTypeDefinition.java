@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
@@ -25,6 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrTypeDefinition extends GroovyPsiElement, GrStatement {
 
-  public GrBody getBody();
+  public GrTypeDefinitionBody getBody();
+
+  public String getQualifiedName();
 
 }

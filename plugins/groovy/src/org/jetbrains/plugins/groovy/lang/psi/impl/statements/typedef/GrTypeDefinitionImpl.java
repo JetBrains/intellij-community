@@ -13,13 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.ASTNode;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Ilya Sergey
  */
-public interface GrTypeDefinitionBody extends GroovyPsiElement {
+public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
+
+  public GrTypeDefinitionImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String getQualifiedName(){
+    return getName();
+  }
+
 }

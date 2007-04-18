@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.formatter.LargeGroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.ContiniousIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author Ilya.Sergey
@@ -50,7 +50,8 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
    */
   @NotNull
   public static Indent getChildIndent(@NotNull final GroovyBlock parent, @Nullable final ASTNode prevChildNode, @NotNull final ASTNode child) {
-    final PsiElement psiParent = parent.getNode().getPsi();
+    ASTNode astNode = parent.getNode();
+    final PsiElement psiParent = astNode.getPsi();
 
     // For Groovy file
     if (psiParent instanceof GroovyFile) {
@@ -58,7 +59,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     // For common code block
-    if (psiParent instanceof GrCodeBlock) {
+    if (BLOCK_SET.contains(astNode.getElementType())) {
       return indentForBlock(psiParent, child);
     }
 
@@ -127,7 +128,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     if (psiParent instanceof GrIfStatement) {
       if ((child.getPsi().equals(((GrIfStatement) psiParent).getThenBranch()) ||
               child.getPsi().equals(((GrIfStatement) psiParent).getElseBranch())) &&
-              !(child.getPsi() instanceof GrCodeBlock)) {
+              !BLOCK_SET.contains(child.getElementType())) {
         return Indent.getNormalIndent();
       }
       if (child.getPsi().equals(((GrIfStatement) psiParent).getCondition())) {
@@ -136,7 +137,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     }
     if (psiParent instanceof GrWhileStatement) {
       if (child.getPsi().equals(((GrWhileStatement) psiParent).getBody()) &&
-              !(child.getPsi() instanceof GrCodeBlock)) {
+              !BLOCK_SET.contains(child.getElementType())) {
         return Indent.getNormalIndent();
       }
       if (child.getPsi().equals(((GrWhileStatement) psiParent).getCondition())) {
@@ -155,7 +156,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     }
     if (psiParent instanceof GrForStatement) {
       if (child.getPsi().equals(((GrForStatement) psiParent).getBody()) &&
-              !(child.getPsi() instanceof GrCodeBlock)) {
+              !BLOCK_SET.contains(child.getElementType())) {
         return Indent.getNormalIndent();
       }
       if (child.getPsi().equals(((GrForStatement) psiParent).getClause())) {

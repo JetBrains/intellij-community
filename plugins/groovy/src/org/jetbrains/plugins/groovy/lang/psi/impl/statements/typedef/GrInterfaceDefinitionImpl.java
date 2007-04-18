@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrBody;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class GrInterfaceDefinitionImpl extends GroovyPsiElementImpl implements GrInterfaceDefinition
+public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements GrInterfaceDefinition
 {
   public GrInterfaceDefinitionImpl(@NotNull ASTNode node)
   {
@@ -37,7 +36,7 @@ public class GrInterfaceDefinitionImpl extends GroovyPsiElementImpl implements G
     return "Interface definition";
   }
 
-  public GrBody getBody() {
-    return this.findChildByClass(GrBody.class);
+  public GrTypeDefinitionBody getBody() {
+    return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 }
