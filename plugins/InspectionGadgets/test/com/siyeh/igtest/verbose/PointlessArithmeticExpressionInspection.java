@@ -59,8 +59,9 @@ public class PointlessArithmeticExpressionInspection
         {
 
         }
+    }
 
-
-
+    double boom(double d){
+        return 1.1 * d;
     }
 }

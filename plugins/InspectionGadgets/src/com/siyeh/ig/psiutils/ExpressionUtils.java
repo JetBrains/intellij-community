@@ -67,9 +67,29 @@ public class ExpressionUtils {
     }
 
     public static boolean isOne(PsiExpression expression) {
+        final PsiType expressionType = expression.getType();
         final Object value = ConstantExpressionUtil.computeCastTo(
-                expression, PsiType.INT);
-        return value instanceof Integer && ((Integer) value).intValue() == 1;
+                expression, expressionType);
+        if(value == null){
+            return false;
+        }
+        //noinspection FloatingPointEquality
+        if(value instanceof Double && ((Double) value).doubleValue() == 1.0) {
+            return true;
+        }
+        if(value instanceof Integer && ((Integer) value).intValue() == 1){
+            return true;
+        }
+        if(value instanceof Long && ((Long) value).longValue() == 1L){
+            return true;
+        }
+        if(value instanceof Short && ((Short) value).shortValue() == 1){
+            return true;
+        }
+        if(value instanceof Character && ((Character) value).charValue() == 1){
+            return true;
+        }
+        return value instanceof Byte && ((Byte) value).byteValue() == 1;
     }
 
     public static boolean isNegation(@Nullable PsiExpression condition,
