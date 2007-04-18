@@ -210,7 +210,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       if (dir_store.exists()) {
         myScheme = StorageScheme.DIRECTORY_BASED;
-        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, dir_store.getChild("project.xml").getPath());
+        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, dir_store.getChild("misc.xml").getPath());
         getStateStorageManager().addMacro(WS_FILE_MACRO, dir_store.getChild("workspace.xml").getPath());
         getStateStorageManager().addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
       }

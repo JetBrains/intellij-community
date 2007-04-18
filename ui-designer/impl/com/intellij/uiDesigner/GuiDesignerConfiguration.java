@@ -1,9 +1,6 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
@@ -17,7 +14,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
     @Storage(
       id ="other",
       file = "$PROJECT_FILE$"
-    )}
+    )
+    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
 )
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
   public static GuiDesignerConfiguration getInstance(final Project project){
