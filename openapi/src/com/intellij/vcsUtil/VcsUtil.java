@@ -62,6 +62,8 @@ import java.util.*;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
 {
+  protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
+
 
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
@@ -222,9 +224,9 @@ public class VcsUtil
    * @return true if the given file resides under the root associated with any
    *         Version Control.
    */
-  public static boolean isFileUnderVcs( Project project, VirtualFile file )
+  public static boolean isFileUnderVcs( Project project, String file )
   {
-    return isFileUnderVcs( project, getFilePath( file.getPath() ));
+    return isFileUnderVcs( project, getFilePath( file ));
   }
   public static boolean isFileUnderVcs( Project project, FilePath file )
   {
@@ -587,5 +589,36 @@ public class VcsUtil
       app.invokeAndWait( action, ModalityState.defaultModalityState() );
 
     return file[ 0 ];
+  }
+
+  public static String getCanonicalLocalPath(String localPath) {
+    localPath = chopTrailingChars(localPath.trim().replace('\\', '/'), ourCharsToBeChopped);
+    if (localPath.length() == 2 && localPath.charAt(1) == ':') {
+      localPath += '/';
+    }
+    return localPath;
+  }
+
+  /**
+   * @return string without all specified chars at the end. For example,
+   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\'}) is <code>"c:\\my_directory\\//"</code>,
+   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\','/'}) is <code>"c:\my_directory"</code>.
+   *         Actually this method can be used to normalize file names to chop trailing separator chars.
+   */
+  public static String chopTrailingChars(String source, char[] chars) {
+    StringBuffer sb = new StringBuffer(source);
+    while (true) {
+      boolean atLeastOneCharWasChopped = false;
+      for (int i = 0; i < chars.length && sb.length() > 0; i++) {
+        if (sb.charAt(sb.length() - 1) == chars[i]) {
+          sb.deleteCharAt(sb.length() - 1);
+          atLeastOneCharWasChopped = true;
+        }
+      }
+      if (!atLeastOneCharWasChopped) {
+        break;
+      }
+    }
+    return sb.toString();
   }
 }
