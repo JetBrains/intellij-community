@@ -8,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiNameHelperImpl extends PsiNameHelper{
   private final PsiManager myManager;
@@ -41,7 +42,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     }
   }
 
-  public boolean isIdentifier(String text, LanguageLevel languageLevel) {
+  public boolean isIdentifier(@NotNull String text, @NotNull LanguageLevel languageLevel) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     synchronized (LOCK) {
