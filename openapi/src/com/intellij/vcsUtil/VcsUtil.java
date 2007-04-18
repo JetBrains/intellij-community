@@ -111,10 +111,13 @@ public class VcsUtil
     for( FilePath path : paths )
     {
       VirtualFile vFile = path.getVirtualFile();
-      if( vFile.isDirectory() )
-        markFileAsDirty( project, vFile );
-      else
-        vFile.refresh( true, vFile.isDirectory() );
+      if( vFile != null )
+      {
+        if( vFile.isDirectory() )
+          markFileAsDirty( project, vFile );
+        else
+          vFile.refresh( true, vFile.isDirectory() );
+      }
     }
   }
 
