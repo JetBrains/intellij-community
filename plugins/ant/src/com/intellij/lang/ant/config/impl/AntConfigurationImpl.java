@@ -18,6 +18,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,7 +56,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AntConfigurationImpl extends AntConfigurationBase implements JDOMExternalizable, ModificationTracker {
+@State(
+  name = "AntConfiguration",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
 
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
   public static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<AntConfiguration>("$instance", null);
@@ -110,6 +121,26 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     myStartupManager = StartupManager.getInstance(project);
   }
 
+  public Element getState() {
+    try {
+      final Element e = new Element("state");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
   public void registerAntTargetBeforeRun(final RunManager runManager, final Project project) {
     runManager.registerStepBeforeRun(ANT, new Function<RunConfiguration, String>() {
       public String fun(final RunConfiguration runConfiguration) {

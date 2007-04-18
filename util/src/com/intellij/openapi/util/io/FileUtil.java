@@ -609,4 +609,27 @@ public class FileUtil {
 
     return success;
   }
+
+  public static String sanitizeFileName(String name) {
+    StringBuffer result = new StringBuffer();
+
+    for (int i = 0; i < name.length(); i++) {
+      final char ch = name.charAt(i);
+
+      if (ch > 0 && ch < 255) {
+        if (Character.isLetterOrDigit(ch)) {
+          result.append(ch);
+        }
+        else {
+          result.append("_");
+        }
+      }
+      else {
+
+      }
+
+    }
+
+    return result.toString();
+  }
 }

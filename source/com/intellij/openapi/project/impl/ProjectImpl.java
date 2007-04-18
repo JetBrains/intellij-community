@@ -1,6 +1,5 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -38,7 +37,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -306,15 +304,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (isDefault()) return TEMPLATE_PROJECT_NAME;
     if (isDummy()) return DUMMY_PROJECT_NAME;
 
-    String temp = getStateStore().getProjectFileName();
-    if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
-    }
-    final int i = temp.lastIndexOf(File.separatorChar);
-    if (i >= 0) {
-      temp = temp.substring(i + 1, temp.length() - i + 1);
-    }
-    return temp;
+    return getStateStore().getProjectName();
   }
 
   @Nullable

@@ -87,6 +87,13 @@ public abstract class ElementPresentationManager {
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
+
+  public static final Function<Object, String> NAMER = new Function<Object, String>() {
+    public String fun(final Object o) {
+      return getElementName(o);
+    }
+  };
+
   @Nullable
   public static String getElementName(Object element) {
     for (final Function<Object, String> function : ourNameProviders) {

@@ -5,6 +5,6 @@ package com.intellij.openapi.components.impl;
  */
 public class ApplicationPathMacroManager extends BasePathMacroManager {
   public ApplicationPathMacroManager() {
-    super(false);
+    super(true);
   }
 }

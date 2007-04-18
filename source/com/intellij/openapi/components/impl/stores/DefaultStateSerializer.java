@@ -42,7 +42,7 @@ class DefaultStateSerializer {
     if (stateElement == null) return mergeInto;
 
     if (stateClass.equals(Element.class)) {
-      assert mergeInto == null;
+      //assert mergeInto == null;
       return (T)stateElement;
     }
     else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {

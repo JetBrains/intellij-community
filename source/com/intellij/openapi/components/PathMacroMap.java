@@ -11,10 +11,6 @@ import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Attr;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -54,6 +50,17 @@ public abstract class PathMacroMap {
     for (Object child : content) {
       if (child instanceof Element) {
         Element element = (Element)child;
+
+        //mike
+        //dirty hack: do not substitute macroses in path macroses declarations.
+        //I can't find a way to disable macro saving in one component (yet).
+
+        if (element.getName().equals("macro") &&
+            element.getAttributes().size() == 2 &&
+            element.getAttributeValue("name") != null &&
+            element.getAttributeValue("value") != null &&
+            element.getChildren().isEmpty()) continue;
+
         substitute(element, caseSensitive, usedMacros);
       }
       else if (child instanceof Text) {
@@ -73,36 +80,6 @@ public abstract class PathMacroMap {
     for (final Object attribute1 : attributes) {
       Attribute attribute = (Attribute)attribute1;
       attribute.setValue(substitute(attribute.getValue(), caseSensitive, usedMacros));
-    }
-  }
-
-  public final void substitute(org.w3c.dom.Element e, boolean caseSensitive,@Nullable final Set<String> usedMacros) {
-    final NodeList childNodes = e.getChildNodes();
-    for (int i = 0; i < childNodes.getLength(); i++) {
-      final Node child = childNodes.item(i);
-
-      if (child instanceof org.w3c.dom.Element) {
-        org.w3c.dom.Element element = (org.w3c.dom.Element)child;
-        substitute(element, caseSensitive, usedMacros);
-      }
-      else if (child instanceof org.w3c.dom.Text) {
-        org.w3c.dom.Text t = (org.w3c.dom.Text)child;
-        t.setTextContent(substitute(t.getTextContent(), caseSensitive, usedMacros));
-      }
-      else if (child instanceof org.w3c.dom.Comment) {
-        org.w3c.dom.Comment c = (org.w3c.dom.Comment)child;
-        c.setTextContent(substitute(c.getTextContent(), caseSensitive, usedMacros));
-      }
-      else {
-        LOG.error("Wrong content: " + child.getClass());
-      }
-    }
-
-    final NamedNodeMap attributes = e.getAttributes();
-    for (int i = 0; i < attributes.getLength(); i++) {
-      final Node node = attributes.item(i);
-      Attr attr = (Attr)node;
-      e.setAttribute(attr.getName(), substitute(attr.getValue(), caseSensitive, usedMacros));
     }
   }
 

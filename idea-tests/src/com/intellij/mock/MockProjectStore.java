@@ -50,6 +50,11 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @NotNull
+  public String getProjectName() {
+    throw new UnsupportedOperationException("Method getProjectName not implemented in " + getClass());
+  }
+
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
     throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
   }

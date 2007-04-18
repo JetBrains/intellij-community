@@ -30,6 +30,9 @@ public interface IProjectStore extends IComponentStore {
 
   String getLocation();
 
+  @NotNull
+  String getProjectName();
+
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED
   }

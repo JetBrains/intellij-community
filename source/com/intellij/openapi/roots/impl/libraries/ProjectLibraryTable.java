@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -66,12 +68,14 @@ public class ProjectLibraryTable extends LibraryTableBase implements ProjectComp
   public static class LibraryStateSplitter implements StateSplitter {
 
     public List<Pair<Element, String>> splitState(Element e) {
+      final UniqueNameGenerator generator = new UniqueNameGenerator();
+
       List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
 
       final List list = e.getChildren();
       for (final Object o : list) {
         Element library = (Element)o;
-        final String name = library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR) + ".xml";
+        final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
         result.add(new Pair<Element, String>(library, name));
       }
 

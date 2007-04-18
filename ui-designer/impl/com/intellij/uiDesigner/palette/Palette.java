@@ -4,12 +4,11 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.uiDesigner.Properties;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -47,7 +46,14 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class Palette implements ProjectComponent, JDOMExternalizable{
+@State(
+  name = "Palette2",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public final class Palette implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 
   private final MyLafManagerListener myLafManagerListener;
@@ -108,6 +114,17 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
     }
   }
+
+  public Element getState() {
+    final Element e = new Element("state");
+    writeExternal(e);
+    return e;
+  }
+
+  public void loadState(Element state) {
+    readExternal(state);
+  }
+
 
   /**Adds specified listener.*/
   public void addListener(@NotNull final Listener l){

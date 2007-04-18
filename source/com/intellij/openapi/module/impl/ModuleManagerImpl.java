@@ -5,7 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.ModuleListener;
@@ -16,7 +16,10 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,7 +49,14 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, JDOMExternalizable,ModificationTracker {
+@State(
+  name = ModuleManagerImpl.COMPONENT_NAME,
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
@@ -106,6 +116,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myModificationCount;
   }
 
+  public Element getState() {
+    final Element e = new Element("state");
+    writeExternal(e);
+    return e;
+  }
+
+  public void loadState(Element state) {
+    readExternal(state);
+  }
+
   public static final class ModulePath {
     private final String myPath;
     private final String myModuleGroup;
@@ -146,7 +166,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return paths.toArray(new ModulePath[paths.size()]);
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(final Element element) {
     myModulePaths = getPathsToModuleFiles(element);
   }
 
@@ -304,7 +324,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     final Element modules = new Element(ELEMENT_MODULES);
     final Collection<Module> collection = getModulesToWrite();
 

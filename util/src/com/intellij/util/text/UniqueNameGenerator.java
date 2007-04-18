@@ -1,10 +1,12 @@
 /*
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.text;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -15,10 +17,13 @@ import java.util.Set;
 public class UniqueNameGenerator implements Condition<String> {
   private final Set<String> myExistingNames = new HashSet<String>();
 
-  public UniqueNameGenerator(final Collection elements) {
+  public UniqueNameGenerator(final Collection elements, @Nullable Function<Object, String> namer) {
     for (final Object t : elements) {
-      myExistingNames.add(ElementPresentationManager.getElementName(t));
+      myExistingNames.add(namer != null ? namer.fun(t) : t.toString());
     }
+  }
+
+  public UniqueNameGenerator() {
   }
 
   public final boolean value(final String candidate) {
@@ -44,11 +49,13 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   public String generateUniqueName(final String defaultName, final String prefix, final String suffix) {
-    return generateUniqueName(defaultName, prefix, suffix, this);
+    final String result = generateUniqueName(defaultName, prefix, suffix, this);
+    myExistingNames.add(result);
+    return result;
   }
 
   public String generateUniqueName(final String defaultName) {
-    return generateUniqueName(defaultName, "", "", this);
+    return generateUniqueName(defaultName, "", "");
   }
 
 }

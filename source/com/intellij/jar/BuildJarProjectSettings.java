@@ -2,20 +2,20 @@ package com.intellij.jar;
 
 import com.intellij.execution.util.RefactoringElementListenerComposite;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.ModuleContainer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.openapi.deployment.ModuleContainer;
+import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,7 +24,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -50,7 +53,14 @@ import java.util.jar.Manifest;
 /**
  * @author cdr
  */
-public class BuildJarProjectSettings implements JDOMExternalizable, ProjectComponent, RefactoringElementListenerProvider {
+@State(
+  name = "BuildJarProjectSettings",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public class BuildJarProjectSettings implements PersistentStateComponent<Element>, ProjectComponent, RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.jar.BuildJarProjectSettings");
 
   public boolean BUILD_JARS_ON_MAKE = false;
@@ -64,6 +74,27 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
 
   public BuildJarProjectSettings(Project project) {
     myProject = project;
+  }
+
+  public Element getState() {
+    try {
+      final Element e = new Element("state");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isBuildJarOnMake() {

@@ -1,10 +1,10 @@
 package com.intellij.compiler;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -13,7 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class RmicSettings implements JDOMExternalizable, ProjectComponent {
+@State(
+  name = "RmicSettings",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public class RmicSettings implements PersistentStateComponent<Element>, ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.RmicSettings");
+
   public boolean IS_EANABLED = false;
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;
@@ -29,6 +38,27 @@ public class RmicSettings implements JDOMExternalizable, ProjectComponent {
   }
 
   public void projectOpened() {
+  }
+
+  public Element getState() {
+    try {
+      final Element e = new Element("state");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

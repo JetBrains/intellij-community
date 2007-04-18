@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -247,6 +248,25 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public String getLocation() {
     if (myScheme == StorageScheme.DEFAULT) return getProjectFilePath();
     else return getProjectBaseDir().getPath();
+  }
+
+  @NotNull
+  public String getProjectName() {
+    if (myScheme == StorageScheme.DEFAULT) {
+      final VirtualFile baseDir = getProjectBaseDir();
+      assert baseDir != null;
+      return baseDir.getName();
+    }
+
+    String temp = getProjectFileName();
+    if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
+    }
+    final int i = temp.lastIndexOf(File.separatorChar);
+    if (i >= 0) {
+      temp = temp.substring(i + 1, temp.length() - i + 1);
+    }
+    return temp;
   }
 
 

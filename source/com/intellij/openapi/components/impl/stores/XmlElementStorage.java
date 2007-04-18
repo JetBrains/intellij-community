@@ -16,6 +16,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.util.*;
 
 abstract class XmlElementStorage implements StateStorage {
+  private static final Set<String> OBSOLETE_COMPONENT_NAMES = new HashSet<String>(Arrays.asList(
+    "Palette"
+  ));
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
   @NonNls private static final String COMPONENT = "component";
@@ -40,7 +43,7 @@ abstract class XmlElementStorage implements StateStorage {
 
     final Element[] elements = JDOMUtil.getElements(rootElement);
     for (Element element : elements) {
-      if (element.getName().equals(COMPONENT) && Comparing.equal(element.getAttributeValue(NAME), componentName)) {
+      if (isComponentTag(componentName, element)) {
         element.removeAttribute(NAME);
         if (myPathMacroManager != null) {
           myPathMacroManager.expandPaths(element);
@@ -53,7 +56,13 @@ abstract class XmlElementStorage implements StateStorage {
     return null;
   }
 
+  private boolean isComponentTag(final String componentName, final Element element) {
+    return element.getName().equals(COMPONENT) && Comparing.equal(element.getAttributeValue(NAME), componentName);
+  }
+
   private synchronized void setState(final String componentName, final Element element) throws StateStorage.StateStorageException {
+    if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) return;
+    
     final Element rootElement = getRootElement();
     if (rootElement == null) return;
 
@@ -78,7 +87,7 @@ abstract class XmlElementStorage implements StateStorage {
 
     final Element[] elements = JDOMUtil.getElements(rootElement);
     for (Element e : elements) {
-      if (e.getName().equals(COMPONENT) && Comparing.equal(e.getAttributeValue(NAME), componentName)) {
+      if (isComponentTag(componentName, e)) {
         e.detach();
       }
     }
@@ -105,7 +114,7 @@ abstract class XmlElementStorage implements StateStorage {
 
     final Element[] elements = JDOMUtil.getElements(rootElement);
     for (Element element : elements) {
-      if (element.getName().equals(COMPONENT) && Comparing.equal(element.getAttributeValue(NAME), componentName)) {
+      if (isComponentTag(componentName, element)) {
         return true;
       }
     }
@@ -167,15 +176,27 @@ abstract class XmlElementStorage implements StateStorage {
 
   @Nullable
   Element getRootElement() throws StateStorage.StateStorageException {
-    if (myDocument == null) {
-      myDocument = loadDocument();
-    }
-    return myDocument != null ? myDocument.getRootElement() : null;
+    final Document document = getDocument();
+    return document != null ? document.getRootElement() : null;
   }
 
   public Document getDocument() throws StateStorage.StateStorageException {
     if (myDocument == null) {
       myDocument = loadDocument();
+
+      final Element[] elements = JDOMUtil.getElements(myDocument.getRootElement());
+      for (Element element : elements) {
+        if (element.getName().equals("component") && element.getAttributes().size() == 1 && element.getAttribute("name") != null && element.getChildren().isEmpty()) {
+          element.getParent().removeContent(element);
+          continue;
+        }
+
+        for (String componentName : OBSOLETE_COMPONENT_NAMES) {
+          if (isComponentTag(componentName, element)) {
+            element.getParent().removeContent(element);
+          }
+        }
+      }
     }
 
     return myDocument;

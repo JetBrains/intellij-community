@@ -1,10 +1,10 @@
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
@@ -12,7 +12,16 @@ import org.jdom.Element;
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
 
-public class JavacSettings implements JDOMExternalizable, ProjectComponent {
+@State(
+  name = "JavacSettings",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
+public class JavacSettings implements PersistentStateComponent<Element>, ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.JavacSettings");
+
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean DEPRECATION = true;
@@ -30,6 +39,27 @@ public class JavacSettings implements JDOMExternalizable, ProjectComponent {
   }
 
   public void projectOpened() {
+  }
+
+  public Element getState() {
+    try {
+      final Element e = new Element("state");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isTestsUseExternalCompiler() {
