@@ -282,7 +282,7 @@ public class ImplementationViewComponent extends JPanel {
     final int end = implementationTextSelectioner.getTextEndOffset(elt);
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
-    final int lineEnd = doc.getLineEndOffset(doc.getLineNumber(end));
+    final int lineEnd = end < doc.getTextLength() ?doc.getLineEndOffset(doc.getLineNumber(end)):0;
 
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
