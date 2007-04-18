@@ -472,6 +472,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return getAttribute(qname);
   }
 
+  @Nullable
   private XmlAttribute getAttribute(String qname){
     if(qname == null) return null;
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(this);
