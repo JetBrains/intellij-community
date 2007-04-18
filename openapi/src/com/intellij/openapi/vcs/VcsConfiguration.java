@@ -37,9 +37,8 @@ import java.util.List;
   storages = {
     @Storage(
       id ="other",
-      file = "$PROJECT_FILE$"
+      file = "$WORKSPACE_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public final class VcsConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
