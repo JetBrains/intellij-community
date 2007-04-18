@@ -6,6 +6,8 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +54,8 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
     if (!helper.checkRequired(element, holder).isEmpty()) return;
     if (element instanceof GenericDomValue) {
       helper.checkExtendClass((GenericDomValue)element, holder);
-    } else {
+    }
+    if (!(element instanceof GenericAttributeValue) && !GenericDomValue.class.equals(ReflectionUtil.getRawType(element.getDomElementType()))) {
       helper.checkNameIdentity(element, holder);
     }
   }

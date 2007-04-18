@@ -24,7 +24,8 @@ public class PatternFilter implements ElementFilter {
   }
 
   public boolean isClassAcceptable(Class hintClass) {
-    throw new UnsupportedOperationException("Method isClassAcceptable is not yet implemented in " + getClass().getName());
+    return true;
+    //throw new UnsupportedOperationException("Method isClassAcceptable is not yet implemented in " + getClass().getName());
   }
 
   public String toString() {
