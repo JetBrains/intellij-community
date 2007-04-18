@@ -111,11 +111,12 @@ public class GroovyBlock implements Block, GroovyElementTypes {
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    final PsiElement psiParent = getNode().getPsi();
+    ASTNode astNode = getNode();
+    final PsiElement psiParent = astNode.getPsi();
     if (psiParent instanceof GroovyFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (psiParent instanceof BlockedIndent) {
+    if (BLOCK_SET.contains(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrBinaryExpression) {
@@ -125,7 +126,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrParameterList) {
-      return new ChildAttributes(this.getIndent(), null);
+      return new ChildAttributes(this.getIndent(), this.getAlignment());
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }

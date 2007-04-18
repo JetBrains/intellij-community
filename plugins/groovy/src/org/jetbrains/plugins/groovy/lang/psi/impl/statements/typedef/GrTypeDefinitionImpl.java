@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
@@ -30,7 +31,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public String getQualifiedName(){
-    return getName();
+    if (findChildByType(GroovyElementTypes.mIDENT) != null) {
+      return findChildByType(GroovyElementTypes.mIDENT).getText();
+    }
+    return "";
   }
 
 }

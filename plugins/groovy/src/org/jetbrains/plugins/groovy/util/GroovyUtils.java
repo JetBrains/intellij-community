@@ -45,7 +45,8 @@ public abstract class GroovyUtils {
 
   public static boolean isGroovyFileOrDirectory(final VirtualFile file) {
     return (file != null) &&
-            GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension());
+            (GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension()) ||
+                    file.isDirectory());
   }
 
   /**
