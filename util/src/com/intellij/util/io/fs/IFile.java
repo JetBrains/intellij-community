@@ -30,4 +30,8 @@ public interface IFile {
   IFile getChild(final String childName);
 
   boolean isDirectory();
+
+  IFile[] listFiles();
+
+  void mkDir();
 }

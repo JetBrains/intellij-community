@@ -1,6 +1,8 @@
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -37,6 +39,16 @@ public interface StorageAnnotationsDefaultValues {
   class NullStateStorageChooser implements StateStorageChooser {
     public Storage[] selectStorages(Storage[] storages, Object component, final StateStorageOperation operation) {
       throw new UnsupportedOperationException("Method selectStorages is not supported in " + getClass());
+    }
+  }
+
+  class NullStateSplitter implements StateSplitter {
+    public List<Pair<Element, String>> splitState(Element e) {
+      throw new UnsupportedOperationException("Method splitState not implemented in " + getClass());
+    }
+
+    public void mergeStatesInto(final Element target, final Element[] elements) {
+      throw new UnsupportedOperationException("Method mergeStatesInto not implemented in " + getClass());
     }
   }
 }

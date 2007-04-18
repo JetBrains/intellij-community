@@ -1,14 +1,16 @@
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Pair;
+import org.jdom.Element;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *  @author dsl
@@ -17,7 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
   name = "libraryTable",
   storages = {
     @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/libraries.xml", scheme = StorageScheme.DIRECTORY_BASED)
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/libraries/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
     }
 )
 public class ProjectLibraryTable extends LibraryTableBase implements ProjectComponent {
@@ -60,4 +62,26 @@ public class ProjectLibraryTable extends LibraryTableBase implements ProjectComp
     return true;
   }
 
+
+  public static class LibraryStateSplitter implements StateSplitter {
+
+    public List<Pair<Element, String>> splitState(Element e) {
+      List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
+
+      final List list = e.getChildren();
+      for (final Object o : list) {
+        Element library = (Element)o;
+        final String name = library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR) + ".xml";
+        result.add(new Pair<Element, String>(library, name));
+      }
+
+      return result;
+    }
+
+    public void mergeStatesInto(Element target, Element[] elements) {
+      for (Element e : elements) {
+        target.addContent(e);
+      }
+    }
+  }
 }

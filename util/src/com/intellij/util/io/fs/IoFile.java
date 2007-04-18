@@ -75,4 +75,34 @@ class IoFile implements IFile {
   public boolean isDirectory() {
     return myFile.isDirectory();
   }
+
+  public IFile[] listFiles() {
+    final File[] files = myFile.listFiles();
+    IFile[] result = new IoFile[files.length];
+
+    for (int i = 0; i < result.length; i++) {
+      result[i] = new IoFile(files[i]);
+    }
+
+    return result;
+  }
+
+  public void mkDir() {
+    myFile.mkdir();
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final IoFile ioFile = (IoFile)o;
+
+    if (!myFile.equals(ioFile.myFile)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myFile.hashCode();
+  }
 }

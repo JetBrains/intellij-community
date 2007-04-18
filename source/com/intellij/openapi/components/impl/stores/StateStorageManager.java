@@ -1,9 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageAnnotationsDefaultValues;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +51,7 @@ class StateStorageManager {
   }
 
 
+  @Nullable
   private StateStorage createStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
     if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
       try {
@@ -65,6 +63,9 @@ class StateStorageManager {
       catch (IllegalAccessException e) {
         throw new StateStorage.StateStorageException(e);
       }
+    }
+    else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+      return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
     else return createFileStateStorage(storageSpec.file());
   }
@@ -81,24 +82,56 @@ class StateStorageManager {
   }
 
   @Nullable
-  protected StateStorage createFileStateStorage(@NotNull final String file) {
+  private StateStorage createDirectoryStateStorage(final String file, final Class<? extends StateSplitter> splitterClass) throws
+                                                                                                                          StateStorage.StateStorageException {
+    final String expandedFile = expandMacroses(file);
+    if (expandedFile == null) {
+      myStorages.put(file, null);
+      return null;
+    }
+
+    final StateSplitter splitter;
+
+    try {
+      splitter = splitterClass.newInstance();
+    }
+    catch (InstantiationException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
+
+    return new DirectoryBasedStorage(myPathMacroManager, expandedFile, splitter);
+  }
+
+  @Nullable
+  private StateStorage createFileStateStorage(@NotNull final String file) {
+    String expandedFile = expandMacroses(file);
+    if (expandedFile == null) {
+      myStorages.put(file, null);
+      return null;
+    }
+
+    assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + file;
+
+    return new FileBasedStorage(myPathMacroManager, expandedFile, myRootTagName);
+  }
+
+  @Nullable
+  private String expandMacroses(final String file) {
     String actualFile = file;
 
     for (String macro : myMacros.keySet()) {
       final String replacement = myMacros.get(macro);
       if (replacement == null) {
-        myStorages.put(file, null);
         return null;
       }
 
       actualFile = StringUtil.replace(actualFile, macro, replacement);
     }
 
-    assert actualFile.indexOf("$") < 0 : "Can't expand all macroses in: " + file;
-
-    final FileBasedStorage storage = new FileBasedStorage(myPathMacroManager, actualFile, myRootTagName);
-    myStorages.put(file, storage);
-    return storage;
+    return actualFile;
   }
 
   public void save() throws StateStorage.StateStorageException, IOException {

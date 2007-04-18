@@ -234,8 +234,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final StateStorage s = getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
     if (!(s instanceof FileBasedStorage)) return null;
     final FileBasedStorage storage = (FileBasedStorage)s;
-    if (storage == null) return null;
-    
+
     final IFile file = storage.getFile();
     if (file == null) return null;
 

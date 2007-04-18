@@ -28,7 +28,7 @@ import java.util.Set;
  */
 public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
-  @NonNls private static final String LIBRARY_NAME_ATTR = "name";
+  @NonNls static final String LIBRARY_NAME_ATTR = "name";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   private String myName;
   private final LibraryTable myLibraryTable;
