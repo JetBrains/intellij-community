@@ -326,9 +326,12 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
 
     String name = ((PsiParameter)info.myElement.getParent()).getName();
-    name = stripTypedVariableDecoration(name);
+    name = isTypedVariable(name) ? stripTypedVariableDecoration(name):name;
 
-    for(Iterator<MatchResult> i = map.get(name).getAllSons().iterator(), j = map.get(info.name).getAllSons().iterator();
+    final MatchResult matchResult = map.get(name);
+    if (matchResult == null) return;
+
+    for(Iterator<MatchResult> i = matchResult.getAllSons().iterator(), j = map.get(info.name).getAllSons().iterator();
         i.hasNext() && j.hasNext();
       ) {
       if (buf.length()>0) {
