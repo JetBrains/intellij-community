@@ -17,17 +17,17 @@ import org.jetbrains.annotations.Nullable;
 public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDescriptor>{
 
   @NotNull
-  DomElementProblemDescriptor createProblem(DomElement domElement, @Nullable String message);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message);
 
   @NotNull
-  DomElementProblemDescriptor createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
 
   @NotNull
-  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message);
 
-  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix... fixes);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix... fixes);
 
-  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
@@ -40,7 +40,7 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
    * @return annotation
    */
   @NotNull
-  Annotation createAnnotation(DomElement element, HighlightSeverity severity, @Nullable String message);
+  Annotation createAnnotation(@NotNull DomElement element, HighlightSeverity severity, @Nullable String message);
 
   int getSize();
 }
