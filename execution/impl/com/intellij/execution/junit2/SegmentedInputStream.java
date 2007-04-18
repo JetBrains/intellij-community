@@ -3,6 +3,7 @@ package com.intellij.execution.junit2;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.SegmentedStream;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -69,12 +70,17 @@ public class SegmentedInputStream extends InputStream {
 
   private char[] readMarker() throws IOException {
     int nextRead = '0';
-    final StringBuffer buffer = new StringBuffer();
-    while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
-      buffer.append((char)nextRead);
-      nextRead = readNext();
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
+        buffer.append((char)nextRead);
+        nextRead = readNext();
+      }
+      return readNext(Integer.valueOf(buffer.toString()).intValue());
     }
-    return readNext(Integer.valueOf(buffer.toString()).intValue());
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
   private char[] readNext(final int charCount) throws IOException {
@@ -86,7 +92,32 @@ public class SegmentedInputStream extends InputStream {
   }
 
   public int available() throws IOException {
-    return mySourceStream.ready() ? 1 : 0;
+    
+    while (mySourceStream.ready()) {
+     
+      while(myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
+        final int aChar = readNext();
+        if (aChar != SegmentedStream.STARTUP_MESSAGE.charAt(myStartupPassed)) {
+          mySourceStream.pushBack(aChar);
+          mySourceStream.pushBack(SegmentedStream.STARTUP_MESSAGE.substring(0, myStartupPassed).toCharArray());
+          myStartupPassed = 0;
+          return 0;
+        }
+        myStartupPassed++;
+      }
+
+      final int b = mySourceStream.next();
+      if (b != SegmentedStream.SPECIAL_SYMBOL) {
+        mySourceStream.pushBack(b);
+        return 1;
+      }
+      final boolean packetRead = readControlSequence();
+      if (!packetRead) {
+        mySourceStream.pushBack(b);
+        return 1;
+      }
+    }
+    return 0;
   }
 
   public void close() throws IOException {
@@ -94,25 +125,30 @@ public class SegmentedInputStream extends InputStream {
   }
 
   public static String decode(final char[] chars) {
-    final StringBuffer buffer = new StringBuffer(chars.length);
-    for (int i = 0; i < chars.length; i++) {
-      char chr = chars[i];
-      final char decodedChar;
-      if (chr == Packet.ourSpecialSymbol) {
-        i++;
-        chr = chars[i];
-        if (chr != Packet.ourSpecialSymbol) {
-          final StringBuffer codeBuffer = new StringBuffer(Packet.CODE_LENGTH);
-          codeBuffer.append(chr);
-          for (int j = 1; j < Packet.CODE_LENGTH; j++)
-            codeBuffer.append(chars[i+j]);
-          i += Packet.CODE_LENGTH - 1;
-          decodedChar = (char)Integer.parseInt(codeBuffer.toString());
-        }
-        else decodedChar = chr;
-      } else decodedChar = chr;
-      buffer.append(decodedChar);
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      for (int i = 0; i < chars.length; i++) {
+        char chr = chars[i];
+        final char decodedChar;
+        if (chr == Packet.ourSpecialSymbol) {
+          i++;
+          chr = chars[i];
+          if (chr != Packet.ourSpecialSymbol) {
+            final StringBuffer codeBuffer = new StringBuffer(Packet.CODE_LENGTH);
+            codeBuffer.append(chr);
+            for (int j = 1; j < Packet.CODE_LENGTH; j++)
+              codeBuffer.append(chars[i+j]);
+            i += Packet.CODE_LENGTH - 1;
+            decodedChar = (char)Integer.parseInt(codeBuffer.toString());
+          }
+          else decodedChar = chr;
+        } else decodedChar = chr;
+        buffer.append(decodedChar);
+      }
+      return buffer.toString();
     }
-    return buffer.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 }
