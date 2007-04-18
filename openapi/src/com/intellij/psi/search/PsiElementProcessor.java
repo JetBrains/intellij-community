@@ -23,7 +23,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @see com.intellij.psi.util.PsiTreeUtil#processElements(com.intellij.psi.PsiElement, PsiElementProcessor)
+ */
 public interface PsiElementProcessor<T extends PsiElement> {
+
+  /**
+   * Processes a PsiElement
+   *
+   * @param element currently processed element.
+   * @return false to stop processing.
+   */
   boolean execute(T element);
 
   class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
