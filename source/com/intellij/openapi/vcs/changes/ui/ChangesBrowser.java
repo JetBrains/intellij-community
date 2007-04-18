@@ -254,7 +254,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   private ChangeList[] getSelectedChangeLists() {
-    return new ChangeList[]{mySelectedChangeList};
+    if (mySelectedChangeList != null) {
+      return new ChangeList[]{mySelectedChangeList};
+    }
+    return null;
   }
 
   private VirtualFile[] getSelectedFiles() {
