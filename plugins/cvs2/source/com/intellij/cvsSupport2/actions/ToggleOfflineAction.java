@@ -12,6 +12,7 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
@@ -38,6 +39,7 @@ public class ToggleOfflineAction extends ToggleAction {
   public void update(final AnActionEvent e) {
     super.update(e);
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
-    e.getPresentation().setVisible(cvsContext.cvsIsActive());
+    final VirtualFile[] files = cvsContext.getSelectedFiles();
+    e.getPresentation().setVisible(files != null && files.length > 0 && cvsContext.cvsIsActive());
   }
 }
