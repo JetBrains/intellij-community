@@ -108,11 +108,11 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
       }
       final CvsResult executionResult = runRLogOperation(connectionSettings, module, cacheElement, date);
 
-      if (!executionResult.hasNoErrors()) {
-        throw executionResult.composeError();
-      }
-      else if (executionResult.isCanceled()) {
+      if (executionResult.isCanceled()) {
         throw new ProcessCanceledException();
+      }
+      else if (!executionResult.hasNoErrors()) {
+        throw executionResult.composeError();
       }
       else {
         cacheElement.flush(date);
