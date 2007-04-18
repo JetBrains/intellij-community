@@ -200,7 +200,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         for (Iterator<MyUsageInfo> iterator = otherUsages.iterator(); iterator.hasNext();) {
           MyUsageInfo info = iterator.next();
           if (member.equals(info.member)) {
-            PsiReference ref = info.reference.getReference();
+            PsiReference ref = info.getReference();
             if (ref != null) {
               refsToBeRebind.add(ref);
             }
