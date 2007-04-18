@@ -466,7 +466,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
-    if(namespace == null || namespace.equals(XmlUtil.ANY_URI) || namespace.equals(getNamespace())) return getAttribute(name);
+    boolean sameNsAsTag = false;
+    if(namespace == null || namespace.equals(XmlUtil.ANY_URI) || (sameNsAsTag = namespace.equals(getNamespace()))) {
+      final XmlAttribute attribute = getAttribute(name);
+      if (attribute != null || !sameNsAsTag) return attribute;
+    }
     final String prefix = getPrefixByNamespace(namespace);
     String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
     return getAttribute(qname);

@@ -95,7 +95,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public String getNamespace() {
     final String name = getName();
     final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
-    if(prefixByQualifiedName.length() == 0) return getParent().getNamespace();
+    // The namespace name for an unprefixed attribute name always has no value. Namespace recommendation section 6.2, third paragraph
+    if(prefixByQualifiedName.length() == 0) return XmlUtil.EMPTY_URI;
     return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
