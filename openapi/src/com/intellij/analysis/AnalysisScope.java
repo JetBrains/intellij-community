@@ -25,11 +25,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.FileIndexImplUtil;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
@@ -70,6 +73,7 @@ public class AnalysisScope {
   private final Module myModule;
   private final PsiElement myElement;
   private final SearchScope myScope;
+  private boolean mySearchInLibraries = false;
   private final int myType;
 
   private HashSet<VirtualFile> myFilesSet;
@@ -139,6 +143,9 @@ public class AnalysisScope {
     myType = CUSTOM;
   }
 
+  public void setSearchInLibraries(final boolean searchInLibraries) {
+    mySearchInLibraries = searchInLibraries;
+  }
 
   public AnalysisScope(Project project, Collection<VirtualFile> virtualFiles) {
     myProject = project;
@@ -323,7 +330,7 @@ public class AnalysisScope {
     } else if (myScope instanceof GlobalSearchScope) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      projectFileIndex.iterateContent(new ContentIterator() {
+      final ContentIterator contentIterator = new ContentIterator() {
         @SuppressWarnings({"SimplifiableIfStatement"})
         public boolean processFile(final VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
@@ -337,7 +344,14 @@ public class AnalysisScope {
           }
           return true;
         }
-      });
+      };
+      projectFileIndex.iterateContent(contentIterator);
+      if (mySearchInLibraries) {
+        final VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
+        for (VirtualFile libraryRoot : libraryRoots) {
+          FileIndexImplUtil.iterateRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator);
+        }
+      }
     } else if (myScope instanceof LocalSearchScope) {
       final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
       for (PsiElement element : psiElements) {

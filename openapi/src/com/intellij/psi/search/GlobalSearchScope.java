@@ -90,8 +90,8 @@ public abstract class GlobalSearchScope extends SearchScope {
                                  PsiBundle.message("psi.search.scope.test.files"));
   }
 
-  public static GlobalSearchScope filterScope(Project project, NamedScope set, final boolean includeNonJavaFiles) {
-    return new FilterScopeAdapter(project, set, includeNonJavaFiles);
+  public static GlobalSearchScope filterScope(Project project, NamedScope set) {
+    return new FilterScopeAdapter(project, set);
   }
 
   public static GlobalSearchScope notScope(final GlobalSearchScope scope) {
@@ -437,13 +437,11 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   private static class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
-    private boolean myIncludeNonJavaFiles;
     private final PsiManager myManager;
     private Project myProject;
 
-    public FilterScopeAdapter(Project project, NamedScope set, boolean includeNonJavaFiles) {
+    public FilterScopeAdapter(Project project, NamedScope set) {
       mySet = set;
-      myIncludeNonJavaFiles = includeNonJavaFiles;
       myProject = project;
       myManager = PsiManager.getInstance(myProject);
     }
@@ -452,14 +450,8 @@ public abstract class GlobalSearchScope extends SearchScope {
       PsiFile psiFile = myManager.findFile(file);
       if (psiFile == null) return false;
       NamedScopesHolder holder = NamedScopeManager.getInstance(myProject);
-      final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
       final PackageSet packageSet = mySet.getValue();
-      if (psiFile instanceof PsiJavaFile || (containingDirectory != null && containingDirectory.getPackage() != null)) {
-        return packageSet != null && packageSet.contains(psiFile, holder);
-      }
-      else {
-        return myIncludeNonJavaFiles;
-      }
+      return packageSet != null && packageSet.contains(psiFile, holder);
     }
 
     public String getDisplayName() {

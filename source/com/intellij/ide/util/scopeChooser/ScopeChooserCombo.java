@@ -138,7 +138,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
       for (NamedScope scope : scopes) {
-        model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope, true)));
+        model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope)));
       }
     }
 

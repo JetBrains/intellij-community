@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
@@ -161,34 +164,6 @@ public class TreeModelBuilder {
     return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project, showProgress);
   }
 
-  private static VirtualFile[] getLibraryRoots(Project project) {
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      for (OrderEntry entry : orderEntries) {
-        if (entry instanceof LibraryOrderEntry){
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          if (library != null) {
-            VirtualFile[] files = library.getFiles(OrderRootType.SOURCES);
-            if (files == null || files.length == 0){
-              files = library.getFiles(OrderRootType.CLASSES);
-            }
-            roots.addAll(Arrays.asList(files));
-          }
-        } else if (entry instanceof JdkOrderEntry){
-          VirtualFile[] files = entry.getFiles(OrderRootType.SOURCES);
-          if (files.length == 0){
-            files = entry.getFiles(OrderRootType.CLASSES);
-          }
-          roots.addAll(Arrays.asList(files));
-        }
-      }
-    }
-    return roots.toArray(new VirtualFile[roots.size()]);
-  }
-
   private void countFiles(Project project) {
     final Integer fileCount = project.getUserData(FILE_COUNT);
     if (fileCount == null) {
@@ -202,8 +177,7 @@ public class TreeModelBuilder {
       });
 
       if (!myGroupByFiles) {
-        VirtualFile[] roots = getLibraryRoots(project);
-        for (VirtualFile root : roots) {
+        for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
           countFilesRecursively(root);
         }
       }
@@ -239,8 +213,7 @@ public class TreeModelBuilder {
         });
 
         if (!myGroupByFiles) {
-          VirtualFile[] roots = getLibraryRoots(project);
-          for (VirtualFile root : roots) {
+          for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
             processFilesRecursively(root, psiManager);
           }
         }
@@ -531,7 +504,7 @@ public class TreeModelBuilder {
   }
 
   private PackageDependenciesNode getLibraryDirNode(PsiPackage aPackage, OrderEntry libraryOrJdk) {
-    if (aPackage == null) {
+    if (aPackage == null || aPackage.getName() == null) {
       return getLibraryOrJDKNode(libraryOrJdk);
     }
 

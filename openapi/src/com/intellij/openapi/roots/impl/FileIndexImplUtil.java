@@ -5,6 +5,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 
 public class FileIndexImplUtil {
+  private FileIndexImplUtil() {
+  }
+
   public static boolean iterateRecursively(VirtualFile root, VirtualFileFilter filter, ContentIterator iterator){
     if (!filter.accept(root)) return true;
 

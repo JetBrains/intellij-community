@@ -1,8 +1,8 @@
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -15,6 +15,7 @@ public class BackwardDependenciesAction extends BaseAnalysisAction{
   }
 
   protected void analyze(Project project, AnalysisScope scope) {
+    scope.setSearchInLibraries(true); //find library usages in project
     new BackwardDependenciesHandler(project, scope).analyze();
   }
 }

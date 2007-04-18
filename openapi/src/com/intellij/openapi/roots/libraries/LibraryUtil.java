@@ -3,12 +3,18 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Set;
 
 public class LibraryUtil {
   private LibraryUtil() {
@@ -66,5 +72,37 @@ public class LibraryUtil {
       name = baseName + " (" + count++ + ")";
     }
     return libraryTable.createLibrary(name);
+  }
+
+  public static VirtualFile[] getLibraryRoots(final Project project) {
+    return getLibraryRoots(project, true, true);
+  }
+
+  public static VirtualFile[] getLibraryRoots(final Project project, final boolean includeSourceFiles, final boolean includeJdk) {
+    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (OrderEntry entry : orderEntries) {
+        if (entry instanceof LibraryOrderEntry){
+          final Library library = ((LibraryOrderEntry)entry).getLibrary();
+          if (library != null) {
+            VirtualFile[] files = includeSourceFiles ? library.getFiles(OrderRootType.SOURCES) : null;
+            if (files == null || files.length == 0){
+              files = library.getFiles(OrderRootType.CLASSES);
+            }
+            roots.addAll(Arrays.asList(files));
+          }
+        } else if (includeJdk && entry instanceof JdkOrderEntry){
+          VirtualFile[] files = includeSourceFiles ? entry.getFiles(OrderRootType.SOURCES) : null;
+          if (files == null || files.length == 0){
+            files = entry.getFiles(OrderRootType.CLASSES);
+          }
+          roots.addAll(Arrays.asList(files));
+        }
+      }
+    }
+    return roots.toArray(new VirtualFile[roots.size()]);
   }
 }
