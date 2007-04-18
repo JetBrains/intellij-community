@@ -16,6 +16,8 @@ import java.awt.*;
 import java.io.File;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * author: lesya
  */
@@ -27,7 +29,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   private final String myParentPath;
   private final String myName;
 
-  public FileOrDirectoryTreeNode(String path, SimpleTextAttributes invalidAttributes,
+  public FileOrDirectoryTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
                                  Project project, String parentPath) {
     String preparedPath = path.replace(File.separatorChar, '/');
     String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(),

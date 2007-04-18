@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * author: lesya
  */
@@ -19,7 +21,7 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<VirtualFile>();
 
 
-  public FileTreeNode(String path, SimpleTextAttributes invalidAttributes,
+  public FileTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
                       Project project, String parentPath) {
     super(path, invalidAttributes, project, parentPath);
   }
