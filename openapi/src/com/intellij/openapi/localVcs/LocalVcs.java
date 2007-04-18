@@ -44,6 +44,7 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   @Nullable
   public abstract LvcsFileRevision findFileRevisionByDate(final String filePath, long date);
 
+  /*unused*/
   @Nullable
   public abstract LvcsFile findFile(String filePath, LvcsLabel label);
 
@@ -53,6 +54,7 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, boolean ignoreDeleted);
 
+  /*unused*/
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, LvcsLabel label);
 
