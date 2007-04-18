@@ -44,12 +44,12 @@ import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision {
   private SVNRepository myRepository;
-  private SVNLogEntryPath myLogEntryPath;
+  private String myPath;
   private long myRevision;
   private String myContent;
 
-  public SvnRepositoryContentRevision(final SVNRepository repository, final SVNLogEntryPath logEntryPath, final long revision) {
-    myLogEntryPath = logEntryPath;
+  public SvnRepositoryContentRevision(final SVNRepository repository, final String path, final long revision) {
+    myPath = path;
     myRepository = repository;
     myRevision = revision;
   }
@@ -57,9 +57,8 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     if (myContent == null) {
-      final String path = myLogEntryPath.getPath();
       final OutputStream buffer = new ByteArrayOutputStream();
-      ContentLoader loader = new ContentLoader(path, buffer, myRevision);
+      ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
       if (ApplicationManager.getApplication().isDispatchThread()) {
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"), false, null);
@@ -78,7 +77,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnNonLocal(myLogEntryPath.getPath(), false);
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnNonLocal(myPath, false);
   }
 
   @NotNull

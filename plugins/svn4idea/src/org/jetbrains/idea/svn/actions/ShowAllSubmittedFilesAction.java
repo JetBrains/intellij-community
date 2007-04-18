@@ -104,7 +104,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
             }
 
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            result.set(new SvnChangeList(logEntry [0], repos));
+            result.set(new SvnChangeList(vcs, logEntry [0], repos));
           }
           catch (Exception e) {
             ex[0] = e;

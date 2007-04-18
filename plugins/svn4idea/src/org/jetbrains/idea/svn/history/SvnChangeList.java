@@ -24,32 +24,59 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.diagnostic.Logger;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class SvnChangeList implements CommittedChangeList {
-  private final SVNLogEntry myLogEntry;
-  private final SVNRepository myRepository;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
+
+  private SvnVcs myVcs;
+  private final String myRepositoryURL;
+  private long myRevision;
+  private String myAuthor;
+  private Date myDate;
+  private String myMessage;
+  private Set<String> myChangedPaths = new HashSet<String>();
+  private Set<String> myAddedPaths = new HashSet<String>();
+  private Set<String> myDeletedPaths = new HashSet<String>();
   private List<Change> myChanges;
 
-  public SvnChangeList(final SVNLogEntry logEntry, SVNRepository repository) {
-    myLogEntry = logEntry;
-    myRepository = repository;
+  public SvnChangeList(SvnVcs vcs, final SVNLogEntry logEntry, SVNRepository repository) {
+    myVcs = vcs;
+    myRevision = logEntry.getRevision();
+    myAuthor = logEntry.getAuthor();
+    myDate = logEntry.getDate();
+    myMessage = logEntry.getMessage();
+    for(Object o: logEntry.getChangedPaths().values()) {
+      SVNLogEntryPath entry = (SVNLogEntryPath) o;
+      if (entry.getType() == 'A') {
+        myAddedPaths.add(entry.getPath());
+      }
+      else if (entry.getType() == 'D') {
+        myDeletedPaths.add(entry.getPath());
+      }
+      else {
+        myChangedPaths.add(entry.getPath());
+      }
+    }
+    myRepositoryURL = repository.getLocation().toString();
   }
 
   public String getCommitterName() {
-    return myLogEntry.getAuthor();
+    return myAuthor;
   }
 
   public Date getCommitDate() {
-    return myLogEntry.getDate();
+    return myDate;
   }
 
   public Collection<Change> getChanges() {
@@ -61,29 +88,42 @@ public class SvnChangeList implements CommittedChangeList {
 
   private void loadChanges() {
     myChanges = new ArrayList<Change>();
-    for(Object o: myLogEntry.getChangedPaths().values()) {
-      SVNLogEntryPath entry = (SVNLogEntryPath) o;
-      SvnRepositoryContentRevision beforeRevision = (entry.getType() == 'A')
-                                          ? null
-                                          : new SvnRepositoryContentRevision(myRepository, entry, myLogEntry.getRevision()-1);
-      SvnRepositoryContentRevision afterRevision = (entry.getType() == 'D')
-                                         ? null
-                                         : new SvnRepositoryContentRevision(myRepository, entry, myLogEntry.getRevision());
+    SVNRepository repository;
+    try {
+      repository = myVcs.createRepository(myRepositoryURL);
+    }
+    catch (SVNException e) {
+      // should never happen - we got the URL from a real live existing repository
+      LOG.error(e);
+      return;
+    }
+    for(String path: myAddedPaths) {
+      myChanges.add(new Change(null,
+                               new SvnRepositoryContentRevision(repository, path, myRevision)));
+    }
+    for(String path: myDeletedPaths) {
+      myChanges.add(new Change(new SvnRepositoryContentRevision(repository, path, myRevision-1),
+                               null));
+
+    }
+    for(String path: myChangedPaths) {
+      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(repository, path, myRevision-1);
+      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(repository, path, myRevision);
       myChanges.add(new Change(beforeRevision, afterRevision));
     }
   }
 
   @NotNull
   public String getName() {
-    return myLogEntry.getMessage();
+    return myMessage;
   }
 
   public String getComment() {
-    return myLogEntry.getMessage();
+    return myMessage;
   }
 
   public long getNumber() {
-    return myLogEntry.getRevision();
+    return myRevision;
   }
 
   public boolean equals(final Object o) {
@@ -92,12 +132,20 @@ public class SvnChangeList implements CommittedChangeList {
 
     final SvnChangeList that = (SvnChangeList)o;
 
-    if (!myLogEntry.equals(that.myLogEntry)) return false;
+    if (myRevision != that.myRevision) return false;
+    if (myAuthor != null ? !myAuthor.equals(that.myAuthor) : that.myAuthor != null) return false;
+    if (myDate != null ? !myDate.equals(that.myDate) : that.myDate != null) return false;
+    if (myMessage != null ? !myMessage.equals(that.myMessage) : that.myMessage != null) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myLogEntry.hashCode();
+    int result;
+    result = (int)(myRevision ^ (myRevision >>> 32));
+    result = 31 * result + (myAuthor != null ? myAuthor.hashCode() : 0);
+    result = 31 * result + (myDate != null ? myDate.hashCode() : 0);
+    result = 31 * result + (myMessage != null ? myMessage.hashCode() : 0);
+    return result;
   }
 }

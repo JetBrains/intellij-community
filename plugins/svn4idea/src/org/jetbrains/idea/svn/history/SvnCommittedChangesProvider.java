@@ -144,7 +144,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
                          progress.checkCanceled();
                        }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         result.add(new SvnChangeList(logEntry, repository));
+                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), logEntry, repository));
                        }
                      }
                    });
