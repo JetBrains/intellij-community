@@ -26,27 +26,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class PackageDefinition implements GroovyElementTypes
-{
+public class PackageDefinition implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     // TODO Add annotation parsing
 
     Marker pMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected")))
-    {
+    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))) {
       pMarker.drop();
       return WRONGWAY;
     }
-    if (ParserUtils.lookAhead(builder, mIDENT))
-    {
+    if (ParserUtils.lookAhead(builder, mIDENT)) {
       identifierParse(builder);
-    }
-    else
-    {
+    } else {
       builder.error(GroovyBundle.message("identifier.expected"));
     }
 
@@ -54,27 +48,42 @@ public class PackageDefinition implements GroovyElementTypes
     return PACKAGE_DEFINITION;
   }
 
-  private static GroovyElementType identifierParse(PsiBuilder builder)
-  {
+  private static GroovyElementType identifierParse(PsiBuilder builder) {
 
     Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
       marker.rollbackTo();
       return WRONGWAY;
     }
 
-    boolean flag = true;
-    while (flag && ParserUtils.getToken(builder, mDOT))
-    {
-      if (ParserUtils.lookAhead(builder, mNLS, mIDENT))
-      {
-        ParserUtils.getToken(builder, mNLS);
-      }
-      flag = ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+    if (mDOT.equals(builder.getTokenType())) {
+      Marker newMarker = marker.precede();
+      marker.done(IDENTIFIER);
+      ParserUtils.getToken(builder, mDOT);
+      ParserUtils.getToken(builder, mNLS);
+      idSubParse(builder, newMarker);
+    } else {
+      marker.done(IDENTIFIER);
     }
-    marker.done(IDENTIFIER);
 
     return IDENTIFIER;
+  }
+
+  private static void idSubParse(PsiBuilder builder, Marker marker) {
+    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
+      marker.rollbackTo();
+      return;
+    }
+    if (mDOT.equals(builder.getTokenType())) {
+      Marker newMarker = marker.precede();
+      marker.done(IDENTIFIER);
+      ParserUtils.getToken(builder, mDOT);
+      ParserUtils.getToken(builder, mNLS);
+      idSubParse(builder, newMarker);
+    } else {
+      marker.done(IDENTIFIER);
+    }
+
+
   }
 }
