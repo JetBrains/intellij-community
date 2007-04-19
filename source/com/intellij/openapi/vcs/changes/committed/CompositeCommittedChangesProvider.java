@@ -60,17 +60,6 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
-  public List<CommittedChangeList> getAllCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    LinkedHashSet<CommittedChangeList> result = new LinkedHashSet<CommittedChangeList>();
-    for(AbstractVcs vcs: settings.getEnabledVcss()) {
-      CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      assert provider != null;
-      //noinspection unchecked
-      result.addAll(provider.getAllCommittedChanges(settings.get(vcs), maxCount));
-    }
-    return new ArrayList<CommittedChangeList>(result);
-  }
-
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
                                                        RepositoryLocation location, final int maxCount) throws VcsException {
     throw new UnsupportedOperationException();

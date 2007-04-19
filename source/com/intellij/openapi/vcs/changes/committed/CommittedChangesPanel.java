@@ -85,8 +85,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
+          final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           if (myLocation == null) {
-            changes.set(myProvider.getAllCommittedChanges(mySettings, myMaxCount));
+            changes.set(cache.getProjectChanges(mySettings, myMaxCount));
           }
           else {
             changes.set(myProvider.getCommittedChanges(mySettings, myLocation, myMaxCount));

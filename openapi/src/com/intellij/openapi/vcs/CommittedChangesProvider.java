@@ -37,7 +37,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
 
   @Nullable
   RepositoryLocation getLocationFor(VirtualFile root);
-  List<T> getAllCommittedChanges(U settings, final int maxCount) throws VcsException;
+
   List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
   ChangeListColumn[] getColumns();
 }

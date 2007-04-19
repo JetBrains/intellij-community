@@ -12,7 +12,6 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -26,10 +25,11 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.io.File;
 
 public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
@@ -48,23 +48,15 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
+  @Nullable
   public CvsRepositoryLocation getLocationFor(final VirtualFile root) {
+    if (!CvsUtil.fileIsUnderCvs(new File(root.getPresentableUrl()))) {
+      return null;
+    }
     final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
     final String module = CvsUtil.getModuleName(root);
     final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
     return new CvsRepositoryLocation(connectionSettings, module);
-  }
-
-  public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    LinkedHashSet<CvsChangeList> result = new LinkedHashSet<CvsChangeList>();
-    final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
-    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(vcs);
-    for(VirtualFile file: files) {
-      if (vcs.fileIsUnderVcs(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-        result.addAll(getCommittedChanges(settings, getLocationFor(file), 0));
-      }
-    }
-    return new ArrayList<CvsChangeList>(result);
   }
 
   public ChangeListColumn[] getColumns() {
