@@ -136,18 +136,18 @@ public class CommittedChangesCache {
     ChangesCacheFile cacheFile = getCacheFile(provider, location);
     if (cacheFile.isEmpty()) {
       List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
-      cacheFile.writeChanges(changes);
+      cacheFile.writeChanges(changes); // this sorts changes in chronological order
       if (changes.size() < myInitialCount) {
         cacheFile.setHaveCompleteHistory(true);
       }
       if (canGetFromCache(provider, settings, location, maxCount)) {
         settings.filterChanges(changes);
-        return changes;
+        return trimToSize(changes, maxCount);
       }
       return provider.getCommittedChanges(settings, location, maxCount);
     }
     else {
-      List<CommittedChangeList> changes = cacheFile.readChanges(settings);
+      List<CommittedChangeList> changes = cacheFile.readChanges(settings, maxCount);
       final Date date = cacheFile.getLastCachedDate();
       final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
       defaultSettings.setDateAfter(date);
@@ -155,8 +155,15 @@ public class CommittedChangesCache {
       newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
       settings.filterChanges(newChanges);
       changes.addAll(newChanges);
-      return changes;
+      return trimToSize(changes, maxCount);
     }
+  }
+
+  private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
+    while(changes.size() > maxCount) {
+      changes.remove(0);
+    }
+    return changes;
   }
 
   private ChangesCacheFile getCacheFile(final CachingCommittedChangesProvider provider, final RepositoryLocation location) {
