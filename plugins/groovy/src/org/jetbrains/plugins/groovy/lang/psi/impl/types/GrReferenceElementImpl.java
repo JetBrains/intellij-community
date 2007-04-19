@@ -42,6 +42,9 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
 
   @NotNull
   public String getReferenceName() {
-    return findChildByType(GroovyTokenTypes.mIDENT).getText();
+    if (findChildByType(GroovyTokenTypes.mIDENT) != null) {
+      return findChildByType(GroovyTokenTypes.mIDENT).getText();
+    }
+    return null;
   }
 }
