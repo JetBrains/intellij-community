@@ -33,9 +33,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.InternationalFormatter;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.regex.Pattern;
@@ -135,6 +133,9 @@ public class LocalVariableNamingConventionInspection
                 return;
             }
             if (m_ignoreCatchParameters && isCatchParameter) {
+                return;
+            }
+            if (m_ignoreForLoopParameters && isForeachParameter) {
                 return;
             }
             final String name = variable.getName();
