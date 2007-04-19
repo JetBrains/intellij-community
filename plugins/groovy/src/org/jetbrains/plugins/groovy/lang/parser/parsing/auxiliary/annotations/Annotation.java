@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Identifier;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -40,7 +41,7 @@ public class Annotation implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(Identifier.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       annMarker.rollbackTo();
       return WRONGWAY;
     }

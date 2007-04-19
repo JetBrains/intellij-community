@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -132,7 +132,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     } else if (mIDENT.equals(builder.getTokenType())) {
-      ClassOrInterfaceType.parse(builder);
+      ReferenceElement.parse(builder);
     } else {
       builder.error(GroovyBundle.message("type.specification.expected"));
       marker.done(NEW_EXPRESSION);

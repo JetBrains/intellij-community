@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -19,7 +19,7 @@ public class TypeArgument implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
 
         //todo: check for upper case type specification
-        if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+        if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
           taMarker.rollbackTo();
           return WRONGWAY;
         }

@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ClassOrInterfaceType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -85,7 +85,7 @@ public class TypeSpec implements GroovyElementTypes {
   private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder, boolean isUpper) {
     PsiBuilder.Marker arrMarker = builder.mark();
 
-    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder, isUpper))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder, isUpper, true))) {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -169,7 +169,7 @@ public class TypeSpec implements GroovyElementTypes {
    */
   private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
-    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }

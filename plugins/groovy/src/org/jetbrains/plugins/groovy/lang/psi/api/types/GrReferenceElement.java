@@ -15,9 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrClassInterfaceType extends GrType {
+public interface GrReferenceElement extends GrType {
+  GrReferenceElement getQualifier();
+
+  @NotNull
+  String getReferenceName();
 }

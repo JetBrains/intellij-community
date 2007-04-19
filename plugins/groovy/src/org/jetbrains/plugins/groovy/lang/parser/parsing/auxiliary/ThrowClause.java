@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -35,7 +36,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(Identifier.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       throwClauseMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -43,7 +44,7 @@ public class ThrowClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(Identifier.parse(builder))) {
+      if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
         throwClauseMarker.rollbackTo();
         return WRONGWAY;
       }

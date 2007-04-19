@@ -37,7 +37,7 @@ public class ImplementsClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       isMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -47,7 +47,7 @@ public class ImplementsClause implements GroovyElementTypes {
 
       ParserUtils.getToken(builder, mCOMMA);
 
-      if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+      if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
         isMarker.rollbackTo();
         return WRONGWAY;
       }

@@ -36,7 +36,7 @@ public class SuperClassClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ClassOrInterfaceType.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       sccMarker.rollbackTo();
       builder.error(GroovyBundle.message("class.or.interface.type.expected"));
       return WRONGWAY;

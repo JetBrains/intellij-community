@@ -136,7 +136,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ENUM_DEFINITION) || elem.equals(ENUM_DEFINITION_ERROR)) return new GrEnumTypeDefinitionImpl(node);
     if (elem.equals(ANNOTATION_DEFINITION) || elem.equals(ANNOTATION_DEFINITION_ERROR)) return new GrAnnotationTypeDefinitionImpl(node);
 
-    if (elem.equals(CLASS_INTERFACE_TYPE)) return new GrClassInterfaceTypeImpl(node);
+    if (elem.equals(REFERENCE_ELEMENT)) return new GrReferenceElementImpl(node);
 
     //clauses
     if (elem.equals(IMPLEMENTS_CLAUSE)) return new GrImplementsClauseImpl(node);

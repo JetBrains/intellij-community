@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 
 
 /**
@@ -39,51 +40,12 @@ public class PackageDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
     if (ParserUtils.lookAhead(builder, mIDENT)) {
-      identifierParse(builder);
+      ReferenceElement.parse(builder, false, false);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));
     }
 
     pMarker.done(PACKAGE_DEFINITION);
     return PACKAGE_DEFINITION;
-  }
-
-  private static GroovyElementType identifierParse(PsiBuilder builder) {
-
-    Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
-      marker.rollbackTo();
-      return WRONGWAY;
-    }
-
-    if (mDOT.equals(builder.getTokenType())) {
-      Marker newMarker = marker.precede();
-      marker.done(IDENTIFIER);
-      ParserUtils.getToken(builder, mDOT);
-      ParserUtils.getToken(builder, mNLS);
-      idSubParse(builder, newMarker);
-    } else {
-      marker.done(IDENTIFIER);
-    }
-
-    return IDENTIFIER;
-  }
-
-  private static void idSubParse(PsiBuilder builder, Marker marker) {
-    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
-      marker.rollbackTo();
-      return;
-    }
-    if (mDOT.equals(builder.getTokenType())) {
-      Marker newMarker = marker.precede();
-      marker.done(IDENTIFIER);
-      ParserUtils.getToken(builder, mDOT);
-      ParserUtils.getToken(builder, mNLS);
-      idSubParse(builder, newMarker);
-    } else {
-      marker.done(IDENTIFIER);
-    }
-
-
   }
 }

@@ -26,12 +26,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 
-public class ClassOrInterfaceType implements GroovyElementTypes {
+public class ReferenceElement implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false);
+    return parse(builder, false, true);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean isUpper) {
+  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
     PsiBuilder.Marker secondInternalTypeMarker;
 
@@ -39,7 +39,7 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
     if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
     else return WRONGWAY;
 
-    if (isUpper && !Character.isUpperCase(firstChar)) {
+    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
       internalTypeMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -49,10 +49,10 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    TypeArguments.parse(builder);
+    if (parseTypeArgs) TypeArguments.parse(builder);
 
     secondInternalTypeMarker = internalTypeMarker.precede();
-    internalTypeMarker.done(CLASS_INTERFACE_TYPE);
+    internalTypeMarker.done(REFERENCE_ELEMENT);
     internalTypeMarker = secondInternalTypeMarker;
 
     while (ParserUtils.getToken(builder, mDOT)) {
@@ -61,14 +61,14 @@ public class ClassOrInterfaceType implements GroovyElementTypes {
         return WRONGWAY;
       }
 
-      TypeArguments.parse(builder);
+      if (parseTypeArgs) TypeArguments.parse(builder);
 
-      secondInternalTypeMarker.done(CLASS_INTERFACE_TYPE);
+      secondInternalTypeMarker.done(REFERENCE_ELEMENT);
       secondInternalTypeMarker = internalTypeMarker.precede();
     }
 
     secondInternalTypeMarker.drop();
 
-    return CLASS_INTERFACE_TYPE;
+    return REFERENCE_ELEMENT;
   }
 }

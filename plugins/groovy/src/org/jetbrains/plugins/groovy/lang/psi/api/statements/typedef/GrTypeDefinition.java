@@ -16,16 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GroovyPsiElement, GrStatement {
+public interface GrTypeDefinition extends GrNamedElement, GrStatement {
 
   public GrTypeDefinitionBody getBody();
 
+  @Nullable
   public String getQualifiedName();
 
 }

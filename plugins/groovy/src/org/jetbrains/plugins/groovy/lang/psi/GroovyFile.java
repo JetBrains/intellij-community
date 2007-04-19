@@ -21,6 +21,7 @@ import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 /**
  * Implements all abstractionos related to Groovy file
@@ -44,6 +45,13 @@ public class GroovyFile extends PsiFileBase {
 
   public GrTypeDefinition[] getTypeDefinitions() {
     return findChildrenByClass(GrTypeDefinition.class);
+  }
+
+  @NotNull
+  public String getPackageName() {
+    GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
+    assert packageDef != null;
+    return packageDef.getPackageName();
   }
 }
 

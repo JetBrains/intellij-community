@@ -16,20 +16,32 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassInterfaceType;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrClassInterfaceTypeImpl extends GroovyPsiElementImpl implements GrClassInterfaceType {
-  public GrClassInterfaceTypeImpl (@NotNull ASTNode node) {
+public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement {
+  public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString(){
     return "Class type";
+  }
+
+  public GrReferenceElement getQualifier() {
+    return (GrReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+  }
+
+  @NotNull
+  public String getReferenceName() {
+    return findChildByType(GroovyTokenTypes.mIDENT).getText();
   }
 }

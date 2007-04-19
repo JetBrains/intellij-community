@@ -20,10 +20,14 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 
 /**
  * @author Ilya.Sergey
  */
 public interface GrPackageDefinition extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement
 {
+  String getPackageName();
+
+  GrReferenceElement getPackageReference();
 }
