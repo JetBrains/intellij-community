@@ -19,18 +19,17 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.DefaultRepositoryLocation;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -90,7 +89,7 @@ public class SvnRevisionPanel extends JPanel {
 
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
-      final DefaultRepositoryLocation location = new DefaultRepositoryLocation(myUrlProvider.getUrl());
+      final SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.getUrl());
       final SvnChangeList version =
         AbstractVcsHelper.getInstance(myProject).chooseCommittedChangeList(SvnVcs.getInstance(myProject).getCommittedChangesProvider(), location);
       if (version != null) {

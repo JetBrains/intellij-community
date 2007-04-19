@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.DefaultRepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -50,6 +49,7 @@ import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
@@ -625,7 +625,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getNotNullSelectedNode();
       SVNURL url = node.getURL();
       AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
-                                                                  new DefaultRepositoryLocation(url.toString()),
+                                                                  new SvnRepositoryLocation(url.toString()),
                                                                   "Changes in " + url.toString(), getContentPane());
     }
 

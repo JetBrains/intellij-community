@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -45,12 +44,14 @@ import java.io.OutputStream;
 public class SvnRepositoryContentRevision implements ContentRevision {
   private SVNRepository myRepository;
   private String myPath;
+  @Nullable private FilePath myLocalPath;
   private long myRevision;
   private String myContent;
 
-  public SvnRepositoryContentRevision(final SVNRepository repository, final String path, final long revision) {
+  public SvnRepositoryContentRevision(final SVNRepository repository, final String path, @Nullable final FilePath localPath, final long revision) {
     myPath = path;
     myRepository = repository;
+    myLocalPath = localPath;
     myRevision = revision;
   }
 
@@ -77,6 +78,9 @@ public class SvnRepositoryContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
+    if (myLocalPath != null) {
+      return myLocalPath;
+    }
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnNonLocal(myPath, false);
   }
 

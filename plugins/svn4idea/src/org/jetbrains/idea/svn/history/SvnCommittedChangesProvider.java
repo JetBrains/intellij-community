@@ -64,7 +64,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), new File(root.getPath()), progress);
     if (urls.length == 1) {
-      return new DefaultRepositoryLocation(urls [0]);
+      return new SvnRepositoryLocation(root, urls [0]);
     }
     return null;
   }
@@ -78,18 +78,15 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
       if (path.exists()) {
         String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), path, progress);
         for(String url: urls) {
-          result.addAll(getCommittedChanges(url, maxCount, settings));
+          result.addAll(getCommittedChanges(settings, new SvnRepositoryLocation(root, url), maxCount));
         }
       }
     }
     return new ArrayList<SvnChangeList>(result);
   }
 
-  public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
-    return getCommittedChanges(((DefaultRepositoryLocation) location).getURL(), maxCount, settings);
-  }
-
-  public List<SvnChangeList> getCommittedChanges(String location, final int maxCount, final ChangeBrowserSettings settings) throws VcsException {
+  public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
+    final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
@@ -98,7 +95,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     }
     try {
       SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
-      final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(location);
+      final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(svnLocation.getURL());
 
       final String author = settings.getUserFilter();
       final Date dateFrom = settings.getDateAfterFilter();
@@ -127,7 +124,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
         revisionAfter = SVNRevision.create(1);
       }
 
-      logger.doLog(SVNURL.parseURIEncoded(location), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
+      logger.doLog(SVNURL.parseURIEncoded(svnLocation.getURL()), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
                        if (progress != null) {
@@ -135,7 +132,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
                          progress.checkCanceled();
                        }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), logEntry, repository));
+                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), svnLocation, logEntry, repository));
                        }
                      }
                    });

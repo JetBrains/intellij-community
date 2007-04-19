@@ -32,6 +32,7 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -90,6 +91,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       final String url = svnRevision.getURL();
       final SVNLogEntry[] logEntry = new SVNLogEntry[1];
       final SVNRepository repos = vcs.createRepository(url);
+      final SvnRepositoryLocation location = new SvnRepositoryLocation(url);
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
@@ -104,7 +106,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
             }
 
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            result.set(new SvnChangeList(vcs, logEntry [0], repos));
+            result.set(new SvnChangeList(vcs, location, logEntry [0], repos));
           }
           catch (Exception e) {
             ex[0] = e;
