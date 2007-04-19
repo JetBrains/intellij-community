@@ -33,6 +33,9 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   String getProjectName();
 
+  @Nullable
+  String getPresentableUrl();
+
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED
   }

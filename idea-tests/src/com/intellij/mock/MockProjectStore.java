@@ -114,4 +114,9 @@ public class MockProjectStore implements IProjectStore {
   public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
     throw new UnsupportedOperationException("Method getAllStorageFilesToSave is not yet implemented in " + getClass().getName());
   }
+
+  @Nullable
+  public String getPresentableUrl() {
+    throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
+  }
 }

@@ -269,6 +269,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return temp;
   }
 
+  @Nullable
+  public String getPresentableUrl() {
+    if (myScheme == StorageScheme.DIRECTORY_BASED) {
+      final VirtualFile baseDir = getProjectBaseDir();
+      return baseDir != null ? baseDir.getPresentableUrl() : null;
+    }
+
+    final VirtualFile projectFile = getProjectFile();
+    return projectFile != null ? projectFile.getPresentableUrl() : null;
+  }
+
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
     final boolean macrosOk = checkMacros(getDefinedMacros());

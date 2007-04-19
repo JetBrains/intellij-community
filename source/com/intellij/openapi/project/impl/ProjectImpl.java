@@ -310,8 +310,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Nullable
   @NonNls
   public String getPresentableUrl() {
-    final VirtualFile projectFile = getStateStore().getProjectFile();
-    return projectFile != null ? projectFile.getPresentableUrl() : null;
+    return getStateStore().getPresentableUrl();
   }
 
   @NotNull
