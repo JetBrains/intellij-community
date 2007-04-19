@@ -87,17 +87,24 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
 
   public abstract void showChangesBrowser(CommittedChangesProvider provider,
-                                          final VirtualFile root,
+                                          final RepositoryLocation location,
                                           @Nls String title,
                                           @Nullable final Component parent);
 
   public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
 
   @Nullable
-  public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
+  public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
+                                                                                                               RepositoryLocation location);
 
   public abstract void openCommittedChangesTab(CommittedChangesProvider provider,
                                                VirtualFile root,
+                                               ChangeBrowserSettings settings,
+                                               int maxCount,
+                                               final String title);
+
+  public abstract void openCommittedChangesTab(CommittedChangesProvider provider,
+                                               RepositoryLocation location,
                                                ChangeBrowserSettings settings,
                                                int maxCount,
                                                final String title);

@@ -1,13 +1,11 @@
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.CvsBundle;
-import com.intellij.pom.Navigatable;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsDataConstants;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
-import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
+import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
 import com.intellij.cvsSupport2.checkout.CheckoutAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
@@ -16,21 +14,23 @@ import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIHelper;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -176,8 +176,10 @@ public class BrowserPanel extends JPanel implements DataProvider {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       assert currentSelection.length == 1;
       final String moduleName = currentSelection [0].getElementPath();
-      CvsCommittedChangesProvider provider = new CvsCommittedChangesProvider(myProject, myCvsRootConfiguration, moduleName);
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(provider, null, VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
+      final CvsRepositoryLocation location = new CvsRepositoryLocation(myCvsRootConfiguration, moduleName);
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(CvsVcs2.getInstance(myProject).getCommittedChangesProvider(),
+                                                                  location,
+                                                                  VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
     }
 
     public void update(final AnActionEvent e) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -25,9 +26,11 @@ import java.awt.event.ActionEvent;
  * @author yole
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
+  private Project myProject;
   private List<AbstractVcs> myBaseVcss = new ArrayList<AbstractVcs>();
 
-  public CompositeCommittedChangesProvider(final AbstractVcs... baseVcss) {
+  public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
+    myProject = project;
     myBaseVcss = new ArrayList<AbstractVcs>();
     Collections.addAll(myBaseVcss, baseVcss);
   }
@@ -46,6 +49,17 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return new CompositeChangesBrowserSettingsEditor();
   }
 
+  public CompositeRepositoryLocation getLocationFor(final VirtualFile root) {
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
+    if (vcs != null) {
+      final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
+      if (committedChangesProvider != null) {
+        return new CompositeRepositoryLocation(committedChangesProvider, committedChangesProvider.getLocationFor(root));
+      }
+    }
+    return null;
+  }
+
   public List<CommittedChangeList> getAllCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings, final int maxCount) throws VcsException {
     LinkedHashSet<CommittedChangeList> result = new LinkedHashSet<CommittedChangeList>();
     for(AbstractVcs vcs: settings.getEnabledVcss()) {
@@ -58,7 +72,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       VirtualFile root, final int maxCount) throws VcsException {
+                                                       RepositoryLocation location, final int maxCount) throws VcsException {
     throw new UnsupportedOperationException();
   }
 

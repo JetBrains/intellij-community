@@ -18,12 +18,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final Project myProject;
   private CommittedChangesProvider myProvider;
   private ChangeBrowserSettings mySettings;
-  private VirtualFile myRoot;
+  private RepositoryLocation myLocation;
   private int myMaxCount = 0;
   private FilterComponent myFilterComponent = new MyFilterComponent();
   private List<CommittedChangeList> myChangesFromProvider;
@@ -64,8 +64,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 
-  public void setRoot(final VirtualFile root) {
-    myRoot = root;
+  public void setRepositoryLocation(final RepositoryLocation location) {
+    myLocation = location;
   }
 
   public void setMaxCount(final int maxCount) {
@@ -85,11 +85,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          if (myRoot == null) {
+          if (myLocation == null) {
             changes.set(myProvider.getAllCommittedChanges(mySettings, myMaxCount));
           }
           else {
-            changes.set(myProvider.getCommittedChanges(mySettings, myRoot, myMaxCount));
+            changes.set(myProvider.getCommittedChanges(mySettings, myLocation, myMaxCount));
           }
         }
         catch (VcsException ex) {

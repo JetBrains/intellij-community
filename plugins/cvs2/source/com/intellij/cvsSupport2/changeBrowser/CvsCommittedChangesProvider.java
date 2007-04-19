@@ -22,10 +22,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.ChangeListColumn;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,18 +33,11 @@ import java.util.*;
 
 public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
-  private CvsEnvironment myEnvironment;
-  private String myModuleName;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
 
   public CvsCommittedChangesProvider(Project project) {
     myProject = project;
-  }
-  public CvsCommittedChangesProvider(final Project project, final CvsEnvironment environment, final String moduleName) {
-    myProject = project;
-    myEnvironment = environment;
-    myModuleName = moduleName;
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -58,16 +48,20 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
+  public CvsRepositoryLocation getLocationFor(final VirtualFile root) {
+    final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
+    final String module = CvsUtil.getModuleName(root);
+    final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
+    return new CvsRepositoryLocation(connectionSettings, module);
+  }
+
   public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    if (myEnvironment != null && myModuleName != null) {
-      return loadCommittedChanges(settings, myModuleName, myEnvironment);
-    }
     LinkedHashSet<CvsChangeList> result = new LinkedHashSet<CvsChangeList>();
     final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
     final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(vcs);
     for(VirtualFile file: files) {
       if (vcs.fileIsUnderVcs(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-        result.addAll(getCommittedChanges(settings, file, 0));
+        result.addAll(getCommittedChanges(settings, getLocationFor(file), 0));
       }
     }
     return new ArrayList<CvsChangeList>(result);
@@ -77,19 +71,9 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION };
   }
 
-  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root, final int maxCount) throws VcsException {
-    if (myEnvironment != null && myModuleName != null) {
-      return loadCommittedChanges(settings, myModuleName, myEnvironment);
-    }
-    final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
-    final String module = CvsUtil.getModuleName(root);
-    final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
-    if (module != null) {
-      return loadCommittedChanges(settings, module, connectionSettings);
-    }
-    else {
-      throw new VcsException(CvsBundle.message("cannot.find.repository.location.error.message", root.getPath()));
-    }
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
+    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment());
   }
 
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings, final String module, final CvsEnvironment connectionSettings)

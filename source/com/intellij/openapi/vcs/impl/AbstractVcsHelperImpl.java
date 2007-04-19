@@ -470,7 +470,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showChangesBrowser(final CommittedChangesProvider provider,
-                                 final VirtualFile root,
+                                 final RepositoryLocation location,
                                  @Nls String title,
                                  final Component parent) {
     final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
@@ -496,7 +496,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
           public void run() {
             try {
-              versions.addAll(provider.getCommittedChanges(settings1, root, 0));
+              versions.addAll(provider.getCommittedChanges(settings1, location, 0));
             }
             catch (VcsException e) {
               exceptions.add(e);
@@ -522,16 +522,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         showChangesBrowser(tableModelRef.get(), title, filterUI != null, parent);
       }
       else {
-        openCommittedChangesTab(provider, null, settings, 0, title);
+        openCommittedChangesTab(provider, location, settings, 0, title);
       }
     }
   }
 
   @Nullable
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider) {
+  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
+                                                                                                      RepositoryLocation location) {
     final List<T> changes;
     try {
-      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getBaseDir(), 0);
+      changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, 0);
     }
     catch (VcsException e) {
       return null;
@@ -673,13 +674,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
+    final RepositoryLocation location = provider.getLocationFor(root);
+    openCommittedChangesTab(provider, location, settings, maxCount, title);
+  }
+
+  public void openCommittedChangesTab(final CommittedChangesProvider provider, final RepositoryLocation location,
+                                      final ChangeBrowserSettings settings, final int maxCount, String title) {
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
-    panel.setRoot(root);
+    panel.setRepositoryLocation(location);
     panel.setMaxCount(maxCount);
     panel.refreshChanges();
     final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
-    if (title == null && root != null) {
-      title = VcsBundle.message("browse.changes.content.title", root.getPresentableUrl());
+    if (title == null && location != null) {
+      title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
     final Content content = factory.createContent(panel, title, false);
     final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(myProject);

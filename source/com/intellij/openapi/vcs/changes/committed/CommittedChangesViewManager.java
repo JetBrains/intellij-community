@@ -84,7 +84,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
       myProvider = vcsWithProviders.get(0).getCommittedChangesProvider();
     }
     else {
-      myProvider = new CompositeCommittedChangesProvider(vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
+      myProvider = new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
     }
 
     if (myProvider == null) {
