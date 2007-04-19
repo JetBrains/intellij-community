@@ -67,8 +67,8 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   }
 
   // Read-only calculation
-  protected XmlAttributeDescriptor[] collectAttributeDescriptors() {
-    final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors();
+  protected XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
+    final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors(context);
     XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
 
     for (int i = 0; i < attributesDescriptors.length; i++) {
@@ -77,14 +77,14 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return temp;
   }
 
-  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
-    return super.getAttributeDescriptor(attributeName.toLowerCase());
+  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
+    return super.getAttributeDescriptor(attributeName.toLowerCase(), context);
   }
 
   // Read-only calculation
-  protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap() {
+  protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
     final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<String, XmlAttributeDescriptor>();
-    XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors();
+    XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors(context);
 
     for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
       hashMap.put(

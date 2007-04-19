@@ -1,20 +1,28 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -25,21 +33,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @by Maxim.Mossienko
@@ -89,6 +89,22 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     @Nullable
     public PsiElement resolve() {
       final String canonicalText = getCanonicalText();
+
+      if (canonicalText.length() == 0) {
+        final XmlAttribute attr = PsiTreeUtil.getParentOfType(getElement(), XmlAttribute.class);
+
+        if (attr != null &&
+            attr.isNamespaceDeclaration() &&
+            attr.getNamespacePrefix().length() == 0
+           ) {
+          // Namespaces in XML 1.0 2nd edition, Section 6.2, last paragraph
+          // The attribute value in a default namespace declaration MAY be empty. This has the same effect, within the scope of the declaration,
+          // of there being no default namespace
+          return myElement;
+        }
+        return null;
+      }
+
       if (ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)) return myElement;
       VirtualFile relativeFile = VfsUtil.findRelativeFile(canonicalText, myElement.getContainingFile().getVirtualFile());
       if (relativeFile != null) return myElement.getManager().findFile(relativeFile);

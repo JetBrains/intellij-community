@@ -6,6 +6,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -155,19 +156,36 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
   public String getName(PsiElement context) {
     final String form = myTag.getAttributeValue("form");
-    boolean isQualfiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
+    boolean isQualifiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
 
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
     String targetNs = rootTag.getAttributeValue("targetNamespace");
-    XmlTag tag = (XmlTag)context;
+    XmlTag contextTag = (XmlTag)context;
     String name = getName();
 
-    if (targetNs != null && 
-        ( isQualfiedAttr ||
-          QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault"))
+    boolean attributeShouldBeQualified = false;
+
+    if (targetNs != null && !contextTag.getNamespace().equals(targetNs)) {
+      final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
+      
+      if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
+        final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
+        final TypeDescriptor type = elementDescriptor.getType();
+
+        if (type instanceof ComplexTypeDescriptor) {
+          final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+          attributeShouldBeQualified = typeDescriptor.canContainAttribute(name, targetNs);
+        }
+      }
+    }
+
+    if (targetNs != null &&
+        ( isQualifiedAttr ||
+          QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
+          attributeShouldBeQualified
         )
       ) {
-      final String prefixByNamespace = tag.getPrefixByNamespace(targetNs);
+      final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
       if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
         name = prefixByNamespace + ":" + name;
       }

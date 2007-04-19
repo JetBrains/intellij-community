@@ -249,7 +249,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
       if (myAttributeDescriptor != null && tagContext != null) {
         XmlElementDescriptor tagDescriptor = tagContext.getDescriptor();
-        XmlAttributeDescriptor attributeDescriptor = tagDescriptor != null ? tagDescriptor.getAttributeDescriptor(text): null;
+        XmlAttributeDescriptor attributeDescriptor = tagDescriptor != null ? tagDescriptor.getAttributeDescriptor(text, tagContext): null;
 
         return (attributeDescriptor != null)?attributeDescriptor.getDeclaration():null;
       }

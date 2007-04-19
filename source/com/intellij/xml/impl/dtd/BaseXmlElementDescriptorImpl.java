@@ -45,7 +45,7 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   private static final SimpleFieldCache<XmlAttributeDescriptor[],BaseXmlElementDescriptorImpl> myAttributeDescriptorsCache =
     new SimpleFieldCache<XmlAttributeDescriptor[], BaseXmlElementDescriptorImpl>() {
     protected final XmlAttributeDescriptor[] compute(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
-      return xmlElementDescriptor.collectAttributeDescriptors();
+      return xmlElementDescriptor.collectAttributeDescriptors(null);
     }
 
     protected final XmlAttributeDescriptor[] getValue(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
@@ -57,17 +57,17 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
     }
   };
 
-  public final XmlAttributeDescriptor[] getAttributesDescriptors() {
+  public final XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return myAttributeDescriptorsCache.get(this);
   }
 
   // Read-only calculation
-  protected abstract XmlAttributeDescriptor[] collectAttributeDescriptors();
+  protected abstract XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context);
 
   private static final SimpleFieldCache<HashMap<String,XmlAttributeDescriptor>, BaseXmlElementDescriptorImpl> attributeDescriptorsMapCache =
     new SimpleFieldCache<HashMap<String, XmlAttributeDescriptor>, BaseXmlElementDescriptorImpl>() {
       protected final HashMap<String, XmlAttributeDescriptor> compute(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
-        return baseXmlElementDescriptor.collectAttributeDescriptorsMap();
+        return baseXmlElementDescriptor.collectAttributeDescriptorsMap(null);
       }
 
       protected final HashMap<String, XmlAttributeDescriptor> getValue(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
@@ -79,12 +79,12 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
       }
     };
 
-  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
+  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     return attributeDescriptorsMapCache.get(this).get(attributeName);
   }
 
   // Read-only calculation
-  protected abstract HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap();
+  protected abstract HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context);
 
   private static final FieldCache<HashMap<String,XmlElementDescriptor>,BaseXmlElementDescriptorImpl,Object,XmlTag> myElementDescriptorsMapCache =
     new FieldCache<HashMap<String, XmlElementDescriptor>, BaseXmlElementDescriptorImpl, Object, XmlTag>() {
@@ -114,6 +114,6 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   protected abstract HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element);
 
   public final XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
-    return getAttributeDescriptor(attr.getName());
+    return getAttributeDescriptor(attr.getName(), attr.getParent());
   }
 }

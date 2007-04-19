@@ -178,7 +178,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only calculation
-  protected final XmlAttributeDescriptor[] collectAttributeDescriptors() {
+  protected final XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
     final XmlAttributeDescriptor[] attrDescrs;
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
     for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
@@ -192,9 +192,9 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only calculation
-  protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap() {
+  protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
     final HashMap<String, XmlAttributeDescriptor> localADM;
-    final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
+    final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors(context);
     localADM = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
 
     for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {

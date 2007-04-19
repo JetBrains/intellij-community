@@ -8,6 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -177,34 +178,72 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return EMPTY_ARRAY;
   }
 
-  public XmlAttributeDescriptor[] getAttributesDescriptors() {
+  public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     TypeDescriptor type = getType();
 
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
-      return typeDescriptor.getAttributes();
+      XmlAttributeDescriptor[] attributeDescriptors = typeDescriptor.getAttributes();
+
+      if (context != null) {
+        final String contextNs = context.getNamespace();
+        final XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+
+        for(String ns:context.knownNamespaces()) {
+          if (!contextNs.equals(ns) && ns.length() > 0) {
+            if (typeDescriptor.canContainAttribute("any",ns)) {
+              final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
+
+              if (descriptor instanceof XmlNSDescriptorImpl) {
+                attributeDescriptors = ArrayUtil.mergeArrays(
+                  attributeDescriptors,
+                  ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(doc),
+                  XmlAttributeDescriptor.class
+                );
+              }
+            }
+          }
+        }
+      }
+      return attributeDescriptors;
     }
 
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName){
+  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context){
+    return getAttributeDescriptorImpl(attributeName,context);
+  }
+
+  private XmlAttributeDescriptor getAttributeDescriptorImpl(final String attributeName, XmlTag context) {
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
     final XmlNSDescriptorImpl xmlNSDescriptor = (XmlNSDescriptorImpl)getNSDescriptor();
     final String namespace = "".equals(namespacePrefix) ?
                              ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
-                             myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
+                             context.getNamespaceByPrefix(namespacePrefix);
 
-    return getAttribute(localName, namespace);
+    final XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context);
+    
+    if (attribute instanceof AnyXmlAttributeDescriptor && namespace.length() > 0) {
+      final XmlNSDescriptor candidateNSDescriptor = context.getNSDescriptor(namespace, true);
+
+      if (candidateNSDescriptor instanceof XmlNSDescriptorImpl) {
+        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)candidateNSDescriptor;
+
+        final XmlAttributeDescriptorImpl xmlAttributeDescriptor = nsDescriptor.getAttribute(localName, namespace);
+        if (xmlAttributeDescriptor != null) return xmlAttributeDescriptor;
+      }
+    }
+    return attribute;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute){
-    return getAttributeDescriptor(attribute.getName());
+    return getAttributeDescriptorImpl(attribute.getName(),attribute.getParent());
   }
 
-  public XmlAttributeDescriptor getAttribute(String attributeName, String namespace) {
-    XmlAttributeDescriptor[] descriptors = getAttributesDescriptors();
+  private XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context) {
+    XmlAttributeDescriptor[] descriptors = getAttributesDescriptors(context);
 
     for (XmlAttributeDescriptor descriptor : descriptors) {
       if (descriptor.getName().equals(attributeName)) {

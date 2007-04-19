@@ -40,11 +40,11 @@ public class NullElementDescriptor implements XmlElementDescriptor {
     return null;
   }
 
-  public XmlAttributeDescriptor[] getAttributesDescriptors() {
+  public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return new XmlAttributeDescriptor[0];
   }
 
-  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
+  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     return null;
   }
 

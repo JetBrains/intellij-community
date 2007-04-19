@@ -325,7 +325,7 @@ public class XmlCompletionData extends CompletionData {
       }
       template.setToReformat(toReformat);
 
-      XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
+      XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
       StringBuilder indirectRequiredAttrs = null;
 
       for (XmlAttributeDescriptor attributeDecl : attributes) {

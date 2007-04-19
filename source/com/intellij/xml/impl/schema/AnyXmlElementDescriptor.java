@@ -70,11 +70,11 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
     return myParentDescriptor.getElementDescriptor(tag);
   }
 
-  public XmlAttributeDescriptor[] getAttributesDescriptors() {
+  public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return new XmlAttributeDescriptor[0];
   }
 
-  public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName) {
+  public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final XmlTag context) {
     return new AnyXmlAttributeDescriptor(attributeName);
   }
 

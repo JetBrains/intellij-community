@@ -44,7 +44,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   private static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
-    final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors();
+    final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors(null);
     Arrays.sort(xmlAttributeDescriptors, COMPARATOR);
     return xmlAttributeDescriptors;
   }

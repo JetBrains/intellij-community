@@ -278,10 +278,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public XmlAttributeDescriptor getDescriptor() {
     final PsiElement parentElement = getParent();
     if (parentElement instanceof XmlDecl) return null;
-    final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
+    final XmlTag tag = (XmlTag)parentElement;
+    final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;
     final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(this);
-    return attributeDescr == null ? descr.getAttributeDescriptor(getName()) : attributeDescr;
+    return attributeDescr == null ? descr.getAttributeDescriptor(getName(), tag) : attributeDescr;
   }
 
   private class MyPsiReference implements PsiReference {
@@ -301,7 +302,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public PsiElement resolve() {
-      final XmlAttributeDescriptor descriptor = myDescr.getAttributeDescriptor(XmlAttributeImpl.this.getName());
+      final XmlAttributeDescriptor descriptor = myDescr.getAttributeDescriptor(XmlAttributeImpl.this);
       if (descriptor != null) {
         return descriptor.getDeclaration();
       }
@@ -338,7 +339,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       if (parentDescriptor != null){
         final XmlTag declarationTag = getParent();
         final XmlAttribute[] attributes = declarationTag.getAttributes();
-        XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors();
+        XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
 
         final XmlAttributeImpl context = XmlAttributeImpl.this;
 
@@ -357,7 +358,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
             final String name = attribute.getName();
             if (name.equals(descriptor.getName())) continue outer;
           }
-          variants.add(descriptor.getName());
+          variants.add(descriptor.getName(declarationTag));
         }
       }
       return variants.toArray();

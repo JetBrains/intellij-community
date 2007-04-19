@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +38,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public static final String XSD_PREFIX = "xsd";
   
   @NonNls static final String ELEMENT_TAG_NAME = "element";
+  @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
   @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
   @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
   @NonNls static final String SCHEMA_TAG_NAME = "schema";
+  @NonNls private static final String INCLUDE_TAG_NAME = "include";
+  @NonNls private static final String IMPORT_TAG_NAME = "import";
 
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
@@ -107,9 +111,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           }
         }
       }
-      else if (equalsToSchemaName(tag, "include") ||
+      else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
                (reference &&
-                equalsToSchemaName(tag, "import") &&
+                equalsToSchemaName(tag, IMPORT_TAG_NAME) &&
                 namespace.equals(tag.getAttributeValue("namespace"))
                )
         ) {
@@ -186,7 +190,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     XmlTag[] tags = myTag.getSubTags();
 
     for (XmlTag tag : tags) {
-      if (equalsToSchemaName(tag, "attribute")) {
+      if (equalsToSchemaName(tag, ATTRIBUTE_TAG_NAME)) {
         String name = tag.getAttributeValue("name");
 
         if (name != null) {
@@ -194,8 +198,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             return createAttributeDescriptor(tag);
           }
         }
-      } else if (equalsToSchemaName(tag, "include") ||
-                 (equalsToSchemaName(tag, "import") &&
+      } else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
+                 (equalsToSchemaName(tag, IMPORT_TAG_NAME) &&
                   namespace.equals(tag.getAttributeValue("namespace"))
                  )
         ) {
@@ -381,8 +385,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           return cachedValue.getValue();
         }
       }
-      else if (equalsToSchemaName(tag, "include") ||
-               ( equalsToSchemaName(tag, "import") &&
+      else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
+               ( equalsToSchemaName(tag, IMPORT_TAG_NAME) &&
                  rootTag.getNamespaceByPrefix(
                    XmlUtil.findPrefixByQualifiedName(name)
                  ).equals(tag.getAttributeValue("namespace"))
@@ -449,7 +453,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   private XmlNSDescriptorImpl findNSDescriptor(final XmlTag tag, final XmlDocument document) {
     final XmlNSDescriptorImpl nsDescriptor;
-    if("import".equals(tag.getLocalName())) {
+    if(IMPORT_TAG_NAME.equals(tag.getLocalName())) {
       final XmlNSDescriptor importedDescriptor = (XmlNSDescriptor)document.getMetaData();
       nsDescriptor = (importedDescriptor instanceof XmlNSDescriptorImpl) ?
                      (XmlNSDescriptorImpl)importedDescriptor:
@@ -550,6 +554,22 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
 
+  public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlDocument doc) {
+    class CollectAttributesProcessor implements PsiElementProcessor<XmlTag> {
+      final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+
+      public boolean execute(final XmlTag element) {
+        result.add(createAttributeDescriptor(element));
+        return true;
+      }
+    }
+
+    CollectAttributesProcessor processor = new CollectAttributesProcessor();
+    processTagsInNamespace(myTag, new String[] {ATTRIBUTE_TAG_NAME}, processor);
+
+    return processor.result.toArray(new XmlAttributeDescriptor[processor.result.size()]);
+  }
+
   public boolean processTagsInNamespace(final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
     return processTagsInNamespaceInner(rootTag, tagNames, processor, null);
   }
@@ -578,7 +598,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         }
       }
 
-      if (equalsToSchemaName(tag, "include")) {
+      if (equalsToSchemaName(tag, INCLUDE_TAG_NAME)) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
@@ -638,8 +658,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             || name.indexOf(":") >= 0 && name.substring(name.indexOf(":") + 1).equals(attribute)) {
           return tag;
         }
-      } else if (equalsToSchemaName(tag,"include") ||
-                 ( equalsToSchemaName(tag, "import") &&
+      } else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
+                 ( equalsToSchemaName(tag, IMPORT_TAG_NAME) &&
                    rootTag.getNamespaceByPrefix(
                      XmlUtil.findPrefixByQualifiedName(name)
                    ).equals(tag.getAttributeValue("namespace"))

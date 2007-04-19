@@ -355,7 +355,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    XmlAttributeDescriptor[] attributeDescriptors = elementDescriptor.getAttributesDescriptors();
+    XmlAttributeDescriptor[] attributeDescriptors = elementDescriptor.getAttributesDescriptors(tag);
     Set<String> requiredAttributes = null;
 
     for (XmlAttributeDescriptor attribute : attributeDescriptors) {

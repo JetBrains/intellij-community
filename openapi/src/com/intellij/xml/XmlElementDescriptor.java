@@ -18,6 +18,7 @@ package com.intellij.xml;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -37,8 +38,8 @@ public interface XmlElementDescriptor extends PsiMetaData{
   XmlElementDescriptor[] getElementsDescriptors(XmlTag context);
   XmlElementDescriptor getElementDescriptor(XmlTag childTag);
 
-  XmlAttributeDescriptor[] getAttributesDescriptors();
-  XmlAttributeDescriptor getAttributeDescriptor(String attributeName);
+  XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context);
+  XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final @Nullable XmlTag context);
   XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute);
 
   XmlNSDescriptor getNSDescriptor();

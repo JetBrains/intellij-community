@@ -73,7 +73,7 @@ public class InsertRequiredAttributeFix implements IntentionAction {
 
     final XmlElementDescriptor descriptor = myTag.getDescriptor();
     if (descriptor instanceof JspElementDescriptor) {
-      final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName);
+      final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName, myTag);
       if (attrDescriptor instanceof TldAttributeDescriptor && ((TldAttributeDescriptor)attrDescriptor).isIndirectSyntax()) {
         indirectSyntax = true;
       }
