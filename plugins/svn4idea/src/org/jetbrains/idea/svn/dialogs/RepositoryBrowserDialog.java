@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.DefaultRepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -47,7 +48,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
-import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
@@ -624,8 +624,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       RepositoryTreeNode node = getNotNullSelectedNode();
       SVNURL url = node.getURL();
-      SvnCommittedChangesProvider provider = new SvnCommittedChangesProvider(myProject, url.toString());
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(provider, null, "Changes in " + url.toString(), getContentPane());
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
+                                                                  new DefaultRepositoryLocation(url.toString()),
+                                                                  "Changes in " + url.toString(), getContentPane());
     }
 
     public void update(final AnActionEvent e) {

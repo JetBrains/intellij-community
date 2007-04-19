@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -53,6 +54,7 @@ import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -98,7 +100,7 @@ public class SvnVcs extends AbstractVcs {
   private VcsShowConfirmationOption myAddConfirmation;
   private VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
-  private CommittedChangesProvider myCommittedChangesProvider;
+  private CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> myCommittedChangesProvider;
   private ChangeProvider myChangeProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
@@ -540,8 +542,8 @@ public class SvnVcs extends AbstractVcs {
   }
 
 
-  @Override @Nullable
-  public CommittedChangesProvider getCommittedChangesProvider() {
+  @Override @NotNull
+  public CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> getCommittedChangesProvider() {
     if (myCommittedChangesProvider == null) {
       myCommittedChangesProvider = new SvnCommittedChangesProvider(myProject);
     }
