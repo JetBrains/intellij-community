@@ -415,7 +415,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (ref != null && !visited.contains(ref)) {
         visited.add(ref);
-        XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
+        XmlTag groupTag = myDocumentDescriptor.findAttributeGroup(ref);
 
         if (groupTag != null) {
           if (_canContainAttribute(name, namespace, groupTag,visited)) return true;
