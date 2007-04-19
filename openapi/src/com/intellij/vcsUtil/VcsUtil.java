@@ -487,6 +487,13 @@ public class VcsUtil
     return (change.getBeforeRevision() != null) && (change.getAfterRevision() == null);
   }
 
+  public static boolean isChangeForFolder( Change change )
+  {
+    ContentRevision revB = change.getBeforeRevision();
+    ContentRevision revA = change.getAfterRevision();
+    return (revA != null && revA.getFile().isDirectory()) ||
+           (revB != null && revB.getFile().isDirectory());
+  }
   /**
    * Sort file paths so that paths under the same root are placed from the
    * innermost to the outermost (closest to the root). 
