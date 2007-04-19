@@ -31,4 +31,6 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement {
   @Nullable
   public String getQualifiedName();
 
+  public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
+
 }

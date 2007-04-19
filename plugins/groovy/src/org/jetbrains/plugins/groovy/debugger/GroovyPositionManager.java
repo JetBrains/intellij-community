@@ -27,6 +27,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,6 +41,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -149,7 +152,6 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
-  //todo
   @Nullable
   private PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) return null;
@@ -161,14 +163,14 @@ public class GroovyPositionManager implements PositionManager {
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
-    PsiClass psiClass = DebuggerUtils.findClass(qName, project, searchScope);
-    if (psiClass == null && dollar >= 0 /*originalName and qName really differ*/) {
-      psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name
-    }
 
-    if (psiClass != null) {
-      psiClass = (PsiClass)psiClass.getNavigationElement();
-      return psiClass.getContainingFile();
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      GroovyModuleCachesManager manager = GroovyModuleCachesManager.getInstance(module);
+      GrTypeDefinition typeDefinition = manager.getModuleFilesCache().getClassByName(qName);
+      if (typeDefinition != null) {
+        return typeDefinition.getContainingFile();
+      }
     }
 
     return null;
