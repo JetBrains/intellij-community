@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.11.2006
- * Time: 18:41:01
- */
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,8 +37,14 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.DataOutput;
+import java.io.DataInput;
 
-public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
+/**
+ * @author yole
+ */
+public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
   private Project myProject;
 
   public SvnCommittedChangesProvider(final Project project) {
@@ -108,6 +108,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
         revisionAfter = SVNRevision.create(1);
       }
 
+      final String repositoryRoot = repository.getRepositoryRoot(true).toString();
       logger.doLog(SVNURL.parseURIEncoded(svnLocation.getURL()), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
@@ -116,7 +117,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
                          progress.checkCanceled();
                        }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), svnLocation, logEntry, repository));
+                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), svnLocation, logEntry, repositoryRoot));
                        }
                      }
                    });
@@ -133,5 +134,13 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
       new ChangeListColumn.ChangeListNumberColumn(SvnBundle.message("revision.title")),
       ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION
     };
+  }
+
+  public void writeChangeList(final DataOutput dataStream, final SvnChangeList list) throws IOException {
+    list.writeToStream(dataStream);
+  }
+
+  public SvnChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
+    return new SvnChangeList(SvnVcs.getInstance(myProject), (SvnRepositoryLocation) location, stream);
   }
 }

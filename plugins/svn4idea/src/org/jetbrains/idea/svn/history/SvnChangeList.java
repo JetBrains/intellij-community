@@ -23,9 +23,9 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +35,18 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-import java.util.*;
+import java.io.DataOutput;
 import java.io.File;
+import java.io.IOException;
+import java.io.DataInput;
+import java.util.*;
 
 public class SvnChangeList implements CommittedChangeList {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
 
   private SvnVcs myVcs;
   private SvnRepositoryLocation myLocation;
-  private final String myRepositoryURL;
+  private String myRepositoryRoot;
   private long myRevision;
   private String myAuthor;
   private Date myDate;
@@ -53,11 +56,12 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myDeletedPaths = new HashSet<String>();
   private List<Change> myChanges;
 
-  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, SVNRepository repository) {
+  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     myRevision = logEntry.getRevision();
-    myAuthor = logEntry.getAuthor();
+    final String author = logEntry.getAuthor();
+    myAuthor = author == null ? "" : author;
     myDate = logEntry.getDate();
     myMessage = logEntry.getMessage();
     for(Object o: logEntry.getChangedPaths().values()) {
@@ -72,7 +76,13 @@ public class SvnChangeList implements CommittedChangeList {
         myChangedPaths.add(entry.getPath());
       }
     }
-    myRepositoryURL = repository.getLocation().toString();
+    myRepositoryRoot = repositoryRoot;
+  }
+
+  public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream) throws IOException {
+    myVcs = vcs;
+    myLocation = location;
+    readFromStream(stream);
   }
 
   public String getCommitterName() {
@@ -93,10 +103,8 @@ public class SvnChangeList implements CommittedChangeList {
   private void loadChanges() {
     myChanges = new ArrayList<Change>();
     SVNRepository repository;
-    String root;
     try {
-      repository = myVcs.createRepository(myRepositoryURL);
-      root = repository.getRepositoryRoot(true).toString();
+      repository = myVcs.createRepository(myRepositoryRoot);
     }
     catch (SVNException e) {
       // should never happen - we got the URL from a real live existing repository
@@ -105,26 +113,26 @@ public class SvnChangeList implements CommittedChangeList {
     }
     for(String path: myAddedPaths) {
       myChanges.add(new Change(null,
-                               new SvnRepositoryContentRevision(repository, path, getLocalPath(root, path), myRevision)));
+                               new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision)));
     }
     for(String path: myDeletedPaths) {
-      myChanges.add(new Change(new SvnRepositoryContentRevision(repository, path, getLocalPath(root, path), myRevision-1),
+      myChanges.add(new Change(new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision-1),
                                null));
 
     }
     for(String path: myChangedPaths) {
-      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(root, path),  myRevision-1);
-      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(root, path), myRevision);
+      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(path),  myRevision-1);
+      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision);
       myChanges.add(new Change(beforeRevision, afterRevision));
     }
   }
 
   @Nullable
-  private FilePath getLocalPath(final String root, final String path) {
+  private FilePath getLocalPath(final String path) {
     if (myLocation.getRootFile() == null) {
       return null;
     }
-    String fullPath = root + path;
+    String fullPath = myRepositoryRoot + path;
     if (fullPath.startsWith(myLocation.getURL())) {
       String relPath = fullPath.substring(myLocation.getURL().length());
       final String basePath = myLocation.getRootFile().getPresentableUrl();
@@ -168,5 +176,41 @@ public class SvnChangeList implements CommittedChangeList {
     result = 31 * result + (myDate != null ? myDate.hashCode() : 0);
     result = 31 * result + (myMessage != null ? myMessage.hashCode() : 0);
     return result;
+  }
+
+  public void writeToStream(final DataOutput stream) throws IOException {
+    stream.writeUTF(myRepositoryRoot);
+    stream.writeLong(myRevision);
+    stream.writeUTF(myAuthor);
+    stream.writeLong(myDate.getTime());
+    stream.writeUTF(myMessage);
+    writeFiles(stream, myChangedPaths);
+    writeFiles(stream, myAddedPaths);
+    writeFiles(stream, myDeletedPaths);
+  }
+
+  private static void writeFiles(final DataOutput stream, final Set<String> paths) throws IOException {
+    stream.writeInt(paths.size());
+    for(String s: paths) {
+      stream.writeUTF(s);
+    }
+  }
+
+  private void readFromStream(final DataInput stream) throws IOException {
+    myRepositoryRoot = stream.readUTF();
+    myRevision = stream.readLong();
+    myAuthor = stream.readUTF();
+    myDate = new Date(stream.readLong());
+    myMessage = stream.readUTF();
+    readFiles(stream, myChangedPaths);
+    readFiles(stream, myAddedPaths);
+    readFiles(stream, myDeletedPaths);
+  }
+
+  private static void readFiles(final DataInput stream, final Set<String> paths) throws IOException {
+    int count = stream.readInt();
+    for(int i=0; i<count; i++) {
+      paths.add(stream.readUTF());
+    }
   }
 }
