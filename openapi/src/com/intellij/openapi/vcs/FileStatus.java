@@ -45,6 +45,7 @@ public interface FileStatus extends NamedComponent {
    .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
   FileStatus SWITCHED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
+  FileStatus OBSOLETE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.switched"), COLOR_OUT_OF_DATE);
 
   Color getColor();
 

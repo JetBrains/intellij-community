@@ -478,6 +478,16 @@ public class VcsUtil
   }
 
   /**
+   * @param  change "Change" description.
+   * @return Return true if the "Change" object is created for "Delete" operation:
+   *         "before" revision is NOT NULL, while "after" revision is NULL.
+   */
+  public static boolean isChangeForDeleted( Change change )
+  {
+    return (change.getBeforeRevision() != null) && (change.getAfterRevision() == null);
+  }
+
+  /**
    * Sort file paths so that paths under the same root are placed from the
    * innermost to the outermost (closest to the root). 
    * @param  files An array of file paths to be sorted. Sorting is done over the parameter.
