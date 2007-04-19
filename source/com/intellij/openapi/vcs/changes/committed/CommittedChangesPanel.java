@@ -80,12 +80,20 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void refreshChanges() {
+    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+    if (!cache.hasCachesForAllRoots()) {
+      CacheSettingsDialog dialog = new CacheSettingsDialog(myProject);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return;
+      }
+      cache.setInitialCount(dialog.getInitialCount());
+    }
     final Ref<VcsException> refEx = new Ref<VcsException>();
     final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           if (myLocation == null) {
             changes.set(cache.getProjectChanges(mySettings, myMaxCount));
           }

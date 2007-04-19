@@ -23,6 +23,8 @@ import java.util.*;
 public class CommittedChangesCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesCache");
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
+  private Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
+  private int myInitialCount = 500;
 
   public static CommittedChangesCache getInstance(Project project) {
     return ServiceManager.getService(project, CommittedChangesCache.class);
@@ -32,6 +34,14 @@ public class CommittedChangesCache {
 
   public CommittedChangesCache(final Project project) {
     myProject = project;
+  }
+
+  public int getInitialCount() {
+    return myInitialCount;
+  }
+
+  public void setInitialCount(final int initialCount) {
+    myInitialCount = initialCount;
   }
 
   public List<CommittedChangeList> getProjectChanges(final ChangeBrowserSettings settings, final int maxCount) throws VcsException {
@@ -59,45 +69,103 @@ public class CommittedChangesCache {
       settings = ((CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) settings).get(vcs);
     }
     if (provider instanceof CachingCommittedChangesProvider) {
-      return getChangesWithCaching((CachingCommittedChangesProvider) provider, settings, location, maxCount);
+      final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+      if (canGetFromCache(cachingProvider, settings, location, maxCount)) {
+        try {
+          return getChangesWithCaching(cachingProvider, settings, location, maxCount);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     }
     //noinspection unchecked
     return provider.getCommittedChanges(settings, location, maxCount);
   }
 
+  private boolean canGetFromCache(final CachingCommittedChangesProvider cachingProvider, final ChangeBrowserSettings settings,
+                                  final RepositoryLocation location, final int maxCount) {
+    ChangesCacheFile cacheFile = getCacheFile(cachingProvider, location);
+    if (cacheFile.isEmpty()) {
+      return true;   // we'll initialize the cache and check again after that
+    }
+    if (settings.USE_DATE_BEFORE_FILTER && !settings.USE_DATE_AFTER_FILTER) {
+      return cacheFile.hasCompleteHistory();
+    }
+    if (settings.USE_CHANGE_BEFORE_FILTER && !settings.USE_CHANGE_AFTER_FILTER) {
+      return cacheFile.hasCompleteHistory();
+    }
+
+    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_DATE_BEFORE_FILTER || settings.USE_CHANGE_AFTER_FILTER || settings.USE_CHANGE_BEFORE_FILTER;
+    boolean hasNonDateFilter = settings.isNonDateFilterSpecified();
+    if (!hasDateFilter && hasNonDateFilter) {
+      return cacheFile.hasCompleteHistory();
+    }
+    if (settings.USE_DATE_AFTER_FILTER && settings.getDateAfter().getTime() < cacheFile.getFirstCachedDate().getTime()) {
+      return cacheFile.hasCompleteHistory();
+    }
+    if (settings.USE_CHANGE_AFTER_FILTER && settings.getChangeAfterFilter().longValue() < cacheFile.getFirstCachedChangelist()) {
+      return cacheFile.hasCompleteHistory();
+    }
+    return true;
+  }
+
+  public boolean hasCachesForAllRoots() {
+    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+    for(VirtualFile file: files) {
+      final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      assert vcs != null;
+      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+      if (provider instanceof CachingCommittedChangesProvider) {
+        final RepositoryLocation location = provider.getLocationFor(file);
+        if (location != null) {
+          ChangesCacheFile cacheFile = getCacheFile((CachingCommittedChangesProvider) provider, location);
+          if (cacheFile.isEmpty()) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   private List<CommittedChangeList> getChangesWithCaching(final CachingCommittedChangesProvider provider,
                                                           final ChangeBrowserSettings settings,
                                                           final RepositoryLocation location,
-                                                          final int maxCount) throws VcsException {
-    ChangesCacheFile cacheFile = new ChangesCacheFile(getCachePath(location), provider, location);
+                                                          final int maxCount) throws VcsException, IOException {
+    ChangesCacheFile cacheFile = getCacheFile(provider, location);
     if (cacheFile.isEmpty()) {
-      List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, 0);
-      try {
-        cacheFile.writeChanges(changes);
+      List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
+      cacheFile.writeChanges(changes);
+      if (changes.size() < myInitialCount) {
+        cacheFile.setHaveCompleteHistory(true);
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      settings.filterChanges(changes);
-      return changes;
-    }
-    else {
-      try {
-        List<CommittedChangeList> changes = cacheFile.readChanges(settings);
-        final Date date = cacheFile.getLastCachedDate();
-        final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
-        defaultSettings.setDateAfter(date);
-        List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
-        newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
-        settings.filterChanges(newChanges);
-        changes.addAll(newChanges);
+      if (canGetFromCache(provider, settings, location, maxCount)) {
+        settings.filterChanges(changes);
         return changes;
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      return provider.getCommittedChanges(settings, location, maxCount);
     }
-    return provider.getCommittedChanges(settings, location, maxCount);
+    else {
+      List<CommittedChangeList> changes = cacheFile.readChanges(settings);
+      final Date date = cacheFile.getLastCachedDate();
+      final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
+      defaultSettings.setDateAfter(date);
+      List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
+      newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
+      settings.filterChanges(newChanges);
+      changes.addAll(newChanges);
+      return changes;
+    }
+  }
+
+  private ChangesCacheFile getCacheFile(final CachingCommittedChangesProvider provider, final RepositoryLocation location) {
+    ChangesCacheFile cacheFile = myCacheFiles.get(location);
+    if (cacheFile == null) {
+      cacheFile = new ChangesCacheFile(getCachePath(location), provider, location);
+      myCacheFiles.put(location, cacheFile);
+    }
+    return cacheFile;
   }
 
   private File getCachePath(final RepositoryLocation location) {
