@@ -14,27 +14,19 @@
  * limitations under the License.
  *
  */
-
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * @author yole
  */
-public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
-  U createDefaultSettings();
-  ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
-
-  @Nullable
-  RepositoryLocation getLocationFor(VirtualFile root);
-
-  List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
-  ChangeListColumn[] getColumns();
+public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
+  void writeChangeList(final DataOutput stream, final T list) throws IOException;
+  T readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException;
 }

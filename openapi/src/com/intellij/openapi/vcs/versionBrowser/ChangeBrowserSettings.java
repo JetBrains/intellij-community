@@ -182,7 +182,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
-  private Filter createFilter() {
+  public Filter createFilter() {
     final List<Filter> filters = createFilters();
     return new Filter() {
       public boolean accepts(CommittedChangeList change) {
