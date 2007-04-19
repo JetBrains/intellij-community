@@ -1,9 +1,8 @@
-#!comment
-package a.b.c
+package a.
+b.
+c
 -----
 Groovy script
-  PsiElement(shell comment)('#!comment')
-  PsiElement(new line)('\n')
   Package definition
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
@@ -12,6 +11,8 @@ Groovy script
         Qualified identifier
           PsiElement(identifier)('a')
         PsiElement(.)('.')
+        PsiElement(new line)('\n')
         PsiElement(identifier)('b')
       PsiElement(.)('.')
+      PsiElement(new line)('\n')
       PsiElement(identifier)('c')

@@ -5,8 +5,10 @@ Groovy script
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
     Qualified identifier
-      PsiElement(identifier)('org')
-      PsiElement(.)('.')
-      PsiElement(identifier)('jetbrains')
+      Qualified identifier
+        Qualified identifier
+          PsiElement(identifier)('org')
+        PsiElement(.)('.')
+        PsiElement(identifier)('jetbrains')
       PsiElement(.)('.')
       PsiElement(identifier)('groovy')
