@@ -185,11 +185,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public String getText() {
-    // check if all elements are laid out consequently in the same buffer (optimization):
     char[] buffer = new char[getTextLength()];
     SourceUtil.toBuffer(this, buffer, 0);
-    //return StringFactory.createStringFromConstantArray(buffer);
-    return new String(buffer);
+    return StringFactory.createStringFromConstantArray(buffer);    
   }
 
   @NotNull
