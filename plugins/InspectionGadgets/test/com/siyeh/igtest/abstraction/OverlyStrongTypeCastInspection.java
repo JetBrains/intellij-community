@@ -14,6 +14,12 @@ interface TestInter{}
 
 public class OverlyStrongTypeCastInspection
 {
+    void optional(Object foo) {
+        if (foo instanceof OverlyStrongTypeCastInspection) {
+            ((OverlyStrongTypeCastInspection)foo).hashCode();
+        }
+    }
+
     public static void main(String[] args)
     {
         List bar = new ArrayList();

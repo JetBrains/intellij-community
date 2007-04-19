@@ -24,10 +24,19 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class OverlyStrongTypeCastInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreInMatchingInstanceof = false;
 
     @NotNull
     public String getDisplayName() {
@@ -41,6 +50,14 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
         final String typeText = expectedType.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "overly.strong.type.cast.problem.descriptor", typeText);
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "overly.strong.type.cast.ignore.in.matching.instanceof.option"),
+                this, "ignoreInMatchingInstanceof");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -72,6 +89,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
             if (operand == null) {
                 return;
             }
+            @NonNls
             final String newExpression =
                     '(' + expectedType.getCanonicalText() + ')' +
                     operand.getText();
@@ -83,7 +101,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
         return new OverlyStrongTypeCastVisitor();
     }
 
-    private static class OverlyStrongTypeCastVisitor
+    private class OverlyStrongTypeCastVisitor
             extends BaseInspectionVisitor {
 
         public void visitTypeCastExpression(
@@ -154,6 +172,10 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
                     return;
                 }
             }
+            if (ignoreInMatchingInstanceof &&
+                    InstanceOfUtils.hasAgreeingInstanceof(expression)) {
+                return;
+            }
             final PsiTypeElement castTypeElement = expression.getCastType();
             if (castTypeElement == null) {
                 return;
@@ -161,7 +183,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
             registerError(castTypeElement, expectedType);
         }
 
-        private static boolean isTypeParameter(PsiType type){
+        private boolean isTypeParameter(PsiType type){
             if(!(type instanceof PsiClassType)){
                 return false;
             }
