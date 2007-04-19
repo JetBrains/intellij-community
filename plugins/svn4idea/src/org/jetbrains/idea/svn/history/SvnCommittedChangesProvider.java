@@ -69,22 +69,6 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     return null;
   }
 
-  public List<SvnChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    LinkedHashSet<SvnChangeList> result = new LinkedHashSet<SvnChangeList>();
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
-    for(VirtualFile root: roots) {
-      final File path = new File(root.getPath());
-      if (path.exists()) {
-        String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), path, progress);
-        for(String url: urls) {
-          result.addAll(getCommittedChanges(settings, new SvnRepositoryLocation(root, url), maxCount));
-        }
-      }
-    }
-    return new ArrayList<SvnChangeList>(result);
-  }
-
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
