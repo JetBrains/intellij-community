@@ -317,22 +317,15 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredElements().containsKey(element)) continue;
-      if (element instanceof RefElement) {
+      if (element instanceof RefModule) {
+        myModulesProblems.add((RefModule)element);
+      }
+      else {
         String packageName = RefUtil.getInstance().getPackageName(element);
         Set<RefEntity> content = myPackageContents.get(packageName);
         if (content == null) {
           content = new HashSet<RefEntity>();
           myPackageContents.put(packageName, content);
-        }
-        content.add(element);
-      } else if (element instanceof RefModule){
-        myModulesProblems.add((RefModule)element);
-      } else if (element instanceof RefPackage) {
-        final RefPackage refPackage = (RefPackage)element;
-        Set<RefEntity> content = myPackageContents.get(refPackage.getName());
-        if (content == null) {
-          content = new HashSet<RefEntity>();
-          myPackageContents.put(refPackage.getName(), content);
         }
         content.add(element);
       }

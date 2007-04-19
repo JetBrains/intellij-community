@@ -79,8 +79,11 @@ public class LibraryUtil {
   }
 
   public static VirtualFile[] getLibraryRoots(final Project project, final boolean includeSourceFiles, final boolean includeJdk) {
+    return getLibraryRoots(ModuleManager.getInstance(project).getModules(), includeSourceFiles, includeJdk);
+  }
+
+  public static VirtualFile[] getLibraryRoots(final Module[] modules, final boolean includeSourceFiles, final boolean includeJdk) {
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();

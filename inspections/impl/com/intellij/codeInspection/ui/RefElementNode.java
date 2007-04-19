@@ -69,6 +69,8 @@ public class RefElementNode extends InspectionTreeNode {
       return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
     } else if (refEntity instanceof RefModule) {
       return ((RefModule)refEntity).getModule().getModuleType().getNodeIcon(expanded);
+    } else if (refEntity instanceof RefProject) {
+      return Icons.PROJECT_ICON;
     }
     return null;
   }

@@ -858,10 +858,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void runTools(final List<InspectionTool> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
-    ((RefManagerImpl)getRefManager()).initializeAnnotators();
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);
+    ((RefManagerImpl)getRefManager()).initializeAnnotators();
     for (Set<InspectionTool> tools : usedTools.values()) {
       for (InspectionTool tool : tools) {
         try {

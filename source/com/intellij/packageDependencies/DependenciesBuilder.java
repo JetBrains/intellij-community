@@ -36,6 +36,10 @@ public abstract class DependenciesBuilder {
     myTotalFileCount = totalFileCount;
   }
 
+  public int getTotalFileCount() {
+    return myTotalFileCount;
+  }
+
   public Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
   }

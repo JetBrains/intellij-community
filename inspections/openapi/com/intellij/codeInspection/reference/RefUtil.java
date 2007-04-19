@@ -47,6 +47,7 @@ public abstract class RefUtil {
 
   public abstract boolean isInheritor(RefClass subClass, RefClass superClass);
 
+  @Nullable //default package name
   public abstract String getPackageName(RefEntity refEntity);
 
   public abstract String getQualifiedName(RefEntity refEntity);

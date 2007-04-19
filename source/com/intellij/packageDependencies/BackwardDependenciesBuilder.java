@@ -21,9 +21,17 @@ import java.util.Set;
  * Date: Jan 16, 2005
  */
 public class BackwardDependenciesBuilder extends DependenciesBuilder {
+  private final AnalysisScope[] myForwardScopes;
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope) {
     super(project, scope);
+    myForwardScopes = getScope().getNarrowedComplementaryScope(getProject());
+    int totalCount = 0;
+    for (AnalysisScope forwardScope : myForwardScopes) {
+      totalCount += forwardScope.getFileCount();
+    }
+    myFileCount = totalCount;
+    myTotalFileCount = totalCount + scope.getFileCount();
   }
 
   public String getRootNodeNameInUsageView() {
@@ -39,25 +47,18 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   public void analyze() {
-    final AnalysisScope[] scopes = getScope().getNarrowedComplementaryScope(getProject());
-    final DependenciesBuilder[] builders = new DependenciesBuilder[scopes.length];
+    final DependenciesBuilder[] builders = new DependenciesBuilder[myForwardScopes.length];
     int totalCount = 0;
-    for (AnalysisScope scope : scopes) {
-      totalCount += scope.getFileCount();
-    }
-    final int finalTotalFilesCount = totalCount;
-    totalCount = 0;
-    for (int i = 0; i < scopes.length; i++) {
-      AnalysisScope scope = scopes[i];
+    for (int i = 0; i < myForwardScopes.length; i++) {
+      AnalysisScope scope = myForwardScopes[i];
       builders[i] = new ForwardDependenciesBuilder(getProject(), scope);
       builders[i].setInitialFileCount(totalCount);
-      builders[i].setTotalFileCount(finalTotalFilesCount);
+      builders[i].setTotalFileCount(myTotalFileCount);
       builders[i].analyze();
       totalCount += scope.getFileCount();
 
       subtractScope(builders[i], getScope());
     }
-
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.startBatchFilesProcessingMode();
     try {
@@ -75,7 +76,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             }
             final int fileCount = getScope().getFileCount();
             if (fileCount > 0) {
-              indicator.setFraction(((double)++myFileCount) / fileCount);
+              indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
             }
           }
           for (DependenciesBuilder builder : builders) {

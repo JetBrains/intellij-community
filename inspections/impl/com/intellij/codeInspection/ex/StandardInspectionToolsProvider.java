@@ -37,6 +37,7 @@ import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModule
 import com.intellij.codeInspection.unneededThrows.RedundantThrows;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
@@ -57,6 +58,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
     return new Class[] {
       DeadCodeInspection.class,
+      UnusedLibrariesInspection.class,
       VisibilityInspection.class,
       CanBeFinalInspection.class,
       UnusedParametersInspection.class,

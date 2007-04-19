@@ -179,7 +179,7 @@ public class AnalysisScope {
 
     return new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
+        if (/*file instanceof PsiJavaFile && */mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
           if (!myIncludeTestSource){
