@@ -15,26 +15,21 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.EqualityToEqualsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,60 +79,6 @@ public class ObjectEqualityInspection extends BaseInspection {
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return new EqualityToEqualsFix();
-    }
-
-    private static class EqualityToEqualsFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "object.comparison.replace.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement comparisonToken = descriptor.getPsiElement();
-            final PsiBinaryExpression expression = (PsiBinaryExpression)
-                    comparisonToken.getParent();
-            if (expression == null) {
-                return;
-            }
-            boolean negated=false;
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            if (JavaTokenType.NE.equals(tokenType)) {
-                negated = true;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression strippedLhs =
-                    ParenthesesUtils.stripParentheses(lhs);
-            if (strippedLhs == null) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            final PsiExpression strippedRhs =
-                    ParenthesesUtils.stripParentheses(rhs);
-            if (strippedRhs == null) {
-                return;
-            }
-            @NonNls final String expString;
-            if (ParenthesesUtils.getPrecedence(strippedLhs) >
-                    ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-                expString = '(' + strippedLhs.getText() + ").equals(" +
-                        strippedRhs.getText() + ')';
-            } else {
-                expString = strippedLhs.getText() + ".equals(" +
-                        strippedRhs.getText() + ')';
-            }
-            final String newExpression;
-            if (negated) {
-                newExpression = '!' + expString;
-            } else {
-                newExpression = expString;
-            }
-            replaceExpression(expression, newExpression);
-        }
-
     }
 
     private class ObjectEqualityVisitor extends BaseInspectionVisitor {
