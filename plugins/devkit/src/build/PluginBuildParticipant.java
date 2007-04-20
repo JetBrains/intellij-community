@@ -44,7 +44,18 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     super(module);
   }
 
-  public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
+  public BuildRecipe getBuildInstructions(final CompileContext context) {
+    //todo[nik] cache?
+    final BuildRecipe buildRecipe = DeploymentUtil.getInstance().createBuildRecipe();
+    registerBuildInstructions(buildRecipe, context);
+    return buildRecipe;
+  }
+
+  public String getConfigurationName() {
+    return getModule().getName();
+  }
+
+  protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
     ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(getModule()).getJdk());
     if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
       return;

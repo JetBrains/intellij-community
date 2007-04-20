@@ -65,10 +65,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return module.getModuleType() == ourInstance;
   }
 
-  public final boolean isJ2EE() {
-    return false;
-  }
-
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
                                               PluginModuleBuilder moduleBuilder,
                                               ModulesProvider modulesProvider) {

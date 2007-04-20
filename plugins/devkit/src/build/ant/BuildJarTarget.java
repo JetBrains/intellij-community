@@ -31,7 +31,7 @@ public class BuildJarTarget extends Target {
   public BuildJarTarget(final ModuleChunk chunk,
                         final GenerationOptions genOptions,
                         final PluginBuildConfiguration moduleBuildProperties) {
-    super("plugin.build.jar." + BuildProperties.convertName(chunk.getName()), null, DevKitBundle.message("ant.build.jar.description", chunk.getName()), null);
+    super(PluginBuildProperties.getBuildJarTargetName(chunk.getName()), null, DevKitBundle.message("ant.build.jar.description", chunk.getName()), null);
 
     final File moduleBaseDir = chunk.getBaseDir();
 
@@ -47,7 +47,7 @@ public class BuildJarTarget extends Target {
       PluginBuildUtil.getLibraries(module1, libs);
     }
 
-    final String jarPathPropertyRef = BuildProperties.propertyRef(BuildProperties.getJarPathProperty(moduleName));
+    final String jarPathPropertyRef = BuildProperties.propertyRef(PluginBuildProperties.getJarPathProperty(moduleName));
 
     if (libs.isEmpty()) {
       add(createPluginsJar(jarPathPropertyRef, modules, moduleBaseDir, genOptions, moduleBuildProperties));

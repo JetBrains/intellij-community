@@ -53,11 +53,13 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   @NonNls private static final String MANIFEST_ATTR = "manifest";
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
+  private PluginBuildParticipant myBuildParticipant;
 
   public PluginBuildConfiguration(Module module) {
     myModule = module;
     myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
     Disposer.register(module, myPluginXmlContainer);
+    myBuildParticipant = new PluginBuildParticipant(module);
   }
 
   @Nullable
@@ -219,5 +221,9 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
 
   public void setUseUserManifest(final boolean useUserManifest) {
     myUseUserManifest = useUserManifest;
+  }
+
+  public PluginBuildParticipant getBuildParticipant() {
+    return myBuildParticipant;
   }
 }
