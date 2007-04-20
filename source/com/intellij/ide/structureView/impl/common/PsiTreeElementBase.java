@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,9 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   public Icon getIcon(boolean open) {
     final PsiElement element = getElement();
     if (element != null) {
-      return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+      int flags = Iconable.ICON_FLAG_READ_STATUS;
+      if (!(element instanceof PsiFile) || !element.isWritable()) flags |= Iconable.ICON_FLAG_VISIBILITY;
+      return element.getIcon(flags);
     }
     else {
       return null;
