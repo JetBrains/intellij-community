@@ -5,10 +5,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -25,6 +28,10 @@ public class CommittedChangesCache {
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
   private Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
   private int myInitialCount = 500;
+  private MessageBus myBus;
+
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
+                                                                                                            CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
     return ServiceManager.getService(project, CommittedChangesCache.class);
@@ -32,8 +39,9 @@ public class CommittedChangesCache {
 
   private Project myProject;
 
-  public CommittedChangesCache(final Project project) {
+  public CommittedChangesCache(final Project project, final MessageBus bus) {
     myProject = project;
+    myBus = bus;
   }
 
   public int getInitialCount() {
@@ -111,6 +119,17 @@ public class CommittedChangesCache {
   }
 
   public boolean hasCachesForAllRoots() {
+    Collection<ChangesCacheFile> caches = getAllCaches();
+    for(ChangesCacheFile cacheFile: caches) {
+      if (cacheFile.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private Collection<ChangesCacheFile> getAllCaches() {
+    Collection<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
     final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
     for(VirtualFile file: files) {
       final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
@@ -120,13 +139,11 @@ public class CommittedChangesCache {
         final RepositoryLocation location = provider.getLocationFor(file);
         if (location != null) {
           ChangesCacheFile cacheFile = getCacheFile((CachingCommittedChangesProvider) provider, location);
-          if (cacheFile.isEmpty()) {
-            return false;
-          }
+          result.add(cacheFile);
         }
       }
     }
-    return true;
+    return result;
   }
 
   private List<CommittedChangeList> getChangesWithCaching(final CachingCommittedChangesProvider provider,
@@ -136,7 +153,8 @@ public class CommittedChangesCache {
     ChangesCacheFile cacheFile = getCacheFile(provider, location);
     if (cacheFile.isEmpty()) {
       List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
-      cacheFile.writeChanges(changes); // this sorts changes in chronological order
+      // when initially initializing cache, assume all changelists are locally available
+      cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
       if (changes.size() < myInitialCount) {
         cacheFile.setHaveCompleteHistory(true);
       }
@@ -152,7 +170,10 @@ public class CommittedChangesCache {
       final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
       defaultSettings.setDateAfter(date);
       List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
-      newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
+      newChanges = cacheFile.writeChanges(newChanges, false);    // skip duplicates
+      if (newChanges.size() > 0) {
+        myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
+      }
       settings.filterChanges(newChanges);
       changes.addAll(newChanges);
       return trimToSize(changes, maxCount);
@@ -164,6 +185,35 @@ public class CommittedChangesCache {
       changes.remove(0);
     }
     return changes;
+  }
+
+  public List<CommittedChangeList> getIncomingChanges() {
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final Collection<ChangesCacheFile> caches = getAllCaches();
+    for(ChangesCacheFile cache: caches) {
+      if (!cache.isEmpty()) {
+        try {
+          result.addAll(cache.loadIncomingChanges());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return result;
+  }
+
+  public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
+    final Collection<ChangesCacheFile> caches = getAllCaches();
+    for(ChangesCacheFile cache: caches) {
+      try {
+        cache.processUpdatedFiles(updatedFiles);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    myBus.syncPublisher(COMMITTED_TOPIC).updatedFilesProcessed();
   }
 
   private ChangesCacheFile getCacheFile(final CachingCommittedChangesProvider provider, final RepositoryLocation location) {

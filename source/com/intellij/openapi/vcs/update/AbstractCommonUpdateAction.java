@@ -42,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -165,6 +166,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
                   }
                   else if (!updatedFiles.isEmpty()) {
+                    CommittedChangesCache.getInstance(project).processUpdatedFiles(updatedFiles);
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
                     ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, getTemplatePresentation().getText(), myActionInfo);

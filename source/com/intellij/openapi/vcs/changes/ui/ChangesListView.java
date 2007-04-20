@@ -150,7 +150,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
+  public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
                           List<VirtualFile> modifiedWithoutEditing,
                           MultiMap<String, VirtualFile> switchedFiles, 
                           @Nullable List<VirtualFile> ignoredFiles) {

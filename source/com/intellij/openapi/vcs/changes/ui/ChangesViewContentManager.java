@@ -27,13 +27,15 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ChangesViewContentManager implements ProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
@@ -54,6 +56,7 @@ public class ChangesViewContentManager implements ProjectComponent {
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myConnection = project.getMessageBus().connect();
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
+    myContentManager.addContentManagerListener(new MyContentManagerListener());
   }
 
   public void projectOpened() {
@@ -67,9 +70,20 @@ public class ChangesViewContentManager implements ProjectComponent {
           updateToolWindowAvailability();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
           myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
+          loadExtensionTabs();
         }
       }
     });
+  }
+
+  private void loadExtensionTabs() {
+    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
+    for(ChangesViewContentEP ep: contentEPs) {
+      final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
+      if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
+        myContentManager.addContent(PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false));
+      }
+    }
   }
 
   private void updateToolWindowAvailability() {
@@ -133,6 +147,28 @@ public class ChangesViewContentManager implements ProjectComponent {
 
     public void moduleRemoved(Project project, Module module) {
       updateToolWindowAvailability();
+    }
+  }
+
+  private static class ContentStub extends JPanel {
+    private ChangesViewContentEP myEP;
+
+    public ContentStub(final ChangesViewContentEP EP) {
+      myEP = EP;
+    }
+
+    public ChangesViewContentEP getEP() {
+      return myEP;
+    }
+  }
+
+  private class MyContentManagerListener extends ContentManagerAdapter {
+    public void selectionChanged(final ContentManagerEvent event) {
+      if (event.getContent().getComponent() instanceof ContentStub) {
+        ChangesViewContentEP ep = ((ContentStub) event.getContent().getComponent()).getEP();
+        ChangesViewContentProvider provider = ep.newInstance(myProject);
+        event.getContent().setComponent(provider.initContent());
+      }
     }
   }
 }

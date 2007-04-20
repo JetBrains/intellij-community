@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NonNls;
@@ -18,7 +19,7 @@ import java.util.*;
  */
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
   private File myPath;
   private File myIndexPath;
@@ -33,7 +34,7 @@ public class ChangesCacheFile {
   private boolean myHaveCompleteHistory = false;
   private boolean myHeaderLoaded = false;
   @NonNls private static final String INDEX_EXTENSION = ".index";
-  private static final int INDEX_ENTRY_SIZE = 3*8;
+  private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 30;
 
   public ChangesCacheFile(final File path, final CachingCommittedChangesProvider changesProvider, final RepositoryLocation location) {
@@ -59,7 +60,7 @@ public class ChangesCacheFile {
     return false;
   }
 
-  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
+  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, boolean assumeCompletelyDownloaded) throws IOException {
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
@@ -68,7 +69,7 @@ public class ChangesCacheFile {
         writeHeader();
       }
       myStream.seek(myStream.length());
-      IndexEntry[] entries = readLastIndexEntries(myIndexStream, 0, 1);
+      IndexEntry[] entries = readLastIndexEntries(0, 1);
       // the list and index are sorted in direct chronological order
       Collections.sort(changes, new Comparator<CommittedChangeList>() {
         public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
@@ -97,9 +98,7 @@ public class ChangesCacheFile {
         if (list.getNumber() < myFirstCachedChangelist) {
           myFirstCachedChangelist = list.getNumber(); 
         }
-        myIndexStream.writeLong(list.getNumber());
-        myIndexStream.writeLong(list.getCommitDate().getTime());
-        myIndexStream.writeLong(position);
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, assumeCompletelyDownloaded);
       }
       writeHeader();
       myHeaderLoaded = true;
@@ -108,6 +107,13 @@ public class ChangesCacheFile {
       closeStreams();
     }
     return result;
+  }
+
+  private void writeIndexEntry(long number, long date, long offset, boolean completelyDownloaded) throws IOException {
+    myIndexStream.writeLong(number);
+    myIndexStream.writeLong(date);
+    myIndexStream.writeLong(offset);
+    myIndexStream.writeShort(completelyDownloaded ? 1 : 0);
   }
 
   private void openStreams() throws FileNotFoundException {
@@ -136,26 +142,31 @@ public class ChangesCacheFile {
     myStream.writeShort(myHaveCompleteHistory ? 1 : 0);
   }
 
-  private IndexEntry[] readLastIndexEntries(final RandomAccessFile indexStream, int offset, int count) throws IOException {
+  private IndexEntry[] readLastIndexEntries(int offset, int count) throws IOException {
     if (!myIndexPath.exists()) {
       return NO_ENTRIES;
     }
-    long totalCount = indexStream.length() / INDEX_ENTRY_SIZE;
+    long totalCount = myIndexStream.length() / INDEX_ENTRY_SIZE;
     if (count > totalCount - offset) {
       count = (int)totalCount - offset;
     }
     if (count == 0) {
       return NO_ENTRIES;
     }
-    indexStream.seek(indexStream.length() - INDEX_ENTRY_SIZE * (count + offset));
+    myIndexStream.seek(myIndexStream.length() - INDEX_ENTRY_SIZE * (count + offset));
     IndexEntry[] result = new IndexEntry[count];
     for(int i=0; i<count; i++) {
       result [i] = new IndexEntry();
-      result [i].number = indexStream.readLong();
-      result [i].date = indexStream.readLong();
-      result [i].offset = indexStream.readLong();
+      readIndexEntry(result [i]);
     }
     return result;
+  }
+
+  private void readIndexEntry(final IndexEntry result) throws IOException {
+    result.number = myIndexStream.readLong();
+    result.date = myIndexStream.readLong();
+    result.offset = myIndexStream.readLong();
+    result.completelyDownloaded = (myIndexStream.readShort() != 0);
   }
 
   public Date getLastCachedDate() {
@@ -214,17 +225,16 @@ public class ChangesCacheFile {
         }
       }
       else if (!settings.isAnyFilterSpecified()) {
-        IndexEntry[] entries = readLastIndexEntries(myIndexStream, 0, maxCount);
+        IndexEntry[] entries = readLastIndexEntries(0, maxCount);
         for(IndexEntry entry: entries) {
           myStream.seek(entry.offset);
-          CommittedChangeList changeList = myChangesProvider.readChangeList(myLocation, myStream);
-          result.add(changeList);
+          result.add(myChangesProvider.readChangeList(myLocation, myStream));
         }
       }
       else {
         int offset = 0;
         while(result.size() < maxCount) {
-          IndexEntry[] entries = readLastIndexEntries(myIndexStream, offset, 1);
+          IndexEntry[] entries = readLastIndexEntries(offset, 1);
           if (entries.length == 0) {
             break;
           }
@@ -265,10 +275,51 @@ public class ChangesCacheFile {
     }
   }
 
+  public Collection<? extends CommittedChangeList> loadIncomingChanges() throws IOException {
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    int offset = 0;
+    openStreams();
+    try {
+      while(true) {
+        IndexEntry[] entries = readLastIndexEntries(offset, 1);
+        if (entries.length == 0 || entries [0].completelyDownloaded) {
+          break;
+        }
+        myStream.seek(entries [0].offset);
+        result.add(myChangesProvider.readChangeList(myLocation, myStream));
+        offset++;
+      }
+      return result;
+    }
+    finally {
+      closeStreams();
+    }
+  }
+
+  public void processUpdatedFiles(final UpdatedFiles updatedFiles) throws IOException {
+    openStreams();
+    try {
+      final long length = myIndexStream.length();
+      long totalCount = length / INDEX_ENTRY_SIZE;
+      IndexEntry e = new IndexEntry();
+      for(int i=0; i<totalCount; i++) {
+        myIndexStream.seek(length - (i+1) * INDEX_ENTRY_SIZE);
+        readIndexEntry(e);
+        if (e.completelyDownloaded) break;
+        myIndexStream.seek(length - (i+1) * INDEX_ENTRY_SIZE);
+        writeIndexEntry(e.number, e.date, e.offset, true);
+      }
+    }
+    finally {
+      closeStreams();
+    }
+  }
+
   private static class IndexEntry {
     long number;
     long date;
     long offset;
+    boolean completelyDownloaded;
   }
 
   private static final IndexEntry[] NO_ENTRIES = new IndexEntry[0];
