@@ -63,7 +63,8 @@ public class SvnChangeList implements CommittedChangeList {
     final String author = logEntry.getAuthor();
     myAuthor = author == null ? "" : author;
     myDate = logEntry.getDate();
-    myMessage = logEntry.getMessage();
+    final String message = logEntry.getMessage();
+    myMessage = message == null ? "" : message;
     for(Object o: logEntry.getChangedPaths().values()) {
       SVNLogEntryPath entry = (SVNLogEntryPath) o;
       if (entry.getType() == 'A') {
