@@ -294,6 +294,11 @@ public class FileReferenceSet {
   }
 
   @Nullable
+  public PsiElement resolve() {
+    return myReferences == null || myReferences.length == 0 ? null : myReferences[myReferences.length - 1].resolve();
+  }
+
+  @Nullable
   public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
