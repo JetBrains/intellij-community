@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -33,6 +32,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
 
 import javax.swing.*;
@@ -479,7 +480,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     setupFindModel(project);
 
-    if (element instanceof PsiVariable || element instanceof XmlAttributeValue) {
+    if (element instanceof PsiVariable ||
+        element instanceof XmlAttributeValue ||
+        element instanceof XmlTag) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
 
@@ -487,8 +490,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         PsiElement refElement = ref.getElement();
         
         if (refElement instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)refElement) ||
-            refElement instanceof XmlAttributeValue
-            ) {
+            ( refElement instanceof XmlAttributeValue &&
+              (!(element instanceof XmlTag) ||
+               refElement.getParent().getParent() == element)
+            )
+            )
+        {
           writeRefs.add(ref);
         }
         else {
