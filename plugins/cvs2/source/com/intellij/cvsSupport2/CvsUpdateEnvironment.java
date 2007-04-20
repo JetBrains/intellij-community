@@ -115,8 +115,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
             FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
             for(VirtualFile mergedFile: list) {
               String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-              mergedWithConflictsGroup.getFiles().remove(path);
-              binaryMergedGroup.getFiles().remove(path);
+              mergedWithConflictsGroup.remove(path);
+              binaryMergedGroup.remove(path);
               mergedGroup.add(path);
             }
           }

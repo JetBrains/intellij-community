@@ -19,16 +19,20 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class FileGroup implements JDOMExternalizable {
@@ -36,14 +40,17 @@ public class FileGroup implements JDOMExternalizable {
   public String myUpdateName;
   public String myStatusName;
 
-  private final Collection<String> myFiles = new ArrayList<String>();
+  private final Collection<UpdatedFile> myFiles = new ArrayList<UpdatedFile>();
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
   public String myId;
   @NonNls private static final String PATH = "PATH";
+  @NonNls private static final String VCS_ATTRIBUTE = "vcs";
+  @NonNls private static final String REVISION_ATTRIBUTE = "revision";
 
   private final List<FileGroup> myChildren = new ArrayList<FileGroup>();
   @NonNls private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
+
   @NonNls public static final String MODIFIED_ID = "MODIFIED";
   @NonNls public static final String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
   @NonNls public static final String MERGED_ID = "MERGED";
@@ -84,17 +91,33 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public void add(@NotNull final String path) {
-    myFiles.add(path);
+    myFiles.add(new UpdatedFile(path));
+  }
+
+  public void add(@NotNull String path, AbstractVcs vcs, VcsRevisionNumber revision) {
+    myFiles.add(new UpdatedFile(path, vcs.getName(), revision.asString()));
+  }
+
+  public void remove(String path) {
+    for(UpdatedFile file: myFiles) {
+      if (file.getPath().equals(path)) {
+        myFiles.remove(file);
+        break;
+      }
+    }
   }
 
   public Collection<String> getFiles() {
-    return myFiles;
+    ArrayList<String> files = new ArrayList<String>();
+    for(UpdatedFile file: myFiles) {
+      files.add(file.getPath());
+    }
+    return files;
   }
 
   public boolean isEmpty() {
     if (!myFiles.isEmpty()) return false;
-    for (Iterator<FileGroup> iterator = myChildren.iterator(); iterator.hasNext();) {
-      FileGroup child = iterator.next();
+    for (FileGroup child : myChildren) {
       if (!child.isEmpty()) return false;
     }
     return true;
@@ -115,10 +138,15 @@ public class FileGroup implements JDOMExternalizable {
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    for (Iterator iterator = myFiles.iterator(); iterator.hasNext();) {
-      String s = (String)iterator.next();
+    for (final UpdatedFile file : myFiles) {
       Element path = new Element(PATH);
-      path.setText(s);
+      path.setText(file.getPath());
+      if (file.getVcsName() != null) {
+        path.setAttribute(VCS_ATTRIBUTE, file.getVcsName());
+      }
+      if (file.getRevision() != null) {
+        path.setAttribute(REVISION_ATTRIBUTE, file.getRevision());
+      }
       element.addContent(path);
     }
   }
@@ -126,9 +154,12 @@ public class FileGroup implements JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     List pathElements = element.getChildren(PATH);
-    for (Iterator iterator = pathElements.iterator(); iterator.hasNext();) {
-      Element pathElement = (Element)iterator.next();
-      myFiles.add(pathElement.getText());
+    for (final Object pathElement1 : pathElements) {
+      Element pathElement = (Element)pathElement1;
+      final String path = pathElement.getText();
+      final String vcsName = pathElement.getAttributeValue(VCS_ATTRIBUTE);
+      final String revision = pathElement.getAttributeValue(REVISION_ATTRIBUTE);
+      myFiles.add(new UpdatedFile(path, vcsName, revision));
     }
   }
 
@@ -137,8 +168,7 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public static void writeGroupsToElement(List<FileGroup> groups, Element element) throws WriteExternalException {
-    for (Iterator<FileGroup> iterator = groups.iterator(); iterator.hasNext();) {
-      FileGroup fileGroup = iterator.next();
+    for (FileGroup fileGroup : groups) {
       Element groupElement = new Element(FILE_GROUP_ELEMENT_NAME);
       element.addContent(groupElement);
       fileGroup.writeExternal(groupElement);
@@ -148,8 +178,8 @@ public class FileGroup implements JDOMExternalizable {
 
   public static void readGroupsFromElement(List<FileGroup> groups, Element element) throws InvalidDataException {
     List groupElements = element.getChildren();
-    for (Iterator iterator = groupElements.iterator(); iterator.hasNext();) {
-      Element groupElement = (Element)iterator.next();
+    for (final Object groupElement1 : groupElements) {
+      Element groupElement = (Element)groupElement1;
       FileGroup fileGroup = new FileGroup();
       fileGroup.readExternal(groupElement);
       groups.add(fileGroup);
@@ -168,5 +198,71 @@ public class FileGroup implements JDOMExternalizable {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return myId + " " + myFiles.size() + " items";
+  }
+
+  @Nullable
+  public VcsRevisionNumber getRevision(final Project project, final String path) {
+    for(UpdatedFile file: myFiles) {
+      if (file.getPath().equals(path)) {
+        final String vcsName = file.getVcsName();
+        final String revision = file.getRevision();
+        if (vcsName != null && revision != null) {
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsName);
+          if (vcs != null) {
+            return vcs.parseRevisionNumber(revision);
+          }
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
+    for(UpdatedFile file: myFiles) {
+      if (file.getPath().startsWith(path)){
+        file.setVcsName(vcs.getName());
+        file.setRevision(revision.asString());
+      }
+    }
+    for(FileGroup group: myChildren) {
+      group.setRevisions(path, vcs, revision);
+    }
+  }
+
+  private static class UpdatedFile {
+    private String myPath;
+    private String myVcsName;
+    private String myRevision;
+
+    public UpdatedFile(final String path) {
+      myPath = path;
+    }
+
+    public UpdatedFile(final String path, final String vcsName, final String revision) {
+      myPath = path;
+      myVcsName = vcsName;
+      myRevision = revision;
+    }
+
+    public String getPath() {
+      return myPath;
+    }
+
+    public String getVcsName() {
+      return myVcsName;
+    }
+
+    public void setVcsName(final String vcsName) {
+      myVcsName = vcsName;
+    }
+
+    public String getRevision() {
+      return myRevision;
+    }
+
+    public void setRevision(final String revision) {
+      myRevision = revision;
+    }
   }
 }

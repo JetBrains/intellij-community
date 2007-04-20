@@ -19,6 +19,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -89,5 +91,11 @@ public class UpdatedFiles implements JDOMExternalizable {
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.added"), VcsBundle.message("status.group.name.locally.added"), false, FileGroup.LOCALLY_ADDED_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.removed"), VcsBundle.message("status.group.name.locally.removed"), false, FileGroup.LOCALLY_REMOVED_ID, false));
     return result;
+  }
+
+  public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
+    for(FileGroup group: myGroups) {
+      group.setRevisions(path, vcs, revision);      
+    }
   }
 }
