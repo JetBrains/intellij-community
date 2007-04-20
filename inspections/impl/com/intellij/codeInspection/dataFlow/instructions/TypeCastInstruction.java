@@ -11,10 +11,8 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.psi.PsiTypeCastExpression;
 
 public class TypeCastInstruction extends Instruction {
@@ -22,31 +20,13 @@ public class TypeCastInstruction extends Instruction {
   private final DfaRelationValue myInstanceofRelation;
   private final boolean myIsSemantical;
 
-  public static TypeCastInstruction createInstruction(PsiTypeCastExpression castExpression, DfaValueFactory factory) {
-    PsiExpression expr = castExpression.getOperand();
-    PsiType castType = castExpression.getCastType().getType();
-
-    if (expr == null) return null;
-
-    if (RedundantCastUtil.isTypeCastSemantical(castExpression)) {
-      return new TypeCastInstruction();
-    }
-
-    DfaValue dfaExpr = factory.create(expr);
-    DfaTypeValue dfaType = factory.getTypeFactory().create(castType);
-    if (dfaExpr == null) return null;
-
-    DfaRelationValue dfaInstanceof = factory.getRelationFactory().create(dfaExpr, dfaType, "instanceof", false);
-    return dfaInstanceof != null ? new TypeCastInstruction(castExpression, dfaInstanceof) : null;
-  }
-
   public TypeCastInstruction() {
     myCastExpression = null;
     myInstanceofRelation = null;
     myIsSemantical = true;
   }
 
-  private TypeCastInstruction(PsiTypeCastExpression castExpression, DfaRelationValue instanceofRelation) {
+  public TypeCastInstruction(PsiTypeCastExpression castExpression, DfaRelationValue instanceofRelation) {
     myIsSemantical = false;
     myCastExpression = castExpression;
     myInstanceofRelation = instanceofRelation;
@@ -58,10 +38,13 @@ public class TypeCastInstruction extends Instruction {
       memState.push(DfaUnknownValue.getInstance());
     }
     else if (!memState.applyInstanceofOrNull(myInstanceofRelation)) {
-      runner.onInstructionProducesCCE(this);
+      onInstructionProducesCCE(runner);
     }
 
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
+  }
+
+  protected void onInstructionProducesCCE(final DataFlowRunner runner) {
   }
 
   public PsiTypeCastExpression getCastExpression() {

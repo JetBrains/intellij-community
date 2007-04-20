@@ -10,6 +10,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.THashSet;
@@ -35,7 +36,7 @@ public class DfaVariableState implements Cloneable {
     myVariableIsDeclaredNotNull = var != null && AnnotationUtil.isNotNull(var);
   }
 
-  private DfaVariableState(final DfaVariableState toClone) {
+  protected DfaVariableState(final DfaVariableState toClone) {
     myVar = toClone.myVar;
     myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
     myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
@@ -130,5 +131,17 @@ public class DfaVariableState implements Cloneable {
 
   public void setNullable(final boolean nullable) {
     myNullable = nullable;
+  }
+
+  public PsiVariable getVariable() {
+    return myVar;
+  }
+
+  public void setValue(DfaValue value) {
+  }
+
+  @Nullable
+  public DfaValue getValue() {
+    return null;
   }
 }

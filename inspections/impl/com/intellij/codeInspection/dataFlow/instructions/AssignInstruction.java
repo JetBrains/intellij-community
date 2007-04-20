@@ -37,7 +37,7 @@ public class AssignInstruction extends Instruction {
       final PsiModifierList modList = psiVariable.getModifierList();
       if (modList != null && modList.findAnnotation(AnnotationUtil.NOT_NULL) != null) {
         if (!memState.applyNotNull(dfaSource)) {
-          runner.onAssigningToNotNullableVariable(myRExpression);
+          onAssigningToNotNullableVariable(runner);
         }
       }
       memState.setVarValue(var, dfaSource);
@@ -46,6 +46,14 @@ public class AssignInstruction extends Instruction {
     memState.push(dfaDest);
 
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+  }
+
+  protected void onAssigningToNotNullableVariable(final DataFlowRunner runner) {
+
+  }
+
+  public PsiExpression getRExpression() {
+    return myRExpression;
   }
 
   public String toString() {

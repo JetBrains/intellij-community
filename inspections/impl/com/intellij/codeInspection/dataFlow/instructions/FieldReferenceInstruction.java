@@ -23,22 +23,19 @@ public class FieldReferenceInstruction extends Instruction {
     myIsPhysical = expression.isPhysical();
     mySyntheticFieldName = syntheticFieldName;
   }
-  public FieldReferenceInstruction(PsiReferenceExpression expression) {
-    this(expression, null);
-  }
-
-  public FieldReferenceInstruction(PsiArrayAccessExpression expression) {
-    this(expression, null);
-  }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
     if (myIsPhysical && !memState.applyNotNull(qualifier)) {
-      runner.onInstructionProducesNPE(this);
+      onInstructionProducesNPE(runner);
       return new DfaInstructionState[0];
     }
 
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
+  }
+
+  protected void onInstructionProducesNPE(final DataFlowRunner runner) {
+
   }
 
   public String toString() {

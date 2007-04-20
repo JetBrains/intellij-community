@@ -66,7 +66,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
     if (body == null) return;
-    DataFlowRunner dfaRunner = new DataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     if (dfaRunner.analyzeMethod(body)) {
       if (dfaRunner.problemsDetected()) {
         createDescription(dfaRunner, holder);
@@ -99,7 +99,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private static void createDescription(DataFlowRunner runner, ProblemsHolder holder) {
+  private static void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder) {
     Pair<Set<Instruction>,Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();

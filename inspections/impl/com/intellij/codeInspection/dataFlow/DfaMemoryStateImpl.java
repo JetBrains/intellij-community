@@ -31,24 +31,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Map<DfaVariableValue,DfaVariableState> myVariableStates;
   private DfaValueFactory myFactory;
 
-  private DfaMemoryStateImpl(final DfaValueFactory factory) {
+  public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
+    myEqClasses = new ArrayList<SortedIntSet>();
+    myStateSize = 0;
+    myStack = new Stack<DfaValue>();
+    myDistinctClasses = new TLongHashSet();
+    myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
+    myOffsetStack = new TIntStack(1);
   }
 
-  public static DfaMemoryState createEmpty(final DfaValueFactory factory) {
-    DfaMemoryStateImpl empty = new DfaMemoryStateImpl(factory);
-
-    empty.myEqClasses = new ArrayList<SortedIntSet>();
-    empty.myStateSize = 0;
-    empty.myStack = new Stack<DfaValue>();
-    empty.myDistinctClasses = new TLongHashSet();
-    empty.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
-    empty.myOffsetStack = new TIntStack(1);
-    return empty;
+  public DfaValueFactory getFactory() {
+    return myFactory;
   }
 
-  public DfaMemoryState createCopy() {
-    DfaMemoryStateImpl newState = new DfaMemoryStateImpl(myFactory);
+  protected DfaMemoryStateImpl createNew() {
+    return new DfaMemoryStateImpl(myFactory);
+  }
+
+  public DfaMemoryStateImpl createCopy() {
+    DfaMemoryStateImpl newState = createNew();
 
     newState.myStack = (Stack<DfaValue>)myStack.clone();
     newState.myDistinctClasses = new TLongHashSet(myDistinctClasses.toArray());
@@ -212,6 +214,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myStack.pop();
   }
 
+  public DfaValue peek() {
+    return myStack.peek();
+  }
+
   public void push(DfaValue value) {
     myStack.push(value != null ? value : DfaUnknownValue.getInstance());
   }
@@ -232,6 +238,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushVariable(var);
     if (value instanceof DfaUnknownValue) return;
 
+    getVariableState(var).setValue(value);
     if (value instanceof DfaNotNullValue) {
       DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNotNullValue)value).getType());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, dfaType, "instanceof", false);
@@ -607,12 +614,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
   }
 
-  private DfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  protected DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {
       final PsiVariable psiVariable = dfaVar.getPsiVariable();
-      state = new DfaVariableState(psiVariable);
+      state = createVariableState(psiVariable);
       myVariableStates.put(dfaVar, state);
       if (psiVariable != null) {
         state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
@@ -620,6 +627,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return state;
+  }
+
+  protected Map<DfaVariableValue, DfaVariableState> getVariableStates() {
+    return myVariableStates;
+  }
+
+  protected DfaVariableState createVariableState(final PsiVariable psiVariable) {
+    return new DfaVariableState(psiVariable);
   }
 
   public void flushFields(DataFlowRunner runner) {

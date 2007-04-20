@@ -83,7 +83,7 @@ public class MethodCallInstruction extends Instruction {
       final DfaValue arg = memState.pop();
       final int revIdx = myArgs.length - i - 1;
       if (myArgs.length <= myParametersNotNull.length && revIdx < myParametersNotNull.length && myParametersNotNull[revIdx] && !memState.applyNotNull(arg)) {
-        runner.onPassingNullParameter(myArgs[revIdx]); // Parameters on stack are reverted.
+        onPassingNullParameter(runner, myArgs[revIdx]); // Parameters on stack are reverted.
         if (arg instanceof DfaVariableValue) {
           memState.setVarValue((DfaVariableValue)arg, myFactory.getNotNullFactory().create(((DfaVariableValue)arg).getPsiVariable().getType()));
         }
@@ -94,10 +94,10 @@ public class MethodCallInstruction extends Instruction {
     try {
       if (!memState.applyNotNull(qualifier)) {
         if (myMethodType == MethodType.UNBOXING) {
-          runner.onUnboxingNullable(myContext);
+          onUnboxingNullable(runner);
         }
         else {
-          runner.onInstructionProducesNPE(this);
+          onInstructionProducesNPE(runner);
         }
         if (qualifier instanceof DfaVariableValue) {
           memState.setVarValue((DfaVariableValue)qualifier, myFactory.getNotNullFactory().create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
@@ -112,6 +112,15 @@ public class MethodCallInstruction extends Instruction {
         memState.flushFields(runner);
       }
     }
+  }
+
+  protected void onInstructionProducesNPE(final DataFlowRunner runner) {
+  }
+
+  protected void onUnboxingNullable(final DataFlowRunner runner) {
+  }
+
+  protected void onPassingNullParameter(final DataFlowRunner runner, final PsiExpression expression) {
   }
 
   private void pushResult(DfaMemoryState state, final DfaValue oldValue) {
@@ -134,6 +143,11 @@ public class MethodCallInstruction extends Instruction {
 
   public PsiCallExpression getCallExpression() {
     return myCall;
+  }
+
+  @NotNull
+  public PsiExpression getContext() {
+    return myContext;
   }
 
   public String toString() {

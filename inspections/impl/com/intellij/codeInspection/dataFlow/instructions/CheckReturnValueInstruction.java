@@ -20,9 +20,17 @@ public class CheckReturnValueInstruction extends Instruction {
     final Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
     final DfaValue retValue = memState.pop();
     if (!memState.checkNotNullable(retValue)) {
-      runner.onNullableReturn(myReturn);
+      onNullableReturn(runner);
     }
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, memState)};
+  }
+
+  protected void onNullableReturn(final DataFlowRunner runner) {
+
+  }
+
+  public PsiReturnStatement getReturn() {
+    return myReturn;
   }
 
   public String toString() {

@@ -18,8 +18,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import gnu.trove.THashSet;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,30 +33,24 @@ public class DataFlowRunner {
   private static final long ourTimeLimit = 10000;
 
   private Instruction[] myInstructions;
-  private final HashSet<Instruction> myNPEInstructions = new HashSet<Instruction>();
   private DfaVariableValue[] myFields;
-  private final HashSet<Instruction> myCCEInstructions = new HashSet<Instruction>();
-  private final HashSet<PsiExpression> myNullableArguments = new HashSet<PsiExpression>();
-  private final HashSet<PsiExpression> myNullableAssignments = new HashSet<PsiExpression>();
-  private final HashSet<PsiReturnStatement> myNullableReturns = new HashSet<PsiReturnStatement>();
   private DfaValueFactory myValueFactory;
-
-  private final boolean mySuggestNullableAnnotations;
-  private boolean myInNullableMethod = false;
-  private boolean myInNotNullMethod = false;
-  private boolean myIsInMethod = false;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
-  private Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
+  private final InstructionFactory myInstructionFactory;
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
   }
 
-  public DataFlowRunner(boolean suggestNullableAnnotations) {
-    mySuggestNullableAnnotations = suggestNullableAnnotations;
+  public Instruction[] getInstructions() {
+    return myInstructions;
+  }
+
+  public DataFlowRunner(final InstructionFactory instructionFactory) {
+    myInstructionFactory = instructionFactory;
     myValueFactory = new DfaValueFactory();
   }
 
@@ -63,17 +58,15 @@ public class DataFlowRunner {
     return myValueFactory;
   }
 
-  public boolean analyzeMethod(PsiCodeBlock psiBlock) {
-    myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
+  public InstructionFactory getInstructionFactory() {
+    return myInstructionFactory;
+  }
 
-    if (myIsInMethod) {
-      PsiMethod method = (PsiMethod)psiBlock.getParent();
-      myInNullableMethod = AnnotationUtil.isNullable(method);
-      myInNotNullMethod = AnnotationUtil.isNotNull(method);
-    }
+  public boolean analyzeMethod(PsiCodeBlock psiBlock) {
+    final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     try {
-      ControlFlow flow = new ControlFlowAnalyzer(myValueFactory).buildControlFlow(psiBlock);
+      ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, myInstructionFactory).buildControlFlow(psiBlock);
       if (flow == null) return false;
 
       myInstructions = flow.getInstructions();
@@ -94,9 +87,9 @@ public class DataFlowRunner {
       if (branchCount > 80) return false; // Do not even try. Definetly will out of time.
 
       final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
-      final DfaMemoryState initialState = DfaMemoryStateImpl.createEmpty(myValueFactory);
+      final DfaMemoryState initialState = createMemoryState();
 
-      if (myIsInMethod) {
+      if (isInMethod) {
         PsiMethod method = (PsiMethod)psiBlock.getParent();
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         for (PsiParameter parameter : parameters) {
@@ -151,20 +144,8 @@ public class DataFlowRunner {
     }
   }
 
-  public void onInstructionProducesNPE(Instruction instruction) {
-    myNPEInstructions.add(instruction);
-  }
-
-  public void onInstructionProducesCCE(Instruction instruction) {
-    myCCEInstructions.add(instruction);
-  }
-
-  @NotNull public Set<Instruction> getCCEInstructions() {
-    return myCCEInstructions;
-  }
-
-  @NotNull public Set<Instruction> getNPEInstructions() {
-    return myNPEInstructions;
+  protected DfaMemoryState createMemoryState() {
+    return new DfaMemoryStateImpl(myValueFactory);
   }
 
   @NotNull public Set<Instruction> getRedundantInstanceofs() {
@@ -178,37 +159,6 @@ public class DataFlowRunner {
     }
 
     return result;
-  }
-
-  @NotNull public Set<PsiReturnStatement> getNullableReturns() {
-    return myNullableReturns;
-  }
-
-  public boolean isInNullableMethod() {
-    return myInNullableMethod;
-  }
-
-  public boolean isInNotNullMethod() {
-    return myInNotNullMethod;
-  }
-
-  @NotNull public Set<PsiExpression> getNullableArguments() {
-    return myNullableArguments;
-  }
-
-  @NotNull public Set<PsiExpression> getNullableAssignments() {
-    return myNullableAssignments;
-  }
-
-  @NotNull public Set<PsiExpression> getUnboxedNullables() {
-    return myUnboxedNullables;
-  }
-
-  public void onUnboxingNullable(@NotNull PsiExpression expression) {
-    LOG.assertTrue(expression.isValid());
-    if (expression.isPhysical()) {
-      myUnboxedNullables.add(expression);
-    }
   }
 
   public DfaVariableValue[] getFields() {
@@ -249,31 +199,4 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  public void onPassingNullParameter(PsiExpression expr) {
-    myNullableArguments.add(expr);
-  }
-
-  public void onAssigningToNotNullableVariable(final PsiExpression expr) {
-    myNullableAssignments.add(expr);
-  }
-
-  public void onNullableReturn(final PsiReturnStatement statement) {
-    if (myInNullableMethod || !myIsInMethod) return;
-    if (myInNotNullMethod || mySuggestNullableAnnotations) {
-      myNullableReturns.add(statement);
-    }
-  }
-
-  public boolean problemsDetected() {
-    final Pair<Set<Instruction>, Set<Instruction>> constConditions = getConstConditionalExpressions();
-    return !constConditions.getFirst().isEmpty()
-           || !constConditions.getSecond().isEmpty()
-           || !myNPEInstructions.isEmpty()
-           || !myCCEInstructions.isEmpty()
-           || !getRedundantInstanceofs().isEmpty()
-           || !myNullableArguments.isEmpty()
-           || !myNullableAssignments.isEmpty()
-           || !myNullableReturns.isEmpty()
-           || !myUnboxedNullables.isEmpty();
-  }
 }

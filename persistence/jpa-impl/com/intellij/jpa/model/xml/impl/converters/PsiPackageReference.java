@@ -8,12 +8,11 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.jpa.JpaMessages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implements EmptyResolveMessageProvider {
@@ -66,7 +65,7 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
   }
 
   public String getUnresolvedMessagePattern() {
-    return JpaMessages.message("message.cannot.resolve.package");
+    return JpaMessages.message("cannot.resolve.package.0");
   }
 
 }
