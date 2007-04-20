@@ -132,10 +132,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
 
         params.setWorkingDirectory(getAbsoluteWorkDir());
         params.getVMParametersList().addParametersString(vmParams);
-//        params.getProgramParametersList().add("e");
         params.getProgramParametersList().add(scriptPath);
         params.getProgramParametersList().addParametersString(scriptParams);
-//        params.setMainClass("org.jetbrains.groovy.runner.GroovyScriptRunner");
         params.setMainClass("groovy.lang.GroovyShell");
 
         return params;

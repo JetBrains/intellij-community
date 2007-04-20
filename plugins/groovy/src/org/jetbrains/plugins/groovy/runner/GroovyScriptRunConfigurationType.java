@@ -47,7 +47,6 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType
 
   public ConfigurationFactory[] getConfigurationFactories()
   {
-    myConfigurationFactory = new GroovyScriptConfigurationFactory(this);
     return new ConfigurationFactory[]
             {
                     myConfigurationFactory
