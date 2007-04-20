@@ -43,7 +43,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   @NotNull
-  public Iterator getLibraryIterator() {
+  public Iterator<Library> getLibraryIterator() {
     return myLibrariesModifiableModel.getLibraryIterator();
   }
 

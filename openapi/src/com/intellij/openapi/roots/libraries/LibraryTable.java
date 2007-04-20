@@ -61,7 +61,7 @@ public interface LibraryTable {
 
     void commit();
 
-    @NotNull Iterator getLibraryIterator();
+    @NotNull Iterator<Library> getLibraryIterator();
 
     Library getLibraryByName(@NotNull String name);
 
