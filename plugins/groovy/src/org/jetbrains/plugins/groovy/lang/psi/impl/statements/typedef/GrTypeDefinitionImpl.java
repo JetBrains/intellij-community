@@ -41,7 +41,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     if (parent instanceof GrTypeDefinition) {
       return ((GrTypeDefinition) parent).getQualifiedName() + "." + getName();
     } else if (parent instanceof GroovyFile) {
-      return ((GroovyFile) parent).getPackageName() + "." + getName();
+      String packageName = ((GroovyFile) parent).getPackageName();
+      return packageName.length() > 0 ? packageName + "." + getName() : getName();
     }
 
     return null;

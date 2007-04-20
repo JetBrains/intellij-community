@@ -14,9 +14,6 @@
   </project-components>
   <module-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.caches.module.ModuleLibraryCachesManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GFacetListener</implementation-class>
     </component>
     <component>

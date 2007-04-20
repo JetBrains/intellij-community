@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.RunnerInfo;
@@ -17,9 +18,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.debugger.engine.DebugProcessAdapter;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.DebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -137,6 +143,16 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
         params.setMainClass("groovy.lang.GroovyShell");
 
         return params;
+      }
+
+      protected OSProcessHandler startProcess() throws ExecutionException {
+        OSProcessHandler handler = super.startProcess();
+        DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessAdapter() {
+          public void processAttached(DebugProcess process) {
+            process.appendPositionManager(new GroovyPositionManager((DebugProcessImpl) process));
+          }
+        });
+        return handler;
       }
     };
 
