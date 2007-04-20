@@ -59,6 +59,14 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     return myComponent;
   }
 
+  public void setTextFieldPreferredWidth(final int charCount) {
+    final Comp comp = getChildComponent();
+    Dimension size = comp.getPreferredSize();
+    FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
+    size.width = fontMetrics.charWidth('a') * charCount;
+    comp.setPreferredSize(size);
+  }
+
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myBrowseButton.setEnabled(enabled && myButtonEnabled);

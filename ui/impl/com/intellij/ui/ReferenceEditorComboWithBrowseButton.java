@@ -8,7 +8,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 
-import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -43,13 +42,6 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
 
   public void setText(final String text){
     getChildComponent().setText(text);
-  }
-
-  public void setTextFieldPreferredWidth(final int charCount) {
-    Dimension size = getChildComponent().getPreferredSize();
-    FontMetrics fontMetrics = getChildComponent().getFontMetrics(getChildComponent().getFont());
-    size.width = fontMetrics.charWidth('a') * charCount;
-    getChildComponent().setPreferredSize(size);
   }
 
   public boolean isEditable() {

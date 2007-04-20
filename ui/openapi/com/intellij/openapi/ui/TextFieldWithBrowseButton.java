@@ -19,7 +19,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> {
@@ -48,13 +47,6 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void setText(final String text){
     getTextField().setText(text);
-  }
-
-  public void setTextFieldPreferredWidth(final int charCount) {
-    Dimension size = getTextField().getPreferredSize();
-    FontMetrics fontMetrics = getTextField().getFontMetrics(getTextField().getFont());
-    size.width = fontMetrics.charWidth('a') * charCount;
-    getTextField().setPreferredSize(size);
   }
 
   public boolean isEditable() {

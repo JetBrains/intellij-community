@@ -14,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.Function;
 
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
@@ -67,13 +66,6 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
 
   public void setText(final String text){
     getEditorTextField().setDocument(myFactory.fun(text));
-  }
-
-  public void setTextFieldPreferredWidth(final int charCount) {
-    Dimension size = getEditorTextField().getPreferredSize();
-    FontMetrics fontMetrics = getEditorTextField().getFontMetrics(getEditorTextField().getFont());
-    size.width = fontMetrics.charWidth('a') * charCount;
-    getEditorTextField().setPreferredSize(size);
   }
 
   public boolean isEditable() {

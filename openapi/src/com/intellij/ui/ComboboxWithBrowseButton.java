@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBox> {
   public ComboboxWithBrowseButton() {
@@ -29,6 +30,15 @@ public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBo
 
   public JComboBox getComboBox() {
     return getChildComponent();
+  }
+
+  public void setTextFieldPreferredWidth(final int charCount) {
+    super.setTextFieldPreferredWidth(charCount);
+    final Component comp = getChildComponent().getEditor().getEditorComponent();
+    Dimension size = comp.getPreferredSize();
+    FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
+    size.width = fontMetrics.charWidth('a') * charCount;
+    comp.setPreferredSize(size);
   }
 
   public void addBrowseFolderListener(Project project, FileChooserDescriptor descriptor) {
