@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -113,10 +112,6 @@ public abstract class AbstractVcs {
   public void shutdown() throws VcsException {
     LOG.assertTrue(myIsStarted, "Attempt to shut down VCS " + getClass().getName() + " which was not started");
     myIsStarted = false;
-  }
-
-  @Nullable public FileViewEnvironment getFileViewEnvironment() {
-    return null;
   }
 
   /**
