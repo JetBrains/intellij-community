@@ -33,12 +33,10 @@ package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.PackagingMethod;
-import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -53,7 +51,7 @@ import java.util.Map;
 
 public class ModuleLinkImpl extends ModuleLink {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.ModuleLink");
-  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls public static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;
   private String myModuleName;
@@ -111,14 +109,6 @@ public class ModuleLinkImpl extends ModuleLink {
     return Comparing.strEqual(((ModuleLink)otherElement).getName(), getName());
   }
 
-  public String getId() {
-    return getId(getModule());
-  }
-
-  public boolean hasId(String id) {
-    return hasId(getModule(), id);
-  }
-
   public String getPresentableName() {
     return getName();
   }
@@ -132,7 +122,7 @@ public class ModuleLinkImpl extends ModuleLink {
     return methodToDescription.get(method);
   }
 
-  public boolean resolveElement(ModulesProvider provider) {
+  public boolean resolveElement(ModulesProvider provider, final FacetsProvider facetsProvider) {
     return getModule(provider) != null;
   }
 

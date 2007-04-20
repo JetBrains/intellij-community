@@ -1,45 +1,39 @@
 package com.intellij.openapi.deployment;
 
-import com.intellij.compiler.impl.FileSetCompileScope;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.ProjectCompileScope;
-import com.intellij.compiler.impl.make.*;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.compiler.impl.make.BuildRecipeImpl;
+import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.descriptors.ConfigFile;
-import com.intellij.javaee.facet.JavaeeFacetUtil;
-import com.intellij.javaee.facet.JavaeeFacet;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -250,11 +244,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
-  public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe, final Module module, @NotNull BuildConfiguration buildConfiguration,
-                                  final String relativePath) {
-    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(module, null, buildConfiguration, relativePath));
-  }
-
   public static boolean containsExternalDependencyInstruction(@NotNull ModuleContainer moduleProperties) {
     final ContainerElement[] elements = moduleProperties.getElements();
     for (ContainerElement element : elements) {
@@ -326,52 +315,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return manifest;
   }
 
-  private static boolean precedesInOrder(final Module parentModule, final String module1Name, final String module2Name) {
-    Boolean found = ModuleRootManager.getInstance(parentModule).processOrder(new RootPolicy<Boolean>() {
-      @Nullable
-      public Boolean visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final Boolean found) {
-        if (found == null) {
-          String moduleName = moduleOrderEntry.getModuleName();
-          if (Comparing.strEqual(module1Name, moduleName)) return Boolean.TRUE;
-          if (Comparing.strEqual(module2Name, moduleName)) return Boolean.FALSE;
-        }
-        return found;
-      }
-    }, null);
-    return found != null && found.booleanValue();
-  }
-
-  public void addDependentModules(@NotNull ModuleLink[] containingModules,
-                                  final ModuleType moduleType,
-                                  final BuildRecipe instructions,
-                                  CompileContext context) {
-    if (containingModules.length == 0) return;
-    final Module parentModule = containingModules[0].getParentModule();
-    Arrays.sort(containingModules, new Comparator<ModuleLink>() {
-      public int compare(final ModuleLink o1, final ModuleLink o2) {
-        return precedesInOrder(parentModule, o1.getName(), o2.getName()) ? 1 : -1;
-      }
-    });
-    for (ModuleLink moduleLink : containingModules) {
-      if (moduleLink.getParentModule() != parentModule) {
-        LOG.error("Expected: " + ModuleUtil.getModuleNameInReadAction(parentModule) +
-                  "; was:" +
-                  ModuleUtil.getModuleNameInReadAction(moduleLink.getParentModule()));
-      }
-      Module module = moduleLink.getModule();
-      if (module != null && moduleType.equals(module.getModuleType())) {
-        final BuildRecipe childBuildRecipe = ModuleBuilder.getInstance(module).getModuleBuildInstructions(context);
-        childBuildRecipe.visitInstructions(new BuildInstructionVisitor() {
-          public boolean visitInstruction(BuildInstruction instruction) throws RuntimeException {
-            final BuildInstructionBase cloned = ((BuildInstructionBase)instruction).clone();
-            instructions.addInstruction(cloned);
-            return true;
-          }
-        }, false);
-      }
-    }
-  }
-
   public void addJavaModuleOutputs(@NotNull final Module module,
                                    @NotNull ModuleLink[] containingModules,
                                    @NotNull BuildRecipe instructions,
@@ -426,10 +369,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
   }
 
-  public BuildRecipe getModuleItems(@NotNull final Module module) {
-    return ModuleBuilder.getInstance(module).getModuleBuildInstructions(DummyCompileContext.getInstance());
-  }
-
   public ModuleLink createModuleLink(Module dep, Module module) {
     return new ModuleLinkImpl(dep, module);
   }
@@ -444,56 +383,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
 
   public BuildRecipe createBuildRecipe() {
     return new BuildRecipeImpl();
-  }
-
-  @Nullable
-  public CompileScope getOutOfSourceJ2eeCompileScope(@NotNull CompileScope compileScope) {
-    Module[] containingModules = getContainingModules(compileScope);
-    final Collection<VirtualFile> j2eeSpecificFiles = new THashSet<VirtualFile>();
-    final Collection<Module> affectedModules = new THashSet<Module>();
-    for (final JavaeeFacet facet : JavaeeFacetUtil.getInstance().getAllJavaeeFacets(containingModules)) {
-      final Module module = facet.getModule();
-      BuildConfiguration buildConfiguration = facet.getBuildConfiguration().getBuildProperties();
-      if (buildConfiguration == null || !buildConfiguration.willBuildExploded()) {
-        continue;
-      }
-      final ModuleCompileScope moduleCompileScope = new ModuleCompileScope(module, true);
-      BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(module);
-      ModuleBuilder.getInstance(module).clearBuildRecipeCaches();
-      buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-        public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(instruction.getFile());
-          if (virtualFile != null && !moduleCompileScope.belongs(virtualFile.getUrl())) {
-            j2eeSpecificFiles.add(virtualFile);
-            affectedModules.add(module);
-          }
-          return true;
-        }
-      }, false);
-    }
-    if (j2eeSpecificFiles.size() == 0) {
-      return null;
-    }
-    VirtualFile[] virtualFiles = j2eeSpecificFiles.toArray(new VirtualFile[j2eeSpecificFiles.size()]);
-    Module[] affectedModuleArray = affectedModules.toArray(new Module[affectedModules.size()]);
-    return new FileSetCompileScope(virtualFiles, affectedModuleArray);
-  }
-
-  @Nullable
-  public ContainerElement createElementByOrderEntry(OrderEntry orderEntry, Module module) {
-    if (orderEntry instanceof ModuleOrderEntry) {
-      if (((ModuleOrderEntry)orderEntry).getModule() != null) {
-        return new ModuleLinkImpl(((ModuleOrderEntry)orderEntry).getModule(), module);
-      }
-    }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-      Library library = libraryOrderEntry.getLibrary();
-      if (library != null && library.getUrls(OrderRootType.CLASSES).length != 0) {
-        return new LibraryLinkImpl(library, module);
-      }
-    }
-    return null;
   }
 
   public @Nullable ContainerElement findElementByOrderEntry(ModuleContainer container, OrderEntry entry) {
@@ -540,53 +429,30 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return null;
   }
 
-  // returns modules entirely contained in this compileScope
-  private static Module[] getContainingModules(CompileScope compileScope) {
-    if (compileScope instanceof ProjectCompileScope || compileScope instanceof ModuleCompileScope) {
-      return compileScope.getAffectedModules();
-    }
-    return Module.EMPTY_ARRAY;
-  }
-
-  public static String getOrCreateExplodedDir(@NotNull BuildConfiguration buildConfiguration, final Module module) {
+  public static String getOrCreateExplodedDir(final BuildParticipant buildParticipant) {
+    BuildConfiguration buildConfiguration = buildParticipant.getBuildConfiguration();
     if (buildConfiguration.isExplodedEnabled()) {
       return buildConfiguration.getExplodedPath();
     }
-
-    final PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
-
-    try {
-      @NonNls final String name = "TEMP_MODULE_EXPLODED_DIR_FOR_" + ModuleUtil.getModuleNameInReadAction(module);
-      String dir = properties.getValue(name);
-      if (dir == null) {
-        File path = FileUtil.createTempDirectory("webExplodedDir", "tmp");
-        dir = path.getAbsolutePath();
-        properties.setValue(name, dir);
-      }
-      return dir;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
+    return buildParticipant.getOrCreateTemporaryDirForExploded();
   }
 
   @Nullable
-  public static String getDirectoryToBuildExploded(BuildConfiguration buildConfiguration, final Module module) {
-    if (buildConfiguration.willBuildExploded()) {
-      return getOrCreateExplodedDir(buildConfiguration, module);
+  public static String getDirectoryToBuildExploded(BuildParticipant buildParticipant) {
+    if (buildParticipant.getBuildConfiguration().willBuildExploded()) {
+      return getOrCreateExplodedDir(buildParticipant);
     }
     return null;
   }
 
-  public static BuildParticipantProvider[] getBuildParticipantProviders() {
+  public static BuildParticipantProvider<?>[] getBuildParticipantProviders() {
     return Extensions.getExtensions(BuildParticipantProvider.EXTENSION_POINT_NAME);
   }
 
   public static BuildParticipant[] getAllBuildParticipants(@NotNull Module module) {
     List<BuildParticipant> participants = new ArrayList<BuildParticipant>();
-    for (BuildParticipantProvider participantProvider : getBuildParticipantProviders()) {
-      participants.addAll(Arrays.asList(participantProvider.getParticipants(module)));
+    for (BuildParticipantProvider<?> participantProvider : getBuildParticipantProviders()) {
+      participants.addAll(participantProvider.getParticipants(module));
     }
     return participants.toArray(new BuildParticipant[participants.size()]);
   }

@@ -6,6 +6,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -48,7 +49,11 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   }
 
   public JComponent createOptionsPanel() {
-    return myFacetsConfigurator.getOrCreateEditor(myFacet).createComponent();
+    return getEditor().getComponent();
+  }
+
+  public FacetEditor getEditor() {
+    return myFacetsConfigurator.getOrCreateEditor(myFacet);
   }
 
   @Nls

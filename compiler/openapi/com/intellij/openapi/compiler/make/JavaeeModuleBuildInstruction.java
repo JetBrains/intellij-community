@@ -23,4 +23,6 @@ public interface JavaeeModuleBuildInstruction extends BuildInstruction {
   BuildConfiguration getBuildProperties();
 
   BuildRecipe getChildInstructions(CompileContext context);
+
+  String getConfigurationName();
 }

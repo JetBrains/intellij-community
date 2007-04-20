@@ -12,20 +12,18 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
-import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -234,9 +232,14 @@ public class CompileDriver {
       final VirtualFile outputDir = myGenerationCompilerModuleToOutputDirMap.get(pair);
       scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputDir}, new Module[]{pair.getSecond()}));
     }
-    CompileScope additionalJ2eeScope = DeploymentUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
-    if (additionalJ2eeScope != null) {
-      scope = new CompositeScope(scope, additionalJ2eeScope);
+
+    final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
+    CompileScope baseScope = scope;
+    for (AdditionalCompileScopeProvider scopeProvider : scopeProviders) {
+      final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope);
+      if (additionalScope != null) {
+        scope = new CompositeScope(scope, additionalScope);
+      }
     }
     return scope;
   }
@@ -1468,9 +1471,6 @@ public class CompileDriver {
     final Set<File> nonExistingOutputPaths = new HashSet<File>();
 
     for (final Module module : scopeModules) {
-      if (ModuleType.J2EE_APPLICATION.equals(module.getModuleType())) {
-        continue; // makes no sence to demand jdk & output paths for such modules
-      }
       final boolean hasSources = hasSources(module, false);
       final boolean hasTestSources = hasSources(module, true);
       if (!hasSources && !hasTestSources) {
@@ -1592,7 +1592,7 @@ public class CompileDriver {
         return false;
       }
     }
-    return J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, scopeModules, true);
+    return true;
   }
 
   private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {

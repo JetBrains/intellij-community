@@ -5,6 +5,8 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see FacetType
  */
-public class Facet<C extends FacetConfiguration> implements Disposable {
+public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
   private final @NotNull FacetType myFacetType;
   private final @NotNull Module myModule;

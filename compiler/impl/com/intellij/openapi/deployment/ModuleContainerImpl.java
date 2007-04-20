@@ -1,36 +1,22 @@
 package com.intellij.openapi.deployment;
 
+import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
-import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ExternalizableString;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Alexey Kudravtsev
@@ -38,30 +24,18 @@ import java.util.Set;
 public class ModuleContainerImpl implements ModuleContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.J2EEModuleContainerImpl");
   private ModulesProvider myDefaultModulesProvider;
-  private ModuleContainerImpl myModifiableModel;
   protected final Module myParentModule;
-  private final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
+  protected final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
 
-  /**
-   * @deprecated
-   */
-  private ModuleRootsWatcher<ExternalizableString> myModuleRootsWatcher;
-  private Map<ExternalizableString, OrderEntryInfo> myOrderInfo;
-  @NonNls private static final String TYPE_ATTRIBUTE_NAME = "type";
-  @NonNls private static final String CONTAINER_ELEMENT_NAME = "containerElement";
-  @NonNls private static final String MODULE_TYPE = "module";
+  @NonNls public static final String TYPE_ATTRIBUTE_NAME = "type";
+  @NonNls public static final String CONTAINER_ELEMENT_NAME = "containerElement";
+  @NonNls public static final String MODULE_TYPE = "module";
   @NonNls private static final String LIBRARY_TYPE = "library";
-  @NonNls protected static final String WATCHER_ELEMENT_NAME = "orderEntriesWatcher";
-  @NonNls protected static final String ENTRY_INFO_ELEMENT_NAME = "order-entry-info";
-  @NonNls protected static final String INFO_ELEMENT_NAME = "info";
-  @NonNls protected static final String KEY_ELEMENT_NAME = "key";
-  @NonNls protected static final String VALUE_ELEMENT_NAME = "value";
 
   public ModuleContainerImpl(Module module) {
     LOG.assertTrue(module != null);
     myParentModule = module;
     myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
-    initContainer();
   }
 
   public void removeLibrary(final Library library) {
@@ -73,141 +47,50 @@ public class ModuleContainerImpl implements ModuleContainer {
     }
   }
 
-  protected void initContainer() {
-    if (myModuleRootsWatcher != null) {
-      migrateRootsWatcher();
-    }
-  }
-
-  private void migrateRootsWatcher() {
-    final Set<ExternalizableString> keys = myOrderInfo.keySet();
-    for (final ExternalizableString key : keys) {
-      final OrderEntryInfo orderEntryInfo = myOrderInfo.get(key);
-      if (!orderEntryInfo.copy) continue;
-      final OrderEntry orderEntry = myModuleRootsWatcher.find(getModule(), key);
-      if (orderEntry == null) continue;
-      final ContainerElement containerElement;
-      if (orderEntry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-        if (module == null) continue;
-        containerElement = new ModuleLinkImpl(module, getModule());
-        containerElement.setPackagingMethod(getModule().getModuleType().equals(ModuleType.EJB)
-                                            ? PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
-                                            : PackagingMethod.COPY_FILES);
-      }
-      else if (orderEntry instanceof LibraryOrderEntry) {
-        final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library == null) continue;
-        containerElement = new LibraryLinkImpl(library, getModule());
-        containerElement.setPackagingMethod(getModule().getModuleType().equals(ModuleType.EJB)
-                                            ? PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
-                                            : PackagingMethod.COPY_FILES);
-      }
-      else {
-        LOG.error("invalid type " + orderEntry);
-        continue;
-      }
-      containerElement.setURI(orderEntryInfo.URI);
-      final Map<String, String> attributes = orderEntryInfo.getAttributes();
-      for (final String name : attributes.keySet()) {
-        String value = attributes.get(name);
-        containerElement.setAttribute(name, value);
-      }
-      containerElement.setURI(orderEntryInfo.URI);
-      addElement(containerElement);
-    }
-
-
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
     final List<Element> children = element.getChildren(CONTAINER_ELEMENT_NAME);
     for (Element child : children) {
       final String type = child.getAttributeValue(TYPE_ATTRIBUTE_NAME);
       ContainerElement containerElement;
-      if (MODULE_TYPE.equals(type)) {
-        containerElement = new ModuleLinkImpl((String)null, getModule());
-      }
-      else if (LIBRARY_TYPE.equals(type)) {
-        containerElement = new LibraryLinkImpl(null, getModule());
-      }
-      else {
-        throw new InvalidDataException("invalid type: " + type + " " + child);
-      }
+      containerElement = createElement(child, type);
 
       containerElement.readExternal(child);
       addElement(containerElement);
     }
-    if (children.size() == 0) {
-      readPlainOldWatcherEntries(element);
-    }
   }
 
-  private static class ExternalizableStringFactory implements Factory<ExternalizableString> {
-    private int seed;
-
-    public ExternalizableString create() {
-      return new ExternalizableString(String.valueOf(seed++));
+  protected ContainerElement createElement(final Element child, final String type) throws InvalidDataException {
+    if (MODULE_TYPE.equals(type)) {
+      return new ModuleLinkImpl((String)null, getModule());
     }
-
-    private void expandSeed(ExternalizableString orderEntryKey) {
-      try {
-        int i = Integer.parseInt(orderEntryKey.value);
-        seed = Math.max(i + 1, seed);
-      }
-      catch (NumberFormatException e) {
-        // must be syntetic entry
-      }
+    else if (LIBRARY_TYPE.equals(type)) {
+      return new LibraryLinkImpl(null, getModule());
     }
-  }
-
-  /**
-   * @deprecated
-   */
-  private void readPlainOldWatcherEntries(Element element) throws InvalidDataException {
-    final Element watcher = element.getChild(WATCHER_ELEMENT_NAME);
-    if (watcher == null) {
-      return;
+    else {
+      throw new InvalidDataException("invalid type: " + type + " " + child);
     }
-    final ExternalizableStringFactory factory = new ExternalizableStringFactory();
-    myModuleRootsWatcher = ModuleRootsWatcherFactory.create(factory);
-    myModuleRootsWatcher.readExternal(watcher);
-    myOrderInfo = new HashMap<ExternalizableString, OrderEntryInfo>();
-    final Element infoRoot = element.getChild(ENTRY_INFO_ELEMENT_NAME);
-    if (infoRoot != null) {
-      final List infos = infoRoot.getChildren(INFO_ELEMENT_NAME);
-      for (Object info1 : infos) {
-        Element info = (Element)info1;
-        final Element keyElement = info.getChild(KEY_ELEMENT_NAME);
-        final ExternalizableString key = new ExternalizableString("");
-        key.readExternal(keyElement);
-        final Element valueElement = info.getChild(VALUE_ELEMENT_NAME);
-        final OrderEntryInfo value = new OrderEntryInfo();
-        value.readExternal(valueElement);
-        // the only situation we want to change seed
-        factory.expandSeed(key);
-
-        myOrderInfo.put(key, value);
-      }
-    }
-
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (final ContainerElement containerElement : myContents) {
       final Element child = new Element(CONTAINER_ELEMENT_NAME);
-      if (containerElement instanceof ModuleLink) {
-        child.setAttribute(TYPE_ATTRIBUTE_NAME, MODULE_TYPE);
-      }
-      else if (containerElement instanceof LibraryLink) {
-        child.setAttribute(TYPE_ATTRIBUTE_NAME, LIBRARY_TYPE);
-      }
-      else {
-        throw new WriteExternalException("invalid type: " + containerElement);
-      }
+      final String type = getElementType(containerElement);
+      child.setAttribute(TYPE_ATTRIBUTE_NAME, type);
       containerElement.writeExternal(child);
       element.addContent(child);
+    }
+  }
+
+  protected String getElementType(final ContainerElement containerElement) throws WriteExternalException {
+    if (containerElement instanceof ModuleLink) {
+      return MODULE_TYPE;
+    }
+    else if (containerElement instanceof LibraryLink) {
+      return LIBRARY_TYPE;
+    }
+    else {
+      throw new WriteExternalException("invalid type: " + containerElement);
     }
   }
 
@@ -246,17 +129,18 @@ public class ModuleContainerImpl implements ModuleContainer {
   }
 
   public ContainerElement[] getElements() {
-    return getElements(myDefaultModulesProvider, true, false, false);
+    return getElements(myDefaultModulesProvider, DefaultFacetsProvider.INSTANCE, true, false, false);
   }
 
   public ContainerElement[] getAllElements() {
-    return getElements(myDefaultModulesProvider, true, true, true);
+    return getElements(myDefaultModulesProvider, DefaultFacetsProvider.INSTANCE, true, true, true);
   }
 
-  public ContainerElement[] getElements(ModulesProvider provider, final boolean includeResolved, final boolean includeUnresolved, final boolean includeNonPackaged) {
+  public ContainerElement[] getElements(ModulesProvider provider, final FacetsProvider facetsProvider,
+                                        final boolean includeResolved, final boolean includeUnresolved, final boolean includeNonPackaged) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
     for (final ContainerElement containerElement : myContents) {
-      final boolean resolved = containerElement.resolveElement(provider);
+      final boolean resolved = containerElement.resolveElement(provider, facetsProvider);
       if ((resolved && includeResolved || !resolved && includeUnresolved)
         && (includeNonPackaged || containerElement.getPackagingMethod() != PackagingMethod.DO_NOT_PACKAGE)) {
         result.add(containerElement);
@@ -279,8 +163,16 @@ public class ModuleContainerImpl implements ModuleContainer {
     }
   }
 
-  public void containedEntriesChanged() {
-
+  public Module[] getContainingIdeaModules() {
+    ModuleLink[] containingModules = getContainingModules();
+    List<Module> result = new ArrayList<Module>(containingModules.length);
+    for (ModuleLink containingModule : containingModules) {
+      final Module module = containingModule.getModule();
+      if (module != null) {
+        result.add(module);
+      }
+    }
+    return result.toArray(new Module[result.size()]);
   }
 
   @NotNull
@@ -296,30 +188,8 @@ public class ModuleContainerImpl implements ModuleContainer {
     copyContainerInfoFrom((ModuleContainerImpl)from);
   }
 
-  public final ModuleContainer getModifiableModel() {
-    return myModifiableModel;
-  }
-
-  public void commit(ModifiableRootModel model) throws ConfigurationException {
-    if (isModified(model)) {
-      copyContainerInfoFrom(myModifiableModel);
-      containedEntriesChanged();
-    }
-  }
-
-  public void disposeModifiableModel() {
-    myModifiableModel = null;
-  }
-
-  public void startEdit(ModifiableRootModel rootModel) {
-    myModifiableModel = new ModuleContainerImpl(getModule());
-    myModifiableModel.copyFrom(this);
-  }
-
-  public boolean isModified(ModifiableRootModel model) {
-    final ContainerElement[] modifiedElements = myModifiableModel.getAllElements();
-
-    return !Arrays.equals(modifiedElements, getAllElements());
+  protected ModuleContainerImpl createCopy() {
+    return new ModuleContainerImpl(getModule());
   }
 
   private void copyContainerInfoFrom(ModuleContainerImpl from) {

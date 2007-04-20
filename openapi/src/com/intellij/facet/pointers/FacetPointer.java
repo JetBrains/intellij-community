@@ -17,19 +17,24 @@
 
 package com.intellij.facet.pointers;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public interface FacetPointer<F extends Facet> {
 
+  @NotNull
+  Project getProject();
+
   @Nullable
-  F getFacet(@NotNull Project project);
+  F getFacet();
 
   @NotNull
   String getModuleName();
@@ -42,4 +47,7 @@ public interface FacetPointer<F extends Facet> {
 
   @Nullable
   FacetType<F, ?> getFacetType();
+
+  @Nullable
+  F findFacet(ModulesProvider modulesProvider, FacetsProvider facetsProvider);
 }

@@ -8,7 +8,10 @@
  */
 package com.intellij.compiler.ant.j2ee;
 
-import com.intellij.compiler.ant.*;
+import com.intellij.compiler.ant.BuildProperties;
+import com.intellij.compiler.ant.CompositeGenerator;
+import com.intellij.compiler.ant.ExplodedAndJarTargetParameters;
+import com.intellij.compiler.ant.GenerationUtils;
 import com.intellij.compiler.ant.taskdefs.AntCall;
 import com.intellij.compiler.ant.taskdefs.Param;
 import com.intellij.compiler.ant.taskdefs.Property;
@@ -20,55 +23,48 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-@SuppressWarnings({"AbstractMethodCallInConstructor"})
-public abstract class CompositeBuildTarget extends CompositeGenerator {
-  public CompositeBuildTarget(final ModuleChunk chunk,
-                              final GenerationOptions genOptions,
-                              final Module module,
-                              final BuildConfiguration buildConfiguration,
-                              final String name,
-                              final String description) {
+public class CompositeBuildTarget extends CompositeGenerator {
+  public CompositeBuildTarget(ExplodedAndJarTargetParameters parameters,
+                              final String targetName, final String targetDescription,
+                              final String depends, @Nullable String jarPath) {
 
-    final File moduleBaseDir = chunk.getBaseDir();
-    final String moduleName = module.getName();
-    final Target buildTarget = new Target(name, getDepends(module), description, null);
+    final File moduleBaseDir = parameters.getChunk().getBaseDir();
+    final String configurationName = parameters.getConfigurationName();
+    final Module containingModule = parameters.getContainingModule();
+    final Target buildTarget = new Target(targetName, depends, targetDescription, null);
+    final BuildConfiguration buildConfiguration = parameters.getBuildConfiguration();
 
+    final String baseDirProperty = BuildProperties.getModuleChunkBasedirProperty(parameters.getChunk());
     if (buildConfiguration.isExplodedEnabled()) {
       final String explodedPath = buildConfiguration.getExplodedPath();
 
-      String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !module.isSavePathsRelative());
-      add(new Property(getExplodedBuildPath(moduleName), location));
+      String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, baseDirProperty,
+                                                       parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
+      add(new Property(parameters.getExplodedPathProperty(configurationName), location));
 
-      final AntCall antCall = new AntCall(getExplodedBuildTarget(moduleName));
+      final AntCall antCall = new AntCall(parameters.getBuildExplodedTargetName(configurationName));
       buildTarget.add(antCall);
-      antCall.add(new Param(getExplodedPathProperty(), BuildProperties.propertyRef(getExplodedBuildPath(moduleName))));
+      antCall.add(new Param(parameters.getExplodedPathProperty(), BuildProperties.propertyRef(parameters.getExplodedPathProperty(configurationName))));
     }
-    final String jarPath = getJarPath(buildConfiguration);
-    if (jarPath != null) {
-      String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(jarPath), moduleBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !module.isSavePathsRelative());
-      add(new Property(BuildProperties.getJarPathProperty(moduleName), location));
 
-      final AntCall antCall = new AntCall(getJarBuildTarget(moduleName));
+    if (jarPath == null) {
+      jarPath = getJarPath(buildConfiguration);
+    }
+
+    if (jarPath != null) {
+      String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(jarPath), moduleBaseDir, baseDirProperty,
+                                                       parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
+      add(new Property(parameters.getJarPathProperty(configurationName), location));
+
+      final AntCall antCall = new AntCall(parameters.getBuildJarTargetName(configurationName));
       buildTarget.add(antCall);
-      antCall.add(new Param(getJarPathProperty(), BuildProperties.propertyRef(BuildProperties.getJarPathProperty(moduleName))));
+      antCall.add(new Param(parameters.getJarPathProperty(), BuildProperties.propertyRef(parameters.getJarPathProperty(configurationName))));
     }
     add(buildTarget);
   }
 
   @Nullable
-  protected String getJarPath(BuildConfiguration buildConfiguration){
+  protected static String getJarPath(BuildConfiguration buildConfiguration){
     return buildConfiguration.isJarEnabled() ? buildConfiguration.getJarPath() : null;
   }
-
-  protected abstract String getDepends(Module module);
-
-  protected abstract String getExplodedBuildTarget(String name);
-
-  protected abstract String getExplodedBuildPath(String name);
-
-  protected abstract String getJarBuildTarget(String name);
-
-  protected abstract String getExplodedPathProperty();
-
-  protected abstract String getJarPathProperty();
 }

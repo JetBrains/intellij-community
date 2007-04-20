@@ -68,7 +68,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   protected PsiFile createFile(Module module, VirtualFile vDir, String fileName, String text) throws IOException {
     if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-      PsiTestUtil.addSourceContentToRoots(module, vDir);
+      addSourceContentToRoots(module, vDir);
     }
 
     final VirtualFile vFile = vDir.createChildData(vDir, fileName);
@@ -77,6 +77,10 @@ public abstract class PsiTestCase extends ModuleTestCase {
     final PsiFile file = myPsiManager.findFile(vFile);
     assertNotNull(file);
     return file;
+  }
+
+  protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {
+    PsiTestUtil.addSourceContentToRoots(module, vDir);
   }
 
   protected PsiElement configureByFileWithMarker(String filePath, String marker) throws Exception{

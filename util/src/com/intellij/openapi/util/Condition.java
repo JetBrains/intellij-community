@@ -34,7 +34,7 @@ public interface Condition<T> {
   };
   Condition FALSE = new Condition() {
     public boolean value(final Object object) {
-      return true;
+      return false;
     }
   };
 }

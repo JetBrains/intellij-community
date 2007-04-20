@@ -52,14 +52,7 @@ public class NameLocationStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    final String text;
-    final ModuleType moduleType = builder.getModuleType();
-    if (ModuleType.J2EE_APPLICATION.equals(moduleType)) {
-      text = IdeBundle.message("prompt.please.specify.module.name");
-    }
-    else {
-      text = IdeBundle.message("prompt.please.specify.module.name.and.content.root");
-    }
+    final String text = IdeBundle.message("prompt.please.specify.module.name.and.content.root");
     final JLabel textLabel = new JLabel(text);
     textLabel.setUI(new MultiLineLabelUI());
     myPanel.add(textLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 8, 10), 0, 0));
@@ -103,15 +96,6 @@ public class NameLocationStep extends ModuleWizardStep {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private String suggestModuleName(ModuleType moduleType) {
-    if (moduleType.equals(ModuleType.J2EE_APPLICATION)) {
-      return "MyApplication";
-    }
-    if (moduleType.equals(ModuleType.EJB)) {
-      return "MyEjb";
-    }
-    if (moduleType.equals(ModuleType.WEB)) {
-      return "MyWebApp";
-    }
     return "untitled";
   }
 
@@ -205,30 +189,26 @@ public class NameLocationStep extends ModuleWizardStep {
       return false;
     }
 
-    if (!ModuleType.J2EE_APPLICATION.equals(myBuilder.getModuleType())) {
-      final String contentEntryPath = getContentEntryPath();
-      if (contentEntryPath != null) {
-        // the check makes sence only for non-null module root
-        Module[] modules = myModulesProvider.getModules();
-        for (int j = 0; j < modules.length; j++) {
-          final Module module = modules[j];
-          ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
-          LOG.assertTrue(rootModel != null);
-          final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
-          final String moduleContentRoot = contentEntryPath.replace(File.separatorChar, '/');
-          for (int k = 0; k < moduleContentRoots.length; k++) {
-            final VirtualFile root = moduleContentRoots[k];
-            if (moduleContentRoot.equals(root.getPath())) {
-              Messages.showErrorDialog(myNamePathComponent.getPathComponent(),
-                                       IdeBundle.message("error.content.root.already.defined.for.module", contentEntryPath, module.getName()),
-                                       IdeBundle.message("title.module.content.root.already.exists"));
-              return false;
-            }
+    final String contentEntryPath = getContentEntryPath();
+    if (contentEntryPath != null) {
+      // the check makes sence only for non-null module root
+      Module[] modules = myModulesProvider.getModules();
+      for (final Module module : modules) {
+        ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
+        LOG.assertTrue(rootModel != null);
+        final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
+        final String moduleContentRoot = contentEntryPath.replace(File.separatorChar, '/');
+        for (final VirtualFile root : moduleContentRoots) {
+          if (moduleContentRoot.equals(root.getPath())) {
+            Messages.showErrorDialog(myNamePathComponent.getPathComponent(),
+                                     IdeBundle.message("error.content.root.already.defined.for.module", contentEntryPath, module.getName()),
+                                     IdeBundle.message("title.module.content.root.already.exists"));
+            return false;
           }
         }
-        if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), contentEntryPath, myNamePathComponent.isPathChangedByUser())) {
-          return false;
-        }
+      }
+      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), contentEntryPath, myNamePathComponent.isPathChangedByUser())) {
+        return false;
       }
     }
     final String moduleFileDirectory = getModuleFileDirectory();

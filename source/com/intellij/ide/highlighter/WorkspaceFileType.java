@@ -41,11 +41,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class WorkspaceFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
+  @NonNls public static final String DEFAULT_EXTENSION = "iws";
 
   @NotNull
   public String getName() {
@@ -59,7 +61,7 @@ public class WorkspaceFileType implements FileType {
 
   @NotNull
   public String getDefaultExtension() {
-    return "iws";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

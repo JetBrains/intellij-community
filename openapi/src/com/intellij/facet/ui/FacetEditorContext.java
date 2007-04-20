@@ -17,17 +17,23 @@
 
 package com.intellij.facet.ui;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.module.Module;
+import com.intellij.facet.Facet;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public interface FacetEditorContext {
+public interface FacetEditorContext extends UserDataHolder {
 
   @Nullable
   Project getProject();
@@ -42,7 +48,24 @@ public interface FacetEditorContext {
   boolean isNewFacet();
 
   @Nullable
+  Facet getFacet();
+
+  @Nullable
   Module getModule();
 
+  @Nullable
+  Facet getParentFacet();
+
+  @NotNull
+  FacetsProvider getFacetsProvider();
+
+  @NotNull
+  ModulesProvider getModulesProvider();
+
+  ModifiableRootModel getRootModel();
+
   Library[] getLibraries();
+
+  @Nullable
+  WizardContext getWizardContext();
 }

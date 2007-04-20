@@ -4,12 +4,11 @@
 
 package com.intellij.facet.ui;
 
+import com.intellij.facet.Facet;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,9 +28,17 @@ public abstract class FacetEditorTab implements Configurable {
     return null;
   }
 
+  public void onTabEntering() {
+  }
+
   public void onTabLeaving() {
   }
 
-  public void onFacetAdded(Module module) {
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
+    return null;
+  }
+
+  public void onFacetInitialized(@NotNull Facet facet) {
   }
 }

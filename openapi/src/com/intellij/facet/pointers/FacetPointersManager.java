@@ -19,7 +19,7 @@ package com.intellij.facet.pointers;
 
 import com.intellij.facet.Facet;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FacetPointersManager {
 
-  public static FacetPointersManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(FacetPointersManager.class);
+  public static FacetPointersManager getInstance(Project project) {
+    return project.getComponent(FacetPointersManager.class);
   }
 
 
@@ -53,5 +53,9 @@ public abstract class FacetPointersManager {
 
   public static String getFacetName(String facetPointerId) {
     return facetPointerId.substring(facetPointerId.lastIndexOf('/') + 1);
+  }
+
+  public static String getModuleName(String facetPointerId) {
+    return facetPointerId.substring(0, facetPointerId.indexOf('/'));
   }
 }

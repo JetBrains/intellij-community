@@ -1,58 +1,51 @@
 package com.intellij.compiler.impl.make;
 
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.DeploymentUtilImpl;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.J2EEBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
-import java.util.ArrayList;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.JarFile;
 
 public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase implements JavaeeModuleBuildInstruction {
-  //not to be forgotten
-  private static final JavaeeModuleProperties aaa = null;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final BuildConfiguration myBuildConfiguration;
+  private BuildParticipant myBuildParticipant;
   private final BuildRecipe myBuildRecipe;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public JavaeeModuleBuildInstructionImpl(Module module, @Nullable BuildRecipe buildRecipe, BuildConfiguration toBuild, String outputRelativePath) {
-    super(outputRelativePath, module);
+  public JavaeeModuleBuildInstructionImpl(@Nullable BuildRecipe buildRecipe, BuildParticipant buildParticipant, String outputRelativePath) {
+    super(outputRelativePath, buildParticipant.getModule());
     myBuildRecipe = buildRecipe;
-    myBuildConfiguration = toBuild;
+    myBuildConfiguration = buildParticipant.getBuildConfiguration();
+    myBuildParticipant = buildParticipant;
     LOG.assertTrue(!isExternalDependencyInstruction());
   }
 
-  public void addFilesToExploded(final CompileContext context,
-                                 final File outputDir,
+  public String getConfigurationName() {
+    return myBuildParticipant.getConfigurationName();
+  }
+
+  public void addFilesToExploded(@NotNull final CompileContext context,
+                                 @NotNull final File outputDir,
                                  final Set<String> writtenPaths,
                                  final FileFilter fileFilter) throws IOException {
     //todo optmization: cache created directory and issue single FileCopy on it
@@ -60,10 +53,10 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildConfiguration, getModule()));
+      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant));
       boolean builtAlready = myBuildConfiguration.willBuildExploded();
       if (!builtAlready) {
-        ModuleBuilder.getInstance(getModule()).buildExploded(myBuildConfiguration, fromFile, context, new ArrayList<File>());
+        new ModuleBuilder(myBuildParticipant).buildExploded(myBuildConfiguration, fromFile, context, new ArrayList<File>());
       }
         DeploymentUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
         // copy dependencies
@@ -113,8 +106,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
       }, false);
     }
     else {
-      String moduleName = ModuleUtil.getModuleNameInReadAction(getModule());
-      tempFile = File.createTempFile(moduleName+"___", TMP_FILE_SUFFIX);
+      tempFile = File.createTempFile(myBuildParticipant.getConfigurationName() +"___", TMP_FILE_SUFFIX);
       tempFile.deleteOnExit();
       makeJar(context, tempFile, childDependencies, fileFilter, true);
       childDependencies.visitInstructions(new BuildInstructionVisitor() {
@@ -208,7 +200,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     if (myBuildRecipe != null) {
       return myBuildRecipe;
     }
-    return ModuleBuilder.getInstance(getModule()).getModuleBuildInstructions(context);
+    return myBuildParticipant.getBuildInstructions(context);
   }
 
   public BuildConfiguration getBuildProperties() {
@@ -216,7 +208,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   }
 
   public String toString() {
-    return J2EEBundle.message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
+    return "Java EE build instruction: " +  myBuildParticipant.getConfigurationName() + " -> " + getOutputRelativePath();
   }
 
   public File findFileByRelativePath(String relativePath) {

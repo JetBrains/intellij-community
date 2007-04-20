@@ -66,10 +66,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private ModulePath[] myModulePaths;
   private List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
-  @NonNls private static final String ELEMENT_MODULES = "modules";
-  @NonNls private static final String ELEMENT_MODULE = "module";
+  @NonNls public static final String ELEMENT_MODULES = "modules";
+  @NonNls public static final String ELEMENT_MODULE = "module";
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
-  @NonNls private static final String ATTRIBUTE_FILEPATH = "filepath";
+  @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
   private MessageBusConnection myConnection;

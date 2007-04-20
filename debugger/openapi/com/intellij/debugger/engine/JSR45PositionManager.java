@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.sun.jdi.AbsentInformationException;
@@ -33,25 +32,25 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  *         Date: May 23, 2006
  */
-public abstract class JSR45PositionManager implements PositionManager {
+public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");
   protected final DebugProcess      myDebugProcess;
-  protected final Module[] myScope;
+  protected final Scope myScope;
   private final String myStratumId;
-  protected final SourcesFinder mySourcesFinder;
+  protected final SourcesFinder<Scope> mySourcesFinder;
   protected final String GENERATED_CLASS_PATTERN;
   protected Matcher myGeneratedClassPatternMatcher;
   private final Set<LanguageFileType> myFileTypes;
 
-  public JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules, final String stratumId, final LanguageFileType[] acceptedFileTypes,
-                              final SourcesFinder sourcesFinder) {
+  public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,
+                              final SourcesFinder<Scope> sourcesFinder) {
     myDebugProcess = debugProcess;
-    myScope = scopeModules;
+    myScope = scope;
     myStratumId = stratumId;
     myFileTypes = Collections.unmodifiableSet(new HashSet<LanguageFileType>(Arrays.asList(acceptedFileTypes)));
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
-    if(generatedClassPattern.equals("")) {
+    if(generatedClassPattern.length() == 0) {
       generatedClassPattern = getGeneratedClassesNamePattern();
     }
     else {

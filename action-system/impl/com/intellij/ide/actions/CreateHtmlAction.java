@@ -9,21 +9,20 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -100,20 +99,19 @@ public class CreateHtmlAction extends CreateElementActionBase {
     if (presentation.isEnabled()) {
       Module module = (Module)dataContext.getData(DataConstantsEx.MODULE);
       if (module != null) {
-        if (module.getModuleType() == ModuleType.WEB) {
-          IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
-          if (view != null) {
-            ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-            PsiDirectory[] dirs = view.getDirectories();
-            boolean inSourceRoot = false;
-            for (PsiDirectory dir : dirs) {
-              if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
-                inSourceRoot = true;
-                break;
-              }
+        IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+        if (view != null) {
+          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+          PsiDirectory[] dirs = view.getDirectories();
+          boolean inSourceRoot = false;
+          for (PsiDirectory dir : dirs) {
+            //todo[nik] check dir is under web facet?
+            if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+              inSourceRoot = true;
+              break;
             }
-            if (!inSourceRoot) return;
           }
+          if (!inSourceRoot) return;
         }
       }
 

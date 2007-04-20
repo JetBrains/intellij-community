@@ -34,11 +34,11 @@ public abstract class BuildParticipantBase extends BuildParticipant {
     myModule = module;
   }
 
-  protected Module getModule() {
+  public Module getModule() {
     return myModule;
   }
 
-  public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
+  protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
     final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

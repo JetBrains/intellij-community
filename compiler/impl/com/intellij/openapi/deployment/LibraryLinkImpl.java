@@ -35,16 +35,11 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -59,21 +54,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class LibraryLinkImpl extends LibraryLink {
   private static final Map<PackagingMethod, String> methodToDescriptionForDirs = new HashMap<PackagingMethod, String>();
   private static final Map<PackagingMethod, String> methodToDescriptionForFiles = new HashMap<PackagingMethod, String>();
-  @NonNls private static final String LEVEL_ATTRIBUTE_NAME = "level";
-  @NonNls private static final String URL_ELEMENT_NAME = "url";
+  @NonNls static final String LEVEL_ATTRIBUTE_NAME = "level";
+  @NonNls static final String URL_ELEMENT_NAME = "url";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
-  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls static final String NAME_ATTRIBUTE_NAME = "name";
 
   static {
     methodToDescriptionForDirs.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
@@ -174,6 +165,7 @@ public class LibraryLinkImpl extends LibraryLink {
     return getUrls().equals(otherLibraryLink.getUrls());
   }
 
+  @Nullable
   public String getSingleFileName() {
     // non-module-level libs can contain multiple files
     final String table = getLevel();
@@ -232,7 +224,7 @@ public class LibraryLinkImpl extends LibraryLink {
     }
   }
 
-  public boolean resolveElement(ModulesProvider provider) {
+  public boolean resolveElement(ModulesProvider provider, final FacetsProvider facetsProvider) {
     return getLibrary(provider) != null;
 
   }
@@ -250,139 +242,4 @@ public class LibraryLinkImpl extends LibraryLink {
     return libraryLink;
   }
 
-  private static @Nullable Library findModuleLibrary(Module module, @Nullable ModulesProvider provider, @Nullable String name, String url) {
-    if (url == null && name == null) return null;
-    if (provider == null) {
-      provider = new DefaultModulesProvider(module.getProject());
-    }
-    return findModuleLibrary(module, provider, url, name, new HashSet<Module>());
-  }
-
-  private static @Nullable Library findModuleLibrary(Module module, final @NotNull ModulesProvider provider,
-                                                     String url, @Nullable String name, Set<Module> visited) {
-    if (!visited.add(module)) {
-      return null;
-    }
-
-    ModuleRootModel rootModel = provider.getRootModel(module);
-    OrderEntry[] orderEntries = rootModel.getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof ModuleOrderEntry) {
-        final Module dependency = ((ModuleOrderEntry)orderEntry).getModule();
-        if (dependency != null) {
-          final Library library = findModuleLibrary(dependency, provider, url, name, visited);
-          if (library != null) {
-            return library;
-          }
-        }
-      }
-      else if (orderEntry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)orderEntry);
-        Library library = libraryOrderEntry.getLibrary();
-        if (library == null) continue;
-
-        if (name != null && library.getTable()==null && name.equals(library.getName())) {
-          return library;
-        }
-
-        if (name == null) {
-          String[] urls = library.getUrls(OrderRootType.CLASSES);
-          if (urls.length == 1 && Comparing.strEqual(urls[0], url)) return library;
-        }
-      }
-    }
-    return null;
-  }
-
-  interface LibraryInfo {
-    String getName();
-
-    @NotNull List<String> getUrls();
-
-    String getLevel();
-
-    void addUrl(String url);
-
-    void readExternal(Element element) throws InvalidDataException;
-  }
-
-  private static class LibraryInfoImpl implements LibraryInfo {
-    private final List<String> myUrls = new ArrayList<String>();
-    private String myName;
-    private String myLevel;
-
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    public List<String> getUrls() {
-      return myUrls;
-    }
-
-    public String getLevel() {
-      return myLevel;
-    }
-
-    public void addUrl(String url) {
-      myUrls.clear();
-      myUrls.add(url);
-    }
-
-    @Nullable
-    public Library findLibrary(final Module module, final @Nullable ModulesProvider provider) {
-      if (module == null) return null;
-
-      if (MODULE_LEVEL.equals(myLevel)) {
-        String url = myUrls.size() == 1 ? myUrls.get(0) : null;
-        return findModuleLibrary(module, provider, myName, url);
-      }
-      return LibraryLink.findLibrary(myName, myLevel, module.getProject());
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-      myName = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
-
-      myLevel = element.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
-      myUrls.clear();
-      final List urls = element.getChildren(URL_ELEMENT_NAME);
-      for (Object url1 : urls) {
-        Element url = (Element)url1;
-        myUrls.add(url.getText());
-      }
-    }
-  }
-
-  private static class LibraryInfoBasedOnLibrary implements LibraryInfo {
-    private final Library myLibrary;
-
-    private LibraryInfoBasedOnLibrary(Library library) {
-      myLibrary = library;
-    }
-
-    public String getName() {
-      return myLibrary.getName();
-    }
-
-    @NotNull
-    public List<String> getUrls() {
-      return Arrays.asList(myLibrary.getUrls(OrderRootType.CLASSES));
-    }
-
-    public String getLevel() {
-      final LibraryTable table = myLibrary.getTable();
-      return table == null ? MODULE_LEVEL : table.getTableLevel();
-    }
-
-    public Library getLibrary() {
-      return myLibrary;
-    }
-
-    public void addUrl(String url) {
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-    }
-
-  }
 }

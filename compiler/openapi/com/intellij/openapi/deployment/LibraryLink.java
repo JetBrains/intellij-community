@@ -43,6 +43,7 @@ public abstract class LibraryLink extends ContainerElement {
 
   public abstract List<String> getUrls();
 
+  @Nullable
   public abstract String getSingleFileName();
 
   public abstract boolean hasDirectoriesOnly();

@@ -7,6 +7,7 @@ package com.intellij.facet.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
@@ -70,6 +71,9 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
   private void onFacetRemoved(final Facet facet) {
     final FacetTypeId typeId = facet.getTypeId();
     Integer count = myFacetCounts.get(typeId);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (count == null || count <= 0) count = 1;
+    }
     LOG.assertTrue(count != null);
     count--;
     boolean lastFacet = count == 0;

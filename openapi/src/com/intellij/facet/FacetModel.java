@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author nik
@@ -27,4 +26,12 @@ public interface FacetModel {
   @Nullable
   <F extends Facet> F getFacetByType(FacetTypeId<F> typeId);
 
+  @Nullable
+  <F extends Facet> F findFacet(FacetTypeId<F> type, String name);
+
+  @Nullable
+  <F extends Facet> F getFacetByType(@NotNull Facet underlyingFacet, FacetTypeId<F> typeId);
+
+  @NotNull
+  <F extends Facet> Collection<F> getFacetsByType(@NotNull Facet underlyingFacet, FacetTypeId<F> typeId);
 }

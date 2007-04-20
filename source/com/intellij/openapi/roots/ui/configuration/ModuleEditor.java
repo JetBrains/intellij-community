@@ -1,8 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.openapi.deployment.ModuleContainer;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
@@ -49,6 +47,7 @@ public class ModuleEditor {
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
+  private final FacetsProvider myFacetsProvider;
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
@@ -59,7 +58,9 @@ public class ModuleEditor {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder) {
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder,
+                      final FacetsProvider facetsProvider) {
+    myFacetsProvider = facetsProvider;
     myProject = project;
     myModulesProvider = modulesProvider;
     myName = moduleName;
@@ -105,7 +106,7 @@ public class ModuleEditor {
 
   private void createEditors(Module module) {
     ModuleConfigurationEditorProvider[] providers = module.getComponents(ModuleConfigurationEditorProvider.class);
-    ModuleConfigurationState state = new ModuleConfigurationStateImpl(myProject, module, myModulesProvider, myModifiableRootModelProxy);
+    ModuleConfigurationState state = createModuleConfigurationState();
     List<ModuleLevelConfigurablesEditorProvider> moduleLevelProviders = new ArrayList<ModuleLevelConfigurablesEditorProvider>();
     for (ModuleConfigurationEditorProvider provider : providers) {
       if (provider instanceof ModuleLevelConfigurablesEditorProvider) {
@@ -117,6 +118,11 @@ public class ModuleEditor {
     for (ModuleLevelConfigurablesEditorProvider provider : moduleLevelProviders) {
       processEditorsProvider(provider, state);
     }
+  }
+
+  public ModuleConfigurationState createModuleConfigurationState() {
+    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, myModifiableRootModelProxy,
+                                                                      myFacetsProvider);
   }
 
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
@@ -228,19 +234,6 @@ public class ModuleEditor {
       editor.apply();
     }
 
-    if (myModifiableRootModel != null) {
-      final Module module = myModifiableRootModel.getModule();
-      if (module.getModuleType().isJ2EE()) {
-        final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
-        if (properties != null) {
-          final ModuleContainer modifiableModel = properties.getModifiableModel();
-          if (modifiableModel instanceof JavaeeModuleProperties && !((JavaeeModuleProperties)modifiableModel).isDisposed()) { //start edit was call
-            properties.commit(myModifiableRootModel);
-          }
-        }
-      }
-    }
-
     return dispose();
   }
 
@@ -253,7 +246,7 @@ public class ModuleEditor {
     return myTabbedPane == null || myTabbedPane.getSelectedIndex() == -1 ? null : myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex());
   }
 
-  public void setSelectedTabName(String name) {
+  public void setSelectedTabName(@Nullable String name) {
     if (name != null) {
       getPanel();
       final int editorTabIndex = getEditorTabIndex(name);

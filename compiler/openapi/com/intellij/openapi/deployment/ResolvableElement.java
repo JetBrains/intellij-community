@@ -32,7 +32,8 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 
 public interface ResolvableElement {
-  boolean resolveElement(ModulesProvider provider);
+  boolean resolveElement(ModulesProvider modulesProvider, final FacetsProvider facetsProvider);
 }

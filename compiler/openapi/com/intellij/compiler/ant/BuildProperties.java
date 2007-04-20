@@ -186,10 +186,6 @@ public abstract class BuildProperties extends CompositeGenerator {
     return canonicalFile;
   }
 
-  public static @NonNls String getJarPathProperty(@NonNls String moduleName) {
-    return convertName(moduleName) + ".path.jar";
-  }
-
   public static @NonNls String getTempDirForModuleProperty(@NonNls String moduleName) {
     return "tmp.dir."+ convertName(moduleName);
   }

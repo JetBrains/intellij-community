@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NonNls;
 /**
  *  @author dsl
  */
-class OrderEntryFactory {
+public class OrderEntryFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryFactory");
-  @NonNls static final String ORDER_ENTRY_ELEMENT_NAME = "orderEntry";
-  @NonNls static final String ORDER_ENTRY_TYPE_ATTR = "type";
+  public @NonNls static final String ORDER_ENTRY_ELEMENT_NAME = "orderEntry";
+  public @NonNls static final String ORDER_ENTRY_TYPE_ATTR = "type";
 
   static OrderEntry createOrderEntryByElement(Element element,
                                               RootModelImpl rootModel,

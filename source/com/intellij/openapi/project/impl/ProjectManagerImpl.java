@@ -40,7 +40,7 @@ import java.util.*;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
-  public static final int CURRENT_FORMAT_VERSION = 4;
+  public static final int CURRENT_FORMAT_VERSION = 5;
 
   private static final Key<ArrayList<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
   @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";

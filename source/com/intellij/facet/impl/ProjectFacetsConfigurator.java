@@ -13,6 +13,9 @@ import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +24,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ProjectFacetsConfigurator {
+public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
   private Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
   private Map<Facet, FacetEditor> myEditors = new HashMap<Facet, FacetEditor>();
@@ -29,8 +32,10 @@ public class ProjectFacetsConfigurator {
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
+  private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
 
-  public ProjectFacetsConfigurator() {
+  public ProjectFacetsConfigurator(NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+    myModuleStateProvider = moduleStateProvider;
   }
 
   public void removeFacet(Facet facet) {
@@ -86,8 +91,8 @@ public class ProjectFacetsConfigurator {
   public FacetEditor getOrCreateEditor(Facet facet) {
     FacetEditor editor = myEditors.get(facet);
     if (editor == null) {
-      editor = new FacetEditor(new ProjectConfigurableContext(facet.getModule(), isNewFacet(facet)), facet.getConfiguration());
-      editor.createComponent();
+      editor = new FacetEditor(new ProjectConfigurableContext(facet, isNewFacet(facet), myModuleStateProvider.fun(facet.getModule())), facet.getConfiguration());
+      editor.getComponent();
       editor.reset();
       myEditors.put(facet, editor);
     }
@@ -109,7 +114,7 @@ public class ProjectFacetsConfigurator {
     }
 
     for (Map.Entry<Facet, FacetEditor> entry : myEditors.entrySet()) {
-      entry.getValue().onFacetAdded(entry.getKey().getModule());
+      entry.getValue().onFacetAdded(entry.getKey());
     }
 
     myModels.clear();
@@ -182,5 +187,20 @@ public class ProjectFacetsConfigurator {
     for (FacetEditor editor : myEditors.values()) {
       editor.disposeUIResources();
     }
+  }
+
+  @NotNull
+  public Facet[] getAllFacets(final Module module) {
+    return getFacetModel(module).getAllFacets();
+  }
+
+  @NotNull
+  public <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
+    return getFacetModel(module).getFacetsByType(type);
+  }
+
+  @Nullable
+  public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
+    return getFacetModel(module).findFacet(type, name);
   }
 }

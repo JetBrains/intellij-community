@@ -15,7 +15,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -148,7 +147,6 @@ public class BuildJarDialog extends DialogWrapper {
 
     final Collection<Module> modules = getModulesToJar(myProject);
     for (final Module module : modules) {
-      if (module.getModuleType().isJ2EE()) continue;
       BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
       myElementsChooser.addElement(module, buildJarSettings.isBuildJar(), new ChooserElementProperties(module));
     }
@@ -344,12 +342,7 @@ public class BuildJarDialog extends DialogWrapper {
     }
 
     public void apply() {
-      try {
-        myEditor.apply();
-      }
-      catch (ConfigurationException e1) {
-        //ignore
-      }
+      myEditor.apply();
       copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
     }
 

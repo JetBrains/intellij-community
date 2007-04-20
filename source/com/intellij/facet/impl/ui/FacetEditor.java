@@ -4,29 +4,30 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.UnnamedConfigurableGroup;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.module.Module;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.UserActivityWatcher;
-import com.intellij.ui.UserActivityListener;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetEditorValidator;
-import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.facet.FacetConfiguration;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurableGroup;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.UserActivityListener;
+import com.intellij.ui.UserActivityWatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 /**
  * @author nik
@@ -35,6 +36,8 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   private FacetEditorTab[] myEditorTabs;
   private JLabel myWarningLabel;
   private final FacetValidatorsManagerImpl myValidatorsManager;
+  private JComponent myComponent;
+  private @Nullable TabbedPaneWrapper myTabbedPane;
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myValidatorsManager = new FacetValidatorsManagerImpl();
@@ -46,27 +49,35 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
     }
   }
 
-
-
   public void reset() {
     super.reset();
     myValidatorsManager.validate();
   }
 
+  public JComponent getComponent() {
+    if (myComponent == null) {
+      myComponent = createComponent();
+    }
+    return myComponent;
+  }
+
   public JComponent createComponent() {
     final JComponent editorComponent;
     if (myEditorTabs.length > 1) {
-      final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
+      myTabbedPane = new TabbedPaneWrapper();
       for (FacetEditorTab editorTab : myEditorTabs) {
-        tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
+        myTabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
       }
-      tabbedPane.addChangeListener(new ChangeListener() {
+      myTabbedPane.addChangeListener(new ChangeListener() {
+        private int myTabIndex;
+
         public void stateChanged(ChangeEvent e) {
-          final int index = tabbedPane.getSelectedIndex();
-          myEditorTabs[index].onTabLeaving();
+          myEditorTabs[myTabIndex].onTabLeaving();
+          myTabIndex = myTabbedPane.getSelectedIndex();
+          onTabSelected(myTabbedPane, myEditorTabs[myTabIndex]);
         }
       });
-      editorComponent = tabbedPane.getComponent();
+      editorComponent = myTabbedPane.getComponent();
     }
     else if (myEditorTabs.length == 1) {
       editorComponent = myEditorTabs[0].createComponent();
@@ -82,14 +93,40 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
     return panel;
   }
 
+  private static void onTabSelected(final TabbedPaneWrapper tabbedPane, final FacetEditorTab selectedTab) {
+    selectedTab.onTabEntering();
+    final JComponent preferredFocusedComponent = selectedTab.getPreferredFocusedComponent();
+    if (preferredFocusedComponent != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (tabbedPane.getComponent().isShowing()) {
+            preferredFocusedComponent.requestFocus();
+          }
+        }
+      });
+    }
+  }
+
   public void disposeUIResources() {
     myWarningLabel = null;
     super.disposeUIResources();
   }
 
-  public void onFacetAdded(@NotNull Module module) {
+  public void onFacetAdded(@NotNull Facet facet) {
     for (FacetEditorTab editorTab : myEditorTabs) {
-      editorTab.onFacetAdded(module);
+      editorTab.onFacetInitialized(facet);
+    }
+  }
+
+  public void setSelectedTabName(final String tabName) {
+    getComponent();
+    final TabbedPaneWrapper tabbedPane = myTabbedPane;
+    if (tabbedPane == null) return;
+    for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+      if (tabName.equals(tabbedPane.getTitleAt(i))) {
+        tabbedPane.setSelectedIndex(i);
+        return;
+      }
     }
   }
 

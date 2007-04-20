@@ -28,8 +28,8 @@ import java.util.Set;
  * @author dsl
  */
 public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOrderEntry, WritableOrderEntry, ClonableOrderEntry {
-  @NonNls static final String ENTRY_TYPE = "module";
-  @NonNls private static final String MODULE_NAME_ATTR = "module-name";
+  @NonNls public static final String ENTRY_TYPE = "module";
+  @NonNls public static final String MODULE_NAME_ATTR = "module-name";
   @NonNls private static final String EXPORTED_ATTR = "exported";
 
   private Module myModule;

@@ -24,9 +24,6 @@ import javax.swing.*;
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
   public static ModuleType JAVA;
-  public static ModuleType EJB;
-  public static ModuleType WEB;
-  public static ModuleType J2EE_APPLICATION;
 
   private final String myId;
 
@@ -57,10 +54,6 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId;
   }
 
-  public boolean isJ2EE() {
-    return false;
-  }
-
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleType)) return false;
@@ -81,10 +74,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   static {
-    WEB = instantiate("com.intellij.openapi.module.WebModuleType");
     JAVA = instantiate("com.intellij.openapi.module.JavaModuleType");
-    EJB = instantiate("com.intellij.openapi.module.EjbModuleType");
-    J2EE_APPLICATION = instantiate("com.intellij.openapi.module.J2EEApplicationModuleType");
   }
 
   private static ModuleType instantiate(String className) {

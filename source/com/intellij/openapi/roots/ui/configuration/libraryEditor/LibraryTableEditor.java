@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -488,11 +487,7 @@ public class LibraryTableEditor implements Disposable {
 
     private void appendLibraryToModules(final ProjectRootConfigurable rootConfigurable, final Library libraryToSelect) {
       final List<Module> modules = new ArrayList<Module>();
-      for (Module module : rootConfigurable.getModules()) {
-        if (module.getModuleType() != ModuleType.J2EE_APPLICATION){
-          modules.add(module);
-        }
-      }
+      modules.addAll(Arrays.asList(rootConfigurable.getModules()));
       Collections.sort(modules, new Comparator<Module>() {
         public int compare(final Module m1, final Module m2) {
           return m1.getName().compareToIgnoreCase(m2.getName());

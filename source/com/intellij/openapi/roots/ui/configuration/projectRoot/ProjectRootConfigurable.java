@@ -1001,6 +1001,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     return tableModel.hasLibraryEditor(library) ? (Library)tableModel.getLibraryEditor(library).getModel() : library;
   }
 
+  public void selectFacetTab(@NotNull Facet facet, @Nullable final String tabName) {
+    final MyNode node = findNodeByObject(myModulesNode, facet);
+    if (node != null) {
+      selectNodeInTree(node);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          FacetConfigurable moduleConfigurable = (FacetConfigurable)node.getConfigurable();
+          moduleConfigurable.getEditor().setSelectedTabName(tabName);
+        }
+      });
+    }
+  }
+
   public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
     final MyNode node = findModuleNode(ModuleManager.getInstance(myProject).findModuleByName(moduleName));
     if (node != null) {

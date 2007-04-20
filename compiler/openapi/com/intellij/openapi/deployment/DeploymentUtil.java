@@ -16,14 +16,11 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
@@ -96,23 +93,13 @@ public abstract class DeploymentUtil {
 
   public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
-  public abstract void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe, final Module module, @NotNull BuildConfiguration buildConfiguration,
-                                           String relativePath);
-
   @Nullable public abstract Manifest createManifest(@NotNull BuildRecipe buildRecipe);
-
-  public abstract void addDependentModules(@NotNull ModuleLink[] containingModules,
-                                           ModuleType moduleType,
-                                           BuildRecipe instructions,
-                                           CompileContext context);
 
   public abstract void addJavaModuleOutputs(@NotNull Module module,
                                             @NotNull ModuleLink[] containingModules,
                                             @NotNull BuildRecipe instructions,
                                             @NotNull CompileContext context,
                                             String explodedPath);
-
-  public abstract BuildRecipe getModuleItems(@NotNull Module module);
 
   public static boolean checkFileExists(final File file, CompileContext context) {
     if (!file.exists()) {
@@ -154,12 +141,6 @@ public abstract class DeploymentUtil {
   public abstract ModuleContainer createModuleContainer(@NotNull Module module);
 
   public abstract BuildRecipe createBuildRecipe();
-
-  @Nullable
-  public abstract CompileScope getOutOfSourceJ2eeCompileScope(@NotNull CompileScope compileScope);
-
-  @Nullable
-  public abstract ContainerElement createElementByOrderEntry(OrderEntry orderEntry, Module module);
 
   public @Nullable abstract ContainerElement findElementByOrderEntry(ModuleContainer container, OrderEntry entry);
 

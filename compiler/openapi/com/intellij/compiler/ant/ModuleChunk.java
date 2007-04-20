@@ -5,7 +5,6 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -45,19 +44,8 @@ public class ModuleChunk {
     return ModuleRootManager.getInstance(myMainModule).getCompilerOutputPathForTestsUrl();
   }
 
-  @Deprecated
-  public boolean isJ2EE() {
-    // assuming that j2ee modules cannot be found inside cycles
-    return myModules.length == 1 && myModules[0].getModuleType().isJ2EE();
-  }
-
   public boolean isSavePathsRelative() {
     return myMainModule.isSavePathsRelative();
-  }
-
-  @Deprecated
-  public boolean isJ2EEApplication() {
-    return myModules.length == 1 && ModuleType.J2EE_APPLICATION.equals(myModules[0].getModuleType());
   }
 
   public boolean isJdkInherited() {

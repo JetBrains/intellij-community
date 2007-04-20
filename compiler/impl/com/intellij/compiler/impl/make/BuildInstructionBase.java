@@ -3,9 +3,10 @@
  */
 package com.intellij.compiler.impl.make;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.compiler.make.BuildInstruction;
+import com.intellij.openapi.module.Module;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,11 @@ public abstract class BuildInstructionBase implements BuildInstruction, Cloneabl
       filesToDelete.addAll(myFilesToDelete);
     }
     myFilesToDelete = null;
+  }
+
+  @NonNls
+  public String toString() {
+    return super.toString();
   }
 
   protected File createTempFile(final String prefix, final String suffix) throws IOException {

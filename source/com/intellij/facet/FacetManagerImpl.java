@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -27,16 +24,17 @@ import java.util.*;
  */
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
-  @NonNls private static final String FACET_ELEMENT = "facet";
-  @NonNls private static final String TYPE_ATTRIBUTE = "type";
-  @NonNls private static final String CONFIGURATION_ELEMENT = "configuration";
-  @NonNls private static final String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String FACET_ELEMENT = "facet";
+  @NonNls public static final String TYPE_ATTRIBUTE = "type";
+  @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String COMPONENT_NAME = "FacetManager";
 
   private Module myModule;
   private FacetTypeRegistry myFacetTypeRegistry;
   private FacetManagerModel myModel = new FacetManagerModel();
-  private boolean myHasNoFacetsFromBeginning = true;
 
+  private boolean myHasNoFacetsFromBeginning = true;
   private boolean myInsideCommit = false;
   private MessageBus myMessageBus;
 
@@ -46,6 +44,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     myFacetTypeRegistry = facetTypeRegistry;
   }
 
+  @NotNull
   public ModifiableFacetModel createModifiableModel() {
     return new FacetModelImpl(this);
   }
@@ -59,16 +58,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     model.commit();
   }
 
-  @Nullable
-  public <F extends Facet> F findFacet(final FacetTypeId<F> type, final String name) {
-    final Collection<F> fs = getFacetsByType(type);
-    for (F f : fs) {
-      if (f.getName().equals(name)) {
-        return f;
-      }
-    }
-    return null;
-  }
 
   private Facet getOrCreateFacet(final Map<FacetInfo, Facet> info2Facet, final FacetInfo info) {
     Facet facet = info2Facet.get(info);
@@ -90,6 +79,21 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   @Nullable
   public <F extends Facet> F getFacetByType(FacetTypeId<F> typeId) {
     return myModel.getFacetByType(typeId);
+  }
+
+  @Nullable
+  public <F extends Facet> F findFacet(final FacetTypeId<F> type, final String name) {
+    return myModel.findFacet(type, name);
+  }
+
+  @Nullable
+  public <F extends Facet> F getFacetByType(@NotNull final Facet underlyingFacet, final FacetTypeId<F> typeId) {
+    return myModel.getFacetByType(underlyingFacet, typeId);
+  }
+
+  @NotNull
+  public <F extends Facet> Collection<F> getFacetsByType(@NotNull final Facet underlyingFacet, final FacetTypeId<F> typeId) {
+    return myModel.getFacetsByType(underlyingFacet, typeId);
   }
 
 
@@ -137,6 +141,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       name = type.getPresentableName();
     }
     final Facet facet = type.createFacet(myModule, name, configuration, underlyingFacet);
+    if (facet instanceof JDOMExternalizable) {
+      //todo[nik] remove 
+      ((JDOMExternalizable)facet).readExternal(config);
+    }
     facets.add(facet);
     addFacets(facets, element, facet);
   }
@@ -160,6 +168,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       final Element config = new Element(CONFIGURATION_ELEMENT);
       try {
         facet.getConfiguration().writeExternal(config);
+        if (facet instanceof JDOMExternalizable) {
+          ((JDOMExternalizable)facet).writeExternal(config);
+        }
       }
       catch (WriteExternalException e) {
         continue;
@@ -262,7 +273,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "FacetManager";
+    return COMPONENT_NAME;
   }
 
   public void initComponent() {

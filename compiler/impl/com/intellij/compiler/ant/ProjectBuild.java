@@ -24,7 +24,7 @@ public abstract class ProjectBuild extends Generator {
 
     // the sequence in which modules are imported is important cause output path properties for dependent modules should be defined first
 
-    final StringBuffer alltargetNames = new StringBuffer();
+    final StringBuilder alltargetNames = new StringBuilder();
     alltargetNames.append(BuildProperties.TARGET_INIT);
     alltargetNames.append(", ");
     alltargetNames.append(BuildProperties.TARGET_CLEAN);
@@ -35,10 +35,13 @@ public abstract class ProjectBuild extends Generator {
 
       for (final ModuleChunk chunk : chunks) {
         myAntProject.add(createModuleBuildGenerator(chunk, genOptions), 1);
-        if (alltargetNames.length() > 0) {
-          alltargetNames.append(", ");
+        final String[] targets = ChunkBuildExtension.getAllTargets(chunk);
+        for (String target : targets) {
+          if (alltargetNames.length() > 0) {
+            alltargetNames.append(", ");
+          }
+          alltargetNames.append(target);
         }
-        alltargetNames.append(ChunkBuildExtension.getAssemblingName(chunk));
       }
     }
 

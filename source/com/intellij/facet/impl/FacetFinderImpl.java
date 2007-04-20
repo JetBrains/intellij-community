@@ -41,7 +41,7 @@ public class FacetFinderImpl extends FacetFinder {
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 
-  private <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
+  public <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
     AllFacetsOfTypeModificationTracker tracker = myAllFacetTrackers.get(type);
     if (tracker == null) {
       tracker = new AllFacetsOfTypeModificationTracker<F>(myProject, type);

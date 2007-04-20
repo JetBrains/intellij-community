@@ -121,13 +121,6 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     project.setOptimiseTestLoadSpeed(false);
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     module.getStateStore().initComponent(moduleRootManager);
-
-    /*
-    ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(module);
-    if (moduleBuildProperties != null) {
-      module.getStateStore().initComponent(moduleBuildProperties);
-    }
-    */
     project.setOptimiseTestLoadSpeed(true);
   }
 

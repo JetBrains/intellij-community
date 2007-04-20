@@ -16,14 +16,13 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public abstract class BuildParticipant {
   public static final BuildParticipant[] EMPTY_ARRAY = new BuildParticipant[0];
-
-  public abstract void registerBuildInstructions(BuildRecipe buildRecipe, CompileContext context);
-
 
   public void afterJarCreated(File jarFile, CompileContext context) throws Exception {
   }
@@ -37,5 +36,16 @@ public abstract class BuildParticipant {
   public void runValidators(File output, CompileContext context) throws Exception {
   }
 
+  public abstract BuildRecipe getBuildInstructions(final CompileContext context);
+
   public abstract BuildConfiguration getBuildConfiguration();
+
+  public abstract String getConfigurationName();
+
+  @Nullable
+  public String getOrCreateTemporaryDirForExploded() {
+    return null;
+  }
+
+  public abstract Module getModule();
 }

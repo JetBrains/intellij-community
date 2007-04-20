@@ -157,15 +157,25 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       }
     }
 
+    boolean sourceRootAdded = false;
     if (isAddDirToContentRoot()) {
       final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
-      if (isAddDirToSource()) contentEntry.addSourceFolder(toDir, false);
+      if (isAddDirToSource()) {
+        sourceRootAdded = true;
+        contentEntry.addSourceFolder(toDir, false);
+      }
     }
     rootModel.commit();
+    if (sourceRootAdded) {
+      sourceRootAdded(toDir);
+    }
 
     openEditorsAndActivateLast(editorInfos);
 
     return toDir;
+  }
+
+  protected void sourceRootAdded(final VirtualFile dir) {
   }
 
   protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(String testDataFromDir,

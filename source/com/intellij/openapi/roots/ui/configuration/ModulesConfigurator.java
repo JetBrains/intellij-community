@@ -2,11 +2,13 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.ui.ConfigureFacetsStep;
+import com.intellij.facet.Facet;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.javaee.J2EEModuleUtil;
-import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,10 +26,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,6 +42,7 @@ import java.util.List;
  *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ModulesConfigurator");
   private final Project myProject;
 
   private boolean myModified = false;
@@ -67,7 +70,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
-    myFacetsConfigurator = new ProjectFacetsConfigurator();
+    myFacetsConfigurator = createFacetsConfigurator();
   }
 
   public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -157,7 +160,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder, final @Nullable ConfigureFacetsStep facetsStep) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder);
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder, myFacetsConfigurator);
     if (facetsStep != null) {
       myFacetsConfigurator.registerEditors(module, facetsStep);
     }
@@ -211,7 +214,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           }
           myFacetsConfigurator.applyEditors();
 
-          J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
           myFacetsConfigurator.commitFacets();
@@ -222,7 +224,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
         finally {
           myFacetsConfigurator.disposeEditors();
-          myFacetsConfigurator = new ProjectFacetsConfigurator();
+          myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {
             if (!module.isDisposed()) {
@@ -243,13 +245,18 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       throw ex[0];
     }
 
-    if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), true)) {
-      throw new ConfigurationException(null);
-    }
-
     ApplicationManager.getApplication().saveAll();
 
     myModified = false;
+  }
+
+  private ProjectFacetsConfigurator createFacetsConfigurator() {
+    return new ProjectFacetsConfigurator(new NotNullFunction<Module, ModuleConfigurationState>() {
+      @NotNull
+      public ModuleConfigurationState fun(final Module module) {
+        return getModuleEditor(module).createModuleConfigurationState();
+      }
+    });
   }
 
   public void setModified(final boolean modified) {
@@ -384,10 +391,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
-    return myModified || myFacetsConfigurator.isModified() ||
-           !J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), false);
+    return myModified || myFacetsConfigurator.isModified();
   }
 
+
+  public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
+                                                final @Nullable String tabNameToSelect) {
+    final Project project = facet.getModule().getProject();
+    final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
+      public void run() {
+        projectRootConfigurable.selectFacetTab(facet, tabNameToSelect);
+        projectRootConfigurable.setStartModuleWizard(false);
+      }
+    });
+  }
 
   public static boolean showDialog(Project project,
                                    @Nullable final String moduleToSelect,

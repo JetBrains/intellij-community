@@ -16,10 +16,7 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.module.Module;
-import com.sun.org.apache.xml.internal.utils.XMLChar;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 
 /**
@@ -33,32 +30,5 @@ public abstract class ModuleLink extends ContainerElement {
 
   public abstract @Nullable Module getModule();
 
-  public abstract String getId();
-
-  public abstract boolean hasId(String id);
-
   public abstract String getName();
-
-  public static String getId(Module module) {
-    String baseName = module == null ? "" : new File(module.getModuleFilePath()).getName();
-    if (baseName.endsWith(".iml")) baseName = baseName.substring(0, baseName.length() - ".iml".length());
-    return convertNameToXmlName(baseName);
-  }
-
-  private static String convertNameToXmlName(final String baseName) {
-    final StringBuilder builder = new StringBuilder(baseName.length());
-    for (int i = 0; i < baseName.length(); i++) {
-      char c = baseName.charAt(i);
-      if (i == 0 && !XMLChar.isNameStart(c) || !XMLChar.isName(c)) {
-        c = '_';
-      }
-      builder.append(c);
-    }
-    return builder.toString();
-  }
-
-  public static boolean hasId(final Module module, final String id) {
-    final String id1 = getId(module);
-    return id1.equals(id) || (id1 + ".iml").equals(id);
-  }
 }

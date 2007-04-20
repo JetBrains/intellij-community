@@ -22,7 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.Nullable;
 
-public interface ModuleContainer extends TransactionalEditable, JDOMExternalizable {
+public interface ModuleContainer extends JDOMExternalizable {
   ModuleLink[] getContainingModules();
 
   @Nullable
@@ -38,7 +38,5 @@ public interface ModuleContainer extends TransactionalEditable, JDOMExternalizab
 
   void removeModule(Module module);
 
-  void containedEntriesChanged();
-
-  void disposeModifiableModel();
+  Module[] getContainingIdeaModules();
 }
