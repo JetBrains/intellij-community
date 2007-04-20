@@ -71,5 +71,5 @@ public interface GroupNames {
   String JSP_INSPECTIONS = XmlBundle.message("jsp.inspections.group.name");
 
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
-
+  String XML_INSPECTIONS = XmlBundle.message("xml.inspections.group.name");
 }

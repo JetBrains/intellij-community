@@ -44,9 +44,7 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
       public void visitXmlTag(final XmlTag tag) {
-        if (( SCRIPT_TAG_NAME.equals(tag.getName()) ||
-              (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
-            ) && tag.getLanguage() != StdLanguages.XML) {
+        if (isScriptTag(tag)) {
           final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
 
           if (child != null) {
@@ -89,6 +87,12 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  static boolean isScriptTag(final XmlTag tag) {
+    return ( SCRIPT_TAG_NAME.equals(tag.getName()) ||
+          (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
+        ) && tag.getLanguage() != StdLanguages.XML;
   }
 
   @NotNull
