@@ -9,10 +9,7 @@ import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.misc.AntStringInterner;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -20,23 +17,31 @@ import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.taskdefs.Property;
 import org.apache.tools.ant.types.DataType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -66,12 +71,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NonNls public static final String FILE_ATTR = "file";
   @NonNls public static final String PREFIX_ATTR = "prefix";
 
-  private volatile AntProject myProject;
-  private volatile AntElement myPrologElement;
-  private volatile AntElement myEpilogueElement;
-  private volatile PsiElement[] myChildren;
-  private volatile ClassLoader myClassLoader;
-  private volatile Hashtable myProjectProperties;
+  @NonNls public static final String DEFAULT_ENVIRONMENT_PREFIX = "env.";
+  
+  private AntProject myProject;
+  private AntElement myPrologElement;
+  private AntElement myEpilogueElement;
+  private PsiElement[] myChildren;
+
+  private ClassLoader myClassLoader;
+  private Hashtable myProjectProperties;
+  private Map<String, AntProperty> myProperties;
+  private volatile AntProperty[] myPropertiesArray;
+  private List<String> myEnvPrefixes;
+
+
   /**
    * Map of propeties set outside.
    */
@@ -93,6 +106,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntFile(this);
   }
 
   @NotNull
@@ -194,8 +211,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         myEpilogueElement = null;
         myTargetDefinition = null;
         myClassLoader = null;
+        myEnvPrefixes = null;
         incModificationCount();
       }
+    }
+  }
+
+  public void invalidateProperties() {
+    synchronized (PsiLock.LOCK) {
+      buildPropertiesMap();
     }
   }
 
@@ -273,7 +297,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
           myProject = project;
-          project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
+          buildPropertiesMap();
           for (final AntFile imported : project.getImportedFiles()) {
             if (imported.isPhysical()) {
               AntSupport.registerDependency(this, imported);
@@ -289,20 +313,210 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         AntChangeVisitor.updateBuildFile(this);
       }
     }
-  }
+  }              
 
   @Nullable
   public AntProperty getProperty(final String name) {
-    return null;
+    if (name == null) {
+      return null;
+    }
+    synchronized (PsiLock.LOCK) {
+      if (myProperties == null) {
+        return null;
+      }
+      return myProperties.get(name);
+    }
   }
 
+  private void buildPropertiesMap() {
+    myProperties = new HashMap<String, AntProperty>();
+    myPropertiesArray = null;
+    loadPredefinedProperties(myProjectProperties, myExternalProperties);
+    PropertiesBuilder.defineProperties(this);
+  }
+
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
+  void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
+    final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("<project name=\"predefined properties\">");
+    try {
+      while (props.hasMoreElements()) {
+        final String name = (String)props.nextElement();
+        final String value = (String)properties.get(name);
+        builder.append("<property name=\"");
+        builder.append(name);
+        builder.append("\" value=\"");
+        builder.append(value);
+        builder.append("\"/>");
+      }
+      final Map<String, String> envMap = System.getenv();
+      for (final String name : envMap.keySet()) {
+        final String value = envMap.get(name);
+        if (name.length() > 0) {
+          builder.append("<property name=\"");
+          builder.append(DEFAULT_ENVIRONMENT_PREFIX);
+          builder.append(name);
+          builder.append("\" value=\"");
+          builder.append(value);
+          builder.append("\"/>");
+        }
+      }
+      if (externalProps != null) {
+        for (final String name : externalProps.keySet()) {
+          final String value = externalProps.get(name);
+          builder.append("<property name=\"");
+          builder.append(name);
+          builder.append("\" value=\"");
+          builder.append(value);
+          builder.append("\"/>");
+        }
+      }
+      final VirtualFile file = getVirtualFile();
+      final AntProject antProject = getAntProject();
+      String basedir = antProject.getBaseDir();
+      if (basedir == null) {
+        basedir = ".";
+      }
+      if (file != null) {
+        final VirtualFile dir = file.getParent();
+        if (dir != null) {
+          try {
+            basedir = new File(dir.getPath(), basedir).getCanonicalPath();
+          }
+          catch (IOException e) {
+            // ignore
+          }
+        }
+      }
+      if (basedir != null) {
+        builder.append("<property name=\"basedir\" value=\"");
+        builder.append(basedir);
+        builder.append("\"/>");
+      }
+      builder.append("<property name=\"ant.home\" value=\"\"/>");
+      builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
+      builder.append("<property name=\"ant.project.name\" value=\"");
+      final String name = antProject.getName();
+      builder.append((name == null) ? "" : name);
+      builder.append("\"/>");
+      builder.append("<property name=\"ant.java.version\" value=\"");
+      builder.append(SystemInfo.JAVA_VERSION);
+      builder.append("\"/>");
+      if (file != null) {
+        final String path = file.getPath();
+        builder.append("<property name=\"ant.file\" value=\"");
+        builder.append(path);
+        builder.append("\"/>");
+        if (name != null) {
+          builder.append("<property name=\"ant.file.");
+          builder.append(name);
+          builder.append("\" value=\"${ant.file}\"/>");
+        }
+      }
+      builder.append("</project>");
+      final XmlFile xmlFile = (XmlFile)getManager().getElementFactory()
+        .createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
+      final XmlDocument document = xmlFile.getDocument();
+      if (document == null) return;
+      final XmlTag rootTag = document.getRootTag();
+      if (rootTag == null) return;
+      final AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
+      AntProject fakeProject = new AntProjectImpl(this, rootTag, antProject.getTypeDefinition());
+      for (final XmlTag tag : rootTag.getSubTags()) {
+        final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
+          public PsiFile getContainingFile() {
+            return getSourceElement().getContainingFile();
+          }
+
+          public PsiElement getNavigationElement() {
+            if (AntFileImpl.BASEDIR_ATTR.equals(getName())) {
+              final XmlAttribute attr = antProject.getSourceElement().getAttribute(AntFileImpl.BASEDIR_ATTR, null);
+              if (attr != null) {
+                return attr;
+              }
+            }
+            return super.getNavigationElement();
+          }
+        };
+        myProperties.put(property.getName(), property);
+      }
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+
   public void setProperty(final String name, final AntProperty element) {
-    throw new RuntimeException("Invoke AntProject.setProperty() instead.");
+    synchronized (PsiLock.LOCK) {
+      if (myProperties == null) {
+        myProperties = new HashMap<String, AntProperty>();
+        myPropertiesArray = null;
+      }
+      if (!myProperties.containsKey(name)) {
+        myProperties.put(name, element);
+        myPropertiesArray = null;
+      }
+    }
   }
 
   @NotNull
   public AntProperty[] getProperties() {
-    return AntProperty.EMPTY_ARRAY;
+    synchronized (PsiLock.LOCK) {
+      if (myProperties == null) {
+        return AntProperty.EMPTY_ARRAY;
+      }
+      if (myPropertiesArray == null) {
+        myPropertiesArray = myProperties.values().toArray(new AntProperty[myProperties.size()]);
+      }
+      return myPropertiesArray;
+    }
+  }
+
+  public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
+    synchronized (PsiLock.LOCK) {
+      checkEnvList();
+      final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
+      if (myEnvPrefixes.indexOf(env) < 0) {
+        myEnvPrefixes.add(env);
+        for (final AntProperty element : getProperties()) {
+          final String name = element.getName();
+          if (name != null && name.startsWith(DEFAULT_ENVIRONMENT_PREFIX)) {
+            setProperty(env + name.substring(DEFAULT_ENVIRONMENT_PREFIX.length()), element);
+          }
+        }
+      }
+    }
+  }
+
+  public boolean isEnvironmentProperty(@NotNull final String propName) {
+    synchronized (PsiLock.LOCK) {
+      checkEnvList();
+      if (!propName.endsWith(".")) {
+        for (final String prefix : myEnvPrefixes) {
+          if (propName.startsWith(prefix)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  }
+
+  public List<String> getEnvironmentPrefixes() {
+    synchronized (PsiLock.LOCK) {
+      checkEnvList();
+      return myEnvPrefixes;
+    }
+  }
+
+
+  private void checkEnvList() {
+    if (myEnvPrefixes == null) {
+      myEnvPrefixes = new ArrayList<String>();
+      myEnvPrefixes.add(DEFAULT_ENVIRONMENT_PREFIX);
+    }
   }
 
   public AntElement lightFindElementAt(int offset) {
@@ -363,10 +577,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         if (targetDef != null) {
           for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
             final AntTypeId id = def.getTypeId();
-            if ((def.isTask() || isDataDype(def)) && isProjectNestedElement(def)) { 
-              // if type definition is a task _and_ is visible at the project level
-              // custom tasks can define nested types with the same typeId (e.g. "property") but different implementation class
-              // such nested types can be used only inside tasks which defined them, but not at a project level
+            if (canBeUsedInTarget(def)) { 
               targetDef.registerNestedType(id, def.getClassName());
             }
           }
@@ -376,6 +587,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       }
       return myTargetDefinition;
     }
+  }
+
+  private boolean canBeUsedInTarget(final AntTypeDefinition def) {
+    // if type definition is a task _and_ is visible at the project level
+    // custom tasks can define nested types with the same typeId (e.g. "property") but different implementation class
+    // such nested types can be used only inside tasks which defined them, but not at a project level
+    return (def.isTask() || isDataDype(def)) && isProjectNestedElement(def);
   }
 
   private boolean isDataDype(final AntTypeDefinition def) {
@@ -407,7 +625,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       final String classname = def.getClassName();
       myTypeDefinitions.put(classname, def);
       if (myTargetDefinition != null && myTargetDefinition != def) {
-        myTargetDefinition = null;
+        if (canBeUsedInTarget(def)) {
+          myTargetDefinition.registerNestedType(def.getTypeId(), def.getClassName());
+        }
       }
     }
   }
@@ -522,7 +742,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
     return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
   }
-
+  
   @Nullable
   private static AntInstrospector getHelperExceptionSafe(Class c) {
     try {

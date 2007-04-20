@@ -5,7 +5,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
-import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -83,11 +82,9 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    final PsiElement element = AntElementImpl.resolveProperty(getElement(), getCanonicalText());
-    if (element instanceof AntProperty) {
-      return ((AntProperty)element).getFormatElement();
-    }
-    return element;
+    final AntFile antFile = getElement().getAntFile();
+    final AntProperty resolved = antFile != null? antFile.getProperty(getCanonicalText()) : null;
+    return resolved != null? resolved.getFormatElement() : null;
   }
 
   public String getUnresolvedMessagePattern() {
@@ -102,7 +99,8 @@ public class AntPropertyReference extends AntGenericReference {
       final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
       try {
         final AntProject project = currentElement.getAntProject();
-        for (final AntProperty property : project.getPredefinedProperties()) {
+        final AntFile antFile = currentElement.getAntFile();
+        for (final AntProperty property : antFile.getProperties()) {
           if (currentElement != property) {
             addAntProperties(property, variants, definedProperties);
           }

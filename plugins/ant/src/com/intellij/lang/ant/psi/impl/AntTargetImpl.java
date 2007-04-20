@@ -1,15 +1,11 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +22,6 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
     myDefinition = getAntFile().getTargetDefinition();
-    setProperties();
   }
 
   @NonNls
@@ -58,6 +53,10 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   public AntElementRole getRole() {
     return AntElementRole.TARGET_ROLE;
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntTarget(this);
   }
 
   @NotNull
@@ -110,8 +109,8 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
       myDependsTargets = null;
       if (myPropElement != null) {
         getAntProject().clearCaches();
+        myPropElement = null;
       }
-      setProperties();
     }
   }
 
@@ -163,6 +162,11 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     return myPropElement;
   }
 
+  /* hack */
+  public void setPropertyDefinitionElement(final XmlAttributeValue sourceElement) {
+    myPropElement = new AntNameElementImpl(this, sourceElement);
+  }
+
   protected AntElement[] getChildrenInner() {
     synchronized (PsiLock.LOCK) {
       final AntElement[] baseChildren = super.getChildrenInner();
@@ -187,22 +191,4 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     }
   }
 
-  private void setProperties() {
-    myPropElement = null;
-    final XmlTag se = getSourceElement();
-    XmlAttribute propNameAttribute = se.getAttribute(AntFileImpl.IF_ATTR, null);
-    if (propNameAttribute == null) {
-      propNameAttribute = se.getAttribute(AntFileImpl.UNLESS_ATTR, null);
-    }
-    if (propNameAttribute != null) {
-      final XmlAttributeValue valueElement = propNameAttribute.getValueElement();
-      if (valueElement != null) {
-        final String value = valueElement.getValue();
-        if (AntElementImpl.resolveProperty(this, value) == null) {
-          myPropElement = new AntNameElementImpl(this, valueElement);
-          getAntProject().setProperty(value, this);
-        }
-      }
-    }
-  }
 }

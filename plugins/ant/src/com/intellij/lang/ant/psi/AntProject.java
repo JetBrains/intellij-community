@@ -3,8 +3,6 @@ package com.intellij.lang.ant.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public interface AntProject extends AntStructuredElement {
 
   @Nullable
@@ -35,13 +33,4 @@ public interface AntProject extends AntStructuredElement {
 
   @NotNull
   String[] getRefIds();
-
-  void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
-
-  boolean isEnvironmentProperty(@NotNull final String propName);
-
-  List<String> getEnvironmentPrefixes();
-  
-  @NotNull
-  AntProperty[] getPredefinedProperties();
 }

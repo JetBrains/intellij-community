@@ -20,14 +20,6 @@ public interface AntElement extends PsiAntElement {
 
   void clearCaches();
 
-  @Nullable
-  AntProperty getProperty(final String name);
-
-  void setProperty(final String name, final AntProperty element);
-
-  @NotNull
-  AntProperty[] getProperties();
-
   /**
    * Does the same as findElementAt() but without rebuilding cleared PSI.
    *
@@ -38,4 +30,6 @@ public interface AntElement extends PsiAntElement {
   AntElement lightFindElementAt(int offset);
 
   void incModificationCount();
+
+  void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor);
 }

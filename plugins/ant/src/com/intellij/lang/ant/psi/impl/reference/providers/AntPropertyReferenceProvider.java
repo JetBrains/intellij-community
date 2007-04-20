@@ -3,10 +3,9 @@ package com.intellij.lang.ant.psi.impl.reference.providers;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
@@ -65,7 +64,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
    * @param refs
    */
   private void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
-    final AntProject project = element.getAntProject();
+    final AntFile antFile = element.getAntFile();
     final String value = attr.getValue();
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
     if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
@@ -97,7 +96,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         if (nestedBrackets > 0 || endIndex > value.length()) return;
         if (endIndex >= startIndex) {
           final String propName = value.substring(startIndex, endIndex);
-          if (project.isEnvironmentProperty(propName) && AntElementImpl.resolveProperty(element, propName) == null) {
+          if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
             continue;
           }
           refs.add(new AntPropertyReference(this, element, propName,
@@ -116,11 +115,12 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
    * @param refs
    */
   private void getAttributeReference(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
-    final AntProject project = element.getAntProject();
+    final AntFile antFile = element.getAntFile();
     final String value = attr.getValue();
-    if (value == null) return;
-    final PsiElement resolvedProp = AntElementImpl.resolveProperty(element, value);
-    if (project.isEnvironmentProperty(value) && resolvedProp == null) {
+    if (value == null) {
+      return;
+    }
+    if (antFile.isEnvironmentProperty(value) && antFile.getProperty(value) == null) {
       return;
     }
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();

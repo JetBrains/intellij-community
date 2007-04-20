@@ -8,6 +8,8 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface AntFile extends PsiFile, AntElement, ModificationTracker {
 
   AntFile[] NO_FILES = new AntFile[0];
@@ -38,4 +40,20 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
   VirtualFile getContainingPath();
 
   void clearCachesWithTypeDefinitions();
+  
+  void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
+
+  boolean isEnvironmentProperty(@NotNull final String propName);
+
+  List<String> getEnvironmentPrefixes();
+
+  @Nullable
+  AntProperty getProperty(final String name);
+
+  void setProperty(final String name, final AntProperty element);
+
+  @NotNull
+  AntProperty[] getProperties();
+
+  void invalidateProperties();
 }

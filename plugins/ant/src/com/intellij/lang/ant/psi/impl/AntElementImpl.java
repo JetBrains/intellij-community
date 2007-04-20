@@ -5,28 +5,27 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
-import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntElementVisitor;
+import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
@@ -46,8 +45,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   private volatile PsiReference[] myReferences;
   private volatile PsiElement myPrev;
   private volatile PsiElement myNext;
-  protected volatile Map<String, AntProperty> myProperties;
-  private volatile AntProperty[] myPropertiesArray;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -159,46 +156,15 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       myChildren = null;
-    myReferences = null;
-    myProperties = null;
-    myPropertiesArray = null;
-    myPrev = null;
-    myNext = null;
-    incModificationCount();
+      myReferences = null;
+      myPrev = null;
+      myNext = null;
+      incModificationCount();
     }
   }
 
   public void incModificationCount() {
     getAntFile().incModificationCount();
-  }
-
-  @Nullable
-  public AntProperty getProperty(final String name) {
-    return myProperties == null ? null : myProperties.get(name);
-  }
-
-  public void setProperty(final String name, final AntProperty element) {
-    synchronized (PsiLock.LOCK) {
-      if (name == null || name.length() == 0) return;
-      if (myProperties == null) {
-        myProperties = new HashMap<String, AntProperty>();
-      }
-      if (!myProperties.containsKey(name)) {
-        myProperties.put(name, element);
-        myPropertiesArray = null;
-      }
-    }
-  }
-
-  @NotNull
-  public AntProperty[] getProperties() {
-    if (myProperties == null) {
-      return AntProperty.EMPTY_ARRAY;
-    }
-    if (myPropertiesArray == null) {
-      myPropertiesArray = myProperties.values().toArray(new AntProperty[myProperties.size()]);
-    }
-    return myPropertiesArray;
   }
 
   @Nullable
@@ -273,12 +239,23 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return getSourceElement().isValid();
   }
 
+  
+  PsiManager myCachedManager;
   public PsiManager getManager() {
-    return getSourceElement().getManager();
+    PsiManager manager = myCachedManager;
+    if (manager == null) {
+      manager = getSourceElement().getManager();
+      myCachedManager = manager;
+    }
+    return manager;
   }
 
   protected AntElement[] getChildrenInner() {
     return AntElement.EMPTY_ARRAY;
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntElement(this);
   }
 
   protected AntElement clone() {
@@ -287,114 +264,4 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return element;
   }
 
-  @Nullable
-  public static PsiElement resolveProperty(@NotNull final AntElement element, final String propName) {
-    if (propName == null) return null;
-    PsiElement result;
-    AntElement temp = element;
-    while (temp != null) {
-      result = temp.getProperty(propName);
-      if (result != null) {
-        return result;
-      }
-      temp = temp.getAntParent();
-    }
-    final Set<PsiElement> projectsStack = PsiElementSetSpinAllocator.alloc();
-    try {
-      result = resolvePropertyInProject(element.getAntProject(), propName, projectsStack);
-      if (result != null) return result;
-    }
-    finally {
-      PsiElementSetSpinAllocator.dispose(projectsStack);
-    }
-    final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
-    if (target != null) {
-      final Set<PsiElement> targetsStack = PsiElementSetSpinAllocator.alloc();
-      try {
-        result = resolveTargetProperty(target, propName, targetsStack);
-      }
-      finally {
-        PsiElementSetSpinAllocator.dispose(targetsStack);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName, final Set<PsiElement> stack) {
-    PsiElement result = null;
-    if (!stack.contains(project)) {
-      result = resolvePropertyInElement(project, propName);
-      if (result == null) {
-        stack.add(project);
-        for (final AntFile file : project.getImportedFiles()) {
-          final AntProject importedProject = file.getAntProject();
-          importedProject.getChildren();
-          if ((result = resolvePropertyInProject(importedProject, propName, stack)) != null) break;
-        }
-        stack.remove(project);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final Set<PsiElement> stack) {
-    PsiElement result = null;
-    if (!stack.contains(target)) {
-      result = resolvePropertyInElement(target, propName);
-      if (result == null) {
-        stack.add(target);
-        for (AntTarget dependie : target.getDependsTargets()) {
-          if ((result = resolveTargetProperty(dependie, propName, stack)) != null) break;
-        }
-        stack.remove(target);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement resolvePropertyInElement(final AntStructuredElement element, final String propName) {
-    PsiElement result = element.getProperty(propName);
-    if (result == null) {
-      result = resolvePropertyInChildishPropertyFiles(element, propName);
-    }
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement resolvePropertyInChildishPropertyFiles(final AntStructuredElement element, final String propName) {
-    PsiElement result = null;
-    final XmlTag se = element.getSourceElement();
-    for (final XmlTag tag : se.getSubTags()) {
-      if (AntFileImpl.PROPERTY.equals(tag.getName())) {
-        final String name = element.computeAttributeValue(tag.getAttributeValue(AntFileImpl.FILE_ATTR));
-        if (name != null) {
-          final PsiFile psiFile = element.findFileByName(name, null);
-          if (psiFile instanceof PropertiesFile) {
-            final PropertiesFile propFile = (PropertiesFile)psiFile;
-            String prefix = element.computeAttributeValue(tag.getAttributeValue(AntFileImpl.PREFIX_ATTR));
-            Property property = null;
-            if (prefix == null) {
-              property = propFile.findPropertyByKey(propName);
-            }
-            else {
-              if (!prefix.endsWith(".")) {
-                prefix += '.';
-              }
-              if (propName.startsWith(prefix)) {
-                property = propFile.findPropertyByKey(propName.substring(prefix.length()));
-              }
-            }
-            if (property != null) {
-              result = property;
-              break;
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
 }

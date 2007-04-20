@@ -12,7 +12,9 @@ import org.jetbrains.annotations.Nullable;
 public class AntNameElementImpl extends AntElementImpl {
 
   private @Nullable AntElement myElementToRename;
-  
+  private String myCachedName;
+  private volatile long myModCount;
+
   public AntNameElementImpl(final AntElement parent, final XmlAttributeValue sourceElement) {
     super(parent, sourceElement);
   }
@@ -23,9 +25,17 @@ public class AntNameElementImpl extends AntElementImpl {
   }
 
   public String getName() {
-    return getSourceElement().getValue();
+    String name = myCachedName;
+    final long modificationCount = getManager().getModificationTracker().getModificationCount();
+    if (name != null && myModCount == modificationCount) {
+      return name;
+    }
+    myModCount = modificationCount;
+    name = getSourceElement().getValue();
+    myCachedName = name;
+    return name;
   }
-
+  
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final XmlAttribute attr = PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class);
     if (attr != null) {

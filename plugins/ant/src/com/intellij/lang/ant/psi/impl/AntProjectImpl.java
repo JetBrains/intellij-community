@@ -5,24 +5,18 @@ import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
-import org.apache.tools.ant.taskdefs.Property;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -36,17 +30,16 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private AntFile[] myCachedImportsArray;
   private Set<String> myImportsDependentProperties;
     
-  private volatile List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
-  private volatile AntProperty[] myPredefinedPropsArray;
   private volatile Map<String, AntElement> myReferencedElements;
   private volatile String[] myRefIdsArray;
-  private volatile AntProject myFakeProject; // project that holds predefined properties
-  @NonNls private volatile List<String> myEnvPrefixes;
-  @NonNls public static final String ourDefaultEnvPrefix = "env.";
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
     super(parent, tag);
     myDefinition = projectDefinition;
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntProject(this);
   }
 
   @NonNls
@@ -80,7 +73,10 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       clearImports();
       myReferencedElements = null;
       myRefIdsArray = null;
-      myEnvPrefixes = null;
+      final AntFile antFile = getAntFile();
+      if (antFile != null) {
+        antFile.invalidateProperties();
+      }
     }
   }
 
@@ -236,6 +232,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
+  // TODO: with the new implementation of properties management this will be obsolete; to be removed
   private void registerImportsDependentProperties(final String fileName) {
     int startProp = 0;
     while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
@@ -293,246 +290,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         }
       }
       return myRefIdsArray;
-    }
-  }
-
-  public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
-    synchronized (PsiLock.LOCK) {
-      checkEnvList();
-      final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
-      if (myEnvPrefixes.indexOf(env) < 0) {
-        myEnvPrefixes.add(env);
-        for (final AntProperty element : getProperties()) {
-          final String name = element.getName();
-          if (name != null && name.startsWith(ourDefaultEnvPrefix)) {
-            setProperty(env + name.substring(ourDefaultEnvPrefix.length()), element);
-          }
-        }
-        if (myFakeProject != null) {
-          myFakeProject.addEnvironmentPropertyPrefix(envPrefix);
-        }
-      }
-    }
-  }
-
-  public boolean isEnvironmentProperty(@NotNull final String propName) {
-    synchronized (PsiLock.LOCK) {
-      checkEnvList();
-      if (!propName.endsWith(".")) {
-        for (final String prefix : myEnvPrefixes) {
-          if (propName.startsWith(prefix)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-  }
-
-  public List<String> getEnvironmentPrefixes() {
-    synchronized (PsiLock.LOCK) {
-      checkEnvList();
-      return myEnvPrefixes;
-    }
-  }
-
-  @Nullable
-  public AntProperty getProperty(final String name) {
-    synchronized (PsiLock.LOCK) {
-      if (getParent() == null) return null;
-      checkPropertiesMap();
-      return super.getProperty(name);
-    }
-  }
-
-  public void setProperty(final String name, final AntProperty element) {
-    synchronized (PsiLock.LOCK) {
-      if (getParent() != null) {
-        checkPropertiesMap();
-        super.setProperty(name, element);
-        // hack: if there are any imports defined in terms of this property, they will be recalculated 
-        if (myImportsDependentProperties != null && myImportsDependentProperties.contains(name)) {
-          clearImports();
-        }
-      }
-    }
-  }
-
-  @NotNull
-  public AntProperty[] getProperties() {
-    synchronized (PsiLock.LOCK) {
-      if (getParent() == null) return AntProperty.EMPTY_ARRAY;
-      checkPropertiesMap();
-      return super.getProperties();
-    }
-  }
-
-  @NotNull
-  public AntProperty[] getPredefinedProperties() {
-    synchronized (PsiLock.LOCK) {
-      if (getParent() == null || myPredefinedProps == null) {
-        return AntProperty.EMPTY_ARRAY;
-      }
-      if (myPredefinedPropsArray == null) {
-        myPredefinedPropsArray = myPredefinedProps.toArray(new AntProperty[myPredefinedProps.size()]); 
-      }
-      return myPredefinedPropsArray;
-    }
-  }
-
-  @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
-    final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    builder.append("<project name=\"predefined properties\">");
-    try {
-      while (props.hasMoreElements()) {
-        final String name = (String)props.nextElement();
-        final String value = (String)properties.get(name);
-        builder.append("<property name=\"");
-        builder.append(name);
-        builder.append("\" value=\"");
-        builder.append(value);
-        builder.append("\"/>");
-      }
-      final Map<String, String> envMap = System.getenv();
-      for (final String name : envMap.keySet()) {
-        final String value = envMap.get(name);
-        if (name.length() > 0) {
-          builder.append("<property name=\"");
-          builder.append(ourDefaultEnvPrefix);
-          builder.append(name);
-          builder.append("\" value=\"");
-          builder.append(value);
-          builder.append("\"/>");
-        }
-      }
-      if (externalProps != null) {
-        for (final String name : externalProps.keySet()) {
-          final String value = externalProps.get(name);
-          builder.append("<property name=\"");
-          builder.append(name);
-          builder.append("\" value=\"");
-          builder.append(value);
-          builder.append("\"/>");
-        }
-      }
-      final VirtualFile file = getAntFile().getVirtualFile();
-      String basedir = getBaseDir();
-      if (basedir == null) {
-        basedir = ".";
-      }
-      if (file != null) {
-        final VirtualFile dir = file.getParent();
-        if (dir != null) {
-          try {
-            basedir = new File(dir.getPath(), basedir).getCanonicalPath();
-          }
-          catch (IOException e) {
-            // ignore
-          }
-        }
-      }
-      if (basedir != null) {
-        builder.append("<property name=\"basedir\" value=\"");
-        builder.append(basedir);
-        builder.append("\"/>");
-      }
-      builder.append("<property name=\"ant.home\" value=\"\"/>");
-      builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
-      builder.append("<property name=\"ant.project.name\" value=\"");
-      final String name = getName();
-      builder.append((name == null) ? "" : name);
-      builder.append("\"/>");
-      builder.append("<property name=\"ant.java.version\" value=\"");
-      builder.append(SystemInfo.JAVA_VERSION);
-      builder.append("\"/>");
-      if (file != null) {
-        final String path = file.getPath();
-        builder.append("<property name=\"ant.file\" value=\"");
-        builder.append(path);
-        builder.append("\"/>");
-        if (name != null) {
-          builder.append("<property name=\"ant.file.");
-          builder.append(name);
-          builder.append("\" value=\"${ant.file}\"/>");
-        }
-      }
-      builder.append("</project>");
-      final XmlFile xmlFile = (XmlFile)getManager().getElementFactory()
-        .createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
-      final XmlDocument document = xmlFile.getDocument();
-      if (document == null) return;
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag == null) return;
-      final AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
-      myFakeProject = new AntProjectImpl(null, rootTag, myDefinition);
-      for (final XmlTag tag : rootTag.getSubTags()) {
-        final AntPropertyImpl property = new AntPropertyImpl(myFakeProject, tag, propertyDef) {
-          public PsiFile getContainingFile() {
-            return getSourceElement().getContainingFile();
-          }
-
-          public PsiElement getNavigationElement() {
-            if (AntFileImpl.BASEDIR_ATTR.equals(getName())) {
-              final XmlAttribute attr = AntProjectImpl.this.getSourceElement().getAttribute(AntFileImpl.BASEDIR_ATTR, null);
-              if (attr != null) return attr;
-            }
-            return super.getNavigationElement();
-          }
-        };
-        myPredefinedProps.add(property);
-        myPredefinedPropsArray = null;
-      }
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-    checkPropertiesMap();
-  }
-
-  private void checkPropertiesMap() {
-    if (myProperties == null) {
-      myProperties = new HashMap<String, AntProperty>(myPredefinedProps.size());
-      for (final AntProperty property : myPredefinedProps) {
-        setProperty(property.getName(), property);
-      }
-    }
-  }
-
-  private void checkEnvList() {
-    if (myEnvPrefixes == null) {
-      myEnvPrefixes = new ArrayList<String>();
-      myEnvPrefixes.add(ourDefaultEnvPrefix);
-    }
-  }
-
-  protected AntElement[] getChildrenInner() {
-    synchronized (PsiLock.LOCK) {
-      if (!myInGettingChildren) {
-        final AntElement[] children = super.getChildrenInner();
-        fixUndefinedElements(this, children);
-        return children;
-      }
-      return AntElement.EMPTY_ARRAY;
-    }
-  }
-
-  private static void fixUndefinedElements(final AntStructuredElement parent, final AntElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      final AntElement element = elements[i];
-      if (element instanceof AntStructuredElement) {
-        AntStructuredElement se = (AntStructuredElement)element;
-        if (se.getTypeDefinition() == null) {
-          se = (AntStructuredElement)AntElementFactory.createAntElement(parent, se.getSourceElement());
-          if (se != null) {
-            elements[i] = se;
-          }
-        }
-        if (se != null) {
-          fixUndefinedElements(se, (AntElement[])element.getChildren());
-        }
-      }
     }
   }
 

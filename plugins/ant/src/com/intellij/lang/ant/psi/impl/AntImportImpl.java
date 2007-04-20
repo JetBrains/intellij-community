@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntElementVisitor;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -12,12 +13,17 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AntImportImpl extends AntTaskImpl implements AntImport {
 
   public AntImportImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntImport(this);
   }
 
   public String toString() {

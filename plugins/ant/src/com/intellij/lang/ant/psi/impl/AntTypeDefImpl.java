@@ -113,16 +113,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
-      if (myNewDefinitions != null) {
-        final AntStructuredElement parent = getAntParent();
-        if (parent != null) {
-          for (final AntTypeDefinition def : myNewDefinitions) {
-            parent.unregisterCustomType(def);
-          }
-        }
-        myNewDefinitions = null;
-        myClassesLoaded = false;
-      }
+      clearClassesCache();
       final AntFile file = getAntFile();
       if (file != null) {
         file.clearCaches();
@@ -162,9 +153,28 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return myClassesLoaded || !isSupported();
   }
 
+  public void clearClassesCache() {
+    synchronized(PsiLock.LOCK) {
+      if (myNewDefinitions != null) {
+        final AntStructuredElement parent = getAntParent();
+        if (parent != null) {
+          for (final AntTypeDefinition def : myNewDefinitions) {
+            parent.unregisterCustomType(def);
+          }
+        }
+        myNewDefinitions = null;
+        myClassesLoaded = false;
+      }
+    }
+  }
+
   @Nullable
   public String getLocalizedError() {
     return myLocalizedError;
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntTypedef(this);
   }
 
   static void loadAntlibStream(@NotNull final InputStream antlibStream, final AntStructuredElement element, final String ns) {

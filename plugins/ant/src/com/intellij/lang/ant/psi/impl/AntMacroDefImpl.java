@@ -1,10 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntMacroDef;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -14,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,12 +27,20 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     invalidateMacroDefinition();
   }
 
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntMacroDef(this);
+  }
+
   public String toString() {
+    return createMacroClassName(getName());
+  }
+
+  public static String createMacroClassName(final String macroName) {
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append(ANT_MACRODEF_NAME);
       builder.append("[");
-      builder.append(getName());
+      builder.append(macroName);
       builder.append("]");
       return builder.toString();
     }
@@ -61,7 +67,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
           final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
           file.unregisterCustomType(nestedDef);
         }
-        final AntStructuredElement parent = getAntParent();
+        final AntStructuredElement parent = getAntProject();
         if (parent != null) {
           parent.unregisterCustomType(myMacroDefinition);
         }
@@ -81,7 +87,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     final AntFile file = getAntFile();
     if (file == null) return;
 
-    final String thisClassName = toString();
+    final String thisClassName = createMacroClassName(getName());
     myMacroDefinition = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(thisClassName);
     final Map<String, AntAttributeType> attributes =
       (myMacroDefinition == null) ? new HashMap<String, AntAttributeType>() : myMacroDefinition.getAttributesMap();
@@ -128,7 +134,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       myMacroDefinition.setIsTask(true);
       myMacroDefinition.setDefiningElement(this);
     }
-    final AntStructuredElement parent = getAntParent();
+    final AntStructuredElement parent = getAntProject();
     if (parent != null) {
       parent.registerCustomType(myMacroDefinition);
     }

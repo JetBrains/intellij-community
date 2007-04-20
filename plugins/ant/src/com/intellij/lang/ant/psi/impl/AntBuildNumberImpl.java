@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,9 +16,9 @@ public class AntBuildNumberImpl extends AntTaskImpl implements AntProperty {
 
   public AntBuildNumberImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    final AntProject project = getAntProject();
-    if (project != null) {
-      project.setProperty(BUILD_NUMBER_PROPERTY, this);
+    final AntFile antFile = getAntFile();
+    if (antFile != null) {
+      antFile.setProperty(BUILD_NUMBER_PROPERTY, this);
     }
   }
 

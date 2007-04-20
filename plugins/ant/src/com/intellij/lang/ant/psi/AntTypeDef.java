@@ -33,6 +33,8 @@ public interface AntTypeDef extends AntTask {
   AntTypeDefinition[] getDefinitions();
 
   boolean typesLoaded();
+  
+  void clearClassesCache();
 
   @Nullable
   String getLocalizedError();

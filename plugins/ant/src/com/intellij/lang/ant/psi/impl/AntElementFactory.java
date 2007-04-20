@@ -6,18 +6,18 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.*;
 import org.apache.tools.ant.taskdefs.optional.extension.JarLibResolveTask;
 import org.apache.tools.ant.taskdefs.optional.perforce.P4Counter;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -72,13 +72,35 @@ public class AntElementFactory {
         typeDef = file.getBaseTypeDefinition(className);
       }
     }
-    if (typeDef == null && file != null) {
-      for (AntTypeDefinition def : file.getBaseTypeDefinitions()) {
-        if (id.equals(def.getTypeId())) {
-          typeDef = def;
-          break;
+
+    if (file != null) {
+      // try macrodef
+      if (typeDef == null) {
+        typeDef = file.getBaseTypeDefinition(AntMacroDefImpl.createMacroClassName(typeName));
+      }
+
+      // try preetDef
+      if (typeDef == null) {
+        typeDef = file.getBaseTypeDefinition(AntPresetDefImpl.createPresetDefClassName(typeName));
+      }
+
+      if (typeDef == null) {
+        final AntProject project = file.getAntProject();
+        final AntTypeDefinition projectDef = project != null? project.getTypeDefinition() : null;
+        for (AntTypeDefinition def : file.getBaseTypeDefinitions()) {
+          if (id.equals(def.getTypeId())) {
+            if (projectDef != null) { // perform additional check if project exists 
+              final boolean isRegisteredWithinProject = def.getClassName().equals(projectDef.getNestedClassName(def.getTypeId()));
+              if (!isRegisteredWithinProject) {
+                continue;
+              }
+            }
+            typeDef = def;
+            break;
+          }
         }
       }
+      
     }
     boolean importedType = false;
     if (typeDef == null) {

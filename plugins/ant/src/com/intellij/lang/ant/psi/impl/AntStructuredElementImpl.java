@@ -6,7 +6,6 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -48,7 +47,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement, @NonNls final String nameElementAttribute) {
+  private AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
     myNameElementAttribute = AntStringInterner.intern(nameElementAttribute);
     getIdElement();
@@ -238,6 +237,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @Nullable
   public String computeAttributeValue(final String value) {
+    if (value == null || value.indexOf('$') < 0) {
+      return value; // optimization
+    }
     synchronized (PsiLock.LOCK) {
       if (value != null) {
         if (myComputingAttrValue == null || !myComputingAttrValue.contains(value)) {
@@ -267,9 +269,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
               StringSetSpinAllocator.dispose(_strSet);
             }
           }
-        }
-        else if (value.indexOf('$') < 0){
-          return value; // heuristics
         }
       }
       return null;
@@ -341,9 +340,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
               final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
               if (antElement != null) {
                 children.add(antElement);
+                /*
                 if (antElement instanceof AntStructuredElement) {
                   antElement.getChildren();
                 }
+                */
               }
             }
           }
@@ -356,6 +357,34 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       }
     }
     return AntElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public AntElement[] getChildren() {
+    synchronized (PsiLock.LOCK) {
+      return fixUndefinedElements(super.getChildren());
+    }
+  }
+
+  private volatile AntElement[] myLastProcessedChildren;
+  private AntElement[] fixUndefinedElements(final AntElement[] elements) {
+    if (myLastProcessedChildren == elements) {
+      return elements;
+    }
+    for (int i = 0; i < elements.length; i++) {
+      final AntElement element = elements[i];
+      if (element instanceof AntStructuredElement) {
+        AntStructuredElement se = (AntStructuredElement)element;
+        if (se.getTypeDefinition() == null) {
+          se = (AntStructuredElement)AntElementFactory.createAntElement(this, se.getSourceElement());
+          if (se != null && se.getTypeDefinition() != null) {
+            elements[i] = se;
+          }
+        }
+      }
+    }
+    myLastProcessedChildren = elements;
+    return elements;
   }
 
   @NotNull
@@ -416,6 +445,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private String computeAttributeValue(String value, final Set<PsiElement> elementStack) {
     elementStack.add(this);
     int startProp = 0;
+    final AntFile antFile = getAntFile();
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
       if (startProp > 0 && value.charAt(startProp - 1) == '$') {
         // the '$' is escaped
@@ -428,20 +458,16 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         continue;
       }
       final String prop = value.substring(startProp + 2, endProp);
-      final PsiElement propElement = resolveProperty(this, prop);
+      final AntProperty propElement = antFile.getProperty(prop);
       if (elementStack.contains(propElement)) {
         return value;
       }
       String resolvedValue = null;
-      if (propElement instanceof AntProperty) {
-        final AntProperty antProperty = (AntProperty)propElement;
-        resolvedValue = antProperty.getValue(prop);
+      if (propElement != null) {
+        resolvedValue = propElement.getValue(prop);
         if (resolvedValue != null) {
-          resolvedValue = ((AntStructuredElementImpl)antProperty).computeAttributeValue(resolvedValue, elementStack);
+          resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack);
         }
-      }
-      else if (propElement instanceof Property) {
-        resolvedValue = ((Property)propElement).getValue();
       }
       if (resolvedValue == null) {
         startProp += 2;

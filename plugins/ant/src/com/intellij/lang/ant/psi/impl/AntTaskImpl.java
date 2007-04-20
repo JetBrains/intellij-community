@@ -2,12 +2,14 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntElementVisitor;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
@@ -21,6 +23,10 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
                      final AntTypeDefinition definition,
                      @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntTask(this);
   }
 
   public String toString() {

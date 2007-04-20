@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
@@ -13,6 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -32,7 +34,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     ourFileRefAttributes.put("loadfile", "srcfile");
   }
 
-  @NonNls private AntElement myPropHolder;
   private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
@@ -40,45 +41,14 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
                          final AntTypeDefinition definition,
                          @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);
-    final AntProject project = getAntProject();
-    myPropHolder = parent;
-    if (parent instanceof AntTarget || parent instanceof AntCall) {
-      myPropHolder = project;
-    }
-    final String name = getName();
-    if (name != null) {
-      myPropHolder.setProperty(name, this);
-    }
-    else {
-      final String environment = getEnvironment();
-      if (environment != null) {
-        project.addEnvironmentPropertyPrefix(environment);
-      }
-      else {
-        if (isTstamp()) {
-          String prefix = getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
-          if (prefix == null) {
-            myPropHolder.setProperty("DSTAMP", this);
-            myPropHolder.setProperty("TSTAMP", this);
-            myPropHolder.setProperty("TODAY", this);
-          }
-          else {
-            prefix += '.';
-            myPropHolder.setProperty(prefix + "DSTAMP", this);
-            myPropHolder.setProperty(prefix + "TSTAMP", this);
-            myPropHolder.setProperty(prefix + "TODAY", this);
-          }
-          final XmlAttributeValue value = getTstampPropertyAttributeValue();
-          if (value != null && value.getValue() != null) {
-            myPropHolder.setProperty(value.getValue(), this);
-          }
-        }
-      }
-    }
   }
 
   public AntPropertyImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
+  }
+
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntProperty(this);
   }
 
   public String toString() {
@@ -136,7 +106,17 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       final XmlTag se = getSourceElement();
       final String tagName = se.getName();
       if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
-        return getPropertyValue();
+        String value = getPropertyValue();
+        if (value == null) {
+          final PropertiesFile propertiesFile = getPropertiesFile();
+          if (propertiesFile != null) {
+            final Property fileProperty = propertiesFile.findPropertyByKey(propName);
+            if (fileProperty != null) {
+              value = fileProperty.getValue();
+            }
+          }
+        }
+        return value;
       }
       else if ("dirname".equals(tagName)) {
         return getDirnameValue();
@@ -187,7 +167,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
     final String name = getName();
     if (name != null) {
-      if (getAntProject().isEnvironmentProperty(name)) {
+      if (getAntFile().isEnvironmentProperty(name)) {
         return getEnvironmentNames(name);
       }
       return new String[]{name};
@@ -198,7 +178,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
-      myPropHolder.clearCaches();
+      final AntFile antFile = getAntFile();
+      if (antFile != null) {
+        antFile.clearCaches();
+      }
       myPropertiesFile = null;
     }
   }
@@ -322,7 +305,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   @Nullable
-  private XmlAttributeValue getTstampPropertyAttributeValue() {
+  public XmlAttributeValue getTstampPropertyAttributeValue() {
     if (isTstamp()) {
       final XmlTag formatTag = getSourceElement().findFirstSubTag(AntFileImpl.FORMAT_TAG);
       if (formatTag != null) {
@@ -338,7 +321,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return null;
   }
 
-  private boolean isTstamp() {
+  public boolean isTstamp() {
     return TSTAMP_TAG.equals(getSourceElement().getName());
   }
 
@@ -371,8 +354,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   private String[] getEnvironmentNames(final String name) {
     @NonNls final Set<String> strings = StringSetSpinAllocator.alloc();
     try {
-      final String sourceName = name.substring(AntProjectImpl.ourDefaultEnvPrefix.length());
-      for (final String prefix : getAntProject().getEnvironmentPrefixes()) {
+      final String sourceName = name.substring(AntFileImpl.DEFAULT_ENVIRONMENT_PREFIX.length());
+      for (final String prefix : getAntFile().getEnvironmentPrefixes()) {
         strings.add(prefix + sourceName);
       }
       return strings.toArray(new String[strings.size()]);
