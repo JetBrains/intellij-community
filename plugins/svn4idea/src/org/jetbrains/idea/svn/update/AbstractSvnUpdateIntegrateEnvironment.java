@@ -15,35 +15,42 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.actions.SvnMergeProvider;
+import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-import java.util.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
@@ -78,7 +85,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"), SvnBundle.message("messate.text.update.error"));
     }
 
-    final Collection<String> conflictedFiles = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+    final Collection<String> conflictedFiles = conflictedGroup.getFiles();
     return new UpdateSessionAdapter(exceptions, false) {
       public void onRefreshFilesCompleted() {
         for(FilePath contentRoot: contentRoots) {
@@ -110,8 +118,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
             FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
             for(VirtualFile mergedFile: mergedFiles) {
               String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-              conflictedFiles.remove(path);
-              mergedGroup.add(path);
+              VcsRevisionNumber revision = conflictedGroup.getRevision(myVcs.getProject(), path); 
+              conflictedGroup.remove(path);
+              mergedGroup.add(path, myVcs, revision);
             }
           }
         }
@@ -160,9 +169,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           if (myUpdatedFiles.getGroupById(SvnStatusEnvironment.REPLACED_ID) == null) {
             myUpdatedFiles.registerGroup(SvnStatusEnvironment.createFileGroup(SvnBundle.message("status.group.name.replaced"), SvnStatusEnvironment.REPLACED_ID));
           }
-          myUpdatedFiles.getGroupById(SvnStatusEnvironment.REPLACED_ID).add(path);
+          addFileToGroup(SvnStatusEnvironment.REPLACED_ID, event);
         } else {
-          myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
+          addFileToGroup(FileGroup.CREATED_ID, event);
         }
       }
       else if (event.getAction() == SVNEventAction.UPDATE_NONE) {
@@ -171,27 +180,27 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       }
       else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
         text2 = SvnBundle.message("progress.text2.deleted", displayPath);
-        myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);
+        addFileToGroup(FileGroup.REMOVED_FROM_REPOSITORY_ID, event);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
         if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-          myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
+          addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
           text2 = SvnBundle.message("progress.text2.conflicted", displayPath);
         }
         else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
           text2 = SvnBundle.message("progres.text2.merged", displayPath);
-          myUpdatedFiles.getGroupById(FileGroup.MERGED_ID).add(path);
+          addFileToGroup(FileGroup.MERGED_ID, event);
         }
         else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
           text2 = SvnBundle.message("progres.text2.updated", displayPath);
-          myUpdatedFiles.getGroupById(FileGroup.UPDATED_ID).add(path);
+          addFileToGroup(FileGroup.UPDATED_ID, event);
         }
         else if (event.getContentsStatus() == SVNStatusType.UNCHANGED && event.getPropertiesStatus() == SVNStatusType.UNCHANGED) {
           text2 = SvnBundle.message("progres.text2.updated", displayPath);
         }
         else {
           text2 = "";
-          myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
+          addFileToGroup(FileGroup.UNKNOWN_ID, event);
         }
       }
       else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
@@ -201,12 +210,12 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                      SvnBundle.message("status.group.name.externals"),
                                                      false, SvnStatusEnvironment.EXTERNAL_ID, true));
         }
-        myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID).add(path);
+        addFileToGroup(SvnStatusEnvironment.EXTERNAL_ID, event);
         text = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
       }
       else if (event.getAction() == SVNEventAction.RESTORE) {
         text2 = SvnBundle.message("progress.text2.restored.file", displayPath);
-        myUpdatedFiles.getGroupById(FileGroup.RESTORED_ID).add(path);
+        addFileToGroup(FileGroup.RESTORED_ID, event);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
         myExternalsCount--;
@@ -223,7 +232,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("update.group.name.skipped"),
                                                      SvnBundle.message("update.group.name.skipped"), false, SKIP_ID, true));
         }
-        myUpdatedFiles.getGroupById(SKIP_ID).add(path);
+        addFileToGroup(SKIP_ID, event);
       }
 
       if (myProgressIndicator != null) {
@@ -234,6 +243,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           myProgressIndicator.setText2(text2);
         }
       }
+    }
+
+    private void addFileToGroup(final String id, final SVNEvent event) {
+      myUpdatedFiles.getGroupById(id).add(event.getFile().getAbsolutePath());
     }
 
     public void checkCancelled() throws SVNCancelException {

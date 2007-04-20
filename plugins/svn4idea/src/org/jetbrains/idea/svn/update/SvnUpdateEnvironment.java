@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
@@ -95,6 +96,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       } else {
         rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
       }
+
+      myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));
 
       return rev;
     }
