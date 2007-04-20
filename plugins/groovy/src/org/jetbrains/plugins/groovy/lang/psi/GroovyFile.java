@@ -50,8 +50,11 @@ public class GroovyFile extends PsiFileBase {
   @NotNull
   public String getPackageName() {
     GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
-    assert packageDef != null;
-    return packageDef.getPackageName();
+    if (packageDef != null) {
+      return packageDef.getPackageName();
+    }
+
+    return "";
   }
 }
 

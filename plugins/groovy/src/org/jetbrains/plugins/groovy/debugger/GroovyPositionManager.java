@@ -20,32 +20,39 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.Query;
+import com.intellij.util.Processor;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager;
+import org.jetbrains.plugins.groovy.GroovyLoader;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
@@ -91,8 +98,16 @@ public class GroovyPositionManager implements PositionManager {
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
     GrTypeDefinition typeDefinition = findTypeDefinition(position);
-    if (typeDefinition == null) return null;
-    String qName = typeDefinition.getQualifiedName();
+    String qName = null;
+    if (typeDefinition == null) {
+      PsiFile file = position.getFile();
+      if (file instanceof GroovyFile) {
+        qName = getScriptFQName((GroovyFile) file);
+      }
+      if (qName == null) return null;
+    } else {
+      qName = typeDefinition.getQualifiedName();
+    }
 
     String waitPrepareFor;
     ClassPrepareRequestor waitRequestor;
@@ -134,13 +149,12 @@ public class GroovyPositionManager implements PositionManager {
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
     if(psiFile == null ) return null;
 
-    int lineNumber  = calcLineIndex(psiFile, location);
+    int lineNumber  = calcLineIndex(location);
     if (lineNumber < 0) return null;
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
-  private int calcLineIndex(PsiFile psiFile,
-                            Location location) {
+  private int calcLineIndex(Location location) {
     LOG.assertTrue(myDebugProcess != null);
     if (location == null) return -1;
 
@@ -159,7 +173,7 @@ public class GroovyPositionManager implements PositionManager {
     final ReferenceType refType = location.declaringType();
     if (refType == null) return null;
 
-    final String originalQName = refType.name();
+    final String originalQName = refType.name().replace('/', '.');
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
@@ -168,12 +182,40 @@ public class GroovyPositionManager implements PositionManager {
     for (Module module : modules) {
       GroovyModuleCachesManager manager = GroovyModuleCachesManager.getInstance(module);
       GrTypeDefinition typeDefinition = manager.getModuleFilesCache().getClassByName(qName);
-      if (typeDefinition != null) {
+      if (typeDefinition != null && searchScope.contains(typeDefinition.getContainingFile().getVirtualFile())) {
         return typeDefinition.getContainingFile();
       }
     }
 
-    return null;
+    DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
+    int dotIndex = qName.lastIndexOf(".");
+    String packageName = dotIndex > 0 ? qName.substring(0, dotIndex) : "";
+    Query<VirtualFile> query = directoryIndex.getDirectoriesByPackageName(packageName, true);
+    String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
+    final Set<String> fileNames = new HashSet<String>();
+    for (final String extention : GroovyLoader.GROOVY_EXTENTIONS) {
+      fileNames.add(fileNameWithoutExtension + "." + extention);
+    }
+
+    final Ref<PsiFile> result = new Ref<PsiFile>();
+    query.forEach(new Processor<VirtualFile>() {
+      public boolean process(VirtualFile vDir) {
+        for (final String fileName : fileNames) {
+          VirtualFile vFile = vDir.findChild(fileName);
+          if (vFile != null) {
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+            if (psiFile instanceof GroovyFile) {
+              result.set(psiFile);
+              return false;
+            }
+          }
+        }
+
+        return true;
+      }
+    });
+
+    return result.get();
   }
 
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
@@ -181,9 +223,18 @@ public class GroovyPositionManager implements PositionManager {
       public List<ReferenceType> compute() {
         GrTypeDefinition typeDefinition = findTypeDefinition(classPosition);
 
-        if(typeDefinition == null) return Collections.emptyList();
+        String qName;
+        if(typeDefinition == null) {
+          PsiFile file = classPosition.getFile();
+          if (file instanceof GroovyFile) {
+            qName = getScriptFQName((GroovyFile) file);
+          } else {
+            return Collections.emptyList();
+          }
+        } else {
+          qName = typeDefinition.getQualifiedName();
+        }
 
-        String qName = typeDefinition.getQualifiedName();
         if(qName == null) {
           final GrTypeDefinition toplevel = getToplevelTypeDefinition(typeDefinition);
           if(toplevel == null) return Collections.emptyList();
@@ -206,6 +257,16 @@ public class GroovyPositionManager implements PositionManager {
         }
       }
     });
+  }
+
+  private String getScriptFQName(GroovyFile groovyFile) {
+    String qName;
+    VirtualFile vFile = groovyFile.getVirtualFile();
+    assert vFile != null;
+    String packageName = groovyFile.getPackageName();
+    String fileName = vFile.getNameWithoutExtension();
+    qName = packageName.length() > 0 ? packageName + "." + fileName : fileName;
+    return qName;
   }
 
   @Nullable
