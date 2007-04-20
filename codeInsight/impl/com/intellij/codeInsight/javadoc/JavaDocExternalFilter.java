@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,7 +73,7 @@ public class JavaDocExternalFilter {
 
     protected abstract String convertReference(String root, String href);
 
-    public String refFilter(String root, String read) {
+    public String refFilter(final String root, String read) {
       String toMatch = read.toUpperCase();
       StringBuffer ready = new StringBuffer();
       int prev = 0;
@@ -80,12 +81,17 @@ public class JavaDocExternalFilter {
 
       while (matcher.find()) {
         String before = read.substring(prev, matcher.start(1) - 1);     // Before reference
-        String href = read.substring(matcher.start(1), matcher.end(1)); // The URL
-
+        final String href = read.substring(matcher.start(1), matcher.end(1)); // The URL
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
-        ready.append(convertReference(root, href));
+        ready.append(ApplicationManager.getApplication().runReadAction(
+            new Computable<String>() {
+              public String compute() {
+                return convertReference(root, href);
+              }
+            }
+        ));
         ready.append("\"");
       }
 

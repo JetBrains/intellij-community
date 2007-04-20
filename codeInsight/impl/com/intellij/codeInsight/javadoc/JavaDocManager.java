@@ -2,11 +2,11 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -329,18 +329,14 @@ public class JavaDocManager implements ProjectComponent {
         LookupItem item = activeLookup.getCurrentItem();
         if (item == null) return null;
 
-        if (file!=null) {
-          final DocumentationProvider documentationProvider = getProviderFromElement(file);
+        final DocumentationProvider documentationProvider = getProviderFromElement(file);
 
-          if (documentationProvider!=null) {
-            element = documentationProvider.getDocumentationElementForLookupItem(
-              file.getManager(),
-              item.getObject(),
-              ref != null ? ref.getElement():contextElement
-            );
-          }
-        } else {
-          return null;
+        if (documentationProvider!=null) {
+          element = documentationProvider.getDocumentationElementForLookupItem(
+            file.getManager(),
+            item.getObject(),
+            ref != null ? ref.getElement():contextElement
+          );
         }
       }
     }
@@ -561,57 +557,63 @@ public class JavaDocManager implements ProjectComponent {
     });
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final String text;
+        final String text;
+        final Exception[] ex = new Exception[1];
+        text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Nullable
+          public String compute() {
             try {
-              text = provider.getJavaDoc();
+              return provider.getJavaDoc();
             }
-            catch (final Exception e) {
-              SwingUtilities.invokeLater(new Runnable(){
-                public void run() {
-                  component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", e.getLocalizedMessage()), true);
-                }
-              });
+            catch (Exception e) {
+              ex[0] = e;
+            }
+            return null;
+          }
+        });
+        if (ex[0] != null) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage()), true);
+            }
+          });
+          return;
+        }
+
+        final PsiElement element = provider.getElement();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+
+            if (text == null) {
+              component.setText(CodeInsightBundle.message("no.documentation.found"), true);
+            }
+            else if (text.length() == 0) {
+              component.setText(component.getText(), true);
+            }
+            else {
+              component.setData(element, text);
+            }
+
+            final JBPopupImpl hint = (JBPopupImpl)getDocInfoHint();
+            if (hint == null) {
               return;
             }
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                if (text == null) {
-                  component.setText(CodeInsightBundle.message("no.documentation.found"), true);
-                }
-                else if (text.length() == 0) {
-                  component.setText(component.getText(), true);
-                }
-                else {
-                  component.setData(provider.getElement(), text);
-                }
+            final String dimensionServiceKey = hint.getDimensionServiceKey();
+            if (dimensionServiceKey == null) { // created from lookup, size is taken care of
+              return;
+            }
 
-                final JBPopupImpl hint = (JBPopupImpl)getDocInfoHint();
-                if (hint==null) {
-                  return;
-                }
-                final String dimensionServiceKey = hint.getDimensionServiceKey();
-                if (dimensionServiceKey==null) { // created from lookup, size is taken care of
-                  return;
-                }
-
-                Dimension dimension = component.getPreferredSize();
-                final Dimension storedSize = DimensionService.getInstance().getSize(dimensionServiceKey, getProject(provider.getElement()));
-                if (storedSize != null) {
-                  dimension = storedSize;
-                }
-                final Window window = SwingUtilities.getWindowAncestor(component);
-                if (window != null) {
-                  window.setBounds(window.getX(),
-                                   window.getY(),
-                                   dimension.width,
-                                   dimension.height);
-                  window.validate();
-                  window.repaint();
-                }
-              }
-            });
+            Dimension dimension = component.getPreferredSize();
+            final Dimension storedSize = DimensionService.getInstance().getSize(dimensionServiceKey, getProject(element));
+            if (storedSize != null) {
+              dimension = storedSize;
+            }
+            final Window window = SwingUtilities.getWindowAncestor(component);
+            if (window != null) {
+              window.setBounds(window.getX(), window.getY(), dimension.width, dimension.height);
+              window.validate();
+              window.repaint();
+            }
           }
         });
       }
