@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.Reversed;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -52,7 +53,7 @@ public class ChangeSet extends Change {
     return myTimestamp;
   }
 
-  // todo test support
+  @Override
   public List<Change> getChanges() {
     return myChanges;
   }
@@ -66,10 +67,7 @@ public class ChangeSet extends Change {
 
   @Override
   public void revertOn(RootEntry e) {
-    for (int i = myChanges.size() - 1; i >= 0; i--) {
-      Change c = myChanges.get(i);
-      c.revertOn(e);
-    }
+    for (Change c : Reversed.list(myChanges)) c.revertOn(e);
   }
 
   @Override

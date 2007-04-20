@@ -52,4 +52,9 @@ public class MoveChange extends StructuralChange {
   public IdPath[] getAffectedIdPaths() {
     return new IdPath[]{myAffectedIdPath, mySecondAffectedIdPath};
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws Exception {
+    v.visit(this);
+  }
 }

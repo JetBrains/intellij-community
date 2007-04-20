@@ -80,4 +80,9 @@ public class DeleteChange extends StructuralChange {
       result.add(e.getContent());
     }
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws Exception {
+    v.visit(this);
+  }
 }

@@ -38,4 +38,9 @@ public class CreateFileChange extends StructuralChange {
   public boolean isCreationalFor(Entry e) {
     return e.getId() == myAffectedIdPath.getId();
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws Exception {
+    v.visit(this);
+  }
 }

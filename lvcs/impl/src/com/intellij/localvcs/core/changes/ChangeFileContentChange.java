@@ -64,4 +64,9 @@ public class ChangeFileContentChange extends StructuralChange {
   public List<Content> getContentsToPurge() {
     return Collections.singletonList(myOldContent);
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws Exception {
+    v.visit(this);
+  }
 }

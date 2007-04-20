@@ -4,6 +4,8 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.ThreadSafeLocalVcs;
+import com.intellij.localvcs.core.changes.Change;
+import com.intellij.localvcs.core.changes.ChangeVisitor;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -62,7 +64,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   protected void initService() {
-    myService = new LocalVcsService(myVcs, new IdeaGateway(myProject), myStartupManager, myRootManager, myFileManager, myCommandProcessor);
+    myService = new LocalVcsService(myVcs, createIdeaGateway(), myStartupManager, myRootManager, myFileManager, myCommandProcessor);
   }
 
   public File getStorageDir() {
@@ -134,11 +136,34 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     myVcs.putLabel(path, name);
   }
 
+  @Override
+  protected Checkpoint putCheckpoint() {
+    return new Checkpoint() {
+      Change myLastChange = myVcs.getLastChange();
+
+      public void revertToPreviousState() {
+        try {
+          ChangeVisitor v = new ChangeRevertionVisitor(myVcs, createIdeaGateway());
+          for (Change c : myVcs.getChangesAfter(myLastChange)) {
+            c.accept(v);
+          }
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+  }
+
   @NonNls
   @NotNull
   public String getComponentName() {
     // todo dont forget to change name
     return "NewLocalVcs";
+  }
+
+  private IdeaGateway createIdeaGateway() {
+    return new IdeaGateway(myProject);
   }
 
   public ILocalVcs getLocalVcs() {

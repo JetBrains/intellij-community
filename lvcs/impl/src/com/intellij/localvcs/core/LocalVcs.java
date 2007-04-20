@@ -20,6 +20,7 @@ public class LocalVcs implements ILocalVcs {
   private boolean wasSaveRequestedDuringChangeSet = false;
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
+  private Change myLastChange;
 
   public LocalVcs(Storage s) {
     myStorage = s;
@@ -145,6 +146,7 @@ public class LocalVcs implements ILocalVcs {
   private void applyChange(Change c) {
     c.applyTo(myRoot);
     myPendingChanges.add(c);
+    myLastChange = c;
 
     // todo forbid the ability of making changes outside of changeset
     if (!isInChangeSet()) registerChangeSet(null);
@@ -168,6 +170,22 @@ public class LocalVcs implements ILocalVcs {
 
   protected Boolean isClean() {
     return myPendingChanges.isEmpty();
+  }
+
+  public Change getLastChange() {
+    return myLastChange;
+  }
+
+  public List<Change> getChangesAfter(Change target) {
+    List<Change> result = new ArrayList<Change>();
+
+    for (Change c : Reversed.list(myPendingChanges)) {
+      result.add(c);
+      if (c == target) return result;
+    }
+    result.addAll(myChangeList.getChangesAfter(target));
+
+    return result;
   }
 
   private long getCurrentTimestamp() {

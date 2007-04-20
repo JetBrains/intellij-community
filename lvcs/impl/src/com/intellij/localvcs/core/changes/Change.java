@@ -6,6 +6,7 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class Change {
@@ -17,6 +18,10 @@ public abstract class Change {
 
   public long getTimestamp() {
     throw new UnsupportedOperationException();
+  }
+
+  public List<Change> getChanges() {
+    return Collections.singletonList(this);
   }
 
   public abstract void applyTo(RootEntry r);
@@ -31,5 +36,8 @@ public abstract class Change {
 
   public boolean isLabel() {
     return false;
+  }
+
+  public void accept(ChangeVisitor v) throws Exception {
   }
 }

@@ -49,4 +49,9 @@ public class RenameChange extends StructuralChange {
   public void revertOn(RootEntry root) {
     root.rename(myAffectedIdPath, myOldName);
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws Exception {
+    v.visit(this);
+  }
 }

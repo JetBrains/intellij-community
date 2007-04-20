@@ -21,6 +21,10 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     getInstance(p).putLabel(path, name);
   }
 
+  public static Checkpoint putCheckpoint(Project p) {
+    return getInstance(p).putCheckpoint();
+  }
+
   public static boolean isEnabled(Project p) {
     return getInstance(p).isEnabled();
   }
@@ -30,6 +34,8 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   protected abstract void putLabel(String name);
 
   protected abstract void putLabel(String path, String name);
+
+  protected abstract Checkpoint putCheckpoint();
 
   protected abstract boolean isEnabled();
 }

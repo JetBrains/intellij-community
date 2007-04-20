@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.Reversed;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -38,13 +39,25 @@ public class ChangeList {
     return result;
   }
 
+  public List<Change> getChangesAfter(Change target) {
+    List<Change> result = new ArrayList<Change>();
+
+    for (Change changeSet : Reversed.list(myChanges)) {
+      for (Change c : Reversed.list(changeSet.getChanges())) {
+        result.add(c);
+        if (c == target) return result;
+      }
+    }
+
+    return result;
+  }
+
   public List<Change> getChangesFor(RootEntry r, String path) {
     RootEntry rootCopy = r.copy();
     Entry e = rootCopy.getEntry(path);
 
     List<Change> result = new ArrayList<Change>();
-    for (int i = myChanges.size() - 1; i >= 0; i--) {
-      Change c = myChanges.get(i);
+    for (Change c : Reversed.list(myChanges)) {
       if (c.affects(e)) result.add(c);
       if (c.isCreationalFor(e)) break;
       c.revertOn(rootCopy);
@@ -58,16 +71,12 @@ public class ChangeList {
   }
 
   public void revertUpTo(RootEntry r, Change target, boolean revertTargetChange) {
-    for (int i = myChanges.size() - 1; i >= 0; i--) {
-      Change c = myChanges.get(i);
-
+    for (Change c : Reversed.list(myChanges)) {
       if (!revertTargetChange && c == target) return;
       c.revertOn(r);
-
       if (c == target) return;
     }
   }
-
 
   public List<Content> purgeUpTo(long timestamp) {
     List<Change> newChanges = new ArrayList<Change>();
