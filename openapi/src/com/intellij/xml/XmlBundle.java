@@ -21,12 +21,12 @@ import java.util.ResourceBundle;
 public class XmlBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls protected static final String PATH_TO_BUNDLE = "messages.XmlBundle";
+  @NonNls public static final String PATH_TO_BUNDLE = "messages.XmlBundle";
 
   private XmlBundle() {
   }
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.XmlBundle")String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

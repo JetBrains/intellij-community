@@ -1,11 +1,19 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiBundle;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -27,6 +35,7 @@ import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -34,6 +43,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,7 +155,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
 
-  static class TypeOrElementOrAttributeReference implements PsiReference {
+  static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
     private PsiElement myElement;
     private TextRange myRange;
     @NonNls private static final String BASE_XML_NS_ATTR_NAME = "base";
@@ -157,6 +167,39 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
     @NonNls private static final String REF_ATTR_NAME = "ref";
     private static final String TARGET_NAMESPACE = "targetNamespace";
+
+    public void registerQuickfix(HighlightInfo info, TypeOrElementOrAttributeReference reference) {
+      if (myType == ReferenceType.TypeReference) {
+        QuickFixAction.registerQuickFixAction(
+          info, new CreateXmlElementIntentionAction("xml.schema.create.complex.type.intention.name",COMPLEX_TYPE_TAG_NAME,reference)
+        );
+        QuickFixAction.registerQuickFixAction(
+          info, new CreateXmlElementIntentionAction("xml.schema.create.simple.type.intention.name",SIMPLE_TYPE_TAG_NAME,reference)
+        );
+      } else if (myType != null) {
+        @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String key = null;
+        @NonNls String declarationTagName = null;
+
+        if (myType == ReferenceType.ElementReference) {
+          declarationTagName = ELEMENT_TAG_NAME;
+          key = "xml.schema.create.element.intention.name";
+        } else if (myType == ReferenceType.AttributeReference) {
+          declarationTagName = ATTRIBUTE_TAG_NAME;
+          key = "xml.schema.create.attribute.intention.name";
+        } else if (myType == ReferenceType.AttributeGroupReference) {
+          declarationTagName = ATTRIBUTE_GROUP_TAG_NAME;
+          key = "xml.schema.create.attribute.group.intention.name";
+        } else if (myType == ReferenceType.GroupReference) {
+          declarationTagName = GROUP_TAG_NAME;
+          key = "xml.schema.create.group.intention.name";
+        }
+
+        assert key != null && declarationTagName != null;
+        QuickFixAction.registerQuickFixAction(
+          info, new CreateXmlElementIntentionAction(key, declarationTagName, reference)
+        );
+      }
+    }
 
     enum ReferenceType {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
@@ -471,6 +514,89 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       static MyResolver INSTANCE = new MyResolver(); 
       public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
         return ((TypeOrElementOrAttributeReference)ref).resolveInner();
+      }
+    }
+
+    private static class CreateXmlElementIntentionAction implements IntentionAction {
+      private final String myMessageKey;
+      protected final TypeOrElementOrAttributeReference myRef;
+      private boolean myIsAvailableEvaluated;
+      private XmlFile myTargetFile;
+      private final String myDeclarationTagName;
+
+      CreateXmlElementIntentionAction(
+        @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
+        @NonNls @NotNull String declarationTagName,
+        TypeOrElementOrAttributeReference ref) {
+
+        myMessageKey = messageKey;
+        myRef = ref;
+        myDeclarationTagName = declarationTagName;
+      }
+
+      @NotNull
+      public String getText() {
+        return XmlBundle.message(myMessageKey,XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()));
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return XmlBundle.message("xml.create.xml.declaration.intention.type");
+      }
+
+      public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+        if (!myIsAvailableEvaluated) {
+          final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
+          if (tag != null) {
+            final XmlNSDescriptorImpl descriptor = myRef.getDescriptor(tag, myRef.getCanonicalText());
+
+            if (descriptor != null &&
+                descriptor.getDescriptorFile() != null &&
+                descriptor.getDescriptorFile().isWritable()
+               ) {
+              myTargetFile = descriptor.getDescriptorFile();
+            }
+          }
+          myIsAvailableEvaluated = true;
+        }
+        return myTargetFile != null;
+      }
+
+      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+        if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
+        final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
+
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(
+          project,
+          myTargetFile.getVirtualFile(),
+          rootTag.getValue().getTextRange().getEndOffset()
+        );
+        Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+        TemplateManager manager = TemplateManager.getInstance(project);
+        final Template template = manager.createTemplate("", "");
+
+        addTextTo(template, rootTag);
+
+        manager.startTemplate(targetEditor, template);
+      }
+
+      protected void addTextTo(Template template, XmlTag rootTag) {
+        String schemaPrefix = rootTag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_URI);
+        if (schemaPrefix.length() > 0) schemaPrefix += ":";
+
+        template.addTextSegment(
+          "<" + schemaPrefix + myDeclarationTagName + " name=\"" + XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()) + "\">"
+        );
+        template.addEndVariable();
+        template.addTextSegment(
+          "</" + schemaPrefix + myDeclarationTagName + ">\n"
+        );
+        template.setToReformat(true);
+      }
+
+      public boolean startInWriteAction() {
+        return true;
       }
     }
   }
