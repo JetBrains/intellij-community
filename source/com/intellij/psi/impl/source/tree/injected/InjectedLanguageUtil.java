@@ -167,7 +167,7 @@ public class InjectedLanguageUtil {
 
       TextRange rangeInHost;
       if (textEscaper == null) {
-        rangeInHost = textRange;
+        rangeInHost = textRange.shiftRight(rangeInsideHost.getStartOffset()-documentRange.getPrefix().length());
       }
       else {
         int startInHost = textEscaper.getOffsetInHost(editable.getStartOffset() - documentRange.getPrefix().length(), rangeInsideHost);

@@ -125,8 +125,8 @@ public class ExpectedHighlightingData {
         startOffset = m.start(1);
         expectedHighlightingSet = highlightingTypes.get(marker);
       }
-
-      @NonNls String descr = m.group(3);
+      int pos=3;
+      @NonNls String descr = m.group(pos++);
       if (descr == null) {
         // no descr means any string by default
         descr = "*";
@@ -136,14 +136,14 @@ public class ExpectedHighlightingData {
         descr = null;
       }
 
-      String typeString = m.group(4);
-      String foregroundColor = m.group(5);
-      String backgroundColor = m.group(6);
-      String effectColor = m.group(7);
-      String effectType = m.group(8);
-      String fontType = m.group(9);
-      String closeTagMarker = m.group(10);
-      String rest = m.group(11);
+      String typeString = m.group(pos++);
+      String foregroundColor = m.group(pos++);
+      String backgroundColor = m.group(pos++);
+      String effectColor = m.group(pos++);
+      String effectType = m.group(pos++);
+      String fontType = m.group(pos++);
+      String closeTagMarker = m.group(pos++);
+      String rest = m.group(pos++);
 
       String content;
       int endOffset;
@@ -152,12 +152,12 @@ public class ExpectedHighlightingData {
         final Matcher matcher2 = pat2.matcher(rest);
         LOG.assertTrue(matcher2.matches(), "Cannot find closing </" + marker + ">");
         content = matcher2.group(1);
-        endOffset = m.start(11) + matcher2.start(2);
+        endOffset = m.start(pos-1) + matcher2.start(2);
       }
       else {
         // <XXX/>
         content = "";
-        endOffset = m.start(11);
+        endOffset = m.start(pos-1);
       }
 
       document.replaceString(startOffset, endOffset, content);
