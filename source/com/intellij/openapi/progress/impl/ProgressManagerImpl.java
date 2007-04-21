@@ -161,7 +161,7 @@ public class ProgressManagerImpl extends ProgressManager {
       .runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
   }
 
-  public static boolean runProcessWithProgressSynchronously(final Task task) {
+  private static boolean runProcessWithProgressSynchronously(final Task task) {
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
       .runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
@@ -185,12 +185,12 @@ public class ProgressManagerImpl extends ProgressManager {
     runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable, PerformInBackgroundOption.DEAF);
   }
 
-  public void runProcessWithProgressAsynchronously(final @NotNull Project project,
-                                                   final @NotNull @Nls String progressTitle,
-                                                   final @NotNull Runnable process,
-                                                   final @Nullable Runnable successRunnable,
-                                                   final @Nullable Runnable canceledRunnable,
-                                                   final @NotNull PerformInBackgroundOption option) {
+  public void runProcessWithProgressAsynchronously(@NotNull final Project project,
+                                                   @Nls @NotNull final String progressTitle,
+                                                   @NotNull final Runnable process,
+                                                   @Nullable final Runnable successRunnable,
+                                                   @Nullable final Runnable canceledRunnable,
+                                                   @NotNull final PerformInBackgroundOption option) {
 
     runProcessWithProgressAsynchronously(new Task.Backgroundable(project, progressTitle, true, option) {
       public void run(final ProgressIndicator indicator) {

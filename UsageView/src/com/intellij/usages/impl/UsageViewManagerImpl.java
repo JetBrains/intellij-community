@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -97,12 +98,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
+
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject,
                                                                        getProgressTitle(presentation),
                                                                        new SearchForUsagesRunnable(usageView, presentation, searchFor,
                                                                                                    searcherFactory, processPresentation,
                                                                                                    listener),
-                                                                       null, null);
+                                                                       null, null, new SearchInBackgroundOption());
     return usageView.get();
   }
 
