@@ -35,13 +35,13 @@ import java.util.List;
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
-  private ClsClassImpl myClass = null;
-  private ClsPackageStatementImpl myPackageStatement = null;
+  private volatile ClsClassImpl myClass = null;
+  private volatile ClsPackageStatementImpl myPackageStatement = null;
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
-  private LanguageLevel myLanguageLevel = null;
-  private boolean myContentsUnloaded;
+  private volatile LanguageLevel myLanguageLevel = null;
+  private volatile boolean myContentsUnloaded;
   private static final int MAX_CLASS_FILE_MAJOR_VERSION = 50;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
