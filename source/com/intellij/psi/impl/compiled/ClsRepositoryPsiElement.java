@@ -11,7 +11,8 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsRepositoryPsiElement");
 
   protected final PsiManagerImpl myManager;
-  private long myRepositoryId;
+  private volatile long myRepositoryId;
+  private volatile long myCachedParentId = -1;
 
   public ClsRepositoryPsiElement(PsiManagerImpl manager, long repositoryId) {
     myManager = manager;
@@ -30,8 +31,6 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
     myRepositoryId = repositoryId;
     myCachedParentId = -1;
   }
-
-  private long myCachedParentId = -1;
 
   protected long getParentId(){
     if(myCachedParentId > 0) return myCachedParentId;
