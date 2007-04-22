@@ -1,26 +1,31 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.xml.util.CheckDtdReferencesInspection;
+import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,10 +35,11 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class DtdReferencesProvider implements PsiReferenceProvider {
-  static class ElementReference implements PsiReference {
+  static class ElementReference implements PsiReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
     private XmlElement myElement;
     private XmlElement myNameElement;
     private TextRange myRange;
+    @NonNls private static final String ELEMENT_DECLARATION_NAME = "ELEMENT";
 
     public ElementReference(final XmlElement element, final XmlElement nameElement) {
       myElement = element;
@@ -115,10 +121,25 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     public boolean isSoft() {
       return true;
     }
+
+    public LocalQuickFix[] getQuickFixes() {
+      return new LocalQuickFix[] {
+        new CheckDtdReferencesInspection.AddDtdDeclarationFix(
+          "xml.dtd.create.dtd.element.intention.name",
+          ELEMENT_DECLARATION_NAME,
+          this
+        )
+      };
+    }
+
+    public String getUnresolvedMessagePattern() {
+      return XmlBundle.message("xml.dtd.unresolved.element.reference", getCanonicalText());
+    }
   }
 
-  static class EntityReference implements PsiReference {
+  static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
     private PsiElement myElement;
+    @NonNls private static final String ENTITY_DECLARATION_NAME = "ENTITY";
 
     EntityReference(PsiElement element) {
       myElement = element;
@@ -136,7 +157,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     public PsiElement resolve() {
       XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
         (XmlElement)myElement,
-        getCanonicalText(),
+        myElement.getText(),
         myElement.getContainingFile()
       );
 
@@ -148,7 +169,8 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      return StringUtil.stripQuotesAroundValue(myElement.getText());
+      final String s = myElement.getText();
+      return s.substring(1,s.length() - 1);
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -172,6 +194,22 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
     public boolean isSoft() {
       return false;
+    }
+
+    public LocalQuickFix[] getQuickFixes() {
+      return new LocalQuickFix[] {
+        new CheckDtdReferencesInspection.AddDtdDeclarationFix(
+          "xml.dtd.create.entity.intention.name",
+          myElement.getText().charAt(0) == '%' ?
+          ENTITY_DECLARATION_NAME + " %":
+          ENTITY_DECLARATION_NAME,
+          this
+        )
+      };
+    }
+
+    public String getUnresolvedMessagePattern() {
+      return XmlBundle.message("xml.dtd.unresolved.entity.reference", getCanonicalText());
     }
   }
 

@@ -158,9 +158,7 @@ public class OldXmlParsing implements ElementType {
       addToken(decl, lexer);
     }
 
-    if (!parseName(decl, lexer)) {
-      return decl;
-    }
+    if (parseCompositeName(lexer, decl)) return decl;
 
     parseEntityDeclContent(decl, lexer);
 
@@ -171,14 +169,36 @@ public class OldXmlParsing implements ElementType {
     return decl;
   }
 
+  private boolean parseCompositeName(final Lexer lexer, final CompositeElement decl) {
+    if (!parseName(decl, lexer)) {
+      if (lexer.getTokenType() == XML_LEFT_PAREN) {
+        parseGroup(decl, lexer);
+      } else {
+        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void parseEntityDeclContent(CompositeElement decl, Lexer lexer) {
-    while (lexer.getTokenType() != XML_TAG_END && lexer.getTokenType() != null) {
-      if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+    IElementType tokenType = lexer.getTokenType();
+    if (tokenType != XML_ATTRIBUTE_VALUE_START_DELIMITER &&
+        tokenType != XML_DOCTYPE_PUBLIC &&
+        tokenType != XML_DOCTYPE_SYSTEM) {
+      TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.literal.public.system.expected")));
+      return;
+    }
+
+    while (tokenType != XML_TAG_END && tokenType != null) {
+      if (tokenType == XML_ATTRIBUTE_VALUE_START_DELIMITER) {
         parseAttributeValue(decl, lexer);
       }
       else {
         addToken(decl, lexer);
       }
+
+      tokenType = lexer.getTokenType();
     }
   }
 
@@ -482,14 +502,7 @@ public class OldXmlParsing implements ElementType {
 
     addToken(decl, lexer);
 
-    if (!parseName(decl, lexer)) {
-      if (lexer.getTokenType() == XML_LEFT_PAREN) {
-        parseGroup(decl, lexer);
-      } else {
-        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
-        return decl;
-      }
-    }
+    if (parseCompositeName(lexer, decl)) return decl;
 
     doParseContentSpec(decl, lexer, false);
 

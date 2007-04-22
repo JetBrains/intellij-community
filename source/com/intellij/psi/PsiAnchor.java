@@ -47,7 +47,7 @@ public class PsiAnchor {
         }
       }
 
-      LOG.assertTrue(myLanguage != null);
+      if (myLanguage == null) myLanguage = element.getLanguage();
       myClass = element.getClass();
 
       TextRange textRange = element.getTextRange();

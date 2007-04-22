@@ -628,12 +628,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public void visitXmlElement(XmlElement element) {
-    if (element instanceof XmlEntityRef) {
-      checkReferences(element, QuickFixProvider.NULL);
-    }
-  }
-
   public void visitXmlTag(XmlTag tag) {
   }
 

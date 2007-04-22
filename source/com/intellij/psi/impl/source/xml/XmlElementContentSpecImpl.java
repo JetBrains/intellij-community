@@ -1,14 +1,13 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.xml.XmlElementContentSpec;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiReference;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementContentSpec;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,5 +56,9 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,XmlElementContentSpec.class);
+  }
+
+  public void accept(@NotNull final PsiElementVisitor visitor) {
+    visitor.visitXmlElement(this);
   }
 }

@@ -46,10 +46,7 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
-import com.intellij.xml.util.CheckEmptyScriptTagInspection;
-import com.intellij.xml.util.CheckImageSizeInspection;
-import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
-import com.intellij.xml.util.CheckTagEmptyBodyInspection;
+import com.intellij.xml.util.*;
 
 /**
  * @author max
@@ -97,6 +94,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UnusedMessageFormatParameterInspection.class,
       CheckImageSizeInspection.class,
       CheckTagEmptyBodyInspection.class,
+      CheckDtdReferencesInspection.class,
       CheckEmptyScriptTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
       WrongPackageStatementInspection.class,

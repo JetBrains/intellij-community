@@ -510,6 +510,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   public void markDocumentForUndo(final PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return;
     final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
     undoableActionPerformed(new UndoableAction() {
       public void undo() {}
