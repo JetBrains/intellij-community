@@ -9,7 +9,9 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,6 +47,17 @@ public class VisibilityUtil  {
     for(;index < visibilityModifiers.length && !PsiUtil.isAccessible(modifierListOwner, place, null); index++) {
       modifierListOwner.getModifierList().setModifierProperty(visibilityModifiers[index], true);
     }
+  }
+
+  public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) throws IncorrectOperationException {
+    if (psiMethod.getManager().arePackagesTheSame(psiMethod, place)) {
+      return PsiModifier.PACKAGE_LOCAL;
+    }
+    if (InheritanceUtil.isInheritorOrSelf(PsiTreeUtil.getParentOfType(place, PsiClass.class),
+                                          psiMethod.getContainingClass(), true)) {
+      return PsiModifier.PROTECTED;
+    }
+    return PsiModifier.PUBLIC;
   }
 
   public static String getVisibilityModifier(PsiModifierList list) {

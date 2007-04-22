@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -150,6 +151,7 @@ public class DuplicatesFinder {
   }
 
 
+  @Nullable
   private Match isDuplicateFragment(PsiElement candidate) {
     if (candidate == myPattern[0]) return null;
     PsiElement sibling = candidate;
@@ -158,10 +160,7 @@ public class DuplicatesFinder {
       if (sibling == null) return null;
       if (!canBeEquivalent(element, sibling)) return null;
       candidates.add(sibling);
-      sibling = sibling.getNextSibling();
-      while (sibling instanceof PsiWhiteSpace) {
-        sibling = sibling.getNextSibling();
-      }
+      sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class);
     }
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {

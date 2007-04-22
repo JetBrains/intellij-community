@@ -4,24 +4,36 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +47,7 @@ import java.util.List;
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
+  private static final Logger LOG = Logger.getInstance("#" + MethodDuplicatesHandler.class.getName());
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
@@ -63,6 +76,44 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       showErrorMessage(message, project);
       return;
     }
+    AnalysisScope scope = new AnalysisScope(file);
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+                                                                RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
+                                                                project, scope, module != null ? module.getName() : null, false);
+    dlg.show();
+    if (dlg.isOK()) {
+      scope = dlg.getScope(((InspectionManagerEx)InspectionManager.getInstance(project)).getUIOptions(), scope, project, module);
+
+      invokeOnScope(project, method, scope);
+    }
+  }
+
+  public static void invokeOnScope(final Project project, final PsiMethod method, final AnalysisScope scope) {
+    final int [] dupCount = new int[]{0};
+    scope.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      }
+
+      public void visitFile(final PsiFile file) {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        LOG.assertTrue(virtualFile != null);
+        if (invokeOnElements(project, file, method)) {
+          dupCount[0]++;
+        }
+      }
+    });
+    if (dupCount[0] == 0) {
+      final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
+                                                       ApplicationNamesInfo.getInstance().getProductName());
+      Messages.showInfoMessage(project, message, REFACTORING_NAME);
+    }
+  }
+
+  public static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null);
+    final PsiStatement[] statements = body.getStatements();
     final DuplicatesFinder duplicatesFinder;
     final PsiElement[] pattern;
     if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
@@ -81,11 +132,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     final List<Match> duplicates = duplicatesFinder.findDuplicates(file);
     if (duplicates.isEmpty()) {
-      final String message =
-        RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call", ApplicationNamesInfo.getInstance().getProductName());
-      Messages.showInfoMessage(project, message, REFACTORING_NAME);
-      return;
+      return false;
     }
+    final VirtualFile virtualFile = file.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+    LOG.assertTrue(editor != null);
     final int duplicatesNo = duplicates.size();
     final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     for (final Match match : duplicates) {
@@ -96,7 +148,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     for (final RangeHighlighter rangeHighlighter : highlighters) {
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
     }
-    if (!dialog.isOK()) return;
+    if (!dialog.isOK()) return true;
     WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -109,6 +161,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }, REFACTORING_NAME, null);
 
     WindowManager.getInstance().getStatusBar(project).setInfo("");
+    return true;
   }
 
   static String getStatusMessage(final int duplicatesNo) {
@@ -133,22 +186,45 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     public void processMatch(Match match) throws IncorrectOperationException {
-      if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) {
+      final PsiClass containingClass = myMethod.getContainingClass();
+      if (isEssentialStaticContextAbsent(match)) {
         myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
       final PsiElementFactory factory = myMethod.getManager().getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
-      final @NonNls String text = needQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+      final boolean needStaticQualifier = isExternal(match);
+      final @NonNls String text = needQualifier || needStaticQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
         methodCallExpression.getArgumentList().add(match.getParameterValue(parameter));
       }
-      if (needQualifier) {
-        methodCallExpression.getMethodExpression().getQualifierExpression().replace(match.getInstanceExpression());
+      if (needQualifier || needStaticQualifier) {
+        final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+        LOG.assertTrue(qualifierExpression != null);
+        if (needQualifier) {
+          qualifierExpression.replace(match.getInstanceExpression());
+        } else {
+          qualifierExpression.replace(factory.createReferenceExpression(containingClass));
+        }
       }
+      VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());
       match.replace(methodCallExpression, null);
+    }
+
+    private boolean isExternal(final Match match) {
+      return !PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false);
+    }
+
+    private boolean isEssentialStaticContextAbsent(final Match match) {
+      if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        if (isExternal(match)) {
+          return match.getInstanceExpression() == null;
+        }
+        if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
+      }
+      return false;
     }
 
     public List<Match> getDuplicates() {
@@ -160,11 +236,27 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     @NotNull
-    public String getConfirmDuplicatePrompt(Match match) {
-      if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass()) && !myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
-    }
-    return RefactoringBundle.message("replace.this.code.fragment");
+    public String getConfirmDuplicatePrompt(final Match match) {
+      final PsiElement matchStart = match.getMatchStart();
+      final boolean needToEscalateVisibility = !PsiUtil.isAccessible(myMethod, matchStart, null);
+      if (needToEscalateVisibility) {
+        try {
+          final String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
+          @NonNls final String visibilityPresentation = visibility == PsiModifier.PACKAGE_LOCAL ? "package local" : visibility;
+          if (isEssentialStaticContextAbsent(match)) {
+            return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation);
+          } else {
+            return RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+      if (isEssentialStaticContextAbsent(match)) {
+        return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+      }
+      return RefactoringBundle.message("replace.this.code.fragment");
     }
   }
 }
