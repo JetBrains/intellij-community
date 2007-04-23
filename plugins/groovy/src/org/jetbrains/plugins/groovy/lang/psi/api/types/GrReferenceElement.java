@@ -24,6 +24,5 @@ import org.jetbrains.annotations.NotNull;
 public interface GrReferenceElement extends GrType {
   GrReferenceElement getQualifier();
 
-  @NotNull
   String getReferenceName();
 }

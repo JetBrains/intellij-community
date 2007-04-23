@@ -43,7 +43,9 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
     if (ref == null) return "";
     StringBuilder builder = new StringBuilder();
     while(ref != null) {
-      builder.append(ref.getReferenceName());
+      String refName = ref.getReferenceName();
+      if (refName == null) break;
+      builder.append(refName);
       ref = ref.getQualifier();
       if (ref != null) builder.append(".");
     }
