@@ -101,7 +101,7 @@ public class SegmentedInputStream extends InputStream {
           mySourceStream.pushBack(aChar);
           mySourceStream.pushBack(SegmentedStream.STARTUP_MESSAGE.substring(0, myStartupPassed).toCharArray());
           myStartupPassed = 0;
-          return 0;
+          return 1;
         }
         myStartupPassed++;
       }
