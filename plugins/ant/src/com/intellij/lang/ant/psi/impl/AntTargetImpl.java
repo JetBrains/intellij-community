@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -71,6 +72,18 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   @Nullable
   public String getDescription() {
     return getSourceElement().getAttributeValue(AntFileImpl.DESCRIPTION_ATTR);
+  }
+
+  @Nullable
+  public String getConditionalPropertyName(final ConditionalAttribute attrib) {
+    final XmlAttribute propNameAttribute = getSourceElement().getAttribute(attrib.getXmlName(), null);
+    if (propNameAttribute != null) {
+      final XmlAttributeValue valueElement = propNameAttribute.getValueElement();
+      if (valueElement != null) {
+        return computeAttributeValue(valueElement.getValue());
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -131,6 +131,16 @@ public class PropertiesBuilder extends AntElementVisitor {
     for (AntTarget dependsTarget : dependsTargets) {
       dependsTarget.acceptAntElementVisitor(this);
     }
+
+    final String ifProperty = target.getConditionalPropertyName(AntTarget.ConditionalAttribute.IF);
+    if (ifProperty != null && myPropertyHolder.getProperty(ifProperty) == null) {
+      return; // skip target because 'if' property not defined
+    }
+
+    final String unlessProperty = target.getConditionalPropertyName(AntTarget.ConditionalAttribute.UNLESS);
+    if (unlessProperty != null && myPropertyHolder.getProperty(unlessProperty) != null) {
+      return; // skip target because 'unless' property is defined 
+    }
     
     for (PsiElement child : target.getChildren()) {
       if (child instanceof AntElement) {
@@ -185,7 +195,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     if (propNameAttribute != null) {
       final XmlAttributeValue valueElement = propNameAttribute.getValueElement();
       if (valueElement != null) {
-        final String value = valueElement.getValue();
+        final String value = target.computeAttributeValue(valueElement.getValue());
         if (propertyHolder.getProperty(value) == null) {
           target.setPropertyDefinitionElement(valueElement);
           propertyHolder.setProperty(value, target);
