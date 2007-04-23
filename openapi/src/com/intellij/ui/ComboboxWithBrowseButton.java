@@ -28,6 +28,10 @@ public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBo
     super(new JComboBox(), null);
   }
 
+  public ComboboxWithBrowseButton(JComboBox comboBox) {
+    super(comboBox, null);
+  }
+
   public JComboBox getComboBox() {
     return getChildComponent();
   }
