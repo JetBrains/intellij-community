@@ -1,6 +1,7 @@
 package com.intellij.localvcsintegr;
 
 
+import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Storage;
@@ -87,5 +88,26 @@ public class BasicsTest extends IntegrationTestCase {
 
     assertTrue(LocalHistory.isUnderControl(myProject, f1));
     assertFalse(LocalHistory.isUnderControl(myProject, f2));
+  }
+
+  public void testContentAtDate() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.java");
+    Clock.setCurrentTimestamp(10);
+    f.setBinaryContent(new byte[]{1});
+    Clock.setCurrentTimestamp(20);
+    f.setBinaryContent(new byte[]{2});
+
+    assertEquals(1, LocalHistory.getByteContentAt(myProject, f, 10)[0]);
+    assertEquals(1, LocalHistory.getByteContentAt(myProject, f, 15)[0]);
+    assertEquals(2, LocalHistory.getByteContentAt(myProject, f, 20)[0]);
+    assertEquals(2, LocalHistory.getByteContentAt(myProject, f, 30)[0]);
+  }
+
+  public void testContentAtDateForFilteredFilesIsNull() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.xxx");
+    Clock.setCurrentTimestamp(10);
+    f.setBinaryContent(new byte[]{1});
+
+    assertNull(LocalHistory.getByteContentAt(myProject, f, 20));
   }
 }

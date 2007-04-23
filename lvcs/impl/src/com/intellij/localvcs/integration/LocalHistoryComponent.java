@@ -141,6 +141,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
+  protected byte[] getByteContentAt(VirtualFile f, long timestamp) {
+    if (!isUnderControl(f)) return null;
+    return myVcs.getByteContentAt(f.getPath(), timestamp);
+  }
+
+  @Override
   protected boolean isUnderControl(VirtualFile f) {
     return createIdeaGateway().getFileFilter().isAllowedAndUnderContentRoot(f);
   }

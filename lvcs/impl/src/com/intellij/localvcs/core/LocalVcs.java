@@ -235,7 +235,12 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public byte[] getByteContentAt(String path, long timestamp) {
-    getEntry(path);
+    for (Revision r : getRevisionsFor(path)) {
+      if (r.getTimestamp() <= timestamp) {
+        Content c = r.getEntry().getContent();
+        return c.isAvailable() ? c.getBytes() : null;
+      }
+    }
     return null;
   }
 

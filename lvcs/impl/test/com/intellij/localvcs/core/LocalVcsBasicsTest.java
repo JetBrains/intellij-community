@@ -193,18 +193,26 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     assertTrue(vcs.hasEntry("c:/dir/root/file"));
   }
 
-  //@Test
-  //public void testContentAtDate() {
-  //  setCurrentTimestamp(10);
-  //  vcs.createFile("f", b("one"), -1);
-  //  setCurrentTimestamp(20);
-  //  vcs.changeFileContent("f", b("two"), -1);
-  //
-  //  assertEquals("one", vcs.getByteContentAt("f", 10));
-  //  assertEquals("one", vcs.getByteContentAt("f", 15));
-  //  assertEquals("one", vcs.getByteContentAt("f", 19));
-  //
-  //  assertEquals("two", vcs.getByteContentAt("f", 20));
-  //  assertEquals("two", vcs.getByteContentAt("f", 100));
-  //}
+  @Test
+  public void testContentAtDate() {
+    setCurrentTimestamp(10);
+    vcs.createFile("f", b("one"), -1);
+    setCurrentTimestamp(20);
+    vcs.changeFileContent("f", b("two"), -1);
+
+    assertEquals("one", new String(vcs.getByteContentAt("f", 10)));
+    assertEquals("one", new String(vcs.getByteContentAt("f", 15)));
+    assertEquals("one", new String(vcs.getByteContentAt("f", 19)));
+
+    assertEquals("two", new String(vcs.getByteContentAt("f", 20)));
+    assertEquals("two", new String(vcs.getByteContentAt("f", 100)));
+  }
+
+  @Test
+  public void testContentAtDateForUnavailableContentIsNull() {
+    setCurrentTimestamp(10);
+    vcs.createFile("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+
+    assertNull(vcs.getByteContentAt("f", 20));
+  }
 }
