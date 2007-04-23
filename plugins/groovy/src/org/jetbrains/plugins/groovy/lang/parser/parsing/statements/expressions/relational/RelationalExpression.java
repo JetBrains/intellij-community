@@ -1,70 +1,84 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
-import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author Ilya.Sergey
  */
-public class RelationalExpression implements GroovyElementTypes {
+public class RelationalExpression implements GroovyElementTypes
+{
 
   private static TokenSet RELATIONS = TokenSet.create(
-      mLT,
-      mGT,
-      mLE,
-      mGE,
-      kIN
+          mLT,
+          mGT,
+          mLE,
+          mGE,
+          kIN
   );
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
 
     PsiBuilder.Marker marker = builder.mark();
 
     GroovyElementType result = ShiftExpression.parse(builder);
-    if (!result.equals(WRONGWAY)) {
+    if (!result.equals(WRONGWAY))
+    {
       if (ParserUtils.getToken(builder, RELATIONS) ||
-          getCompositeSign(builder)) {
+              getCompositeSign(builder))
+      {
         result = RELATIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder);
         marker.done(RELATIONAL_EXPRESSION);
-      } else if (kINSTANCEOF.equals(builder.getTokenType()) ||
-          kAS.equals(builder.getTokenType())) {
+      }
+      else if (kINSTANCEOF.equals(builder.getTokenType()) ||
+              kAS.equals(builder.getTokenType()))
+      {
         builder.advanceLexer();
         PsiBuilder.Marker rb = builder.mark();
         ParserUtils.getToken(builder, mNLS);
-        if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+        if (WRONGWAY.equals(TypeSpec.parse(builder)))
+        {
           rb.rollbackTo();
           builder.error(GroovyBundle.message("type.specification.expected"));
-        } else {
+        }
+        else
+        {
           rb.drop();
         }
         marker.done(RELATIONAL_EXPRESSION);
-      } else {
+      }
+      else
+      {
         marker.drop();
       }
-    } else {
+    }
+    else
+    {
       marker.drop();
     }
 
@@ -77,15 +91,20 @@ public class RelationalExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static boolean getCompositeSign(PsiBuilder builder) {
-    if (ParserUtils.lookAhead(builder, mGT, mASSIGN)) {
+  private static boolean getCompositeSign(PsiBuilder builder)
+  {
+    if (ParserUtils.lookAhead(builder, mGT, mASSIGN))
+    {
       PsiBuilder.Marker marker = builder.mark();
-      for (int i = 0; i < 2; i++) {
+      for (int i = 0; i < 2; i++)
+      {
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
       return true;
-    } else {
+    }
+    else
+    {
       return false;
     }
   }

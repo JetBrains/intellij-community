@@ -1,16 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
@@ -30,21 +31,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 23.03.2007
  */
 
-public class ConstructorDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+public class ConstructorDefinition implements GroovyElementTypes
+{
+  public static GroovyElementType parse(PsiBuilder builder)
+  {
+    if (!ParserUtils.getToken(builder, mIDENT))
+    {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mLPAREN)) {
+    if (!ParserUtils.getToken(builder, mLPAREN))
+    {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
     ParameterDeclarationList.parse(builder, mRPAREN);
 
     ParserUtils.getToken(builder, mNLS);
-    if (!ParserUtils.getToken(builder, mRPAREN)) {
+    if (!ParserUtils.getToken(builder, mRPAREN))
+    {
       ParserUtils.waitNextRCurly(builder);
 
       builder.error(GroovyBundle.message("rparen.expected"));
@@ -56,9 +62,12 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     GroovyElementType methodBody = ConstructorBody.parse(builder);
 
-    if (!WRONGWAY.equals(methodBody)) {
+    if (!WRONGWAY.equals(methodBody))
+    {
       return CONSTRUCTOR_DEFINITION;
-    } else {
+    }
+    else
+    {
       return WRONGWAY;
     }
   }

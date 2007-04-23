@@ -1,16 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
@@ -32,22 +33,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *              | {annotation nls}+
  */
 
-public class Modifiers implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+public class Modifiers implements GroovyElementTypes
+{
+  public static IElementType parse(PsiBuilder builder)
+  {
     PsiBuilder.Marker modifiersMarker = builder.mark();
-        
+
     IElementType annotation = Annotation.parse(builder);
     IElementType modifier = Modifier.parse(builder);
     IElementType def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))) {
+    if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)))
+    {
       modifiersMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)) {
+    while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))
+    {
       annotation = Annotation.parse(builder);
       modifier = Modifier.parse(builder);
       def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;
