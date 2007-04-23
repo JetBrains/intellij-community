@@ -11,6 +11,10 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
     </component>
+    <component>
+      <interface-class>org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyElementFactoryImpl</implementation-class>
+    </component>
   </project-components>
   <module-components>
     <component>

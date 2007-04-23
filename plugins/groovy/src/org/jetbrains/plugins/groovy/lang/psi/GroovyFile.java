@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 /**
@@ -55,6 +57,10 @@ public class GroovyFile extends PsiFileBase {
     }
 
     return "";
+  }
+
+  public GrStatement[] getStatements() {
+    return findChildrenByClass(GrStatement.class);
   }
 }
 

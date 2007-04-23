@@ -16,16 +16,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author Ilya.Sergey
  */
 public class GrReferenceExprImpl extends GroovyPsiElementImpl implements GrReferenceExpression
 {
-
   public GrReferenceExprImpl(@NotNull ASTNode node)
   {
     super(node);
@@ -34,5 +35,9 @@ public class GrReferenceExprImpl extends GroovyPsiElementImpl implements GrRefer
   public String toString()
   {
     return "Reference expression";
+  }
+
+  public PsiElement getReferenceNameElement() {
+    return findChildByType(GroovyElementTypes.mIDENT);
   }
 }

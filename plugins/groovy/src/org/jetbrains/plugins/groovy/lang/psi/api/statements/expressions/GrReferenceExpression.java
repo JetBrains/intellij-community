@@ -26,4 +26,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  * @author Ilya.Sergey
  */
 public interface GrReferenceExpression extends GrExpression {
+  PsiElement getReferenceNameElement();
 }
