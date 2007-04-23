@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,8 +32,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -513,6 +514,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
+      if (usage.getReference() instanceof LightElement) continue; //filter out implicit references (e.g. from derived class to super class' default constructor)
 
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
       if (element.equals(usageInfo.getReferencedElement())) {

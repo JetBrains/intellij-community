@@ -182,7 +182,19 @@ public class ConstructorReferencesSearchHelper {
         }
 
         public TextRange getRangeInElement() {
-          return usage.getTextRange();
+          if (usage instanceof PsiClass) {
+            PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();
+            if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
+          }
+          else if (usage instanceof PsiField) {
+            PsiIdentifier identifier = ((PsiField)usage).getNameIdentifier();
+            return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
+          }
+          else if (usage instanceof PsiMethod) {
+            PsiIdentifier identifier = ((PsiMethod)usage).getNameIdentifier();
+            if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
+          }
+          return super.getRangeInElement();
         }
       });
     }

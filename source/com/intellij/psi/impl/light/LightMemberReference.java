@@ -103,12 +103,12 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     //TODO?
-    throw new UnsupportedOperationException();
+    throw new IncorrectOperationException();
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     //TODO?
-    throw new UnsupportedOperationException();
+    throw new IncorrectOperationException();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -120,8 +120,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (!(element instanceof PsiClass)) return false;
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return element instanceof PsiClass && element.getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {

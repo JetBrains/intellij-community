@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.jetbrains.annotations.NonNls;
 
 public class RenameClassTest extends MultiFileTestCase {
   public void testNonJava() throws Exception {
@@ -35,16 +36,19 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("Loader", "Reader");
   }
 
-  private void doTest(final String qClassName, final String newName) throws Exception {
+  public void testImplicitReferenceToDefaultCtr() throws Exception {
+    doTest("pack1.Parent", "ParentXXX");
+  }
+
+  private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        RenameClassTest.this.performAction(rootDir, qClassName, newName);
+        RenameClassTest.this.performAction(qClassName, newName);
       }
     });
   }
 
-
-  private void performAction(VirtualFile rootDir, String qClassName, String newName) throws Exception {
+  private void performAction(String qClassName, String newName) throws Exception {
     PsiClass aClass = myPsiManager.findClass(qClassName);
     assertNotNull("Class " + qClassName + " not found", aClass);
 
