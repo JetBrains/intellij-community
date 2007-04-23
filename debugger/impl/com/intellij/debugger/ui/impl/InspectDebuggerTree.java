@@ -44,6 +44,7 @@ public class InspectDebuggerTree extends DebuggerTree{
 
             root.add(node);
             treeChanged();
+            root.getTree().expandRow(0);
           }
         });
       }
