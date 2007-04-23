@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -10,9 +13,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -156,12 +156,7 @@ public class CommittedChangesCache {
                                                           final int maxCount) throws VcsException, IOException {
     ChangesCacheFile cacheFile = getCacheFile(provider, root, location);
     if (cacheFile.isEmpty()) {
-      List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
-      // when initially initializing cache, assume all changelists are locally available
-      cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
-      if (changes.size() < myInitialCount) {
-        cacheFile.setHaveCompleteHistory(true);
-      }
+      List<CommittedChangeList> changes = initCache(cacheFile);
       if (canGetFromCache(provider, settings, root, location, maxCount)) {
         settings.filterChanges(changes);
         return trimToSize(changes, maxCount);
@@ -175,6 +170,30 @@ public class CommittedChangesCache {
       changes.addAll(newChanges);
       return trimToSize(changes, maxCount);
     }
+  }
+
+  public void refreshAllCaches() throws IOException, VcsException {
+    final Collection<ChangesCacheFile> files = getAllCaches();
+    for(ChangesCacheFile file: files) {
+      if (file.isEmpty()) {
+        initCache(file);
+      }
+      else {
+        refreshCache(file);
+      }
+    }
+  }
+
+  private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    final CachingCommittedChangesProvider provider = cacheFile.getProvider();
+    final RepositoryLocation location = cacheFile.getLocation();
+    List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
+    // when initially initializing cache, assume all changelists are locally available
+    cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
+    if (changes.size() < myInitialCount) {
+      cacheFile.setHaveCompleteHistory(true);
+    }
+    return changes;
   }
 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
@@ -192,8 +211,10 @@ public class CommittedChangesCache {
   }
 
   private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
-    while(changes.size() > maxCount) {
-      changes.remove(0);
+    if (maxCount > 0) {
+      while(changes.size() > maxCount) {
+        changes.remove(0);
+      }
     }
     return changes;
   }
@@ -273,8 +294,12 @@ public class CommittedChangesCache {
     return cacheFile;
   }
 
+  public static File getCacheRootPath() {
+    return new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
+  }
+
   private File getCachePath(final RepositoryLocation location) {
-    File file = new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
+    File file = getCacheRootPath();
     file = new File(file, myProject.getLocationHash());
     file.mkdirs();
     String s = location.toString();
