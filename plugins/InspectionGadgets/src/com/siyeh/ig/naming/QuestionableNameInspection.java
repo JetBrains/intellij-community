@@ -42,7 +42,11 @@ import java.util.*;
 public class QuestionableNameInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    @NonNls public String nameString = "foo,bar,baz";
+    @NonNls public String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
+            "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
+            "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
+            "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
+            "then,three,whi1e,var";
 
     List<String> nameList = new ArrayList<String>(32);
 

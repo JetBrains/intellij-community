@@ -90,10 +90,11 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     }
 
     public BaseInspectionVisitor buildVisitor(){
-        return new QuestionableNameVisitor();
+        return new NonBooleanMethodNameMayNotStartWithQuestionVisitor();
     }
 
-    private class QuestionableNameVisitor extends BaseInspectionVisitor{
+    private class NonBooleanMethodNameMayNotStartWithQuestionVisitor
+            extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);

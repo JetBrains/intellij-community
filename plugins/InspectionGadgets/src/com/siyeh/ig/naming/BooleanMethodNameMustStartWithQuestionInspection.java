@@ -90,10 +90,11 @@ public class BooleanMethodNameMustStartWithQuestionInspection
     }
 
     public BaseInspectionVisitor buildVisitor(){
-        return new QuestionableNameVisitor();
+        return new BooleanMethodNameMustStartWithQuestionVisitor();
     }
 
-    private class QuestionableNameVisitor extends BaseInspectionVisitor{
+    private class BooleanMethodNameMustStartWithQuestionVisitor
+            extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
             final PsiType returnType = method.getReturnType();
