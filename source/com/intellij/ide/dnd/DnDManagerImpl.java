@@ -538,7 +538,10 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
       mySource.dragDropEnd();
-      getLastProcessedTarget().cleanUpOnLeave();
+      final DnDTarget target = getLastProcessedTarget();
+      if (target != null) {
+        target.cleanUpOnLeave();
+      }
       resetCurrentEvent("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
       Highlighters.hide(TEXT | ERROR_TEXT);
     }
