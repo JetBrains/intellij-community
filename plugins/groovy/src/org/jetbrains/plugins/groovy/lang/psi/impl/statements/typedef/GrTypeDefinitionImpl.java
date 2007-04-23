@@ -67,6 +67,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
+  public GrTypeDefinition[] getInnerTypeDefinitions(boolean checkBases) {
+    //todo
+    return new GrTypeDefinition[0];
+  }
+
   public GrTypeParameter[] getTypeParameters() {
     return findChildrenByClass(GrTypeParameter.class);
   }

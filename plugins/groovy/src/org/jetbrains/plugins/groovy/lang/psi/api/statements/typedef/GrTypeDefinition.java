@@ -38,5 +38,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement
 
   GrTypeDefinition findInnerTypeDefinitionByName(String name, boolean checkBases);
 
+  GrTypeDefinition[] getInnerTypeDefinitions(boolean checkBases);
+
   GrTypeParameter[] getTypeParameters();
 }

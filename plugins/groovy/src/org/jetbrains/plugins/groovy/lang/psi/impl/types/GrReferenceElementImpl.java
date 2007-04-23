@@ -194,6 +194,29 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
 
   public Object[] getVariants()
   {
+    switch(getKind()) {
+      case CLASS:
+
+        GrReferenceElement qualifier = getQualifier();
+        if (qualifier != null) {
+          PsiElement qualifierResolved = qualifier.resolve();
+          if (qualifierResolved instanceof PsiPackage) {
+            return ((PsiPackage) qualifierResolved).getClasses();
+          } else if (qualifierResolved instanceof PsiClass) {
+            return ((PsiClass) qualifierResolved).getInnerClasses();
+          } else if (qualifierResolved instanceof GrTypeDefinition) {
+            return ((GrTypeDefinition) qualifierResolved).getInnerTypeDefinitions(true);
+          }
+        } else {
+          ClassResolver processor = new ClassResolver(null);
+          ResolveUtil.treeWalkUp(this, processor);
+          List<GrTypeDefinition> candidates = processor.getCandidates();
+          return candidates.toArray(GrTypeDefinition.EMPTY_ARRAY);
+        }
+        break;
+
+        //todo other cases
+    }
     return new Object[0];
   }
 

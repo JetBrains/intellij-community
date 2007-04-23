@@ -24,10 +24,12 @@ public class ClassResolver implements PsiScopeProcessor {
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof GrTypeDefinition) {
-      myCandidates.add((GrTypeDefinition) element);
+      if (myName == null || myName.equals(((GrTypeDefinition) element).getName())) {
+        myCandidates.add((GrTypeDefinition) element);
+      }
     }
 
-    return myCandidates.size() < 2;
+    return myName == null || myCandidates.size() < 2;
   }
 
   public List<GrTypeDefinition> getCandidates() {
