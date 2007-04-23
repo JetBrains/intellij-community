@@ -626,7 +626,9 @@ public class CvsUtil {
 
         int revisionsSize = strings.length > 2 ? strings.length - 2 : 0;
         String[] revisions = new String[revisionsSize];
-        System.arraycopy(strings, 2, revisions, 0, revisions.length);
+        if (revisions.length > 0) {
+          System.arraycopy(strings, 2, revisions, 0, revisions.length);
+        }
 
         return new Conflict(name, Arrays.asList(revisions), time);
       }
