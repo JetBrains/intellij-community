@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -92,7 +93,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     CLASS,
     CLASS_OR_PACKAGE,
     PACKAGE_FQ,
-    CLASS_FQ,
     CLASS_OR_PACKAGE_FQ
   }
 
@@ -102,6 +102,15 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     String refName = getReferenceName();
     if (refName == null) return null;
     switch (getKind()) {
+      case CLASS_OR_PACKAGE_FQ: {
+        PsiClass aClass = getManager().findClass(PsiUtil.getQualifiedReferenceText(this), getResolveScope());
+        if (aClass != null) return aClass;
+        //fallthrough
+      }
+
+      case PACKAGE_FQ:
+        return getManager().findPackage(PsiUtil.getQualifiedReferenceText(this));
+
       case CLASS:
         GrReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
@@ -136,7 +145,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     if (parent instanceof GrReferenceElement) {
       ReferenceKind parentKind = ((GrReferenceElementImpl) parent).getKind();
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
-      if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
       return parentKind;
     } else if (parent instanceof GrNewExpression) {
       return CLASS;

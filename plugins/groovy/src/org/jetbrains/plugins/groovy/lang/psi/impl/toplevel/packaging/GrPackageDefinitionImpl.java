@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Ilya.Sergey
@@ -43,17 +44,7 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   {
     GrReferenceElement ref = getPackageReference();
     if (ref == null) return "";
-    StringBuilder builder = new StringBuilder();
-    while (ref != null)
-    {
-      String refName = ref.getReferenceName();
-      if (refName == null) break;
-      builder.append(refName);
-      ref = ref.getQualifier();
-      if (ref != null) builder.append(".");
-    }
-
-    return builder.toString();
+    return PsiUtil.getQualifiedReferenceText(ref);
   }
 
   public GrReferenceElement getPackageReference()
