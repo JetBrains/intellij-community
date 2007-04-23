@@ -19,19 +19,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrReferenceElementImpl.ReferenceKind.*;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolver;
+
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -84,10 +88,63 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     return new TextRange(0, getTextLength());
   }
 
+  enum ReferenceKind {
+    CLASS,
+    CLASS_OR_PACKAGE,
+    PACKAGE_FQ,
+    CLASS_FQ,
+    CLASS_OR_PACKAGE_FQ
+  }
+
   @Nullable
   public PsiElement resolve()
   {
+    String refName = getReferenceName();
+    if (refName == null) return null;
+    switch (getKind()) {
+      case CLASS:
+        GrReferenceElement qualifier = getQualifier();
+        if (qualifier != null) {
+          PsiElement qualifierResolved = qualifier.resolve();
+          if (qualifierResolved instanceof PsiPackage) {
+            PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses();
+            for (final PsiClass aClass : classes) {
+              if (refName.equals(aClass.getName())) return aClass;
+            }
+          } else if (qualifierResolved instanceof PsiClass) {
+            return ((PsiClass) qualifierResolved).findInnerClassByName(refName, true);
+          } else if (qualifierResolved instanceof GrTypeDefinition) {
+            return ((GrTypeDefinition) qualifierResolved).findInnerTypeDefinitionByName(refName, true);
+          }
+        } else {
+          ClassResolver processor = new ClassResolver(refName);
+          ResolveUtil.treeWalkUp(this, processor);
+          List<GrTypeDefinition> candidates = processor.getCandidates();
+          return candidates.size() == 1 ? candidates.get(0) : null;
+        }
+        break;
+
+        //todo other cases
+
+    }
+
     return null;
+  }
+
+  private ReferenceKind getKind() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrReferenceElement) {
+      ReferenceKind parentKind = ((GrReferenceElementImpl) parent).getKind();
+      if (parentKind == CLASS) return CLASS_OR_PACKAGE;
+      if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
+      return parentKind;
+    } else if (parent instanceof GrNewExpression) {
+      return CLASS;
+    } else if (parent instanceof GrPackageDefinition) {
+      return PACKAGE_FQ;
+    }
+
+    return CLASS;
   }
 
   public String getCanonicalText()

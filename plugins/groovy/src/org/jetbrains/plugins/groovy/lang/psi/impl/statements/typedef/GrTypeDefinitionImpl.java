@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,6 +39,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public GrTypeDefinitionImpl(@NotNull ASTNode node)
   {
     super(node);
+  }
+
+  public int getTextOffset() {
+    return  getNameIdentifier().getTextRange().getStartOffset();
   }
 
   @Nullable
@@ -55,6 +62,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
+  public GrTypeDefinition findInnerTypeDefinitionByName(String name, boolean checkBases) {
+    //todo:
+    return null;
+  }
+
+  public GrTypeParameter[] getTypeParameters() {
+    return findChildrenByClass(GrTypeParameter.class);
+  }
+
   @NotNull
   private PsiElement getNameIdentifier()
   {
@@ -66,6 +82,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException
   {
     throw new IncorrectOperationException("NIY");
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
+    if (!processor.execute(this, substitutor)) return false;
+    for (final GrTypeParameter typeParameter : getTypeParameters()) {
+      if (!processor.execute(typeParameter, substitutor)) return false;
+    }
+
+    return true;
   }
 
   @NotNull

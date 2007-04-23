@@ -17,6 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -35,5 +38,10 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   public String toString()
   {
     return "Import expression";
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor psiScopeProcessor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
+    //todo
+    return true;
   }
 }

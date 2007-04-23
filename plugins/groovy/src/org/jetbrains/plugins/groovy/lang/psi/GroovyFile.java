@@ -19,11 +19,15 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
  * Implements all abstractionos related to Groovy file
@@ -69,6 +73,18 @@ public class GroovyFile extends PsiFileBase
   public GrStatement[] getStatements()
   {
     return findChildrenByClass(GrStatement.class);
+  }
+
+  public GrImportStatement[] getImportStatements() {
+    return findChildrenByClass(GrImportStatement.class);
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    for (final GrImportStatement importStatement : getImportStatements()) {
+      if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    }
+
+    return true;
   }
 }
 

@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import com.intellij.psi.PsiElement;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -34,4 +36,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
+  GrTypeDefinition findInnerTypeDefinitionByName(String name, boolean checkBases);
+
+  GrTypeParameter[] getTypeParameters();
 }
