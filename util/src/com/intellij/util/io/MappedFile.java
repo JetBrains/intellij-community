@@ -73,9 +73,19 @@ public class MappedFile {
     return readInt();
   }
 
+  public long getLong(final int index) throws IOException {
+    seek(index);
+    return readLong();
+  }
+
   public void putInt(int index, int value) throws IOException {
     seek(index);
     writeInt(value);
+  }
+
+  public void putLong(final int index, final long value) throws IOException {
+    seek(index);
+    writeLong(value);
   }
 
   public byte get(int index) throws IOException {
@@ -203,12 +213,38 @@ public class MappedFile {
     return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + ch4);
   }
 
+  public long readLong() throws IOException {
+    get(buffer, 0, 8);
+
+    long ch1 = buffer[0] & 0xff;
+    long ch2 = buffer[1] & 0xff;
+    long ch3 = buffer[2] & 0xff;
+    long ch4 = buffer[3] & 0xff;
+    long ch5 = buffer[4] & 0xff;
+    long ch6 = buffer[5] & 0xff;
+    long ch7 = buffer[6] & 0xff;
+    long ch8 = buffer[7] & 0xff;
+    return (ch1 << 56) + (ch2 << 48) + (ch3 << 40) + (ch4 << 32) + (ch5 << 24) + (ch6 << 16) + (ch7 << 8) + ch8;
+  }
+
   public void writeInt(int value) throws IOException {
     buffer[0] = (byte)((value >>> 24) & 0xFF);
     buffer[1] = (byte)((value >>> 16) & 0xFF);
     buffer[2] = (byte)((value >>> 8) & 0xFF);
     buffer[3] = (byte)(value & 0xFF);
     put(buffer, 0, 4);
+  }
+
+  public void writeLong(long value) throws IOException {
+    buffer[0] = (byte)((value >>> 56) & 0xFF);
+    buffer[1] = (byte)((value >>> 48) & 0xFF);
+    buffer[2] = (byte)((value >>> 40) & 0xFF);
+    buffer[3] = (byte)((value >>> 32) & 0xFF);
+    buffer[4] = (byte)((value >>> 24) & 0xFF);
+    buffer[5] = (byte)((value >>> 16) & 0xFF);
+    buffer[6] = (byte)((value >>> 8) & 0xFF);
+    buffer[7] = (byte)(value & 0xFF);
+    put(buffer, 0, 8);
   }
 
   public String readUTF() throws IOException {

@@ -499,11 +499,15 @@ public class FileUtil {
   }
 
   public static boolean startsWith(String path1, String path2) {
+    return startsWith(path1, path2, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static boolean startsWith(final String path1, final String path2, final boolean caseSensitive) {
     final int length1 = path1.length();
     final int length2 = path2.length();
     if (length2 == 0) return true;
     if (length2 > length1) return false;
-    if (!path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, length2)) return false;
+    if (!path1.regionMatches(!caseSensitive, 0, path2, 0, length2)) return false;
     if (length1 == length2) return true;
     char last2 = path2.charAt(length2 - 1);
     char next1;
