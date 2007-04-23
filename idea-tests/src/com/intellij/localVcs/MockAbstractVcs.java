@@ -5,6 +5,7 @@ import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
@@ -12,6 +13,7 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   private boolean myMarkExternalChangesAsCurrent = false;
   private LocalVcsItemsLocker myUpToDateRevisionProvider;
   private CheckinEnvironment myCheckinEnvironment;
+  private CommittedChangesProvider myCommittedChangesProvider;
 
   public MockAbstractVcs(Project project){
     super(project);
@@ -19,6 +21,10 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
+  }
+
+  public CommittedChangesProvider getCommittedChangesProvider() {
+    return myCommittedChangesProvider;
   }
 
   public String getName() {
@@ -70,5 +76,9 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public void setCheckinEnvironment(CheckinEnvironment ce) {
     myCheckinEnvironment = ce;
+  }
+
+  public void setCommittedChangesProvider(final CommittedChangesProvider committedChangesProvider) {
+    myCommittedChangesProvider = committedChangesProvider;
   }
 }
