@@ -46,7 +46,10 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 
 import java.util.ArrayList;
@@ -78,15 +81,15 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
-  private GrTypeDefinition findTypeDefinition(SourcePosition position) {
+  private GroovyPsiElement findReferenceTypeSourceImage(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFile)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
+    return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, GrClosableBlock.class);
   }
 
-  private GrTypeDefinition getToplevelTypeDefinition (GrTypeDefinition inner) {
+  private GrTypeDefinition getToplevelTypeDefinition (GroovyPsiElement inner) {
     GrTypeDefinition outer = PsiTreeUtil.getParentOfType(inner, GrTypeDefinition.class);
     while(outer != null) {
       if (outer.getQualifiedName() != null) return outer;
@@ -97,23 +100,25 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
-    GrTypeDefinition typeDefinition = findTypeDefinition(position);
+    GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
     String qName = null;
-    if (typeDefinition == null) {
-      PsiFile file = position.getFile();
-      if (file instanceof GroovyFile) {
-        qName = getScriptFQName((GroovyFile) file);
-      }
-      if (qName == null) return null;
+    if (sourceImage instanceof GrTypeDefinition) {
+      qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
     } else {
-      qName = typeDefinition.getQualifiedName();
+      if (sourceImage == null) {
+        PsiFile file = position.getFile();
+        if (file instanceof GroovyFile) {
+          qName = getScriptFQName((GroovyFile) file);
+        }
+        if (qName == null) return null;
+      }
     }
 
     String waitPrepareFor;
     ClassPrepareRequestor waitRequestor;
 
     if(qName == null) {
-      GrTypeDefinition toplevel = getToplevelTypeDefinition(typeDefinition);
+      GrTypeDefinition toplevel = getToplevelTypeDefinition(sourceImage);
 
       if(toplevel == null) return null;
 
@@ -221,22 +226,22 @@ public class GroovyPositionManager implements PositionManager {
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>> () {
       public List<ReferenceType> compute() {
-        GrTypeDefinition typeDefinition = findTypeDefinition(classPosition);
+        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(classPosition);
 
-        String qName;
-        if(typeDefinition == null) {
+        String qName = null;
+        if (sourceImage instanceof GrTypeDefinition) {
+          qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
+        } else if (sourceImage == null) {
           PsiFile file = classPosition.getFile();
           if (file instanceof GroovyFile) {
             qName = getScriptFQName((GroovyFile) file);
           } else {
             return Collections.emptyList();
           }
-        } else {
-          qName = typeDefinition.getQualifiedName();
         }
 
         if(qName == null) {
-          final GrTypeDefinition toplevel = getToplevelTypeDefinition(typeDefinition);
+          final GrTypeDefinition toplevel = getToplevelTypeDefinition(sourceImage);
           if(toplevel == null) return Collections.emptyList();
 
           final String parentClassName = toplevel.getQualifiedName();
@@ -245,7 +250,7 @@ public class GroovyPositionManager implements PositionManager {
           final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
 
           for (ReferenceType outer : outers) {
-            final ReferenceType nested = findNested(outer, typeDefinition, classPosition);
+            final ReferenceType nested = findNested(outer, sourceImage, classPosition);
             if (nested != null) {
               result.add(nested);
             }
@@ -270,14 +275,14 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private ReferenceType findNested(ReferenceType fromClass, final GrTypeDefinition typeDefinitionToFind, SourcePosition classPosition) {
+  private ReferenceType findNested(ReferenceType fromClass, final GroovyPsiElement toFind, SourcePosition classPosition) {
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
 
       final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
 
       for (ReferenceType nested : nestedTypes) {
-        final ReferenceType found = findNested(nested, typeDefinitionToFind, classPosition);
+        final ReferenceType found = findNested(nested, toFind, classPosition);
         if (found != null) {
           return found;
         }
@@ -290,8 +295,8 @@ public class GroovyPositionManager implements PositionManager {
         }
         //noinspection LoopStatementThatDoesntLoop
         for (Location location : fromClass.allLineLocations()) {
-          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(typeDefinitionToFind.getContainingFile(), location.lineNumber() - 1);
-          if (typeDefinitionToFind.equals(findTypeDefinition(candidateFirstPosition))) {
+          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(toFind.getContainingFile(), location.lineNumber() - 1);
+          if (toFind.equals(findReferenceTypeSourceImage(candidateFirstPosition))) {
             return fromClass;
           }
           break; // check only the first location

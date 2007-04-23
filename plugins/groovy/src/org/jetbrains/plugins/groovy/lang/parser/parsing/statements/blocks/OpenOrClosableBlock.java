@@ -87,16 +87,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = closableBlockParamsOpt(builder);
+    closableBlockParamsOpt(builder);
     parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
-    if (!result.equals(WRONGWAY)) {
-      marker.done(CLOSABLE_BLOCK);
-      return CLOSABLE_BLOCK;
-    } else {
-      marker.done(OPEN_BLOCK);
-      return OPEN_BLOCK;
-    }
+    marker.done(CLOSABLE_BLOCK);
+    return CLOSABLE_BLOCK;
   }
 
 
