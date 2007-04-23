@@ -3,9 +3,18 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -26,7 +35,9 @@ public class ChangesCacheFile {
   private RandomAccessFile myStream;
   private RandomAccessFile myIndexStream;
   boolean myStreamsOpen;
+  private Project myProject;
   private CachingCommittedChangesProvider myChangesProvider;
+  private FilePath myRootPath;
   private RepositoryLocation myLocation;
   private Date myFirstCachedDate = new Date(2020, 1, 2);
   private Date myLastCachedDate = new Date(1970, 1, 2);
@@ -37,11 +48,22 @@ public class ChangesCacheFile {
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 30;
 
-  public ChangesCacheFile(final File path, final CachingCommittedChangesProvider changesProvider, final RepositoryLocation location) {
+  public ChangesCacheFile(Project project, File path, CachingCommittedChangesProvider changesProvider, VirtualFile root,
+                          RepositoryLocation location) {
+    myProject = project;
     myPath = path;
     myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
     myChangesProvider = changesProvider;
+    myRootPath = new FilePathImpl(root);
     myLocation = location;
+  }
+
+  public RepositoryLocation getLocation() {
+    return myLocation;
+  }
+
+  public CachingCommittedChangesProvider getProvider() {
+    return myChangesProvider;
   }
 
   public boolean isEmpty() {
@@ -238,8 +260,7 @@ public class ChangesCacheFile {
           if (entries.length == 0) {
             break;
           }
-          myStream.seek(entries [0].offset);
-          CommittedChangeList changeList = myChangesProvider.readChangeList(myLocation, myStream);
+          CommittedChangeList changeList = loadChangeListAt(entries [0].offset);
           if (filter.accepts(changeList)) {
             result.add(0, changeList);
           }
@@ -285,8 +306,7 @@ public class ChangesCacheFile {
         if (entries.length == 0 || entries [0].completelyDownloaded) {
           break;
         }
-        myStream.seek(entries [0].offset);
-        result.add(myChangesProvider.readChangeList(myLocation, myStream));
+        result.add(loadChangeListAt(entries[0].offset));
         offset++;
       }
       return result;
@@ -296,23 +316,84 @@ public class ChangesCacheFile {
     }
   }
 
-  public void processUpdatedFiles(final UpdatedFiles updatedFiles) throws IOException {
+  private CommittedChangeList loadChangeListAt(final long clOffset) throws IOException {
+    myStream.seek(clOffset);
+    return myChangesProvider.readChangeList(myLocation, myStream);
+  }
+
+  public boolean processUpdatedFiles(final UpdatedFiles updatedFiles) throws IOException {
+    boolean haveUnaccountedUpdatedFiles = false;
     openStreams();
     try {
-      final long length = myIndexStream.length();
-      long totalCount = length / INDEX_ENTRY_SIZE;
-      IndexEntry e = new IndexEntry();
-      for(int i=0; i<totalCount; i++) {
-        myIndexStream.seek(length - (i+1) * INDEX_ENTRY_SIZE);
-        readIndexEntry(e);
-        if (e.completelyDownloaded) break;
-        myIndexStream.seek(length - (i+1) * INDEX_ENTRY_SIZE);
-        writeIndexEntry(e.number, e.date, e.offset, true);
+      final List<IncomingChangeListData> incomingData = loadIncomingChangeListData();
+      for(FileGroup group: updatedFiles.getTopLevelGroups()) {
+        haveUnaccountedUpdatedFiles |= processGroup(group, incomingData);
+      }
+      if (!haveUnaccountedUpdatedFiles) {
+        for(IncomingChangeListData data: incomingData) {
+          if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
+            myIndexStream.seek(data.indexOffset);
+            writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
+          }
+        }
       }
     }
     finally {
       closeStreams();
     }
+    return haveUnaccountedUpdatedFiles;
+  }
+
+  private boolean processGroup(final FileGroup group, final List<IncomingChangeListData> incomingData) {
+    boolean haveUnaccountedUpdatedFiles = false;
+    final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myProject);
+    for(Pair<String, VcsRevisionNumber> pair: list) {
+      haveUnaccountedUpdatedFiles |= processFile(pair.first, pair.second, incomingData);
+    }
+    for(FileGroup childGroup: group.getChildren()) {
+      haveUnaccountedUpdatedFiles |= processGroup(childGroup, incomingData);
+    }
+    return haveUnaccountedUpdatedFiles;
+  }
+
+  private boolean processFile(final String file, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+    FilePath path = new FilePathImpl(new File(file), false);
+    if (!path.isUnder(myRootPath, false)) {
+      return false;
+    }
+    boolean foundRevision = false;
+    for(IncomingChangeListData data: incomingData) {
+      for(Change change: data.changeList.getChanges()) {
+        ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null && afterRevision.getFile().equals(path)) {
+          int rc = number.compareTo(afterRevision.getRevisionNumber());
+          if (rc == 0) {
+            foundRevision = true;
+          }
+          data.accountedChanges.add(change);
+        }
+      }
+    }
+    return !foundRevision;
+  }
+
+  private List<IncomingChangeListData> loadIncomingChangeListData() throws IOException {
+    final long length = myIndexStream.length();
+    long totalCount = length / INDEX_ENTRY_SIZE;
+    List<IncomingChangeListData> incomingData = new ArrayList<IncomingChangeListData>();
+    for(int i=0; i<totalCount; i++) {
+      final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+      myIndexStream.seek(indexOffset);
+      IndexEntry e = new IndexEntry();
+      readIndexEntry(e);
+      if (e.completelyDownloaded) break;
+      IncomingChangeListData data = new IncomingChangeListData();
+      data.indexOffset = indexOffset;
+      data.indexEntry = e;
+      data.changeList = loadChangeListAt(e.offset);
+      data.accountedChanges = new HashSet<Change>();
+    }
+    return incomingData;
   }
 
   private static class IndexEntry {
@@ -320,6 +401,13 @@ public class ChangesCacheFile {
     long date;
     long offset;
     boolean completelyDownloaded;
+  }
+
+  private static class IncomingChangeListData {
+    public long indexOffset;
+    public IndexEntry indexEntry;
+    public CommittedChangeList changeList;
+    public Set<Change> accountedChanges;
   }
 
   private static final IndexEntry[] NO_ENTRIES = new IndexEntry[0];

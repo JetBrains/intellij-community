@@ -10,6 +10,9 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -78,9 +81,9 @@ public class CommittedChangesCache {
     }
     if (provider instanceof CachingCommittedChangesProvider) {
       final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
-      if (canGetFromCache(cachingProvider, settings, location, maxCount)) {
+      if (canGetFromCache(cachingProvider, settings, file, location, maxCount)) {
         try {
-          return getChangesWithCaching(cachingProvider, settings, location, maxCount);
+          return getChangesWithCaching(cachingProvider, settings, file, location, maxCount);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -92,8 +95,8 @@ public class CommittedChangesCache {
   }
 
   private boolean canGetFromCache(final CachingCommittedChangesProvider cachingProvider, final ChangeBrowserSettings settings,
-                                  final RepositoryLocation location, final int maxCount) {
-    ChangesCacheFile cacheFile = getCacheFile(cachingProvider, location);
+                                  final VirtualFile root, final RepositoryLocation location, final int maxCount) {
+    ChangesCacheFile cacheFile = getCacheFile(cachingProvider, root, location);
     if (cacheFile.isEmpty()) {
       return true;   // we'll initialize the cache and check again after that
     }
@@ -138,7 +141,7 @@ public class CommittedChangesCache {
       if (provider instanceof CachingCommittedChangesProvider) {
         final RepositoryLocation location = provider.getLocationFor(file);
         if (location != null) {
-          ChangesCacheFile cacheFile = getCacheFile((CachingCommittedChangesProvider) provider, location);
+          ChangesCacheFile cacheFile = getCacheFile((CachingCommittedChangesProvider) provider, file, location);
           result.add(cacheFile);
         }
       }
@@ -148,9 +151,10 @@ public class CommittedChangesCache {
 
   private List<CommittedChangeList> getChangesWithCaching(final CachingCommittedChangesProvider provider,
                                                           final ChangeBrowserSettings settings,
+                                                          final VirtualFile root,
                                                           final RepositoryLocation location,
                                                           final int maxCount) throws VcsException, IOException {
-    ChangesCacheFile cacheFile = getCacheFile(provider, location);
+    ChangesCacheFile cacheFile = getCacheFile(provider, root, location);
     if (cacheFile.isEmpty()) {
       List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
       // when initially initializing cache, assume all changelists are locally available
@@ -158,7 +162,7 @@ public class CommittedChangesCache {
       if (changes.size() < myInitialCount) {
         cacheFile.setHaveCompleteHistory(true);
       }
-      if (canGetFromCache(provider, settings, location, maxCount)) {
+      if (canGetFromCache(provider, settings, root, location, maxCount)) {
         settings.filterChanges(changes);
         return trimToSize(changes, maxCount);
       }
@@ -166,18 +170,25 @@ public class CommittedChangesCache {
     }
     else {
       List<CommittedChangeList> changes = cacheFile.readChanges(settings, maxCount);
-      final Date date = cacheFile.getLastCachedDate();
-      final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
-      defaultSettings.setDateAfter(date);
-      List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
-      newChanges = cacheFile.writeChanges(newChanges, false);    // skip duplicates
-      if (newChanges.size() > 0) {
-        myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
-      }
+      List<CommittedChangeList> newChanges = refreshCache(cacheFile);
       settings.filterChanges(newChanges);
       changes.addAll(newChanges);
       return trimToSize(changes, maxCount);
     }
+  }
+
+  private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    final Date date = cacheFile.getLastCachedDate();
+    final CachingCommittedChangesProvider provider = cacheFile.getProvider();
+    final RepositoryLocation location = cacheFile.getLocation();
+    final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
+    defaultSettings.setDateAfter(date);
+    List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
+    newChanges = cacheFile.writeChanges(newChanges, false);    // skip duplicates
+    if (newChanges.size() > 0) {
+      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
+    }
+    return newChanges;
   }
 
   private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
@@ -205,21 +216,58 @@ public class CommittedChangesCache {
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
     final Collection<ChangesCacheFile> caches = getAllCaches();
-    for(ChangesCacheFile cache: caches) {
+    for(final ChangesCacheFile cache: caches) {
+      boolean needRefresh;
       try {
-        cache.processUpdatedFiles(updatedFiles);
+        needRefresh = cache.processUpdatedFiles(updatedFiles);
       }
       catch (IOException e) {
         LOG.error(e);
+        continue;
+      }
+      if (needRefresh) {
+        refreshCacheAsync(cache, new Runnable() {
+          public void run() {
+            try {
+              cache.processUpdatedFiles(updatedFiles);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+        });
       }
     }
     myBus.syncPublisher(COMMITTED_TOPIC).updatedFilesProcessed();
   }
 
-  private ChangesCacheFile getCacheFile(final CachingCommittedChangesProvider provider, final RepositoryLocation location) {
+  private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
+    final Task task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
+      private boolean hasNewChanges = false;
+
+      public void run(final ProgressIndicator indicator) {
+        try {
+          final List<CommittedChangeList> list = refreshCache(cache);
+          hasNewChanges = (list.size() > 0);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+
+      public void onSuccess() {
+        if (postRunnable != null && hasNewChanges) {
+          postRunnable.run();
+        }
+      }
+    };
+    ProgressManager.getInstance().run(task);
+  }
+
+  private ChangesCacheFile getCacheFile(CachingCommittedChangesProvider provider, VirtualFile root, RepositoryLocation location) {
     ChangesCacheFile cacheFile = myCacheFiles.get(location);
     if (cacheFile == null) {
-      cacheFile = new ChangesCacheFile(getCachePath(location), provider, location);
+      cacheFile = new ChangesCacheFile(myProject, getCachePath(location), provider, root, location);
       myCacheFiles.put(location, cacheFile);
     }
     return cacheFile;

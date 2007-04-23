@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -115,6 +112,15 @@ public class FileGroup implements JDOMExternalizable {
     return files;
   }
 
+  public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(Project project) {
+    ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<Pair<String, VcsRevisionNumber>>();
+    for(UpdatedFile file: myFiles) {
+      VcsRevisionNumber number = getRevision(project, file);
+      files.add(new Pair<String, VcsRevisionNumber>(file.getPath(), number));
+    }
+    return files;
+  }
+
   public boolean isEmpty() {
     if (!myFiles.isEmpty()) return false;
     for (FileGroup child : myChildren) {
@@ -204,15 +210,20 @@ public class FileGroup implements JDOMExternalizable {
   public VcsRevisionNumber getRevision(final Project project, final String path) {
     for(UpdatedFile file: myFiles) {
       if (file.getPath().equals(path)) {
-        final String vcsName = file.getVcsName();
-        final String revision = file.getRevision();
-        if (vcsName != null && revision != null) {
-          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsName);
-          if (vcs != null) {
-            return vcs.parseRevisionNumber(revision);
-          }
-        }
-        break;
+        return getRevision(project, file);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VcsRevisionNumber getRevision(final Project project, final UpdatedFile file) {
+    final String vcsName = file.getVcsName();
+    final String revision = file.getRevision();
+    if (vcsName != null && revision != null) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsName);
+      if (vcs != null) {
+        return vcs.parseRevisionNumber(revision);
       }
     }
     return null;
