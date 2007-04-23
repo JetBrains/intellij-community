@@ -1016,6 +1016,18 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  public PsiMethod getExtractedMethod() {
+    return myExtractedMethod;
+  }
+
+  public PsiType getReturnType() {
+    return myReturnType;
+  }
+
+  public boolean canBeStatic() {
+    return myCanBeStatic;
+  }
+
   public boolean hasDuplicates() {
     final List<Match> duplicates = getDuplicates();
     return duplicates != null && !duplicates.isEmpty();
