@@ -29,6 +29,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   private PsiType myRuntimeException;
   private DfaValueFactory myFactory;
   private final InstructionFactory myInstructionFactory;
+  private boolean myHonorRuntimeExceptions = true;
 
   public ControlFlowAnalyzer(final DfaValueFactory valueFactory, final InstructionFactory instructionFactory) {
     myFactory = valueFactory;
@@ -36,6 +37,10 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   }
 
   private static class CantAnalyzeException extends RuntimeException {
+  }
+
+  public void setHonorRuntimeExceptions(final boolean honorRuntimeExceptions) {
+    myHonorRuntimeExceptions = honorRuntimeExceptions;
   }
 
   public ControlFlow buildControlFlow(PsiElement codeFragment) {
@@ -704,7 +709,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiCodeBlock catchBlock = section.getCatchBlock();
       PsiParameter parameter = section.getParameter();
       if (parameter != null && catchBlock != null && parameter.getType() instanceof PsiClassType &&
-          !ExceptionUtil.isUncheckedException((PsiClassType)parameter.getType())) {
+          (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)parameter.getType()))) {
         myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
         catchesPushCount++;
       }

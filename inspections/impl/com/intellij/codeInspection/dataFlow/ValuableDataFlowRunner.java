@@ -33,6 +33,12 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     return new MyDfaMemoryState(getFactory());
   }
 
+  protected ControlFlowAnalyzer createControlFlowAnalyzer() {
+    final ControlFlowAnalyzer analyzer = super.createControlFlowAnalyzer();
+    analyzer.setHonorRuntimeExceptions(false);
+    return analyzer;
+  }
+
   @NotNull
   public Collection<PsiExpression> getPossibleVariableValues(PsiVariable psiVariable) {
     final Collection<PsiExpression> psiExpressions = ((MyInstructionFactory)getInstructionFactory()).myValues.get(psiVariable);

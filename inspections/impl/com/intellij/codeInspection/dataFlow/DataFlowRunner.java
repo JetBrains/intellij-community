@@ -66,7 +66,8 @@ public class DataFlowRunner {
     final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     try {
-      ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, myInstructionFactory).buildControlFlow(psiBlock);
+      final ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
+      final ControlFlow flow = analyzer.buildControlFlow(psiBlock);
       if (flow == null) return false;
 
       myInstructions = flow.getInstructions();
@@ -142,6 +143,10 @@ public class DataFlowRunner {
     catch (EmptyStackException e) /* TODO[max] !!! hack (of 18186). Please fix in better times. */ {
       return false;
     }
+  }
+
+  protected ControlFlowAnalyzer createControlFlowAnalyzer() {
+    return new ControlFlowAnalyzer(myValueFactory, myInstructionFactory);
   }
 
   protected DfaMemoryState createMemoryState() {
