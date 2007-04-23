@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.localVcs.LvcsObject;
@@ -15,343 +16,435 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * author: lesya
+ */
+
 class FileOperationsUndoProvider extends VirtualFileAdapter implements LocalVcsItemsLocker {
-  private Key<CompositeUndoableAction> DELETE_UNDOABLE_ACTION_KEY = new Key<CompositeUndoableAction>("DeleteUndoableAction");
-
-  private Project myProject;
-  private UndoManagerImpl myUndoManager;
-  private Set<LvcsRevision> myLockedRevisions = Collections.synchronizedSet(new HashSet<LvcsRevision>());
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.FileOperationsUndoProvider");
+  private final UndoManagerImpl myUndoManager;
+  private final Project myProject;
   private boolean myCommandStarted;
-
-
-  public FileOperationsUndoProvider(UndoManagerImpl m, Project p) {
-    myUndoManager = m;
-    myProject = p;
-
-    if (myProject == null) return;
-
-    getLvcs().getLocalVcsPurgingProvider().registerLocker(this);
-    getFileManager().addVirtualFileListener(this);
-  }
-
-  public void dispose() {
-    if (myProject == null) return;
-
-    getFileManager().removeVirtualFileListener(this);
-    getLvcs().getLocalVcsPurgingProvider().unregisterLocker(this);
-  }
-
-  private VirtualFileManager getFileManager() {
-    return VirtualFileManager.getInstance();
-  }
-
-  public void commandStarted(Project p) {
-    if (myProject != p) return;
-    myCommandStarted = true;
-  }
-
-  public void commandFinished(Project p) {
-    if (myProject != p) return;
-    myCommandStarted = false;
-  }
-
-  public void fileCreated(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
-
-    if (isUndoable(e)) {
-      createUndoableAction(e, true); //??
-    }
-    else {
-      createNonUndoableAction(e);
-    }
-  }
-
-  public void beforeContentsChange(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
-    if (isUndoable(e)) return;
-
-    createNonUndoableAction(e);
-  }
-
-  public void propertyChanged(VirtualFilePropertyEvent e) {
-    if (shouldNotProcess(e)) return;
-    if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
-
-    if (isUndoable(e)) {
-      createUndoableAction(e, false);
-    }
-    else {
-      createNonUndoableAction(e);
-    }
-  }
-
-  public void fileMoved(VirtualFileMoveEvent e) {
-    if (shouldNotProcess(e)) return;
-
-    if (isUndoable(e)) {
-      createUndoableAction(e, false);
-    }
-    else {
-      createNonUndoableAction(e);
-    }
-  }
-
-  public void beforeFileDeletion(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
-
-    if (isUndoable(e)) {
-      CompositeUndoableAction a = startUndoableAction(e, false);
-      e.getFile().putUserData(DELETE_UNDOABLE_ACTION_KEY, a);
-    }
-    else {
-      createNonUndoableAction(e);
-    }
-  }
-
-  public void fileDeleted(VirtualFileEvent e) {
-    VirtualFile f = e.getFile();
-    CompositeUndoableAction a = f.getUserData(DELETE_UNDOABLE_ACTION_KEY);
-    if (a == null) return;
-
-    a.completeAction();
-    myUndoManager.undoableActionPerformed(a);
-
-    f.putUserData(DELETE_UNDOABLE_ACTION_KEY, null);
-  }
-
-  private boolean shouldNotProcess(VirtualFileEvent e) {
-    return !getLvcs().isAvailable() || !getLvcs().isUnderVcs(e.getFile());
-  }
-
-  private boolean isUndoable(VirtualFileEvent e) {
-    return !e.isFromRefresh() && getLvcs().isUnderVcs(e.getFile());
-  }
-
-  private void createNonUndoableAction(VirtualFileEvent e) {
-    VirtualFile f = e.getFile();
-
-    DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
-    registerNonUndoableAction(newRef);
-
-    DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
-    if (oldRef != null && !oldRef.equals(newRef)) {
-      registerNonUndoableAction(oldRef);
-    }
-  }
-
-  private void registerNonUndoableAction(final DocumentReference r) {
-    if (myUndoManager.undoableActionsForDocumentAreEmpty(r)) return;
-    myUndoManager.undoableActionPerformed(new NonUndoableAction() {
-      public DocumentReference[] getAffectedDocuments() {
-        return new DocumentReference[]{r};
-      }
-
-      public boolean isComplex() {
-        return true;
-      }
-    });
-  }
-
-  private void createUndoableAction(VirtualFileEvent e, boolean isContentAffected) {
-    UndoableAction a = startUndoableAction(e, isContentAffected);
-    if (a == null) return;
-    myUndoManager.undoableActionPerformed(a);
-  }
-
-  private CompositeUndoableAction startUndoableAction(VirtualFileEvent e, boolean isContentAffected) {
-    if (!myCommandStarted) return null;
-    CompositeUndoableAction a = new CompositeUndoableAction();
-    buildCompositeUndoableAction(a, e.getFile(), isContentAffected);
-    return a;
-  }
-
-  private void buildCompositeUndoableAction(CompositeUndoableAction a, VirtualFile f, boolean isContentAffected) {
-    String filePath = f.getPath();
-    boolean isDirectory = f.isDirectory();
-
-    LvcsRevision revisionAfterAction = getCurrentRevision(filePath, isDirectory);
-    if (revisionAfterAction == null) return;
-
-    myLockedRevisions.add(revisionAfterAction);
-
-    a.addAction(new LvcsBasedUndoableAction(f, filePath, isDirectory, revisionAfterAction, isContentAffected));
-
-    if (isDirectory) {
-      for (VirtualFile child : f.getChildren()) {
-        buildCompositeUndoableAction(a, child, isContentAffected);
-      }
-    }
-  }
-
-  private LvcsRevision getCurrentRevision(String path, boolean isDir) {
-    LocalVcs vcs = getLvcs();
-    LvcsObject o = isDir ? vcs.findDirectory(path, true) : vcs.findFile(path, true);
-    if (o == null) return null;
-    return o.getRevision();
-  }
-
-  public boolean itemCanBePurged(LvcsRevision revision) {
-    return !myLockedRevisions.contains(revision);
-  }
-
-  private LocalVcs getLvcs() {
-    return LocalVcs.getInstance(myProject);
-  }
-
-  private class LvcsBasedUndoableAction implements UndoableAction, Disposable {
-    private final VirtualFile myFile;
-    private final String myFilePath;
-    private boolean myIsContentAffected;
-
-    private final boolean myDirectory;
-    private LvcsRevision myRevisionAfterAction;
-    private LvcsRevision myRevisionAfterUndo;
-
-
-    public LvcsBasedUndoableAction(VirtualFile file,
-                                   String filePath,
-                                   boolean directory,
-                                   LvcsRevision revisionAfterAction,
-                                   boolean contentAffected) {
-      myFile = file;
-      myFilePath = filePath;
-      myDirectory = directory;
-      myRevisionAfterAction = revisionAfterAction;
-      myIsContentAffected = contentAffected;
-    }
-
-    public void dispose() {
-      if (myRevisionAfterUndo != null) myLockedRevisions.remove(myRevisionAfterUndo);
-      if (myRevisionAfterAction != null) myLockedRevisions.remove(myRevisionAfterAction);
-    }
-
-    public void undo() throws UnexpectedUndoException {
-      LvcsRevision beforeUndo = getCurrentRevision(myFilePath, myDirectory);
-      if (beforeUndo == null) return; // ?
-
-      if (!rollbackToBefore(myRevisionAfterAction)) return;
-
-      myRevisionAfterUndo = beforeUndo.getNextRevision();
-      if (myRevisionAfterUndo != null) {
-        myLockedRevisions.add(myRevisionAfterUndo);
-      }
-    }
-
-    public void redo() throws UnexpectedUndoException {
-      if (myRevisionAfterUndo == null) return;
-      rollbackToBefore(myRevisionAfterUndo);
-      myRevisionAfterUndo = null;
-    }
-
-    private boolean rollbackToBefore(LvcsRevision r) {
-      try {
-        LocalVcsChanges.rollback(getChanges(r));
-        return true;
-      }
-      catch (final IOException e) {
-        Application app = ApplicationManager.getApplication();
-        Runnable runnable = new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(CommonBundle.message("cannot.undo.command.error.message", e.getLocalizedMessage()),
-                                     CommonBundle.message("cannot.undo.dialog.title"));
-          }
-        };
-        if (app.isDispatchThread()) {
-          runnable.run();
-        }
-        else {
-          app.invokeLater(runnable);
-        }
-        return false;
-      }
-    }
-
-    private List<LvcsChange> getChanges(LvcsRevision from) {
-      List<LvcsChange> cc = LocalVcsChanges.getChanges(collectRevisions(from));
-      return selectGlobalChanges(cc);
-    }
-
-    private List<LvcsRevision> collectRevisions(LvcsRevision from) {
-      List<LvcsRevision> result = new ArrayList<LvcsRevision>();
-      result.add(from);
-
-      LvcsRevision r = from;
-      while (r.getNextRevision() != null) {
-        r = r.getNextRevision();
-        assert !r.isPurged();
-        result.add(r);
-      }
-
-      return result;
-    }
-
-    private List<LvcsChange> selectGlobalChanges(List<LvcsChange> cc) {
-      ArrayList<LvcsChange> result = new ArrayList<LvcsChange>();
-      for (LvcsChange c : cc) {
-        if (c.getChangeType() != LvcsChange.CONTENT_CHANGED) result.add(c);
-      }
-      return result;
-    }
-
-    public DocumentReference[] getAffectedDocuments() {
-      if (!myIsContentAffected) return DocumentReference.EMPTY_ARRAY;
-      return new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)};
-    }
-
-    public boolean isComplex() {
-      return true;
-    }
-
-    public void finishAction() {
-      myRevisionAfterAction = myRevisionAfterAction.findLatestRevision();
-    }
-  }
+  private final Collection<LvcsRevision> myLockedRevisions = new HashSet<LvcsRevision>();
+  private final Key<CompositeUndoableAction> DELETE_UNDOABLE_ACTION_KEY = new Key<CompositeUndoableAction>("DeleteUndoableAction");
 
   private static class CompositeUndoableAction implements UndoableAction, Disposable {
-    private List<LvcsBasedUndoableAction> myActions = new ArrayList<LvcsBasedUndoableAction>();
+    private final List<LvcsBasedUndoableAction> myActions = new ArrayList<LvcsBasedUndoableAction>();
 
-    public void dispose() {
-      for (LvcsBasedUndoableAction a : myActions) {
-        a.dispose();
-      }
-    }
-
-    public void addAction(LvcsBasedUndoableAction a) {
-      myActions.add(a);
-    }
-
-    public void completeAction() {
-      for (LvcsBasedUndoableAction a : myActions) {
-        a.finishAction();
-      }
+    public CompositeUndoableAction addAction(LvcsBasedUndoableAction action) {
+      myActions.add(action);
+      return this;
     }
 
     public void undo() throws UnexpectedUndoException {
-      for (LvcsBasedUndoableAction a : myActions) {
-        a.undo();
+      for (final LvcsBasedUndoableAction action : myActions) {
+        action.undo();
       }
     }
 
     public void redo() throws UnexpectedUndoException {
       for (int i = myActions.size() - 1; i >= 0; i--) {
-        myActions.get(i).redo();
+        UndoableAction undoableAction = myActions.get(i);
+        undoableAction.redo();
       }
     }
 
     public DocumentReference[] getAffectedDocuments() {
-      List<DocumentReference> result = new ArrayList<DocumentReference>();
-      for (UndoableAction a : myActions) {
-        result.addAll(Arrays.asList(a.getAffectedDocuments()));
+      ArrayList<DocumentReference> result = new ArrayList<DocumentReference>();
+      for (final LvcsBasedUndoableAction action : myActions) {
+        result.addAll(Arrays.asList(action.getAffectedDocuments()));
       }
-      return result.toArray(new DocumentReference[0]);
+      return result.toArray(new DocumentReference[result.size()]);
     }
 
     public boolean isComplex() {
       return true;
+    }
+
+    public void dispose() {
+      for (final LvcsBasedUndoableAction action : myActions) {
+        action.dispose();
+      }
+    }
+
+    public boolean isEmpty() {
+      return myActions.isEmpty();
+    }
+
+    public void actionCompleted() {
+      for (final LvcsBasedUndoableAction action : myActions) {
+        action.actionCompleted();
+      }
+    }
+  }
+
+  public FileOperationsUndoProvider(UndoManager undoManager, Project project) {
+    myUndoManager = (UndoManagerImpl)undoManager;
+    myProject = project;
+    if (myProject != null) {
+      virtualFileManager().addVirtualFileListener(this);
+
+      if (LocalVcs.getInstance(myProject) != null) {
+        LocalVcs.getInstance(myProject).getLocalVcsPurgingProvider().registerLocker(this);
+      }
+    }
+  }
+
+  public void dispose() {
+    if (myProject != null) {
+      virtualFileManager().removeVirtualFileListener(this);
+
+      if (LocalVcs.getInstance(myProject) != null) {
+        LocalVcs.getInstance(myProject).getLocalVcsPurgingProvider().unregisterLocker(this);
+      }
+    }
+  }
+
+
+  private VirtualFileManager virtualFileManager() {
+    return VirtualFileManager.getInstance();
+  }
+
+  public void propertyChanged(VirtualFilePropertyEvent event) {
+    if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      if (shouldProcess(event)) {
+        undoableActionPerformed(event, false);
+      }
+      else {
+        createNonUndoableAction(event.getFile(), true);
+      }
+    }
+  }
+
+  public void contentsChanged(VirtualFileEvent event) {
+  }
+
+  public void fileCreated(VirtualFileEvent event) {
+    if (!shouldProcess(event)) {
+      createNonUndoableAction(event.getFile(), true);
+    }
+    else {
+      undoableActionPerformed(event, true); //??
+    }
+  }
+
+  private boolean shouldProcess(final VirtualFileEvent event) {
+    return !event.isFromRefresh() && getLocalVcs().isUnderVcs(event.getFile());
+  }
+
+  public void fileDeleted(VirtualFileEvent event) {
+    VirtualFile file = event.getFile();
+    try {
+      CompositeUndoableAction deleteUndoableAction = file.getUserData(DELETE_UNDOABLE_ACTION_KEY);
+      if (deleteUndoableAction == null) return;
+      deleteUndoableAction.actionCompleted();
+      myUndoManager.undoableActionPerformed(deleteUndoableAction);
+    }
+    finally {
+      file.putUserData(DELETE_UNDOABLE_ACTION_KEY, null);
+    }
+  }
+
+  public void fileMoved(VirtualFileMoveEvent event) {
+    if (shouldProcess(event)) {
+      undoableActionPerformed(event, false);
+    }
+    else {
+      createNonUndoableAction(event.getFile(), true);
+    }
+
+  }
+
+  public void beforePropertyChange(VirtualFilePropertyEvent event) {
+  }
+
+  public void beforeContentsChange(VirtualFileEvent event) {
+    if (!shouldProcess(event)) {
+      createNonUndoableAction(event.getFile(), false);
+    }
+  }
+
+  public void beforeFileDeletion(VirtualFileEvent event) {
+    VirtualFile file = event.getFile();
+    if (!shouldProcess(event)) {
+      createNonUndoableAction(file, true);
+    }
+    else {
+      CompositeUndoableAction undoableAction = createUndoableAction(file, false);
+      if (!undoableAction.isEmpty()) {
+        file.putUserData(DELETE_UNDOABLE_ACTION_KEY, undoableAction);
+      }
+
+    }
+  }
+
+  public void beforeFileMovement(VirtualFileMoveEvent event) {
+  }
+
+  private void createNonUndoableAction(final VirtualFile vFile, final boolean isComplex) {
+    if (getLocalVcs() == null) {
+      return;
+    }
+
+    if (!getLocalVcs().isUnderVcs(vFile)) {
+      return;
+    }
+
+    final DocumentReference newRef = new DocumentReferenceByVirtualFile(vFile);
+
+    if (!vFile.isDirectory() && vFile.getFileType().isBinary()) {
+      myUndoManager.undoableActionPerformed(new NonUndoableAction() {
+        public DocumentReference[] getAffectedDocuments() {
+          return new DocumentReference[]{newRef};
+        }
+
+        public boolean isComplex() {
+          return isComplex;
+        }
+      });
+
+    }
+
+    DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(vFile.getUrl());
+
+    createNonUndoableAction(vFile, newRef, isComplex);
+
+    if ((oldRef != null) && !oldRef.equals(newRef)) {
+      createNonUndoableAction(vFile, oldRef, isComplex);
+    }
+
+  }
+
+  private void createNonUndoableAction(final VirtualFile vFile, final DocumentReference newRef, final boolean isComplex) {
+    if (getLocalVcs() == null || !getLocalVcs().isUnderVcs(vFile) || myUndoManager.undoableActionsForDocumentAreEmpty(newRef)) {
+      return;
+    }
+
+    myUndoManager.undoableActionPerformed(new NonUndoableAction() {
+      public DocumentReference[] getAffectedDocuments() {
+        return new DocumentReference[]{newRef};
+      }
+
+      public boolean isComplex() {
+        return isComplex;
+      }
+    });
+  }
+
+
+  private CompositeUndoableAction createUndoableAction(final VirtualFile vFile, final boolean isContentsAffected) {
+
+    CompositeUndoableAction compositeUndoableAction = new CompositeUndoableAction();
+
+    if (myCommandStarted && (getLocalVcs() != null) && getLocalVcs().isAvailable()) {
+      addActionForFileTo(compositeUndoableAction, vFile, isContentsAffected);
+    }
+    return compositeUndoableAction;
+  }
+
+  private void addActionForFileTo(CompositeUndoableAction compositeUndoableAction,
+                                  final VirtualFile vFile,
+                                  final boolean isContentsAffected) {
+    final String filePath = vFile.getPath();
+    final boolean isDirectory = vFile.isDirectory();
+    final LvcsRevision afterActionPerformedRevision = getCurrentRevision(filePath, isDirectory);
+    if (afterActionPerformedRevision == null) return;
+    synchronized (myLockedRevisions) {
+      myLockedRevisions.add(afterActionPerformedRevision);
+    }
+    LvcsBasedUndoableAction action =
+      new LvcsBasedUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision, isContentsAffected);
+    compositeUndoableAction.addAction(action);
+
+    VirtualFile[] children = vFile.getChildren();
+    if (children == null) return;
+    for (VirtualFile aChildren : children) {
+      addActionForFileTo(compositeUndoableAction, aChildren, isContentsAffected);
+    }
+
+  }
+
+  @Nullable
+  private LvcsRevision getCurrentRevision(String filePath, boolean isDir) {
+    LocalVcs vcs = getLocalVcs();
+    LvcsObject lvcsFile = isDir ? vcs.findDirectory(filePath, true) : vcs.findFile(filePath, true);
+    if (lvcsFile == null) return null;
+    return lvcsFile.getRevision();
+  }
+
+  private LocalVcs getLocalVcs() {
+    return LocalVcs.getInstance(myProject);
+  }
+
+  private void undoableActionPerformed(VirtualFileEvent event, final boolean isContentsAffected) {
+    CompositeUndoableAction compositeUndoableAction = createUndoableAction(event.getFile(), isContentsAffected);
+    if (!compositeUndoableAction.isEmpty()) {
+      myUndoManager.undoableActionPerformed(compositeUndoableAction);
+    }
+  }
+
+  private List<LvcsChange> getChanges(LvcsRevision requestedRevision, boolean isDir) {
+    List<LvcsChange> changes = getChanges(requestedRevision, getCurrentRevision(getUpToDatePathFor(requestedRevision), isDir));
+    return filterOnlyGlobalChanges(changes);
+  }
+
+  private List<LvcsChange> filterOnlyGlobalChanges(List<LvcsChange> changes) {
+    ArrayList<LvcsChange> result = new ArrayList<LvcsChange>();
+    for (final LvcsChange change : changes) {
+      if (change.getChangeType() != LvcsChange.CONTENT_CHANGED) result.add(change);
+    }
+    return result;
+  }
+
+  private String getUpToDatePathFor(LvcsRevision requestedRevision) {
+    LvcsRevision current = requestedRevision;
+    while (current.getNextRevision() != null) current = current.getNextRevision();
+    return current.getAbsolutePath();
+  }
+
+  private List<LvcsChange> getChanges(LvcsRevision requestedRevision, LvcsRevision lastRevision) {
+    if (lastRevision == null || requestedRevision == null) {
+      return new ArrayList<LvcsChange>();
+    }
+    return createChangesFromRevisions(collectRevisionsFromTo(requestedRevision, lastRevision));
+  }
+
+  private List<LvcsChange> createChangesFromRevisions(ArrayList<LvcsRevision> revisions) {
+    return LocalVcsChanges.getChanges(revisions);
+  }
+
+  private ArrayList<LvcsRevision> collectRevisionsFromTo(LvcsRevision requestedRevision, LvcsRevision lastRevision) {
+    ArrayList<LvcsRevision> revisions = new ArrayList<LvcsRevision>();
+
+    revisions.add(requestedRevision);
+
+    LvcsRevision currentRevision = requestedRevision;
+
+    while (!currentRevision.equals(lastRevision)) {
+      currentRevision = currentRevision.getNextRevision();
+      LOG.assertTrue(!currentRevision.isPurged());
+      revisions.add(currentRevision);
+    }
+    return revisions;
+  }
+
+  public void commandStarted(Project project) {
+    if (myProject == project) {
+      myCommandStarted = true;
+    }
+  }
+
+  public void commandFinished(Project project) {
+    if (myProject == project) {
+      myCommandStarted = false;
+    }
+  }
+
+  private class LvcsBasedUndoableAction implements UndoableAction, Disposable {
+    private LvcsRevision myBeforeUndoRevision;
+    private LvcsRevision myAfterActionPerformedRevision;
+    private boolean myIsContentsAffected;
+
+    private final VirtualFile myFile;
+    private final String myFilePath;
+    private final boolean myDirectory;
+
+    public LvcsBasedUndoableAction(VirtualFile file,
+                                   String filePath,
+                                   boolean directory,
+                                   LvcsRevision afterActionPerformedRevision,
+                                   boolean contentsAffected) {
+      myFile = file;
+      myFilePath = filePath;
+      myDirectory = directory;
+      myAfterActionPerformedRevision = afterActionPerformedRevision;
+      myIsContentsAffected = contentsAffected;
+    }
+
+    public void dispose() {
+      synchronized (myLockedRevisions) {
+        if (myBeforeUndoRevision != null) myLockedRevisions.remove(myBeforeUndoRevision);
+        if (myAfterActionPerformedRevision != null) myLockedRevisions.remove(myAfterActionPerformedRevision);
+      }
+    }
+
+    public void undo() throws UnexpectedUndoException {
+      myBeforeUndoRevision = getCurrentRevision(myFilePath, myDirectory);
+      if (myBeforeUndoRevision == null) return;
+      try {
+        rollbackTo(myAfterActionPerformedRevision);
+        myBeforeUndoRevision = myBeforeUndoRevision.getNextRevision();
+        if (myBeforeUndoRevision != null) {
+          synchronized (myLockedRevisions) {
+            myLockedRevisions.add(myBeforeUndoRevision);
+          }
+        }
+      }
+      catch (final IOException e) {
+        myBeforeUndoRevision = null;
+        Application application = ApplicationManager.getApplication();
+        if (!application.isUnitTestMode()) {
+          Runnable showDialogAction = new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(CommonBundle.message("cannot.undo.command.error.message", e.getLocalizedMessage()),
+                                       CommonBundle.message("cannot.undo.dialog.title"));
+            }
+          };
+
+          if (application.isDispatchThread()) {
+            showDialogAction.run();
+          }
+          else {
+            application.invokeLater(showDialogAction);
+          }
+        }
+        else {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    public void redo() throws UnexpectedUndoException {
+      try {
+        rollbackTo(myBeforeUndoRevision);
+      }
+      catch (IOException e) {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          Messages.showErrorDialog(CommonBundle.message("cannot.redo.error.message", e.getLocalizedMessage()),
+                                   CommonBundle.message("cannot.redo.dialog.title"));
+        }
+        else {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    private void rollbackTo(final LvcsRevision currentRevision) throws IOException {
+      if (currentRevision == null) return;
+      LocalVcsChanges.rollback(getChanges(currentRevision, myDirectory));
+    }
+
+    public DocumentReference[] getAffectedDocuments() {
+      return myIsContentsAffected ? new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)} : DocumentReference.EMPTY_ARRAY;
+    }
+
+    public boolean isComplex() {
+      return true;
+    }
+
+    public void actionCompleted() {
+      myAfterActionPerformedRevision = myAfterActionPerformedRevision.findLatestRevision();
+    }
+  }
+
+  public boolean itemCanBePurged(LvcsRevision revision) {
+    synchronized (myLockedRevisions) {
+      return !myLockedRevisions.contains(revision);
     }
   }
 }

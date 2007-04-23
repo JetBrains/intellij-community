@@ -38,6 +38,10 @@ public abstract class Change {
     return false;
   }
 
+  public boolean isGlobal() {
+    return false;
+  }
+
   public void accept(ChangeVisitor v) throws Exception {
   }
 }

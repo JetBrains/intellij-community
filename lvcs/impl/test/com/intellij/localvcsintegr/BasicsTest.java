@@ -80,4 +80,12 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(3, rr.size());
     assertEquals("global", rr.get(0).getName());
   }
+
+  public void testIsUnderControl() throws Exception {
+    VirtualFile f1 = root.createChildData(null, "file.java");
+    VirtualFile f2 = root.createChildData(null, "file.xxx");
+
+    assertTrue(LocalHistory.isUnderControl(myProject, f1));
+    assertFalse(LocalHistory.isUnderControl(myProject, f2));
+  }
 }

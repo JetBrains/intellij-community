@@ -58,4 +58,9 @@ public abstract class StructuralChange extends Change {
   public List<Content> getContentsToPurge() {
     return Collections.emptyList();
   }
+
+  @Override
+  public boolean isGlobal() {
+    return true;
+  }
 }

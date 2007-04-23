@@ -44,8 +44,8 @@ public class ChangeList {
 
     for (Change changeSet : Reversed.list(myChanges)) {
       for (Change c : Reversed.list(changeSet.getChanges())) {
-        result.add(c);
         if (c == target) return result;
+        result.add(c);
       }
     }
 

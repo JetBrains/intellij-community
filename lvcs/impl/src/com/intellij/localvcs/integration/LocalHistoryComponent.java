@@ -4,8 +4,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.ThreadSafeLocalVcs;
-import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.changes.ChangeVisitor;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -15,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -138,21 +137,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected Checkpoint putCheckpoint() {
-    return new Checkpoint() {
-      Change myLastChange = myVcs.getLastChange();
+    return new CheckpointImpl(createIdeaGateway(), myVcs);
+  }
 
-      public void revertToPreviousState() {
-        try {
-          ChangeVisitor v = new ChangeRevertionVisitor(myVcs, createIdeaGateway());
-          for (Change c : myVcs.getChangesAfter(myLastChange)) {
-            c.accept(v);
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
+  @Override
+  protected boolean isUnderControl(VirtualFile f) {
+    return createIdeaGateway().getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
   @NonNls

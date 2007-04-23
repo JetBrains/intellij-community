@@ -146,7 +146,7 @@ public class LocalVcs implements ILocalVcs {
   private void applyChange(Change c) {
     c.applyTo(myRoot);
     myPendingChanges.add(c);
-    myLastChange = c;
+    if (c.isGlobal()) myLastChange = c;
 
     // todo forbid the ability of making changes outside of changeset
     if (!isInChangeSet()) registerChangeSet(null);
@@ -172,7 +172,7 @@ public class LocalVcs implements ILocalVcs {
     return myPendingChanges.isEmpty();
   }
 
-  public Change getLastChange() {
+  public Change getLastGlobalChange() {
     return myLastChange;
   }
 
@@ -180,8 +180,8 @@ public class LocalVcs implements ILocalVcs {
     List<Change> result = new ArrayList<Change>();
 
     for (Change c : Reversed.list(myPendingChanges)) {
-      result.add(c);
       if (c == target) return result;
+      result.add(c);
     }
     result.addAll(myChangeList.getChangesAfter(target));
 
@@ -232,6 +232,11 @@ public class LocalVcs implements ILocalVcs {
     c.setTimeInMillis(0);
     c.add(Calendar.DAY_OF_YEAR, 5);
     return c.getTimeInMillis();
+  }
+
+  public byte[] getByteContentAt(String path, long timestamp) {
+    getEntry(path);
+    return null;
   }
 
   public static class Memento {

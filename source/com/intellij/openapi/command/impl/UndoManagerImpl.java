@@ -27,8 +27,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -61,7 +61,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
-  private FileOperationsUndoProvider myFileOperationUndoProvider;
+  private NewFileOperationsUndoProvider myFileOperationUndoProvider;
 
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandCounter = 1;
@@ -85,6 +85,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     init(application);
   }
+
   public UndoManagerImpl(Application application,
                          CommandProcessor commandProcessor,
                          EditorFactory editorFactory,
@@ -108,7 +109,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myProject;
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   private void initialize() {
 
@@ -157,14 +159,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
     myLastMerger = new CommandMerger(this, myEditorFactory);
-    myFileOperationUndoProvider = new FileOperationsUndoProvider(this, myProject);
+    myFileOperationUndoProvider = new NewFileOperationsUndoProvider(this, myProject);
     myBeforeFileDeletionListener = new MyBeforeDeletionListener();
     myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);
   }
 
-  private void onCommandFinished(final Project project,
-                                final String commandName,
-                                final Object commandGroupId) {
+  private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
       myFileOperationUndoProvider.commandFinished(project);
@@ -186,8 +186,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public void dropHistory() {
     // Run dummy command in order to drop all mergers...
-    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(),
-                                                  CommonBundle.message("drop.undo.history.command.name"), null);
+    CommandProcessor.getInstance()
+      .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
 
     LOG.assertTrue(myCommandLevel == 0);
 
@@ -293,8 +293,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private int getRefAge(DocumentReference ref) {
-    return Math.max(myUndoStacksHolder.getYoungestCommandAge(ref),
-                    myRedoStacksHolder.getYoungestCommandAge(ref));
+    return Math.max(myUndoStacksHolder.getYoungestCommandAge(ref), myRedoStacksHolder.getYoungestCommandAge(ref));
   }
 
   public void undoableActionPerformed(UndoableAction action) {
@@ -353,9 +352,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(myProject, executeUndoOrRedoAction,
-                                                  isUndoInProgress() ? CommonBundle.message("undo.command.name") : CommonBundle
-                                                    .message("redo.command.name"), null, myLastMerger.getUndoConfirmationPolicy());
+    CommandProcessor.getInstance()
+      .executeCommand(myProject, executeUndoOrRedoAction, isUndoInProgress() ? CommonBundle.message("undo.command.name") : CommonBundle
+        .message("redo.command.name"), null, myLastMerger.getUndoConfirmationPolicy());
     if (exception[0] != null) throw exception[0];
   }
 
@@ -366,7 +365,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         return false;
       }
     }
-    final Document[] documents = editor == null? null : TextEditorProvider.getDocuments(editor);
+    final Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
     if (documents != null && documents.length > 0) {
       for (Document document : documents) {
         if (myLastMerger != null && !myLastMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
@@ -383,7 +382,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     }
     else {
-      if (myLastMerger != null &&  myLastMerger.isComplex() && !myLastMerger.isEmpty()) return true;
+      if (myLastMerger != null && myLastMerger.isComplex() && !myLastMerger.isEmpty()) return true;
       return !myUndoStacksHolder.getGlobalStack().isEmpty();
     }
   }
@@ -395,7 +394,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         return false;
       }
     }
-    final Document[] documents = editor == null? null : TextEditorProvider.getDocuments(editor);
+    final Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
     if (documents != null && documents.length > 0) {
       for (Document document : documents) {
         LinkedList localStack = getRedoStacksHolder().getStack(document);
@@ -513,15 +512,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (document == null) return;
     final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
     undoableActionPerformed(new UndoableAction() {
-      public void undo() {}
-
-      public void redo() {}
-
-      public DocumentReference[] getAffectedDocuments() {
-        return new DocumentReference[] {ref};
+      public void undo() {
       }
 
-      public boolean isComplex() { return false; }
+      public void redo() {
+      }
+
+      public DocumentReference[] getAffectedDocuments() {
+        return new DocumentReference[]{ref};
+      }
+
+      public boolean isComplex() {
+        return false;
+      }
 
       @NonNls
       public String toString() {
