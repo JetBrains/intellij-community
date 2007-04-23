@@ -1,15 +1,14 @@
-package com.intellij.openapi.vcs.ui.exclude;
+package com.intellij.ui;
 
 import com.intellij.util.Assertion;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ui.SortedListModel;
 import gnu.trove.TIntArrayList;
 import junit.framework.TestCase;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.util.Iterator;
 import java.util.Comparator;
+import java.util.Iterator;
 
 public class SortedListModelTest extends TestCase {
   private SortedListModel myModel = new SortedListModel(new Comparator() {
