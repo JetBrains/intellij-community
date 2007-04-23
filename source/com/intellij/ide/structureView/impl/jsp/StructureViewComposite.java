@@ -53,6 +53,10 @@ public class StructureViewComposite implements StructureView {
     return mySelectedViewDescriptor.structureView;
   }
 
+  public void setStructureView(int index, StructureViewDescriptor view) {
+    myStructureViews[index] = view;
+  }
+
   public FileEditor getFileEditor() {
     return getSelectedStructureView().getFileEditor();
   }
