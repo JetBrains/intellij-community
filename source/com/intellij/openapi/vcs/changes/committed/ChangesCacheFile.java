@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -356,7 +357,7 @@ public class ChangesCacheFile {
     return haveUnaccountedUpdatedFiles;
   }
 
-  private boolean processFile(final String file, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+  private boolean processFile(final String file, @NotNull final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
     FilePath path = new FilePathImpl(new File(file), false);
     if (!path.isUnder(myRootPath, false)) {
       return false;
@@ -392,6 +393,7 @@ public class ChangesCacheFile {
       data.indexEntry = e;
       data.changeList = loadChangeListAt(e.offset);
       data.accountedChanges = new HashSet<Change>();
+      incomingData.add(data);
     }
     return incomingData;
   }

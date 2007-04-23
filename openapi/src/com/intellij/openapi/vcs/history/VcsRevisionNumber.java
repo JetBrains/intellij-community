@@ -59,6 +59,10 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     public int hashCode() {
       return myValue;
     }
+
+    public int getValue() {
+      return myValue;
+    }
   }
 
   class Long implements VcsRevisionNumber{

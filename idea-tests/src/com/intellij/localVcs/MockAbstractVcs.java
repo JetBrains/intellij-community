@@ -6,8 +6,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import org.jetbrains.annotations.Nullable;
 
 public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   private boolean myMarkExternalChangesAsCurrent = false;
@@ -80,5 +82,11 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public void setCommittedChangesProvider(final CommittedChangesProvider committedChangesProvider) {
     myCommittedChangesProvider = committedChangesProvider;
+  }
+
+  @Override
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
+    return new VcsRevisionNumber.Int(Integer.parseInt(revisionNumberString));
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -263,6 +264,10 @@ public class CommittedChangesCache {
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      refreshCacheSync(cache, postRunnable);
+      return;
+    }
     final Task task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
       private boolean hasNewChanges = false;
 
@@ -283,6 +288,19 @@ public class CommittedChangesCache {
       }
     };
     ProgressManager.getInstance().run(task);
+  }
+
+  private void refreshCacheSync(final ChangesCacheFile cache, final Runnable postRunnable) {
+    final List<CommittedChangeList> list;
+    try {
+      list = refreshCache(cache);
+      if (list.size() > 0 && postRunnable != null) {
+        postRunnable.run();
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private ChangesCacheFile getCacheFile(CachingCommittedChangesProvider provider, VirtualFile root, RepositoryLocation location) {
