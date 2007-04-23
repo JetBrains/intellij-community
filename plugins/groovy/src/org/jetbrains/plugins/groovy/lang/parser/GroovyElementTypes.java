@@ -1,30 +1,32 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility interface that contains all Groovy non-token element types
  *
  * @author Dmitry.Krasilschikov, Ilya Sergey
  */
-public interface GroovyElementTypes extends GroovyTokenTypes {
+public interface GroovyElementTypes extends GroovyTokenTypes
+{
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
 
@@ -94,7 +96,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
   GroovyElementType PATH_EXPRESSION = new GroovyElementType("Path expression");
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
-  GroovyElementType PATH_METHOD_CALL= new GroovyElementType("Method call");
+  GroovyElementType PATH_METHOD_CALL = new GroovyElementType("Method call");
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
   GroovyElementType PARENTHSIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
 
@@ -104,7 +106,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
   GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
-  GroovyElementType ARGUMENT_LABEL= new GroovyElementType("Argument label");
+  GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
 
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
@@ -149,7 +151,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 //  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
 //  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
 //  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
-//  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
+  //  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation");
 
   //methods
@@ -157,7 +159,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
 
   //bodies
-//  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
+  //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
   GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
 

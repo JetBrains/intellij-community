@@ -1,16 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser;
@@ -27,10 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForTradClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
@@ -38,6 +35,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForTradClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -54,15 +55,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relatio
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrAnnotationBodyImplType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrClassBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumBodyImplType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrInterfaceBodyImplType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.enumConstantBody.GrEnumConstantBodyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.enumConstantMember.GrEnumConstantMemberImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportReferenceImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
@@ -75,7 +77,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes {
+public abstract class GroovyPsiCreator implements GroovyElementTypes
+{
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -83,7 +86,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
    * @param node Given node
    * @return Respective PSI element
    */
-  public static PsiElement createElement(ASTNode node) {
+  public static PsiElement createElement(ASTNode node)
+  {
     IElementType elem = node.getElementType();
 
     //Identifiers & literal
@@ -126,15 +130,18 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
-    if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR)) return new GrVariableDefinitionsImpl(node);
+    if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
+      return new GrVariableDefinitionsImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
     if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
-    if (elem.equals(INTERFACE_DEFINITION) || elem.equals(INTERFACE_DEFINITION_ERROR)) return new GrInterfaceDefinitionImpl(node);
+    if (elem.equals(INTERFACE_DEFINITION) || elem.equals(INTERFACE_DEFINITION_ERROR))
+      return new GrInterfaceDefinitionImpl(node);
     if (elem.equals(ENUM_DEFINITION) || elem.equals(ENUM_DEFINITION_ERROR)) return new GrEnumTypeDefinitionImpl(node);
-    if (elem.equals(ANNOTATION_DEFINITION) || elem.equals(ANNOTATION_DEFINITION_ERROR)) return new GrAnnotationTypeDefinitionImpl(node);
+    if (elem.equals(ANNOTATION_DEFINITION) || elem.equals(ANNOTATION_DEFINITION_ERROR))
+      return new GrAnnotationTypeDefinitionImpl(node);
 
     if (elem.equals(REFERENCE_ELEMENT)) return new GrReferenceElementImpl(node);
 

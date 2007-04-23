@@ -1,16 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
@@ -24,30 +25,36 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class ImplementsClause implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+public class ImplementsClause implements GroovyElementTypes
+{
+  public static IElementType parse(PsiBuilder builder)
+  {
     //see also InterfaceExtends
 
     PsiBuilder.Marker isMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kIMPLEMENTS)) {
+    if (!ParserUtils.getToken(builder, kIMPLEMENTS))
+    {
       isMarker.rollbackTo();
       return NONE;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder)))
+    {
       isMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ParserUtils.lookAhead(builder, mCOMMA)) {
+    while (ParserUtils.lookAhead(builder, mCOMMA))
+    {
       ParserUtils.getToken(builder, mNLS);
 
       ParserUtils.getToken(builder, mCOMMA);
 
-      if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+      if (WRONGWAY.equals(ReferenceElement.parse(builder)))
+      {
         isMarker.rollbackTo();
         return WRONGWAY;
       }
