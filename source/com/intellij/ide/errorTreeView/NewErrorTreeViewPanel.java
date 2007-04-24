@@ -21,6 +21,7 @@ import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -70,6 +71,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar) {
+    this(project, helpId, createExitAction, true, null);
+  }
+
+  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, Runnable rerunAction) {
     myProject = project;
     myHelpId = helpId;
     myCreateExitAction = createExitAction;
@@ -108,13 +113,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
-    myTree.setLargeModel(true);
 
     JScrollPane scrollPane = NewErrorTreeRenderer.install(myTree);
     myMessagePanel.add(scrollPane, BorderLayout.CENTER);
 
     if (createToolbar) {
-      add(createToolbarPanel(), BorderLayout.WEST);
+      add(createToolbarPanel(rerunAction), BorderLayout.WEST);
     }
 
     add(myMessagePanel, BorderLayout.CENTER);
@@ -209,7 +213,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data) {
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix);
+    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix, null);
     myBuilder.updateTree();
   }
 
@@ -375,7 +379,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private JPanel createToolbarPanel() {
+  private JPanel createToolbarPanel(Runnable rerunAction) {
     AnAction closeMessageViewAction = new CloseTabToolbarAction() {
       public void actionPerformed(AnActionEvent e) {
         close();
@@ -383,6 +387,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     };
 
     DefaultActionGroup leftUpdateableActionGroup = new DefaultActionGroup();
+    if (rerunAction != null) {
+      leftUpdateableActionGroup.add(new RerunAction(rerunAction, closeMessageViewAction));
+    }
+    
     leftUpdateableActionGroup.add(new StopAction());
     if (myCreateExitAction) {
       leftUpdateableActionGroup.add(closeMessageViewAction);
@@ -438,6 +446,27 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigatorSupport.getPreviousOccurenceActionName();
+  }
+
+  private class RerunAction extends AnAction {
+    private Runnable myRerunAction;
+    private AnAction myCloseAction;
+
+    public RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
+      super(IdeBundle.message("action.refresh"), null, IconLoader.getIcon("/actions/refreshUsages.png"));
+      myRerunAction = rerunAction;
+      myCloseAction = closeAction;
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      myCloseAction.actionPerformed(e);
+      myRerunAction.run();
+    }
+
+    public void update(AnActionEvent event) {
+      final Presentation presentation = event.getPresentation();
+      presentation.setEnabled(canControlProcess() && isProcessStopped());
+    }
   }
 
   private class StopAction extends AnAction {

@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -20,22 +21,36 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
   public ValidateXmlAction() {
   }
 
-  protected CodeInsightActionHandler getHandler(Project project) {
+  private CodeInsightActionHandler getHandler(final @NotNull PsiFile file) {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
-    handler.setErrorReporter(handler.new StdErrorReporter(project));
+    handler.setErrorReporter(
+      handler.new StdErrorReporter(
+        file.getProject(),
+        new Runnable() {
+          public void run() {
+            doRunAction(file);
+          }
+        }
+      )
+    );
     return handler;
   }
 
   public void actionPerformed(AnActionEvent e) {
     final PsiFile psiFile = (PsiFile) e.getDataContext().getData(DataConstants.PSI_FILE);
     if (psiFile == null) return;
+    doRunAction(psiFile);
+  }
+
+  private void doRunAction(final @NotNull PsiFile psiFile) {
     final Project project = psiFile.getProject();
+
     CommandProcessor.getInstance().executeCommand(
         project, new Runnable(){
         public void run(){
           final Runnable action = new Runnable() {
             public void run() {
-              getHandler(project).invoke(project, null, psiFile);
+              getHandler(psiFile).invoke(project, null, psiFile);
             }
           };
           ApplicationManager.getApplication().runWriteAction(action);

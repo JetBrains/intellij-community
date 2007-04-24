@@ -128,7 +128,16 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   public void addMessage(ErrorTreeElementKind kind, String[] text, VirtualFile file, int line, int column, Object data) {
     if (file != null) {
-      addNavigatableMessage(file.getPresentableUrl(), new OpenFileDescriptor(myProject, file, line, column), kind, text, data, NewErrorTreeViewPanel.createExportPrefix(line), NewErrorTreeViewPanel.createRendererPrefix(line, column));
+      addNavigatableMessage(
+        file.getPresentableUrl(),
+        new OpenFileDescriptor(myProject, file, line, column),
+        kind,
+        text,
+        data,
+        NewErrorTreeViewPanel.createExportPrefix(line),
+        NewErrorTreeViewPanel.createRendererPrefix(line, column),
+        file
+      );
     }
     else {
       addSimpleMessage(kind, text, data);
@@ -139,7 +148,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     addSimpleMessage(kind, text, data);
   }
 
-  public void addNavigatableMessage(String groupName, Navigatable navigatable, final ErrorTreeElementKind kind, final String[] message, final Object data, String exportText, String rendererTextPrefix) {
+  public void addNavigatableMessage(String groupName, Navigatable navigatable, final ErrorTreeElementKind kind, final String[] message,
+                                    final Object data, String exportText, String rendererTextPrefix, VirtualFile file) {
     synchronized (myGroupNameToMessagesMap) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) {
@@ -148,7 +158,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       }
       elements.add(new NavigatableMessageElement(
         kind,
-        getGroupingElement(groupName, data),
+        getGroupingElement(groupName, data, file),
         message, navigatable, exportText, rendererTextPrefix)
       );
     }
@@ -171,10 +181,10 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     elements.add(new SimpleMessageElement(kind, text, data));
   }
 
-  public GroupingElement getGroupingElement(String groupName, Object data) {
+  public GroupingElement getGroupingElement(String groupName, Object data, VirtualFile file) {
     GroupingElement element = myGroupNameToElementMap.get(groupName);
     if (element == null) {
-      element = new GroupingElement(groupName, data);
+      element = new GroupingElement(groupName, data, file);
       myGroupNames.add(groupName);
       myGroupNameToElementMap.put(groupName, element);
     }

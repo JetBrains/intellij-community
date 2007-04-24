@@ -6,8 +6,6 @@ package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import javax.swing.*;
-
 /**
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
@@ -15,19 +13,13 @@ import javax.swing.*;
 public class GroupingElement extends ErrorTreeElement {
   private final String[] myText;
   private final Object myData;
+  private VirtualFile myFile;
 
-  public GroupingElement(VirtualFile file) {
-    this(file.getPresentableUrl(), null);
-  }
-
-  public GroupingElement(String name, Object data) {
+  public GroupingElement(String name, Object data, VirtualFile file) {
     super(ErrorTreeElementKind.GENERIC);
     myText = new String[] {name};
     myData = data;
-  }
-
-  public GroupingElement(VirtualFile file, Object data) {
-    this(file.getPresentableUrl(), data);
+    myFile = file;
   }
 
   public Object getData() {
@@ -44,5 +36,9 @@ public class GroupingElement extends ErrorTreeElement {
 
   public String getExportTextPrefix() {
     return "";
+  }
+
+  public VirtualFile getFile() {
+    return myFile;
   }
 }

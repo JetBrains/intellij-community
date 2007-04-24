@@ -151,9 +151,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
     private boolean myErrorsDetected = false;
 
-    StdErrorReporter(Project project) {
-      myErrorsView = new NewErrorTreeViewPanel(project, null);
+    StdErrorReporter(Project project, Runnable rerunAction) {
+      myErrorsView = new NewErrorTreeViewPanel(project, null, true, true, rerunAction);
     }
+
     public void startProcessing() {
       final Runnable task = new Runnable() {
         public void run() {

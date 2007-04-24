@@ -53,7 +53,9 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     Icon icon = null;
 
     if (element instanceof GroupingElement) {
-      icon = ourFileIcon;
+      final GroupingElement groupingElement = (GroupingElement)element;
+
+      icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : ourFileIcon;
     }
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       ErrorTreeElementKind kind = element.getKind();
