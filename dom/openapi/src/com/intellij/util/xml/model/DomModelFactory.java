@@ -23,12 +23,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ModelMerger;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +61,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
 
          final Module module = ModuleUtil.findModuleForPsiElement(file);
          final M model = computeModel(file, module);
-         return new CachedValueProvider.Result<M>(model, computeDependencies(file, module));
+         return new CachedValueProvider.Result<M>(model, computeDependencies(model, module));
       }
     };
 
@@ -69,7 +69,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
       @NotNull
       protected CachedValueProvider.Result<M> computeValue(@NotNull final Module module) {
         final M combinedModel = computeCombinedModel(module);
-        return new CachedValueProvider.Result<M>(combinedModel, combinedModel == null ? computeDependencies(module) : computeDependencies(combinedModel, module));
+        return new CachedValueProvider.Result<M>(combinedModel, computeDependencies(combinedModel, module));
       }
     };
 
@@ -77,36 +77,25 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
       @NotNull
       protected CachedValueProvider.Result<List<M>> computeValue(@NotNull final Module module) {
         final List<M> models = computeAllModels(module);
-        return new CachedValueProvider.Result<List<M>>(models, computeDependencies(module));
+        return new CachedValueProvider.Result<List<M>>(models, computeDependencies(null, module));
       }
     };
   }
 
   @NotNull
-  protected Object[] computeDependencies(@NotNull XmlFile file, @Nullable Module module) {
-    if (module == null) {
-      return new Object[] {file};
+  public Object[] computeDependencies(@Nullable M model, @Nullable Module module) {
+
+    final ArrayList<Object> dependencies = new ArrayList<Object>();
+    final Set<XmlFile> files;
+    if (model != null) {
+      files = model.getConfigFiles();
+      dependencies.addAll(files);
     } else {
-      final Object[] moduleDependencies = computeDependencies(module);
-      return ArrayUtil.append(moduleDependencies, file);
+      dependencies.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
-  }
-
-
-  @NotNull
-  protected Object[] computeDependencies(@NotNull Module module) {
-    final ProjectRootManager manager = ProjectRootManager.getInstance(module.getProject());
-    return new Object[] { manager };
-  }
-
-  @NotNull
-  public Object[] computeDependencies(@NotNull M model, @NotNull Module module) {
-
-    final Object[] moduleDependencies = computeDependencies(module);
-    final Set<XmlFile> files = model.getConfigFiles();
-    final ArrayList<Object> dependencies = new ArrayList<Object>(moduleDependencies.length + files.size());
-    dependencies.addAll(files);
-    Collections.addAll(dependencies, moduleDependencies);
+    if (module != null) {
+      dependencies.add(ProjectRootManager.getInstance(module.getProject()));
+    }
     return dependencies.toArray(new Object[dependencies.size()]);
   }
 
