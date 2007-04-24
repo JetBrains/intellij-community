@@ -82,13 +82,13 @@ public class CommittedChangesCache {
     }
     if (provider instanceof CachingCommittedChangesProvider) {
       final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
-      if (canGetFromCache(cachingProvider, settings, file, location, maxCount)) {
-        try {
+      try {
+        if (canGetFromCache(cachingProvider, settings, file, location, maxCount)) {
           return getChangesWithCaching(cachingProvider, settings, file, location, maxCount);
         }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
     //noinspection unchecked
@@ -96,7 +96,7 @@ public class CommittedChangesCache {
   }
 
   private boolean canGetFromCache(final CachingCommittedChangesProvider cachingProvider, final ChangeBrowserSettings settings,
-                                  final VirtualFile root, final RepositoryLocation location, final int maxCount) {
+                                  final VirtualFile root, final RepositoryLocation location, final int maxCount) throws IOException {
     ChangesCacheFile cacheFile = getCacheFile(cachingProvider, root, location);
     if (cacheFile.isEmpty()) {
       return true;   // we'll initialize the cache and check again after that
@@ -125,8 +125,13 @@ public class CommittedChangesCache {
   public boolean hasCachesForAllRoots() {
     Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cacheFile: caches) {
-      if (cacheFile.isEmpty()) {
-        return false;
+      try {
+        if (cacheFile.isEmpty()) {
+          return false;
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
     return true;
@@ -224,13 +229,13 @@ public class CommittedChangesCache {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cache: caches) {
-      if (!cache.isEmpty()) {
-        try {
+      try {
+        if (!cache.isEmpty()) {
           result.addAll(cache.loadIncomingChanges());
         }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
     return result;

@@ -18,10 +18,7 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -72,7 +69,7 @@ public class ChangesCacheFile {
     return myChangesProvider;
   }
 
-  public boolean isEmpty() {
+  public boolean isEmpty() throws IOException {
     if (!myPath.exists()) {
       return true;
     }
@@ -80,6 +77,11 @@ public class ChangesCacheFile {
       loadHeader();
     }
     catch(VersionMismatchException ex) {
+      myPath.delete();
+      myIndexPath.delete();
+      return true;
+    }
+    catch(EOFException ex) {
       myPath.delete();
       myIndexPath.delete();
       return true;
@@ -197,42 +199,37 @@ public class ChangesCacheFile {
     result.completelyDownloaded = (myIndexStream.readShort() != 0);
   }
 
-  public Date getLastCachedDate() {
+  public Date getLastCachedDate() throws IOException {
     loadHeader();
     return myLastCachedDate;
   }
 
-  public Date getFirstCachedDate() {
+  public Date getFirstCachedDate() throws IOException {
     loadHeader();
     return myFirstCachedDate;
   }
 
-  public long getFirstCachedChangelist() {
+  public long getFirstCachedChangelist() throws IOException {
     loadHeader();
     return myFirstCachedChangelist;
   }
 
-  private void loadHeader() {
+  private void loadHeader() throws IOException {
     if (!myHeaderLoaded) {
+      RandomAccessFile stream = new RandomAccessFile(myPath, "r");
       try {
-        RandomAccessFile stream = new RandomAccessFile(myPath, "r");
-        try {
-          int version = stream.readInt();
-          if (version != VERSION) {
-            throw new VersionMismatchException();
-          }
-          myLastCachedDate = new Date(stream.readLong());
-          myFirstCachedDate = new Date(stream.readLong());
-          myFirstCachedChangelist = stream.readLong();
-          myHaveCompleteHistory = (stream.readShort() != 0);
-          assert stream.getFilePointer() == HEADER_SIZE;
+        int version = stream.readInt();
+        if (version != VERSION) {
+          throw new VersionMismatchException();
         }
-        finally {
-          stream.close();
-        }
+        myLastCachedDate = new Date(stream.readLong());
+        myFirstCachedDate = new Date(stream.readLong());
+        myFirstCachedChangelist = stream.readLong();
+        myHaveCompleteHistory = (stream.readShort() != 0);
+        assert stream.getFilePointer() == HEADER_SIZE;
       }
-      catch (IOException e) {
-        LOG.error(e);
+      finally {
+        stream.close();
       }
       myHeaderLoaded = true;
     }
