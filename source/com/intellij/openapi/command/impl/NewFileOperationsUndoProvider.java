@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
-class NewFileOperationsUndoProvider extends VirtualFileAdapter {
+class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeleteWasUndoable");
 
   private Project myProject;
@@ -22,6 +22,7 @@ class NewFileOperationsUndoProvider extends VirtualFileAdapter {
     getFileManager().addVirtualFileListener(this);
   }
 
+  @Override
   public void dispose() {
     if (myProject == null) return;
     getFileManager().removeVirtualFileListener(this);
@@ -31,11 +32,13 @@ class NewFileOperationsUndoProvider extends VirtualFileAdapter {
     return VirtualFileManager.getInstance();
   }
 
+  @Override
   public void commandStarted(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = true;
   }
 
+  @Override
   public void commandFinished(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = false;

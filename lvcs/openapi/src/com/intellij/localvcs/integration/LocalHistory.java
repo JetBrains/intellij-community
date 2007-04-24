@@ -35,7 +35,7 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   }
 
   public static boolean isEnabled(Project p) {
-    return getInstance(p).isEnabled();
+    return System.getProperty("UseOldLocalHistory") == null;
   }
 
   protected abstract LocalHistoryAction startAction(String name);
@@ -49,6 +49,4 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   protected abstract byte[] getByteContentAt(VirtualFile f, long timestamp);
 
   protected abstract boolean isUnderControl(VirtualFile f);
-
-  protected abstract boolean isEnabled();
 }

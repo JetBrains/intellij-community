@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.localVcs.LvcsFileRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -113,10 +114,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return myProject.isDefault();
   }
 
-  @Override
   public boolean isEnabled() {
-    // see CommonLcs.isOldVcsEnabled.
-    return System.getProperty("newlocalvcs.disabled") == null;
+    return isEnabled(myProject);
   }
 
   @Override
@@ -142,8 +141,17 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected byte[] getByteContentAt(VirtualFile f, long timestamp) {
+    if (!isEnabled()) {
+      LvcsFileRevision r = getOldVcs().findFileRevisionByDate(f.getPath(), timestamp);
+      return r == null ? null : r.getByteContent();
+    }
+
     if (!isUnderControl(f)) return null;
     return myVcs.getByteContentAt(f.getPath(), timestamp);
+  }
+
+  private com.intellij.openapi.localVcs.LocalVcs getOldVcs() {
+    return com.intellij.openapi.localVcs.LocalVcs.getInstance(myProject);
   }
 
   @Override

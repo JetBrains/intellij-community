@@ -848,7 +848,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private boolean isOldLvcsEnabled() {
-    return System.getProperty("newlocalvcs.disabled") != null;
+    return !LocalHistory.isEnabled(myProject);
   }
 
   private boolean isNewLvcsEnabled() {
