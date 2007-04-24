@@ -317,13 +317,14 @@ public class CommittedChangesCache {
     return cacheFile;
   }
 
-  public static File getCacheRootPath() {
-    return new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
+  public File getCacheBasePath() {
+    File file = new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
+    file = new File(file, myProject.getLocationHash());
+    return file;
   }
 
   private File getCachePath(final RepositoryLocation location) {
-    File file = getCacheRootPath();
-    file = new File(file, myProject.getLocationHash());
+    File file = getCacheBasePath();
     file.mkdirs();
     String s = location.toString();
     try {
