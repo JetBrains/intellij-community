@@ -334,6 +334,7 @@ public class ChangesCacheFile {
       }
       if (!haveUnaccountedUpdatedFiles) {
         for(IncomingChangeListData data: incomingData) {
+          writePartial(data);
           if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
             myIndexStream.seek(data.indexOffset);
             writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
@@ -394,10 +395,73 @@ public class ChangesCacheFile {
       data.indexOffset = indexOffset;
       data.indexEntry = e;
       data.changeList = loadChangeListAt(e.offset);
-      data.accountedChanges = new HashSet<Change>();
+      data.accountedChanges = readPartial(data.changeList, e.offset);
       incomingData.add(data);
     }
     return incomingData;
+  }
+
+  private void writePartial(final IncomingChangeListData data) throws IOException {
+    File partialFile = getPartialPath(data.indexEntry.offset);
+    final int accounted = data.accountedChanges.size();
+    if (accounted == data.changeList.getChanges().size()) {
+      partialFile.delete();
+    }
+    else if (accounted > 0) {
+      RandomAccessFile file = new RandomAccessFile(partialFile, "rw");
+      try {
+        file.writeInt(accounted);
+        for(Change c: data.accountedChanges) {
+          boolean isAfterRevision = true;
+          ContentRevision revision = c.getAfterRevision();
+          if (revision == null) {
+            isAfterRevision = false;
+            revision = c.getBeforeRevision();
+            assert revision != null;
+          }
+          file.writeByte(isAfterRevision ? 1 : 0);
+          file.writeUTF(revision.getFile().getIOFile().toString());
+        }
+      }
+      finally {
+        file.close();
+      }
+    }
+  }
+
+  private Set<Change> readPartial(CommittedChangeList changeList, final long offset) {
+    HashSet<Change> result = new HashSet<Change>();
+    try {
+      File partialFile = getPartialPath(offset);
+      if (partialFile.exists()) {
+        RandomAccessFile file = new RandomAccessFile(partialFile, "r");
+        try {
+          int count = file.readInt();
+          for(int i=0; i<count; i++) {
+            boolean isAfterRevision = (file.readByte() != 0);
+            String path = file.readUTF();
+            for(Change c: changeList.getChanges()) {
+              final ContentRevision afterRevision = isAfterRevision ? c.getAfterRevision() : c.getBeforeRevision();
+              if (afterRevision != null && afterRevision.getFile().getIOFile().toString().equals(path)) {
+                result.add(c);                
+              }
+            }
+          }
+        }
+        finally {
+          file.close();
+        }
+      }
+    }
+    catch(IOException ex) {
+      LOG.error(ex);
+    }
+    return result;
+  }
+
+  @NonNls
+  private File getPartialPath(final long offset) {
+    return new File(myPath + "." + offset + ".partial");
   }
 
   private static class IndexEntry {
