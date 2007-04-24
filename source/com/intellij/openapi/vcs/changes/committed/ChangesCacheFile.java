@@ -26,7 +26,7 @@ import java.util.*;
  */
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   private File myPath;
   private File myIndexPath;
@@ -40,11 +40,12 @@ public class ChangesCacheFile {
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist = Long.MAX_VALUE;
+  private int myIncomingCount = 0;
   private boolean myHaveCompleteHistory = false;
   private boolean myHeaderLoaded = false;
   @NonNls private static final String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
-  private static final int HEADER_SIZE = 30;
+  private static final int HEADER_SIZE = 34;
 
   public ChangesCacheFile(Project project, File path, CachingCommittedChangesProvider changesProvider, VirtualFile root,
                           RepositoryLocation location) {
@@ -129,6 +130,9 @@ public class ChangesCacheFile {
           myFirstCachedChangelist = list.getNumber(); 
         }
         writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, assumeCompletelyDownloaded);
+        if (!assumeCompletelyDownloaded) {
+          myIncomingCount++;
+        }
       }
       writeHeader();
       myHeaderLoaded = true;
@@ -170,6 +174,7 @@ public class ChangesCacheFile {
     myStream.writeLong(myFirstCachedDate.getTime());
     myStream.writeLong(myFirstCachedChangelist);
     myStream.writeShort(myHaveCompleteHistory ? 1 : 0);
+    myStream.writeInt(myIncomingCount);
   }
 
   private IndexEntry[] readLastIndexEntries(int offset, int count) throws IOException {
@@ -226,6 +231,7 @@ public class ChangesCacheFile {
         myFirstCachedDate = new Date(stream.readLong());
         myFirstCachedChangelist = stream.readLong();
         myHaveCompleteHistory = (stream.readShort() != 0);
+        myIncomingCount = stream.readInt();
         assert stream.getFilePointer() == HEADER_SIZE;
       }
       finally {
@@ -306,10 +312,13 @@ public class ChangesCacheFile {
     try {
       while(true) {
         IndexEntry[] entries = readLastIndexEntries(offset, 1);
-        if (entries.length == 0 || entries [0].completelyDownloaded) {
+        if (entries.length == 0) {
           break;
         }
-        result.add(loadChangeListAt(entries[0].offset));
+        if (!entries [0].completelyDownloaded) {
+          result.add(loadChangeListAt(entries[0].offset));
+          if (result.size() == myIncomingCount) break;
+        }
         offset++;
       }
       return result;
@@ -338,8 +347,10 @@ public class ChangesCacheFile {
           if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
             myIndexStream.seek(data.indexOffset);
             writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
+            myIncomingCount--;
           }
         }
+        writeHeader();
       }
     }
     finally {
@@ -373,6 +384,8 @@ public class ChangesCacheFile {
           int rc = number.compareTo(afterRevision.getRevisionNumber());
           if (rc == 0) {
             foundRevision = true;
+          }
+          if (rc >= 0) {
             data.accountedChanges.add(change);
           }
         }
@@ -390,13 +403,17 @@ public class ChangesCacheFile {
       myIndexStream.seek(indexOffset);
       IndexEntry e = new IndexEntry();
       readIndexEntry(e);
-      if (e.completelyDownloaded) break;
-      IncomingChangeListData data = new IncomingChangeListData();
-      data.indexOffset = indexOffset;
-      data.indexEntry = e;
-      data.changeList = loadChangeListAt(e.offset);
-      data.accountedChanges = readPartial(data.changeList, e.offset);
-      incomingData.add(data);
+      if (!e.completelyDownloaded) {
+        IncomingChangeListData data = new IncomingChangeListData();
+        data.indexOffset = indexOffset;
+        data.indexEntry = e;
+        data.changeList = loadChangeListAt(e.offset);
+        data.accountedChanges = readPartial(data.changeList, e.offset);
+        incomingData.add(data);
+        if (incomingData.size() == myIncomingCount) {
+          break;
+        }
+      }
     }
     return incomingData;
   }
