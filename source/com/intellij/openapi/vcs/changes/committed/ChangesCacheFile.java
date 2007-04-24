@@ -370,8 +370,8 @@ public class ChangesCacheFile {
           int rc = number.compareTo(afterRevision.getRevisionNumber());
           if (rc == 0) {
             foundRevision = true;
+            data.accountedChanges.add(change);
           }
-          data.accountedChanges.add(change);
         }
       }
     }
