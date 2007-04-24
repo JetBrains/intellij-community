@@ -119,6 +119,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
+      <headless-implementation-class/>
     </component>
   </application-components>
 

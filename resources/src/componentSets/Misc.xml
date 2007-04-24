@@ -14,6 +14,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.EvaluationSupport</implementation-class>
+      <headless-implementation-class/>
     </component>
     <component>
       <interface-class>com.intellij.featureStatistics.FeatureUsageTracker</interface-class>

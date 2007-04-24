@@ -4,13 +4,14 @@
  */
 package com.intellij.execution.remote;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -49,8 +50,9 @@ public class RemoteConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @NotNull
   public String getComponentName() {
-    return ExecutionBundle.message("remote.debug.configuration.display.name");
+    return "Remote";
   }
 
   public static RemoteConfigurationType getInstance() {
