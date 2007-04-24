@@ -16,11 +16,11 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
-import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNErrorMessage;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.annotations.NonNls;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -36,7 +36,6 @@ import java.security.cert.X509Certificate;
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private Project myProject;
-  @NonNls private static final String USER_NAME_PROPERTY = "user.name";
 
   public SvnAuthenticationProvider(Project project) {
     myProject = project;
@@ -51,7 +50,8 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
-    final String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty(USER_NAME_PROPERTY);
+    final String userName =
+      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
@@ -83,7 +83,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           }
           dialog.show();
           if (dialog.isOK()) {
-              result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed());
+            result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed());
           }
         }
       };
@@ -107,8 +107,10 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
               if (passphrase != null && passphrase.length() == 0) {
                 passphrase = null;
               }
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed());
-            } else {
+              result[0] =
+                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed());
+            }
+            else {
               result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed());
             }
           }
@@ -142,7 +144,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     final int[] result = new int[1];
     Runnable command = new Runnable() {
       public void run() {
-        ServerSSLDialog dialog = new ServerSSLDialog(myProject, (X509Certificate) certificate, resultMayBeStored);
+        ServerSSLDialog dialog = new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored);
         dialog.show();
         result[0] = dialog.getResult();
 
