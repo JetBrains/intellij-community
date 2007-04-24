@@ -102,7 +102,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   }
 
   protected boolean isRightFile(final VirtualFile file) {
-    return myRootElement.isValid() && file.equals(myRootElement.getRoot().getFile().getVirtualFile());
+    return myRootElement == null || (myRootElement.isValid() && file.equals(myRootElement.getRoot().getFile().getVirtualFile()));
   }
 
   private void queueUpdate(final VirtualFile file) {
