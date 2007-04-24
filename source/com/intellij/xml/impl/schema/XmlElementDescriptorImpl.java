@@ -381,4 +381,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       validator.validate(context, host);
     }
   }
+
+  public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+    final TypeDescriptor type = getType();
+    
+    if (type instanceof ComplexTypeDescriptor) {
+      return ((ComplexTypeDescriptor)type).canContainTag("a", namespace) ||
+             XmlUtil.tagFromTemplateFramework(context);
+    }
+    return false;
+  }
 }

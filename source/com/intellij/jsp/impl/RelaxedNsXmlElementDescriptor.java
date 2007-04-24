@@ -31,4 +31,8 @@ public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
 
     return elementDescriptor;
   }
+
+  public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+    return true;
+  }
 }

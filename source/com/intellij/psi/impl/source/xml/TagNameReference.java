@@ -28,6 +28,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -200,16 +201,22 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
   public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
+    XmlElementDescriptor elementDescriptor = null;
 
     {
       PsiElement curElement = element.getParent();
+      
       while(curElement instanceof XmlTag){
         final XmlTag declarationTag = (XmlTag)curElement;
         final String namespace = declarationTag.getNamespace();
+
         if(!descriptorsMap.containsKey(namespace)) {
           final XmlElementDescriptor descriptor = declarationTag.getDescriptor();
-          if(descriptor != null)
+
+          if(descriptor != null) {
             descriptorsMap.put(namespace, descriptor);
+            if(elementDescriptor == null) elementDescriptor = descriptor;
+          }
         }
         curElement = curElement.getContext();
       }
@@ -244,7 +251,11 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         if(nsDescriptor == null && PsiUtil.isInJspFile(element))
           nsDescriptor = PsiUtil.getJspFile(element).getDocument().getRootTag().getNSDescriptor(namespace, false);
 
-        if(nsDescriptor != null && !visited.contains(nsDescriptor)){
+        if(nsDescriptor != null && !visited.contains(nsDescriptor) &&
+           ( !(elementDescriptor instanceof XmlElementDescriptorImpl) ||
+             ((XmlElementDescriptorImpl)elementDescriptor).allowElementsFromNamespace(namespace, element.getParentTag())
+           )
+          ){
           visited.add(nsDescriptor);
           final XmlElementDescriptor[] rootElementsDescriptors =
             nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));

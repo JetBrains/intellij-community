@@ -212,14 +212,17 @@ public class HtmlUtil {
         public String getDefaultName() {
           return tagName;
         }
+
+        public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+          return true;
+        }
       };
     }
 
     return descriptors;
   }
 
-  public static @Nullable
-  String getEntitiesString(XmlElement context, int type) {
+  public static @Nullable String getEntitiesString(XmlElement context, int type) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile();
     if (containingFile.getOriginalFile() != null) {
