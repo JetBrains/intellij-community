@@ -303,7 +303,7 @@ public class CommittedChangesCache {
     }
   }
 
-  private ChangesCacheFile getCacheFile(CachingCommittedChangesProvider provider, VirtualFile root, RepositoryLocation location) {
+  public ChangesCacheFile getCacheFile(CachingCommittedChangesProvider provider, VirtualFile root, RepositoryLocation location) {
     ChangesCacheFile cacheFile = myCacheFiles.get(location);
     if (cacheFile == null) {
       cacheFile = new ChangesCacheFile(myProject, getCachePath(location), provider, root, location);

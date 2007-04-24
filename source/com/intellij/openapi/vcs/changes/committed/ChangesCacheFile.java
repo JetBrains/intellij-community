@@ -35,13 +35,13 @@ public class ChangesCacheFile {
   private File myIndexPath;
   private RandomAccessFile myStream;
   private RandomAccessFile myIndexStream;
-  boolean myStreamsOpen;
+  private boolean myStreamsOpen;
   private Project myProject;
   private CachingCommittedChangesProvider myChangesProvider;
   private FilePath myRootPath;
   private RepositoryLocation myLocation;
-  private Date myFirstCachedDate = new Date(2020, 1, 2);
-  private Date myLastCachedDate = new Date(1970, 1, 2);
+  private Date myFirstCachedDate;
+  private Date myLastCachedDate;
   private long myFirstCachedChangelist = Long.MAX_VALUE;
   private boolean myHaveCompleteHistory = false;
   private boolean myHeaderLoaded = false;
@@ -51,6 +51,11 @@ public class ChangesCacheFile {
 
   public ChangesCacheFile(Project project, File path, CachingCommittedChangesProvider changesProvider, VirtualFile root,
                           RepositoryLocation location) {
+    final Calendar date = Calendar.getInstance();
+    date.set(2020, 1, 2);
+    myFirstCachedDate = date.getTime();
+    date.set(1970, 1, 2);
+    myLastCachedDate = date.getTime();
     myProject = project;
     myPath = path;
     myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
