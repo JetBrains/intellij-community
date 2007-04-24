@@ -182,7 +182,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public Object[] getVariants() {
     PsiElement context = getContext();
     if (context == null) {
-      context = myJavaClassReferenceSet.getElement().getManager().findPackage("");
+      context = getElement().getManager().findPackage("");
     }
     if (context instanceof PsiPackage) {
       final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
@@ -241,8 +241,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
 
     PsiManager manager = psiElement.getManager();
+    GlobalSearchScope scope = getScope();
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
-      final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(psiElement.getProject()));
+      final PsiClass aClass = manager.findClass(qName, scope);
       if (aClass != null) {
         return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, psiElement);
       } else {
@@ -254,7 +255,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     PsiElement resolveResult = manager.findPackage(qName);
     if (resolveResult == null) {
-      resolveResult = manager.findClass(qName, GlobalSearchScope.allScope(psiElement.getProject()));
+      resolveResult = manager.findClass(qName, scope);
     }
     if (myInStaticImport && resolveResult == null) {
       resolveResult = resolveMember(qName, manager, getElement().getResolveScope());
@@ -293,6 +294,14 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return resolveResult != null
            ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, psiElement)
            : JavaResolveResult.EMPTY;
+  }
+
+  private GlobalSearchScope getScope() {
+    GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
+    if (scope == null) {
+      scope = GlobalSearchScope.allScope(getElement().getProject());
+    }
+    return scope;
   }
 
   private Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
@@ -342,6 +351,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private Object[] getSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses) {
     HashSet<Object> lookups = new HashSet<Object>();
     GlobalSearchScope packageScope = GlobalSearchScope.packageScope(context, true);
+    GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
+    if (scope != null) {
+      packageScope = packageScope.intersectWith(scope);
+    }
     final GlobalSearchScope allScope = context.getProject().getAllScope();
     Boolean inst = JavaClassReferenceProvider.INSTANTIATABLE.getValue(getOptions());
 

@@ -4,11 +4,13 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.web.PsiReferenceConverter;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -134,16 +136,16 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       ExtendClass extendClass = invocationHandler.getAnnotation(ExtendClass.class);
       final JavaClassReferenceProvider provider;
       if (extendClass == null) {
-        provider = new JavaClassReferenceProvider();
+        provider = new JavaClassReferenceProvider(getScope(domValue));
       }
       else {
-        provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
+        provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable(), getScope(domValue));
       }
       provider.setSoft(true);
       return provider.getReferencesByElement(psiElement);
     }
     if (ReflectionCache.isAssignable(PsiPackage.class, clazz)) {
-      final JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
+      final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(domValue));
       provider.setSoft(true);
       return provider.getReferencesByElement(psiElement, new ReferenceType(ReferenceType.JAVA_PACKAGE));
     }
@@ -165,6 +167,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     return new PsiReference[]{new GenericDomValueReference(domValue)};
   }
 
+  @Nullable
+  private static GlobalSearchScope getScope(final GenericDomValue domValue) {
+    final Module module = domValue.getModule();
+    return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+  }
 
   @NotNull
   public final PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {

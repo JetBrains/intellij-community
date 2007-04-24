@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -30,40 +31,53 @@ import java.util.Map;
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   public static final ReferenceType CLASS_REFERENCE_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
-  private @Nullable Map<CustomizationKey, Object> myOptions;
-  private boolean mySoft;
-
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
-
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
   public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
   public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
   public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
 
+  @Nullable private Map<CustomizationKey, Object> myOptions;
+  private boolean mySoft;
+  @Nullable private final GlobalSearchScope myScope;
 
-  public JavaClassReferenceProvider(String extendClassName, boolean instantiatable) {
-    this(new String[]{extendClassName}, instantiatable);
+  public JavaClassReferenceProvider(String extendClassName, boolean instantiatable, GlobalSearchScope scope) {
+    this(new String[]{extendClassName}, instantiatable, false, scope);
   }
 
   public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
-    this(extendClassNames, instantiatable, false);
+    this(extendClassNames, instantiatable, false, null);
   }
 
-  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable, boolean jvmFormat) {
+  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable, boolean jvmFormat, GlobalSearchScope scope) {
     myOptions = new THashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
     INSTANTIATABLE.putValue(myOptions, instantiatable);
     RESOLVE_ONLY_CLASSES.putValue(myOptions, Boolean.TRUE);
     JVM_FORMAT.putValue(myOptions, jvmFormat);
+    myScope = scope;
   }
 
   public JavaClassReferenceProvider(boolean jvmFormat) {
-    this(ArrayUtil.EMPTY_STRING_ARRAY, false, jvmFormat);
+    this(ArrayUtil.EMPTY_STRING_ARRAY, false, jvmFormat, null);
   }
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
-    this(extendClassName, true);
+    this(extendClassName, true, null);
+  }
+
+  public JavaClassReferenceProvider() {
+    myScope = null;
+  }
+
+  public JavaClassReferenceProvider(GlobalSearchScope scope) {
+    myScope = scope;
+  }
+
+  @Nullable
+  public GlobalSearchScope getScope() {
+    return myScope;
   }
 
   public boolean isSoft() {
@@ -72,9 +86,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public void setSoft(final boolean soft) {
     mySoft = soft;
-  }
-
-  public JavaClassReferenceProvider() {
   }
 
   @NotNull
