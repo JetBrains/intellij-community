@@ -40,7 +40,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private static final String INTERNAL_DIR = "internal";
   @NonNls private static final String INCLUDES_DIR = "includes";
   @NonNls private static final String CODETEMPLATES_DIR = "code";
-  @NonNls  private static final String J2EE_TEMPLATES_DIR = "j2ee";
+  @NonNls private static final String J2EE_TEMPLATES_DIR = "j2ee";
 
   @NonNls private final String myDefaultTemplatesDir;
   @NonNls private final String myTemplatesDir;
@@ -67,20 +67,21 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
 
-  public static FileTemplateManagerImpl getInstance(){
+  public static FileTemplateManagerImpl getInstance() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
   public FileTemplateManagerImpl(VirtualFileManager virtualFileManager, FileTypeManagerEx fileTypeManagerEx) {
     this(".", "fileTemplates", virtualFileManager, fileTypeManagerEx);
 
-    myInternalTemplatesManager = new FileTemplateManagerImpl(INTERNAL_DIR,
-                                                             myTemplatesDir + File.separator + INTERNAL_DIR, myVirtualFileManager, myTypeManager);
-    myPatternsManager = new FileTemplateManagerImpl(INCLUDES_DIR, myTemplatesDir + File.separator + INCLUDES_DIR, myVirtualFileManager, myTypeManager);
-    myCodeTemplatesManager = new FileTemplateManagerImpl(CODETEMPLATES_DIR,
-                                                         myTemplatesDir + File.separator + CODETEMPLATES_DIR, myVirtualFileManager, myTypeManager);
-    myJ2eeTemplatesManager = new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR,
-                                                         myTemplatesDir + File.separator + J2EE_TEMPLATES_DIR, myVirtualFileManager, myTypeManager);
+    myInternalTemplatesManager =
+      new FileTemplateManagerImpl(INTERNAL_DIR, myTemplatesDir + File.separator + INTERNAL_DIR, myVirtualFileManager, myTypeManager);
+    myPatternsManager =
+      new FileTemplateManagerImpl(INCLUDES_DIR, myTemplatesDir + File.separator + INCLUDES_DIR, myVirtualFileManager, myTypeManager);
+    myCodeTemplatesManager = new FileTemplateManagerImpl(CODETEMPLATES_DIR, myTemplatesDir + File.separator + CODETEMPLATES_DIR,
+                                                         myVirtualFileManager, myTypeManager);
+    myJ2eeTemplatesManager = new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR, myTemplatesDir + File.separator + J2EE_TEMPLATES_DIR,
+                                                         myVirtualFileManager, myTypeManager);
 
     myLocalizedTemplateNames.put(TEMPLATE_CATCH_BODY, IdeBundle.message("template.catch.statement.body"));
     myLocalizedTemplateNames.put(TEMPLATE_IMPLEMENTED_METHOD_BODY, IdeBundle.message("template.implemented.method.body"));
@@ -106,11 +107,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myTypeManager = fileTypeManagerEx;
   }
 
-  @NotNull public File[] getExportFiles() {
+  @NotNull
+  public File[] getExportFiles() {
     return new File[]{getParentDirectory(false), PathManager.getDefaultOptionsFile()};
   }
 
-  @NotNull public String getPresentableName() {
+  @NotNull
+  public String getPresentableName() {
     return IdeBundle.message("item.file.templates");
   }
 
@@ -144,14 +147,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     ensureTemplatesAreLoaded();
     myTemplates.removeTemplate(template);
     try {
-      ((FileTemplateImpl) template).removeFromDisk();
-    } catch (Exception e) {
+      ((FileTemplateImpl)template).removeFromDisk();
+    }
+    catch (Exception e) {
       LOG.error("Unable to remove template", e);
     }
 
     if (!fromDiskOnly) {
-      myDeletedTemplatesManager.addName(template.getName() + "." + template.getExtension() + "." +
-          DEFAULT_TEMPLATE_EXTENSION);
+      myDeletedTemplatesManager.addName(template.getName() + "." + template.getExtension() + "." + DEFAULT_TEMPLATE_EXTENSION);
     }
 
     revalidate();
@@ -176,7 +179,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     props.setProperty("HOUR", Integer.toString(calendar.get(Calendar.HOUR_OF_DAY)));
     props.setProperty("MINUTE", Integer.toString(calendar.get(Calendar.MINUTE)));
 
-    props.setProperty("USER", System.getProperty("user.name"));
+    props.setProperty("USER", SystemProperties.getUserName());
 
     return props;
   }
@@ -233,7 +236,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       String name = file.getName();
       String extension = myTypeManager.getExtension(name);
       name = name.substring(0, name.length() - extension.length() - 1);
-      if ( file.isHidden() || name.length() == 0 ) {
+      if (file.isHidden() || name.length() == 0) {
         continue;
       }
       FileTemplate existing = myTemplates.findByName(name);
@@ -245,10 +248,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         //fileTemplate.setDescription(myDefaultDescription);   default description will be shown
         myTemplates.addTemplate(fileTemplate);
         existingTemplates.add(fileTemplate);
-      } else {
+      }
+      else {
         // it is a user-defined template, revalidate it
-        LOG.assertTrue(!((FileTemplateImpl) existing).isModified());
-        ((FileTemplateImpl) existing).invalidate();
+        LOG.assertTrue(!((FileTemplateImpl)existing).isModified());
+        ((FileTemplateImpl)existing).invalidate();
         existingTemplates.add(existing);
       }
     }
@@ -282,7 +286,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
     FileTemplate[] allTemplates = myTemplates.getAllTemplates();
     for (FileTemplate template : allTemplates) {
-      FileTemplateImpl templateImpl = (FileTemplateImpl) template;
+      FileTemplateImpl templateImpl = (FileTemplateImpl)template;
       if (!templateImpl.isDefault()) {
         if (!existingTemplates.contains(templateImpl)) {
           if (!templateImpl.isNew()) {
@@ -319,7 +323,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       if (myJ2eeTemplatesManager != null) {
         myJ2eeTemplatesManager.saveTemplates();
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error("Unable to save templates", e);
     }
   }
@@ -338,7 +343,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   @NotNull
   public String getComponentName() {
@@ -441,7 +447,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     if (myTemplates != null) {
       FileTemplate[] allTemplates = myTemplates.getAllTemplates();
       for (FileTemplate template : allTemplates) {
-        ((FileTemplateImpl) template).invalidate();
+        ((FileTemplateImpl)template).invalidate();
       }
     }
   }
@@ -466,7 +472,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     LOG.assertTrue(myInternalTemplatesManager != null);
     //noinspection HardCodedStringLiteral
     String actualTemplateName = ApplicationManager.getApplication().isUnitTestMode() ? templateName + "ForTest" : templateName;
-    FileTemplateImpl template = (FileTemplateImpl) myInternalTemplatesManager.getTemplate(actualTemplateName);
+    FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(actualTemplateName);
 
     if (template == null) {
       template = (FileTemplateImpl)getTemplate(actualTemplateName);
@@ -506,12 +512,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return "package $PACKAGE_NAME$;\npublic " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
 
-  @NotNull public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
+  @NotNull
+  public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
     //noinspection HardCodedStringLiteral
     return INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME.equals(templateName) ? "@interface" : templateName.toLowerCase();
   }
 
-  @NotNull public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
+  @NotNull
+  public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
     String localizedName = myLocalizedTemplateNames.get(template.getName());
     if (localizedName == null) {
       localizedName = myLocalizedTemplateNames.get(template.getName() + "." + template.getExtension());
@@ -522,8 +530,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls
   private String getDefaultClassTemplateText(@NotNull @NonNls String templateName) {
     return IdeBundle.message("template.default.class.comment", ApplicationNamesInfo.getInstance().getFullProductName()) +
-           "package $PACKAGE_NAME$;\n" +
-           "public " + internalTemplateToSubject(templateName) + " $NAME$ { }";
+           "package $PACKAGE_NAME$;\n" + "public " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
 
   public FileTemplate getCodeTemplate(@NotNull @NonNls String templateName) {
@@ -553,8 +560,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       if (ApplicationManager.getApplication().isUnitTestMode() && templateName.endsWith("ForTest")) return null;
 
       VirtualFile[] defaultTemplates = templatesManager.getDefaultTemplates();
-      @NonNls String message = "Unable to find " + templateType + " Template '" + templateName + "'! Default " + templateType +
-                               " Templates are: ";
+      @NonNls String message =
+        "Unable to find " + templateType + " Template '" + templateName + "'! Default " + templateType + " Templates are: ";
       for (int i = 0; i < defaultTemplates.length; i++) {
         VirtualFile defaultTemplate = defaultTemplates[i];
         if (i != 0) {
@@ -579,8 +586,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         name = name.substring(0, name.length() - extension.length() - 1);                   //name="NewClass.java"   extension="ft"
 
         Locale locale = Locale.getDefault();
-        String descName = MessageFormat.format("{0}_{1}_{2}.html",
-                                               name, locale.getLanguage(), locale.getCountry());
+        String descName = MessageFormat.format("{0}_{1}_{2}.html", name, locale.getLanguage(), locale.getCountry());
         VirtualFile descFile = parent.findChild(descName);
         if (descFile != null && descFile.isValid()) {
           return descFile;
@@ -617,7 +623,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private void removeDeletedTemplates(Set<VirtualFile> files) {
     Set<VirtualFile> removedSet = new HashSet<VirtualFile>();
 
-    for (VirtualFile file: files) {
+    for (VirtualFile file : files) {
       String nameWithExtension = file.getName();
       if (myDeletedTemplatesManager.contains(nameWithExtension)) {
         removedSet.add(file);
@@ -627,7 +633,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     files.removeAll(removedSet);
   }
 
-  private static VirtualFile getDefaultFromManager(@NotNull @NonNls String name, @NotNull @NonNls String extension, FileTemplateManagerImpl manager) {
+  private static VirtualFile getDefaultFromManager(@NotNull @NonNls String name,
+                                                   @NotNull @NonNls String extension,
+                                                   FileTemplateManagerImpl manager) {
     if (manager == null) return null;
     VirtualFile[] files = manager.getDefaultTemplates();
     for (VirtualFile file : files) {
@@ -650,7 +658,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   public FileTemplate getDefaultTemplate(@NotNull @NonNls String name) {
     @NonNls String extension = myTypeManager.getExtension(name);
-    String nameWithoutExtension = StringUtil.trimEnd(name, "."+extension);
+    String nameWithoutExtension = StringUtil.trimEnd(name, "." + extension);
     if (extension.length() == 0) {
       extension = "java";
     }
@@ -659,7 +667,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return new FileTemplateImpl(file, nameWithoutExtension, extension);
   }
 
-  @NotNull private VirtualFile[] getDefaultTemplates() {
+  @NotNull
+  private VirtualFile[] getDefaultTemplates() {
     if (myDefaultTemplatesDir == null || myDefaultTemplatesDir.length() == 0) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -709,7 +718,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       if (systemResources != null && systemResources.hasMoreElements()) {
         Set<URL> urls = new HashSet<URL>();
         while (systemResources.hasMoreElements()) {
-          URL nextURL = (URL) systemResources.nextElement();
+          URL nextURL = (URL)systemResources.nextElement();
           if (!urls.contains(nextURL)) {
             urls.add(nextURL);
             VirtualFile dir = VfsUtil.findFileByURL(nextURL, myVirtualFileManager);
@@ -723,7 +732,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
           }
         }
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
   }
@@ -800,7 +810,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       myTemplatesList.remove(template);
     }
 
-    @NotNull public FileTemplate[] getAllTemplates() {
+    @NotNull
+    public FileTemplate[] getAllTemplates() {
       return myTemplatesList.toArray(new FileTemplate[myTemplatesList.size()]);
     }
 
@@ -857,7 +868,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       RECENT_TEMPLATES.add(name);
     }
 
-    @NotNull public Collection<String> getRecentNames(int max) {
+    @NotNull
+    public Collection<String> getRecentNames(int max) {
       int size = RECENT_TEMPLATES.size();
       int resultSize = Math.min(max, size);
       return RECENT_TEMPLATES.subList(size - resultSize, size);
