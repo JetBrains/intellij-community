@@ -35,6 +35,10 @@ public class SystemProperties {
     return System.getProperty("user.home");
   }
 
+  public static String getUserName() {
+    return System.getProperty("user.name");
+  }
+
   /**
    * Returns the value of the line.separator system property.
    *
