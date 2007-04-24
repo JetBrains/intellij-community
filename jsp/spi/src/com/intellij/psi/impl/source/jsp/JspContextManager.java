@@ -6,6 +6,7 @@ package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,4 +28,9 @@ public abstract class JspContextManager {
   public abstract @Nullable JspFile getContextFile(@NotNull PsiFile file);
 
   public abstract @Nullable JspFile getConfiguredContextFile(@NotNull PsiFile file);
+
+  public abstract @Nullable PsiFileSystemItem getContextFolder(@NotNull PsiFile file);
+
+  public abstract void setContextFolder(@NotNull PsiFile file, @NotNull PsiFileSystemItem contextFolder);
+
 }

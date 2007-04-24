@@ -57,7 +57,6 @@ public class HectorComponent extends JPanel {
 
   public HectorComponent(PsiFile file) {
     super(new GridBagLayout());
-    setBorder(BorderFactory.createEtchedBorder());
     myFile = file;
     mySliders = new HashMap<Language, JSlider>();
 
