@@ -208,6 +208,7 @@ public class CommittedChangesCache {
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
     defaultSettings.setDateAfter(date);
+    defaultSettings.USE_DATE_AFTER_FILTER = true;
     List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
     newChanges = cacheFile.writeChanges(newChanges, false);    // skip duplicates
     if (newChanges.size() > 0) {
