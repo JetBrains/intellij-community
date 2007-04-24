@@ -111,4 +111,28 @@ public class JDomConvertingUtil {
       }
     }
   }
+
+  public static Element createComponentElement(final String componentName) {
+    final Element element = new Element(COMPONENT_ELEMENT);
+    element.setAttribute(NAME_ATTRIBUTE, componentName);
+    return element;
+  }
+
+  public static void addComponent(final Element root, final Element component) {
+    String componentName = component.getAttributeValue(NAME_ATTRIBUTE);
+    for (int i = 0; i < root.getContent().size(); i++) {
+      Object o = root.getContent().get(i);
+      if (o instanceof Element) {
+        Element element = (Element)o;
+        if (element.getName().equals(COMPONENT_ELEMENT)) {
+          final String name = element.getAttributeValue(NAME_ATTRIBUTE);
+          if (componentName.compareTo(name) < 0) {
+            root.addContent(i, component);
+            return;
+          }
+        }
+      }
+    }
+    root.addContent(component);
+  }
 }
