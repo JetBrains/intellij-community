@@ -69,7 +69,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   public void waitFor() throws Exception {
-    synchronized(LOCK) {
+    synchronized (LOCK) {
       if (mySemaphore > 0) {
         LOCK.wait();
       }
@@ -77,7 +77,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void setUp() throws Exception {
-    final Exception[] ex = new Exception[] {null};
+    final Exception[] ex = new Exception[]{null};
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
         try {
@@ -109,6 +109,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   */
 
   //------------------------------------------------------------------------------------------
+
   protected void doTest() throws Exception {
     final String name = getTestName(true);
 
@@ -301,7 +302,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
 
-        try{
+        try {
           myDataDir = getDataRootDir(testName);
           myOriginalSourceDir = myDataDir.findFileByRelativePath(getSourceDirRelativePath());
 
@@ -325,13 +326,13 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           myData.readExternal(document.getRootElement());
 
         }
-        catch(Exception e){
+        catch (Exception e) {
           ex[0] = e;
         }
       }
     });
 
-    if (ex[0] != null){
+    if (ex[0] != null) {
       throw ex[0];
     }
   }
@@ -347,7 +348,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected boolean shouldExcludeOutputFromProject() {
     return true;
   }
-  
+
   protected void setupMainModuleRootModel() {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     rootModel.clear();
@@ -437,7 +438,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           }
         }
 
-//        if (!"dsl".equals(System.getProperty("user.name"))){
+//        if (!"dsl".equals(SystemProperties.getUserName())){
 //          assertTrue("dsl was stupid enough to checkin these changes", false);
 //        } else {
 //          Thread.sleep(2000);
@@ -475,7 +476,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void tearDown() throws Exception {
-    final Exception[] exceptions = new Exception[] {null};
+    final Exception[] exceptions = new Exception[]{null};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         try {
