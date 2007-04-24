@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,6 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                 final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression)condition;
                 final PsiElement element = referenceExpression.resolve();
-
                 if (element instanceof PsiField) {
                     final PsiField field = (PsiField)element;
                     final PsiType type = field.getType();
@@ -152,13 +152,8 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                         // final variables cannot be updated, don't bother to
                         // flag them
                         return true;
-                    } else if (element instanceof PsiLocalVariable) {
-                        if (!VariableAccessUtils.variableIsAssigned(variable,
-                                context)) {
-                            notUpdated.add(referenceExpression);
-                            return true;
-                        }
-                    } else if (element instanceof PsiParameter) {
+                    } else if (element instanceof PsiLocalVariable ||
+                            element instanceof PsiParameter) {
                         if (!VariableAccessUtils.variableIsAssigned(variable,
                                 context)) {
                             notUpdated.add(referenceExpression);
@@ -195,7 +190,6 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             } else if (condition instanceof PsiConditionalExpression) {
                 final PsiConditionalExpression conditionalExpression =
                         (PsiConditionalExpression)condition;
-
                 final PsiExpression thenExpression =
                         conditionalExpression.getThenExpression();
                 final PsiExpression elseExpression =
@@ -209,6 +203,36 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                         && checkCondition(elseExpression, context, notUpdated);
             } else if (condition instanceof PsiThisExpression) {
                 return true;
+            } else if (condition instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) condition;
+                if (!IteratorUtils.isCallToHasNext(methodCallExpression)) {
+                    return false;
+                }
+                final PsiReferenceExpression methodExpression =
+                        methodCallExpression.getMethodExpression();
+                final PsiExpression qualifierExpression =
+                        methodExpression.getQualifierExpression();
+                if (qualifierExpression instanceof PsiReferenceExpression) {
+                    final PsiReferenceExpression referenceExpression =
+                            (PsiReferenceExpression) qualifierExpression;
+                    final PsiElement element = referenceExpression.resolve();
+                    if (!(element instanceof PsiVariable)) {
+                        return false;
+                    }
+                    final PsiVariable variable = (PsiVariable) element;
+                    if (IteratorUtils.containsCallToIteratorNext(context,
+                            variable, true)) {
+                        notUpdated.add(qualifierExpression);
+                        return true;
+                    }
+                } else {
+                    if (IteratorUtils.containsCallToIteratorNext(context,
+                            null, true)) {
+                        notUpdated.add(methodCallExpression);
+                        return true;
+                    }
+                }
             }
             return false;
         }

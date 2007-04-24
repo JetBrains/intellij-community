@@ -21,7 +21,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExceptionUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.IteratorUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -55,19 +56,8 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
 
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
-            @NonNls final String name = method.getName();
-            if(!HardcodedMethodConstants.NEXT.equals(name)){
-                return;
-            }
-            if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null || !IteratorUtils.isIterator(aClass)) {
+            if (!MethodUtils.methodMatches(method, "java.util.Iterator", null,
+                    HardcodedMethodConstants.NEXT)) {
                 return;
             }
             final Set<PsiType> exceptions =
@@ -78,7 +68,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                     return;
                 }
             }
-            if(IteratorUtils.callsIteratorNext(method, false)){
+            if(IteratorUtils.containsCallToIteratorNext(method, null, false)){
                 return;
             }
             final CalledMethodsVisitor visitor = new CalledMethodsVisitor();

@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.IteratorUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,24 +50,11 @@ public class IteratorHasNextCallsIteratorNextInspection
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             @NonNls final String name = method.getName();
-            if(!HardcodedMethodConstants.HAS_NEXT.equals(name)){
+            if (!MethodUtils.methodMatches(method, "java.util.Iterator", null,
+                    HardcodedMethodConstants.HAS_NEXT)) {
                 return;
             }
-            if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null){
-                return;
-            }
-            if(!IteratorUtils.isIterator(aClass)){
-                return;
-            }
-            if(!IteratorUtils.callsIteratorNext(method, true)){
+            if(!IteratorUtils.containsCallToIteratorNext(method, null, true)){
                 return;
             }
             registerMethodError(method);
