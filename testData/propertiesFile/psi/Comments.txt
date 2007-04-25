@@ -1,7 +1,7 @@
 Properties file:Comments.properties
+  PsiComment(Properties:END_OF_LINE_COMMENT)('# xxx')
+  PsiWhiteSpace('\n')
   PropertiesList
-    PsiComment(Properties:END_OF_LINE_COMMENT)('# xxx')
-    PsiWhiteSpace('\n')
     Property:xx
       PsiElement(Properties:KEY_CHARACTERS)('xx')
       PsiElement(Properties:KEY_VALUE_SEPARATOR)('=')

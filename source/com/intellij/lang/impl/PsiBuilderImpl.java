@@ -57,7 +57,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int[] myLexEnds;
   private IElementType[] myLexTypes;
 
-//  private final List<Token> myLexems = new ArrayList<Token>();
   private final MyList myProduction = new MyList();
 
   private final Lexer myLexer;
@@ -711,14 +710,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       ProductionMarker item = fProduction.get(i);
 
       if (item instanceof StartMarker) {
-        while (item.myLexemIndex < myLexemCount && myWhitespaces.contains(myLexTypes[item.myLexemIndex])) {
+        IElementType nextTokenType;
+        while (item.myLexemIndex < myLexemCount &&
+               ( myWhitespaces.contains(nextTokenType = myLexTypes[item.myLexemIndex]) ||
+                 myComments.contains(nextTokenType)
+               )
+              ) {
           item.myLexemIndex++;
         }
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemIndex;
+        IElementType prevTokenType;
+
         while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex < myLexemCount &&
-               myWhitespaces.contains(myLexTypes[item.myLexemIndex - 1])) {
+               ( myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemIndex - 1]) ||
+                 myComments.contains(prevTokenType)
+               )
+              ) {
           item.myLexemIndex--;
         }
       }

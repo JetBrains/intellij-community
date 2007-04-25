@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.codeInsight.lookup.PresentableLookupValue;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.IconUtilEx;
@@ -516,6 +513,9 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else{
       Object o = item.getObject();
+      if (o instanceof LookupValueWithUIHint2) {
+        return ((LookupValueWithUIHint2)o).isStrikeout();
+      }
       if (o instanceof LookupValueWithPsiElement) {
         o = ((LookupValueWithPsiElement)o).getElement();
       }
