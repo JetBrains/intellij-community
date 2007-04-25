@@ -615,7 +615,6 @@ mGSTRING_LITERAL = \"\"
 "float"                                   {  return( kFLOAT );  }
 "long"                                    {  return( kLONG );  }
 "double"                                  {  return( kDOUBLE );  }
-"ident"                                   {  return( kIDENT );  }
 "as"                                      {  return( kAS );  }
 "private"                                 {  return( kPRIVATE );  }
 "public"                                  {  return( kPUBLIC );  }

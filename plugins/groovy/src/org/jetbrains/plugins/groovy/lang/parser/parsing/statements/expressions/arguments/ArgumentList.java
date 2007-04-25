@@ -86,6 +86,7 @@ public class ArgumentList implements GroovyElementTypes {
   private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker argMarker = builder.mark();
+    builder.getTokenText(); //TODO Show to ven as bug
     boolean labeled = argumentLabelStartCheck(builder);
     boolean expansed = ParserUtils.getToken(builder, mSTAR);
     if (labeled) {
