@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.Collections;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
@@ -32,11 +33,15 @@ public class LaterInvocator {
       this.runnable = runnable;
       this.modalityState = modalityState;
     }
+
+    public String toString() {
+      return "[runnable: " + runnable + "; state=" + modalityState + "] ";
+    }
   }
 
   private static ArrayList<Object> ourModalEntities = new ArrayList<Object>();
   private static final ArrayList<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>();
-  private static int ourQueueSkipCount = 0; // optimization
+  private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
 
   private static Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>();
@@ -140,7 +145,7 @@ public class LaterInvocator {
     }
 
     boolean removed = ourModalEntities.remove(modalEntity);
-    LOG.assertTrue(removed);
+    LOG.assertTrue(removed, modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
   }
@@ -160,7 +165,9 @@ public class LaterInvocator {
   }
 
   public static Object[] getCurrentModalEntities() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!IS_TEST_MODE) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     //TODO!
     //LOG.assertTrue(IdeEventQueue.getInstance().isInInputEvent() || isInMyRunnable());
 
@@ -190,6 +197,7 @@ public class LaterInvocator {
                                         ? new ModalityStateEx(ourModalEntities.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY))
                                         : ApplicationManager.getApplication().getNoneModalityState());
 
+      ourQueueSkipCount =0;
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
         if (!currentModality.dominates(info.modalityState)) {
@@ -203,7 +211,7 @@ public class LaterInvocator {
     }
   }
 
-  private final static Object RUN_LOCK = new Object();
+  private static final Object RUN_LOCK = new Object();
 
   private static class FlushQueue implements Runnable {
     public void run() {
@@ -232,5 +240,18 @@ public class LaterInvocator {
         requestFlush();
       }
     }
+  }
+
+  //tests only
+  public static java.util.List<Object> dumpQueue() {
+    synchronized (LOCK) {
+      if (!ourQueue.isEmpty()) {
+        ArrayList<Object> r = new ArrayList<Object>();
+        r.addAll(ourQueue);
+        Collections.reverse(r);
+        return r;
+      }
+    }
+    return null;
   }
 }
