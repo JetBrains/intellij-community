@@ -47,7 +47,7 @@ class StatementMover extends LineMover {
         if (isDown) {
           PsiElement blockChild = firstNonWhiteElement(newCodeBlock.getFirstBodyElement(), true);
           if (blockChild == null) blockChild = newCodeBlock.getRBrace();
-          toMove2 = new LineRange(document.getLineNumber(newCodeBlock.getParent().getTextRange().getStartOffset()),
+          toMove2 = new LineRange(toMove2.startLine, //document.getLineNumber(newCodeBlock.getParent().getTextRange().getStartOffset()),
                                   document.getLineNumber(blockChild.getTextRange().getStartOffset()));
         }
         else {
@@ -93,7 +93,7 @@ class StatementMover extends LineMover {
         if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
-          if ((element instanceof PsiStatement || element instanceof PsiComment || element instanceof JspTemplateStatement)
+          if ((element instanceof PsiStatement || element instanceof PsiComment)
               && statementCanBePlacedAlong(element)) {
             found = true;
             if (!(element.getParent() instanceof PsiCodeBlock)) {
@@ -128,7 +128,7 @@ class StatementMover extends LineMover {
     }
   }
 
-  private boolean statementCanBePlacedAlong(final PsiElement element) {
+  private static boolean statementCanBePlacedAlong(final PsiElement element) {
     if (element instanceof JspTemplateStatement) {
       PsiElement neighbour = element.getPrevSibling();
       // we can place statement inside scriptlet only
