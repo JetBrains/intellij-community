@@ -31,50 +31,40 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class EnumBlock implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class EnumBlock implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ebMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       ebMarker.rollbackTo();
       return WRONGWAY;
     }
 
     IElementType seps;
-    do
-    {
+    do {
       seps = Separators.parse(builder);
     } while (!WRONGWAY.equals(seps));
 
-    if (parseEnumConstantStart(builder))
-    {
+    if (parseEnumConstantStart(builder)) {
       EnumConstants.parse(builder);
-    }
-    else
-    {
+    } else {
       ClassMember.parse(builder);
     }
 
     IElementType sep = Separators.parse(builder);
 
-    while (!WRONGWAY.equals(sep))
-    {
+    while (!WRONGWAY.equals(sep)) {
       ClassMember.parse(builder);
 
       sep = Separators.parse(builder);
     }
 
-    if (!ParserUtils.lookAhead(builder, mRCURLY))
-    {
+    if (!ParserUtils.lookAhead(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
     }
 
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY))
-    {
+    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
       ClassMember.parse(builder);
       builder.advanceLexer();
     }
@@ -83,8 +73,7 @@ public class EnumBlock implements GroovyElementTypes
     return ENUM_BLOCK;
   }
 
-  private static boolean parseEnumConstantStart(PsiBuilder builder)
-  {
+  private static boolean parseEnumConstantStart(PsiBuilder builder) {
     PsiBuilder.Marker checkMarker = builder.mark();
 
     boolean result = !WRONGWAY.equals(EnumConstant.parse(builder))

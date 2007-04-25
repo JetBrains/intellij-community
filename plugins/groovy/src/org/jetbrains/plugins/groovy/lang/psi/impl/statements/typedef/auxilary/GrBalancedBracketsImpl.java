@@ -24,10 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class GrBalancedBracketsImpl extends GroovyPsiElementImpl
-{
-  public GrBalancedBracketsImpl(@NotNull ASTNode node)
-  {
+public class GrBalancedBracketsImpl extends GroovyPsiElementImpl {
+  public GrBalancedBracketsImpl(@NotNull ASTNode node) {
     super(node);
   }
 }

@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrAssertStmtImpl extends GroovyPsiElementImpl implements GrAssertStatement
-{
-  public GrAssertStmtImpl(@NotNull ASTNode node)
-  {
+public class GrAssertStmtImpl extends GroovyPsiElementImpl implements GrAssertStatement {
+  public GrAssertStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "ASSERT statement";
   }
 }

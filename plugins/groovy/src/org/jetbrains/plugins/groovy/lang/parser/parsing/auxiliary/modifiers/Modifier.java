@@ -41,12 +41,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  *            | srtictfp
  */
 
-public class Modifier implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
-    if (TokenSets.MODIFIERS.contains(builder.getTokenType()))
-    {
+public class Modifier implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
+    if (TokenSets.MODIFIERS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return MODIFIERS;
     }

@@ -29,36 +29,30 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class EnumConstant implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class EnumConstant implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker ecMarker = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
     Annotation.parseAnnotationOptional(builder);
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       ecMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (ParserUtils.getToken(builder, mLPAREN))
-    {
+    if (ParserUtils.getToken(builder, mLPAREN)) {
       ArgumentList.parse(builder, mRPAREN);
 
       ParserUtils.getToken(builder, mNLS);
-      if (!ParserUtils.getToken(builder, mRPAREN))
-      {
+      if (!ParserUtils.getToken(builder, mRPAREN)) {
         builder.error(GroovyBundle.message("rparen.expected"));
         ecMarker.rollbackTo();
         return ENUM_CONSTANT_ERROR;
       }
     }
 
-    if (ParserUtils.lookAhead(builder, mLCURLY))
-    {
+    if (ParserUtils.lookAhead(builder, mLCURLY)) {
       ClassBlock.parse(builder);
     }
 

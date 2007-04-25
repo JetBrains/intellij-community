@@ -26,25 +26,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @autor: Ilya Sergey
  */
-public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForStatement
-{
-  public GrForStatementImpl(@NotNull ASTNode node)
-  {
+public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForStatement {
+  public GrForStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "For statement";
   }
 
-  public GrForClause getClause()
-  {
+  public GrForClause getClause() {
     return findChildByClass(GrForClause.class);
   }
 
-  public GrStatement getBody()
-  {
+  public GrStatement getBody() {
     return findChildByClass(GrStatement.class);
   }
 }

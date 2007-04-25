@@ -25,8 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class PostfixExpression implements GroovyElementTypes
-{
+public class PostfixExpression implements GroovyElementTypes {
 
 
   private static TokenSet POSTFIXES = TokenSet.create(
@@ -34,17 +33,13 @@ public class PostfixExpression implements GroovyElementTypes
           mDEC
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = PathExpression.parse(builder);
-    if (!result.equals(WRONGWAY))
-    {
+    if (!result.equals(WRONGWAY)) {
       subParse(builder, marker, result);
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
     return result;
@@ -52,17 +47,13 @@ public class PostfixExpression implements GroovyElementTypes
 
   private static GroovyElementType subParse(PsiBuilder builder,
                                             PsiBuilder.Marker marker,
-                                            GroovyElementType result)
-  {
-    if (ParserUtils.getToken(builder, POSTFIXES))
-    {
+                                            GroovyElementType result) {
+    if (ParserUtils.getToken(builder, POSTFIXES)) {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(POSTFIX_EXPRESSION);
       subParse(builder, newMarker, POSTFIX_EXPRESSION);
       return POSTFIX_EXPRESSION;
-    }
-    else
-    {
+    } else {
       marker.drop();
       return result;
     }

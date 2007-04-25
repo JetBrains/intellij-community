@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrParameterModifiers extends GroovyPsiElement
-{
+public interface GrParameterModifiers extends GroovyPsiElement {
 }

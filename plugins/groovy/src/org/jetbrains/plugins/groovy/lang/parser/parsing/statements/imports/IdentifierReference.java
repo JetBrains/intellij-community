@@ -28,88 +28,66 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @author Ilya Sergey
  */
-public class IdentifierReference implements GroovyElementTypes
-{
+public class IdentifierReference implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     Marker idMarker = builder.mark();
 
-    if (ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected")))
-    {
-      if (ParserUtils.lookAhead(builder, mDOT))
-      {
+    if (ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
+      if (ParserUtils.lookAhead(builder, mDOT)) {
         Marker newMarker = idMarker.precede();
         idMarker.done(IMPORT_REFERENCE);
         subParse(builder, newMarker);
-      }
-      else if (ParserUtils.lookAhead(builder, kAS))
-      {
+      } else if (ParserUtils.lookAhead(builder, kAS)) {
         builder.advanceLexer();
-        if (ParserUtils.lookAhead(builder, mNLS, mIDENT))
-        {
+        if (ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
           ParserUtils.getToken(builder, mNLS);
         }
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
         idMarker.done(IMPORT_SELECTOR);
-      }
-      else
-      {
+      } else {
         idMarker.done(IMPORT_REFERENCE);
       }
-    }
-    else
-    {
+    } else {
       idMarker.drop();
     }
     return IMPORT_REFERENCE;
   }
 
-  private static void subParse(PsiBuilder builder, Marker marker)
-  {
+  private static void subParse(PsiBuilder builder, Marker marker) {
     ParserUtils.getToken(builder, mDOT);
     if (ParserUtils.lookAhead(builder, mIDENT, mDOT) ||
-            ParserUtils.lookAhead(builder, mNLS, mIDENT, mDOT))
-    {
+            ParserUtils.lookAhead(builder, mNLS, mIDENT, mDOT)) {
       ParserUtils.getToken(builder, mNLS);
       builder.advanceLexer();
       Marker newMarker = marker.precede();
       marker.done(IMPORT_REFERENCE);
       subParse(builder, newMarker);
-    }
-    else if (ParserUtils.lookAhead(builder, mSTAR) ||
-            ParserUtils.lookAhead(builder, mNLS, mSTAR))
-    {
+    } else if (ParserUtils.lookAhead(builder, mSTAR) ||
+            ParserUtils.lookAhead(builder, mNLS, mSTAR)) {
       ParserUtils.getToken(builder, mNLS);
       builder.advanceLexer();
       marker.done(IMPORT_REFERENCE);
-    }
-    else if (ParserUtils.lookAhead(builder, mIDENT, kAS) ||
-            ParserUtils.lookAhead(builder, mNLS, mIDENT, kAS))
-    {
+    } else if (ParserUtils.lookAhead(builder, mIDENT, kAS) ||
+            ParserUtils.lookAhead(builder, mNLS, mIDENT, kAS)) {
       marker.drop();
       ParserUtils.getToken(builder, mNLS);
       Marker selMarker = builder.mark();
       builder.advanceLexer();
       builder.getTokenText(); // eat identifier and pick lexer
       builder.advanceLexer(); // as
-      if (ParserUtils.lookAhead(builder, mNLS, mIDENT))
-      {
+      if (ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
         ParserUtils.getToken(builder, mNLS);
       }
       ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
       selMarker.done(IMPORT_SELECTOR);
-    }
-    else if (ParserUtils.lookAhead(builder, mIDENT) ||
-            ParserUtils.lookAhead(builder, mNLS, mIDENT))
-    {
+    } else if (ParserUtils.lookAhead(builder, mIDENT) ||
+            ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
       marker.done(IMPORT_REFERENCE);
-    }
-    else
-    {
+    } else {
       builder.error(GroovyBundle.message("identifier.expected"));
       marker.done(IMPORT_REFERENCE);
     }

@@ -32,10 +32,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
-public class InterfaceMember implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class InterfaceMember implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
 
     //constructor
     PsiBuilder.Marker constructorMarker = builder.mark();
@@ -43,12 +41,9 @@ public class InterfaceMember implements GroovyElementTypes
 
     GroovyElementType constructorDef = ConstructorDefinition.parse(builder);
 
-    if (WRONGWAY.equals(constructorDef))
-    {
+    if (WRONGWAY.equals(constructorDef)) {
       constructorMarker.rollbackTo();
-    }
-    else
-    {
+    } else {
       constructorMarker.done(constructorDef);
       builder.error(GroovyBundle.message("interface.must.has.no.constructor"));
       return constructorDef;
@@ -57,12 +52,9 @@ public class InterfaceMember implements GroovyElementTypes
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
     GroovyElementType declType = Declaration.parse(builder);
-    if (WRONGWAY.equals(declType))
-    {
+    if (WRONGWAY.equals(declType)) {
       declMarker.rollbackTo();
-    }
-    else
-    {
+    } else {
       declMarker.drop();
       return declType;
     }
@@ -77,13 +69,11 @@ public class InterfaceMember implements GroovyElementTypes
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
-    if (TypeDeclarationStart.parse(builder))
-    {
+    if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
       IElementType typeDef = TypeDefinition.parse(builder);
-      if (WRONGWAY.equals(typeDef))
-      {
+      if (WRONGWAY.equals(typeDef)) {
         return WRONGWAY;
       }
       return typeDef;
@@ -91,22 +81,17 @@ public class InterfaceMember implements GroovyElementTypes
     typeDeclStartMarker.rollbackTo();
 
     //static compound statement
-    if (ParserUtils.getToken(builder, kSTATIC))
-    {
-      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder)))
-      {
+    if (ParserUtils.getToken(builder, kSTATIC)) {
+      if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         builder.error(GroovyBundle.message("interface.must.has.no.static.compound.statemenet"));
         return STATIC_COMPOUND_STATEMENT;
-      }
-      else
-      {
+      } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return WRONGWAY;
       }
     }
 
-    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder)))
-    {
+    if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       builder.error(GroovyBundle.message("interface.must.has.no.compound.statemenet"));
       return COMPOUND_STATEMENT;
     }

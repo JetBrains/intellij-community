@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStatement
-{
-  public GrBreakStmtImpl(@NotNull ASTNode node)
-  {
+public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStatement {
+  public GrBreakStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "BREAK statement";
   }
 }

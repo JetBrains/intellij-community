@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock
-{
+public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock {
 
-  public GrCaseBlockImpl(@NotNull ASTNode node)
-  {
+  public GrCaseBlockImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Case block";
   }
 }

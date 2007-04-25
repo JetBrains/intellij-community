@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrRelationalExprImpl extends GrBinaryExpressionImpl implements GrRelationalExpression
-{
+public class GrRelationalExprImpl extends GrBinaryExpressionImpl implements GrRelationalExpression {
 
-  public GrRelationalExprImpl(@NotNull ASTNode node)
-  {
+  public GrRelationalExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Relational expression";
   }
 

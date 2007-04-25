@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrStatement
-{
-  public GrLabeledStatementImpl(@NotNull ASTNode node)
-  {
+public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrStatement {
+  public GrLabeledStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Labeled statement";
   }
 }

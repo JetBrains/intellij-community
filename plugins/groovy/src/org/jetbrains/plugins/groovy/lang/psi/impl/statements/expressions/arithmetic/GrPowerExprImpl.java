@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrPowerExprImpl extends GrBinaryExpressionImpl
-{
+public class GrPowerExprImpl extends GrBinaryExpressionImpl {
 
-  public GrPowerExprImpl(@NotNull ASTNode node)
-  {
+  public GrPowerExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Power expression";
   }
 }

@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrLabelImpl extends GroovyPsiElementImpl implements GrLabel
-{
+public class GrLabelImpl extends GroovyPsiElementImpl implements GrLabel {
 
-  public GrLabelImpl(@NotNull ASTNode node)
-  {
+  public GrLabelImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Label";
   }
 }

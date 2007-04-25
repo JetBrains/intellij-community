@@ -33,28 +33,22 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya Sergey
  */
-public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition
-{
+public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
 
-  public GrTypeDefinitionImpl(@NotNull ASTNode node)
-  {
+  public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public int getTextOffset() {
-    return  getNameIdentifier().getTextRange().getStartOffset();
+    return getNameIdentifier().getTextRange().getStartOffset();
   }
 
   @Nullable
-  public String getQualifiedName()
-  {
+  public String getQualifiedName() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTypeDefinition)
-    {
+    if (parent instanceof GrTypeDefinition) {
       return ((GrTypeDefinition) parent).getQualifiedName() + "." + getName();
-    }
-    else if (parent instanceof GroovyFile)
-    {
+    } else if (parent instanceof GroovyFile) {
       String packageName = ((GroovyFile) parent).getPackageName();
       return packageName.length() > 0 ? packageName + "." + getName() : getName();
     }
@@ -77,15 +71,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  private PsiElement getNameIdentifier()
-  {
+  private PsiElement getNameIdentifier() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
     assert result != null;
     return result;
   }
 
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException
-  {
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("NIY");
   }
 
@@ -99,8 +91,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public String getName()
-  {
+  public String getName() {
     return getNameIdentifier().getText();
   }
 }

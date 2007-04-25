@@ -30,41 +30,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author ven
  */
-public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent
-{
+public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent {
   Project myProject;
 
-  public PsiElement createIdentifierFromText(String idText)
-  {
+  public PsiElement createIdentifierFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
     return ((GrReferenceExpression) ((GroovyFile) file).getStatements()[0]).getReferenceNameElement();
   }
 
-  private PsiFile createGroovyFile(String idText)
-  {
+  private PsiFile createGroovyFile(String idText) {
     return PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY", idText);
   }
 
-  public void projectOpened()
-  {
+  public void projectOpened() {
   }
 
-  public void projectClosed()
-  {
+  public void projectClosed() {
   }
 
   @NonNls
   @NotNull
-  public String getComponentName()
-  {
+  public String getComponentName() {
     return "Groovy Element Factory";
   }
 
-  public void initComponent()
-  {
+  public void initComponent() {
   }
 
-  public void disposeComponent()
-  {
+  public void disposeComponent() {
   }
 }

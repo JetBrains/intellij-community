@@ -38,8 +38,7 @@ import java.util.List;
  *
  * @author Ilya.Sergey
  */
-public class GroovyBlock implements Block, GroovyElementTypes
-{
+public class GroovyBlock implements Block, GroovyElementTypes {
 
   final protected ASTNode myNode;
   final protected Alignment myAlignment;
@@ -49,8 +48,7 @@ public class GroovyBlock implements Block, GroovyElementTypes
 
   protected List<Block> mySubBlocks = null;
 
-  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings)
-  {
+  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings) {
     myNode = node;
     myAlignment = alignment;
     myIndent = indent;
@@ -59,48 +57,40 @@ public class GroovyBlock implements Block, GroovyElementTypes
   }
 
   @NotNull
-  public ASTNode getNode()
-  {
+  public ASTNode getNode() {
     return myNode;
   }
 
   @NotNull
-  public CodeStyleSettings getSettings()
-  {
+  public CodeStyleSettings getSettings() {
     return mySettings;
   }
 
   @NotNull
-  public TextRange getTextRange()
-  {
+  public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
   @NotNull
-  public List<Block> getSubBlocks()
-  {
-    if (mySubBlocks == null)
-    {
+  public List<Block> getSubBlocks() {
+    if (mySubBlocks == null) {
       mySubBlocks = GroovyBlockGenerator.generateSubBlocks(myNode, myAlignment, myWrap, mySettings, this);
     }
     return mySubBlocks;
   }
 
   @Nullable
-  public Wrap getWrap()
-  {
+  public Wrap getWrap() {
     return myWrap;
   }
 
   @Nullable
-  public Indent getIndent()
-  {
+  public Indent getIndent() {
     return myIndent;
   }
 
   @Nullable
-  public Alignment getAlignment()
-  {
+  public Alignment getAlignment() {
     return myAlignment;
   }
 
@@ -112,42 +102,34 @@ public class GroovyBlock implements Block, GroovyElementTypes
    * @return
    */
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2)
-  {
+  public Spacing getSpacing(Block child1, Block child2) {
     return null;
   }
 
   @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex)
-  {
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
-    if (psiParent instanceof GroovyFile)
-    {
+    if (psiParent instanceof GroovyFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (BLOCK_SET.contains(astNode.getElementType()))
-    {
+    if (BLOCK_SET.contains(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (psiParent instanceof GrBinaryExpression)
-    {
+    if (psiParent instanceof GrBinaryExpression) {
       return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
     }
-    if (this instanceof LargeGroovyBlock)
-    {
+    if (this instanceof LargeGroovyBlock) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (psiParent instanceof GrParameterList)
-    {
+    if (psiParent instanceof GrParameterList) {
       return new ChildAttributes(this.getIndent(), this.getAlignment());
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }
 
 
-  public boolean isIncomplete()
-  {
+  public boolean isIncomplete() {
     return isIncomplete(myNode);
   }
 
@@ -155,27 +137,22 @@ public class GroovyBlock implements Block, GroovyElementTypes
    * @param node Tree node
    * @return true if node is incomplete
    */
-  public boolean isIncomplete(@NotNull final ASTNode node)
-  {
+  public boolean isIncomplete(@NotNull final ASTNode node) {
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
-            (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment))
-    {
+            (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
-    if (lastChild == null)
-    {
+    if (lastChild == null) {
       return false;
     }
-    if (lastChild.getPsi() instanceof PsiErrorElement)
-    {
+    if (lastChild.getPsi() instanceof PsiErrorElement) {
       return true;
     }
     return isIncomplete(lastChild);
   }
 
-  public boolean isLeaf()
-  {
+  public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
   }
 

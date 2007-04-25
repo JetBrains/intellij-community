@@ -34,44 +34,36 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
  *
  * @author Ilya Sergey
  */
-public class GroovyFile extends PsiFileBase
-{
+public class GroovyFile extends PsiFileBase {
 
-  public GroovyFile(FileViewProvider viewProvider)
-  {
+  public GroovyFile(FileViewProvider viewProvider) {
     super(viewProvider, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
   }
 
   @NotNull
-  public FileType getFileType()
-  {
+  public FileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Groovy script";
   }
 
-  public GrTypeDefinition[] getTypeDefinitions()
-  {
+  public GrTypeDefinition[] getTypeDefinitions() {
     return findChildrenByClass(GrTypeDefinition.class);
   }
 
   @NotNull
-  public String getPackageName()
-  {
+  public String getPackageName() {
     GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
-    if (packageDef != null)
-    {
+    if (packageDef != null) {
       return packageDef.getPackageName();
     }
 
     return "";
   }
 
-  public GrStatement[] getStatements()
-  {
+  public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
 

@@ -22,8 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 /**
  * @autor: Ilya Sergey
  */
-public interface GrIfStatement extends GrStatement, GrControlStatement
-{
+public interface GrIfStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 

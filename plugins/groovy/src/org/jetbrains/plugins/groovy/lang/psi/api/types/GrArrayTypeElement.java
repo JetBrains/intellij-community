@@ -24,6 +24,5 @@ import com.intellij.psi.PsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType
-{
+public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
 }

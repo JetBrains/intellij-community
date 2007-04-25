@@ -26,26 +26,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @author Ilya Sergey
  */
-public class Separators implements GroovyElementTypes
-{
+public class Separators implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (mSEMI.equals(builder.getTokenType()))
-    {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (mSEMI.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      while (ParserUtils.getToken(builder, mNLS))
-      {
+      while (ParserUtils.getToken(builder, mNLS)) {
         // Parse newLines
       }
       return SEP;
-    }
-    else if (mNLS.equals(builder.getTokenType()))
-    {
+    } else if (mNLS.equals(builder.getTokenType())) {
       builder.advanceLexer();
       while (ParserUtils.getToken(builder, mSEMI) ||
-              ParserUtils.getToken(builder, mNLS))
-      {
+              ParserUtils.getToken(builder, mNLS)) {
         // Parse newLines
       }
       return SEP;

@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrArgumentsImpl extends GroovyPsiElementImpl implements GrArguments
-{
+public class GrArgumentsImpl extends GroovyPsiElementImpl implements GrArguments {
 
-  public GrArgumentsImpl(@NotNull ASTNode node)
-  {
+  public GrArgumentsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Arguments";
   }
 }

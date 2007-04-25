@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrUnaryExprImpl extends GroovyPsiElementImpl implements GrUnaryExpression
-{
+public class GrUnaryExprImpl extends GroovyPsiElementImpl implements GrUnaryExpression {
 
-  public GrUnaryExprImpl(@NotNull ASTNode node)
-  {
+  public GrUnaryExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Unary expression";
   }
 }

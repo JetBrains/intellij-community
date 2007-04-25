@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrPostfixExprImpl extends GroovyPsiElementImpl implements GrPostfixExpression
-{
+public class GrPostfixExprImpl extends GroovyPsiElementImpl implements GrPostfixExpression {
 
-  public GrPostfixExprImpl(@NotNull ASTNode node)
-  {
+  public GrPostfixExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Postfix expression";
   }
 }

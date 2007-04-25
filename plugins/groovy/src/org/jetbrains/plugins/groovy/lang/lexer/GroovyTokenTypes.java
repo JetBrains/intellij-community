@@ -23,8 +23,7 @@ import com.intellij.psi.tree.IElementType;
  *
  * @author Ilya Sergey
  */
-public interface GroovyTokenTypes
-{
+public interface GroovyTokenTypes {
 
   /**
    * Wrong token. Use for debug needs

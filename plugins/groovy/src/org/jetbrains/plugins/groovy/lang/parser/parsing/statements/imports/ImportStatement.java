@@ -28,11 +28,9 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @author Ilya Sergey
  */
-public class ImportStatement implements GroovyElementTypes
-{
+public class ImportStatement implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     Marker impMarker = builder.mark();
 

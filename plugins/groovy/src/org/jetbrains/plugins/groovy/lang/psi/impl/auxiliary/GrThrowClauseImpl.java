@@ -25,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
-public class GrThrowClauseImpl extends GroovyPsiElementImpl implements GrThrowClause
-{
-  public GrThrowClauseImpl(@NotNull ASTNode node)
-  {
+public class GrThrowClauseImpl extends GroovyPsiElementImpl implements GrThrowClause {
+  public GrThrowClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Throw clause";
   }
 }

@@ -21,6 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrLabel extends GroovyPsiElement
-{
+public interface GrLabel extends GroovyPsiElement {
 }

@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClause
-{
+public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClause {
 
-  public GrForInClauseImpl(@NotNull ASTNode node)
-  {
+  public GrForInClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "In clause";
   }
 }

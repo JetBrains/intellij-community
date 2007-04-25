@@ -29,17 +29,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class InterfaceDefinition implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, kINTERFACE))
-    {
+public class InterfaceDefinition implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, kINTERFACE)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
@@ -49,8 +45,7 @@ public class InterfaceDefinition implements GroovyElementTypes
 
     InterfaceExtends.parse(builder);
 
-    if (WRONGWAY.equals(InterfaceBlock.parse(builder)))
-    {
+    if (WRONGWAY.equals(InterfaceBlock.parse(builder))) {
       builder.error(GroovyBundle.message("interface.body.expected"));
       return INTERFACE_DEFINITION_ERROR;
     }

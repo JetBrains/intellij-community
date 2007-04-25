@@ -26,12 +26,10 @@ import java.util.Map;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public abstract class Pairs
-{
+public abstract class Pairs {
   public static Map<IElementType, IElementType> pairElementsMap = new HashMap<IElementType, IElementType>();
 
-  static
-  {
+  static {
     pairElementsMap.put(mLPAREN, mRPAREN);
     pairElementsMap.put(mRPAREN, mLPAREN);
 

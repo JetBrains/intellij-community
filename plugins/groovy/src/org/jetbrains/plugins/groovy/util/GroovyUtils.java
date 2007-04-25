@@ -25,16 +25,13 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 /**
  * @author Ilya.Sergey
  */
-public abstract class GroovyUtils
-{
+public abstract class GroovyUtils {
   /**
    * @param dir
    * @return true if current file is VCS auxiliary directory
    */
-  public static boolean isVersionControlSysDir(final VirtualFile dir)
-  {
-    if (!dir.isDirectory())
-    {
+  public static boolean isVersionControlSysDir(final VirtualFile dir) {
+    if (!dir.isDirectory()) {
       return false;
     }
     final String name = dir.getName().toLowerCase();
@@ -47,8 +44,7 @@ public abstract class GroovyUtils
    * @return true if current file is true groovy file
    */
 
-  public static boolean isGroovyFileOrDirectory(final VirtualFile file)
-  {
+  public static boolean isGroovyFileOrDirectory(final VirtualFile file) {
     return (file != null) &&
             (GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension()) ||
                     file.isDirectory());
@@ -59,11 +55,9 @@ public abstract class GroovyUtils
    * @return VirtualFile corresponding to content root
    */
   @NotNull
-  public static VirtualFile getModuleRoot(@NotNull final Module module)
-  {
+  public static VirtualFile getModuleRoot(@NotNull final Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (roots.length > 0)
-    {
+    if (roots.length > 0) {
       return roots[0];
     }
     return (module.getModuleFile().getParent());
@@ -74,8 +68,7 @@ public abstract class GroovyUtils
    * @return VirtualFile array corresponding to content roots of current module
    */
   @NotNull
-  public static VirtualFile[] getModuleRoots(@NotNull final Module module)
-  {
+  public static VirtualFile[] getModuleRoots(@NotNull final Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
     return roots;
   }
@@ -85,17 +78,14 @@ public abstract class GroovyUtils
    * @return VirtualFile corresponding to content root
    */
   @NotNull
-  public static String[] getModuleRootUrls(@NotNull final Module module)
-  {
+  public static String[] getModuleRootUrls(@NotNull final Module module) {
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (roots.length == 0)
-    {
+    if (roots.length == 0) {
       roots = new VirtualFile[]{(module.getModuleFile().getParent())};
     }
     String[] urls = new String[roots.length];
     int i = 0;
-    for (VirtualFile root : roots)
-    {
+    for (VirtualFile root : roots) {
       urls[i++] = root.getUrl();
     }
     return urls;

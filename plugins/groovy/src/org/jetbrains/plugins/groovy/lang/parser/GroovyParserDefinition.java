@@ -36,50 +36,41 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Ilya Sergey
  */
-public class GroovyParserDefinition implements ParserDefinition
-{
+public class GroovyParserDefinition implements ParserDefinition {
 
   @NotNull
-  public Lexer createLexer(Project project)
-  {
+  public Lexer createLexer(Project project) {
     return new GroovyLexer();
   }
 
-  public PsiParser createParser(Project project)
-  {
+  public PsiParser createParser(Project project) {
     return new GroovyParser();
   }
 
-  public IFileElementType getFileNodeType()
-  {
+  public IFileElementType getFileNodeType() {
     return new IFileElementType(Language.findInstance(GroovyLanguage.class));
   }
 
   @NotNull
-  public TokenSet getWhitespaceTokens()
-  {
+  public TokenSet getWhitespaceTokens() {
     return TokenSets.WHITE_SPACE_TOKEN_SET;
   }
 
   @NotNull
-  public TokenSet getCommentTokens()
-  {
+  public TokenSet getCommentTokens() {
     return TokenSets.COMMENTS_TOKEN_SET;
   }
 
   @NotNull
-  public PsiElement createElement(ASTNode node)
-  {
+  public PsiElement createElement(ASTNode node) {
     return GroovyPsiCreator.createElement(node);
   }
 
-  public PsiFile createFile(FileViewProvider viewProvider)
-  {
+  public PsiFile createFile(FileViewProvider viewProvider) {
     return new GroovyFile(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right)
-  {
+  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return null;
   }
 }

@@ -19,8 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrBinaryExpression extends GrExpression
-{
+public interface GrBinaryExpression extends GrExpression {
 
   /**
    * @return left operand of binary expression

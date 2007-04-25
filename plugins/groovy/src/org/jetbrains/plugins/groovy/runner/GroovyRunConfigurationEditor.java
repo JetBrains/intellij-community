@@ -31,8 +31,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import javax.swing.*;
 import java.awt.*;
 
-public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration>
-{
+public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> {
   private DefaultComboBoxModel myModulesModel;
   private JComboBox myModulesBox;
   private JPanel myMainPanel;
@@ -44,18 +43,15 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JTextField scriptPathField;
   private JTextField workDirField;
 
-  public GroovyRunConfigurationEditor(Project project)
-  {
+  public GroovyRunConfigurationEditor(Project project) {
     myProject = project;
 
     scriptPathField = new JTextField();
     final BrowseFilesListener scriptBrowseListener = new BrowseFilesListener(scriptPathField,
             "Script Path",
             "Specify path to script",
-            new FileChooserDescriptor(true, false, false, false, false, false)
-            {
-              public boolean isFileSelectable(VirtualFile file)
-              {
+            new FileChooserDescriptor(true, false, false, false, false, false) {
+              public boolean isFileSelectable(VirtualFile file) {
                 return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
               }
             });
@@ -73,8 +69,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     workDirPanel.add(workDirFieldPanel, BorderLayout.CENTER);
   }
 
-  public void resetEditorFrom(GroovyScriptRunConfiguration configuration)
-  {
+  public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
     myVMParameters.setDialodCaption("VM Parameters");
     myVMParameters.setText(configuration.vmParams);
 
@@ -85,15 +80,13 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     workDirField.setText(configuration.getAbsoluteWorkDir());
 
     myModulesModel.removeAllElements();
-    for (Module module : configuration.getValidModules())
-    {
+    for (Module module : configuration.getValidModules()) {
       myModulesModel.addElement(module);
     }
     myModulesModel.setSelectedItem(configuration.getModule());
   }
 
-  public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException
-  {
+  public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule((Module) myModulesBox.getSelectedItem());
     configuration.vmParams = myVMParameters.getText();
     configuration.scriptParams = myParameters.getText();
@@ -102,19 +95,15 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   @NotNull
-  public JComponent createEditor()
-  {
+  public JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel();
     myModulesBox.setModel(myModulesModel);
 
-    myModulesBox.setRenderer(new DefaultListCellRenderer()
-    {
-      public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus)
-      {
+    myModulesBox.setRenderer(new DefaultListCellRenderer() {
+      public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Module module = (Module) value;
-        if (module != null)
-        {
+        if (module != null) {
           setIcon(module.getModuleType().getNodeIcon(false));
           setText(module.getName());
         }
@@ -125,7 +114,6 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     return myMainPanel;
   }
 
-  public void disposeEditor()
-  {
+  public void disposeEditor() {
   }
 }

@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrPropertySelectorImpl extends GroovyPsiElementImpl implements GrPropertySelector
-{
+public class GrPropertySelectorImpl extends GroovyPsiElementImpl implements GrPropertySelector {
 
-  public GrPropertySelectorImpl(@NotNull ASTNode node)
-  {
+  public GrPropertySelectorImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Property selector";
   }
 }

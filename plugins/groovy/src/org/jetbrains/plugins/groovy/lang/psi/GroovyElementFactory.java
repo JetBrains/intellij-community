@@ -22,10 +22,8 @@ import com.intellij.psi.PsiElement;
 /**
  * @author ven
  */
-public abstract class GroovyElementFactory
-{
-  public static GroovyElementFactory getInstance(Project project)
-  {
+public abstract class GroovyElementFactory {
+  public static GroovyElementFactory getInstance(Project project) {
     return project.getComponent(GroovyElementFactory.class);
   }
 

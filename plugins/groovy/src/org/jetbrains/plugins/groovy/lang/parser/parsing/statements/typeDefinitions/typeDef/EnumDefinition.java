@@ -27,27 +27,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class EnumDefinition implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, kENUM))
-    {
+public class EnumDefinition implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, kENUM)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(ImplementsClause.parse(builder)))
-    {
+    if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
       return ENUM_DEFINITION_ERROR;
     }
 
-    if (WRONGWAY.equals(EnumBlock.parse(builder)))
-    {
+    if (WRONGWAY.equals(EnumBlock.parse(builder))) {
       return ENUM_DEFINITION_ERROR;
     }
 

@@ -35,17 +35,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * ClassDefinition ::= classdef IDENT nls [TypeParameters] superClassClause implementsClause classBlock
  */
 
-public class ClassDefinition implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, kCLASS))
-    {
+public class ClassDefinition implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, kCLASS)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
@@ -54,25 +50,19 @@ public class ClassDefinition implements GroovyElementTypes
 
     TypeParameters.parse(builder);
 
-    if (kEXTENDS.equals(builder.getTokenType()))
-    {
+    if (kEXTENDS.equals(builder.getTokenType())) {
       SuperClassClause.parse(builder);
     }
 
-    if (kIMPLEMENTS.equals(builder.getTokenType()))
-    {
+    if (kIMPLEMENTS.equals(builder.getTokenType())) {
       ImplementsClause.parse(builder);
     }
 
-    if (mLCURLY.equals(builder.getTokenType()))
-    {
-      if (WRONGWAY.equals(ClassBlock.parse(builder)))
-      {
+    if (mLCURLY.equals(builder.getTokenType())) {
+      if (WRONGWAY.equals(ClassBlock.parse(builder))) {
         return CLASS_DEFINITION_ERROR;
       }
-    }
-    else
-    {
+    } else {
       builder.error(GroovyBundle.message("lcurly.expected"));
       return CLASS_DEFINITION_ERROR;
     }

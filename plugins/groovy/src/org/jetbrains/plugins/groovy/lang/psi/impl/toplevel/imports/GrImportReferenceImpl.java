@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrImportReferenceImpl extends GroovyPsiElementImpl implements GrImportReference
-{
+public class GrImportReferenceImpl extends GroovyPsiElementImpl implements GrImportReference {
 
-  public GrImportReferenceImpl(@NotNull ASTNode node)
-  {
+  public GrImportReferenceImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Import referenece";
   }
 }

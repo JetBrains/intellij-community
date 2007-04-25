@@ -23,6 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public interface GrAnnotation extends GroovyPsiElement, GrCondition
-{
+public interface GrAnnotation extends GroovyPsiElement, GrCondition {
 }

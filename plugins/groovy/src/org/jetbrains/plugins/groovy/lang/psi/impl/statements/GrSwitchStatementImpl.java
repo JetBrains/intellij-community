@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwitchStatement
-{
+public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwitchStatement {
 
-  public GrSwitchStatementImpl(@NotNull ASTNode node)
-  {
+  public GrSwitchStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Switch statement";
   }
 }

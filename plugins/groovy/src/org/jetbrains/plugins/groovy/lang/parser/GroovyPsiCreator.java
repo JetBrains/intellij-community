@@ -77,8 +77,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes
-{
+public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -86,8 +85,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes
    * @param node Given node
    * @return Respective PSI element
    */
-  public static PsiElement createElement(ASTNode node)
-  {
+  public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
     //Identifiers & literal

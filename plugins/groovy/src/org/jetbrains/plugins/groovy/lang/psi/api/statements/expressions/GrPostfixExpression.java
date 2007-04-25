@@ -19,6 +19,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrPostfixExpression extends GrExpression
-{
+public interface GrPostfixExpression extends GrExpression {
 }

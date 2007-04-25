@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Ilya.Sergey
  */
-public interface GrPropertySelection extends GrExpression, GrNested
-{
+public interface GrPropertySelection extends GrExpression, GrNested {
 }

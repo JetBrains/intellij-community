@@ -25,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
-{
-  public GrModifiersImpl(@NotNull ASTNode node)
-  {
+public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers {
+  public GrModifiersImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Modifiers";
   }
 }

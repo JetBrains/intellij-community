@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrInclusiveOrExprImpl extends GrBinaryExpressionImpl
-{
+public class GrInclusiveOrExprImpl extends GrBinaryExpressionImpl {
 
-  public GrInclusiveOrExprImpl(@NotNull ASTNode node)
-  {
+  public GrInclusiveOrExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Inclusive OR expression";
   }
 }

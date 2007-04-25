@@ -19,6 +19,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrParenthesizedExpr extends GrExpression
-{
+public interface GrParenthesizedExpr extends GrExpression {
 }

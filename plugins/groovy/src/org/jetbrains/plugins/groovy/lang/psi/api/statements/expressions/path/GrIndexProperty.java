@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Ilya.Sergey
  */
-public interface GrIndexProperty extends GrExpression, GrNested
-{
+public interface GrIndexProperty extends GrExpression, GrNested {
 }

@@ -23,6 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  *
  * @author Ilya.Sergey
  */
-public interface GrCondition extends GroovyPsiElement
-{
+public interface GrCondition extends GroovyPsiElement {
 }

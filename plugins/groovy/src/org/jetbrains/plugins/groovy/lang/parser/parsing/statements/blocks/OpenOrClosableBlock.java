@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class OpenOrClosableBlock implements GroovyElementTypes
-{
+public class OpenOrClosableBlock implements GroovyElementTypes {
 
   /**
    * Parses blocks of both types
@@ -37,11 +36,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes
    * @param builder
    * @return
    */
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       return WRONGWAY;
     }
@@ -49,13 +46,10 @@ public class OpenOrClosableBlock implements GroovyElementTypes
     GroovyElementType result = closableBlockParamsOpt(builder);
     parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
-    if (!result.equals(WRONGWAY))
-    {
+    if (!result.equals(WRONGWAY)) {
       marker.done(CLOSABLE_BLOCK);
       return CLOSABLE_BLOCK;
-    }
-    else
-    {
+    } else {
       marker.done(OPEN_BLOCK);
       return OPEN_BLOCK;
     }
@@ -67,11 +61,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes
    * @param builder
    * @return
    */
-  public static GroovyElementType parseOpenBlock(PsiBuilder builder)
-  {
+  public static GroovyElementType parseOpenBlock(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       return WRONGWAY;
     }
@@ -89,11 +81,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes
    * @param builder
    * @return
    */
-  public static GroovyElementType parseClosableBlock(PsiBuilder builder)
-  {
+  public static GroovyElementType parseClosableBlock(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       return WRONGWAY;
     }
@@ -106,28 +96,23 @@ public class OpenOrClosableBlock implements GroovyElementTypes
   }
 
 
-  private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder)
-  {
+  private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder) {
     ParameterDeclarationList.parse(builder, mCLOSABLE_BLOCK_OP);
     ParserUtils.getToken(builder, mNLS);
-    if (ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP))
-    {
+    if (ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP)) {
       return PARAMETERS_LIST;
     }
     return WRONGWAY;
   }
 
-  public static GroovyElementType parseBlockBody(PsiBuilder builder)
-  {
-    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))
-    {
+  public static GroovyElementType parseBlockBody(PsiBuilder builder) {
+    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }
 
     GroovyElementType result = Statement.parse(builder);
     while (!result.equals(WRONGWAY) &&
-            (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())))
-    {
+            (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
       result = Statement.parse(builder);
       cleanAfterError(builder);
@@ -141,25 +126,20 @@ public class OpenOrClosableBlock implements GroovyElementTypes
    *
    * @param builder
    */
-  public static void cleanAfterError(PsiBuilder builder)
-  {
+  public static void cleanAfterError(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
     while (!builder.eof() &&
             !(mNLS.equals(builder.getTokenType()) ||
                     mRCURLY.equals(builder.getTokenType()) ||
                     mSEMI.equals(builder.getTokenType()))
-            )
-    {
+            ) {
       builder.advanceLexer();
       i++;
     }
-    if (i > 0)
-    {
+    if (i > 0) {
       em.error(GroovyBundle.message("separator.or.rcurly.expected"));
-    }
-    else
-    {
+    } else {
       em.drop();
     }
   }

@@ -23,8 +23,7 @@ import com.intellij.psi.tree.TokenSet;
  *
  * @author Ilya Sergey
  */
-public abstract class TokenSets implements GroovyTokenTypes
-{
+public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
           mSL_COMMENT,

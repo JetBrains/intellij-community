@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrCaseBlock extends GroovyPsiElement, BlockedIndent
-{
+public interface GrCaseBlock extends GroovyPsiElement, BlockedIndent {
 }

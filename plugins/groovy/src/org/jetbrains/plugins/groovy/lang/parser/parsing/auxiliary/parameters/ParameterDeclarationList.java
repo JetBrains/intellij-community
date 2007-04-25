@@ -27,16 +27,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: Dmitry.Krasilschikov, Ilya Sergey
  * @date: 26.03.2007
  */
-public class ParameterDeclarationList implements GroovyElementTypes
-{
+public class ParameterDeclarationList implements GroovyElementTypes {
 
   /**
    * @param builder Given builder
    * @param ending  ending:  -> or ) in various cases
    * @return PARAMETERS_LIST
    */
-  public static GroovyElementType parse(PsiBuilder builder, IElementType ending)
-  {
+  public static GroovyElementType parse(PsiBuilder builder, IElementType ending) {
 //    if (ParserUtils.lookAhead(builder, mRPAREN)) return NONE;
 
     if (ParserUtils.lookAhead(builder, mRPAREN)) return NONE;
@@ -45,29 +43,23 @@ public class ParameterDeclarationList implements GroovyElementTypes
 
     GroovyElementType result = ParameterDeclaration.parse(builder, ending);
 
-    if (!PARAMETER.equals(result))
-    {
+    if (!PARAMETER.equals(result)) {
       pdlMarker.rollbackTo();
       return WRONGWAY;
     }
 
     while (!builder.eof() &&
             result.equals(PARAMETER) &&
-            mCOMMA.equals(builder.getTokenType()))
-    {
+            mCOMMA.equals(builder.getTokenType())) {
       PsiBuilder.Marker rb = builder.mark();
       ParserUtils.getToken(builder, mCOMMA);
       ParserUtils.getToken(builder, mNLS);
       result = ParameterDeclaration.parse(builder, ending);
-      if (result.equals(PARAMETER))
-      {
+      if (result.equals(PARAMETER)) {
         rb.drop();
-      }
-      else
-      {
+      } else {
         rb.rollbackTo();
-        if (mCOMMA.equals(builder.getTokenType()))
-        {
+        if (mCOMMA.equals(builder.getTokenType())) {
           ParserUtils.getToken(builder, mCOMMA);
           builder.error(GroovyBundle.message("param.expected"));
         }
@@ -76,13 +68,10 @@ public class ParameterDeclarationList implements GroovyElementTypes
 
     if ((ending.equals(mCLOSABLE_BLOCK_OP) &&
             mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
-            || ending.equals(mRPAREN))
-    {
+            || ending.equals(mRPAREN)) {
       pdlMarker.done(PARAMETERS_LIST);
       return PARAMETERS_LIST;
-    }
-    else
-    {
+    } else {
       pdlMarker.rollbackTo();
       return WRONGWAY;
     }

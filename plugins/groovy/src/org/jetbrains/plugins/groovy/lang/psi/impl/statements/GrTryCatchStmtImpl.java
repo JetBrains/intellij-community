@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrTryCatchStmtImpl extends GroovyPsiElementImpl implements GrTryCatchStatement
-{
-  public GrTryCatchStmtImpl(@NotNull ASTNode node)
-  {
+public class GrTryCatchStmtImpl extends GroovyPsiElementImpl implements GrTryCatchStatement {
+  public GrTryCatchStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Try statement";
   }
 }

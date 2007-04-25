@@ -23,10 +23,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 /**
  * @autor: Ilya Sergey
  */
-public class TypeParameters implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class TypeParameters implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     return WRONGWAY;
   }
 }

@@ -26,50 +26,38 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class ShiftExpression implements GroovyElementTypes
-{
+public class ShiftExpression implements GroovyElementTypes {
 
   private static TokenSet RANGES = TokenSet.create(
           mRANGE_EXCLUSIVE,
           mRANGE_INCLUSIVE
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = AdditiveExpression.parse(builder);
 
-    if (!result.equals(WRONGWAY))
-    {
+    if (!result.equals(WRONGWAY)) {
       if (ParserUtils.getToken(builder, RANGES) ||
-              getCompositeSign(builder))
-      {
+              getCompositeSign(builder)) {
         ParserUtils.getToken(builder, mNLS);
         result = AdditiveExpression.parse(builder);
-        if (result.equals(WRONGWAY))
-        {
+        if (result.equals(WRONGWAY)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(SHIFT_EXPRESSION);
         result = SHIFT_EXPRESSION;
-        if (RANGES.contains(builder.getTokenType()))
-        {
+        if (RANGES.contains(builder.getTokenType())) {
           subParse(builder, newMarker);
-        }
-        else
-        {
+        } else {
           newMarker.drop();
         }
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
     return result;
@@ -81,52 +69,39 @@ public class ShiftExpression implements GroovyElementTypes
    * @param builder
    * @return
    */
-  private static boolean getCompositeSign(PsiBuilder builder)
-  {
-    if (ParserUtils.lookAhead(builder, mGT, mGT, mGT))
-    {
+  private static boolean getCompositeSign(PsiBuilder builder) {
+    if (ParserUtils.lookAhead(builder, mGT, mGT, mGT)) {
       PsiBuilder.Marker marker = builder.mark();
-      for (int i = 0; i < 3; i++)
-      {
+      for (int i = 0; i < 3; i++) {
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
       return true;
-    }
-    else if (ParserUtils.lookAhead(builder, mLT, mLT) ||
-            ParserUtils.lookAhead(builder, mGT, mGT))
-    {
+    } else if (ParserUtils.lookAhead(builder, mLT, mLT) ||
+            ParserUtils.lookAhead(builder, mGT, mGT)) {
       PsiBuilder.Marker marker = builder.mark();
-      for (int i = 0; i < 2; i++)
-      {
+      for (int i = 0; i < 2; i++) {
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
       return true;
-    }
-    else
-    {
+    } else {
       return false;
     }
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker)
-  {
+  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, RANGES);
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = AdditiveExpression.parse(builder);
-    if (result.equals(WRONGWAY))
-    {
+    if (result.equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(SHIFT_EXPRESSION);
-    if (RANGES.contains(builder.getTokenType()))
-    {
+    if (RANGES.contains(builder.getTokenType())) {
       subParse(builder, newMarker);
-    }
-    else
-    {
+    } else {
       newMarker.drop();
     }
     return SHIFT_EXPRESSION;

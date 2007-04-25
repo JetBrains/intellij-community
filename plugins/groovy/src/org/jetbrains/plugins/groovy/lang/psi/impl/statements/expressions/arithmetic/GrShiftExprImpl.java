@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrShiftExprImpl extends GrBinaryExpressionImpl
-{
+public class GrShiftExprImpl extends GrBinaryExpressionImpl {
 
-  public GrShiftExprImpl(@NotNull ASTNode node)
-  {
+  public GrShiftExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Shift expression";
   }
 }

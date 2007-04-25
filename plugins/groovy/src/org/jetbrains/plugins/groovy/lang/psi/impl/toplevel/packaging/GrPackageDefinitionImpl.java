@@ -27,28 +27,23 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Ilya.Sergey
  */
-public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrPackageDefinition
-{
+public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrPackageDefinition {
 
-  public GrPackageDefinitionImpl(@NotNull ASTNode node)
-  {
+  public GrPackageDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Package definition";
   }
 
-  public String getPackageName()
-  {
+  public String getPackageName() {
     GrReferenceElement ref = getPackageReference();
     if (ref == null) return "";
     return PsiUtil.getQualifiedReferenceText(ref);
   }
 
-  public GrReferenceElement getPackageReference()
-  {
+  public GrReferenceElement getPackageReference() {
     return (GrReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 }

@@ -32,22 +32,18 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 
-public class AnnotationArguments implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class AnnotationArguments implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker annArgs = builder.mark();
-    if (parseAnnotationMemberValueInitializer(builder))
-    {
+    if (parseAnnotationMemberValueInitializer(builder)) {
       annArgs.done(ANNOTATION_ARGUMENTS);
       return ANNOTATION_ARGUMENTS;
     }
     annArgs.rollbackTo();
 
     annArgs = builder.mark();
-    if (!WRONGWAY.equals(parseAnnotationMemberValuePairs(builder)))
-    {
+    if (!WRONGWAY.equals(parseAnnotationMemberValuePairs(builder))) {
       annArgs.done(ANNOTATION_ARGUMENTS);
       return ANNOTATION_ARGUMENTS;
     }
@@ -60,10 +56,8 @@ public class AnnotationArguments implements GroovyElementTypes
   * annotationMemberValueInitializer ::=  conditionalExpression |	annotation
   */
 
-  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder)
-  {
-    if (ParserUtils.lookAhead(builder, mAT))
-    {
+  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
+    if (ParserUtils.lookAhead(builder, mAT)) {
       return !WRONGWAY.equals(Annotation.parse(builder));
     }
 
@@ -75,22 +69,18 @@ public class AnnotationArguments implements GroovyElementTypes
    * anntotationMemberValuePairs ::= annotationMemberValuePair ( COMMA nls annotationMemberValuePair )*
    */
 
-  private static GroovyElementType parseAnnotationMemberValuePairs(PsiBuilder builder)
-  {
+  private static GroovyElementType parseAnnotationMemberValuePairs(PsiBuilder builder) {
     PsiBuilder.Marker annmvps = builder.mark();
 
-    if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder)))
-    {
+    if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder))) {
       annmvps.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ParserUtils.getToken(builder, mCOMMA))
-    {
+    while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder)))
-      {
+      if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder))) {
         annmvps.rollbackTo();
         return WRONGWAY;
       }
@@ -104,26 +94,22 @@ public class AnnotationArguments implements GroovyElementTypes
    * annotationMemberValuePair ::= IDENT ASSIGN nls annotationMemberValueInitializer
    */
 
-  private static GroovyElementType parseAnnotationMemberValueSinglePair(PsiBuilder builder)
-  {
+  private static GroovyElementType parseAnnotationMemberValueSinglePair(PsiBuilder builder) {
     PsiBuilder.Marker annmvp = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       annmvp.rollbackTo();
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mASSIGN))
-    {
+    if (!ParserUtils.getToken(builder, mASSIGN)) {
       annmvp.rollbackTo();
       return WRONGWAY;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (parseAnnotationMemberValueInitializer(builder))
-    {
+    if (parseAnnotationMemberValueInitializer(builder)) {
       annmvp.done(ANNOTATION_MEMBER_VALUE_PAIR);
       return ANNOTATION_MEMBER_VALUE_PAIR;
     }

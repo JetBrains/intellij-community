@@ -25,66 +25,49 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class PowerExpressionNotPlusMinus implements GroovyElementTypes
-{
+public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = UnaryExpressionNotPlusMinus.parse(builder);
 
-    if (!result.equals(WRONGWAY))
-    {
-      if (ParserUtils.getToken(builder, mSTAR_STAR))
-      {
+    if (!result.equals(WRONGWAY)) {
+      if (ParserUtils.getToken(builder, mSTAR_STAR)) {
         ParserUtils.getToken(builder, mNLS);
         result = UnaryExpression.parse(builder);
-        if (result.equals(WRONGWAY))
-        {
+        if (result.equals(WRONGWAY)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(POWER_EXPRESSION_SIMPLE);
         result = POWER_EXPRESSION_SIMPLE;
-        if (mSTAR_STAR.equals(builder.getTokenType()))
-        {
+        if (mSTAR_STAR.equals(builder.getTokenType())) {
           subParse(builder, newMarker);
-        }
-        else
-        {
+        } else {
           newMarker.drop();
         }
-      }
-      else
-      {
+      } else {
         marker.drop();
       }
-    }
-    else
-    {
+    } else {
       marker.drop();
     }
     return result;
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker)
-  {
+  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, mSTAR_STAR);
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = UnaryExpression.parse(builder);
-    if (result.equals(WRONGWAY))
-    {
+    if (result.equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(POWER_EXPRESSION_SIMPLE);
-    if (mSTAR_STAR.equals(builder.getTokenType()))
-    {
+    if (mSTAR_STAR.equals(builder.getTokenType())) {
       subParse(builder, newMarker);
-    }
-    else
-    {
+    } else {
       newMarker.drop();
     }
     return POWER_EXPRESSION_SIMPLE;

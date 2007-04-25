@@ -32,26 +32,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 */
 
 
-public class Annotation implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class Annotation implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker annMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mAT))
-    {
+    if (!ParserUtils.getToken(builder, mAT)) {
       annMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder)))
-    {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       annMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mLPAREN))
-    {
+    if (!ParserUtils.getToken(builder, mLPAREN)) {
       annMarker.done(ANNOTATION);
       return ANNOTATION;
     }
@@ -60,8 +55,7 @@ public class Annotation implements GroovyElementTypes
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!ParserUtils.getToken(builder, mRPAREN))
-    {
+    if (!ParserUtils.getToken(builder, mRPAREN)) {
       annMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -70,24 +64,19 @@ public class Annotation implements GroovyElementTypes
     return ANNOTATION;
   }
 
-  public static GroovyElementType parseAnnotationOptional(PsiBuilder builder)
-  {
+  public static GroovyElementType parseAnnotationOptional(PsiBuilder builder) {
     PsiBuilder.Marker annOptMarker = builder.mark();
 
     boolean hasAnnotations = false;
-    while (!WRONGWAY.equals(Annotation.parse(builder)))
-    {
+    while (!WRONGWAY.equals(Annotation.parse(builder))) {
       ParserUtils.getToken(builder, mNLS);
       hasAnnotations = true;
     }
 
-    if (hasAnnotations)
-    {
+    if (hasAnnotations) {
       annOptMarker.done(MODIFIERS);
       return MODIFIERS;
-    }
-    else
-    {
+    } else {
       annOptMarker.rollbackTo();
       return NONE;
     }

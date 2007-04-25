@@ -31,26 +31,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 23.03.2007
  */
 
-public class ConstructorDefinition implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+public class ConstructorDefinition implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mLPAREN))
-    {
+    if (!ParserUtils.getToken(builder, mLPAREN)) {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
     ParameterDeclarationList.parse(builder, mRPAREN);
 
     ParserUtils.getToken(builder, mNLS);
-    if (!ParserUtils.getToken(builder, mRPAREN))
-    {
+    if (!ParserUtils.getToken(builder, mRPAREN)) {
       ParserUtils.waitNextRCurly(builder);
 
       builder.error(GroovyBundle.message("rparen.expected"));
@@ -62,12 +57,9 @@ public class ConstructorDefinition implements GroovyElementTypes
 
     GroovyElementType methodBody = ConstructorBody.parse(builder);
 
-    if (!WRONGWAY.equals(methodBody))
-    {
+    if (!WRONGWAY.equals(methodBody)) {
       return CONSTRUCTOR_DEFINITION;
-    }
-    else
-    {
+    } else {
       return WRONGWAY;
     }
   }

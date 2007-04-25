@@ -22,11 +22,9 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * @author Ilya Sergey
  */
-public class GroovyLexer extends MergingLexerAdapter
-{
+public class GroovyLexer extends MergingLexerAdapter {
 
-  public GroovyLexer()
-  {
+  public GroovyLexer() {
     super(new GroovyFlexLexer(),
             TokenSet.create(
                     GroovyTokenTypes.mSL_COMMENT,

@@ -31,62 +31,45 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @autor: Dmitry.Krasilschikov, Ilya Sergey
  */
-public class StrictContextExpression implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class StrictContextExpression implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
-    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType()))
-    {
+    if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())) {
       return BranchStatement.parse(builder);
     }
-    if (mAT.equals(builder.getTokenType()))
-    {
+    if (mAT.equals(builder.getTokenType())) {
       return Annotation.parse(builder);
     }
-    if (DeclarationStart.parse(builder))
-    {
+    if (DeclarationStart.parse(builder)) {
       return singleDeclarationParse(builder);
     }
     return ExpressionStatement.argParse(builder);
   }
 
-  public static GroovyElementType singleDeclarationParse(PsiBuilder builder)
-  {
+  public static GroovyElementType singleDeclarationParse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (!WRONGWAY.equals(Modifiers.parse(builder)))
-    {
+    if (!WRONGWAY.equals(Modifiers.parse(builder))) {
       PsiBuilder.Marker rb = builder.mark();
       TypeSpec.parse(builder);
-      if (!mIDENT.equals(builder.getTokenType()))
-      {
+      if (!mIDENT.equals(builder.getTokenType())) {
         rb.rollbackTo();
-      }
-      else
-      {
+      } else {
         rb.drop();
       }
       ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
-      if (mASSIGN.equals(builder.getTokenType()))
-      {
+      if (mASSIGN.equals(builder.getTokenType())) {
         VariableInitializer.parse(builder);
       }
       marker.done(VARIABLE_DEFINITION);
-    }
-    else
-    {
-      if (!WRONGWAY.equals(TypeSpec.parse(builder)))
-      {
+    } else {
+      if (!WRONGWAY.equals(TypeSpec.parse(builder))) {
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
-        if (mASSIGN.equals(builder.getTokenType()))
-        {
+        if (mASSIGN.equals(builder.getTokenType())) {
           VariableInitializer.parse(builder);
         }
         marker.done(VARIABLE_DEFINITION);
-      }
-      else
-      {
+      } else {
         builder.error(GroovyBundle.message("type.specification.expected"));
       }
     }

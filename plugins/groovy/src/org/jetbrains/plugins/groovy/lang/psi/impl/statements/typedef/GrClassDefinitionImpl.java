@@ -25,20 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrClassDefinition
-{
-  public GrClassDefinitionImpl(@NotNull ASTNode node)
-  {
+public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrClassDefinition {
+  public GrClassDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Class definition";
   }
 
-  public GrTypeDefinitionBody getBody()
-  {
+  public GrTypeDefinitionBody getBody() {
     return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 }

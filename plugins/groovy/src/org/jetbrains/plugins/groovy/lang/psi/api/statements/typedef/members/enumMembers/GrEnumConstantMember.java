@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public interface GrEnumConstantMember extends GrMember
-{
+public interface GrEnumConstantMember extends GrMember {
 }

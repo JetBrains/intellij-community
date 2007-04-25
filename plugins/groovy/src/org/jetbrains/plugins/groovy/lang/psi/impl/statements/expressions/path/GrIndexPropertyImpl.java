@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrIndexPropertyImpl extends GroovyPsiElementImpl implements GrIndexProperty
-{
+public class GrIndexPropertyImpl extends GroovyPsiElementImpl implements GrIndexProperty {
 
-  public GrIndexPropertyImpl(@NotNull ASTNode node)
-  {
+  public GrIndexPropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Property by index";
   }
 }

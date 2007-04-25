@@ -26,36 +26,26 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrBinaryExpressionImpl extends GroovyPsiElementImpl implements GrBinaryExpression
-{
+public class GrBinaryExpressionImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
 
-  public GrBinaryExpressionImpl(@NotNull ASTNode node)
-  {
+  public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrExpression getLeftOperand()
-  {
+  public GrExpression getLeftOperand() {
     PsiElement first = getFirstChild();
-    if (first instanceof GrExpression)
-    {
+    if (first instanceof GrExpression) {
       return (GrExpression) first;
-    }
-    else
-    {
+    } else {
       return null;
     }
   }
 
-  public GrExpression getRightOperand()
-  {
+  public GrExpression getRightOperand() {
     PsiElement last = getLastChild();
-    if (last instanceof GrExpression)
-    {
+    if (last instanceof GrExpression) {
       return (GrExpression) last;
-    }
-    else
-    {
+    } else {
       return null;
     }
   }

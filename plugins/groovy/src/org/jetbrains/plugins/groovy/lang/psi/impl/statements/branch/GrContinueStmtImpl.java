@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement
-{
-  public GrContinueStmtImpl(@NotNull ASTNode node)
-  {
+public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement {
+  public GrContinueStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "CONTINUE statement";
   }
 }

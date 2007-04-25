@@ -26,20 +26,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrConstructorDefinitionImpl extends GroovyPsiElementImpl implements GrMethod
-{
-  public GrConstructorDefinitionImpl(@NotNull ASTNode node)
-  {
+public class GrConstructorDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
+  public GrConstructorDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Constructor";
   }
 
-  public GrOpenBlock getBody()
-  {
+  public GrOpenBlock getBody() {
     return this.findChildByClass(GrOpenBlock.class);
   }
 }

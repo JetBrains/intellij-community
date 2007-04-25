@@ -27,60 +27,49 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class SynchronizedStatement implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class SynchronizedStatement implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     ParserUtils.getToken(builder, kSYNCHRONIZED);
 
-    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.drop();
       return WRONGWAY;
 //      marker.done(SYNCHRONIZED_STATEMENT);
 //      return SYNCHRONIZED_STATEMENT;
     }
 
-    if (StrictContextExpression.parse(builder).equals(WRONGWAY))
-    {
+    if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(SYNCHRONIZED_STATEMENT);
       return SYNCHRONIZED_STATEMENT;
     }
 
-    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN))
-    {
+    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)) {
       ParserUtils.getToken(builder, mNLS);
     }
-    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       marker.done(SYNCHRONIZED_STATEMENT);
       return SYNCHRONIZED_STATEMENT;
     }
 
     PsiBuilder.Marker warn = builder.mark();
-    if (ParserUtils.lookAhead(builder, mNLS))
-    {
+    if (ParserUtils.lookAhead(builder, mNLS)) {
       ParserUtils.getToken(builder, mNLS);
     }
 
     GroovyElementType result = WRONGWAY;
-    if (mLCURLY.equals(builder.getTokenType()))
-    {
+    if (mLCURLY.equals(builder.getTokenType())) {
       result = OpenOrClosableBlock.parseOpenBlock(builder);
     }
-    if (result.equals(WRONGWAY) || result.equals(IMPORT_STATEMENT))
-    {
+    if (result.equals(WRONGWAY) || result.equals(IMPORT_STATEMENT)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("block.expression.expected"));
       marker.done(SYNCHRONIZED_STATEMENT);
       return SYNCHRONIZED_STATEMENT;
-    }
-    else
-    {
+    } else {
       warn.drop();
       marker.done(SYNCHRONIZED_STATEMENT);
       return SYNCHRONIZED_STATEMENT;

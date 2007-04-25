@@ -40,43 +40,33 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * | (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
  */
 
-public class DeclarationStart implements GroovyElementTypes
-{
+public class DeclarationStart implements GroovyElementTypes {
   /*
    * @deprecated
    */
 
-  public static boolean parse(PsiBuilder builder)
-  {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker declStartMarker = builder.mark();
 
-    if (!WRONGWAY.equals(Declaration.parse(builder)))
-    {
+    if (!WRONGWAY.equals(Declaration.parse(builder))) {
       declStartMarker.rollbackTo();
       return true;
-    }
-    else
-    {
+    } else {
       declStartMarker.rollbackTo();
       return false;
     }
   }
 
-  public static boolean parseDeclarationStart(PsiBuilder builder)
-  {
+  public static boolean parseDeclarationStart(PsiBuilder builder) {
     PsiBuilder.Marker declStartMarker = builder.mark();
     IElementType elementType;
 
     //def
-    if (ParserUtils.getToken(builder, kDEF))
-    {
-      if (parseNextTokenInDeclaration(builder))
-      {
+    if (ParserUtils.getToken(builder, kDEF)) {
+      if (parseNextTokenInDeclaration(builder)) {
         declStartMarker.rollbackTo();
         return true;
-      }
-      else
-      {
+      } else {
         declStartMarker.rollbackTo();
         return false;
       }
@@ -84,61 +74,48 @@ public class DeclarationStart implements GroovyElementTypes
 
     //Modifiers
     elementType = Modifiers.parse(builder);
-    if (!WRONGWAY.equals(elementType))
-    {
-      if (parseNextTokenInDeclaration(builder))
-      {
+    if (!WRONGWAY.equals(elementType)) {
+      if (parseNextTokenInDeclaration(builder)) {
         declStartMarker.rollbackTo();
         return true;
-      }
-      else
-      {
+      } else {
         declStartMarker.rollbackTo();
         return false;
       }
     }
 
     //@IDENT
-    if (ParserUtils.getToken(builder, mAT))
-    {
+    if (ParserUtils.getToken(builder, mAT)) {
       declStartMarker.rollbackTo();
       return ParserUtils.lookAhead(builder, mIDENT);
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
-    if (UpperCaseIdent.parse(builder) || !WRONGWAY.equals(BuiltInType.parse(builder)) || !WRONGWAY.equals(QualifiedTypeName.parse(builder)))
-    {
+    if (UpperCaseIdent.parse(builder) || !WRONGWAY.equals(BuiltInType.parse(builder)) || !WRONGWAY.equals(QualifiedTypeName.parse(builder))) {
 
       IElementType balancedTokens;
 
-      do
-      {
+      do {
         balancedTokens = parseBalancedTokensInBrackets(builder);
       } while (!NONE.equals(balancedTokens) && !WRONGWAY.equals(balancedTokens));
 
       //IDENT
-      if (ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT))
-      {
+      if (ParserUtils.getToken(builder, mIDENT) && !ParserUtils.getToken(builder, mDOT)) {
         declStartMarker.rollbackTo();
         return true;
-      }
-      else
-      {
+      } else {
         declStartMarker.rollbackTo();
         return false;
       }
 
-    }
-    else
-    {
+    } else {
       declStartMarker.rollbackTo();
       return false;
     }
   }
 
   //todo: check it
-  private static boolean parseNextTokenInDeclaration(PsiBuilder builder)
-  {
+  private static boolean parseNextTokenInDeclaration(PsiBuilder builder) {
     return ParserUtils.lookAhead(builder, mIDENT) ||
             TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
             TokenSets.MODIFIERS.contains(builder.getTokenType()) ||
@@ -149,24 +126,20 @@ public class DeclarationStart implements GroovyElementTypes
             ParserUtils.lookAhead(builder, mSTRING_LITERAL);
   }
 
-  private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder)
-  {
+  private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder) {
     PsiBuilder.Marker btm = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       btm.rollbackTo();
       return NONE;
     }
 
-    if (WRONGWAY.equals(BalancedTokens.parse(builder)))
-    {
+    if (WRONGWAY.equals(BalancedTokens.parse(builder))) {
       btm.rollbackTo();
       return NONE;
     }
 
-    if (!ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"))) {
       btm.rollbackTo();
       return NONE;
     }

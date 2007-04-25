@@ -23,46 +23,37 @@ import org.jetbrains.plugins.groovy.Icons;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements ConfigurationType
-{
+public class GroovyScriptRunConfigurationType implements ConfigurationType {
   private GroovyScriptConfigurationFactory myConfigurationFactory;
 
-  public GroovyScriptRunConfigurationType()
-  {
+  public GroovyScriptRunConfigurationType() {
     myConfigurationFactory = new GroovyScriptConfigurationFactory(this);
   }
 
-  public void initComponent()
-  {
+  public void initComponent() {
   }
 
-  public void disposeComponent()
-  {
+  public void disposeComponent() {
   }
 
   @NotNull
-  public String getComponentName()
-  {
+  public String getComponentName() {
     return "GroovyScriptRunConfigurationType";
   }
 
-  public String getDisplayName()
-  {
+  public String getDisplayName() {
     return "Groovy Script";
   }
 
-  public String getConfigurationTypeDescription()
-  {
+  public String getConfigurationTypeDescription() {
     return "Groovy Script";
   }
 
-  public Icon getIcon()
-  {
+  public Icon getIcon() {
     return Icons.FILE_TYPE;
   }
 
-  public ConfigurationFactory[] getConfigurationFactories()
-  {
+  public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]
             {
                     myConfigurationFactory

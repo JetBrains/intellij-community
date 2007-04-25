@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap
-{
+public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap {
 
-  public GrListOrMapImpl(@NotNull ASTNode node)
-  {
+  public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Generalized list";
   }
 }

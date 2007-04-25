@@ -25,34 +25,27 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssignmentExpression
-{
+public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssignmentExpression {
 
-  public GrAssignmentExprImpl(@NotNull ASTNode node)
-  {
+  public GrAssignmentExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Assignment expression";
   }
 
-  public GrExpression getLValue()
-  {
+  public GrExpression getLValue() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 0)
-    {
+    if (exprs.length > 0) {
       return exprs[0];
     }
     return null;
   }
 
-  public GrExpression getRValue()
-  {
+  public GrExpression getRValue() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 1)
-    {
+    if (exprs.length > 1) {
       return exprs[1];
     }
     return null;

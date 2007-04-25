@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrCommandArgsImpl extends GroovyPsiElementImpl implements GrCommandArguments
-{
+public class GrCommandArgsImpl extends GroovyPsiElementImpl implements GrCommandArguments {
 
-  public GrCommandArgsImpl(@NotNull ASTNode node)
-  {
+  public GrCommandArgsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Command arguments";
   }
 }

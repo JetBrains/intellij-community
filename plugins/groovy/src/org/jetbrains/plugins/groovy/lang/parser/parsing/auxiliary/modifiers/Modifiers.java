@@ -33,10 +33,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *              | {annotation nls}+
  */
 
-public class Modifiers implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class Modifiers implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     IElementType annotation = Annotation.parse(builder);
@@ -45,14 +43,12 @@ public class Modifiers implements GroovyElementTypes
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)))
-    {
+    if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))) {
       modifiersMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))
-    {
+    while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)) {
       annotation = Annotation.parse(builder);
       modifier = Modifier.parse(builder);
       def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;

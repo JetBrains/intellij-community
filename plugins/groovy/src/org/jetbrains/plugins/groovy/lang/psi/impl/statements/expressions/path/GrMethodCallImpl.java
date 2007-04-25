@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCall
-{
+public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCall {
 
-  public GrMethodCallImpl(@NotNull ASTNode node)
-  {
+  public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Method call";
   }
 }

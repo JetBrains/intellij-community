@@ -26,7 +26,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public class ResolveUtil {
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
     PsiElement lastParent = null;
-    while(place != null) {
+    while (place != null) {
       if (!place.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
       lastParent = place;
       place = place.getParent();

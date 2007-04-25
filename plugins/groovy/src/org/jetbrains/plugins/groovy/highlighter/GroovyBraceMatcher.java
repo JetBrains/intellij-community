@@ -25,8 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  *
  * @author Ilya.Sergey
  */
-public class GroovyBraceMatcher implements PairedBraceMatcher
-{
+public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = new BracePair[]{
           new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
@@ -37,8 +36,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher
           new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
   };
 
-  public BracePair[] getPairs()
-  {
+  public BracePair[] getPairs() {
     return PAIRS;
   }
 }

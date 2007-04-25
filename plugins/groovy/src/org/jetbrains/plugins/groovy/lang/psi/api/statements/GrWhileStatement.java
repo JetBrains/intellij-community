@@ -23,8 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrWhileStatement extends GrStatement, GrControlStatement
-{
+public interface GrWhileStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 

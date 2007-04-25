@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrBuiltInTypeImpl extends GroovyPsiElementImpl implements GrBuiltInTypeElement
-{
+public class GrBuiltInTypeImpl extends GroovyPsiElementImpl implements GrBuiltInTypeElement {
 
-  public GrBuiltInTypeImpl(@NotNull ASTNode node)
-  {
+  public GrBuiltInTypeImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Built in type";
   }
 }

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrOpenBlock extends GroovyPsiElement
-{
+public interface GrOpenBlock extends GroovyPsiElement {
 
 }

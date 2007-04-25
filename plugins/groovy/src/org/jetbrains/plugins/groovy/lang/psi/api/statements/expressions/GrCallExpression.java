@@ -21,6 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrCallExpression extends GrStatement
-{
+public interface GrCallExpression extends GrStatement {
 }

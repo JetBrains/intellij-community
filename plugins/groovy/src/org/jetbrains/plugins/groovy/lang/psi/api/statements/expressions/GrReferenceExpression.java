@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrReferenceExpression extends GrExpression
-{
+public interface GrReferenceExpression extends GrExpression {
   PsiElement getReferenceNameElement();
 }

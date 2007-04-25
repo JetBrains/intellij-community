@@ -21,6 +21,5 @@ import com.intellij.psi.PsiElement;
 /**
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public interface GroovyPsiElement extends PsiElement
-{
+public interface GroovyPsiElement extends PsiElement {
 }

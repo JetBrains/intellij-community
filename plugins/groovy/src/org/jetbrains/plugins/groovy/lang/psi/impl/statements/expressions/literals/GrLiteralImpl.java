@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral
-{
+public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
 
-  public GrLiteralImpl(@NotNull ASTNode node)
-  {
+  public GrLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Literal";
   }
 }

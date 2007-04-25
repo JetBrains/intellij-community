@@ -23,6 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrCodeBlock extends GroovyPsiElement, BlockedIndent, GrStatement
-{
+public interface GrCodeBlock extends GroovyPsiElement, BlockedIndent, GrStatement {
 }

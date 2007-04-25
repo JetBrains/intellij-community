@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrStringImpl extends GroovyPsiElementImpl implements GrString
-{
+public class GrStringImpl extends GroovyPsiElementImpl implements GrString {
 
-  public GrStringImpl(@NotNull ASTNode node)
-  {
+  public GrStringImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Compound Gstring";
   }
 }

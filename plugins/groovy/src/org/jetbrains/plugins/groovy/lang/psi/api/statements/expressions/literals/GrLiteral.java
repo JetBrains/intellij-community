@@ -21,6 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Ilya.Sergey
  */
-public interface GrLiteral extends GrExpression
-{
+public interface GrLiteral extends GrExpression {
 }

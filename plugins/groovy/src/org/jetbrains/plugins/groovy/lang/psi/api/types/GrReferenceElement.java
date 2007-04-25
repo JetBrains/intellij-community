@@ -22,8 +22,7 @@ import com.intellij.psi.PsiElement;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrReferenceElement extends GrType
-{
+public interface GrReferenceElement extends GrType {
   GrReferenceElement getQualifier();
 
   String getReferenceName();

@@ -19,8 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrConditionalExpression extends GrExpression
-{
+public interface GrConditionalExpression extends GrExpression {
 
   public GrExpression getCondition();
 

@@ -25,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotation
-{
-  public GrAnnotationImpl(@NotNull ASTNode node)
-  {
+public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotation {
+  public GrAnnotationImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Annotation";
   }
 }

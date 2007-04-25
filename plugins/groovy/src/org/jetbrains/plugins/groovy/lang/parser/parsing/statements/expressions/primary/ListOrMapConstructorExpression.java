@@ -26,28 +26,20 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class ListOrMapConstructorExpression implements GroovyElementTypes
-{
+public class ListOrMapConstructorExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       marker.drop();
       return WRONGWAY;
     }
-    if (ParserUtils.getToken(builder, mRBRACK))
-    {
+    if (ParserUtils.getToken(builder, mRBRACK)) {
       marker.done(LIST_OR_MAP);
       return LIST_OR_MAP;
-    }
-    else if (ParserUtils.getToken(builder, mCOLON))
-    {
+    } else if (ParserUtils.getToken(builder, mCOLON)) {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
-    }
-    else if (!ArgumentList.parse(builder, mRBRACK).equals(WRONGWAY))
-    {
+    } else if (!ArgumentList.parse(builder, mRBRACK).equals(WRONGWAY)) {
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }

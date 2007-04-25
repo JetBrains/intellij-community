@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrRegexImpl extends GroovyPsiElementImpl implements GrRegex
-{
+public class GrRegexImpl extends GroovyPsiElementImpl implements GrRegex {
 
-  public GrRegexImpl(@NotNull ASTNode node)
-  {
+  public GrRegexImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Compound regular expression";
   }
 }

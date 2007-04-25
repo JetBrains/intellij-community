@@ -25,36 +25,30 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class ImplementsClause implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class ImplementsClause implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     //see also InterfaceExtends
 
     PsiBuilder.Marker isMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kIMPLEMENTS))
-    {
+    if (!ParserUtils.getToken(builder, kIMPLEMENTS)) {
       isMarker.rollbackTo();
       return NONE;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder)))
-    {
+    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
       isMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    while (ParserUtils.lookAhead(builder, mCOMMA))
-    {
+    while (ParserUtils.lookAhead(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
       ParserUtils.getToken(builder, mCOMMA);
 
-      if (WRONGWAY.equals(ReferenceElement.parse(builder)))
-      {
+      if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
         isMarker.rollbackTo();
         return WRONGWAY;
       }

@@ -38,10 +38,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *                          | AnnotationDefinition 
  */
 
-public class TypeDefinitionInternal implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class TypeDefinitionInternal implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     if (ParserUtils.lookAhead(builder, kCLASS)) return ClassDefinition.parse(builder);
     if (ParserUtils.lookAhead(builder, kINTERFACE)) return InterfaceDefinition.parse(builder);

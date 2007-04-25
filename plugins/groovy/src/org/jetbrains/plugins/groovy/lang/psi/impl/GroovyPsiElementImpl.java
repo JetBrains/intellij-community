@@ -24,11 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement
-{
+public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 
-  public GroovyPsiElementImpl(@NotNull ASTNode node)
-  {
+  public GroovyPsiElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 

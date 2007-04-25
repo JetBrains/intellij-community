@@ -26,20 +26,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrReferenceExprImpl extends GroovyPsiElementImpl implements GrReferenceExpression
-{
-  public GrReferenceExprImpl(@NotNull ASTNode node)
-  {
+public class GrReferenceExprImpl extends GroovyPsiElementImpl implements GrReferenceExpression {
+  public GrReferenceExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Reference expression";
   }
 
-  public PsiElement getReferenceNameElement()
-  {
+  public PsiElement getReferenceNameElement() {
     return findChildByType(GroovyElementTypes.mIDENT);
   }
 }

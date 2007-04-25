@@ -25,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParameterList
-{
-  public GrParameterListImpl(@NotNull ASTNode node)
-  {
+public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParameterList {
+  public GrParameterListImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Parameter list";
   }
 }

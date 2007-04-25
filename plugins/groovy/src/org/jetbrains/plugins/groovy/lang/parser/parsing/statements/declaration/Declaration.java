@@ -37,21 +37,17 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *                  | TypeSpec VariableDefinitions
  */
 
-public class Declaration implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class Declaration implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker declmMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
 
-    if (!WRONGWAY.equals(modifiers))
-    {
+    if (!WRONGWAY.equals(modifiers)) {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (WRONGWAY.equals(TypeSpec.parse(builder, true)))
-      { //if type wasn't recognized trying poarse VaribleDeclaration
+      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) { //if type wasn't recognized trying poarse VaribleDeclaration
         checkMarker.rollbackTo();
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
@@ -62,78 +58,59 @@ public class Declaration implements GroovyElementTypes
 //          return CONSTRUCTOR_DEFINITION;
 //        }
 
-        if (WRONGWAY.equals(varDecl))
-        {
+        if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
           declmMarker.rollbackTo();
           return WRONGWAY;
-        }
-        else
-        {
+        } else {
           declmMarker.done(varDecl);
           return varDecl;
         }
 
-      }
-      else
-      {  //type was recognezed
+      } else {  //type was recognezed
         GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder);
         if (IDENTIFIER.equals(varDeclarationTop)) varDeclarationTop = VARIABLE_DEFINITION;
 
-        if (WRONGWAY.equals(varDeclarationTop))
-        {
+        if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
 
           GroovyElementType varDecl = VariableDefinitions.parse(builder);
           if (IDENTIFIER.equals(varDeclarationTop)) varDecl = VARIABLE_DEFINITION;
 
-          if (WRONGWAY.equals(varDecl))
-          {
+          if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
             declmMarker.rollbackTo();
             return WRONGWAY;
-          }
-          else
-          {
+          } else {
             declmMarker.done(varDecl);
             return varDecl;
           }
-        }
-        else
-        {
+        } else {
           checkMarker.drop();
           declmMarker.done(varDeclarationTop);
           return varDeclarationTop;
         }
       }
-    }
-    else
-    {
+    } else {
 
       //if definition starts with lower case letter than it can be just call expression
 
       if (!builder.eof()
               && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-              && Character.isLowerCase(builder.getTokenText().charAt(0)))
-      {
+              && Character.isLowerCase(builder.getTokenText().charAt(0))) {
         GroovyElementType exprType = ExpressionStatement.parse(builder);
-        if (EXPRESSION_STATEMENT.equals(exprType))
-        {
+        if (EXPRESSION_STATEMENT.equals(exprType)) {
           declmMarker.drop();
           return exprType;
-        }
-        else
-        {
+        } else {
           declmMarker.drop();
           return WRONGWAY;
         }
       }
 
-      if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN))
-      {
+      if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
         //type specification starts with upper case letter
-        if (WRONGWAY.equals(TypeSpec.parse(builder, true)))
-        {
+        if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
           builder.error(GroovyBundle.message("type.specification.expected"));
           declmMarker.rollbackTo();
           return WRONGWAY;
@@ -149,23 +126,20 @@ public class Declaration implements GroovyElementTypes
       GroovyElementType exprType = ExpressionStatement.parse(builder); //todo: check it
       exprStmtMarker.rollbackTo();
 
-      if (IDENTIFIER.equals(varDef) && REFERENCE_EXPRESSION.equals(exprType))
-      {
+      if (IDENTIFIER.equals(varDef) && REFERENCE_EXPRESSION.equals(exprType)) {
         VariableDefinitions.parse(builder);
         declmMarker.done(VARIABLE_DEFINITION);
         return VARIABLE_DEFINITION;
       }
 
       //handle "A a = "
-      if (IDENTIFIER.equals(varDef) && ASSIGNMENT_EXPRESSION.equals(exprType))
-      {
+      if (IDENTIFIER.equals(varDef) && ASSIGNMENT_EXPRESSION.equals(exprType)) {
         VariableDefinitions.parse(builder);
         declmMarker.done(VARIABLE_DEFINITION);
         return VARIABLE_DEFINITION;
       }
 
-      if (!IDENTIFIER.equals(varDef) && !WRONGWAY.equals(varDef))
-      {
+      if (!IDENTIFIER.equals(varDef) && !WRONGWAY.equals(varDef)) {
         varDef = VariableDefinitions.parse(builder);
         declmMarker.done(varDef);
         return varDef;
@@ -207,18 +181,14 @@ public class Declaration implements GroovyElementTypes
 //    }
   }
 
-  private static GroovyElementType wrapVariableIfNeeds(PsiBuilder builder)
-  {
+  private static GroovyElementType wrapVariableIfNeeds(PsiBuilder builder) {
     PsiBuilder.Marker identMarker = builder.mark();
     GroovyElementType varDecl = VariableDefinitions.parse(builder);
 
-    if (IDENTIFIER.equals(varDecl))
-    {
+    if (IDENTIFIER.equals(varDecl)) {
       varDecl = VARIABLE_DEFINITION;
       identMarker.done(VARIABLE);
-    }
-    else
-    {
+    } else {
       identMarker.drop();
     }
     return varDecl;

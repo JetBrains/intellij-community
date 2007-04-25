@@ -24,6 +24,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrImportStatement extends UserDataHolderEx, Cloneable, Iconable, NavigationItem, GrTopStatement
-{
+public interface GrImportStatement extends UserDataHolderEx, Cloneable, Iconable, NavigationItem, GrTopStatement {
 }

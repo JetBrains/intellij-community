@@ -29,15 +29,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class InterfaceBlock implements GroovyElementTypes
-{
-  public static IElementType parse(PsiBuilder builder)
-  {
+public class InterfaceBlock implements GroovyElementTypes {
+  public static IElementType parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ibMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY))
-    {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       ibMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -45,20 +42,17 @@ public class InterfaceBlock implements GroovyElementTypes
     InterfaceMember.parse(builder);
     GroovyElementType sep = Separators.parse(builder);
 
-    while (!WRONGWAY.equals(sep))
-    {
+    while (!WRONGWAY.equals(sep)) {
       InterfaceMember.parse(builder);
 
       sep = Separators.parse(builder);
     }
 
-    if (!ParserUtils.lookAhead(builder, mRCURLY))
-    {
+    if (!ParserUtils.lookAhead(builder, mRCURLY)) {
       builder.error(GroovyBundle.message("rcurly.expected"));
     }
 
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY))
-    {
+    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
       InterfaceMember.parse(builder);
       builder.advanceLexer();
     }

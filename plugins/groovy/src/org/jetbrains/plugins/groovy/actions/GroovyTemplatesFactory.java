@@ -26,20 +26,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.Icons;
 
-public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent
-{
+public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent {
   @NonNls
   public static final String[] TEMPLATES = {
           "GroovyClass.groovy", "GroovyScript.groovy"
   };
 
-  public FileTemplateGroupDescriptor getFileTemplatesDescriptor()
-  {
+  public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
             Icons.SMALLEST);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    for (String template : TEMPLATES)
-    {
+    for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
     }
     return group;
@@ -47,16 +44,13 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
   @NonNls
   @NotNull
-  public String getComponentName()
-  {
+  public String getComponentName() {
     return "GroovyTemplatesFactory";
   }
 
-  public void initComponent()
-  {
+  public void initComponent() {
   }
 
-  public void disposeComponent()
-  {
+  public void disposeComponent() {
   }
 }

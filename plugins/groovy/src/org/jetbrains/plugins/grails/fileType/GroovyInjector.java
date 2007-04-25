@@ -30,21 +30,16 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyInjector implements ProjectComponent, LanguageInjector
-{
+public class GroovyInjector implements ProjectComponent, LanguageInjector {
   private Project project;
 
-  public GroovyInjector(Project project)
-  {
+  public GroovyInjector(Project project) {
     this.project = project;
   }
 
-  public void initComponent()
-  {
-    PsiManager.getInstance(project).registerLanguageInjector(new LanguageInjector()
-    {
-      public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar)
-      {
+  public void initComponent() {
+    PsiManager.getInstance(project).registerLanguageInjector(new LanguageInjector() {
+      public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
         if (!(host.getLanguage() instanceof XMLLanguage))
           return;
 
@@ -53,8 +48,7 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector
           return;
 
         String value = null;
-        if (host instanceof XmlAttributeValue)
-        {
+        if (host instanceof XmlAttributeValue) {
           XmlAttributeValue attr = (XmlAttributeValue) host;
           value = attr.getValue();
         }
@@ -65,8 +59,7 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector
 //          value = xmlText.getText();
 //        }
 
-        if (value != null)
-        {
+        if (value != null) {
           int start = value.indexOf("${");
           if (start == -1)
             return;
@@ -81,27 +74,22 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector
     });
   }
 
-  public void disposeComponent()
-  {
+  public void disposeComponent() {
   }
 
   @NotNull
-  public String getComponentName()
-  {
+  public String getComponentName() {
     return "GroovyInjector";
   }
 
-  public void projectOpened()
-  {
+  public void projectOpened() {
     // called when project is opened
   }
 
-  public void projectClosed()
-  {
+  public void projectClosed() {
     // called when project is being closed
   }
 
-  public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar)
-  {
+  public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
   }
 }

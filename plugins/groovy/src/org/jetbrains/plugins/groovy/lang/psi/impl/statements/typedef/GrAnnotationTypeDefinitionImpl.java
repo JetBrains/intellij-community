@@ -25,20 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrAnnotationTypeDefinition
-{
-  public GrAnnotationTypeDefinitionImpl(@NotNull ASTNode node)
-  {
+public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrAnnotationTypeDefinition {
+  public GrAnnotationTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Annotation definition";
   }
 
-  public GrTypeDefinitionBody getBody()
-  {
+  public GrTypeDefinitionBody getBody() {
     return null;
   }
 }

@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrCallExpressionImpl extends GroovyPsiElementImpl implements GrCallExpression
-{
+public class GrCallExpressionImpl extends GroovyPsiElementImpl implements GrCallExpression {
 
-  public GrCallExpressionImpl(@NotNull ASTNode node)
-  {
+  public GrCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Call expression";
   }
 }

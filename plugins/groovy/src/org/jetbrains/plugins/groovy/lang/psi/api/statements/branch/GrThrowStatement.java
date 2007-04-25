@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrThrowStatement extends GrStatement, GrCondition
-{
+public interface GrThrowStatement extends GrStatement, GrCondition {
 }

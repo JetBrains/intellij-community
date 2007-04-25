@@ -25,8 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  *
  * @author Dmitry.Krasilschikov, Ilya Sergey
  */
-public interface GroovyElementTypes extends GroovyTokenTypes
-{
+public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
 
@@ -150,7 +149,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes
   //fields
 //  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
 //  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
-//  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
+  //  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
   //  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation");
 

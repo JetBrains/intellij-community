@@ -26,19 +26,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author: Ilya Sergey
  */
-public class VariableInitializer implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, mASSIGN))
-    {
+public class VariableInitializer implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, mASSIGN)) {
       return WRONGWAY;
-    }
-    else
-    {
+    } else {
       ParserUtils.getToken(builder, mNLS);
-      if (AssignmentExpression.parse(builder).equals(WRONGWAY))
-      {
+      if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       return VARIABLE_INITIALIZER;

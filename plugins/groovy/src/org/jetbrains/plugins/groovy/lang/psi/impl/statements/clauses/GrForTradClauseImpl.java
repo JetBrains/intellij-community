@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrForTradClauseImpl extends GroovyPsiElementImpl implements GrForClause
-{
-  public GrForTradClauseImpl(@NotNull ASTNode node)
-  {
+public class GrForTradClauseImpl extends GroovyPsiElementImpl implements GrForClause {
+  public GrForTradClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Traditional FOR clause";
   }
 }

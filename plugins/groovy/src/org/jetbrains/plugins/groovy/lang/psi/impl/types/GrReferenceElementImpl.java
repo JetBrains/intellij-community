@@ -42,50 +42,40 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement, PsiReference
-{
-  public GrReferenceElementImpl(@NotNull ASTNode node)
-  {
+public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement, PsiReference {
+  public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Class type";
   }
 
-  public GrReferenceElement getQualifier()
-  {
+  public GrReferenceElement getQualifier() {
     return (GrReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
-  public PsiReference getReference()
-  {
+  public PsiReference getReference() {
     return this;
   }
 
-  public String getReferenceName()
-  {
+  public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
-    if (nameElement != null)
-    {
+    if (nameElement != null) {
       return nameElement.getText();
     }
     return null;
   }
 
-  private PsiElement getReferenceNameElement()
-  {
+  private PsiElement getReferenceNameElement() {
     return findChildByType(GroovyTokenTypes.mIDENT);
   }
 
-  public PsiElement getElement()
-  {
+  public PsiElement getElement() {
     return this;
   }
 
-  public TextRange getRangeInElement()
-  {
+  public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
@@ -97,8 +87,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
   }
 
   @Nullable
-  public PsiElement resolve()
-  {
+  public PsiElement resolve() {
     String refName = getReferenceName();
     if (refName == null) return null;
     switch (getKind()) {
@@ -155,25 +144,20 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     return CLASS;
   }
 
-  public String getCanonicalText()
-  {
+  public String getCanonicalText() {
     PsiElement resolved = resolve();
-    if (resolved instanceof GrTypeDefinition)
-    {
+    if (resolved instanceof GrTypeDefinition) {
       return ((GrTypeDefinition) resolved).getQualifiedName();
     }
-    if (resolved instanceof PsiPackage)
-    {
+    if (resolved instanceof PsiPackage) {
       return ((PsiPackage) resolved).getQualifiedName();
     }
     return null;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException
-  {
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
-    if (nameElement != null)
-    {
+    if (nameElement != null) {
       ASTNode node = nameElement.getNode();
       ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(newElementName).getNode();
       assert newNameNode != null && node != null;
@@ -183,26 +167,21 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     return this;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException
-  {
+  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("NIY");
   }
 
-  public boolean isReferenceTo(PsiElement element)
-  {
-    if (element instanceof GrTypeDefinition || element instanceof PsiPackage)
-    {
-      if (Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName()))
-      {
+  public boolean isReferenceTo(PsiElement element) {
+    if (element instanceof GrTypeDefinition || element instanceof PsiPackage) {
+      if (Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
         return element.equals(resolve());
       }
     }
     return false;
   }
 
-  public Object[] getVariants()
-  {
-    switch(getKind()) {
+  public Object[] getVariants() {
+    switch (getKind()) {
       case CLASS:
 
         GrReferenceElement qualifier = getQualifier();
@@ -228,8 +207,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     return new Object[0];
   }
 
-  public boolean isSoft()
-  {
+  public boolean isSoft() {
     return false;
   }
 }

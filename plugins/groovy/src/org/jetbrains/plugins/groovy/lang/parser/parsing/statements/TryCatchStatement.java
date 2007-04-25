@@ -28,23 +28,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class TryCatchStatement implements GroovyElementTypes
-{
+public class TryCatchStatement implements GroovyElementTypes {
 
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kTRY);
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = WRONGWAY;
-    if (mLCURLY.equals(builder.getTokenType()))
-    {
+    if (mLCURLY.equals(builder.getTokenType())) {
       result = OpenOrClosableBlock.parseOpenBlock(builder);
     }
-    if (result.equals(WRONGWAY))
-    {
+    if (result.equals(WRONGWAY)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
@@ -55,37 +51,30 @@ public class TryCatchStatement implements GroovyElementTypes
     if (!ParserUtils.lookAhead(builder, kCATCH) &&
             !ParserUtils.lookAhead(builder, kFINALLY) &&
             !ParserUtils.lookAhead(builder, mNLS, kCATCH) &&
-            !ParserUtils.lookAhead(builder, mNLS, kFINALLY))
-    {
+            !ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
       builder.error(GroovyBundle.message("catch.or.finally.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
       return TRY_BLOCK_STATEMENT;
     }
     ParserUtils.getToken(builder, mNLS);
 
-    if (kCATCH.equals(builder.getTokenType()))
-    {
+    if (kCATCH.equals(builder.getTokenType())) {
       parseHandlers(builder);
     }
 
     ParserUtils.getToken(builder, mNLS);
-    if (kFINALLY.equals(builder.getTokenType()))
-    {
+    if (kFINALLY.equals(builder.getTokenType())) {
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
       ParserUtils.getToken(builder, mNLS);
       result = WRONGWAY;
-      if (mLCURLY.equals(builder.getTokenType()))
-      {
+      if (mLCURLY.equals(builder.getTokenType())) {
         result = OpenOrClosableBlock.parseOpenBlock(builder);
       }
-      if (result.equals(WRONGWAY))
-      {
+      if (result.equals(WRONGWAY)) {
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
-      }
-      else
-      {
+      } else {
         warn.drop();
       }
     }
@@ -98,49 +87,39 @@ public class TryCatchStatement implements GroovyElementTypes
    *
    * @param builder
    */
-  private static void parseHandlers(PsiBuilder builder)
-  {
+  private static void parseHandlers(PsiBuilder builder) {
     ParserUtils.getToken(builder, kCATCH);
-    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       return;
     }
 
-    if (ParameterDeclaration.parse(builder, mRPAREN).equals(WRONGWAY))
-    {
+    if (ParameterDeclaration.parse(builder, mRPAREN).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("param.expected"));
       return;
     }
 
-    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN))
-    {
+    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)) {
       ParserUtils.getToken(builder, mNLS);
     }
-    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected")))
-    {
+    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       return;
     }
 
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = WRONGWAY;
-    if (mLCURLY.equals(builder.getTokenType()))
-    {
+    if (mLCURLY.equals(builder.getTokenType())) {
       result = OpenOrClosableBlock.parseOpenBlock(builder);
     }
-    if (result.equals(WRONGWAY))
-    {
+    if (result.equals(WRONGWAY)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-    }
-    else
-    {
+    } else {
       warn.drop();
     }
 
     if (ParserUtils.lookAhead(builder, mNLS, kCATCH) ||
-            ParserUtils.lookAhead(builder, kCATCH))
-    {
+            ParserUtils.lookAhead(builder, kCATCH)) {
       ParserUtils.getToken(builder, mNLS);
       parseHandlers(builder);
     }

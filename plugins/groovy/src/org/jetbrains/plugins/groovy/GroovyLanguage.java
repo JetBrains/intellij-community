@@ -39,44 +39,36 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
  *
  * @author Ilya.Sergey
  */
-public class GroovyLanguage extends Language
-{
-  public GroovyLanguage()
-  {
+public class GroovyLanguage extends Language {
+  public GroovyLanguage() {
     super("Groovy");
   }
 
-  public ParserDefinition getParserDefinition()
-  {
+  public ParserDefinition getParserDefinition() {
     return new GroovyParserDefinition();
   }
 
-  public FoldingBuilder getFoldingBuilder()
-  {
+  public FoldingBuilder getFoldingBuilder() {
     return new GroovyFoldingBuilder();
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile)
-  {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     return new GroovySyntaxHighlighter();
   }
 
   @Nullable
-  public Commenter getCommenter()
-  {
+  public Commenter getCommenter() {
     return new GroovyCommenter();
   }
 
   @Nullable
-  public FormattingModelBuilder getFormattingModelBuilder()
-  {
+  public FormattingModelBuilder getFormattingModelBuilder() {
     return new GroovyFormattingModelBuilder();
   }
 
   @Nullable
-  public PairedBraceMatcher getPairedBraceMatcher()
-  {
+  public PairedBraceMatcher getPairedBraceMatcher() {
     return new GroovyBraceMatcher();
   }
 

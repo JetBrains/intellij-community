@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrArrayTypeElement
-{
+public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrArrayTypeElement {
 
-  public GrArrayTypeElementImpl(@NotNull ASTNode node)
-  {
+  public GrArrayTypeElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Array type";
   }
 }

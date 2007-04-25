@@ -24,8 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Ilya.Sergey
  */
-public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement, GrControlStatement
-{
+public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement, GrControlStatement {
 
   public GrExpression getMonitor();
 

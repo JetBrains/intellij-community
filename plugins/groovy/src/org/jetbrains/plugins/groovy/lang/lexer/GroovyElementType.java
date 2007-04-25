@@ -24,19 +24,16 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  *
  * @author Ilya Sergey
  */
-public class GroovyElementType extends IElementType
-{
+public class GroovyElementType extends IElementType {
 
   private String debugName = null;
 
-  public GroovyElementType(String debugName)
-  {
+  public GroovyElementType(String debugName) {
     super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
     this.debugName = debugName;
   }
 
-  public String toString()
-  {
+  public String toString() {
     return debugName;
   }
 }

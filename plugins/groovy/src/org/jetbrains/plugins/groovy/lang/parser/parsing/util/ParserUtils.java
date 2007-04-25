@@ -30,8 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  *
  * @author Ilya Sergey
  */
-public abstract class ParserUtils
-{
+public abstract class ParserUtils {
 
   /**
    * Auxiliary method for strict token appearance
@@ -41,15 +40,11 @@ public abstract class ParserUtils
    * @param errorMsg Message, that displays if element was not found; if errorMsg == null nothing displays
    * @return true if element parsed
    */
-  public static boolean getToken(PsiBuilder builder, IElementType elem, String errorMsg)
-  {
-    if (elem.equals(builder.getTokenType()))
-    {
+  public static boolean getToken(PsiBuilder builder, IElementType elem, String errorMsg) {
+    if (elem.equals(builder.getTokenType())) {
       builder.advanceLexer();
       return true;
-    }
-    else
-    {
+    } else {
       if (errorMsg != null)
         builder.error(errorMsg);
       return false;
@@ -67,10 +62,8 @@ public abstract class ParserUtils
    * @param elem    given element
    * @return true if element parsed
    */
-  public static boolean getToken(PsiBuilder builder, IElementType elem)
-  {
-    if (elem.equals(builder.getTokenType()))
-    {
+  public static boolean getToken(PsiBuilder builder, IElementType elem) {
+    if (elem.equals(builder.getTokenType())) {
       builder.advanceLexer();
       return true;
     }
@@ -85,10 +78,8 @@ public abstract class ParserUtils
    * @param tokenSet
    * @return
    */
-  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet)
-  {
-    if (tokenSet.contains(builder.getTokenType()))
-    {
+  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet) {
+    if (tokenSet.contains(builder.getTokenType())) {
       return getToken(builder, builder.getTokenType(), null);
     }
     return false;
@@ -101,10 +92,8 @@ public abstract class ParserUtils
    * @param tokenSet
    * @return
    */
-  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg)
-  {
-    if (tokenSet.contains(builder.getTokenType()))
-    {
+  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
+    if (tokenSet.contains(builder.getTokenType())) {
       return getToken(builder, builder.getTokenType(), msg);
     }
     return false;
@@ -118,23 +107,19 @@ public abstract class ParserUtils
    * @param elems   Array of need elements in order
    * @return true if following sequence is like a given
    */
-  public static boolean lookAhead(PsiBuilder builder, IElementType... elems)
-  {
+  public static boolean lookAhead(PsiBuilder builder, IElementType... elems) {
 
-    if (elems.length == 0)
-    {
+    if (elems.length == 0) {
       return false;
     }
 
-    if (elems.length == 1)
-    {
+    if (elems.length == 1) {
       return elems[0].equals(builder.getTokenType());
     }
 
     Marker rb = builder.mark();
     int i = 0;
-    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType()))
-    {
+    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;
     }
@@ -150,32 +135,25 @@ public abstract class ParserUtils
    * @param elems      Array of need elements in order
    * @return true if following sequence is like a given
    */
-  public static boolean lookAhead(PsiBuilder builder, boolean dropMarker, IElementType... elems)
-  {
+  public static boolean lookAhead(PsiBuilder builder, boolean dropMarker, IElementType... elems) {
 
-    if (elems.length == 0)
-    {
+    if (elems.length == 0) {
       return false;
     }
 
-    if (elems.length == 1)
-    {
+    if (elems.length == 1) {
       return elems[0].equals(builder.getTokenType());
     }
 
     PsiBuilder.Marker rb = builder.mark();
     int i = 0;
-    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType()))
-    {
+    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;
     }
-    if (dropMarker && i == elems.length)
-    {
+    if (dropMarker && i == elems.length) {
       rb.drop();
-    }
-    else
-    {
+    } else {
       rb.rollbackTo();
     }
     return i == elems.length;
@@ -188,8 +166,7 @@ public abstract class ParserUtils
    * @param elem    Node element
    * @return elem type
    */
-  public static GroovyElementType eatElement(PsiBuilder builder, GroovyElementType elem)
-  {
+  public static GroovyElementType eatElement(PsiBuilder builder, GroovyElementType elem) {
     Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(elem);
@@ -202,28 +179,22 @@ public abstract class ParserUtils
    * @param builder
    * @param msg     Error message
    */
-  public static void wrapError(PsiBuilder builder, String msg)
-  {
+  public static void wrapError(PsiBuilder builder, String msg) {
     Marker marker = builder.mark();
     builder.advanceLexer();
     marker.error(msg);
   }
 
-  public static void waitNextRCurly(PsiBuilder builder)
-  {
+  public static void waitNextRCurly(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() && !GroovyElementTypes.mRCURLY.equals(builder.getTokenType()))
-    {
+    while (!builder.eof() && !GroovyElementTypes.mRCURLY.equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;
     }
-    if (i > 0)
-    {
+    if (i > 0) {
       em.error(GroovyBundle.message("rcurly.expected"));
-    }
-    else
-    {
+    } else {
       em.drop();
     }
   }

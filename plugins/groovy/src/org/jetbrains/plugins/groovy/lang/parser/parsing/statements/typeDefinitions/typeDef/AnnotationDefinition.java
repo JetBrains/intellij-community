@@ -26,27 +26,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class AnnotationDefinition implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
-    if (!ParserUtils.getToken(builder, mAT))
-    {
+public class AnnotationDefinition implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
+    if (!ParserUtils.getToken(builder, mAT)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, kINTERFACE))
-    {
+    if (!ParserUtils.getToken(builder, kINTERFACE)) {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT))
-    {
+    if (!ParserUtils.getToken(builder, mIDENT)) {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(AnnotationBlock.parse(builder)))
-    {
+    if (WRONGWAY.equals(AnnotationBlock.parse(builder))) {
       return WRONGWAY;
     }
     return ANNOTATION_BLOCK;

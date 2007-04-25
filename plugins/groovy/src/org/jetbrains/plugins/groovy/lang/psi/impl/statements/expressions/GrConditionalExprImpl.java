@@ -25,44 +25,35 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrConditionalExpression
-{
+public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrConditionalExpression {
 
-  public GrConditionalExprImpl(@NotNull ASTNode node)
-  {
+  public GrConditionalExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Conditional expression";
   }
 
-  public GrExpression getCondition()
-  {
+  public GrExpression getCondition() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 0)
-    {
+    if (exprs.length > 0) {
       return exprs[0];
     }
     return null;
   }
 
-  public GrExpression getThenBranch()
-  {
+  public GrExpression getThenBranch() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 1)
-    {
+    if (exprs.length > 1) {
       return exprs[1];
     }
     return null;
   }
 
-  public GrExpression getElseBranch()
-  {
+  public GrExpression getElseBranch() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 2)
-    {
+    if (exprs.length > 2) {
       return exprs[2];
     }
     return null;

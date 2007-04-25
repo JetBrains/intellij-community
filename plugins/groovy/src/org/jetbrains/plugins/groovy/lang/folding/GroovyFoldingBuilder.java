@@ -33,31 +33,25 @@ import java.util.List;
 /**
  * @author Ilya.Sergey
  */
-public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes
-{
+public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
 
-  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document)
-  {
+  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     appendDescriptors(node, document, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private void appendDescriptors(ASTNode node, Document document, List<FoldingDescriptor> descriptors)
-  {
+  private void appendDescriptors(ASTNode node, Document document, List<FoldingDescriptor> descriptors) {
 
     node.getPsi().getChildren();
 
     // Method body
-    if (node.getPsi() != null && node.getPsi() instanceof GrMethod)
-    {
+    if (node.getPsi() != null && node.getPsi() instanceof GrMethod) {
       GrMethod method = (GrMethod) node.getPsi();
       GrOpenBlock body = method.getBody();
-      if (body != null)
-      {
+      if (body != null) {
         ASTNode myNode = body.getNode();
-        if (myNode != null)
-        {
+        if (myNode != null) {
           descriptors.add(new FoldingDescriptor(myNode, myNode.getTextRange()));
         }
       }
@@ -66,16 +60,13 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes
     // Inner class or interface body
     if (node.getPsi() != null && node.getPsi().getParent() != null &&
             node.getPsi() instanceof GrTypeDefinition &&
-            !(node.getPsi().getParent() instanceof GroovyFile))
-    {
+            !(node.getPsi().getParent() instanceof GroovyFile)) {
       GrTypeDefinition typeDef = (GrTypeDefinition) node.getPsi();
       GrTypeDefinitionBody body = typeDef.getBody();
-      if (body != null)
-      {
+      if (body != null) {
         ASTNode myNode = body.getNode();
         if (myNode != null &&
-                (myNode.getText().contains("\n") || myNode.getText().contains("\t")))
-        {
+                (myNode.getText().contains("\n") || myNode.getText().contains("\t"))) {
           descriptors.add(new FoldingDescriptor(myNode, myNode.getTextRange()));
         }
       }
@@ -84,37 +75,31 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes
     // Doc comments
     if (node.getElementType().equals(mML_COMMENT) &&
             node.getText().substring(0, 3).equals("/**") &&
-            (node.getText().contains("\n") || node.getText().contains("\r")))
-    {
+            (node.getText().contains("\n") || node.getText().contains("\r"))) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
     ASTNode child = node.getFirstChildNode();
-    while (child != null)
-    {
+    while (child != null) {
       appendDescriptors(child, document, descriptors);
       child = child.getTreeNext();
     }
 
   }
 
-  public String getPlaceholderText(ASTNode node)
-  {
-    if (GroovyElementTypes.BLOCK_SET.contains(node.getElementType()))
-    {
+  public String getPlaceholderText(ASTNode node) {
+    if (GroovyElementTypes.BLOCK_SET.contains(node.getElementType())) {
       return "{...}";
     }
     if (node.getElementType().equals(mML_COMMENT) &&
             node.getText().substring(0, 3).equals("/**") &&
-            (node.getText().contains("\n") || node.getText().contains("\r")))
-    {
+            (node.getText().contains("\n") || node.getText().contains("\r"))) {
       return "/**...*/";
     }
     return null;
   }
 
-  public boolean isCollapsedByDefault(ASTNode node)
-  {
+  public boolean isCollapsedByDefault(ASTNode node) {
     return false;
   }
 }

@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrMultiplicativeExprImpl extends GrBinaryExpressionImpl
-{
+public class GrMultiplicativeExprImpl extends GrBinaryExpressionImpl {
 
-  public GrMultiplicativeExprImpl(@NotNull ASTNode node)
-  {
+  public GrMultiplicativeExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Multiplicative expression";
   }
 }

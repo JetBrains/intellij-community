@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel
-{
+public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel {
 
-  public GrCaseLabelImpl(@NotNull ASTNode node)
-  {
+  public GrCaseLabelImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Case label";
   }
 }

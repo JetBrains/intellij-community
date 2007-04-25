@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrEqualityExprImpl extends GrBinaryExpressionImpl
-{
+public class GrEqualityExprImpl extends GrBinaryExpressionImpl {
 
-  public GrEqualityExprImpl(@NotNull ASTNode node)
-  {
+  public GrEqualityExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Equality expression";
   }
 

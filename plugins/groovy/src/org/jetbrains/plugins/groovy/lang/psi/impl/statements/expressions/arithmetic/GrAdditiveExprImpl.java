@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrAdditiveExprImpl extends GrBinaryExpressionImpl
-{
+public class GrAdditiveExprImpl extends GrBinaryExpressionImpl {
 
-  public GrAdditiveExprImpl(@NotNull ASTNode node)
-  {
+  public GrAdditiveExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Additive expression";
   }
 }

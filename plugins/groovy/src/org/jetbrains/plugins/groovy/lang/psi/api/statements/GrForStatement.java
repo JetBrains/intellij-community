@@ -22,8 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 /**
  * @autor: Ilya Sergey
  */
-public interface GrForStatement extends GrStatement, GrControlStatement
-{
+public interface GrForStatement extends GrStatement, GrControlStatement {
 
   public GrForClause getClause();
 

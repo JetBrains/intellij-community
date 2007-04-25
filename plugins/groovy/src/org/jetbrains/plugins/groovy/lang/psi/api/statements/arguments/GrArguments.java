@@ -22,6 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrArguments extends GroovyPsiElement, ContiniousIndent
-{
+public interface GrArguments extends GroovyPsiElement, ContiniousIndent {
 }

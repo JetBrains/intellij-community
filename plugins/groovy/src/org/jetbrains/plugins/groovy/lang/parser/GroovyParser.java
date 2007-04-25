@@ -28,12 +28,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit
  *
  * @author Ilya Sergey, Dmitry.Krasilschikov
  */
-public class GroovyParser implements PsiParser
-{
+public class GroovyParser implements PsiParser {
 
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder)
-  {
+  public ASTNode parse(IElementType root, PsiBuilder builder) {
 
     PsiBuilder.Marker rootMarker = builder.mark();
 

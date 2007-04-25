@@ -20,6 +20,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrAnnotationTypeDefinition extends GrTypeDefinition
-{
+public interface GrAnnotationTypeDefinition extends GrTypeDefinition {
 }

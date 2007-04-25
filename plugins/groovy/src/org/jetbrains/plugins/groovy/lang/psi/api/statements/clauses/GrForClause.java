@@ -21,6 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrForClause extends GroovyPsiElement
-{
+public interface GrForClause extends GroovyPsiElement {
 }

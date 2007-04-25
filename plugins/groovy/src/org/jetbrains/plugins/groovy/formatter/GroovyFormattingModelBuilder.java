@@ -27,11 +27,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Ilya.Sergey
  */
-public class GroovyFormattingModelBuilder implements FormattingModelBuilder
-{
+public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings)
-  {
+  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(),
             new GroovyBlock(element.getNode(), null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
   }

@@ -26,8 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class UnaryExpression implements GroovyElementTypes
-{
+public class UnaryExpression implements GroovyElementTypes {
 
   private static TokenSet PREFIXES = TokenSet.create(
           mPLUS,
@@ -38,23 +37,18 @@ public class UnaryExpression implements GroovyElementTypes
           mLNOT
   );
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, PREFIXES))
-    {
+    if (ParserUtils.getToken(builder, PREFIXES)) {
       ParserUtils.getToken(builder, mNLS);
       parse(builder);
       marker.done(UNARY_EXPRESSION);
       return UNARY_EXPRESSION;
-    }
-    else
-    {
+    } else {
       marker.drop();
       GroovyElementType result = UnaryExpressionNotPlusMinus.parse(builder);
-      if (result.equals(WRONGWAY))
-      {
+      if (result.equals(WRONGWAY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       return result;

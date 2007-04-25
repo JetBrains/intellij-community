@@ -19,6 +19,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrTypeCastExpression extends GrExpression
-{
+public interface GrTypeCastExpression extends GrExpression {
 }

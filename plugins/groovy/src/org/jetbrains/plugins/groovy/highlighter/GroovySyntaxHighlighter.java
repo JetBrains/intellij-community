@@ -31,8 +31,7 @@ import java.util.Map;
 /**
  * @author Ilya.Sergey
  */
-public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes
-{
+public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
@@ -193,8 +192,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.kNULL
   );
 
-  static
-  {
+  static {
     fillMap(ATTRIBUTES, tCOMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
     fillMap(ATTRIBUTES, tWRONG_STRING, DefaultHighlighter.WRONG_STRING);
@@ -207,14 +205,12 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   }
 
   @NotNull
-  public Lexer getHighlightingLexer()
-  {
+  public Lexer getHighlightingLexer() {
     return new GroovyFlexLexer();
   }
 
   @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType)
-  {
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ATTRIBUTES.get(tokenType));
   }
 }

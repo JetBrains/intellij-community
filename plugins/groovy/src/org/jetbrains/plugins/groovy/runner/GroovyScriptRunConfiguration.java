@@ -48,22 +48,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
-{
+class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private GroovyScriptConfigurationFactory factory;
   public String vmParams;
   public String scriptParams;
   public String scriptPath;
   public String workDir = ".";
 
-  public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name)
-  {
+  public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project, true), factory);
     this.factory = factory;
   }
 
-  public Collection<Module> getValidModules()
-  {
+  public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     ArrayList<Module> res = new ArrayList<Module>();
     for (Module module : modules)
@@ -72,25 +69,20 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return res;
   }
 
-  public void setAbsoluteWorkDir(String dir)
-  {
+  public void setAbsoluteWorkDir(String dir) {
     workDir = FileUtil.getRelativePath(new File(getProject().getBaseDir().getPath()), new File(dir));
   }
 
-  public String getAbsoluteWorkDir()
-  {
+  public String getAbsoluteWorkDir() {
     String path = getProject().getBaseDir().getPath();
-    try
-    {
+    try {
       return new File(path, workDir).getCanonicalFile().getAbsolutePath();
-    } catch (IOException e)
-    {
+    } catch (IOException e) {
       return path;
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException
-  {
+  public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     readModule(element);
     scriptPath = JDOMExternalizer.readString(element, "path");
@@ -99,8 +91,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     workDir = JDOMExternalizer.readString(element, "workDir");
   }
 
-  public void writeExternal(Element element) throws WriteExternalException
-  {
+  public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
     JDOMExternalizer.write(element, "path", scriptPath);
@@ -109,13 +100,11 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     JDOMExternalizer.write(element, "workDir", workDir);
   }
 
-  protected ModuleBasedConfiguration createInstance()
-  {
+  protected ModuleBasedConfiguration createInstance() {
     return new GroovyScriptRunConfiguration(factory, getConfigurationModule().getProject(), getName());
   }
 
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor()
-  {
+  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor(getProject());
   }
 
@@ -123,31 +112,25 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
           DataContext context,
           RunnerInfo runnerInfo,
           RunnerSettings runnerSettings,
-          ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException
-  {
+          ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     GroovyGrailsConfiguration groovyConfig = GroovyGrailsConfiguration.getInstance();
-    if (!groovyConfig.isGroovyConfigured(null))
-    {
+    if (!groovyConfig.isGroovyConfigured(null)) {
       throw new ExecutionException("Groovy is not configured");
     }
 
     final Module module = getModule();
-    if (module == null)
-    {
+    if (module == null) {
       throw new ExecutionException("Module is not specified");
     }
 
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ProjectJdk jdk = rootManager.getJdk();
-    if (jdk == null)
-    {
+    if (jdk == null) {
       throw CantRunException.noJdkForModule(getModule());
     }
 
-    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings)
-    {
-      protected JavaParameters createJavaParameters() throws ExecutionException
-      {
+    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+      protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = new JavaParameters();
 
         params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
@@ -161,13 +144,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
         return params;
       }
 
-      protected OSProcessHandler startProcess() throws ExecutionException
-      {
+      protected OSProcessHandler startProcess() throws ExecutionException {
         OSProcessHandler handler = super.startProcess();
-        DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessAdapter()
-        {
-          public void processAttached(DebugProcess process)
-          {
+        DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessAdapter() {
+          public void processAttached(DebugProcess process) {
             process.appendPositionManager(new GroovyPositionManager((DebugProcessImpl) process));
           }
         });
@@ -180,8 +160,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return state;
   }
 
-  public Module getModule()
-  {
+  public Module getModule() {
     return getConfigurationModule().getModule();
   }
 }

@@ -25,20 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition
-{
-  public GrEnumTypeDefinitionImpl(@NotNull ASTNode node)
-  {
+public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
+  public GrEnumTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Enumeration definition";
   }
 
-  public GrTypeDefinitionBody getBody()
-  {
+  public GrTypeDefinitionBody getBody() {
     return null;
   }
 }

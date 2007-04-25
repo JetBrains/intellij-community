@@ -27,16 +27,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImportStatement
-{
+public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImportStatement {
 
-  public GrImportStatementImpl(@NotNull ASTNode node)
-  {
+  public GrImportStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Import expression";
   }
 

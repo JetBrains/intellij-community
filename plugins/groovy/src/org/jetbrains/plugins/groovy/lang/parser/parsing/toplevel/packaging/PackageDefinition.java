@@ -28,27 +28,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author Ilya.Sergey
  */
-public class PackageDefinition implements GroovyElementTypes
-{
+public class PackageDefinition implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     // TODO Add annotation parsing
 
     Marker pMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected")))
-    {
+    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))) {
       pMarker.drop();
       return WRONGWAY;
     }
-    if (ParserUtils.lookAhead(builder, mIDENT))
-    {
+    if (ParserUtils.lookAhead(builder, mIDENT)) {
       ReferenceElement.parse(builder, false, false);
-    }
-    else
-    {
+    } else {
       builder.error(GroovyBundle.message("identifier.expected"));
     }
 

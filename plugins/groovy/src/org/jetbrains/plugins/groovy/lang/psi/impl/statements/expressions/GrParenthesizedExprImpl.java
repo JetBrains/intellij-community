@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrParenthesizedExprImpl extends GroovyPsiElementImpl implements GrParenthesizedExpr
-{
+public class GrParenthesizedExprImpl extends GroovyPsiElementImpl implements GrParenthesizedExpr {
 
-  public GrParenthesizedExprImpl(@NotNull ASTNode node)
-  {
+  public GrParenthesizedExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Parenthesized expression";
   }
 }

@@ -21,6 +21,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.formatter;
  *
  * @author Ilya.Sergey
  */
-public interface GrControlStatement
-{
+public interface GrControlStatement {
 }

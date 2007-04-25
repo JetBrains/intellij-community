@@ -25,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class GrEnumConstantsImpl extends GroovyPsiElementImpl implements GrEnumConstants
-{
-  public GrEnumConstantsImpl(@NotNull ASTNode node)
-  {
+public class GrEnumConstantsImpl extends GroovyPsiElementImpl implements GrEnumConstants {
+  public GrEnumConstantsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Enumeration constants";
   }
 }

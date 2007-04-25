@@ -23,16 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author Ilya.Sergey
  */
-public class GrRegexExprImpl extends GrBinaryExpressionImpl
-{
+public class GrRegexExprImpl extends GrBinaryExpressionImpl {
 
-  public GrRegexExprImpl(@NotNull ASTNode node)
-  {
+  public GrRegexExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Regex expression";
   }
 

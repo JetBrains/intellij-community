@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 /**
  * @author Ilya.Sergey
  */
-public interface GrUnaryExpression extends GrExpression
-{
+public interface GrUnaryExpression extends GrExpression {
   public String toString();
 }

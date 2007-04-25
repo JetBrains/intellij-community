@@ -24,15 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrReturnStmtImpl extends GroovyPsiElementImpl implements GrReturnStatement
-{
-  public GrReturnStmtImpl(@NotNull ASTNode node)
-  {
+public class GrReturnStmtImpl extends GroovyPsiElementImpl implements GrReturnStatement {
+  public GrReturnStmtImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "RETURN statement";
   }
 }

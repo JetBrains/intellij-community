@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrOpenBlockImpl extends GroovyPsiElementImpl implements GrOpenBlock
-{
+public class GrOpenBlockImpl extends GroovyPsiElementImpl implements GrOpenBlock {
 
-  public GrOpenBlockImpl(@NotNull ASTNode node)
-  {
+  public GrOpenBlockImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString()
-  {
+  public String toString() {
     return "Open block";
   }
 }

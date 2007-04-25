@@ -28,20 +28,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
-public class AnnotationMember implements GroovyElementTypes
-{
-  public static GroovyElementType parse(PsiBuilder builder)
-  {
+public class AnnotationMember implements GroovyElementTypes {
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
-    if (TypeDeclarationStart.parse(builder))
-    {
+    if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
       GroovyElementType typeDef = TypeDefinition.parse(builder);
-      if (WRONGWAY.equals(typeDef))
-      {
+      if (WRONGWAY.equals(typeDef)) {
         return WRONGWAY;
       }
       return typeDef;
@@ -53,15 +49,13 @@ public class AnnotationMember implements GroovyElementTypes
 
     //typized var definition
     //todo: check for upper case type specification 
-    if (WRONGWAY.equals(TypeSpec.parse(builder)))
-    {
+    if (WRONGWAY.equals(TypeSpec.parse(builder))) {
       varDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     GroovyElementType varDef = VariableDefinitions.parse(builder);
-    if (!WRONGWAY.equals(varDef))
-    {
+    if (!WRONGWAY.equals(varDef)) {
       varDefMarker.done(varDef);
       return varDef;
     }
