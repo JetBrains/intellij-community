@@ -8,16 +8,11 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
-import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -30,13 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -98,7 +92,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final static Object myLock = new Object();
 
   private final PsiManager myPsiManager;
-  private final ToolWindowManager myToolWindowManager;
   private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
     new HashMap<ExecutionEvent, Pair<AntBuildFile, String>>();
   private final List<AntBuildFile> myBuildFiles = new ArrayList<AntBuildFile>();
@@ -107,7 +100,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
   private volatile long myModificationCount = 0;
-  private AntExplorer myAntExplorer;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration) {
     super(project);
@@ -117,7 +109,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     INSTANCE.set(getProperties(), this);
     myAntWorkspaceConfiguration = antWorkspaceConfiguration;
     myPsiManager = PsiManager.getInstance(project);
-    myToolWindowManager = ToolWindowManager.getInstance(project);
     myStartupManager = StartupManager.getInstance(project);
   }
 
@@ -174,38 +165,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private static String getPresentableDescription(final String targetName) {
     return targetName != null ? "\'" + targetName + "\'" : "";
-  }
-
-  public void projectOpened() {
-    final CompilerManager compilerManager = CompilerManager.getInstance(getProject());
-    final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, getProject());
-    compilerManager.addBeforeTask(new CompileTask() {
-      public boolean execute(CompileContext context) {
-        return executeTargetBeforeCompile(dataContext);
-      }
-    });
-    compilerManager.addAfterTask(new CompileTask() {
-      public boolean execute(CompileContext context) {
-        return executeTargetAfterCompile(dataContext);
-      }
-    });
-
-    StartupManager.getInstance(getProject()).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myAntExplorer = new AntExplorer(getProject());
-        ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.ANT_BUILD, myAntExplorer, ToolWindowAnchor.RIGHT);
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowAnt.png"));
-      }
-    });
-  }
-
-  public void projectClosed() {
-    updateRegisteredActions();
-    if (myAntExplorer != null) {
-      myToolWindowManager.unregisterToolWindow(ToolWindowId.ANT_BUILD);
-      myAntExplorer.dispose();
-      myAntExplorer = null;
-    }
   }
 
   @NonNls
@@ -364,30 +323,41 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return myModificationCount;
   }
 
-  public void readExternal(final Element parentNode) throws InvalidDataException {
+  private void readExternal(final Element parentNode) throws InvalidDataException {
     myAntWorkspaceConfiguration.loadFromProjectSettings(parentNode);
     getProperties().readExternal(parentNode);
-    final Runnable action = new Runnable() {
+    runWhenInitialized(new Runnable() {
       public void run() {
-        try {
-          loadBuildFileProjectProperties(parentNode);
-          loadBuildFileWorkspaceProperties();
-        }
-        catch (InvalidDataException e) {
-          LOG.error(e);
-        }
-        updateRegisteredActions();
-      }
-    };
-    myStartupManager.registerPostStartupActivity(new Runnable() {
-      public void run() {
-        LOG.info("Start up");
-        ApplicationManager.getApplication().runReadAction(action);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            try {
+              loadBuildFileProjectProperties(parentNode);
+              AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+            }
+            catch (InvalidDataException e) {
+              LOG.error(e);
+            }
+            updateRegisteredActions();
+          }
+        });
       }
     });
   }
 
-  public void writeExternal(final Element parentNode) throws WriteExternalException {
+  private void runWhenInitialized(final Runnable runnable) {
+    if (getProject().isInitialized()) {
+      runnable.run();
+    }
+    else {
+      myStartupManager.registerPostStartupActivity(new Runnable(){
+        public void run() {
+          runnable.run();
+        }
+      });
+    }
+  }
+  
+  private void writeExternal(final Element parentNode) throws WriteExternalException {
     getProperties().writeExternal(parentNode);
     final ActionRunner.InterruptibleRunnable action = new ActionRunner.InterruptibleRunnable() {
       public void run() throws WriteExternalException {
@@ -565,11 +535,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     myEventDispatcher.getMulticaster().buildFileRemoved(buildFile);
   }
 
-  private boolean executeTargetBeforeCompile(final DataContext context) {
+  public boolean executeTargetBeforeCompile(final DataContext context) {
     return runTargetSynchronously(context, ExecuteBeforeCompilationEvent.getInstance());
   }
 
-  private boolean executeTargetAfterCompile(final DataContext context) {
+  public boolean executeTargetAfterCompile(final DataContext context) {
     return runTargetSynchronously(context, ExecuteAfterCompilationEvent.getInstance());
   }
 
@@ -665,10 +635,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     }
-  }
-
-  private void loadBuildFileWorkspaceProperties() throws InvalidDataException {
-    AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
   }
 
   @Nullable

@@ -9,8 +9,13 @@
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
 
   <extensions xmlns="com.intellij">
+    <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
+    <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
+    <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntBeforeRunActionRegistrar" serviceImplementation="com.intellij.lang.ant.config.impl.AntBeforeRunActionRegistrar"/>
+    
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
+   
   </extensions>
 
   <application-components>
@@ -30,19 +35,7 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration</interface-class>
-      <implementation-class>com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.lang.ant.config.AntConfiguration</interface-class>
-      <implementation-class>com.intellij.lang.ant.config.impl.AntConfigurationImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.lang.ant.config.impl.AntBeforeRunActionRegistrar</interface-class>
-      <implementation-class>com.intellij.lang.ant.config.impl.AntBeforeRunActionRegistrar</implementation-class>
+      <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
@@ -50,7 +43,7 @@
       <skipForDummyProject/>
     </component>
   </project-components>
-
+  
   <actions>
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>

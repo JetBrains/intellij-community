@@ -3,17 +3,32 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class AntWorkspaceConfiguration implements JDOMExternalizable, ProjectComponent {
+@State(
+  name="antWorkspaceConfiguration",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class AntWorkspaceConfiguration implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration");
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String URL = "url";
@@ -26,18 +41,25 @@ public class AntWorkspaceConfiguration implements JDOMExternalizable, ProjectCom
     myProject = project;
   }
 
-  public void projectClosed() {
+  public Element getState() {
+    try {
+      final Element e = new Element("state");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
   }
 
-  public void projectOpened() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "antWorkspaceConfiguration";
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void initComponent() {
@@ -59,7 +81,7 @@ public class AntWorkspaceConfiguration implements JDOMExternalizable, ProjectCom
   }
 
   public static AntWorkspaceConfiguration getInstance(Project project) {
-    return project.getComponent(AntWorkspaceConfiguration.class);
+    return ServiceManager.getService(project, AntWorkspaceConfiguration.class);
   }
 
   public void loadFileProperties() throws InvalidDataException {
