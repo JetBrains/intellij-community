@@ -381,7 +381,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Icon myIcon;
     private boolean myPrependWithSeparator;
 
-    public ActionItem(AnAction action, String text, boolean enabled, Icon icon, final boolean prependWithSeparator) {
+    public ActionItem(AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -393,6 +393,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return myAction;
     }
 
+    @NotNull
     public String getText() {
       return myText;
     }
