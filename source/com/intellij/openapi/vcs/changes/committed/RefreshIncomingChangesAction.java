@@ -15,4 +15,9 @@ public class RefreshIncomingChangesAction extends AnAction {
       CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync();
     }
   }
+
+  public void update(final AnActionEvent e) {
+    Project project = e.getData(DataKeys.PROJECT);
+    e.getPresentation().setEnabled(project != null && !CommittedChangesCache.getInstance(project).isRefreshingIncomingChanges());
+  }
 }

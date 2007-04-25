@@ -319,6 +319,7 @@ public class ChangesCacheFile {
         }
         offset++;
       }
+      LOG.info("Loaded " + result.size() + " incoming changelists");
       return result;
     }
     finally {
@@ -355,6 +356,7 @@ public class ChangesCacheFile {
   private void saveIncoming(final IncomingChangeListData data) throws IOException {
     writePartial(data);
     if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
+      LOG.info("Removing changelist " + data.changeList.getNumber() + " from incoming changelists");
       myIndexStream.seek(data.indexOffset);
       writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
       myIncomingCount--;
@@ -417,6 +419,7 @@ public class ChangesCacheFile {
         }
       }
     }
+    LOG.info("Loaded " + incomingData.size() + "incoming changelist pointers");
     return incomingData;
   }
 
@@ -491,6 +494,7 @@ public class ChangesCacheFile {
     try {
       final List<IncomingChangeListData> list = loadIncomingChangeListData();
       for(IncomingChangeListData data: list) {
+        LOG.info("Checking incoming changelist " + data.changeList.getNumber());
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
@@ -514,6 +518,9 @@ public class ChangesCacheFile {
           anyChanges = true;
           saveIncoming(data);
         }
+      }
+      if (anyChanges) {
+        writeHeader();
       }
     }
     finally {

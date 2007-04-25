@@ -1,12 +1,12 @@
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -34,6 +34,7 @@ public class CommittedChangesCache {
   private int myInitialCount = 500;
   private MessageBus myBus;
   private BackgroundTaskQueue myTaskQueue;
+  private boolean myRefreshingIncomingChanges = false;
 
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
                                                                                                             CommittedChangesListener.class);
@@ -193,6 +194,7 @@ public class CommittedChangesCache {
   }
 
   private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    LOG.info("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
@@ -205,6 +207,7 @@ public class CommittedChangesCache {
   }
 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    LOG.info("Refreshing cache for " + cacheFile.getLocation());
     final Date date = cacheFile.getLastCachedDate();
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
@@ -234,6 +237,7 @@ public class CommittedChangesCache {
     for(ChangesCacheFile cache: caches) {
       try {
         if (!cache.isEmpty()) {
+          LOG.info("Loading incoming changes for " + cache.getLocation());
           result.addAll(cache.loadIncomingChanges());
         }
       }
@@ -275,10 +279,15 @@ public class CommittedChangesCache {
     myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated();
   }
 
+  public boolean isRefreshingIncomingChanges() {
+    return myRefreshingIncomingChanges;
+  }
+
   public boolean refreshIncomingChanges() {
     boolean hasChanges = false;
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile file: caches) {
+      LOG.info("Refreshing incoming changes for " + file.getLocation());
       try {
         boolean changesForCache = file.refreshIncomingChanges();
         hasChanges |= changesForCache;
@@ -291,6 +300,8 @@ public class CommittedChangesCache {
   }
 
   public void refreshIncomingChangesAsync() {
+    LOG.info("Refreshing incoming changes in background");
+    myRefreshingIncomingChanges = true;
     final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing incoming changes") {
       private boolean myAnyChanges = false;
 
@@ -299,6 +310,7 @@ public class CommittedChangesCache {
       }
 
       public void onSuccess() {
+        myRefreshingIncomingChanges = false;
         if (myAnyChanges) {
           notifyIncomingChangesUpdated();
         }
