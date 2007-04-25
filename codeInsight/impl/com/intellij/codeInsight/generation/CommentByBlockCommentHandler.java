@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -168,6 +169,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
     }
 
+    final LanguageDialect languageDialect = file.getLanguageDialect();
+    if (languageDialect != null) lang = languageDialect;
+
     if (lang.getCommenter() == null) {
       lang = file.getLanguage();
     }
@@ -188,6 +192,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
       curOffset = elt.getTextRange().getEndOffset();
     } while(curOffset < end);
+    if (file.getLanguageDialect() != null) return file.getLanguageDialect();
     return lang;
   }
 
