@@ -15,12 +15,17 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,14 +69,83 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
         }
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        if (!(location instanceof PsiReferenceExpression)) {
+            return null;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) location;
+        final String text = referenceExpression.getText();
+        if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+            "java.util.Map")) {
+            if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+                    "java.util.SortedMap")) {
+                return new ReturnOfCollectionFieldFix(
+                        "java.util.Collections.unmodifiableSortedMap(" +
+                                text + ')');
+            }
+            return new ReturnOfCollectionFieldFix(
+                    "java.util.Collections.unmodifiableMap(" + text + ')');
+        } else if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+                "java.util.Collection")) {
+            if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+                    "java.util.Set")) {
+                if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+                        "java.util.SortedSet")) {
+                    return new ReturnOfCollectionFieldFix(
+                            "java.util.Collections.unmodifiableSortedSet(" +
+                                    text + ')');
+                }
+                return new ReturnOfCollectionFieldFix(
+                        "java.util.Collections.unmodifiableSet(" + text + ')');
+            } else if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
+                    "java.util.List")) {
+                return new ReturnOfCollectionFieldFix(
+                        "java.util.Collections.unmodifiableList(" + text + ')');
+            }
+            return new ReturnOfCollectionFieldFix(
+                    "java.util.Collections.unmodifiableCollection(" + text +
+                            ')');
+        }
+        return null;
+    }
+
     public BaseInspectionVisitor buildVisitor(){
         return new ReturnOfCollectionFieldVisitor();
+    }
+
+    private static class ReturnOfCollectionFieldFix
+            extends InspectionGadgetsFix {
+
+        private final String replacementText;
+
+        ReturnOfCollectionFieldFix(String replacementText) {
+            this.replacementText = replacementText;
+        }
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "return.of.collection.field.fix", replacementText);
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            if (!(element instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) element;
+            replaceExpressionAndShorten(referenceExpression, replacementText);
+        }
     }
 
     private class ReturnOfCollectionFieldVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(returnValue == null){
