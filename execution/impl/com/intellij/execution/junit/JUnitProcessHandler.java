@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -100,25 +99,9 @@ public class JUnitProcessHandler extends OSProcessHandler {
     }
 
     public Reader getReader() {
-      return new Reader() {
-        public void close() throws IOException {
-          myStream.close();
-        }
-
-        public boolean ready() throws IOException {
-          return myStream.available() > 0;
-        }
-
-        public int read(final char[] cbuf, final int off, final int len) throws IOException {
-          for (int i = 0; i < len; i++) {
-            final int aChar = myStream.read();
-            if (aChar == -1) return i == 0 ? -1 : i;
-            cbuf[off + i] = (char)aChar;
-          }
-          return len;
-        }
-      };
+      return new SegmentedInputStreamReader(myStream);
       //return new InputStreamReader(myStream, myCharset);
     }
   }
+
 }

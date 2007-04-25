@@ -114,6 +114,8 @@ public class SegmentedInputStream extends InputStream {
       }
       final boolean packetRead = readControlSequence();
       if (!packetRead) {
+        // push back quoted slash
+        mySourceStream.pushBack(b);
         mySourceStream.pushBack(b);
         return 1;
       }
