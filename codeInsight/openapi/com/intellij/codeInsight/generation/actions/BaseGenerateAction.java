@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class BaseGenerateAction extends CodeInsightAction {
   private CodeInsightActionHandler myHandler;
@@ -18,6 +19,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     return myHandler;
   }
 
+  @Nullable
   protected PsiClass getTargetClass (Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
