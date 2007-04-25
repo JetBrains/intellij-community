@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -33,6 +33,7 @@ public class CommittedChangesCache {
   private Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
   private int myInitialCount = 500;
   private MessageBus myBus;
+  private BackgroundTaskQueue myTaskQueue;
 
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
                                                                                                             CommittedChangesListener.class);
@@ -46,6 +47,7 @@ public class CommittedChangesCache {
   public CommittedChangesCache(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
+    myTaskQueue = new BackgroundTaskQueue(project, "Refreshing VCS history");
   }
 
   public int getInitialCount() {
@@ -266,19 +268,43 @@ public class CommittedChangesCache {
         });
       }
     }
-    myBus.syncPublisher(COMMITTED_TOPIC).updatedFilesProcessed();
+    notifyIncomingChangesUpdated();
   }
 
-  public void refreshIncomingChanges() {
+  private void notifyIncomingChangesUpdated() {
+    myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated();
+  }
+
+  public boolean refreshIncomingChanges() {
+    boolean hasChanges = false;
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile file: caches) {
       try {
-        file.refreshIncomingChanges();
+        boolean changesForCache = file.refreshIncomingChanges();
+        hasChanges |= changesForCache;
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
+    return hasChanges;
+  }
+
+  public void refreshIncomingChangesAsync() {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing incoming changes") {
+      private boolean myAnyChanges = false;
+
+      public void run(final ProgressIndicator indicator) {
+        myAnyChanges = refreshIncomingChanges();
+      }
+
+      public void onSuccess() {
+        if (myAnyChanges) {
+          notifyIncomingChangesUpdated();
+        }
+      }
+    };
+    myTaskQueue.run(task);    
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
@@ -286,7 +312,7 @@ public class CommittedChangesCache {
       refreshCacheSync(cache, postRunnable);
       return;
     }
-    final Task task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
       private boolean hasNewChanges = false;
 
       public void run(final ProgressIndicator indicator) {
@@ -305,7 +331,7 @@ public class CommittedChangesCache {
         }
       }
     };
-    ProgressManager.getInstance().run(task);
+    myTaskQueue.run(task);
   }
 
   private void refreshCacheSync(final ChangesCacheFile cache, final Runnable postRunnable) {

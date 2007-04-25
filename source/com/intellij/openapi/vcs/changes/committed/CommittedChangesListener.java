@@ -10,5 +10,5 @@ import java.util.List;
  */
 public interface CommittedChangesListener {
   void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes);
-  void updatedFilesProcessed();
+  void incomingChangesUpdated();
 }

@@ -484,11 +484,12 @@ public class ChangesCacheFile {
     return new File(myPath + "." + offset + ".partial");
   }
 
-  public void refreshIncomingChanges() throws IOException {
+  public boolean refreshIncomingChanges() throws IOException {
+    DiffProvider diffProvider = myVcs.getDiffProvider();
+    if (diffProvider == null) return false;
+    boolean anyChanges = false;
     openStreams();
     try {
-      DiffProvider diffProvider = myVcs.getDiffProvider();
-      if (diffProvider == null) return;
       final List<IncomingChangeListData> list = loadIncomingChangeListData();
       for(IncomingChangeListData data: list) {
         boolean updated = false;
@@ -511,6 +512,7 @@ public class ChangesCacheFile {
           }
         }
         if (updated) {
+          anyChanges = true;
           saveIncoming(data);
         }
       }
@@ -518,6 +520,7 @@ public class ChangesCacheFile {
     finally {
       closeStreams();
     }
+    return anyChanges;
   }
 
   private static class IndexEntry {

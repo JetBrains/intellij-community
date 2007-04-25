@@ -1485,6 +1485,11 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
     </group>
 
+    <group id="IncomingChangesToolbar">
+      <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
+        icon="/vcs/refresh.png"/>
+    </group>
+
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
   </actions>
 </component>

@@ -1,10 +1,14 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.util.messages.MessageBus;
 
 import javax.swing.*;
@@ -26,6 +30,9 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   public JComponent initContent() {
     final List<CommittedChangeList> list = CommittedChangesCache.getInstance(myProject).getIncomingChanges();
     myBrowser = new CommittedChangesBrowser(myProject, new CommittedChangesTableModel(list));
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    myBrowser.addToolBar(toolbar.getComponent());
     myBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     return myBrowser;
   }
@@ -43,7 +50,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       updateModel();
     }
 
-    public void updatedFilesProcessed() {
+    public void incomingChangesUpdated() {
       updateModel();
     }
   }
