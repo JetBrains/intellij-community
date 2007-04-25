@@ -92,6 +92,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public JComponent getComponent() {
       return null;
     }
+
+    public ContentManager getContentManager() {
+      return null;
+    }
   };
   public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor) {
     return HEADLESS_WINDOW;

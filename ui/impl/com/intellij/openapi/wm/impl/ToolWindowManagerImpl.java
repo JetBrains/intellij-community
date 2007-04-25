@@ -101,6 +101,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     mySideStack = new SideStack();
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public void initComponent() {
   }
 

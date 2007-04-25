@@ -122,4 +122,7 @@ public interface ToolWindow {
    */
   JComponent getComponent();
 
+
+  ContentManager getContentManager();
+
 }

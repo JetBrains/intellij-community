@@ -24,6 +24,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -82,7 +83,6 @@ public final class InternalDecorator extends JPanel {
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
   private final TitlePanel myTitlePanel;
-  private final MyTitleLabel myTitleLabel;
   private final MyTitleButton myToggleFloatingModeButton;
   private final Separator myFloatingDockSeparator;
   private final MyTitleButton myToggleDockModeButton;
@@ -111,14 +111,16 @@ public final class InternalDecorator extends JPanel {
   @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
   private MyTitleButton myHideSideButton;
+  private JComponent myTitleTabs;
 
   InternalDecorator(final Project project, final WindowInfo info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
     myProject = project;
     myToolWindow = toolWindow;
+    myToolWindow.setDecorator(this);
     myDivider = new MyDivider();
     myTitlePanel = new TitlePanel();
-    myTitleLabel = new MyTitleLabel();
+    myTitleTabs = toolWindow.getContentUI().getTabComponent();
 
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
     myFloatingDockSeparator = new Separator();
@@ -169,13 +171,7 @@ public final class InternalDecorator extends JPanel {
     myFloatingDockSeparator.setActive(active);
     myDockAutoHideSeparator.setActive(active);
     myAutoHideHideSeparator.setActive(active);
-    // Icon
-    if (myInfo.isFloating()) {
-      myTitleLabel.setIcon(myToolWindow.getIcon());
-    }
-    else {
-      myTitleLabel.setIcon(null);
-    }
+
     // Anchor
     final ToolWindowAnchor anchor = myInfo.getAnchor();
     if (info.isSliding()) {
@@ -353,9 +349,7 @@ public final class InternalDecorator extends JPanel {
   private void init() {
     enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
     // Compose title bar
-    myTitleLabel.setForeground(Color.white);
-    myTitleLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
-    myTitlePanel.addTitle(myTitleLabel);
+    myTitlePanel.addTitle(myTitleTabs);
 
     final JPanel buttonPanel = new JPanel(new GridBagLayout());
     buttonPanel.setOpaque(false);
@@ -388,22 +382,6 @@ public final class InternalDecorator extends JPanel {
     add(contentPane, BorderLayout.CENTER);
 
     // Add listeners
-
-    myTitleLabel.addMouseListener(new PopupHandler() {
-      public void invokePopup(final Component comp, final int x, final int y) {
-        final ActionGroup group = createPopupGroup();
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
-    myTitleLabel.addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
-        if (!e.isPopupTrigger()) {
-          fireActivated();
-        }
-      }
-    });
-
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
@@ -411,7 +389,7 @@ public final class InternalDecorator extends JPanel {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  final ActionGroup createPopupGroup() {
+  public final ActionGroup createPopupGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     if (myInfo.isDocked()) {
@@ -497,7 +475,6 @@ public final class InternalDecorator extends JPanel {
         fullTitle.append(title);
       }
     }
-    myTitleLabel.setText(fullTitle.toString());
   }
 
   private void updateTooltips() {
@@ -745,52 +722,6 @@ public final class InternalDecorator extends JPanel {
 
       public final boolean isBorderOpaque() {
         return true;
-      }
-    }
-  }
-
-
-  private final class MyTitleLabel extends JLabel {
-    private Point myLastPoint;
-
-    public MyTitleLabel() {
-      enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
-    }
-
-    public void updateUI() {
-      super.updateUI();
-      setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    }
-
-    protected final void processMouseEvent(final MouseEvent e) {
-      super.processMouseEvent(e);
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED: {
-          myLastPoint = e.getPoint();
-          SwingUtilities.convertPointToScreen(myLastPoint, this);
-          break;
-        }
-      }
-    }
-
-    protected final void processMouseMotionEvent(final MouseEvent e) {
-      super.processMouseMotionEvent(e);
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_DRAGGED: {
-          // 1. myLast point can be null due to bugs in Swing.
-          // 2. do not allow drag enclosed window if ToolWindow isn't floating
-          if (myLastPoint == null || !myInfo.isFloating()) {
-            return;
-          }
-          final Window window = SwingUtilities.windowForComponent(this);
-          final Rectangle oldBounds = window.getBounds();
-          final Point newPoint = e.getPoint();
-          SwingUtilities.convertPointToScreen(newPoint, this);
-          final Point offset = new Point(newPoint.x - myLastPoint.x, newPoint.y - myLastPoint.y);
-          window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
-          myLastPoint = newPoint;
-          break;
-        }
       }
     }
   }
