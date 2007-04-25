@@ -90,6 +90,7 @@ public class ChangesCacheFile {
   }
 
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, boolean assumeCompletelyDownloaded) throws IOException {
+    LOG.info("Writing " + changes.size() + (assumeCompletelyDownloaded ? " old changes" : " incoming changes"));
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
