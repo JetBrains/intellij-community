@@ -34,7 +34,6 @@ public class ReferenceElement implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
-    PsiBuilder.Marker secondInternalTypeMarker;
 
     char firstChar;
     if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
@@ -52,9 +51,8 @@ public class ReferenceElement implements GroovyElementTypes {
 
     if (parseTypeArgs) TypeArguments.parse(builder);
 
-    secondInternalTypeMarker = internalTypeMarker.precede();
     internalTypeMarker.done(REFERENCE_ELEMENT);
-    internalTypeMarker = secondInternalTypeMarker;
+    internalTypeMarker = internalTypeMarker.precede();
 
     while (ParserUtils.getToken(builder, mDOT)) {
       if (!ParserUtils.getToken(builder, mIDENT)) {
@@ -62,14 +60,13 @@ public class ReferenceElement implements GroovyElementTypes {
         return WRONGWAY;
       }
 
-      if (parseTypeArgs) TypeArguments.parse(builder);
+      TypeArguments.parse(builder);
 
-      secondInternalTypeMarker.done(REFERENCE_ELEMENT);
-      secondInternalTypeMarker = internalTypeMarker.precede();
+      internalTypeMarker.done(REFERENCE_ELEMENT);
+      internalTypeMarker = internalTypeMarker.precede();
     }
 
-    secondInternalTypeMarker.drop();
-
+    internalTypeMarker.drop();
     return REFERENCE_ELEMENT;
   }
 }
