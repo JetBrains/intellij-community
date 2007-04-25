@@ -1,21 +1,22 @@
 package com.intellij.localVcs;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
-public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
+public class MockAbstractVcs extends AbstractVcs {
   private boolean myMarkExternalChangesAsCurrent = false;
   private LocalVcsItemsLocker myUpToDateRevisionProvider;
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
+  private DiffProvider myDiffProvider;
 
   public MockAbstractVcs(Project project){
     super(project);
@@ -29,6 +30,10 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
     return myCommittedChangesProvider;
   }
 
+  public DiffProvider getDiffProvider() {
+    return myDiffProvider;
+  }
+
   public String getName() {
     return "mock";
   }
@@ -39,21 +44,6 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public Configurable getConfigurable() {
     return null;
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public String getComponentName() {
-    return "mock";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public ChangeProvider getChangeProvider() {
@@ -82,6 +72,10 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public void setCommittedChangesProvider(final CommittedChangesProvider committedChangesProvider) {
     myCommittedChangesProvider = committedChangesProvider;
+  }
+
+  public void setDiffProvider(final DiffProvider diffProvider) {
+    myDiffProvider = diffProvider;
   }
 
   @Override

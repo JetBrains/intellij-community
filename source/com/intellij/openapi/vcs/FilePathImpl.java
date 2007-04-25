@@ -75,7 +75,7 @@ public class FilePathImpl implements FilePath {
   public void refresh() {
     if (!myNonLocal) {
       if (myVirtualParent == null) {
-        myVirtualFile = LocalFileSystem.getInstance().findFileByPath(myName);
+        myVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
       }
       else {
         myVirtualFile = myVirtualParent.findChild(myName);

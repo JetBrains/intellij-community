@@ -83,8 +83,8 @@ public class CommittedChangesCache {
     if (provider instanceof CachingCommittedChangesProvider) {
       final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
       try {
-        if (canGetFromCache(cachingProvider, settings, file, location, maxCount)) {
-          return getChangesWithCaching(cachingProvider, settings, file, location, maxCount);
+        if (canGetFromCache(vcs, settings, file, location, maxCount)) {
+          return getChangesWithCaching(vcs, settings, file, location, maxCount);
         }
       }
       catch (IOException e) {
@@ -95,9 +95,9 @@ public class CommittedChangesCache {
     return provider.getCommittedChanges(settings, location, maxCount);
   }
 
-  private boolean canGetFromCache(final CachingCommittedChangesProvider cachingProvider, final ChangeBrowserSettings settings,
+  private boolean canGetFromCache(final AbstractVcs vcs, final ChangeBrowserSettings settings,
                                   final VirtualFile root, final RepositoryLocation location, final int maxCount) throws IOException {
-    ChangesCacheFile cacheFile = getCacheFile(cachingProvider, root, location);
+    ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
     if (cacheFile.isEmpty()) {
       return true;   // we'll initialize the cache and check again after that
     }
@@ -147,7 +147,7 @@ public class CommittedChangesCache {
       if (provider instanceof CachingCommittedChangesProvider) {
         final RepositoryLocation location = provider.getLocationFor(file);
         if (location != null) {
-          ChangesCacheFile cacheFile = getCacheFile((CachingCommittedChangesProvider) provider, file, location);
+          ChangesCacheFile cacheFile = getCacheFile(vcs, file, location);
           result.add(cacheFile);
         }
       }
@@ -155,19 +155,19 @@ public class CommittedChangesCache {
     return result;
   }
 
-  private List<CommittedChangeList> getChangesWithCaching(final CachingCommittedChangesProvider provider,
+  private List<CommittedChangeList> getChangesWithCaching(final AbstractVcs vcs,
                                                           final ChangeBrowserSettings settings,
                                                           final VirtualFile root,
                                                           final RepositoryLocation location,
                                                           final int maxCount) throws VcsException, IOException {
-    ChangesCacheFile cacheFile = getCacheFile(provider, root, location);
+    ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
     if (cacheFile.isEmpty()) {
       List<CommittedChangeList> changes = initCache(cacheFile);
-      if (canGetFromCache(provider, settings, root, location, maxCount)) {
+      if (canGetFromCache(vcs, settings, root, location, maxCount)) {
         settings.filterChanges(changes);
         return trimToSize(changes, maxCount);
       }
-      return provider.getCommittedChanges(settings, location, maxCount);
+      return cacheFile.getProvider().getCommittedChanges(settings, location, maxCount);
     }
     else {
       List<CommittedChangeList> changes = cacheFile.readChanges(settings, maxCount);
@@ -269,6 +269,18 @@ public class CommittedChangesCache {
     myBus.syncPublisher(COMMITTED_TOPIC).updatedFilesProcessed();
   }
 
+  public void refreshIncomingChanges() {
+    final Collection<ChangesCacheFile> caches = getAllCaches();
+    for(ChangesCacheFile file: caches) {
+      try {
+        file.refreshIncomingChanges();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
   private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshCacheSync(cache, postRunnable);
@@ -309,10 +321,10 @@ public class CommittedChangesCache {
     }
   }
 
-  public ChangesCacheFile getCacheFile(CachingCommittedChangesProvider provider, VirtualFile root, RepositoryLocation location) {
+  public ChangesCacheFile getCacheFile(AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
     ChangesCacheFile cacheFile = myCacheFiles.get(location);
     if (cacheFile == null) {
-      cacheFile = new ChangesCacheFile(myProject, getCachePath(location), provider, root, location);
+      cacheFile = new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location);
       myCacheFiles.put(location, cacheFile);
     }
     return cacheFile;
