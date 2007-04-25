@@ -34,7 +34,7 @@ import java.io.File;
     )}
 )
 public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
-  @NonNls public String EXPORT_FILE_NAME = "$PROJECT_DIR$/report.txt";
+  @NonNls public String EXPORT_FILE_NAME = "report.txt";
   public boolean IS_EXPANDED = false;
   public boolean IS_SHOW_PACKAGES = true;
   public boolean IS_SHOW_METHODS = false;
