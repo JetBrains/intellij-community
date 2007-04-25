@@ -29,10 +29,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class ReferenceElement implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false, true);
+    return parse(builder, false, true, false);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs) {
+  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
     char firstChar;
@@ -54,7 +54,21 @@ public class ReferenceElement implements GroovyElementTypes {
     internalTypeMarker.done(REFERENCE_ELEMENT);
     internalTypeMarker = internalTypeMarker.precede();
 
-    while (ParserUtils.getToken(builder, mDOT)) {
+    while (mDOT.equals(builder.getTokenType())) {
+
+      if ((ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
+              ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
+              forImport) {
+        internalTypeMarker.drop();
+        return REFERENCE_ELEMENT;
+      }
+
+      ParserUtils.getToken(builder, mDOT);
+
+      if (forImport) {
+        ParserUtils.getToken(builder, mNLS);
+      }
+
       if (!ParserUtils.getToken(builder, mIDENT)) {
         internalTypeMarker.rollbackTo();
         return WRONGWAY;

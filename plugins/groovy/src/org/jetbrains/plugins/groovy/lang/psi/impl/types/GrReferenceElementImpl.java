@@ -48,7 +48,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
   }
 
   public String toString() {
-    return "Class type";
+    return "Reference element";
   }
 
   public GrReferenceElement getQualifier() {

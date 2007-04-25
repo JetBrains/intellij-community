@@ -36,7 +36,7 @@ public class ImportStatement implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, kIMPORT, GroovyBundle.message("import.keyword.expected"));
     ParserUtils.getToken(builder, kSTATIC);
-    IdentifierReference.parse(builder);
+    ImportReference.parse(builder);
 
     impMarker.done(IMPORT_STATEMENT);
 
