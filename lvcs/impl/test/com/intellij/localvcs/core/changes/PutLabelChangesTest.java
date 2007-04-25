@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PutEntryLabelChangeTest extends LocalVcsTestCase {
+public class PutLabelChangesTest extends LocalVcsTestCase {
   RootEntry r;
 
   @Before
@@ -18,7 +18,7 @@ public class PutEntryLabelChangeTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelOnFile() {
-    Change c = new PutEntryLabelChange("dir/subDir/file", -1, null);
+    Change c = new PutEntryLabelChange(-1, "dir/subDir/file", null, false);
     c.applyTo(r);
 
     assertFalse(c.affects(r.getEntry("dir")));
@@ -28,10 +28,20 @@ public class PutEntryLabelChangeTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelOnDirectory() {
-    Change c = new PutEntryLabelChange("dir/subDir", -1, null);
+    Change c = new PutEntryLabelChange(-1, "dir/subDir", null, false);
     c.applyTo(r);
 
     assertFalse(c.affects(r.getEntry("dir")));
+    assertTrue(c.affects(r.getEntry("dir/subDir")));
+    assertTrue(c.affects(r.getEntry("dir/subDir/file")));
+  }
+
+  @Test
+  public void testGlobalLabel() {
+    Change c = new PutLabelChange(-1, null, false);
+    c.applyTo(r);
+
+    assertTrue(c.affects(r.getEntry("dir")));
     assertTrue(c.affects(r.getEntry("dir/subDir")));
     assertTrue(c.affects(r.getEntry("dir/subDir/file")));
   }

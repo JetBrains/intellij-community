@@ -12,21 +12,25 @@ import java.util.List;
 public class PutLabelChange extends Change {
   private long myTimestamp;
   private String myName;
+  private boolean myIsMark;
 
-  public PutLabelChange(long timestamp, String name) {
+  public PutLabelChange(long timestamp, String name, boolean isMark) {
     myTimestamp = timestamp;
     myName = name;
+    myIsMark = isMark;
   }
 
   public PutLabelChange(Stream s) throws IOException {
     myTimestamp = s.readLong();
     myName = s.readString();
+    myIsMark = s.readBoolean();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     s.writeLong(myTimestamp);
     s.writeString(myName);
+    s.writeBoolean(myIsMark);
   }
 
   @Override
@@ -62,5 +66,10 @@ public class PutLabelChange extends Change {
   @Override
   public boolean isLabel() {
     return true;
+  }
+
+  @Override
+  public boolean isMark() {
+    return myIsMark;
   }
 }

@@ -131,14 +131,18 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void putLabel(String name) {
-    applyLabel(new PutLabelChange(getCurrentTimestamp(), name));
+    applyLabel(new PutLabelChange(getCurrentTimestamp(), name, false));
   }
 
   public void putLabel(String path, String name) {
-    applyLabel(new PutEntryLabelChange(path, getCurrentTimestamp(), name));
+    applyLabel(new PutEntryLabelChange(getCurrentTimestamp(), path, name, false));
   }
 
-  private void applyLabel(Change c) {
+  public void mark(String path) {
+    applyLabel(new PutEntryLabelChange(getCurrentTimestamp(), path, "Marked", true));
+  }
+
+  private void applyLabel(PutLabelChange c) {
     c.applyTo(myRoot);
     myChangeList.addChange(c);
   }
@@ -236,12 +240,21 @@ public class LocalVcs implements ILocalVcs {
 
   public byte[] getByteContentAt(String path, long timestamp) {
     for (Revision r : getRevisionsFor(path)) {
-      if (r.getTimestamp() <= timestamp) {
-        Content c = r.getEntry().getContent();
-        return c.isAvailable() ? c.getBytes() : null;
-      }
+      if (r.getTimestamp() <= timestamp) return getByteContentOf(r);
     }
     return null;
+  }
+
+  public byte[] getLastMarkedByteContent(String path) {
+    for (Revision r : getRevisionsFor(path)) {
+      if (r.isMarked()) return getByteContentOf(r);
+    }
+    return null;
+  }
+
+  private byte[] getByteContentOf(Revision r) {
+    Content c = r.getEntry().getContent();
+    return c.isAvailable() ? c.getBytes() : null;
   }
 
   public static class Memento {

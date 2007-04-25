@@ -21,4 +21,8 @@ public abstract class Revision {
 
     return leftEntry.getDifferenceWith(rightEntry);
   }
+
+  public boolean isMarked() {
+    return false;
+  }
 }

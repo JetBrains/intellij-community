@@ -38,6 +38,10 @@ public abstract class Change {
     return false;
   }
 
+  public boolean isMark() {
+    return false;
+  }
+
   public boolean isGlobal() {
     return false;
   }

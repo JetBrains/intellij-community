@@ -14,4 +14,9 @@ public class LabeledRevision extends RevisionBeforeChange {
   public String getName() {
     return myChange.getName();
   }
+
+  @Override
+  public boolean isMarked() {
+    return myChange.isMark();
+  }
 }

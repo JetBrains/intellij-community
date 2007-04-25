@@ -163,4 +163,12 @@ public class Stream {
   public void writeLong(long l) throws IOException {
     myOs.writeLong(l);
   }
+
+  public boolean readBoolean() throws IOException {
+    return myIs.readBoolean();
+  }
+
+  public void writeBoolean(boolean b) throws IOException {
+    myOs.writeBoolean(b);
+  }
 }

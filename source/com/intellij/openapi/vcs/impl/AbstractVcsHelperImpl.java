@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -18,7 +19,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsFile;
-import com.intellij.openapi.localVcs.LvcsObject;
 import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -290,18 +290,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  public void markFileAsUpToDate(final VirtualFile file) {
-    LvcsObject object;
-    if (file.isDirectory()) {
-      object = LocalVcs.getInstance(myProject).findDirectory(file.getPath());
-    }
-    else {
-      object = LocalVcs.getInstance(myProject).findFile(file.getPath());
-    }
-
-    if (object != null) {
-      object.getRevision().setUpToDate(true);
-    }
+  public void markFileAsUpToDate(VirtualFile f) {
+    LocalHistory.mark(myProject, f);
   }
 
   public LocalHistoryAction startVcsAction(String actionName) {

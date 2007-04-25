@@ -9,7 +9,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.localVcs.LvcsFile;
 import com.intellij.openapi.localVcs.LvcsFileRevision;
+import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -137,6 +139,34 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   @Override
   protected Checkpoint putCheckpoint() {
     return new CheckpointImpl(createIdeaGateway(), myVcs);
+  }
+
+  @Override
+  protected void mark(VirtualFile f) {
+    if (!isEnabled()) {
+      LvcsFile ff = getOldVcs().findFile(f.getPath());
+      if (ff != null && ff.getRevision() != null) {
+        ff.getRevision().setUpToDate(true);
+      }
+      return;
+    }
+
+    if (!isUnderControl(f)) return;
+    myVcs.mark(f.getPath());
+  }
+
+  @Override
+  protected byte[] getLastMarkedByteContent(VirtualFile f) {
+    if (!isEnabled()) {
+      LvcsFile ff = getOldVcs().findFile(f.getPath());
+      if (ff != null && ff.getRevision() != null) {
+        LvcsRevision uptoDate = ff.getRevision().findNearestPreviousUpToDateRevision();
+        return ((LvcsFileRevision)uptoDate).getByteContent();
+      }
+      return null;
+    }
+    if (!isUnderControl(f)) return null;
+    return myVcs.getLastMarkedByteContent(f.getPath());
   }
 
   @Override
