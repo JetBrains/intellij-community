@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,15 +43,15 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   private boolean mySoft;
   @Nullable private final GlobalSearchScope myScope;
 
-  public JavaClassReferenceProvider(String extendClassName, boolean instantiatable, GlobalSearchScope scope) {
+  public JavaClassReferenceProvider(@NonNls String extendClassName, boolean instantiatable, GlobalSearchScope scope) {
     this(new String[]{extendClassName}, instantiatable, false, scope);
   }
 
-  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
+  public JavaClassReferenceProvider(@NonNls String[] extendClassNames, boolean instantiatable) {
     this(extendClassNames, instantiatable, false, null);
   }
 
-  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable, boolean jvmFormat, GlobalSearchScope scope) {
+  public JavaClassReferenceProvider(@NonNls String[] extendClassNames, boolean instantiatable, boolean jvmFormat, GlobalSearchScope scope) {
     myOptions = new THashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
     INSTANTIATABLE.putValue(myOptions, instantiatable);
