@@ -48,6 +48,8 @@ import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
@@ -89,6 +91,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   }
 
   public abstract class ErrorReporter {
+    protected final Set<String> ourErrorsSet = new HashSet<String>();
     public abstract void processError(SAXParseException ex,boolean warning);
 
     public boolean filterValidationException(Exception ex) {
@@ -117,6 +120,13 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     public boolean isStopOnUndeclaredResource() {
       return false;
+    }
+
+    public boolean isUniqueProblem(final SAXParseException e) {
+      String error = buildMessageString(e);
+      if (ourErrorsSet.contains(error)) return false;
+      ourErrorsSet.add(error);
+      return true;
     }
   }
 
@@ -355,15 +365,15 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         try {
           parser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
             public void warning(SAXParseException e) {
-              myErrorReporter.processError(e, true);
+              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, true);
             }
 
             public void error(SAXParseException e) {
-              myErrorReporter.processError(e, false);
+              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
             }
 
             public void fatalError(SAXParseException e) {
-              myErrorReporter.processError(e, false);
+              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
             }
 
             public InputSource resolveEntity(String publicId, String systemId) {
