@@ -147,19 +147,24 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      final TextRange textRange = getRangeInElement();
-      final PsiElement elementToChange = myElement.findElementAt(textRange.getStartOffset());
+      final TextRange textRangeInElement = getRangeInElement();
+      final PsiElement elementToChange = myElement.findElementAt(textRangeInElement.getStartOffset());
       final ElementManipulator<PsiElement> manipulator =
         ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(elementToChange);
       assert manipulator != null;
-      manipulator.handleContentChange(elementToChange, new TextRange(1, elementToChange.getTextLength() - 1),newElementName);
+      final int offsetFromStart = myElement.getTextRange().getStartOffset() + textRangeInElement.getStartOffset() - elementToChange.getTextOffset();
+       
+      manipulator.handleContentChange(elementToChange, new TextRange(offsetFromStart, offsetFromStart + textRangeInElement.getLength()),newElementName);
       return myElement;
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-      // TODO: this should work!
       assert element instanceof PsiFile;
-      handleElementRename(VfsUtil.fixIDEAUrl(((PsiFile)element).getVirtualFile().getPresentableUrl()));
+      
+      if (!isUrlText(getCanonicalText())) {
+        // TODO: this should work!
+        handleElementRename(VfsUtil.fixIDEAUrl(((PsiFile)element).getVirtualFile().getPresentableUrl()));
+      }
       return myElement;
     }
 
