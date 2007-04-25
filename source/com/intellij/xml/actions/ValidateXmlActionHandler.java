@@ -248,8 +248,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                     warning ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
                     getFile(ex.getPublicId()),
-                    ex.getLineNumber(),
-                    ex.getColumnNumber(), null);
+                    ex.getLineNumber() - 1 ,
+                    ex.getColumnNumber() - 1, null);
               }
             }
         );
