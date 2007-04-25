@@ -206,6 +206,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   }
 
   private void addMessage(final String text){
+    if (text == null) return;
     final String key = LogConsolePreferences.getType(text);
     if (getPreferences().isApplicable(text, myPrevType)){
       myProcessHandler.notifyTextAvailable(text + "\n", key != null ?
