@@ -13,16 +13,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -316,8 +314,6 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public void setSelectedContent(final Content content, final boolean requestFocus) {
-    if (isSelected(content)) return;
-
     final Content[] old = getSelectedContents();
 
     boolean wasFocusable = requestFocus;
