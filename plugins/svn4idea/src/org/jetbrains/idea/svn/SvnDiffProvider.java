@@ -20,10 +20,17 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.SVNException;
+
+import java.io.File;
 
 public class SvnDiffProvider implements DiffProvider {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnDiffProvider");
   private SvnVcs myVcs;
 
   public SvnDiffProvider(final SvnVcs vcs) {
@@ -31,7 +38,15 @@ public class SvnDiffProvider implements DiffProvider {
   }
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
-    return new SvnRevisionNumber(SVNRevision.BASE);
+    final SVNStatusClient client = myVcs.createStatusClient();
+    try {
+      final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), false, false);
+      return new SvnRevisionNumber(svnStatus.getCommittedRevision());
+    }
+    catch (SVNException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public VcsRevisionNumber getLastRevision(VirtualFile file) {
