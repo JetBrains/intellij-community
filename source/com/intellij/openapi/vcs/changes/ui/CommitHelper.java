@@ -135,7 +135,7 @@ public class CommitHelper {
 
       final LocalHistoryAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
         public LocalHistoryAction compute() {
-          return LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
+          return LocalVcs.getInstance(myProject).startAction_New(myActionName, "", true);
         }
       });
       VirtualFileManager.getInstance().refresh(true, new Runnable() {

@@ -121,7 +121,7 @@ public abstract class AbstractAction extends AnAction {
     if (lvcs != null && getTitle(context) != null) {
 
       synchronized (lvcs) {
-        myLvcsAction = lvcs.startAction(CvsBundle.getCvsDisplayName() + ": " + getTitle(context), "", true);
+        myLvcsAction = lvcs.startAction_New(CvsBundle.getCvsDisplayName() + ": " + getTitle(context), "", true);
       }
     }
   }

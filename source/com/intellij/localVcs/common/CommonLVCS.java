@@ -442,14 +442,24 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public LocalHistoryAction startExternalChangesAction() {
-    return startAction(EXTERNAL_CHANGES_ACTION, "", true);
+    return startAction_New(EXTERNAL_CHANGES_ACTION, "", true);
   }
 
-  public synchronized LocalHistoryAction startAction(String action, String path, boolean isExternalChanges) {
-    //if (isNewLvcsEnabled()) {
-    //  LocalHistory.startAction(myProject, action);
-    //}
+  public synchronized LocalHistoryAction startAction_New(String action, String path, boolean isExternalChanges) {
+    if (action == null) return LvcsAction.EMPTY;
+    if (action.length() > REASONABLE_ACTION_NAME_LENGTH) {
+      action = action.substring(0, REASONABLE_ACTION_NAME_LENGTH);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: started(action='" + action + "')");
+    }
+    if (myAction != null) return LvcsAction.EMPTY;
+    commitAllUnsavedDocuments();
+    myAction = myImplementation.startAction(action, path);
+    return myAction;
+  }
 
+  public synchronized LvcsAction startAction(String action, String path, boolean isExternalChanges) {
     if (action == null) return LvcsAction.EMPTY;
     if (action.length() > REASONABLE_ACTION_NAME_LENGTH) {
       action = action.substring(0, REASONABLE_ACTION_NAME_LENGTH);

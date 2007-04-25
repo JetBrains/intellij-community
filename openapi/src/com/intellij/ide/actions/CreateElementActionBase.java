@@ -144,7 +144,7 @@ public abstract class CreateElementActionBase extends AnAction {
             public void run() {
               LocalHistoryAction action = LvcsAction.EMPTY;
               try {
-                action = lvcs.startAction(getActionName(myDirectory, inputString), "", false);
+                action = lvcs.startAction_New(getActionName(myDirectory, inputString), "", false);
                 PsiElement[] psiElements = create(inputString, myDirectory);
                 myCreatedElements = new SmartPsiElementPointer[psiElements.length];
                 SmartPointerManager manager = SmartPointerManager.getInstance(myProject);

@@ -156,7 +156,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
 
                 String directoryPath = myDirectory.getVirtualFile().getPath() + "/" + subDirName;
 
-                lvcsAction = LocalVcs.getInstance(myProject).startAction(actionName, directoryPath, false);
+                lvcsAction = LocalVcs.getInstance(myProject).startAction_New(actionName, directoryPath, false);
 
                 final PsiDirectory createdDir;
                 if (myIsDirectory) {

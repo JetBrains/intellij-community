@@ -62,7 +62,9 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel addLabel(byte type, String name, String path);
 
-  public abstract LocalHistoryAction startAction(String action, String path, boolean isExternalChanges);
+  public abstract LocalHistoryAction startAction_New(String action, String path, boolean isExternalChanges);
+
+  public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
   public abstract LvcsRevision[] getChanges(String path, LvcsLabel label);
 

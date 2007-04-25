@@ -36,9 +36,9 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.ChangesBrowserDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
@@ -305,7 +305,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public LocalHistoryAction startVcsAction(String actionName) {
-    return LocalVcs.getInstance(myProject).startAction(actionName, "", false);
+    return LocalVcs.getInstance(myProject).startAction_New(actionName, "", false);
   }
 
   public void finishVcsAction(LocalHistoryAction action) {
@@ -678,8 +678,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     openCommittedChangesTab(provider, location, settings, maxCount, title);
   }
 
-  public void openCommittedChangesTab(final CommittedChangesProvider provider, final RepositoryLocation location,
-                                      final ChangeBrowserSettings settings, final int maxCount, String title) {
+  public void openCommittedChangesTab(final CommittedChangesProvider provider,
+                                      final RepositoryLocation location,
+                                      final ChangeBrowserSettings settings,
+                                      final int maxCount,
+                                      String title) {
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
     panel.setRepositoryLocation(location);
     panel.setMaxCount(maxCount);

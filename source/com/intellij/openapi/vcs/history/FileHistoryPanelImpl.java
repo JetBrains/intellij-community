@@ -734,7 +734,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     private LocalHistoryAction startLvcsAction(final VcsFileRevision revision) {
-      return LocalVcs.getInstance(myProject).startAction(createGetActionTitle(revision), getFilePath(), false);
+      return LocalVcs.getInstance(myProject).startAction_New(createGetActionTitle(revision), getFilePath(), false);
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {

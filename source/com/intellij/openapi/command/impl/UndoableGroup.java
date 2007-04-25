@@ -96,7 +96,7 @@ class UndoableGroup {
         else {
           lvcsActionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
         }
-        actionStarted = lvcs.startAction(lvcsActionName, "", false);
+        actionStarted = lvcs.startAction_New(lvcsActionName, "", false);
       }
     }
     try {

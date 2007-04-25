@@ -191,7 +191,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
     final LocalHistoryAction lvcsAction =
-      LocalVcs.getInstance(project).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
+      LocalVcs.getInstance(project).startAction_New(VcsBundle.message("changes.action.rollback.text"), "", true);
     VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
       public void run() {
         lvcsAction.finish();
