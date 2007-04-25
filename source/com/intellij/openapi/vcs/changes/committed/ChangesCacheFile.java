@@ -1,20 +1,19 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -374,9 +373,9 @@ public class ChangesCacheFile {
     return haveUnaccountedUpdatedFiles;
   }
 
-  private boolean processFile(final String file, @NotNull final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+  private boolean processFile(final String file, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
     FilePath path = new FilePathImpl(new File(file), false);
-    if (!path.isUnder(myRootPath, false)) {
+    if (!path.isUnder(myRootPath, false) || number == null) {
       return false;
     }
     boolean foundRevision = false;
