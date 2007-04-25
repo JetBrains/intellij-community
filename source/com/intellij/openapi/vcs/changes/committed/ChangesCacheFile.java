@@ -125,7 +125,7 @@ public class ChangesCacheFile {
           myFirstCachedDate = list.getCommitDate();
         }
         if (list.getNumber() < myFirstCachedChangelist) {
-          myFirstCachedChangelist = list.getNumber(); 
+          myFirstCachedChangelist = list.getNumber();
         }
         writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, assumeCompletelyDownloaded);
         if (!assumeCompletelyDownloaded) {
@@ -367,7 +367,17 @@ public class ChangesCacheFile {
     boolean haveUnaccountedUpdatedFiles = false;
     final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myProject);
     for(Pair<String, VcsRevisionNumber> pair: list) {
-      haveUnaccountedUpdatedFiles |= processFile(pair.first, pair.second, incomingData);
+      final String file = pair.first;
+      FilePath path = new FilePathImpl(new File(file), false);
+      if (!path.isUnder(myRootPath, false) || pair.second == null) {
+        continue;
+      }
+      if (group.getId().equals(FileGroup.REMOVED_FROM_REPOSITORY_ID)) {
+        haveUnaccountedUpdatedFiles |= processDeletedFile(path, pair.second, incomingData);
+      }
+      else {
+        haveUnaccountedUpdatedFiles |= processFile(path, pair.second, incomingData);
+      }
     }
     for(FileGroup childGroup: group.getChildren()) {
       haveUnaccountedUpdatedFiles |= processGroup(childGroup, incomingData);
@@ -375,11 +385,7 @@ public class ChangesCacheFile {
     return haveUnaccountedUpdatedFiles;
   }
 
-  private boolean processFile(final String file, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
-    FilePath path = new FilePathImpl(new File(file), false);
-    if (!path.isUnder(myRootPath, false) || number == null) {
-      return false;
-    }
+  private static boolean processFile(final FilePath path, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
     boolean foundRevision = false;
     for(IncomingChangeListData data: incomingData) {
       for(Change change: data.changeList.getChanges()) {
@@ -391,6 +397,22 @@ public class ChangesCacheFile {
           }
           if (rc >= 0) {
             data.accountedChanges.add(change);
+          }
+        }
+      }
+    }
+    return !foundRevision;
+  }
+
+  private static boolean processDeletedFile(final FilePath path, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+    boolean foundRevision = false;
+    for(IncomingChangeListData data: incomingData) {
+      for(Change change: data.changeList.getChanges()) {
+        ContentRevision beforeRevision = change.getBeforeRevision();
+        if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
+          data.accountedChanges.add(change);
+          if (change.getAfterRevision() == null) {
+            foundRevision = true;
           }
         }
       }
@@ -419,7 +441,7 @@ public class ChangesCacheFile {
         }
       }
     }
-    LOG.info("Loaded " + incomingData.size() + "incoming changelist pointers");
+    LOG.info("Loaded " + incomingData.size() + " incoming changelist pointers");
     return incomingData;
   }
 
@@ -465,7 +487,7 @@ public class ChangesCacheFile {
             for(Change c: data.changeList.getChanges()) {
               final ContentRevision afterRevision = isAfterRevision ? c.getAfterRevision() : c.getBeforeRevision();
               if (afterRevision != null && afterRevision.getFile().getIOFile().toString().equals(path)) {
-                result.add(c);                
+                result.add(c);
               }
             }
           }
@@ -501,10 +523,12 @@ public class ChangesCacheFile {
           ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null) {
             afterRevision.getFile().refresh();
+            LOG.info("Checking file " + afterRevision.getFile().getPath());
             VirtualFile file = afterRevision.getFile().getVirtualFile();
             if (file != null) {
               VcsRevisionNumber revision = diffProvider.getCurrentRevision(file);
               if (revision != null) {
+                LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
                 int rc = revision.compareTo(afterRevision.getRevisionNumber());
                 if (rc >= 0) {
                   data.accountedChanges.add(change);
