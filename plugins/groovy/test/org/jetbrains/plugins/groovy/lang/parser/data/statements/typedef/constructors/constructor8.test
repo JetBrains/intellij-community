@@ -25,8 +25,9 @@ Groovy script
         Throw clause
           PsiElement(throws)('throws')
           PsiWhiteSpace(' ')
-          Qualified identifier
-            PsiElement(identifier)('A')
+          Reference element
+            Reference element
+              PsiElement(identifier)('A')
             PsiElement(.)('.')
             PsiElement(identifier)('B')
         PsiWhiteSpace(' ')

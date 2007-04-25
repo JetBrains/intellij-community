@@ -5,14 +5,15 @@ c
 Groovy script
   Package definition
     PsiElement(package)('package')
-    PsiWhiteSpace(' ')
-    Qualified identifier
-      Qualified identifier
-        Qualified identifier
-          PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(new line)('\n')
-        PsiElement(identifier)('b')
-      PsiElement(.)('.')
-      PsiElement(new line)('\n')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(identifier)('a')
+    PsiElement(.)('.')
+  PsiElement(new line)('\n')
+  Property selection
+    Reference expression
+      PsiElement(identifier)('b')
+    PsiElement(.)('.')
+    PsiElement(new line)('\n')
+    Property selector
       PsiElement(identifier)('c')

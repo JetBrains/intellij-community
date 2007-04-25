@@ -2,7 +2,7 @@ Map map
 -----
 Groovy script
   Variable definitions
-    Class type
+    Reference element
       PsiElement(identifier)('Map')
     PsiWhiteSpace(' ')
     Variable

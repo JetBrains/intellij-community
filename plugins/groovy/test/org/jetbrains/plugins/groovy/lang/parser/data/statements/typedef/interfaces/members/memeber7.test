@@ -36,7 +36,7 @@ Groovy script
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
       Method
-        Class type
+        Reference element
           PsiElement(identifier)('String')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('c')

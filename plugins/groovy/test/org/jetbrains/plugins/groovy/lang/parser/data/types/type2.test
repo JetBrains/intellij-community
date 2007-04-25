@@ -13,8 +13,8 @@ Groovy script
         Parameter modifiers
           <empty list>
         Array type
-          Class type
-            Class type
+          Reference element
+            Reference element
               PsiElement(identifier)('A')
             PsiElement(.)('.')
             PsiElement(identifier)('B')

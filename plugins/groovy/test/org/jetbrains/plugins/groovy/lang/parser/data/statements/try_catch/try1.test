@@ -20,7 +20,7 @@ Groovy script
     Parameter
       Parameter modifiers
         <empty list>
-      Class type
+      Reference element
         PsiElement(identifier)('Exception1')
       PsiWhiteSpace(' ')
       PsiElement(identifier)('e1')
@@ -39,7 +39,7 @@ Groovy script
     Parameter
       Parameter modifiers
         <empty list>
-      Class type
+      Reference element
         PsiElement(identifier)('Exception1')
       PsiWhiteSpace(' ')
       PsiElement(identifier)('e2')

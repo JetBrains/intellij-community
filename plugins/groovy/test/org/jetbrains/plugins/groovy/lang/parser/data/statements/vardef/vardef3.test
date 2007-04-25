@@ -2,7 +2,7 @@ A b, d = 5
 -----
 Groovy script
   Variable definitions
-    Class type
+    Reference element
       PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
     Variable

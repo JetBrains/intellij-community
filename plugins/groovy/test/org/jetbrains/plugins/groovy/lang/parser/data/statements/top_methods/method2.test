@@ -13,7 +13,7 @@ Groovy script
     Throw clause
       PsiElement(throws)('throws')
       PsiWhiteSpace(' ')
-      Qualified identifier
+      Reference element
         PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
     Open block

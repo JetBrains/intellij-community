@@ -8,11 +8,11 @@ Groovy script
     Type arguments
       PsiElement(<)('<')
       Type argument
-        Class type
+        Reference element
           PsiElement(identifier)('T')
       PsiElement(,)(',')
       Type argument
-        Class type
+        Reference element
           PsiElement(identifier)('S')
       PsiErrorElement:'>' expected
         <empty list>

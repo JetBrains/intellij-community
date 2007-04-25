@@ -20,7 +20,7 @@ Groovy script
         Parameter modifiers
           PsiElement(final)('final')
         PsiWhiteSpace(' ')
-        Class type
+        Reference element
           PsiElement(identifier)('String')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('b')

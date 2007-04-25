@@ -10,7 +10,7 @@ Groovy script
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')
-      Class type
+      Reference element
         PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
     Class body

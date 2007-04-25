@@ -3,12 +3,12 @@
 Groovy script
   Typecast expression
     PsiElement(()('(')
-    Class type
-      Class type
-        Class type
-          Class type
-            Class type
-              Class type
+    Reference element
+      Reference element
+        Reference element
+          Reference element
+            Reference element
+              Reference element
                 PsiElement(identifier)('a')
               PsiElement(.)('.')
               PsiElement(identifier)('b')

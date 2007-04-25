@@ -27,7 +27,7 @@ Groovy script
   PsiElement(new line)('\n')
   PsiErrorElement:'finally' without 'try'
     PsiElement(finally)('finally')
-  Open block
+  Closable block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
     Reference expression

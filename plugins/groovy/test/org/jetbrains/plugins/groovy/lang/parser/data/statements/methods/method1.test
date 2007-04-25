@@ -7,7 +7,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(synchronized)('synchronized')
     PsiWhiteSpace(' ')
-    Class type
+    Reference element
       PsiElement(identifier)('String')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
@@ -17,7 +17,7 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Class type
+        Reference element
           PsiElement(identifier)('Object')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('param')

@@ -12,7 +12,7 @@ Groovy script
       PsiElement(identifier)('f')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
-      Open block
+      Closable block
         PsiElement({)('{')
         PsiWhiteSpace('\n')
         WHILE statement

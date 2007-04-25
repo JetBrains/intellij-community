@@ -5,12 +5,11 @@ Groovy script
   Import expression
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
-    Import referenece
-      Import referenece
-        Import referenece
-          PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(identifier)('b')
+    Reference element
+      Reference element
+        PsiElement(identifier)('a')
       PsiElement(.)('.')
-      PsiElement(new line)('\n')
-      PsiElement(*)('*')
+      PsiElement(identifier)('b')
+    PsiElement(.)('.')
+    PsiElement(new line)('\n')
+    PsiElement(*)('*')

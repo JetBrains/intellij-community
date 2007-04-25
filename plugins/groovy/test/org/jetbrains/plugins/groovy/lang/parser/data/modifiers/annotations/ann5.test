@@ -5,7 +5,7 @@ Groovy script
     Modifiers
       Annotation
         PsiElement(@)('@')
-        Qualified identifier
+        Reference element
           PsiElement(identifier)('Annotation')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
@@ -18,7 +18,7 @@ Groovy script
               PsiWhiteSpace(' ')
               Annotation
                 PsiElement(@)('@')
-                Qualified identifier
+                Reference element
                   PsiElement(identifier)('Ann1')
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
@@ -42,7 +42,7 @@ Groovy script
                   PsiElement(false)('false')
         PsiElement())(')')
     PsiWhiteSpace(' ')
-    Class type
+    Reference element
       PsiElement(identifier)('String')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')

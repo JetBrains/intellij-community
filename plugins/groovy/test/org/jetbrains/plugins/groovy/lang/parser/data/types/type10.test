@@ -19,8 +19,8 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Class type
-          Class type
+        Reference element
+          Reference element
             PsiElement(identifier)('A')
           PsiElement(.)('.')
           PsiElement(identifier)('B')
@@ -32,12 +32,12 @@ Groovy script
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Type argument
-              Class type
+              Reference element
                 PsiElement(identifier)('String')
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Type argument
-              Class type
+              Reference element
                 PsiElement(identifier)('T')
                 Type arguments
                   PsiElement(<)('<')

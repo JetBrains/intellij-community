@@ -59,7 +59,7 @@ Groovy script
               Modifiers
                 Annotation
                   PsiElement(@)('@')
-                  Qualified identifier
+                  Reference element
                     PsiElement(identifier)('Property')
                 PsiWhiteSpace(' ')
                 PsiElement(def)('def')

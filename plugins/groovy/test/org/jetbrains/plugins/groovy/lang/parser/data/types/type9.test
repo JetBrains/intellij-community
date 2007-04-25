@@ -18,7 +18,7 @@ Groovy script
         Parameter modifiers
           <empty list>
         Array type
-          Class type
+          Reference element
             PsiElement(identifier)('String')
           PsiElement([)('[')
           PsiElement(])(']')

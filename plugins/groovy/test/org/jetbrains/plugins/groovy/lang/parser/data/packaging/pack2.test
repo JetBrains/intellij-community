@@ -7,9 +7,9 @@ Groovy script
   Package definition
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
-    Qualified identifier
-      Qualified identifier
-        Qualified identifier
+    Reference element
+      Reference element
+        Reference element
           PsiElement(identifier)('a')
         PsiElement(.)('.')
         PsiElement(identifier)('b')

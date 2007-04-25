@@ -11,12 +11,12 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(instanceof)('instanceof')
       PsiWhiteSpace(' ')
-      Class type
+      Reference element
         PsiElement(identifier)('List')
         Type arguments
           PsiElement(<)('<')
           Type argument
-            Class type
+            Reference element
               PsiElement(identifier)('String')
           PsiElement(>)('>')
     PsiElement())(')')

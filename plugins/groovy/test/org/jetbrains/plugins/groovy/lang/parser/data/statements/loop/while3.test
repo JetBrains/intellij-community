@@ -11,7 +11,7 @@ Groovy script
     PsiErrorElement:')' expected
       <empty list>
   PsiElement(new line)('\n')
-  Open block
+  Closable block
     PsiElement({)('{')
     Method call
       Reference expression

@@ -4,9 +4,9 @@ Groovy script
   Package definition
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
-    Qualified identifier
-      Qualified identifier
-        Qualified identifier
+    Reference element
+      Reference element
+        Reference element
           PsiElement(identifier)('org')
         PsiElement(.)('.')
         PsiElement(identifier)('jetbrains')

@@ -9,7 +9,7 @@ Groovy script
     PsiElement(useh)('use')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Class type
+    Reference element
       PsiElement(identifier)('StringCalculationCategory')
     PsiElement())(')')
     PsiWhiteSpace(' ')

@@ -5,7 +5,7 @@ Groovy script
   PsiErrorElement:'else' without 'if'
     PsiElement(else)('else')
   PsiElement(new line)('\n')
-  Open block
+  Closable block
     PsiElement({)('{')
     Additive expression
       Literal

@@ -16,7 +16,7 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         Array type
-          Class type
+          Reference element
             PsiElement(identifier)('String')
           PsiElement([)('[')
           PsiElement(])(']')

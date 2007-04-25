@@ -11,7 +11,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(protected)('protected')
     PsiWhiteSpace(' ')
-    Class type
+    Reference element
       PsiElement(identifier)('String')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
@@ -22,12 +22,13 @@ Groovy script
     Throw clause
       PsiElement(throws)('throws')
       PsiWhiteSpace(' ')
-      Qualified identifier
+      Reference element
         PsiElement(identifier)('NullPointerException')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Qualified identifier
-        PsiElement(identifier)('BigException')
+      Reference element
+        Reference element
+          PsiElement(identifier)('BigException')
         PsiElement(.)('.')
         PsiElement(identifier)('SmallException')
     PsiWhiteSpace(' ')

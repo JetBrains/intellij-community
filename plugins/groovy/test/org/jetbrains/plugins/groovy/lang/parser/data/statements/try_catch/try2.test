@@ -20,13 +20,13 @@ Groovy script
           PsiElement(()('(')
           PsiWhiteSpace(' ')
           Variable definitions
-            Class type
+            Reference element
               PsiElement(identifier)('Exception1')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('e1')
           PsiElement())(')')
         PsiWhiteSpace(' ')
-        Open block
+        Closable block
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n')
@@ -38,19 +38,19 @@ Groovy script
           PsiElement(()('(')
           PsiWhiteSpace(' ')
           Variable definitions
-            Class type
+            Reference element
               PsiElement(identifier)('Exception1')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('e2')
           PsiElement())(')')
         PsiWhiteSpace(' ')
-        Open block
+        Closable block
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'finally' without 'try'
         PsiElement(finally)('finally')
-      Open block
+      Closable block
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         Reference expression

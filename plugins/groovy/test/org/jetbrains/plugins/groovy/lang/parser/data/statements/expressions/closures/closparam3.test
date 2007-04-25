@@ -1,7 +1,7 @@
 {def a=1, b=3; a+b}
 -----
 Groovy script
-  Open block
+  Closable block
     PsiElement({)('{')
     Variable definitions
       Modifiers

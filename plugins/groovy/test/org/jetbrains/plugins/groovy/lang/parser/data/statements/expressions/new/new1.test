@@ -10,7 +10,7 @@ Groovy script
     NEW expression
       PsiElement(new)('new')
       PsiWhiteSpace(' ')
-      Class type
+      Reference element
         PsiElement(identifier)('MyClass')
       PsiElement(()('(')
       Arguments

@@ -5,7 +5,7 @@ Groovy script
     Modifiers
       PsiElement(protected)('protected')
     PsiWhiteSpace(' ')
-    Class type
+    Reference element
       PsiElement(identifier)('String')
     PsiWhiteSpace(' ')
     Variable

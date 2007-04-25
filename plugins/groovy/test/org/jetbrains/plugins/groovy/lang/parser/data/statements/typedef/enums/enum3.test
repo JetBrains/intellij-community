@@ -21,9 +21,9 @@ Groovy script
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')
-      Class type
-        Class type
-          Class type
+      Reference element
+        Reference element
+          Reference element
             PsiElement(identifier)('A')
           PsiElement(.)('.')
           PsiElement(identifier)('B')
@@ -38,12 +38,12 @@ Groovy script
           Modifiers
             Annotation
               PsiElement(@)('@')
-              Qualified identifier
+              Reference element
                 PsiElement(identifier)('NotNull')
             PsiWhiteSpace(' ')
             Annotation
               PsiElement(@)('@')
-              Qualified identifier
+              Reference element
                 PsiElement(identifier)('Property')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('item1')
@@ -93,7 +93,7 @@ Groovy script
                 PsiWhiteSpace(' ')
                 PsiElement(def)('def')
               PsiWhiteSpace(' ')
-              Class type
+              Reference element
                 PsiElement(identifier)('String')
               PsiWhiteSpace(' ')
               Variable
@@ -112,7 +112,7 @@ Groovy script
             PsiElement(new line)('\n')
             PsiWhiteSpace('     ')
             Method
-              Class type
+              Reference element
                 PsiElement(identifier)('Integer')
               PsiWhiteSpace(' ')
               PsiElement(identifier)('getNumber')

@@ -16,7 +16,7 @@ Groovy script
         Literal
           PsiElement(number)('2')
       PsiElement())(')')
-      Open block
+      Closable block
         PsiElement({)('{')
         Multiplicative expression
           Reference expression

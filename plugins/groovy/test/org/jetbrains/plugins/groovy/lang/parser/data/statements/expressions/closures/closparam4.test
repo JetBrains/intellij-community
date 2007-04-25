@@ -2,19 +2,19 @@
 return 1+2 }
 -----
 Groovy script
-  Open block
+  Closable block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
     Variable definitions
       Modifiers
         PsiElement(def)('def')
       PsiWhiteSpace(' ')
-      Class type
+      Reference element
         PsiElement(identifier)('Map')
         Type arguments
           PsiElement(<)('<')
           Type argument
-            Class type
+            Reference element
               PsiElement(identifier)('String')
           PsiElement(>)('>')
       PsiWhiteSpace(' ')
