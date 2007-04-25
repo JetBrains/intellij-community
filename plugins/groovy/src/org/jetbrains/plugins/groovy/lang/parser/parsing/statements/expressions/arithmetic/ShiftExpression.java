@@ -49,7 +49,8 @@ public class ShiftExpression implements GroovyElementTypes {
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(SHIFT_EXPRESSION);
         result = SHIFT_EXPRESSION;
-        if (RANGES.contains(builder.getTokenType())) {
+        if (RANGES.contains(builder.getTokenType()) ||
+                getCompositeSign(builder)) {
           subParse(builder, newMarker);
         } else {
           newMarker.drop();
@@ -99,7 +100,8 @@ public class ShiftExpression implements GroovyElementTypes {
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(SHIFT_EXPRESSION);
-    if (RANGES.contains(builder.getTokenType())) {
+    if (RANGES.contains(builder.getTokenType()) ||
+            getCompositeSign(builder)) {
       subParse(builder, newMarker);
     } else {
       newMarker.drop();
