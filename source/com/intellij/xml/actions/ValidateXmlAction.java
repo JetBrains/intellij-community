@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
  * @author mike
  */
 public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*/ {
+  private static final Key<String> runningValidationKey = Key.create("xml.running.validation.indicator");
+
   public ValidateXmlAction() {
   }
 
@@ -50,7 +53,13 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
         public void run(){
           final Runnable action = new Runnable() {
             public void run() {
-              getHandler(psiFile).invoke(project, null, psiFile);
+              try {
+                psiFile.putUserData(runningValidationKey, "");
+                getHandler(psiFile).invoke(project, null, psiFile);
+              }
+              finally {
+                psiFile.putUserData(runningValidationKey, null);
+              }
             }
           };
           ApplicationManager.getApplication().runWriteAction(action);
@@ -83,7 +92,7 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
           (containingFile.getFileType() == StdFileTypes.XML ||
            containingFile.getFileType() == StdFileTypes.XHTML
           )) {
-        value = true;
+        value = containingFile.getUserData(runningValidationKey) == null;
       } else {
         value = false;
       }
