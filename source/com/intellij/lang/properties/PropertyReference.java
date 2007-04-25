@@ -121,6 +121,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
         if (!file.isValid()) continue;
         PsiFile psiFile = psiManager.findFile(file);
         if (!(psiFile instanceof PropertiesFile)) continue;
+        if (psiFile.getProject() != psiManager.getProject()) continue; //multiple opened projects
         PropertiesFile propertiesFile = (PropertiesFile)psiFile;
         addVariantsFromFile(propertiesFile, variants);
       }

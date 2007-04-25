@@ -9,6 +9,7 @@ import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.properties.psi.Property;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -25,6 +26,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     super(key, element, bundleName, false);
   }
 
+  @NotNull
   protected String getKeyText() {
     String keyText = super.getKeyText();
     final String keyPrefix = getKeyPrefix();
