@@ -743,6 +743,7 @@ public class TypeConversionUtil {
       rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
       rightClass = leftClass;
     }
+    else if (!rightClass.hasTypeParameters()) return true;
 
     Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
     Iterator<PsiTypeParameter> ri = PsiUtil.typeParametersIterator(rightClass);

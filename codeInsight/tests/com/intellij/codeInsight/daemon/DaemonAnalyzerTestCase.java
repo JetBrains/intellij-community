@@ -34,10 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
@@ -159,6 +156,15 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return infos;
   }
 
+  protected Collection<HighlightInfo> highlightErrors() {
+    Collection<HighlightInfo> infos = doHighlighting();
+    Iterator<HighlightInfo> iterator = infos.iterator();
+    while (iterator.hasNext()) {
+      HighlightInfo info = iterator.next();
+      if (info.getSeverity() != HighlightSeverity.ERROR) iterator.remove();
+    }
+    return infos;
+  }
   protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();

@@ -103,7 +103,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     configureByFile(vFile, null);
   }
 
-  protected void configureByExistingFile(VirtualFile virtualFile) throws IOException {
+  protected void configureByExistingFile(VirtualFile virtualFile) {
     myFile = null;
     myEditor = null;
 
