@@ -320,6 +320,15 @@ public class CommittedChangesCache {
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
+    try {
+      if (cache.isEmpty()) {
+        return;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return;
+    }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshCacheSync(cache, postRunnable);
       return;
