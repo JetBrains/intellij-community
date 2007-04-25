@@ -45,32 +45,33 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   }
 
   public void fileCreated(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
     processEvent(e);
   }
 
-  public void beforeContentsChange(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
-    if (isUndoable(e)) return;
-
-    createNonUndoableAction(e);
-  }
-
   public void propertyChanged(VirtualFilePropertyEvent e) {
-    if (shouldNotProcess(e)) return;
     if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
-
     processEvent(e);
   }
 
   public void fileMoved(VirtualFileMoveEvent e) {
-    if (shouldNotProcess(e)) return;
     processEvent(e);
   }
 
-  public void beforeFileDeletion(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
+  private void processEvent(VirtualFileEvent e) {
+    if (isUndoable(e)) {
+      createUndoableAction();
+    }
+    else {
+      createNonUndoableAction(e);
+    }
+  }
 
+  public void beforeContentsChange(VirtualFileEvent e) {
+    if (isUndoable(e)) return;
+    createNonUndoableAction(e);
+  }
+
+  public void beforeFileDeletion(VirtualFileEvent e) {
     if (isUndoable(e)) {
       e.getFile().putUserData(DELETE_WAS_UNDOABLE, true);
     }
@@ -88,21 +89,8 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
     }
   }
 
-  private void processEvent(VirtualFileEvent e) {
-    if (isUndoable(e)) {
-      createUndoableAction();
-    }
-    else {
-      createNonUndoableAction(e);
-    }
-  }
-
-  private boolean shouldNotProcess(VirtualFileEvent e) {
-    return !LocalHistory.isUnderControl(myProject, e.getFile());
-  }
-
   private boolean isUndoable(VirtualFileEvent e) {
-    return myIsInsideCommand && !e.isFromRefresh();
+    return !e.isFromRefresh() && LocalHistory.isUnderControl(myProject, e.getFile());
   }
 
   private void createNonUndoableAction(VirtualFileEvent e) {
@@ -132,6 +120,7 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   }
 
   private void createUndoableAction() {
+    if (!myIsInsideCommand) return;
     myUndoManager.undoableActionPerformed(new MyUndoableAction());
   }
 
