@@ -16,6 +16,7 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 
 import javax.swing.*;
 import java.util.List;
@@ -32,6 +33,8 @@ public interface ContentManager {
   boolean removeContent(Content content);
 
   void setSelectedContent(Content content);
+  void setSelectedContent(Content content, boolean requestFocus);
+
   void addSelectedContent(Content content);
 
   @Nullable
@@ -82,4 +85,6 @@ public interface ContentManager {
   boolean isSelected(Content content);
 
   void requestFocus(@Nullable Content content);
+
+  void addDataProvider(DataProvider provider);
 }

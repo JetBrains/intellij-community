@@ -20,6 +20,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -37,7 +39,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private InternalDecorator myDecorator;
 
-  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, final JComponent component) {
+  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
     myChangeSupport = new PropertyChangeSupport(this);
     myId = id;
@@ -47,12 +49,15 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myContentUI = new ToolWindowContentUi(this);
     myContentManager =
       contentFactory.createContentManager(myContentUI, false, toolWindowManager.getProject());
-    final Content content = contentFactory.createContent(component, "", false);
-    myContentManager.addContent(content);
 
-    myContentManager.setSelectedContent(content);
+    if (component != null) {
+      final Content content = contentFactory.createContent(component, "", false);
+      myContentManager.addContent(content);
+      myContentManager.setSelectedContent(content);
+    }
 
-    myComponent = myContentUI.getComponent();
+
+    myComponent = myContentManager.getComponent();
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
@@ -227,5 +232,9 @@ public final class ToolWindowImpl implements ToolWindowEx {
       final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myDecorator.createPopupGroup());
       popupMenu.getComponent().show(comp, x, y);
     }
+  }
+
+  public ToolWindowManagerImpl getToolWindowManager() {
+    return myToolWindowManager;
   }
 }

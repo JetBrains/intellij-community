@@ -16,11 +16,15 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.ui.content.ContentManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface ToolWindow {
+
+  Key<Boolean> SHOW_CONTENT_ICON = new Key<Boolean>("ContentIcon");
+
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */

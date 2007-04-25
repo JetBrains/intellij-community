@@ -46,6 +46,7 @@ import com.intellij.ui.content.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;

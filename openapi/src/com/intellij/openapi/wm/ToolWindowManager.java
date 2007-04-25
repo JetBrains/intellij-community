@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -31,16 +32,18 @@ public abstract class ToolWindowManager {
    * Register specified tool window into IDE window system.
    * @param id <code>id</code> of tool window to be registered.
    * @param component <code>component</code> which represents tool window content.
+   * May be null. Content can be further added via content manager for this tool window (See {@link com.intellij.openapi.wm.ToolWindow#getContentManager()})
    * @param anchor the default anchor for first registration. It uses only first time the
    * tool window with the specified <code>id</code> is being registered into the window system.
    * After the first registration window's anchor is stored in project file
    * and <code>anchor</code> is ignored.
    * @exception java.lang.IllegalArgumentException if the same window is already installed or one
    * of the parameters is <code>null</code>.
+   * @return tool window
    */
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@Nullable JComponent component,@NotNull ToolWindowAnchor anchor);
 
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@Nullable JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
 
   /**
    * @exception java.lang.IllegalArgumentException if tool window with specified isn't

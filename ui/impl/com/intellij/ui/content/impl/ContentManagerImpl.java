@@ -2,6 +2,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -10,14 +11,18 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.awt.*;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -36,6 +41,7 @@ public class ContentManagerImpl implements ContentManager {
 
   private final ProjectManagerAdapter myProjectManagerListener;
   private boolean myListenerAdded;
+  private MyComponent myComponent = new MyComponent();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
@@ -66,7 +72,32 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public JComponent getComponent() {
-    return myUI.getComponent();
+    if (myComponent.getComponentCount() == 0) {
+      myComponent.setContent(myUI.getComponent());
+    }
+    return myComponent;
+  }
+
+  private class MyComponent extends Wrapper implements DataProvider {
+    private List<DataProvider> myProviders = new ArrayList<DataProvider>();
+
+    public MyComponent() {
+      setOpaque(false);
+      setFocusable(true);
+    }
+
+    public void addProvider(final DataProvider provider) {
+      myProviders.add(provider);
+    }
+
+    @Nullable
+    public Object getData(@NonNls final String dataId) {
+      for (DataProvider each : myProviders) {
+        final Object data = each.getData(dataId);
+        if (data != null) return data;
+      }
+      return null;
+    }
   }
 
   public void addContent(Content content) {
@@ -284,15 +315,36 @@ public class ContentManagerImpl implements ContentManager {
     return mySelection.size() > 0 ? mySelection.get(0) : null;
   }
 
-  public void setSelectedContent(Content content) {
+  public void setSelectedContent(final Content content, final boolean requestFocus) {
     if (isSelected(content)) return;
+
     final Content[] old = getSelectedContents();
+
+    boolean wasFocusable = requestFocus;
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+    if (c != null) {
+      for (Content each : old) {
+        if (SwingUtilities.isDescendingFrom(c, each.getComponent())) {
+          wasFocusable = true;
+          break;
+        }
+      }
+    }
+
+    if (wasFocusable) {
+      myComponent.requestFocusInternal();
+    }
+
     for (Content each : old) {
       removeSelectedContent(each);
     }
     mySelection.clear();
 
     addSelectedContent(content);
+  }
+
+  public void setSelectedContent(final Content content) {
+    setSelectedContent(content, false);
   }
 
   public void selectPreviousContent() {
@@ -365,5 +417,9 @@ public class ContentManagerImpl implements ContentManager {
 
     final JComponent toFocus = toSelect.getPreferredFocusableComponent();
     toFocus.requestFocus();
+  }
+
+  public void addDataProvider(final DataProvider provider) {
+    myComponent.addProvider(provider);
   }
 }

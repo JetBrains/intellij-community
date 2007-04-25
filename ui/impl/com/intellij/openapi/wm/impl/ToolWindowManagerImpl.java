@@ -26,6 +26,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -502,7 +503,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
-                                       @NotNull final JComponent component,
+                                       @Nullable final JComponent component,
                                        @NotNull final ToolWindowAnchor anchor) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
@@ -557,7 +558,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
-                                       @NotNull JComponent component,
+                                       @Nullable JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
                                        Disposable parentDisposable) {
     final ToolWindow window = registerToolWindow(id, component, anchor);

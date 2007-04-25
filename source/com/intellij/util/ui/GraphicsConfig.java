@@ -18,6 +18,10 @@ public class GraphicsConfig {
     return this;
   }
 
+  public Graphics2D getG() {
+    return myG;
+  }
+
   public void restore() {
     myG.setRenderingHints(myHints);
   }

@@ -37,7 +37,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -118,16 +117,12 @@ public class RunContentManagerImpl implements RunContentManager {
       return;
     }
 
-    final ContentManager contentManager = PeerFactory.getInstance().getContentFactory().createContentManager(new TabbedPaneContentUI(), true, myProject);
+    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, null,
+                                                                       ToolWindowAnchor.BOTTOM);
 
-    class MyDataProvider extends JPanel implements DataProvider {
+    final ContentManager contentManager = toolWindow.getContentManager();
+    class MyDataProvider implements DataProvider {
       private int myInsideGetData = 0;
-
-      MyDataProvider () {
-        super(new BorderLayout());
-        add(contentManager.getComponent());
-      }
-
       public Object getData(String dataId) {
         myInsideGetData ++;
         try {
@@ -142,8 +137,8 @@ public class RunContentManagerImpl implements RunContentManager {
         }
       }
     }
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, new MyDataProvider(),
-                                                                       ToolWindowAnchor.BOTTOM);
+    contentManager.addDataProvider(new MyDataProvider());
+
     toolWindow.setIcon(runner.getInfo().getToolWindowIcon());
     new ContentManagerWatcher(toolWindow, contentManager);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
@@ -256,6 +251,7 @@ public class RunContentManagerImpl implements RunContentManager {
     }
     else {
       content = createNewContent(contentManager, descriptor, runnerInfo.getToolWindowId());
+      content.setIcon(requestor.getInfo().getToolWindowIcon());
     }
 
     content.setComponent(descriptor.getComponent());
@@ -325,6 +321,7 @@ public class RunContentManagerImpl implements RunContentManager {
     final String processDisplayName = descriptor.getDisplayName();
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(descriptor.getComponent(), processDisplayName, true);
     content.putUserData(DESCRIPTOR_KEY, descriptor);
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     contentManager.addContent(content);
     new CloseListener(content, myProject, processDisplayName, toolWindowId);
     return content;

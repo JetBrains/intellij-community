@@ -62,11 +62,15 @@ public abstract class BaseButtonBehavior {
     }
 
     public void mousePressed(MouseEvent e) {
+      if (e.getButton() != MouseEvent.BUTTON1) return;
+
       setPressedByMouse(true);
       myComponent.repaint();
     }
 
     public void mouseReleased(MouseEvent e) {
+      if (e.getButton() != MouseEvent.BUTTON1) return;
+
       setPressedByMouse(false);
 
       Point point = e.getPoint();

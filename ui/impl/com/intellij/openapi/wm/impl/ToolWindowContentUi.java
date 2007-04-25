@@ -1,17 +1,21 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.content.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.content.*;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseAdapter;
+import java.awt.geom.GeneralPath;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -19,25 +23,53 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener {
-  private ContentManager myManager;
 
+  private ContentManager myManager;
 
   private ArrayList<ContentTab> myTabs = new ArrayList<ContentTab>();
   private Map<Content, ContentTab> myContent2Tabs = new HashMap<Content, ContentTab>();
 
-  private Wrapper myContent = new Wrapper();
+  private JPanel myContent = new JPanel(new BorderLayout());
   private ToolWindowImpl myWindow;
 
-  private JLabel myIdLabel = new BaseLabel();
+  private JLabel myIdLabel = new BaseLabel() {
+    protected void paintComponent(final Graphics g) {
+      final GraphicsConfig config = new GraphicsConfig(g);
+
+      config.setAntialiasing(true);
+
+      final GeneralPath shape = new GeneralPath();
+      shape.moveTo(0, 0);
+      shape.lineTo(getWidth() - 8, 0);
+      shape.lineTo(getWidth(), getHeight());
+      shape.lineTo(0, getHeight());
+      shape.closePath();
+
+
+      config.getG().setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), myWindow.isActive() ? TitlePanel.ACTIVE_SIDE_BUTTON_BG : TitlePanel.INACTIVE_SIDE_BUTTON_BG));
+      config.getG().fill(shape);
+
+      config.restore();
+
+      setForeground(myWindow.isActive() ? Color.black : Color.gray);
+
+      super.paintComponent(g);
+    }
+  };
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
     myContent.setOpaque(false);
+    myContent.setFocusable(true);
     setOpaque(false);
 
-    myIdLabel.setForeground(Color.white);
     myIdLabel.setOpaque(false);
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
+    myIdLabel.setFont(UIManager.getFont("Label.font"));    
+
+    addMouseListeners(this);
+
+    update();
   }
 
   public JComponent getComponent() {
@@ -73,8 +105,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
 
       public void selectionChanged(final ContentManagerEvent event) {
-        myContent.setContent(event.getContent().getComponent());
-        repaint();
+        myContent.removeAll();
+        myContent.add(event.getContent().getComponent(), BorderLayout.CENTER);
+
+        update();
+
+        myContent.revalidate();
+        myContent.repaint();
       }
     });
   }
@@ -88,6 +125,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     for (ContentTab each : myTabs) {
       add(each);
     }
+
+    update();
 
     revalidate();
     repaint();
@@ -124,17 +163,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void propertyChange(final PropertyChangeEvent evt) {
-    if (myTabs.size() == 1) {
-      final ContentTab tab = myTabs.get(0);
-      tab.setText("");
-      final String displayName = tab.myContent.getDisplayName();
-      myIdLabel.setText(myWindow.getId() + ((displayName == null || displayName.length() == 0) ? "" : " - " + displayName));
-    }
-    else {
-      myIdLabel.setText(myWindow.getId());
-      for (ContentTab each : myTabs) {
-        each.update();
-      }
+    update();
+  }
+
+  private void update() {
+    myIdLabel.setText(myWindow.getId());
+    for (ContentTab each : myTabs) {
+      each.update();
     }
 
     revalidate();
@@ -149,52 +184,56 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return false;
   }
 
+  private void addMouseListeners(final JComponent c) {
+    final Point[] myLastPoint = new Point[1];
+
+    c.addMouseMotionListener(new MouseMotionAdapter() {
+      public void mouseDragged(final MouseEvent e) {
+        // 1. myLast point can be null due to bugs in Swing.
+        // 2. do not allow drag enclosed window if ToolWindow isn't floating
+
+        if (myLastPoint[0] == null) return;
+
+        final Window window = SwingUtilities.windowForComponent(c);
+
+        if (window instanceof IdeFrame) return;
+
+        final Rectangle oldBounds = window.getBounds();
+        final Point newPoint = e.getPoint();
+        SwingUtilities.convertPointToScreen(newPoint, c);
+        final Point offset = new Point(newPoint.x - myLastPoint[0].x, newPoint.y - myLastPoint[0].y);
+        window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
+        myLastPoint[0] = newPoint;
+      }
+    });
+
+    c.addMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e) {
+        myLastPoint[0] = e.getPoint();
+        SwingUtilities.convertPointToScreen(myLastPoint[0], c);
+        if (!e.isPopupTrigger()) {
+          myWindow.fireActivated();
+        }
+      }
+    });
+
+    c.addMouseListener(new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        myWindow.invokePopup(comp, x, y);
+      }
+    });
+  }
+
   private class BaseLabel extends JLabel {
 
-    private Point myLastPoint;
-
     public BaseLabel() {
-      setBorder(new EmptyBorder(0, 0, 0, 4));
-
       setForeground(Color.white);
       setOpaque(false);
 
-      addMouseMotionListener(new MouseMotionAdapter() {
-        public void mouseDragged(final MouseEvent e) {
-          // 1. myLast point can be null due to bugs in Swing.
-          // 2. do not allow drag enclosed window if ToolWindow isn't floating
 
-          if (myLastPoint == null) return;
-
-          final Window window = SwingUtilities.windowForComponent(BaseLabel.this);
-
-          if (window instanceof IdeFrame) return;
-
-          final Rectangle oldBounds = window.getBounds();
-          final Point newPoint = e.getPoint();
-          SwingUtilities.convertPointToScreen(newPoint, BaseLabel.this);
-          final Point offset = new Point(newPoint.x - myLastPoint.x, newPoint.y - myLastPoint.y);
-          window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
-          myLastPoint = newPoint;
-        }
-      });
-
-      addMouseListener(new MouseAdapter() {
-        public void mousePressed(final MouseEvent e) {
-          myLastPoint = e.getPoint();
-          SwingUtilities.convertPointToScreen(myLastPoint, BaseLabel.this);
-          if (!e.isPopupTrigger()) {
-            myWindow.fireActivated();
-          }
-        }
-      });
-
-      addMouseListener(new PopupHandler() {
-        public void invokePopup(final Component comp, final int x, final int y) {
-          myWindow.invokePopup(comp, x, y);
-        }
-      });
+      addMouseListeners(this);
     }
+
 
     public void updateUI() {
       super.updateUI();
@@ -205,23 +244,57 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private class ContentTab extends BaseLabel {
 
     private Content myContent;
+    private BaseButtonBehavior myBehavior;
 
     public ContentTab(final Content content) {
       myContent = content;
+      setBorder(new EmptyBorder(0, 8, 0, 8));
       update();
+
+      myBehavior = new BaseButtonBehavior(this) {
+        protected void execute() {
+          myWindow.getContentManager().setSelectedContent(myContent, true);
+        }
+
+        public void setHovered(final boolean hovered) {
+          setCursor(hovered ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+        }
+      };
     }
+
 
     public void update() {
       setText(myContent.getDisplayName());
+      final Font font = UIManager.getFont("Label.font");
+      setFont(isSelected() ? font.deriveFont(Font.BOLD) : font);
+
+      final boolean show = Boolean.TRUE.equals(myContent.getUserData(ToolWindow.SHOW_CONTENT_ICON));
+      if (show) {
+        final Icon icon = myContent.getIcon();
+        setIcon(isSelected() ? icon : IconLoader.getDisabledIcon(icon));
+      } else {
+        setIcon(null);
+      }
     }
 
     protected void paintComponent(final Graphics g) {
-      if (myContent.isSelected() && myTabs.size() > 1) {
-        g.setColor(UIUtil.getListSelectionBackground());
-        g.fillRect(0, 0, getWidth(), getHeight());
+      if (myBehavior.isPressedByMouse() && !isSelected()) {
+        g.translate(1, 1);
+      }
+
+      if (myWindow.isActive()) {
+        setForeground(isSelected() ? Color.white : Color.lightGray);
+      } else {
+        setForeground(Color.white);        
       }
 
       super.paintComponent(g);
+
+      g.translate(-1, -1);
+    }
+
+    private boolean isSelected() {
+      return myWindow.getContentManager().isSelected(myContent);
     }
 
   }

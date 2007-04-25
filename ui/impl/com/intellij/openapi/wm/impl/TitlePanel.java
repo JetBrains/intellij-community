@@ -43,8 +43,8 @@ public final class TitlePanel extends JPanel {
   private final Icon mySeparatorActive = IconLoader.getIcon("/general/separator.png");
   private final Icon mySeparatorInactive = IconLoader.getIcon("/general/inactiveSeparator.png");
 
-  private final static Color ACTIVE_SIDE_BUTTON_BG = new Color(179, 197, 231);
-  private final static Color INACTIVE_SIDE_BUTTON_BG = new Color(200, 200, 200);
+  public final static Color ACTIVE_SIDE_BUTTON_BG = new Color(179, 197, 231);
+  public final static Color INACTIVE_SIDE_BUTTON_BG = new Color(200, 200, 200);
 
   TitlePanel() {
     super(new BorderLayout());
