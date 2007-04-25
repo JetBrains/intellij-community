@@ -62,7 +62,9 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder);
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
+      ParserUtils.getToken(builder, mNLS);
+    }
     if (kFINALLY.equals(builder.getTokenType())) {
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
