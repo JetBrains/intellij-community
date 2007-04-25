@@ -22,7 +22,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   public MoveStatementHandler(boolean down) {
     isDown = down;
     // order is important
-    myMovers = new Mover[]{new StatementMover(down), new DeclarationMover(down), new LineMover(down)};
+    myMovers = new Mover[]{new StatementMover(down), new DeclarationMover(down), new XmlMover(down), new LineMover(down)};
   }
 
   public void executeWriteAction(Editor editor, DataContext dataContext) {
