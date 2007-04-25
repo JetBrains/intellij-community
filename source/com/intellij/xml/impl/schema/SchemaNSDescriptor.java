@@ -25,12 +25,18 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   @NonNls private static final String MAX_OCCURS_ATTR_NAME = MAX_OCCURS_ATTR_VALUE;
   @NonNls private static final String ID_ATTR_NAME = "id";
   @NonNls private static final String REF_ATTR_NAME = "ref";
+  @NonNls private static final String DEFAULT_ATTR_NAME = "default";
+  @NonNls private static final String FIXED_ATTR_NAME = "fixed";
+
+  @NonNls private static final String NAME_ATTR_NAME = "name";
 
   private static final Validator ELEMENT_VALIDATOR = new Validator() {
     public void validate(PsiElement context, ValidationHost host) {
       final XmlTag tag = ((XmlTag)context);
+      if (!isFromSchemaNs(tag)) return;
+      final boolean hasRefAttribute = tag.getAttributeValue(REF_ATTR_NAME) != null;
 
-      if (tag.getAttributeValue(REF_ATTR_NAME) != null) {
+      if (hasRefAttribute) {
         for(XmlAttribute attr:tag.getAttributes()) {
           final String name = attr.getName();
 
@@ -67,12 +73,49 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
           // this schema will be reported by xerces validation
         }
       }
+
+      if (!hasRefAttribute && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
+        host.addMessage(
+          tag,
+          XmlBundle.message("xml.schema.validation.name.or.ref.should.present"),
+          Validator.ValidationHost.ERROR
+        );
+      }
+    }
+  };
+
+  private static final Validator ATTRIBUTE_VALIDATOR = new Validator() {
+    public void validate(PsiElement context, ValidationHost host) {
+      final XmlTag tag = ((XmlTag)context);
+      if (!isFromSchemaNs(tag)) return;
+
+      if (tag.getAttributeValue(REF_ATTR_NAME) == null && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
+        host.addMessage(
+          tag,
+          XmlBundle.message("xml.schema.validation.name.or.ref.should.present"),
+          Validator.ValidationHost.ERROR
+        );
+      }
+
+      if (tag.getAttributeValue(DEFAULT_ATTR_NAME) != null && tag.getAttributeValue(FIXED_ATTR_NAME) != null) {
+        host.addMessage(
+          tag.getAttribute(DEFAULT_ATTR_NAME, null),
+          XmlBundle.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
+          Validator.ValidationHost.ERROR
+        );
+
+        host.addMessage(
+          tag.getAttribute(FIXED_ATTR_NAME, null),
+          XmlBundle.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
+          Validator.ValidationHost.ERROR
+        );
+      }
     }
   };
 
   private static XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
     public String getName(final XmlTag t) {
-      return t.getAttributeValue("name");
+      return t.getAttributeValue(NAME_ATTR_NAME);
     }
 
     public String getNameKey(final XmlTag t, String name) {
@@ -81,13 +124,14 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
     @NotNull
     public PsiElement getNodeForMessage(final XmlTag t) {
-      return t.getAttribute("name", null).getValueElement();
+      return t.getAttribute(NAME_ATTR_NAME, null).getValueElement();
     }
   };
 
   private static final Validator ELEMENT_AND_ATTR_VALIDATOR = new Validator() {
     public void validate(PsiElement context, ValidationHost host) {
       final XmlTag tag = ((XmlTag)context);
+      if (!isFromSchemaNs(tag)) return;
       final String nsPrefix = tag.getNamespacePrefix();
       final XmlTag[] attrDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "attribute");
 
@@ -109,13 +153,19 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
+  private static boolean isFromSchemaNs(final XmlTag tag) {
+    return XmlUtil.XML_SCHEMA_URI.equals(tag.getNamespace());
+  }
+
   protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
     final XmlElementDescriptor descriptor = super.createElementDescriptor(tag);
-    String localName = tag.getAttributeValue("name");
+    String localName = tag.getAttributeValue(NAME_ATTR_NAME);
     if (ELEMENT_TAG_NAME.equals(localName)) {
       ((XmlElementDescriptorImpl)descriptor).setValidator(ELEMENT_VALIDATOR);
     } else if (COMPLEX_TYPE_TAG_NAME.equals(localName) || SCHEMA_TAG_NAME.equals(localName) || SEQUENCE_TAG_NAME.equals(localName)) {
       ((XmlElementDescriptorImpl)descriptor).setValidator(ELEMENT_AND_ATTR_VALIDATOR);
+    } else if (ATTRIBUTE_TAG_NAME.equals(localName)) {
+      ((XmlElementDescriptorImpl)descriptor).setValidator(ATTRIBUTE_VALIDATOR);
     }
     return descriptor;
   }
