@@ -477,22 +477,21 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         }
       }
 
-      if (ourNamespace != null && ourNamespace.length() > 0) {
-        XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-        if (nsDescriptor != null) {
-          processNamespace(
-            ourNamespace,
-            processor,
-            nsDescriptor,
-            tagNames
-          );
-        }
+
+      XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+      if (nsDescriptor != null) {
+        processNamespace(
+          ourNamespace,
+          processor,
+          nsDescriptor,
+          tagNames
+        );
       }
 
       return processor.myElements.toArray(new String[processor.myElements.size()]);
     }
 
-    private void processNamespace(final String namespace,
+    private static void processNamespace(final String namespace,
                                   final CompletionProcessor processor,
                                   final XmlNSDescriptor nsDescriptor,
                                   final String[] tagNames) {
