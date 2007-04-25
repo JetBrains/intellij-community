@@ -109,7 +109,7 @@ public class ReplaceDialog extends SearchDialog {
     final Runnable replaceRunnable = new Runnable() {
       public void run() {
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LocalHistoryAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
+        LocalHistoryAction lvcsAction = instance.startAction_New(getDefaultTitle(), null, false);
 
         doReplace(replaceContext);
         replaceContext.getUsageView().close();
@@ -127,7 +127,7 @@ public class ReplaceDialog extends SearchDialog {
         if (infos == null || infos.isEmpty()) return;
 
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LocalHistoryAction lvcsAction = instance.startAction(getDefaultTitle(), null, false);
+        LocalHistoryAction lvcsAction = instance.startAction_New(getDefaultTitle(), null, false);
 
         for (final Usage info : infos) {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
