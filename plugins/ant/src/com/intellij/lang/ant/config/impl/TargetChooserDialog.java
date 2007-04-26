@@ -17,7 +17,6 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
@@ -33,11 +32,11 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public class TargetChooserDialog extends DialogWrapper {
-  private Pair<AntBuildFile, String> mySelectedTarget;
+  private AntBuildTarget mySelectedTarget;
   private AntConfiguration myAntConfiguration;
 
   protected TargetChooserDialog(final Project project,
-                                final Pair<AntBuildFile, String> selectedTarger,
+                                final AntBuildTarget selectedTarger,
                                 final AntConfiguration antConfiguration) {
     super(project, false);
     mySelectedTarget = selectedTarger;
@@ -64,7 +63,7 @@ public class TargetChooserDialog extends DialogWrapper {
           final Object userObject = node.getUserObject();
           if (userObject instanceof AntTargetNodeDescriptor) {
             final AntTargetNodeDescriptor antBuildTarget = (AntTargetNodeDescriptor)userObject;
-            mySelectedTarget = new Pair<AntBuildFile, String>(antBuildTarget.getBuildFile(), antBuildTarget.getAntTarget().getName());
+            mySelectedTarget = antBuildTarget.getAntTarget();
           }
           else {
             mySelectedTarget = null;
@@ -114,11 +113,11 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private boolean isSelected(final AntTargetNodeDescriptor descriptor) {
-    return mySelectedTarget != null && Comparing.strEqual(mySelectedTarget.getSecond(), descriptor.getAntTarget().getName()) &&
-           mySelectedTarget.getFirst() == descriptor.getBuildFile();
+    return mySelectedTarget != null && Comparing.strEqual(mySelectedTarget.getName(), descriptor.getAntTarget().getName()) &&
+           mySelectedTarget.getModel().getBuildFile() == descriptor.getBuildFile();
   }
 
-  public Pair<AntBuildFile, String> getSelectedTarget() {
+  public AntBuildTarget getSelectedTarget() {
     return mySelectedTarget;
   }
 

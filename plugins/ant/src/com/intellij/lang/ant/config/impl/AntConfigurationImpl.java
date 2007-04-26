@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataAccessor;
@@ -25,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,7 +33,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
@@ -45,7 +40,6 @@ import com.intellij.util.config.ValueProperty;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -131,46 +125,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     catch (InvalidDataException e) {
       LOG.error(e);
     }
-  }
-  public void registerAntTargetBeforeRun(final RunManager runManager, final Project project) {
-    runManager.registerStepBeforeRun(ANT, new Function<RunConfiguration, String>() {
-      public String fun(final RunConfiguration runConfiguration) {
-        ExecuteBeforeRunEvent event = findExecuteBeforeRunEvent(runConfiguration);
-        Pair<AntBuildFile, String> selectedTarget = myEventToTargetMap.get(event);
-        final TargetChooserDialog dlg = new TargetChooserDialog(project, selectedTarget, AntConfigurationImpl.this);
-        dlg.show();
-        if (dlg.isOK()) {
-          selectedTarget = dlg.getSelectedTarget();
-          if (event == null) {
-            event = new ExecuteBeforeRunEvent(runConfiguration.getType(), runConfiguration.getName());
-          }
-          if (selectedTarget != null) {
-            myEventToTargetMap.put(event, selectedTarget);
-          }
-          else {
-            myEventToTargetMap.remove(event);
-          }
-        }
-        final String targetName = selectedTarget != null ? selectedTarget.getSecond() : null;
-        return getPresentableDescription(targetName);
-      }
-    }, new Function<RunConfiguration, String>() {
-      public String fun(final RunConfiguration runConfiguration) {
-        final ExecuteBeforeRunEvent event = findExecuteBeforeRunEvent(runConfiguration);
-        final AntBuildTarget buildTarget = getTargetForEvent(event);
-        return buildTarget != null ? getPresentableDescription(buildTarget.getName()) : "";
-      }
-    });
-  }
-
-  private static String getPresentableDescription(final String targetName) {
-    return targetName != null ? "\'" + targetName + "\'" : "";
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "AntConfiguration";
   }
 
   public AntBuildFile[] getBuildFiles() {
@@ -279,11 +233,22 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return null; // file was removed
     }
     final String targetName = (String)pair.second;
-    if (ExecuteCompositeTargetEvent.TYPE_ID.equals(event.getTypeId())) {
-      final ExecuteCompositeTargetEvent _event = (ExecuteCompositeTargetEvent)event;
-      return new MetaTarget(buildFile, _event.getPresentableName(), _event.getTargetNames());
+
+    final AntBuildTarget antBuildTarget = buildFile.getModel().findTarget(targetName);
+    if (antBuildTarget != null) {
+      return antBuildTarget;
     }
-    return buildFile.getModel().findTarget(targetName);
+    final List<ExecutionEvent> events = getEventsByClass(ExecuteCompositeTargetEvent.class);
+    if (events.size() == 0) {
+      return null;
+    }
+    for (ExecutionEvent ev : events) {
+      final String presentableName = ev.getPresentableName();
+      if (Comparing.strEqual(targetName, presentableName)) {
+        return new MetaTarget(buildFile, presentableName, ((ExecuteCompositeTargetEvent)ev).getTargetNames());
+      }
+    }
+    return null;
   }
 
   public void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event) {
@@ -638,7 +603,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Nullable
-  private ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
+  ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
     final ConfigurationType type = configuration.getType();
     for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
       final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;

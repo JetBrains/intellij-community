@@ -128,12 +128,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void createStepsBeforeRun(final RunnerAndConfigurationSettingsImpl template, final RunConfiguration configuration) {
-    AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-    if (antConfiguration != null) {
-      final RunConfiguration templateConfiguration = template.getConfiguration();
-      final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(templateConfiguration.getType(), templateConfiguration.getName());
-      if (antBuildTarget != null){
-        antConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), templateConfiguration.getType(), configuration.getName());
+    final RunConfiguration templateConfiguration = template.getConfiguration();
+    final Boolean antTargetSet = getStepsBeforeLaunch(templateConfiguration).get(AntConfiguration.ANT);
+    if (antTargetSet != null && antTargetSet.booleanValue()) {
+      AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+      if (antConfiguration != null) {
+        final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(templateConfiguration.getType(), templateConfiguration.getName());
+        if (antBuildTarget != null){
+          antConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), templateConfiguration.getType(), configuration.getName());
+        }
       }
     }
   }
