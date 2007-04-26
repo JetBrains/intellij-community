@@ -15,6 +15,7 @@ import java.util.Set;
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
   private boolean myThrowExceptionOnOverflow;
+  private Project myProject;
 
   private Object myValue;
   
@@ -22,9 +23,10 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
-  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow, final Project project) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
+    myProject = project;
   }
 
   public void visitLiteralExpression(PsiLiteralExpression expression) {
@@ -32,13 +34,14 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitBinaryExpression(PsiBinaryExpression expression) {
-    Object rOperandValue = accept(expression.getROperand()); //right operand size tends to me smaller
-    if (rOperandValue == null) {
+    Object lOperandValue = accept(expression.getLOperand());
+    if (lOperandValue == null) {
       myValue = null;
       return;
     }
-    Object lOperandValue = accept(expression.getLOperand());
-    if (lOperandValue == null) {
+
+    Object rOperandValue = accept(expression.getROperand());
+    if (rOperandValue == null) {
       myValue = null;
       return;
     }
@@ -353,25 +356,23 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Object accept(PsiElement element) {
     if (element == null) return null;
 
-    Project project = element.getProject();
     final Key<CachedValue<Map<PsiElement, Object>>> key = myThrowExceptionOnOverflow ?
                                                           CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY :
                                                           CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
-    return calculateWithCaching(project, key, element);
+    return calculateWithCaching(key, element);
   }
 
-  private Object calculateWithCaching(final Project project,
-                                      final Key<CachedValue<Map<PsiElement, Object>>> key,
+  private Object calculateWithCaching(final Key<CachedValue<Map<PsiElement, Object>>> key,
                                       final PsiElement element) {
-    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(key);
+    CachedValue<Map<PsiElement,Object>> cachedValue = myProject.getUserData(key);
     if (cachedValue == null) {
-      cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
+      cachedValue = PsiManager.getInstance(myProject).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
         public Result<Map<PsiElement,Object>> compute() {
           Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
           return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }, false);
-      project.putUserData(key, cachedValue);
+      myProject.putUserData(key, cachedValue);
     }
     Map<PsiElement, Object> map = cachedValue.getValue();
     Object value = map.get(element);
@@ -575,7 +576,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public static Object computeConstantExpression(PsiExpression expression, Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
-    ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow);
+    ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject());
     return _compute(evaluator, expression);
   }
 
