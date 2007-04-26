@@ -79,14 +79,13 @@ public class TreeState implements JDOMExternalizable {
   private final List<List<PathElement>> myExpandedPaths;
   private final List<List<PathElement>> mySelectedPaths;
 
-  private TreeState(List<List<PathElement>> paths, final List<List<PathElement>> selectedPaths) {
-    myExpandedPaths = paths;
+  private TreeState(List<List<PathElement>> expandedPaths, final List<List<PathElement>> selectedPaths) {
+    myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
   }
 
   public TreeState() {
-    myExpandedPaths = new ArrayList<List<PathElement>>();
-    mySelectedPaths = new ArrayList<List<PathElement>>();
+    this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -201,13 +200,23 @@ public class TreeState implements JDOMExternalizable {
   private static String getDescriptorKey(final NodeDescriptor nodeDescriptor) {
     if (nodeDescriptor instanceof AbstractTreeNode) {
       Object value;
-      if (nodeDescriptor instanceof NodeDescriptorProvidingKey) value = ((NodeDescriptorProvidingKey)nodeDescriptor).getKey();
-      else value = ((AbstractTreeNode)nodeDescriptor).getValue();
-
-      if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
-        // for PsiElements only since they define toString() correctly
-        return value.toString();
+      if (nodeDescriptor instanceof NodeDescriptorProvidingKey) {
+        value = ((NodeDescriptorProvidingKey)nodeDescriptor).getKey();
       }
+      else {
+        value = ((AbstractTreeNode)nodeDescriptor).getValue();
+      }
+
+      if (value instanceof PsiElement) {
+        // for PsiElements only since they define toString() correctly
+        try {
+          return value.toString();
+        }
+        catch (Exception e) {
+          //ignore for invalid psi element
+        }
+      }
+      if (value != null) return value.toString();
     }
     return nodeDescriptor.toString();
   }
@@ -224,7 +233,7 @@ public class TreeState implements JDOMExternalizable {
     if (!(root instanceof DefaultMutableTreeNode)) {
       return;
     }
-    final DefaultMutableTreeNode nodeRoot = ((DefaultMutableTreeNode)root);
+    final DefaultMutableTreeNode nodeRoot = (DefaultMutableTreeNode)root;
     final TreeNode[] nodePath = nodeRoot.getPath();
     if (nodePath.length > 0) {
       for (final List<PathElement> path : myExpandedPaths) {

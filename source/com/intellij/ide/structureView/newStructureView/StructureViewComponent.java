@@ -88,10 +88,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
       public void rebuildTree() {
-        if (isDisposed()) return;
-        storeState();
-        super.rebuildTree();
-        restoreState();
+        if (!isDisposed()) {
+          super.rebuildTree();
+        }
       }
 
       protected TreeElementWrapper createTree() {
@@ -185,7 +184,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         final Object userObject = ((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject();
         if (userObject instanceof AbstractTreeNode) {
           Object value = ((AbstractTreeNode)userObject).getValue();
-          if (value instanceof TreeElement) {
+          if (value instanceof StructureViewTreeElement) {
             value = ((StructureViewTreeElement)value).getValue();
           }
           result.add(value);
@@ -244,7 +243,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void storeState() {
     myStructureViewState = getState();
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, getState());
+    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
   }
 
   public StructureViewState getState() {
@@ -325,10 +324,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       for (Object element : expandedPsiElements) {
         if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
           continue;
-        }
-        expandPathToElement(element);
       }
+        expandPathToElement(element);
     }
+  }
   }
 
   protected ActionGroup createActionGroup() {
@@ -438,7 +437,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private static boolean addToPath(AbstractTreeNode<?> rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
     Object value = rootElement.getValue();
-    if (value instanceof TreeElement) {
+    if (value instanceof StructureViewTreeElement) {
       value = ((StructureViewTreeElement) value).getValue();
     }
     if (!processedElements.add(value)){
@@ -718,7 +717,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     @NotNull
     public Object getKey() {
-      Object value = ((StructureViewTreeElement)getValue()).getValue();
+      StructureViewTreeElement element = (StructureViewTreeElement)getValue();
+      if (element instanceof NodeDescriptorProvidingKey) return ((NodeDescriptorProvidingKey)element).getKey();
+      Object value = element.getValue();
       return value == null ? this : value;
     }
 

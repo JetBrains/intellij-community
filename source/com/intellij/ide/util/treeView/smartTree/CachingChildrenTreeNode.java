@@ -190,6 +190,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
           }
         }
       }
+
+      myOldChildren = null;
     }
   }
 

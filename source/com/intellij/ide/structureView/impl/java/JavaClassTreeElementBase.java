@@ -6,8 +6,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtil;
 
-public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements
-                                                                          AccessLevelProvider {
+public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider {
   protected final boolean myIsInherited;
 
   protected JavaClassTreeElementBase(boolean isInherited, PsiElement element) {
@@ -21,12 +20,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   public boolean isPublic() {
     Value element = getElement();
-    if (element instanceof PsiModifierListOwner) {
-      return ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PUBLIC);
-    }
-    else {
-      return true;
-    }
+    return !(element instanceof PsiModifierListOwner) || ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   public int getAccessLevel() {
@@ -35,5 +29,18 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   public int getSubLevel() {
     return 0;
+  }
+
+  public boolean equals(final Object o) {
+    if (!super.equals(o)) return false;
+    final JavaClassTreeElementBase that = (JavaClassTreeElementBase)o;
+
+    if (myIsInherited != that.myIsInherited) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return super.hashCode();
   }
 }

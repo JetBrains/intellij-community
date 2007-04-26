@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
 
-abstract public class AbstractXmlTagTreeElement<T extends XmlElement> extends PsiTreeElementBase<T> {
+public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends PsiTreeElementBase<T> {
   protected AbstractXmlTagTreeElement(final PsiElement psiElement) {
     super(psiElement);
   }

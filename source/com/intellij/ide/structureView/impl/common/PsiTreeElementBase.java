@@ -34,6 +34,7 @@ package com.intellij.ide.structureView.impl.common;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -43,6 +44,7 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -50,7 +52,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation {
+public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation,
+                                                                               NodeDescriptorProvidingKey {
   private final PsiElement myValue;
 
   protected PsiTreeElementBase(PsiElement psiElement) {
@@ -61,7 +64,19 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     return this;
   }
 
-  public @Nullable final Value getElement() {
+  @NotNull
+  public Object getKey() {
+    try {
+      return myValue.toString();
+    }
+    catch (Exception e) {
+      // illegal psi element access
+      return myValue.getClass();
+    }
+  }
+
+  @Nullable
+  public final Value getElement() {
     return (Value)(myValue.isValid() ? myValue : null);
   }
 
@@ -87,7 +102,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
 
   public String toString() {
     final Value element = getElement();
-    return (element != null) ? element.toString() : "";
+    return element != null ? element.toString() : "";
   }
 
   public TextAttributesKey getTextAttributesKey() {
@@ -96,9 +111,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
 
   private boolean isDeprecated(){
     final Value element = getElement();
-    if (element == null) return false;
-    if (!(element instanceof PsiDocCommentOwner)) return false;
-    return ((PsiDocCommentOwner)element).isDeprecated();
+    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
 
   }
 
@@ -128,13 +141,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
 
   public boolean canNavigate() {
     final Value element = getElement();
-    if (element == null) return false;
-    if (element instanceof Navigatable) {
-      return ((Navigatable)element).canNavigate();
-    }
-    else {
-      return false;
-    }
+    return element instanceof Navigatable && ((Navigatable)element).canNavigate();
   }
 
   public boolean canNavigateToSource() {
@@ -142,4 +149,19 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public abstract Collection<StructureViewTreeElement> getChildrenBase();
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final PsiTreeElementBase that = (PsiTreeElementBase)o;
+
+    Value value = getValue();
+    return value == null ? that.getValue() == null : value.equals(that.getValue());
+  }
+
+  public int hashCode() {
+    Value value = getValue();
+    return value == null ? 0 : value.hashCode();
+  }
 }
