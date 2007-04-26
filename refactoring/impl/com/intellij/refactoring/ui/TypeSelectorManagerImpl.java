@@ -1,12 +1,16 @@
 package com.intellij.refactoring.ui;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypeUtil;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,7 +38,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     myOccurrenceClassProvider = createOccurrenceClassProvider();
     myTypesForMain = getTypesForMain();
-    myTypesForAll = getTypesForAll();
+    myTypesForAll = getTypesForAll(true);
 
     myIsOneSuggestion =
         myTypesForMain.length == 1 && myTypesForAll.length == 1 &&
@@ -48,13 +52,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
+    this(project, type, occurrences, true);
+  }
+
+  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
     myFactory = PsiManager.getInstance(project).getElementFactory();
     myDefaultType = type;
     myMainOccurence = null;
     myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
     myOccurrenceClassProvider = createOccurrenceClassProvider();
-    myTypesForAll = getTypesForAll();
+    myTypesForAll = getTypesForAll(areTypesDirected);
     myTypesForMain = PsiType.EMPTY_ARRAY;
     myIsOneSuggestion = myTypesForAll.length == 1;
 
@@ -112,7 +120,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result.toArray(new PsiType[result.size()]);
   }
 
-  private PsiType[] getTypesForAll() {
+  private PsiType[] getTypesForAll(final boolean areTypesDirected) {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
     for (PsiExpression occurrence : myOccurrences) {
 
@@ -145,6 +153,9 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     });
 
     final ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
+    if (!areTypesDirected) {
+      Collections.reverse(result);
+    }
     return result.toArray(new PsiType[result.size()]);
   }
 

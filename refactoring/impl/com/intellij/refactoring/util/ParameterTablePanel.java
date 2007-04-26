@@ -58,6 +58,10 @@ public abstract class ParameterTablePanel extends JPanel {
 
   protected abstract void doCancelAction();
 
+  protected boolean areTypesDirected() {
+    return true;
+  }
+
   public ParameterTablePanel(Project project, VariableData[] variableData, final PsiElement... scopeElements) {
     super(new BorderLayout());
     myProject = project;
@@ -83,9 +87,10 @@ public abstract class ParameterTablePanel extends JPanel {
 
     myParameterTypeSelectors = new TypeSelector[myVariableData.length];
     for (int i = 0; i < myParameterTypeSelectors.length; i++) {
-      PsiExpression[] occurrences = findVariableOccurrences(scopeElements, myVariableData[i].variable);
-      TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences);
+      final PsiExpression[] occurrences = findVariableOccurrences(scopeElements, myVariableData[i].variable);
+      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences, areTypesDirected());
       myParameterTypeSelectors[i] = manager.getTypeSelector();
+      myVariableData[i].type = myParameterTypeSelectors[i].getSelectedType(); //reverse order
     }
 
     final JComboBox combo = new JComboBox(myVariableData); //used for rendering types with multiple choices

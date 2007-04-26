@@ -110,30 +110,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
   }
 
-  public static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    LOG.assertTrue(body != null);
-    final PsiStatement[] statements = body.getStatements();
-    final DuplicatesFinder duplicatesFinder;
-    final PsiElement[] pattern;
-    if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
-      pattern = statements;
-    } else {
-      final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
-      if (returnValue != null) {
-        pattern = new PsiElement[]{returnValue};
-      }
-      else {
-        pattern = statements;
-      }
-    }
-    duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()),
-                                            new ArrayList<PsiVariable>());
-
-    final List<Match> duplicates = duplicatesFinder.findDuplicates(file);
-    if (duplicates.isEmpty()) {
-      return false;
-    }
+  private static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
+    final List<Match> duplicates = hasDuplicates(file, method);
+    if (duplicates.isEmpty()) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
@@ -164,6 +143,29 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     return true;
   }
 
+  public static List<Match> hasDuplicates(final PsiFile file, final PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null);
+    final PsiStatement[] statements = body.getStatements();
+    final DuplicatesFinder duplicatesFinder;
+    final PsiElement[] pattern;
+    if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
+      pattern = statements;
+    } else {
+      final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+      if (returnValue != null) {
+        pattern = new PsiElement[]{returnValue};
+      }
+      else {
+        pattern = statements;
+      }
+    }
+    duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()),
+                                            new ArrayList<PsiVariable>());
+
+    return duplicatesFinder.findDuplicates(file);
+  }
+
   static String getStatusMessage(final int duplicatesNo) {
     return RefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
@@ -186,6 +188,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     public void processMatch(Match match) throws IncorrectOperationException {
+      match.changeSignature(myMethod);
       final PsiClass containingClass = myMethod.getContainingClass();
       if (isEssentialStaticContextAbsent(match)) {
         myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
@@ -238,22 +241,23 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     @NotNull
     public String getConfirmDuplicatePrompt(final Match match) {
       final PsiElement matchStart = match.getMatchStart();
+      final String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
+      final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
+      final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
+      if (signature != null) {
+        return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
+      }
       final boolean needToEscalateVisibility = !PsiUtil.isAccessible(myMethod, matchStart, null);
       if (needToEscalateVisibility) {
-        try {
-          final String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
-          @NonNls final String visibilityPresentation = visibility == PsiModifier.PACKAGE_LOCAL ? "package local" : visibility;
-          if (isEssentialStaticContextAbsent(match)) {
-            return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation);
-          } else {
-            return RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
-          }
+        @NonNls final String visibilityPresentation = visibility == PsiModifier.PACKAGE_LOCAL ? "package local" : visibility;
+        if (shouldBeStatic) {
+          return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation);
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        else {
+          return RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
         }
       }
-      if (isEssentialStaticContextAbsent(match)) {
+      if (shouldBeStatic) {
         return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
       }
       return RefactoringBundle.message("replace.this.code.fragment");

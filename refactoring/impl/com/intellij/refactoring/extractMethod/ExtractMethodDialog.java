@@ -122,6 +122,10 @@ class ExtractMethodDialog extends DialogWrapper {
     init();
   }
 
+  protected boolean areTypesDirected() {
+    return true;
+  }
+
   public boolean isMakeStatic() {
     if (myStaticFlag) return true;
     if (!myCanBeStatic) return false;
@@ -256,6 +260,10 @@ class ExtractMethodDialog extends DialogWrapper {
 
       protected void doCancelAction() {
         ExtractMethodDialog.this.doCancelAction();
+      }
+
+      protected boolean areTypesDirected() {
+        return ExtractMethodDialog.this.areTypesDirected();
       }
     };
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));

@@ -43,7 +43,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       if (file != null && editor != null) {
         final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
         if (processor != null) {
-          invokeOnElements(project, editor, processor);
+          invokeOnElements(project, editor, processor, true);
         }
       }
     }
@@ -70,12 +70,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
     final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
     if (processor != null) {
-      invokeOnElements(project, editor, processor);
+      invokeOnElements(project, editor, processor, true);
     }
   }
 
-  private static void invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor) {
-    if (processor.showDialog()) {
+  private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
+    if (processor.showDialog(directTypes)) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
@@ -95,7 +96,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
           });
         }
       }, REFACTORING_NAME, null);
+      return true;
     }
+    return false;
   }
 
   @Nullable
@@ -113,8 +116,6 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       return null;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return null;
-
     for (PsiElement element : elements) {
       if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         if (showErrorMessages) {
@@ -128,13 +129,15 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
     final ExtractMethodProcessor processor =
       new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
-
+    processor.setShowErrorDialogs(showErrorMessages);
     try {
       if (!processor.prepare()) return null;
     }
     catch (PrepareFailedException e) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
-      highlightPrepareError(e, file, editor, project);
+      if (showErrorMessages) {
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
+        highlightPrepareError(e, file, editor, project);
+      }
       return null;
     }
     return processor;
@@ -161,8 +164,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     return getProcessor(elements, project, file, openEditor(project, file), showErrorMessage);
   }
 
-  public static void invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file) {
-    invokeOnElements(project, openEditor(project, file), processor);
+  public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
+    return invokeOnElements(project, openEditor(project, file), processor, directTypes);
   }
 
   @Nullable

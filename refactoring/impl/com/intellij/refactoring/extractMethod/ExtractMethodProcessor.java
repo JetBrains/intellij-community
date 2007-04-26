@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,6 +31,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -89,6 +91,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean myShowErrorDialogs = true;
   private boolean myCanBeStatic;
+  private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
   private String myMethodVisibility = PsiModifier.PRIVATE;
   private boolean myGenerateConditionalExit;
@@ -345,14 +348,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCanBeStatic = false;
     }
 
-    final DuplicatesFinder duplicatesFinder;
     if (myExpression != null) {
-      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
-      myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
+      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
-      myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
+      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
 
     return true;
@@ -398,10 +400,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     return false;
   }
 
-  public boolean showDialog() {
+  public boolean showDialog(final boolean direct) {
     ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
                                                          myThrownExceptions, myStatic, myCanBeStatic, myInitialMethodName,
-                                                         myRefactoringName, myHelpId, myElements);
+                                                         myRefactoringName, myHelpId, myElements) {
+      protected boolean areTypesDirected() {
+        return direct;
+      }
+    };
     dialog.show();
     if (!dialog.isOK()) return false;
     myMethodName = dialog.getChoosenMethodName();
@@ -410,6 +416,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodVisibility = dialog.getVisibility();
 
     return true;
+  }
+
+  public boolean showDialog() {
+    return showDialog(true);
   }
 
   public void testRun() throws IncorrectOperationException {
@@ -692,6 +702,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void processMatch(Match match) throws IncorrectOperationException {
+    match.changeSignature(myExtractedMethod);
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
@@ -1020,22 +1031,28 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myExtractedMethod;
   }
 
-  public PsiType getReturnType() {
-    return myReturnType;
-  }
-
-  public boolean canBeStatic() {
-    return myCanBeStatic;
-  }
-
   public boolean hasDuplicates() {
     final List<Match> duplicates = getDuplicates();
     return duplicates != null && !duplicates.isEmpty();
   }
 
+  public boolean hasDuplicates(Set<VirtualFile> files) {
+    if (hasDuplicates()) return true;
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (VirtualFile file : files) {
+      if (!myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+    }
+    return false;
+  }
+
   @NotNull
   public String getConfirmDuplicatePrompt(Match match) {
-    if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass()) && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
+    final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());
+    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
+    if (changedSignature != null) {
+      return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
+    }
+    if (needToBeStatic && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return RefactoringBundle.message("replace.this.code.fragment");

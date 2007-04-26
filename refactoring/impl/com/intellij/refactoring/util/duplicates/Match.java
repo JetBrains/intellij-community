@@ -2,13 +2,19 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -25,6 +31,7 @@ public final class Match {
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<PsiElement, PsiElement>();
   private ReturnValue myReturnValue = null;
   private Ref<PsiExpression> myInstanceExpression = null;
+  private final Map<PsiVariable, PsiType> myChangedParams = new HashMap<PsiVariable, PsiType>();
 
   Match(PsiExpression expression) {
     myMatchStart = expression;
@@ -70,23 +77,27 @@ public final class Match {
   }
 
 
-  boolean putParameter(PsiVariable parameter, PsiElement value) {
-    final PsiElement currentValue = myParameterValues.get(parameter);
+  boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
+    final PsiVariable psiVariable = parameter.first;
+    final PsiElement currentValue = myParameterValues.get(psiVariable);
     if (currentValue == null) {
       if (!(value instanceof PsiExpression)) return false;
       final PsiType type = ((PsiExpression)value).getType();
-      final PsiType parameterType = parameter.getType();
+      final PsiType parameterType = parameter.second;
       if (type == null || !parameterType.isAssignableFrom(type)) return false;
-      myParameterValues.put(parameter, value);
+      myParameterValues.put(psiVariable, value);
       final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-      myParameterOccurences.put(parameter, elements);
+      myParameterOccurences.put(psiVariable, elements);
+      if (!psiVariable.getType().isAssignableFrom(type)) {
+        myChangedParams.put(psiVariable, parameterType);
+      }
       return true;
     }
     else {
       if (!PsiEquivalenceUtil.areElementsEquivalent(currentValue, value)) {
         return false;
       }
-      myParameterOccurences.get(parameter).add(value);
+      myParameterOccurences.get(psiVariable).add(value);
       return true;
     }
   }
@@ -207,5 +218,87 @@ public final class Match {
       new TextRange(getMatchStart().getTextRange().getStartOffset(),
                     getMatchEnd().getTextRange().getEndOffset());
     return textRange;
+  }
+
+  @Nullable
+  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
+    if (!myChangedParams.isEmpty()) {
+      @NonNls StringBuffer buffer = new StringBuffer();
+      buffer.append(visibilityString);
+      if (buffer.length() > 0) {
+        buffer.append(" ");
+      }
+      if (shouldBeStatic) {
+        buffer.append("static ");
+      }
+      final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+      if (typeParameterList != null) {
+        buffer.append(typeParameterList.getText());
+        buffer.append(" ");
+      }
+
+      buffer.append(PsiFormatUtil.formatType(method.getReturnType(), 0, PsiSubstitutor.EMPTY));
+      buffer.append(" ");
+      buffer.append(method.getName());
+      buffer.append("(");
+      int count = 0;
+      final String INDENT = "    ";
+      final ArrayList<ParameterInfo> params = patchParams(method);
+      for (ParameterInfo param : params) {
+        String typeText = param.getTypeText();
+        if (count > 0) {
+          buffer.append(",");
+        }
+        buffer.append("\n");
+        buffer.append(INDENT);
+        buffer.append(typeText);
+        buffer.append(" ");
+        buffer.append(param.getName());
+        count++;
+      }
+
+      if (count > 0) {
+        buffer.append("\n");
+      }
+      buffer.append(")");
+      final PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
+      if (exceptions.length > 0) {
+        buffer.append("\n");
+        buffer.append("throws\n");
+        for (PsiType exception : exceptions) {
+          buffer.append(INDENT);
+          buffer.append(PsiFormatUtil.formatType(exception, 0, PsiSubstitutor.EMPTY));
+          buffer.append("\n");
+        }
+      }
+      return buffer.toString();
+    }
+    return null;
+  }
+
+  public void changeSignature(final PsiMethod psiMethod) {
+    final ArrayList<ParameterInfo> newParameters = patchParams(psiMethod);
+    final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
+                                                                      psiMethod.getReturnType(),
+                                                                      newParameters.toArray(new ParameterInfo[newParameters.size()]));
+
+    csp.run();
+  }
+
+  private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
+    final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
+    final PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
+    for (int i = 0; i < oldParameters.length; i++) {
+      final PsiParameter oldParameter = oldParameters[i];
+      PsiType type = oldParameter.getType();
+      for (PsiVariable variable : myChangedParams.keySet()) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(variable, oldParameter)) {
+          type = myChangedParams.get(variable);
+          break;
+        }
+      }
+      newParameters.add(new ParameterInfo(i, oldParameter.getName(), type));
+    }
+    return newParameters;
   }
 }

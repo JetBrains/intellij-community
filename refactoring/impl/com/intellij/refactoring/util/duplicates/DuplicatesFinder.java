@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -22,7 +23,7 @@ import java.util.*;
  */
 public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
-  private static final Key<PsiVariable> PARAMETER = Key.create("PARAMETER");
+  private static final Key<Pair<PsiVariable, PsiType>> PARAMETER = Key.create("PARAMETER");
   private final PsiElement[] myPattern;
   private List<? extends PsiVariable> myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
@@ -111,11 +112,24 @@ public class DuplicatesFinder {
       patternComponent.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           final PsiElement element = reference.resolve();
-          if (myParameters.contains(element)) {
-            reference.putUserData(PARAMETER, (PsiVariable)element);
+          if (element instanceof PsiVariable && myParameters.contains(element)) {
+            final PsiVariable variable = (PsiVariable)element;
+            PsiType type = variable.getType();
+            final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(reference, PsiMethodCallExpression.class);
+            if (methodCallExpression != null) {
+              final int idx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), reference);
+              if (idx > -1) {
+                final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+                if (psiMethod != null) {
+                  type = psiMethod.getParameterList().getParameters()[idx].getType();
+                }
+              }
+            }
+            reference.putUserData(PARAMETER, Pair.create(variable, type));
           }
-          if (myOutputParameters.contains(element)) {
-            reference.putUserData(PARAMETER, (PsiVariable)element);
+          if (element instanceof PsiVariable && myOutputParameters.contains(element)) {
+            final PsiVariable psiVariable = (PsiVariable)element;
+            reference.putUserData(PARAMETER, Pair.create(psiVariable, psiVariable.getType()));
           }
           PsiElement qualifier = reference.getQualifier();
           if (qualifier != null) {
@@ -201,7 +215,7 @@ public class DuplicatesFinder {
                                Match match) {
     if (pattern == null || candidate == null) return pattern == candidate;
     if (pattern.getUserData(PARAMETER) != null) {
-      final PsiVariable parameter = pattern.getUserData(PARAMETER);
+      final Pair<PsiVariable, PsiType> parameter = pattern.getUserData(PARAMETER);
       return match.putParameter(parameter, candidate);
     }
 
