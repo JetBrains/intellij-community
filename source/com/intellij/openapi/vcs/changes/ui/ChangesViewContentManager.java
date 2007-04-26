@@ -81,7 +81,9 @@ public class ChangesViewContentManager implements ProjectComponent {
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
-        myContentManager.addContent(PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false));
+        final Content content = PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false);
+        content.setCloseable(false);
+        myContentManager.addContent(content);
       }
     }
   }
