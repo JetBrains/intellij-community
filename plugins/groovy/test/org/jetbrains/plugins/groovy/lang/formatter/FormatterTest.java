@@ -34,42 +34,32 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  *
  * @author Ilya.Sergey
  */
-public class FormatterTest extends SimpleGroovyFileSetTestCase
-{
+public class FormatterTest extends SimpleGroovyFileSetTestCase {
   @NonNls
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/formatter/parser/data/";
 
-  public FormatterTest()
-  {
+  public FormatterTest() {
     super(System.getProperty("path") != null ?
             System.getProperty("path") :
             DATA_PATH
     );
   }
 
-  protected void performFormatting(final Project project, final PsiFile file) throws IncorrectOperationException
-  {
+  protected void performFormatting(final Project project, final PsiFile file) throws IncorrectOperationException {
     TextRange myTextRange = file.getTextRange();
     CodeStyleManager.getInstance(project).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
   }
 
-  public String transform(String testName, String[] data) throws Exception
-  {
+  public String transform(String testName, String[] data) throws Exception {
     String fileText = data[0];
     final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable()
-    {
-      public void run()
-      {
-        ApplicationManager.getApplication().runWriteAction(new Runnable()
-        {
-          public void run()
-          {
-            try
-            {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            try {
               performFormatting(project, psiFile);
-            } catch (IncorrectOperationException e)
-            {
+            } catch (IncorrectOperationException e) {
               e.printStackTrace();
             }
           }
@@ -84,8 +74,7 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase
   }
 
 
-  public static Test suite()
-  {
+  public static Test suite() {
     return new FormatterTest();
   }
 
