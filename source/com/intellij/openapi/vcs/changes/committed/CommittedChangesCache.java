@@ -49,6 +49,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
   private int myProjectChangesRefreshCount = 0;
+  private int myPendingUpdateCount = 0;
   private State myState = new State();
   private ScheduledFuture myFuture;
 
@@ -95,6 +96,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myProject = project;
     myBus = bus;
     myTaskQueue = new BackgroundTaskQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
+  }
+
+  public MessageBus getMessageBus() {
+    return myBus;
   }
 
   public State getState() {
@@ -357,12 +362,19 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(final ChangesCacheFile cache: caches) {
+      myPendingUpdateCount++;
       final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
         public void run(final ProgressIndicator indicator) {
           try {
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles);
             if (needRefresh) {
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
+            }
+            else {
+              myPendingUpdateCount--;
+              if (myPendingUpdateCount == 0) {
+                notifyIncomingChangesUpdated();
+              }
             }
           }
           catch (IOException e) {
@@ -380,6 +392,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void run() {
         try {
           cache.processUpdatedFiles(updatedFiles);
+          myPendingUpdateCount--;
+          if (myPendingUpdateCount == 0) {
+            notifyIncomingChangesUpdated();
+          }
         }
         catch (IOException e) {
           LOG.error(e);
