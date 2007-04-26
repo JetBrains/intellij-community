@@ -84,7 +84,6 @@ public class CommittedChangesCache {
       settings = ((CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) settings).get(vcs);
     }
     if (provider instanceof CachingCommittedChangesProvider) {
-      final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
       try {
         if (canGetFromCache(vcs, settings, file, location, maxCount)) {
           return getChangesWithCaching(vcs, settings, file, location, maxCount);
@@ -207,8 +206,8 @@ public class CommittedChangesCache {
   }
 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
-    LOG.info("Refreshing cache for " + cacheFile.getLocation());
     final Date date = cacheFile.getLastCachedDate();
+    LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since " + date);
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();

@@ -174,6 +174,7 @@ public class ChangesCacheFile {
     myStream.writeLong(myFirstCachedChangelist);
     myStream.writeShort(myHaveCompleteHistory ? 1 : 0);
     myStream.writeInt(myIncomingCount);
+    LOG.info("Saved header for cache of " + myLocation + ": last cached date=" + myLastCachedDate + ", incoming count=" + myIncomingCount);
   }
 
   private IndexEntry[] readLastIndexEntries(int offset, int count) throws IOException {
