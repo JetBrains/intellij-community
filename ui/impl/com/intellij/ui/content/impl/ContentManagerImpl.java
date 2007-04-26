@@ -21,12 +21,16 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class ContentManagerImpl implements ContentManager {
+public class ContentManagerImpl implements ContentManager, PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
@@ -40,6 +44,8 @@ public class ContentManagerImpl implements ContentManager {
   private final ProjectManagerAdapter myProjectManagerListener;
   private boolean myListenerAdded;
   private MyComponent myComponent = new MyComponent();
+
+  private Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
@@ -106,6 +112,7 @@ public class ContentManagerImpl implements ContentManager {
     try {
       ((ContentImpl)content).setManager(this);
       myContents.add(content);
+      content.addPropertyChangeListener(this);
       fireContentAdded(content, myContents.size() - 1);
       if (myUI.isToSelectAddedContent()) {
         if (myUI.isSingleSelection()) {
@@ -155,6 +162,7 @@ public class ContentManagerImpl implements ContentManager {
       }
 
       myContents.remove(content);
+      content.removePropertyChangeListener(this);
 
       int newSize = myContents.size();
       if (newSize > 0) {
@@ -278,6 +286,8 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public void addSelectedContent(final Content content) {
+    if (!checkSelectionChangeShouldBeProcessed(content)) return;
+
     int index;
     if (content != null) {
       index = getIndexOfContent(content);
@@ -292,6 +302,12 @@ public class ContentManagerImpl implements ContentManager {
       mySelection.add(content);
       fireSelectionChanged(content);
     }
+  }
+
+  private boolean checkSelectionChangeShouldBeProcessed(Content content) {
+    final boolean result = !isSelected(content) || myContentWithChangedComponent.contains(content);
+    myContentWithChangedComponent.remove(content);
+    return result;
   }
 
   public void removeSelectedContent(Content content) {
@@ -314,6 +330,8 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public void setSelectedContent(final Content content, final boolean requestFocus) {
+    if (!checkSelectionChangeShouldBeProcessed(content)) return;
+
     final Content[] old = getSelectedContents();
 
     boolean wasFocusable = requestFocus;
@@ -418,4 +436,11 @@ public class ContentManagerImpl implements ContentManager {
   public void addDataProvider(final DataProvider provider) {
     myComponent.addProvider(provider);
   }
+
+  public void propertyChange(final PropertyChangeEvent evt) {
+    if (Content.PROP_COMPONENT.equals(evt.getPropertyName())) {
+      myContentWithChangedComponent.add((Content)evt.getSource());
+    }
+  }
+  
 }
