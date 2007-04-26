@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +21,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FacetEditorContextBase extends UserDataHolderBase implements FacetEditorContext {
   private FacetsProvider myFacetsProvider;
+  @Nullable private final FacetEditorContext myParentContext;
   private ModulesProvider myModulesProvider;
 
-  public FacetEditorContextBase(final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider) {
+  public FacetEditorContextBase(final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider) {
+    myParentContext = parentContext;
     myModulesProvider = modulesProvider;
     myFacetsProvider = facetsProvider != null ? facetsProvider : DefaultFacetsProvider.INSTANCE;
   }
@@ -44,6 +47,15 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
       }
     }
     return null;
+  }
+
+  @Nullable
+  public <T> T getUserData(final Key<T> key) {
+    T t = super.getUserData(key);
+    if (t == null && myParentContext != null) {
+      t = myParentContext.getUserData(key);
+    }
+    return t;
   }
 
   @NotNull

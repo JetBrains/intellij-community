@@ -38,8 +38,10 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   private final FacetValidatorsManagerImpl myValidatorsManager;
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
+  private final FacetEditorContext myContext;
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
+    myContext = context;
     myValidatorsManager = new FacetValidatorsManagerImpl();
     myWarningLabel = new JLabel();
     myWarningLabel.setVisible(false);
@@ -128,6 +130,10 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
         return;
       }
     }
+  }
+
+  public FacetEditorContext getContext() {
+    return myContext;
   }
 
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {

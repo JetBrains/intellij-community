@@ -6,6 +6,7 @@ package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
 import com.intellij.facet.FacetInfo;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
@@ -91,7 +92,10 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   public FacetEditor getOrCreateEditor(Facet facet) {
     FacetEditor editor = myEditors.get(facet);
     if (editor == null) {
-      editor = new FacetEditor(new ProjectConfigurableContext(facet, isNewFacet(facet), myModuleStateProvider.fun(facet.getModule())), facet.getConfiguration());
+      final Facet underlyingFacet = facet.getUnderlyingFacet();
+      final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
+      editor = new FacetEditor(new ProjectConfigurableContext(facet, isNewFacet(facet), parentContext, 
+                                                              myModuleStateProvider.fun(facet.getModule())), facet.getConfiguration());
       editor.getComponent();
       editor.reset();
       myEditors.put(facet, editor);

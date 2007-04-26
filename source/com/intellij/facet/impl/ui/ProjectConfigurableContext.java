@@ -6,6 +6,7 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.ProjectSettingsContext;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
@@ -25,8 +26,9 @@ public class ProjectConfigurableContext extends FacetEditorContextBase implement
   private ModuleConfigurationState myModuleConfigurationState;
 
   public ProjectConfigurableContext(final @NotNull Facet facet, final boolean isNewFacet,
+                                    @Nullable FacetEditorContext parentContext,
                                     final ModuleConfigurationState state) {
-    super(state.getFacetsProvider(), state.getModulesProvider());
+    super(parentContext, state.getFacetsProvider(), state.getModulesProvider());
     myModuleConfigurationState = state;
     myFacet = facet;
     myNewFacet = isNewFacet;
