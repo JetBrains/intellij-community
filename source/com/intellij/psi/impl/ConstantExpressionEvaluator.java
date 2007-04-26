@@ -51,36 +51,36 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
 
     Object value = null;
     if (tokenType == JavaTokenType.LT) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() < ((Number)rOperandValue).doubleValue());
       }
     }
     else if (tokenType == JavaTokenType.LE) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() <= ((Number)rOperandValue).doubleValue());
       }
     }
     else if (tokenType == JavaTokenType.GT) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() > ((Number)rOperandValue).doubleValue());
       }
     }
     else if (tokenType == JavaTokenType.GE) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() >= ((Number)rOperandValue).doubleValue());
       }
     }
     else if (tokenType == JavaTokenType.EQEQ) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue());
       }
@@ -92,8 +92,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.NE) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() != ((Number)rOperandValue).doubleValue());
       }
@@ -109,8 +109,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         value = (lOperandValue.toString() + rOperandValue.toString()).intern();
       }
       else {
-        if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-        if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+        if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+        if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
 
         if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
           if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
@@ -124,21 +124,21 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
             final long l = ((Number)lOperandValue).longValue();
             final long r = ((Number)rOperandValue).longValue();
-            value = new Long(l + r);
+            value = Long.valueOf(l + r);
             checkAdditionOverflow(((Long)value).longValue() >= 0, l >= 0, r >= 0, expression);
           }
           else {
             final int l = ((Number)lOperandValue).intValue();
             final int r = ((Number)rOperandValue).intValue();
-            value = new Integer(l + r);
+            value = Integer.valueOf(l + r);
             checkAdditionOverflow(((Integer)value).intValue() >= 0, l >= 0, r >= 0, expression);
           }
         }
       }
     }
     else if (tokenType == JavaTokenType.MINUS) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
           value = new Double(((Number)lOperandValue).doubleValue() - ((Number)rOperandValue).doubleValue());
@@ -151,20 +151,20 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
           final long l = ((Number)lOperandValue).longValue();
           final long r = ((Number)rOperandValue).longValue();
-          value = new Long(l - r);
+          value = Long.valueOf(l - r);
           checkAdditionOverflow(((Long)value).longValue() >= 0, l >= 0, r < 0, expression);
         }
         else {
           final int l = ((Number)lOperandValue).intValue();
           final int r = ((Number)rOperandValue).intValue();
-          value = new Integer(l - r);
+          value = Integer.valueOf(l - r);
           checkAdditionOverflow(((Integer)value).intValue() >= 0, l >= 0, r < 0, expression);
         }
       }
     }
     else if (tokenType == JavaTokenType.ASTERISK) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
           value = new Double(((Number)lOperandValue).doubleValue() * ((Number)rOperandValue).doubleValue());
@@ -177,20 +177,20 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
           final long l = ((Number)lOperandValue).longValue();
           final long r = ((Number)rOperandValue).longValue();
-          value = new Long(l * r);
+          value = Long.valueOf(l * r);
           checkMultiplicationOverflow(((Long)value).longValue(), l, r, expression);
         }
         else {
           final int l = ((Number)lOperandValue).intValue();
           final int r = ((Number)rOperandValue).intValue();
-          value = new Integer(l * r);
+          value = Integer.valueOf(l * r);
           checkMultiplicationOverflow(((Integer)value).intValue(), l, r, expression);
         }
       }
     }
     else if (tokenType == JavaTokenType.DIV) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
           value = new Double(((Number)lOperandValue).doubleValue() / ((Number)rOperandValue).doubleValue());
@@ -204,19 +204,19 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           final long r = ((Number)rOperandValue).longValue();
           final long l = ((Number)lOperandValue).longValue();
           checkDivisionOverflow(l, r, Long.MIN_VALUE, expression);
-          value = r == 0 ? null : new Long(l / r);
+          value = r == 0 ? null : Long.valueOf(l / r);
         }
         else {
           final int r = ((Number)rOperandValue).intValue();
           final int l = ((Number)lOperandValue).intValue();
           checkDivisionOverflow(l, r, Integer.MIN_VALUE, expression);
-          value = r == 0 ? null : new Integer(l / r);
+          value = r == 0 ? null : Integer.valueOf(l / r);
         }
       }
     }
     else if (tokenType == JavaTokenType.PERC) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         double rVal = ((Number)rOperandValue).doubleValue();
         if (myThrowExceptionOnOverflow && rVal == 0) throw new ConstantEvaluationOverflowException(expression);
@@ -232,61 +232,61 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           final long l = ((Number)lOperandValue).longValue();
           final long r = ((Number)rOperandValue).longValue();
           checkDivisionOverflow(l, r, Long.MIN_VALUE, expression);
-          value = r == 0 ? null : new Long(l % r);
+          value = r == 0 ? null : Long.valueOf(l % r);
         }
         else {
           final int l = ((Number)lOperandValue).intValue();
           final int r = ((Number)rOperandValue).intValue();
           checkDivisionOverflow(l, r, Integer.MIN_VALUE, expression);
-          value = r == 0 ? null : new Integer(l % r);
+          value = r == 0 ? null : Integer.valueOf(l % r);
         }
       }
     }
     else if (tokenType == JavaTokenType.LTLT) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() << ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() << ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() << ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() << ((Number)rOperandValue).intValue());
         }
       }
     }
     else if (tokenType == JavaTokenType.GTGT) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() >> ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() >> ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() >> ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() >> ((Number)rOperandValue).intValue());
         }
       }
     }
     else if (tokenType == JavaTokenType.GTGTGT) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() >>> ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() >>> ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() >>> ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() >>> ((Number)rOperandValue).intValue());
         }
       }
     }
     else if (tokenType == JavaTokenType.AND) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() & ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() & ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() & ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() & ((Number)rOperandValue).intValue());
         }
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -294,14 +294,14 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.OR) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() | ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() | ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() | ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() | ((Number)rOperandValue).intValue());
         }
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -309,14 +309,14 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.XOR) {
-      if (lOperandValue instanceof Character) lOperandValue = new Integer(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = new Integer(((Character)rOperandValue).charValue());
+      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() ^ ((Number)rOperandValue).longValue());
+          value = Long.valueOf(((Number)lOperandValue).longValue() ^ ((Number)rOperandValue).longValue());
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() ^ ((Number)rOperandValue).intValue());
+          value = Integer.valueOf(((Number)lOperandValue).intValue() ^ ((Number)rOperandValue).intValue());
         }
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -432,7 +432,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     IElementType tokenType = expression.getOperationSign().getTokenType();
     Object value = null;
     if (tokenType == JavaTokenType.MINUS) {
-      if (operand instanceof Character) operand = new Integer(((Character)operand).charValue());
+      if (operand instanceof Character) operand = Integer.valueOf(((Character)operand).charValue());
       if (operand instanceof Number) {
         if (operand instanceof Double) {
           value = new Double(-((Number)operand).doubleValue());
@@ -443,7 +443,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operand instanceof Long) {
-          value = new Long(-((Number)operand).longValue());
+          value = Long.valueOf(-((Number)operand).longValue());
           if (myThrowExceptionOnOverflow
               && !(expression.getOperand() instanceof PsiLiteralExpression)
               && ((Number)operand).longValue() == Long.MIN_VALUE) {
@@ -451,7 +451,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           }
         }
         else {
-          value = new Integer(-((Number)operand).intValue());
+          value = Integer.valueOf(-((Number)operand).intValue());
           if (myThrowExceptionOnOverflow
               && !(expression.getOperand() instanceof PsiLiteralExpression)
               && ((Number)operand).intValue() == Integer.MIN_VALUE) {
@@ -461,19 +461,19 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.PLUS) {
-      if (operand instanceof Character) operand = new Integer(((Character)operand).charValue());
+      if (operand instanceof Character) operand = Integer.valueOf(((Character)operand).charValue());
       if (operand instanceof Number) {
         value = operand;
       }
     }
     else if (tokenType == JavaTokenType.TILDE) {
-      if (operand instanceof Character) operand = new Integer(((Character)operand).charValue());
+      if (operand instanceof Character) operand = Integer.valueOf(((Character)operand).charValue());
       if (isIntegral(operand)) {
         if (operand instanceof Long) {
-          value = new Long(~((Number)operand).longValue());
+          value = Long.valueOf(~((Number)operand).longValue());
         }
         else {
-          value = new Integer(~((Number)operand).intValue());
+          value = Integer.valueOf(~((Number)operand).intValue());
         }
       }
     }
@@ -576,6 +576,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public static Object computeConstantExpression(PsiExpression expression, Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+    if (expression == null) return null;
     ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject());
     return _compute(evaluator, expression);
   }
