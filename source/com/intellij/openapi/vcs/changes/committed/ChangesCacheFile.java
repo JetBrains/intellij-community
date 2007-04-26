@@ -166,7 +166,7 @@ public class ChangesCacheFile {
   }
 
   private void writeHeader() throws IOException {
-    assert myStreamsOpen;
+    assert myStreamsOpen && myHeaderLoaded;
     myStream.seek(0);
     myStream.writeInt(VERSION);
     myStream.writeLong(myLastCachedDate.getTime());
@@ -515,6 +515,7 @@ public class ChangesCacheFile {
     if (diffProvider == null) return false;
     boolean anyChanges = false;
     openStreams();
+    loadHeader();
     try {
       final List<IncomingChangeListData> list = loadIncomingChangeListData();
       // the incoming changelist pointers are actually sorted in reverse chronological order,
