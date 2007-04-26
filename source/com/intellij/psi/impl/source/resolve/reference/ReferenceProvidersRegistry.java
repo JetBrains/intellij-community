@@ -204,7 +204,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerTypeWithProvider(SCHEMA_PROVIDER, schemaReferencesProvider);
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"ref","type","base","name","substitutionGroup","memberTypes","value"},
+      schemaReferencesProvider.getCandidateAttributeNamesForSchemaReferences(),
       new ScopeFilter(
         new ParentElementFilter(
           new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2

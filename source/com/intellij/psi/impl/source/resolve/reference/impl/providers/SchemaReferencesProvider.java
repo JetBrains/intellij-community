@@ -52,17 +52,34 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 4, 2005
- * Time: 3:58:53 PM
- * To change this template use File | Settings | File Templates.
+ * @by Maxim.Mossienko
  */
 public class SchemaReferencesProvider implements PsiReferenceProvider {
   @NonNls private static final String VALUE_ATTR_NAME = "value";
   @NonNls private static final String PATTERN_TAG_NAME = "pattern";
   @NonNls private static final String NAME_ATTR_NAME = "name";
+
   @NonNls private static final String MEMBER_TYPES_ATTR_NAME = "memberTypes";
+  @NonNls private static final String ITEM_TYPE_ATTR_NAME = "itemType";
+  @NonNls private static final String BASE_ATTR_NAME = "base";
+  @NonNls private static final String BASE_XML_NS_ATTR_NAME = BASE_ATTR_NAME;
+  @NonNls private static final String GROUP_TAG_NAME = "group";
+
+  @NonNls private static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
+  @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
+  @NonNls private static final String ELEMENT_TAG_NAME = "element";
+  @NonNls private static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
+
+  @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
+  @NonNls private static final String REF_ATTR_NAME = "ref";
+  @NonNls private static final String TARGET_NAMESPACE = "targetNamespace";
+  @NonNls private static final String TYPE_ATTR_NAME = "type";
+  @NonNls private static final String SUBSTITUTION_GROUP_ATTR_NAME = "substitutionGroup";
+
+  public String[] getCandidateAttributeNamesForSchemaReferences() {
+    return new String[] {REF_ATTR_NAME,TYPE_ATTR_NAME, BASE_ATTR_NAME,NAME_ATTR_NAME, SUBSTITUTION_GROUP_ATTR_NAME,MEMBER_TYPES_ATTR_NAME,
+      VALUE_ATTR_NAME, ITEM_TYPE_ATTR_NAME};
+  }
 
   static class RegExpReference extends BasicAttributeValueReference implements EmptyResolveMessageProvider {
     private String message;
@@ -158,15 +175,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
     private PsiElement myElement;
     private TextRange myRange;
-    @NonNls private static final String BASE_XML_NS_ATTR_NAME = "base";
-    @NonNls private static final String GROUP_TAG_NAME = "group";
-    @NonNls private static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
-    @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
-    @NonNls private static final String ELEMENT_TAG_NAME = "element";
-    @NonNls private static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
-    @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
-    @NonNls private static final String REF_ATTR_NAME = "ref";
-    private static final String TARGET_NAMESPACE = "targetNamespace";
 
     public void registerQuickfix(HighlightInfo info, TypeOrElementOrAttributeReference reference) {
       if (myType == ReferenceType.TypeReference) {
@@ -220,7 +228,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final String localName = tag.getLocalName();
       final String attributeLocalName = attribute.getLocalName();
 
-      if (REF_ATTR_NAME.equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
+      if (REF_ATTR_NAME.equals(attributeLocalName) || SUBSTITUTION_GROUP_ATTR_NAME.equals(attributeLocalName)) {
         if (localName.equals(GROUP_TAG_NAME)) {
           myType = ReferenceType.GroupReference;
         } else if (localName.equals(ATTRIBUTE_GROUP_TAG_NAME)) {
@@ -230,9 +238,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         } else if (ATTRIBUTE_TAG_NAME.equals(localName)) {
           myType = ReferenceType.AttributeReference;
         }
-      } else if ("type".equals(attributeLocalName) ||
+      } else if (TYPE_ATTR_NAME.equals(attributeLocalName) ||
                  BASE_XML_NS_ATTR_NAME.equals(attributeLocalName) ||
-                 MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName)
+                 MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName) ||
+                 ITEM_TYPE_ATTR_NAME.equals(attributeLocalName)
                 ) {
         myType = ReferenceType.TypeReference;
       }
