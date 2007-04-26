@@ -1,11 +1,13 @@
 package com.intellij.codeInsight.template;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface Template {
   void addTextSegment(String text);
-  void addVariableSegment(String name);
+  void addVariableSegment(@NonNls String name);
 
-  void addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);
-  void addVariable(String name, String expression, String defaultValueExpression, boolean isAlwaysStopAt);
+  void addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);
+  void addVariable(@NonNls String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
 
   void addEndVariable();
   void addSelectionStartVariable();
