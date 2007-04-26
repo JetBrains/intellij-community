@@ -1,9 +1,9 @@
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,10 +17,9 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.Consumer;
-import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -443,10 +442,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       LOG.error(e);
       return;
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      refreshCacheSync(cache, postRunnable);
-      return;
-    }
     final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
       private boolean hasNewChanges = false;
 
@@ -473,19 +468,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     };
     myTaskQueue.run(task);
-  }
-
-  private void refreshCacheSync(final ChangesCacheFile cache, final Runnable postRunnable) {
-    final List<CommittedChangeList> list;
-    try {
-      list = refreshCache(cache);
-      if (list.size() > 0 && postRunnable != null) {
-        postRunnable.run();
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public ChangesCacheFile getCacheFile(AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
