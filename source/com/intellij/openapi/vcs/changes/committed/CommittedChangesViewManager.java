@@ -15,9 +15,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 
 import javax.swing.*;
+import java.util.List;
 
 public class CommittedChangesViewManager implements ChangesViewContentProvider {
   public static CommittedChangesViewManager getInstance(Project project) {
@@ -25,13 +30,16 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   private ProjectLevelVcsManager myVcsManager;
+  private MessageBus myBus;
+  private MessageBusConnection myConnection;
   private CommittedChangesPanel myComponent;
   private Project myProject;
   private VcsListener myVcsListener = new MyVcsListener();
 
-  public CommittedChangesViewManager(final Project project, final ProjectLevelVcsManager vcsManager) {
+  public CommittedChangesViewManager(final Project project, final ProjectLevelVcsManager vcsManager, final MessageBus bus) {
     myProject = project;
     myVcsManager = vcsManager;
+    myBus = bus;
   }
 
   private void updateChangesContent() {
@@ -48,6 +56,8 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
   public JComponent initContent() {
     myVcsManager.addVcsListener(myVcsListener);
+    myConnection = myBus.connect();
+    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     updateChangesContent();
     myComponent.refreshChanges(true);
     return myComponent;
@@ -55,6 +65,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
   public void disposeContent() {
     myVcsManager.removeVcsListener(myVcsListener);
+    myConnection.disconnect();
     myComponent = null;
   }
 
@@ -65,6 +76,21 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
           updateChangesContent();
         }
       });
+    }
+  }
+
+  private class MyCommittedChangesListener implements CommittedChangesListener {
+    public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (myComponent != null) {
+            myComponent.refreshChanges(true);
+          }
+        }
+      });
+    }
+
+    public void incomingChangesUpdated() {
     }
   }
 }
