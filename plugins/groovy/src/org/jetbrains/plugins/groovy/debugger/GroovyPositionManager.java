@@ -46,7 +46,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLoader;
-import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager;
+import org.jetbrains.plugins.groovy.caches.module.GroovyProjectCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -183,8 +183,8 @@ public class GroovyPositionManager implements PositionManager {
 
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      GroovyModuleCachesManager manager = GroovyModuleCachesManager.getInstance(module);
-      GrTypeDefinition typeDefinition = manager.getModuleFilesCache().getClassByName(qName);
+      GroovyProjectCachesManager manager = GroovyProjectCachesManager.getInstance(module.getProject());
+      GrTypeDefinition typeDefinition = manager.getModuleFilesCache(module).getClassByName(qName);
       if (typeDefinition != null && searchScope.contains(typeDefinition.getContainingFile().getVirtualFile())) {
         return typeDefinition.getContainingFile();
       }

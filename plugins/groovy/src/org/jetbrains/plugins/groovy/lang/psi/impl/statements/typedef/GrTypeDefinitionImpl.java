@@ -23,6 +23,8 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.Icons;
+
+import javax.swing.*;
 
 /**
  * @author Ilya Sergey
@@ -62,6 +67,31 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return findChildrenByClass(GrTypeParameter.class);
   }
 
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation(){
+
+      public String getPresentableText() {
+        return getName();
+      }
+
+      @Nullable
+      public String getLocationString() {
+        return "in "+ getContainingFile().getVirtualFile().getName();                  // TODO implement
+      }
+
+      @Nullable
+      public Icon getIcon(boolean open) {
+        return Icons.SMALLEST;
+      }
+
+      @Nullable
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
+  }
+
+
   @NotNull
   public PsiElement getNameIdentifier() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
@@ -74,11 +104,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
-/*
+    if (!processor.execute(this, substitutor)) return false;
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!process(processor, typeParameter)) return false;
+      if (!processor.execute(typeParameter, substitutor)) return false;
     }
-*/
 
     return true;
   }
