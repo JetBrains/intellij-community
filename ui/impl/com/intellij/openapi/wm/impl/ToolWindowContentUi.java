@@ -64,7 +64,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     setOpaque(false);
 
     myIdLabel.setOpaque(false);
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 4));
+    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 6));
     myIdLabel.setFont(UIManager.getFont("Label.font"));    
 
     addMouseListeners(this);
