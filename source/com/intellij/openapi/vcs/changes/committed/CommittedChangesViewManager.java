@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -17,9 +18,6 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
-import com.intellij.openapi.vcs.changes.committed.CompositeCommittedChangesProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;

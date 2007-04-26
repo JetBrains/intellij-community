@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class CommittedChangesCache {
   private MessageBus myBus;
   private BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
+  private int myProjectChangesRefreshCount = 0;
 
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
                                                                                                             CommittedChangesListener.class);
@@ -59,16 +61,47 @@ public class CommittedChangesCache {
     myInitialCount = initialCount;
   }
 
-  public List<CommittedChangeList> getProjectChanges(final ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
-    final LinkedHashSet<CommittedChangeList> result = new LinkedHashSet<CommittedChangeList>();
-    for(VirtualFile file: files) {
-      result.addAll(getChanges(settings, file, maxCount));
-    }
-    return new ArrayList<CommittedChangeList>(result);
+  public void getProjectChangesAsync(final ChangeBrowserSettings settings,
+                                     final int maxCount,
+                                     final boolean cacheOnly,
+                                     final Consumer<List<CommittedChangeList>> consumer,
+                                     final Consumer<List<VcsException>> errorConsumer) {
+    myProjectChangesRefreshCount++;
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
+      private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
+      private final List<VcsException> myExceptions = new ArrayList<VcsException>();
+
+      public void run(final ProgressIndicator indicator) {
+        final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+        for(VirtualFile file: files) {
+          try {
+            myResult.addAll(getChanges(settings, file, maxCount, cacheOnly));
+          }
+          catch (VcsException e) {
+            myExceptions.add(e);
+          }
+        }
+      }
+
+      public void onSuccess() {
+        myProjectChangesRefreshCount--;
+        if (myExceptions.size() > 0) {
+          errorConsumer.consume(myExceptions);
+        }
+        else {
+          consumer.consume(new ArrayList<CommittedChangeList>(myResult));
+        }
+      }
+    };
+    myTaskQueue.run(task);
   }
 
-  public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount)
+  public boolean isRefreshingProjectChanges() {
+    return myProjectChangesRefreshCount > 0;
+  }
+
+  public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount,
+                                              final boolean cacheOnly)
     throws VcsException {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     assert vcs != null;
@@ -85,8 +118,17 @@ public class CommittedChangesCache {
     }
     if (provider instanceof CachingCommittedChangesProvider) {
       try {
-        if (canGetFromCache(vcs, settings, file, location, maxCount)) {
-          return getChangesWithCaching(vcs, settings, file, location, maxCount);
+        if (cacheOnly) {
+          ChangesCacheFile cacheFile = getCacheFile(vcs, file, location);
+          if (!cacheFile.isEmpty()) {
+            return cacheFile.readChanges(settings, maxCount);
+          }
+          return Collections.emptyList();
+        }
+        else {
+          if (canGetFromCache(vcs, settings, file, location, maxCount)) {
+            return getChangesWithCaching(vcs, settings, file, location, maxCount);
+          }
         }
       }
       catch (IOException e) {

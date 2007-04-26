@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -14,7 +13,7 @@ public class RefreshCommittedAction extends AnAction {
     Project project = e.getData(DataKeys.PROJECT);
     CommittedChangesPanel panel = CommittedChangesViewManager.getInstance(project).getActivePanel();
     assert panel != null;
-    panel.refreshChanges();
+    panel.refreshChanges(false);
   }
 
   public void update(final AnActionEvent e) {

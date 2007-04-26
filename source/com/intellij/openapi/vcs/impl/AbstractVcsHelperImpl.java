@@ -676,7 +676,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
     panel.setRepositoryLocation(location);
     panel.setMaxCount(maxCount);
-    panel.refreshChanges();
+    panel.refreshChanges(false);
     final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
     if (title == null && location != null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
