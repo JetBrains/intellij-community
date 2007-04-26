@@ -23,6 +23,7 @@ import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -179,9 +180,13 @@ public class MetaRegistry extends MetaDataRegistrar {
       }
     };
   
+  @Nullable
   public static PsiMetaDataBase getMetaBase(final PsiElement element) {
     ProgressManager.getInstance().checkCanceled();
-    return ourCachedMetaCache.get(META_DATA_KEY, element, null).get().getValue();
+    final SoftReference<CachedValue<PsiMetaDataBase>> ref = ourCachedMetaCache.get(META_DATA_KEY, element, null);
+    final CachedValue<PsiMetaDataBase> unref = ref.get();
+    if (unref == null) return null;
+    return unref.getValue();
   }
 
   public static <T extends PsiMetaDataBase> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
