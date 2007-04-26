@@ -428,12 +428,15 @@ public class CodeInsightUtil {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     if (document == null) return element;
+    final Language language = element.getLanguage();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
     final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
     documentManager.doPostponedOperationsAndUnblockDocument(document);
     documentManager.commitDocument(document);
 
-    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass(), element.getLanguage());
+    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                              (Class<? extends T>)element.getClass(),
+                              language);
   }
 
   private static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
