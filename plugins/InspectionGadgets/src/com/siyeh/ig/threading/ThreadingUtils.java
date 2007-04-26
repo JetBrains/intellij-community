@@ -17,15 +17,18 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
-public class ThreadingUtils {
+class ThreadingUtils {
 
     private ThreadingUtils() {
         super();
     }
 
-    public static boolean isWaitCall(PsiMethodCallExpression expression) {
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    public static boolean isWaitCall(
+            @NotNull PsiMethodCallExpression expression) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if (!"wait".equals(methodName)) {
             return false;
@@ -55,21 +58,23 @@ public class ThreadingUtils {
         return true;
     }
 
-    public static boolean isNotifyOrNotifyAllCall(PsiMethodCallExpression expression) {
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
+    public static boolean isNotifyOrNotifyAllCall(
+            @NotNull PsiMethodCallExpression expression) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if (!"notify".equals(methodName) && !"notifyAll".equals(methodName)) {
             return false;
         }
         final PsiExpressionList argumentList = expression.getArgumentList();
-
         final PsiExpression[] args = argumentList.getExpressions();
         return args.length == 0;
     }
 
-    public static boolean isSignalOrSignalAllCall(PsiMethodCallExpression expression) {
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    public static boolean isSignalOrSignalAllCall(
+            @NotNull PsiMethodCallExpression expression) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if (!"signal".equals(methodName) && !"signalAll".equals(methodName)) {
             return false;
@@ -89,10 +94,12 @@ public class ThreadingUtils {
         }
         return ClassUtils.isSubclass(containingClass,
                         "java.util.concurrent.locks.Condition");
-
     }
-    public static boolean isAwaitCall(PsiMethodCallExpression expression) {
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+
+    public static boolean isAwaitCall(
+            @NotNull PsiMethodCallExpression expression) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if (!"await".equals(methodName)
                 && !"awaitUntil".equals(methodName)
@@ -110,6 +117,5 @@ public class ThreadingUtils {
         }
         return ClassUtils.isSubclass(containingClass,
                         "java.util.concurrent.locks.Condition");
-
     }
 }
