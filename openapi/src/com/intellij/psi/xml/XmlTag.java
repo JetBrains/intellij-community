@@ -42,12 +42,28 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   @Nullable XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
 
-  @Nullable String getAttributeValue(@NonNls String name);
+  /**
+   * Returns a tag attribute by qualified name.
+   *
+   * @param qname qualified attribute name, like "ns:name" or "name".
+   * @return null if the attribute not exist.
+   * @see #getAttribute(String, String)
+   */
+  @Nullable XmlAttribute getAttribute(@NonNls String qname);
 
   @Nullable String getAttributeValue(@NonNls String name, @NonNls String namespace);
 
+  /**
+   * Returns a tag attribute value by qualified name.
+   *
+   * @param qname qualified attribute name, like "ns:name" or "name".
+   * @return null if the attribute not exist.
+   * @see #getAttributeValue(String, String)  
+   */
+  @Nullable String getAttributeValue(@NonNls String qname);
+
   XmlAttribute setAttribute(@NonNls String name, @NonNls String namespace, @NonNls String value) throws IncorrectOperationException;
-  XmlAttribute setAttribute(@NonNls String name, @NonNls String value) throws IncorrectOperationException;
+  XmlAttribute setAttribute(@NonNls String qname, @NonNls String value) throws IncorrectOperationException;
 
   XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @NonNls String bodyText, boolean enforceNamespacesDeep);
 
