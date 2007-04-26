@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.annotations.NotNull;
@@ -84,9 +85,18 @@ public class GroovyFile extends PsiFileBase {
       if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
-    //todo: process current and implicitly imported packages
+    for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
+      PsiPackage aPackage = getManager().findPackage(implicitlyImported);
+      if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    }
 
     return true;
   }
+
+  private static final String[] IMPLICITLY_IMPORTED_PACKAGES = new String[] {
+      "java.lang",
+      "java.util",
+      /* todo check others*/
+  };
 }
 
