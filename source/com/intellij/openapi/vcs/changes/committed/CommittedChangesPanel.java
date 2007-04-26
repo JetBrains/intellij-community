@@ -84,6 +84,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   public void refreshChanges(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     if (!cache.hasCachesForAllRoots()) {
+      if (cacheOnly) return;
       CacheSettingsDialog dialog = new CacheSettingsDialog(myProject);
       dialog.show();
       if (!dialog.isOK()) {
@@ -115,7 +116,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       }
     }
     else {
-      cache.getProjectChangesAsync(mySettings, myMaxCount, false, new Consumer<List<CommittedChangeList>>() {
+      cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly, new Consumer<List<CommittedChangeList>>() {
                                      public void consume(final List<CommittedChangeList> committedChangeLists) {
                                        myChangesFromProvider = committedChangeLists;
                                        updateFilteredModel();

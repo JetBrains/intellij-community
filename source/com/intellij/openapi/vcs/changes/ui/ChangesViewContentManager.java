@@ -22,7 +22,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
@@ -163,6 +166,16 @@ public class ChangesViewContentManager implements ProjectComponent {
   @Nullable
   public Content getSelectedContent() {
     return myContentManager.getSelectedContent();
+  }
+
+  @Nullable
+  public <T> T getActiveComponent(final Class<T> aClass) {
+    final Content content = myContentManager.getSelectedContent();
+    if (content != null && aClass.isInstance(content.getComponent())) {
+      //noinspection unchecked
+      return (T) content.getComponent();
+    }
+    return null;
   }
 
   private class MyVcsListener implements VcsListener {
