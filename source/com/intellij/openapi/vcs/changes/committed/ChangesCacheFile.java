@@ -391,6 +391,7 @@ public class ChangesCacheFile {
 
   private static boolean processFile(final FilePath path, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
     boolean foundRevision = false;
+    LOG.info("Processing updated file " + path + ", revision " + number);
     for(IncomingChangeListData data: incomingData) {
       for(Change change: data.changeList.getChanges()) {
         ContentRevision afterRevision = change.getAfterRevision();
@@ -405,6 +406,7 @@ public class ChangesCacheFile {
         }
       }
     }
+    LOG.info(foundRevision ? "All changes for file found" : "Some of changes for file not found");
     return !foundRevision;
   }
 

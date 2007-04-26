@@ -360,14 +360,17 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
+    LOG.info("Processing updated files");
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(final ChangesCacheFile cache: caches) {
       myPendingUpdateCount++;
       final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
         public void run(final ProgressIndicator indicator) {
           try {
+            LOG.info("Processing updated files in " + cache.getLocation());
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles);
             if (needRefresh) {
+              LOG.info("Found unaccounted files, requesting refresh");
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
             else {
@@ -391,7 +394,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     refreshCacheAsync(cache, false, new Runnable() {
       public void run() {
         try {
-          cache.processUpdatedFiles(updatedFiles);
+          LOG.info("Processing updated files after refresh in " + cache.getLocation());
+          boolean result = cache.processUpdatedFiles(updatedFiles);
+          LOG.info(result ? "Still have unaccounted files" : "No more unaccounted files");
           myPendingUpdateCount--;
           if (myPendingUpdateCount == 0) {
             notifyIncomingChangesUpdated();
