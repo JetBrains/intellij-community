@@ -6,6 +6,7 @@ package com.intellij.javaee.converting;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jetbrains.annotations.NonNls;
@@ -24,17 +25,24 @@ public class JDomConvertingUtil {
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   @NonNls private static final String VALUE_ATTRIBUTE = "value";
 
+  private JDomConvertingUtil() {
+  }
+
   public static String getOptionValue(Element element, String optionName) {
     return JDOMExternalizerUtil.readField(element, optionName);
   }
 
-  public static Condition<Element> createOptionElementFilter(final String optionName) {
+  public static Condition<Element> createAttributeValueFilter(final @NonNls String name, final @NonNls String value) {
     return new Condition<Element>() {
       public boolean value(final Element element) {
-        return OPTION_ELEMENT.equals(element.getName())
-               && optionName.equals(element.getAttributeValue(NAME_ATTRIBUTE));
+        return value.equals(element.getAttributeValue(name));
       }
     };
+  }
+
+  public static Condition<Element> createOptionElementFilter(final @NonNls String optionName) {
+    return Conditions.and(createElementNameFilter(OPTION_ELEMENT),
+                          createAttributeValueFilter(NAME_ATTRIBUTE, optionName));
   }
 
   public static void copyAttributes(Element from, Element to) {
@@ -134,5 +142,16 @@ public class JDomConvertingUtil {
       }
     }
     root.addContent(component);
+  }
+
+  @Nullable
+  public static Element findChild(Element parent, final Condition<Element> filter) {
+    final List<Element> list = parent.getChildren();
+    for (Element e : list) {
+      if (filter.value(e)) {
+        return e;
+      }
+    }
+    return null;
   }
 }

@@ -234,7 +234,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     return false;
   }
 
-  public boolean isExplodedDirectory(VirtualFile file) {
+  private boolean isExplodedDirectory(VirtualFile file) {
     final VirtualFile explodedDir = myRootModel.getExplodedDirectory();
     if (explodedDir != null) {
       if (explodedDir.equals(file)) {
