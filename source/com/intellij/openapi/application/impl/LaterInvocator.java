@@ -19,7 +19,7 @@ import java.util.Collections;
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
 
-  private static final Object LOCK = new Object();
+  public static final Object LOCK = new Object(); //public for tests
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
 
   private LaterInvocator() {
@@ -197,7 +197,6 @@ public class LaterInvocator {
                                         ? new ModalityStateEx(ourModalEntities.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY))
                                         : ApplicationManager.getApplication().getNoneModalityState());
 
-      ourQueueSkipCount =0;
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
         if (!currentModality.dominates(info.modalityState)) {
