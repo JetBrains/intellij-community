@@ -97,6 +97,7 @@ public class Declaration implements GroovyElementTypes {
 
       if (!builder.eof()
               && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
+              && builder.getTokenText() != null
               && Character.isLowerCase(builder.getTokenText().charAt(0))) {
         GroovyElementType exprType = ExpressionStatement.parse(builder);
         if (EXPRESSION_STATEMENT.equals(exprType)) {
@@ -150,7 +151,7 @@ public class Declaration implements GroovyElementTypes {
 //        declmMarker.drop();
 //        return REFERENCE_EXPRESSION;
 //      }
-
+      declmMarker.rollbackTo();
       return WRONGWAY;
     }
 
