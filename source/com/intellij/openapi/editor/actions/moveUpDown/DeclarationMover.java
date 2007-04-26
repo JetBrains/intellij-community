@@ -211,7 +211,8 @@ class DeclarationMover extends LineMover {
       final PsiElement parent = aClass.getParent();
       if (!areWeMovingClass && !(parent instanceof PsiClass)) throw new IllegalMoveException();
       if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
-      return new LineRange(sibling, sibling, editor.getDocument());
+      PsiElement start = isDown ? sibling : aClass.getModifierList();
+      return new LineRange(start, sibling, editor.getDocument());
       //return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
     }
     // trying to move up inside enum constant list, move outside of enum class instead
