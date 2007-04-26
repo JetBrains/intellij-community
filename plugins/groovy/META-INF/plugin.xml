@@ -19,6 +19,9 @@
   <id>org.intellij.groovy</id>
   <project-components>
     <component>
+      <implementation-class>org.jetbrains.plugins.groovy.caches.module.GroovyProjectCachesManager</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.plugins.groovy.GrailsConsole</implementation-class>
     </component>
     <component>
@@ -35,9 +38,6 @@
   <module-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GFacetListener</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.caches.module.GroovyModuleCachesManager</implementation-class>
     </component>
   </module-components>
   <actions>
