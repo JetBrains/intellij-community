@@ -29,16 +29,12 @@ import com.intellij.navigation.NavigationItem;
  */
 public interface GrTypeDefinition extends GrNamedElement, GrStatement {
 
+  public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
+
   public GrTypeDefinitionBody getBody();
 
   @Nullable
   public String getQualifiedName();
-
-  public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
-
-  GrTypeDefinition findInnerTypeDefinitionByName(String name, boolean checkBases);
-
-  GrTypeDefinition[] getInnerTypeDefinitions(boolean checkBases);
 
   GrTypeParameter[] getTypeParameters();
 }

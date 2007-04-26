@@ -17,12 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrReferenceElement extends GrType {
+public interface GrReferenceElement extends GrType, PsiReference {
   GrReferenceElement getQualifier();
 
   String getReferenceName();

@@ -43,7 +43,7 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement, PsiReference {
+public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement {
   public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -112,8 +112,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
             }
           } else if (qualifierResolved instanceof PsiClass) {
             return ((PsiClass) qualifierResolved).findInnerClassByName(refName, true);
-          } else if (qualifierResolved instanceof GrTypeDefinition) {
-            return ((GrTypeDefinition) qualifierResolved).findInnerTypeDefinitionByName(refName, true);
           }
         } else {
           ClassResolver processor = new ClassResolver(refName);
@@ -192,8 +190,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
             return ((PsiPackage) qualifierResolved).getClasses();
           } else if (qualifierResolved instanceof PsiClass) {
             return ((PsiClass) qualifierResolved).getInnerClasses();
-          } else if (qualifierResolved instanceof GrTypeDefinition) {
-            return ((GrTypeDefinition) qualifierResolved).getInnerTypeDefinitions(true);
           }
         } else {
           ClassResolver processor = new ClassResolver(null);

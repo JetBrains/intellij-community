@@ -22,6 +22,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.NameHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -72,6 +73,13 @@ public class GroovyFile extends PsiFileBase {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    NameHint nameHint = processor.getHint(NameHint.class);
+    for (final GrTypeDefinition typeDefinition : getTypeDefinitions()) {
+      if (nameHint == null || nameHint.getName().equals(typeDefinition.getName())) {
+        if (!processor.execute(typeDefinition, PsiSubstitutor.EMPTY)) return false;
+      }
+    }
+    
     for (final GrImportStatement importStatement : getImportStatements()) {
       if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }

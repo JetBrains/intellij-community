@@ -58,16 +58,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
-  public GrTypeDefinition findInnerTypeDefinitionByName(String name, boolean checkBases) {
-    //todo:
-    return null;
-  }
-
-  public GrTypeDefinition[] getInnerTypeDefinitions(boolean checkBases) {
-    //todo
-    return new GrTypeDefinition[0];
-  }
-
   public GrTypeParameter[] getTypeParameters() {
     return findChildrenByClass(GrTypeParameter.class);
   }
@@ -84,7 +74,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
-    if (!process(processor, this)) return false;
 /*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
       if (!process(processor, typeParameter)) return false;
