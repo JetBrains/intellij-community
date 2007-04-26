@@ -6,9 +6,9 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
+import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
-import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
@@ -279,6 +279,8 @@ public class IdTableBuilding {
                       final IndexPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
+      if (length == 0) return;
+
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
 
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
