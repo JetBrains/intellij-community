@@ -17,11 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class PsiUtil {
+  @Nullable
   public static String getQualifiedReferenceText(GrReferenceElement referenceElement) {
     StringBuilder builder = new StringBuilder();
     if (!appendName(referenceElement, builder)) return null;

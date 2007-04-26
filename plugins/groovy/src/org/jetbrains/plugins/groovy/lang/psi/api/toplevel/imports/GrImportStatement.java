@@ -20,9 +20,15 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 
 /**
  * @author Ilya.Sergey
  */
 public interface GrImportStatement extends UserDataHolderEx, Cloneable, Iconable, NavigationItem, GrTopStatement {
+  GrReferenceElement getImportReference();
+
+  String getImportedName();
+
+  boolean isOnDemand();
 }

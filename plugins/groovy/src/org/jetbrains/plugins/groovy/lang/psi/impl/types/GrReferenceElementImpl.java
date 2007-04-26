@@ -117,7 +117,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
         } else {
           ClassResolver processor = new ClassResolver(refName);
           ResolveUtil.treeWalkUp(this, processor);
-          List<GrTypeDefinition> candidates = processor.getCandidates();
+          List<PsiNamedElement> candidates = processor.getCandidates();
           return candidates.size() == 1 ? candidates.get(0) : null;
         }
         break;
@@ -197,8 +197,8 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
         } else {
           ClassResolver processor = new ClassResolver(null);
           ResolveUtil.treeWalkUp(this, processor);
-          List<GrTypeDefinition> candidates = processor.getCandidates();
-          return candidates.toArray(GrTypeDefinition.EMPTY_ARRAY);
+          List<PsiNamedElement> candidates = processor.getCandidates();
+          return candidates.toArray(PsiNamedElement.EMPTY_ARRAY);
         }
         break;
 

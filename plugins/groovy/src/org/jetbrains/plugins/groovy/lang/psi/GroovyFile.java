@@ -76,6 +76,8 @@ public class GroovyFile extends PsiFileBase {
       if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
+    //todo: process current and implicitly imported packages
+
     return true;
   }
 }
