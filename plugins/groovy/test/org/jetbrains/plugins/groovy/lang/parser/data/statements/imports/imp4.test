@@ -2,7 +2,7 @@ import a.b.
 c.d
 -----
 Groovy script
-  Import expression
+  Import statement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element

@@ -34,7 +34,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public String toString() {
-    return "Import expression";
+    return "Import statement";
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor psiScopeProcessor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {

@@ -2,7 +2,7 @@ import static a
 import b as c
 -----
 Groovy script
-  Import expression
+  Import statement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     PsiElement(static)('static')
@@ -10,7 +10,7 @@ Groovy script
     Reference element
       PsiElement(identifier)('a')
   PsiElement(new line)('\n')
-  Import expression
+  Import statement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element
