@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
@@ -37,4 +38,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement {
   public String getQualifiedName();
 
   GrTypeParameter[] getTypeParameters();
+
+  @NotNull
+  PsiElement getNameIdentifier();
 }

@@ -63,7 +63,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  private PsiElement getNameIdentifier() {
+  public PsiElement getNameIdentifier() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
     assert result != null;
     return result;

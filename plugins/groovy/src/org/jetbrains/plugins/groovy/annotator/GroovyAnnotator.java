@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 
 /**
@@ -15,14 +17,26 @@ public class GroovyAnnotator implements Annotator {
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrReferenceElement) {
-      GrReferenceElement refElement = (GrReferenceElement) element;
-      if (!refElement.isSoft() && refElement.getReferenceName() != null) {
+      checkReferenceElement(element, holder, (GrReferenceElement) element);
+    } else if (element instanceof GrTypeDefinition) {
+      checkTypeDefinition(holder, (GrTypeDefinition) element);
+    }
+  }
+
+  private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+    if (typeDefinition.getParent() instanceof GrClassBody) {
+      holder.createErrorAnnotation(typeDefinition.getNameIdentifier(), "Inner classes are not supported in Groovy");
+    }
+  }
+
+  private void checkReferenceElement(PsiElement element, AnnotationHolder holder, GrReferenceElement refElement) {
+    if (!refElement.isSoft() && refElement.getReferenceName() != null) {
         PsiElement resolved = refElement.resolve();
         if (resolved == null) {
-          String message = String.format("Cannot resolve symbol {0}", refElement.getReferenceName());
+          String message = "Cannot resolve symbol " + refElement.getReferenceName();
           holder.createErrorAnnotation(element, message);
         }
       }
-    }
   }
 }
+
