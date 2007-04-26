@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,11 +84,21 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
-    if (!processor.execute(this, substitutor)) return false;
+    if (!process(processor, this)) return false;
+/*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!processor.execute(typeParameter, substitutor)) return false;
+      if (!process(processor, typeParameter)) return false;
     }
+*/
 
+    return true;
+  }
+
+  private boolean process(PsiScopeProcessor processor, PsiNamedElement element) {
+    NameHint nameHint = processor.getHint(NameHint.class);
+    if (nameHint == null || getName().equals(nameHint.getName())) {
+      return processor.execute(element, PsiSubstitutor.EMPTY);
+    }
     return true;
   }
 

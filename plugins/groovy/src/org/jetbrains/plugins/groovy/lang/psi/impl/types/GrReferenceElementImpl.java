@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrReferenceElementImpl.ReferenceKind.*;
@@ -135,10 +136,10 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
       ReferenceKind parentKind = ((GrReferenceElementImpl) parent).getKind();
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
       return parentKind;
-    } else if (parent instanceof GrNewExpression) {
-      return CLASS;
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
+    }  else if (parent instanceof GrImportStatement) {
+      return CLASS_OR_PACKAGE_FQ;
     }
 
     return CLASS;

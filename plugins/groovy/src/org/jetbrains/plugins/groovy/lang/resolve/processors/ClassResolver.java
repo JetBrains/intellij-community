@@ -16,22 +16,21 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.containers.HashSet;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
  */
-public class ClassResolver implements PsiScopeProcessor {
+public class ClassResolver implements PsiScopeProcessor, NameHint {
   private String myName;
 
   private List<PsiNamedElement> myCandidates = new ArrayList<PsiNamedElement>();
@@ -42,9 +41,7 @@ public class ClassResolver implements PsiScopeProcessor {
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof GrTypeDefinition || element instanceof PsiClass) {
-      if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-        myCandidates.add((PsiNamedElement) element);
-      }
+      myCandidates.add((PsiNamedElement) element);
     }
 
     return myName == null || myCandidates.size() < 2;
@@ -55,9 +52,17 @@ public class ClassResolver implements PsiScopeProcessor {
   }
 
   public <T> T getHint(Class<T> hintClass) {
+    if (NameHint.class == hintClass && myName != null){
+      return (T) this;
+    }
+
     return null;
   }
 
   public void handleEvent(Event event, Object associated) {
+  }
+
+  public String getName() {
+    return myName;
   }
 }
