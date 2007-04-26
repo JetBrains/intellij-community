@@ -141,7 +141,13 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
   public void update() {
     List<UsageInfo> infos = myUsageView.getSelectedUsageInfos();
-    if (infos != null) {
+    if (infos == null) {
+      removeAll();
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
+      add(titleComp, BorderLayout.CENTER);
+      revalidate();
+    }
+    else {
       resetEditor(infos);
     }
   }

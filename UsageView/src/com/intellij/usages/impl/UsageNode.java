@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.TextChunk;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   private final Usage myUsage;
   private boolean myUsageExcluded = false;
 
-  public UsageNode(Usage usage, DefaultTreeModel model) {
+  public UsageNode(@NotNull Usage usage, @NotNull DefaultTreeModel model) {
     super(model);
     setUserObject(usage);
     myUsage = usage;
@@ -52,6 +52,7 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
     return UsageViewImpl.USAGE_COMPARATOR.compare(myUsage, usageNode.getUsage());
   }
 
+  @NotNull
   public Usage getUsage() {
     return myUsage;
   }

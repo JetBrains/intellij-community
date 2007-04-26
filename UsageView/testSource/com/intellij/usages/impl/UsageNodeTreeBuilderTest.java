@@ -2,14 +2,12 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsagePresentation;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -223,8 +221,22 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       return myId;
     }
 
+    @NotNull
     public UsagePresentation getPresentation() {
-      return null;
+      return new UsagePresentation() {
+        @NotNull
+        public TextChunk[] getText() {
+          return new TextChunk[0];
+        }
+
+        public Icon getIcon() {
+          return null;
+        }
+
+        public String getTooltipText() {
+          return null;
+        }
+      };
     }
 
     public boolean isValid() // ?

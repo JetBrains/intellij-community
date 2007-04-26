@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -96,6 +97,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     myTextChunks = new ChunkExtractor(getElement(), myRangeMarkers).extractChunks();
   }
   
+  @NotNull
   public UsagePresentation getPresentation() {
     return myUsagePresentation;
   }
@@ -283,6 +285,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
       return containingFile == null? -1L : containingFile.getModificationStamp();
     }
 
+    @NotNull
     public TextChunk[] getText() {
       if (isValid()) {
         // the check below makes sence only for valid PsiElement

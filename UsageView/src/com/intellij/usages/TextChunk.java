@@ -16,12 +16,13 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 public class TextChunk {
   private TextAttributes myAttributes;
   private String myText;
 
-  public TextChunk(TextAttributes attributesKey, String text) {
+  public TextChunk(TextAttributes attributesKey, @NotNull String text) {
     myAttributes = attributesKey;
     myText = text;
   }

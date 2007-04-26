@@ -90,7 +90,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageModelTracker myModelTracker;
   private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
-  private static final UsageNode NULL_NODE = new UsageNode(null,null);
+  private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new DefaultTreeModel(null));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
@@ -416,10 +416,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
-          Usage usage = i.next();
+        for (Usage usage : allUsages) {
           if (!usage.isValid()) {
-            i.remove();
             continue;
           }
           if (usage instanceof MergeableUsage) {
@@ -430,7 +428,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
     setupCentralPanel();
-    restoreUsageExpandState(states);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        restoreUsageExpandState(states);
+        updateImmediately();
+      }
+    });
   }
 
   private void captureUsagesExpandState(TreePath pathFrom, final Collection<UsageState> states) {
@@ -443,9 +446,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       final TreeNode child = node.getChildAt(idx);
       if (child instanceof UsageNode) {
         final Usage usage = ((UsageNode)child).getUsage();
-        if (usage != null) {
-          states.add(new UsageState(usage, myTree.getSelectionModel().isPathSelected(pathFrom.pathByAddingChild(child))));
-        }
+        states.add(new UsageState(usage, myTree.getSelectionModel().isPathSelected(pathFrom.pathByAddingChild(child))));
       }
       else {
         captureUsagesExpandState(pathFrom.pathByAddingChild(child), states);
@@ -607,7 +608,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       return;
     }
     myUsages.add(usage);
-    final UsageNode node = myBuilder.appendUsage(usage);
+    UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
       myIsFirstVisibleUsageFound = true;
