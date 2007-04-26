@@ -357,28 +357,35 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(final ChangesCacheFile cache: caches) {
-      boolean needRefresh;
-      try {
-        needRefresh = cache.processUpdatedFiles(updatedFiles);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        continue;
-      }
-      if (needRefresh) {
-        refreshCacheAsync(cache, false, new Runnable() {
-          public void run() {
-            try {
-              cache.processUpdatedFiles(updatedFiles);
-            }
-            catch (IOException e) {
-              LOG.error(e);
+      final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
+        public void run(final ProgressIndicator indicator) {
+          try {
+            boolean needRefresh = cache.processUpdatedFiles(updatedFiles);
+            if (needRefresh) {
+              processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
           }
-        });
-      }
+          catch (IOException e) {
+            LOG.error(e);
+            return;
+          }
+        }
+      };
+      myTaskQueue.run(task);
     }
-    notifyIncomingChangesUpdated();
+  }
+
+  private void processUpdatedFilesAfterRefresh(final ChangesCacheFile cache, final UpdatedFiles updatedFiles) {
+    refreshCacheAsync(cache, false, new Runnable() {
+      public void run() {
+        try {
+          cache.processUpdatedFiles(updatedFiles);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   private void notifyIncomingChangesUpdated() {
@@ -442,9 +449,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       LOG.error(e);
       return;
     }
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing VCS history") {
-      private boolean hasNewChanges = false;
-
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
       public void run(final ProgressIndicator indicator) {
         try {
           final List<CommittedChangeList> list;
@@ -454,16 +459,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           else {
             list = refreshCache(cache);
           }
-          hasNewChanges = (list.size() > 0);
+          if (list.size() > 0 && postRunnable != null) {
+            postRunnable.run();
+          }
         }
         catch (Exception e) {
           LOG.error(e);
-        }
-      }
-
-      public void onSuccess() {
-        if (postRunnable != null && hasNewChanges) {
-          postRunnable.run();
         }
       }
     };
