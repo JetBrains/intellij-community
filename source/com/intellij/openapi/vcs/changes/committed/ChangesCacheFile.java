@@ -96,6 +96,7 @@ public class ChangesCacheFile {
     openStreams();
     try {
       if (wasEmpty) {
+        myHeaderLoaded = true;
         writeHeader();
       }
       myStream.seek(myStream.length());
@@ -337,6 +338,7 @@ public class ChangesCacheFile {
   public boolean processUpdatedFiles(final UpdatedFiles updatedFiles) throws IOException {
     boolean haveUnaccountedUpdatedFiles = false;
     openStreams();
+    loadHeader();
     try {
       final List<IncomingChangeListData> incomingData = loadIncomingChangeListData();
       for(FileGroup group: updatedFiles.getTopLevelGroups()) {
