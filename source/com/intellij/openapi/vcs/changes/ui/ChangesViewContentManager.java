@@ -1,13 +1,7 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.12.2006
- * Time: 17:42:54
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ProjectTopics;
@@ -19,6 +13,7 @@ import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -37,8 +32,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @author yole
+ */
 public class ChangesViewContentManager implements ProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
+  private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
 
   public static ChangesViewContentManager getInstance(Project project) {
     return project.getComponent(ChangesViewContentManager.class);
@@ -81,11 +80,46 @@ public class ChangesViewContentManager implements ProjectComponent {
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
-        final Content content = PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false);
-        content.setCloseable(false);
-        myContentManager.addContent(content);
+        addExtensionTab(ep);
       }
     }
+  }
+
+  private void addExtensionTab(final ChangesViewContentEP ep) {
+    final Content content = PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false);
+    content.setCloseable(false);
+    content.putUserData(myEPKey, ep);
+    myContentManager.addContent(content);
+  }
+
+  private void updateExtensionTabs() {
+    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
+    for(ChangesViewContentEP ep: contentEPs) {
+      final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
+      if (predicate == null) continue;
+      Content epContent = findEPContent(ep);
+      final Boolean predicateResult = predicate.fun(myProject);
+      if (predicateResult.equals(Boolean.TRUE) && epContent == null) {
+        addExtensionTab(ep);
+      }
+      else if (predicateResult.equals(Boolean.FALSE) && epContent != null) {
+        if (!(epContent.getComponent() instanceof ContentStub)) {
+          ep.getInstance(myProject).disposeContent();
+        }
+        myContentManager.removeContent(epContent);
+      }
+    }
+  }
+
+  @Nullable
+  private Content findEPContent(final ChangesViewContentEP ep) {
+    final Content[] contents = myContentManager.getContents();
+    for(Content content: contents) {
+      if (content.getUserData(myEPKey) == ep) {
+        return content;
+      }
+    }
+    return null;
   }
 
   private void updateToolWindowAvailability() {
@@ -137,6 +171,7 @@ public class ChangesViewContentManager implements ProjectComponent {
       myVcsChangeAlarm.addRequest(new Runnable() {
         public void run() {
           updateToolWindowAvailability();
+          updateExtensionTabs();
         }
       }, 100, ModalityState.NON_MODAL);
     }
@@ -168,7 +203,7 @@ public class ChangesViewContentManager implements ProjectComponent {
     public void selectionChanged(final ContentManagerEvent event) {
       if (event.getContent().getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) event.getContent().getComponent()).getEP();
-        ChangesViewContentProvider provider = ep.newInstance(myProject);
+        ChangesViewContentProvider provider = ep.getInstance(myProject);
         event.getContent().setComponent(provider.initContent());
       }
     }

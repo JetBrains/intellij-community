@@ -27,6 +27,7 @@ public class ChangesViewContentEP {
   public String predicateClassName;
 
   private PluginDescriptor myPluginDescriptor;
+  private ChangesViewContentProvider myInstance;
 
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
@@ -56,8 +57,11 @@ public class ChangesViewContentEP {
     this.predicateClassName = predicateClassName;
   }
 
-  public ChangesViewContentProvider newInstance(Project project) {
-    return (ChangesViewContentProvider) newClassInstance(project, className);
+  public ChangesViewContentProvider getInstance(Project project) {
+    if (myInstance == null) {
+      myInstance = (ChangesViewContentProvider) newClassInstance(project, className); 
+    }
+    return myInstance;
   }
 
   @Nullable

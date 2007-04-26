@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 
 import javax.swing.*;
 import java.util.List;
@@ -21,6 +22,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private Project myProject;
   private MessageBus myBus;
   private CommittedChangesBrowser myBrowser;
+  private MessageBusConnection myConnection;
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;
@@ -33,14 +35,22 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     myBrowser.addToolBar(toolbar.getComponent());
-    myBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
+    myConnection = myBus.connect();
+    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     return myBrowser;
+  }
+
+  public void disposeContent() {
+    myConnection.disconnect();
+    myBrowser = null;
   }
 
   private void updateModel() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myBrowser.setItems(CommittedChangesCache.getInstance(myProject).getIncomingChanges());
+        if (myBrowser != null) {
+          myBrowser.setItems(CommittedChangesCache.getInstance(myProject).getIncomingChanges());
+        }
       }
     });
   }

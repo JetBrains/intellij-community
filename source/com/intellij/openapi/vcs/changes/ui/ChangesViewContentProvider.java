@@ -7,4 +7,5 @@ import javax.swing.*;
  */
 public interface ChangesViewContentProvider {
   JComponent initContent();
+  void disposeContent();
 }
