@@ -61,10 +61,22 @@ public class BackgroundTaskQueue {
       ProgressManager.getInstance().run(task);
     }
     else {
-      synchronized(myQueue) {
+      boolean hadActiveTask;
+      synchronized (myQueue) {
+        hadActiveTask = myHasActiveTask;
         myQueue.offer(task);
-        if (!myHasActiveTask) {
+        myHasActiveTask = true;
+      }
+      if (!hadActiveTask) {
+        if (ApplicationManager.getApplication().isDispatchThread()) {
           ProgressManager.getInstance().run(myRunnerTask);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              ProgressManager.getInstance().run(myRunnerTask);
+            }
+          });
         }
       }
     }

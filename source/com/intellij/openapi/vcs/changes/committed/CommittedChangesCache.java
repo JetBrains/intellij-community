@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.Consumer;
+import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -24,19 +28,60 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
  */
-public class CommittedChangesCache {
+@State(
+  name="CommittedChangesCache",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class CommittedChangesCache implements PersistentStateComponent<CommittedChangesCache.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesCache");
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
   private Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
-  private int myInitialCount = 500;
   private MessageBus myBus;
   private BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
   private int myProjectChangesRefreshCount = 0;
+  private State myState = new State();
+  private ScheduledFuture myFuture;
+
+  public static class State {
+    private int myInitialCount = 500;
+    private int myRefreshInterval = 30;
+    private boolean myRefreshEnabled = true;
+
+    public int getInitialCount() {
+      return myInitialCount;
+    }
+
+    public void setInitialCount(final int initialCount) {
+      myInitialCount = initialCount;
+    }
+
+    public int getRefreshInterval() {
+      return myRefreshInterval;
+    }
+
+    public void setRefreshInterval(final int refreshInterval) {
+      myRefreshInterval = refreshInterval;
+    }
+
+    public boolean isRefreshEnabled() {
+      return myRefreshEnabled;
+    }
+
+    public void setRefreshEnabled(final boolean refreshEnabled) {
+      myRefreshEnabled = refreshEnabled;
+    }
+  }
 
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
                                                                                                             CommittedChangesListener.class);
@@ -50,15 +95,16 @@ public class CommittedChangesCache {
   public CommittedChangesCache(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
-    myTaskQueue = new BackgroundTaskQueue(project, "Refreshing VCS history");
+    myTaskQueue = new BackgroundTaskQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
   }
 
-  public int getInitialCount() {
-    return myInitialCount;
+  public State getState() {
+    return myState;
   }
 
-  public void setInitialCount(final int initialCount) {
-    myInitialCount = initialCount;
+  public void loadState(State state) {
+    myState = state;
+    updateRefreshTimer();
   }
 
   public void getProjectChangesAsync(final ChangeBrowserSettings settings,
@@ -238,10 +284,10 @@ public class CommittedChangesCache {
     LOG.info("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
-    List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myInitialCount);
+    List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myState.getInitialCount());
     // when initially initializing cache, assume all changelists are locally available
     cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
-    if (changes.size() < myInitialCount) {
+    if (changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
     return changes;
@@ -360,6 +406,13 @@ public class CommittedChangesCache {
     myTaskQueue.run(task);    
   }
 
+  private void refreshAllCachesAsync() {
+    final Collection<ChangesCacheFile> files = getAllCaches();
+    for(ChangesCacheFile file: files) {
+      refreshCacheAsync(file, null);
+    }
+  }
+
   private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
     try {
       if (cache.isEmpty()) {
@@ -438,6 +491,20 @@ public class CommittedChangesCache {
     }
     catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void updateRefreshTimer() {
+    if (myFuture != null) {
+      myFuture.cancel(false);
+      myFuture = null;
+    }
+    if (myState.isRefreshEnabled()) {
+      myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+        public void run() {
+          refreshAllCachesAsync();
+        }
+      }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
     }
   }
 }

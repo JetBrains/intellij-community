@@ -90,7 +90,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       if (!dialog.isOK()) {
         return;
       }
-      cache.setInitialCount(dialog.getInitialCount());
     }
     final Ref<VcsException> refEx = new Ref<VcsException>();
     final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
