@@ -160,20 +160,20 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
           // Register tool window
 
-          myContentManager=PeerFactory.getInstance().getContentFactory().createContentManager(new TabbedPaneContentUI(),false, myProject);
-          myContentManager.addContent(allTodosContent);
-          myContentManager.addContent(currentFileTodosContent);
-          Content content=myContentManager.getContent(mySelectedIndex);
-          content = content == null ? allTodosContent : content;
-          myContentManager.setSelectedContent(content);
-          ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
-          ToolWindow toolWindow=toolWindowManager.registerToolWindow(
+          ToolWindow toolWindow=ToolWindowManager.getInstance(myProject).registerToolWindow(
             ToolWindowId.TODO_VIEW,
-            myContentManager.getComponent(),
+            null,
             ToolWindowAnchor.BOTTOM
           );
           toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowTodo.png"));
-          new TodoContentManagerWatcher(toolWindow,myContentManager);
+          myContentManager=toolWindow.getContentManager();
+
+          myContentManager.addContent(allTodosContent);
+          myContentManager.addContent(currentFileTodosContent);
+
+          Content content=myContentManager.getContent(mySelectedIndex);
+          content = content == null ? allTodosContent : content;
+          myContentManager.setSelectedContent(content);
         }
       }
     );

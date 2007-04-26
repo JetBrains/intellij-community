@@ -40,7 +40,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       final GeneralPath shape = new GeneralPath();
       shape.moveTo(0, 0);
-      shape.lineTo(getWidth() - 8, 0);
+      shape.lineTo(getWidth() - 6, 0);
       shape.lineTo(getWidth(), getHeight());
       shape.lineTo(0, getHeight());
       shape.closePath();
@@ -64,7 +64,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     setOpaque(false);
 
     myIdLabel.setOpaque(false);
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
+    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 4));
     myIdLabel.setFont(UIManager.getFont("Label.font"));    
 
     addMouseListeners(this);
@@ -246,6 +246,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     private Content myContent;
     private BaseButtonBehavior myBehavior;
 
+    private Font myFont;
+    private Font myBoldFont;
+
+    private Dimension myPrefSize;
+
     public ContentTab(final Content content) {
       myContent = content;
       setBorder(new EmptyBorder(0, 8, 0, 8));
@@ -257,16 +262,41 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         }
 
         public void setHovered(final boolean hovered) {
-          setCursor(hovered ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+          setCursor(hovered && myTabs.size() > 1 ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
         }
       };
     }
 
+    public void updateUI() {
+      super.updateUI();
+      myFont = null;
+      myBoldFont = null;
+      myPrefSize = null;
+    }
+
+    public Dimension getPreferredSize() {
+      if (myPrefSize == null) {
+        Font old = getFont();
+        setFont(myBoldFont != null ? myBoldFont : old);
+        myPrefSize = super.getPreferredSize();
+        setFont(old);
+      }
+
+      return myPrefSize;
+    }
 
     public void update() {
       setText(myContent.getDisplayName());
-      final Font font = UIManager.getFont("Label.font");
-      setFont(isSelected() ? font.deriveFont(Font.BOLD) : font);
+
+      if (myFont == null || myBoldFont == null) {
+        myFont = UIManager.getFont("Label.font");
+        myBoldFont = myFont.deriveFont(Font.BOLD);
+      }
+
+
+      myPrefSize = null;
+
+      setFont(isSelected() ? myBoldFont : myFont);
 
       final boolean show = Boolean.TRUE.equals(myContent.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {

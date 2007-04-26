@@ -1,6 +1,7 @@
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -82,12 +85,31 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myComponent;
   }
 
-  private class MyComponent extends Wrapper implements DataProvider {
+  private class MyComponent extends Wrapper implements DataProvider, FocusListener {
     private List<DataProvider> myProviders = new ArrayList<DataProvider>();
+
+    private Runnable myCallback;
 
     public MyComponent() {
       setOpaque(false);
       setFocusable(true);
+      addFocusListener(this);
+    }
+
+    public void requestFocus(Runnable callback) {
+      myCallback = callback;
+      requestFocusInternal();
+    }
+
+    public void focusGained(final FocusEvent e) {
+      if (myCallback != null) {
+        Runnable callback = myCallback;
+        myCallback = null;
+        callback.run();
+      }
+    }
+
+    public void focusLost(final FocusEvent e) {
     }
 
     public void addProvider(final DataProvider provider) {
@@ -332,30 +354,44 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void setSelectedContent(final Content content, final boolean requestFocus) {
     if (!checkSelectionChangeShouldBeProcessed(content)) return;
 
+    final boolean focused = isSelectionHoldsFocus();
+
     final Content[] old = getSelectedContents();
 
-    boolean wasFocusable = requestFocus;
+    Runnable selection = new Runnable() {
+      public void run() {
+        for (Content each : old) {
+          removeSelectedContent(each);
+          mySelection.clear();
+        }
+
+        addSelectedContent(content);
+        requestFocus(content);
+      }
+    };
+
+    if (focused || requestFocus) {
+      myComponent.requestFocus(selection);
+    } else {
+      selection.run();
+    }
+  }
+
+  private boolean isSelectionHoldsFocus() {
+    boolean focused = false;
+    final Content[] selection = getSelectedContents();
     final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (c != null) {
-      for (Content each : old) {
+      for (Content each : selection) {
         if (SwingUtilities.isDescendingFrom(c, each.getComponent())) {
-          wasFocusable = true;
+          focused = true;
           break;
         }
       }
     }
-
-    if (wasFocusable) {
-      myComponent.requestFocusInternal();
-    }
-
-    for (Content each : old) {
-      removeSelectedContent(each);
-    }
-    mySelection.clear();
-
-    addSelectedContent(content);
+    return focused;
   }
+
 
   public void setSelectedContent(final Content content) {
     setSelectedContent(content, false);
@@ -429,8 +465,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (toSelect == null) return;
     assert myContents.contains(toSelect);
 
-    final JComponent toFocus = toSelect.getPreferredFocusableComponent();
-    toFocus.requestFocus();
+    JComponent toFocus = toSelect.getPreferredFocusableComponent();
+    toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+
+    if (toFocus != null) {
+      toFocus.requestFocus();
+    }
   }
 
   public void addDataProvider(final DataProvider provider) {

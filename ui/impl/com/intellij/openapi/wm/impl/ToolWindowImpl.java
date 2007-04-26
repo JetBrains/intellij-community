@@ -53,7 +53,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
       myContentManager.addContent(content);
-      myContentManager.setSelectedContent(content);
+      myContentManager.setSelectedContent(content, false);
     }
 
 
