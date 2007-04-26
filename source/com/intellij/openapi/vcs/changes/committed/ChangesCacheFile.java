@@ -516,6 +516,9 @@ public class ChangesCacheFile {
     openStreams();
     try {
       final List<IncomingChangeListData> list = loadIncomingChangeListData();
+      // the incoming changelist pointers are actually sorted in reverse chronological order,
+      // so we process file delete changes before changes made to deleted files before they were deleted
+      final Set<FilePath> deletedFiles = new HashSet<FilePath>();
       for(IncomingChangeListData data: list) {
         LOG.info("Checking incoming changelist " + data.changeList.getNumber());
         boolean updated = false;
@@ -536,6 +539,21 @@ public class ChangesCacheFile {
                   updated = true;
                 }
               }
+            }
+            else if (deletedFiles.contains(afterRevision.getFile())) {
+              data.accountedChanges.add(change);
+              updated = true;
+            }
+          }
+          else {
+            ContentRevision beforeRevision = change.getBeforeRevision();
+            assert beforeRevision != null;
+            deletedFiles.add(beforeRevision.getFile());
+            beforeRevision.getFile().refresh();
+            if (beforeRevision.getFile().getVirtualFile() == null) {
+              // file has already been deleted
+              data.accountedChanges.add(change);
+              updated = true;
             }
           }
         }
