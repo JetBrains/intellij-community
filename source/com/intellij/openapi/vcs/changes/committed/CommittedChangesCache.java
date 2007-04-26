@@ -367,7 +367,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         continue;
       }
       if (needRefresh) {
-        refreshCacheAsync(cache, new Runnable() {
+        refreshCacheAsync(cache, false, new Runnable() {
           public void run() {
             try {
               cache.processUpdatedFiles(updatedFiles);
@@ -426,16 +426,16 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);    
   }
 
-  private void refreshAllCachesAsync() {
+  public void refreshAllCachesAsync(final boolean initIfEmpty) {
     final Collection<ChangesCacheFile> files = getAllCaches();
     for(ChangesCacheFile file: files) {
-      refreshCacheAsync(file, null);
+      refreshCacheAsync(file, initIfEmpty, null);
     }
   }
 
-  private void refreshCacheAsync(final ChangesCacheFile cache, final Runnable postRunnable) {
+  private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty, final Runnable postRunnable) {
     try {
-      if (cache.isEmpty()) {
+      if (!initIfEmpty && cache.isEmpty()) {
         return;
       }
     }
@@ -452,7 +452,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
       public void run(final ProgressIndicator indicator) {
         try {
-          final List<CommittedChangeList> list = refreshCache(cache);
+          final List<CommittedChangeList> list;
+          if (initIfEmpty && cache.isEmpty()) {
+            list = initCache(cache);
+          }
+          else {
+            list = refreshCache(cache);
+          }
           hasNewChanges = (list.size() > 0);
         }
         catch (Exception e) {
@@ -522,7 +528,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (myState.isRefreshEnabled()) {
       myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         public void run() {
-          refreshAllCachesAsync();
+          refreshAllCachesAsync(false);
         }
       }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
     }

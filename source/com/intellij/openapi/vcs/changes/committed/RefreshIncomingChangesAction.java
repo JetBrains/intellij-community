@@ -12,7 +12,12 @@ public class RefreshIncomingChangesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     if (project != null) {
-      CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync();
+      final CommittedChangesCache cache = CommittedChangesCache.getInstance(project);
+      if (!cache.hasCachesForAllRoots() && !CacheSettingsDialog.showSettingsDialog(project)) {
+        return;
+      }
+      cache.refreshAllCachesAsync(true);
+      cache.refreshIncomingChangesAsync();
     }
   }
 

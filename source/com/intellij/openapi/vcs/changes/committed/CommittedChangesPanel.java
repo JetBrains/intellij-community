@@ -85,11 +85,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     if (!cache.hasCachesForAllRoots()) {
       if (cacheOnly) return;
-      CacheSettingsDialog dialog = new CacheSettingsDialog(myProject);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
+      if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
     }
     final Ref<VcsException> refEx = new Ref<VcsException>();
     final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();

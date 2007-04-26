@@ -51,4 +51,13 @@ public class CacheSettingsDialog extends DialogWrapper {
     CommittedChangesCache.getInstance(myProject).loadState(state);
     super.doOKAction();
   }
+
+  public static boolean showSettingsDialog(final Project project) {
+    CacheSettingsDialog dialog = new CacheSettingsDialog(project);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return false;
+    }
+    return true;
+  }
 }
