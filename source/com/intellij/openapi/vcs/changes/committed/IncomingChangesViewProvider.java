@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -30,8 +31,11 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   }
 
   public JComponent initContent() {
-    final List<CommittedChangeList> list = CommittedChangesCache.getInstance(myProject).getIncomingChanges();
-    myBrowser = new CommittedChangesBrowser(myProject, new CommittedChangesTableModel(list));
+    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+    final List<CommittedChangeList> list = cache.getIncomingChanges();
+    final CommittedChangesProvider provider = cache.getProviderForProject();
+    final CommittedChangesTableModel model = new CommittedChangesTableModel(list, provider.getColumns());
+    myBrowser = new CommittedChangesBrowser(myProject, model);
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     myBrowser.addToolBar(toolbar.getComponent());

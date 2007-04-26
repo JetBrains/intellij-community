@@ -12,15 +12,12 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommittedChangesViewManager implements ChangesViewContentProvider {
   public static CommittedChangesViewManager getInstance(Project project) {
@@ -38,21 +35,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   private void updateChangesContent() {
-    final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
-    List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
-    for(AbstractVcs vcs: vcss) {
-      if (vcs.getCommittedChangesProvider() != null) {
-        vcsWithProviders.add(vcs);
-      }
-    }
-    assert vcsWithProviders.size() > 0;
-    final CommittedChangesProvider provider;
-    if (vcsWithProviders.size() == 1) {
-      provider = vcsWithProviders.get(0).getCommittedChangesProvider();
-    }
-    else {
-      provider = new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
-    }
+    final CommittedChangesProvider provider = CommittedChangesCache.getInstance(myProject).getProviderForProject();
 
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings());

@@ -107,6 +107,26 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     updateRefreshTimer();
   }
 
+  public CommittedChangesProvider getProviderForProject() {
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
+    for(AbstractVcs vcs: vcss) {
+      if (vcs.getCommittedChangesProvider() != null) {
+        vcsWithProviders.add(vcs);
+      }
+    }
+    assert vcsWithProviders.size() > 0;
+    final CommittedChangesProvider provider;
+    if (vcsWithProviders.size() == 1) {
+      provider = vcsWithProviders.get(0).getCommittedChangesProvider();
+    }
+    else {
+      provider = new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
+    }
+    assert provider != null;
+    return provider;
+  }
+
   public void getProjectChangesAsync(final ChangeBrowserSettings settings,
                                      final int maxCount,
                                      final boolean cacheOnly,

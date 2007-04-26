@@ -147,7 +147,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           filteredChanges.add(changeList);
         }
       }
-        myBrowser.setModel(new CommittedChangesTableModel(filteredChanges, myProvider.getColumns()));
+      myBrowser.setModel(new CommittedChangesTableModel(filteredChanges, myProvider.getColumns()));
     }
   }
 
