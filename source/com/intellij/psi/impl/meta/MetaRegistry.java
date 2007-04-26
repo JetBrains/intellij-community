@@ -17,7 +17,6 @@ import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.impl.schema.NamedObjectDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -133,16 +132,16 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   }
 
-  private static final Key<SoftReference<CachedValue<PsiMetaDataBase>>> META_DATA_KEY = Key.create("META DATA KEY");
+  private static final Key<CachedValue<PsiMetaDataBase>> META_DATA_KEY = Key.create("META DATA KEY");
 
   public static void bindDataToElement(final PsiElement element, final PsiMetaDataBase data){
-    SoftReference<CachedValue<PsiMetaDataBase>> value = new SoftReference<CachedValue<PsiMetaDataBase>>(
+    CachedValue<PsiMetaDataBase> value =
       element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaDataBase>() {
       public CachedValueProvider.Result<PsiMetaDataBase> compute() {
         data.init(element);
         return new Result<PsiMetaDataBase>(data, data.getDependences());
       }
-    }));
+    });
     element.putUserData(META_DATA_KEY, value);
   }
 
@@ -151,11 +150,10 @@ public class MetaRegistry extends MetaDataRegistrar {
     return base instanceof PsiMetaData ? (PsiMetaData)base : null;
   }
 
-  private static UserDataCache<SoftReference<CachedValue<PsiMetaDataBase>>, PsiElement, Object> ourCachedMetaCache =
-    new UserDataCache<SoftReference<CachedValue<PsiMetaDataBase>>, PsiElement, Object>() {
-
-      protected SoftReference<CachedValue<PsiMetaDataBase>> compute(final PsiElement element, Object p) {
-        final CachedValue<PsiMetaDataBase> cachedValue = element.getManager().getCachedValuesManager()
+  private static UserDataCache<CachedValue<PsiMetaDataBase>, PsiElement, Object> ourCachedMetaCache =
+    new UserDataCache<CachedValue<PsiMetaDataBase>, PsiElement, Object>() {
+      protected CachedValue<PsiMetaDataBase> compute(final PsiElement element, Object p) {
+        return element.getManager().getCachedValuesManager()
         .createCachedValue(new CachedValueProvider<PsiMetaDataBase>() {
           public Result<PsiMetaDataBase> compute() {
             try {
@@ -176,17 +174,13 @@ public class MetaRegistry extends MetaDataRegistrar {
             return new Result<PsiMetaDataBase>(null, element);
           }
         }, false);
-        return new SoftReference<CachedValue<PsiMetaDataBase>>(cachedValue);
       }
     };
   
   @Nullable
   public static PsiMetaDataBase getMetaBase(final PsiElement element) {
     ProgressManager.getInstance().checkCanceled();
-    final SoftReference<CachedValue<PsiMetaDataBase>> ref = ourCachedMetaCache.get(META_DATA_KEY, element, null);
-    final CachedValue<PsiMetaDataBase> unref = ref.get();
-    if (unref == null) return null;
-    return unref.getValue();
+    return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
   }
 
   public static <T extends PsiMetaDataBase> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
