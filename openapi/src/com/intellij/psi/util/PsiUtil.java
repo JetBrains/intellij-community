@@ -1234,7 +1234,7 @@ public final class PsiUtil {
     if (originalFile == null) return psiElement;
     final TextRange range = psiElement.getTextRange();
     final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    return PsiTreeUtil.getParentOfType(element, elementClass);
+    return PsiTreeUtil.getParentOfType(element, elementClass, false);
   }
 
 }

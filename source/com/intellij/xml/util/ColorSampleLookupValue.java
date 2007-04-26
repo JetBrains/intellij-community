@@ -1,18 +1,18 @@
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
+import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -233,6 +233,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   private String myName;
   private String myValue;
   private Color myColor;
+  private static ArrayList<String> ourSystemColors;
 
   public ColorSampleLookupValue(String name, String value, boolean isStandard) {
     myName = name;
@@ -249,6 +250,21 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
       item.setLookupString(myValue);
     }
     return true;
+  }
+
+  public static boolean isSystemColorName(@NotNull @NonNls final String s) {
+    if (ourSystemColors == null) {
+      ourSystemColors = new ArrayList<String>();
+      StringTokenizer tokenizer = new StringTokenizer(systemColorsString, "\n");
+
+      while(tokenizer.hasMoreTokens()) {
+        String name = tokenizer.nextToken();
+        ourSystemColors.add(name.toLowerCase());
+        tokenizer.nextToken();
+      }
+    }
+
+    return ourSystemColors.contains(s);
   }
 
   public static Object[] getColors() {
@@ -315,6 +331,10 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   public boolean isBold() {
     return false;
   }
+
+  public String getName() {
+    return myName;
+  }                 
 
   public int getPriority() {
     return Character.isLowerCase(myName.charAt(0)) ? HIGHER:NORMAL;
