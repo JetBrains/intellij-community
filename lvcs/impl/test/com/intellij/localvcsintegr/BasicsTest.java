@@ -10,6 +10,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ProfilingUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,18 +50,23 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testUpdatingOnFileTypesChange() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.xxx");
+    try {
+      VirtualFile f = root.createChildData(null, "file.xxx");
 
-    assertFalse(hasVcsEntry(f));
+      assertFalse(hasVcsEntry(f));
 
-    FileTypeManager tm = FileTypeManager.getInstance();
-    tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
+      FileTypeManager tm = FileTypeManager.getInstance();
+      tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
 
-    assertTrue(hasVcsEntry(f));
+      assertTrue(hasVcsEntry(f));
 
-    tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
+      tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
 
-    assertFalse(hasVcsEntry(f));
+      assertFalse(hasVcsEntry(f));
+    }
+    catch (Throwable e) {
+      ProfilingUtil.captureMemorySnapshot("BasicsTest.testUpdatingOnFileTypesChange");
+    }
   }
 
   public void testPuttingLabel() throws IOException {
