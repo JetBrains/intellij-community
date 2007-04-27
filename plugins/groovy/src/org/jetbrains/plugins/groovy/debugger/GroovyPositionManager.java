@@ -46,7 +46,8 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLoader;
-import org.jetbrains.plugins.groovy.caches.module.GroovyProjectCachesManager;
+import org.jetbrains.plugins.groovy.caches.module.GroovyCachesManagerImpl;
+import org.jetbrains.plugins.groovy.caches.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -181,14 +182,8 @@ public class GroovyPositionManager implements PositionManager {
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
 
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      GroovyProjectCachesManager manager = GroovyProjectCachesManager.getInstance(module.getProject());
-      GrTypeDefinition typeDefinition = manager.getModuleFilesCache(module).getClassByName(qName);
-      if (typeDefinition != null && searchScope.contains(typeDefinition.getContainingFile().getVirtualFile())) {
-        return typeDefinition.getContainingFile();
-      }
-    }
+    GrTypeDefinition clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
+    if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
     int dotIndex = qName.lastIndexOf(".");
