@@ -68,7 +68,8 @@ public class CopyHandler {
 
   private static boolean canCopyFiles(PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element))) {
+      if (!(element instanceof PsiFile) ||
+          element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element)) {
         return false;
       }
     }
@@ -259,7 +260,7 @@ public class CopyHandler {
               final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
               final PsiJavaFile createdFile = (PsiJavaFile)targetDirectory.copyFileFrom(fileName, aClass.getContainingFile());
               final PsiClass[] classes = createdFile.getClasses();
-              assert classes.length > 0;
+              assert classes.length > 0 : createdFile.getText();
               createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
               PsiClass newClass = (PsiClass) createdFile.add(classCopy);
               ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
@@ -297,10 +298,12 @@ public class CopyHandler {
     if (ToolWindowId.COMMANDER.equals(id)) {
       Commander commander = Commander.getInstance(project);
       CommanderPanel panel = selectInActivePanel ? commander.getActivePanel() : commander.getInactivePanel();
-      panel.getBuilder().selectElement(newElement,PsiUtil.getVirtualFile(newElement));
-    } else if (ToolWindowId.PROJECT_VIEW.equals(id)) {
+      panel.getBuilder().selectElement(newElement, PsiUtil.getVirtualFile(newElement));
+    }
+    else if (ToolWindowId.PROJECT_VIEW.equals(id)) {
       ProjectView.getInstance(project).selectPsiElement(newElement, true);
-    } else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {
+    }
+    else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {
       VirtualFile virtualFile = newElement.getContainingFile().getVirtualFile();
       FileEditor editor = FileEditorManager.getInstance(newElement.getProject()).getSelectedEditor(virtualFile);
       StructureViewFactoryEx.getInstance(project).getStructureViewWrapper().selectCurrentElement(editor, true);
