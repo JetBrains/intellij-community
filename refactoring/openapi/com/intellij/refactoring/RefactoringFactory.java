@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -43,7 +44,7 @@ public abstract class RefactoringFactory {
   /**
    * Creates move destination for a specified package that moves all items to a specifed source folder
    */
-  public abstract MoveDestination createSourceRootMoveDestination(String targetPackageQualifiedName, VirtualFile sourceRoot);
+  public abstract MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot);
 
   public abstract MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination);
 

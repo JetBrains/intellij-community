@@ -62,7 +62,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                                                     UsageViewUtil.getLongName(firstElement)));
     }
     else if (elementsToMove.length > 1) {
-      myNameLabel.setText((elementsToMove[0] instanceof PsiClass)
+      myNameLabel.setText(elementsToMove[0] instanceof PsiClass
                           ? RefactoringBundle.message("move.specified.classes")
                           : RefactoringBundle.message("move.specified.packages"));
     }
@@ -85,11 +85,11 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private JPanel myRootPanel;
   private JLabel myNameLabel;
 
-  public boolean isSearchInNonJavaFiles() {
+  private boolean isSearchInNonJavaFiles() {
     return mySearchForTextOccurrencesCheckBox.isSelected();
   }
 
-  public boolean isSearchInComments() {
+  private boolean isSearchInComments() {
     return mySearchInCommentsAndStringsCheckBox.isSelected();
   }
 
@@ -100,9 +100,8 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
 
   protected void doOKAction() {
     final String path = myDestDirectoryField.getText();
-    PsiDirectory directory;
     final Project project = myDirectory.getProject();
-    directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+    PsiDirectory directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
       public PsiDirectory compute() {
         try {
           return DirectoryUtil.mkdirs(PsiManager.getInstance(project), path);
@@ -134,8 +133,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
 
-    final VirtualFile sourceRoot =
-        ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
+    if (sourceRoot == null) {
+      Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
+                               RefactoringBundle.message("cannot.move"));
+      return;
+    }
     final RefactoringFactory factory = RefactoringFactory.getInstance(project);
     final MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
 
