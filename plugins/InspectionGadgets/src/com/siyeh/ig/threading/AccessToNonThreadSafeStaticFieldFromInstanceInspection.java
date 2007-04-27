@@ -92,16 +92,17 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
             super.visitReferenceExpression(expression);
             final PsiModifierListOwner parent =
                     PsiTreeUtil.getParentOfType(expression,
-                            PsiField.class, PsiMethod.class);
+                            PsiField.class, PsiMethod.class,
+                            PsiClassInitializer.class);
             if (parent == null) {
                 return;
             }
             if (parent.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if (parent instanceof PsiMethod) {
-                final PsiMethod method = (PsiMethod) parent;
-                if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+            if (parent instanceof PsiMethod ||
+                    parent instanceof PsiClassInitializer) {
+                if (parent.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                     return;
                 }
                 final PsiSynchronizedStatement synchronizedStatement =
@@ -112,10 +113,10 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                 }
             }
             final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier == null) {
+            if (qualifier != null) {
                 return;
             }
-            final PsiType type = qualifier.getType();
+            final PsiType type = expression.getType();
             if (type == null) {
                 return;
             }
@@ -126,12 +127,15 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                     break;
                 }
             }
-            final PsiElement referenceParent = expression.getParent();
-            if (referenceParent instanceof PsiMethodCallExpression) {
-                registerError(referenceParent, parent, typeString);
-            } else {
-                registerError(expression, parent, typeString);
+            final PsiElement target = expression.resolve();
+            if (!(target instanceof PsiField)) {
+                return;
             }
+            final PsiField field = (PsiField) target;
+            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            registerError(expression, parent, typeString);
         }
     }
 
