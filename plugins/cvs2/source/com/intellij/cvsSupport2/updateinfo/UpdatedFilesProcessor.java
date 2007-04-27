@@ -36,35 +36,40 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.FileMessage;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 
 public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor");
 
+  private Project myProject;
   private final UpdatedFiles myUpdatedFiles;
 
-  public UpdatedFilesProcessor(UpdatedFiles updatedFiles) {
+  public UpdatedFilesProcessor(Project project, UpdatedFiles updatedFiles) {
+    myProject = project;
     myUpdatedFiles = updatedFiles;
   }
 
   public void addFileMessage(FileMessage message) {
-    processFileMessage(message);
-  }
-
-  public void processFileMessage(FileMessage message) {
     String path = message.getFileAbsolutePath();
     VirtualFile virtualFile = getVirtualFileFor(path);
     FileGroup collection = getCollectionFor(message.getType(), virtualFile);
     LOG.assertTrue(collection != null, String.valueOf(message.getType()));
-    collection.add(path);
-
+    final CvsRevisionNumber revision = message.getRevision();
+    if (revision != null) {
+      collection.add(path, CvsVcs2.getInstance(myProject), revision);
+    }
+    else {
+      collection.add(path);
+    }
   }
 
   private FileGroup getCollectionFor(int messageType, VirtualFile vFile) {

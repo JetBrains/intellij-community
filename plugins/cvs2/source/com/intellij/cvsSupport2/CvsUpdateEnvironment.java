@@ -85,7 +85,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
                                                                                                    cvsConfiguration.RESET_STICKY);
       final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
                                                                           updateSettings, myProject, updatedFiles);
-      handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));
+      handler.addCvsListener(new UpdatedFilesProcessor(myProject, updatedFiles));
       CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
       cvsOperationExecutor.setShowErrors(false);
       cvsOperationExecutor.performActionSync(handler, new CvsOperationExecutorCallback() {

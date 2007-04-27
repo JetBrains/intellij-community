@@ -1,14 +1,17 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsMessages;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.update.UpdateFileInfo;
 import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -38,6 +41,7 @@ public class FileMessage {
 
   private int myType;
   private String myFileAbsolutePath = "";
+  private CvsRevisionNumber myRevision;
   @NonNls public static final String CONFLICT = "C";
   @NonNls private static final String U_COMMIT_OPERATION_TYPE = "U";
   @NonNls private static final String P_COMMIT_OPERATION_TYPE = "P";
@@ -50,18 +54,25 @@ public class FileMessage {
   public FileMessage(UpdateFileInfo info,
                      UpdatedFilesManager mergedFilesCollector,
                      UpdatedFilesManager updatedFilesManager) {
+    final Entry entry = info.getEntry();
     myType = getCommitOperationType(info.getType(),
-                                    info.getFile(),
-                                    info.getEntry(),
+                                    info.getFile(), entry,
                                     mergedFilesCollector,
                                     updatedFilesManager);
     myFileAbsolutePath = info.getFile().getAbsolutePath();
+    if (entry != null) {
+      myRevision = new CvsRevisionNumber(entry.getRevision());
+    }
   }
 
   public FileMessage(UpdatedFileInfo info,
                      UpdatedFilesManager updatedFilesManager) {
-    myType = getUpdateOperationType(info.getType(), info.getFile(), updatedFilesManager, info.getEntry());
+    final Entry entry = info.getEntry();
+    myType = getUpdateOperationType(info.getType(), info.getFile(), updatedFilesManager, entry);
     myFileAbsolutePath = info.getFile().getAbsolutePath();
+    if (entry != null) {
+      myRevision = new CvsRevisionNumber(entry.getRevision());
+    }
   }
 
   public void showMessageIn(ProgressIndicator progress) {
@@ -71,29 +82,29 @@ public class FileMessage {
   private String getMyActionName() {
     switch (myType) {
       case SCHEDULING_FOR_ADDING:
-        return com.intellij.CvsBundle.message("current.action.name.scheduling.for.adding");
+        return CvsBundle.message("current.action.name.scheduling.for.adding");
       case SCHEDULING_FOR_REMOVING:
-        return com.intellij.CvsBundle.message("current.action.name.scheduling.for.removing");
+        return CvsBundle.message("current.action.name.scheduling.for.removing");
       case UPDATING:
-        return com.intellij.CvsBundle.message("current.action.name.updating");
+        return CvsBundle.message("current.action.name.updating");
       case UPDATING2:
-        return com.intellij.CvsBundle.message("current.action.name.updating");
+        return CvsBundle.message("current.action.name.updating");
       case IMPORTING:
-        return com.intellij.CvsBundle.message("current.action.name.importing");
+        return CvsBundle.message("current.action.name.importing");
       case ADDING:
-        return com.intellij.CvsBundle.message("current.action.name.adding");
+        return CvsBundle.message("current.action.name.adding");
       case REMOVING:
-        return com.intellij.CvsBundle.message("current.action.name.removing");
+        return CvsBundle.message("current.action.name.removing");
       case SAVING:
-        return com.intellij.CvsBundle.message("current.action.name.saving");
+        return CvsBundle.message("current.action.name.saving");
       case SENDING:
-        return com.intellij.CvsBundle.message("current.action.name.sending");
+        return CvsBundle.message("current.action.name.sending");
       case MODIFIED:
-        return com.intellij.CvsBundle.message("current.action.name.modified");
+        return CvsBundle.message("current.action.name.modified");
 
     }
 
-    return com.intellij.CvsBundle.message("current.action.name.processing");
+    return CvsBundle.message("current.action.name.processing");
 
   }
 
@@ -105,9 +116,14 @@ public class FileMessage {
     return myType;
   }
 
-  private int getUpdateOperationType(UpdatedFileInfo.UpdatedType type,
-                                     File file,
-                                     UpdatedFilesManager updatedFilesManager, Entry entry) {
+  @Nullable
+  public CvsRevisionNumber getRevision() {
+    return myRevision;
+  }
+
+  private static int getUpdateOperationType(UpdatedFileInfo.UpdatedType type,
+                                            File file,
+                                            UpdatedFilesManager updatedFilesManager, Entry entry) {
     if (type == UpdatedFileInfo.UpdatedType.REMOVED) {
       return REMOVED_FROM_REPOSITORY;
     }
