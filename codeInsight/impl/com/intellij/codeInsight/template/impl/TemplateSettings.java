@@ -174,7 +174,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     myDefaultShortcutChar = defaultShortcutChar;
   }
 
-  public TemplateImpl getTemplate(String key) {
+  public TemplateImpl getTemplate(@NonNls String key) {
     return (TemplateImpl) myTemplates.get(key);
   }
 
@@ -281,7 +281,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     readTemplateFile(JDOMUtil.loadDocument(file), defGroupName, false);
   }
 
-  private void readTemplateFile(Document document, String defGroupName, boolean isDefault) throws InvalidDataException {
+  public void readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault) throws InvalidDataException {
     if (document == null) {
       throw new InvalidDataException();
     }
