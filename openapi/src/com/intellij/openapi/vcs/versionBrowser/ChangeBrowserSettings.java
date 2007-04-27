@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -163,13 +160,21 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
       }
     }
 
+    if (USE_USER_FILTER) {
+      result.add(new Filter() {
+        public boolean accepts(CommittedChangeList change) {
+          return Comparing.equal(change.getCommitterName(), USER, false);
+        }
+      });
+    }
+
     return result;
   }
 
-  private void addDateFilter(final boolean useFilter,
-                             final Date date,
-                             final ArrayList<Filter> result,
-                             final boolean before) {
+  private static void addDateFilter(final boolean useFilter,
+                                    final Date date,
+                                    final ArrayList<Filter> result,
+                                    final boolean before) {
     if (useFilter) {
       result.add(new Filter() {
         public boolean accepts(CommittedChangeList change) {
@@ -214,7 +219,8 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public boolean isAnyFilterSpecified() {
-    return USE_CHANGE_AFTER_FILTER || USE_CHANGE_BEFORE_FILTER || USE_DATE_AFTER_FILTER || USE_DATE_BEFORE_FILTER;
+    return USE_CHANGE_AFTER_FILTER || USE_CHANGE_BEFORE_FILTER || USE_DATE_AFTER_FILTER || USE_DATE_BEFORE_FILTER ||
+           isNonDateFilterSpecified();
   }
 
   public boolean isNonDateFilterSpecified() {
