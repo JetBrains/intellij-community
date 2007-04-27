@@ -62,8 +62,8 @@ public class HighlightUtil {
   private static final Set<String> ourConstructorNotAllowedModifiers;
 
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
-  private static final @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
-  private static final @NonNls String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
+  @NonNls private static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+  @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private HighlightUtil() {
@@ -1891,7 +1891,6 @@ public class HighlightUtil {
       }
       if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
         highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref);
-        if (highlightInfo != null) return highlightInfo;
       }
     }
     return highlightInfo;
@@ -1974,7 +1973,7 @@ public class HighlightUtil {
     }
   }
 
-  public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
+  public static HighlightInfo convertToHighlightInfo(@NotNull Annotation annotation) {
     TextAttributes attributes = annotation.getEnforcedTextAttributes();
     if (attributes == null) {
       attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
@@ -1987,8 +1986,7 @@ public class HighlightUtil {
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction
-          .registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.options, quickFixInfo.displayName);
+        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.options, quickFixInfo.displayName);
       }
     }
     return info;
