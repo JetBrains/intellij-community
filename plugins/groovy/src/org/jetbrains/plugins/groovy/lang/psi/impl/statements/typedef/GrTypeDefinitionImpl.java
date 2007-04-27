@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.util.IncorrectOperationException;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GrJavaClass;
 import org.jetbrains.plugins.groovy.Icons;
 
 import javax.swing.*;
@@ -99,15 +101,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return result;
   }
 
+  public PsiClass getJavaClass() {
+    return new GrJavaClass(getParent(), this);
+  }
+
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("NIY");
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
-    if (!processor.execute(this, substitutor)) return false;
+/*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!processor.execute(typeParameter, substitutor)) return false;
+      if (!process(processor, typeParameter)) return false;
     }
+*/
 
     return true;
   }

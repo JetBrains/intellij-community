@@ -22,13 +22,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.navigation.NavigationItem;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrNamedElement, GrStatement {
+public interface GrTypeDefinition extends GrNamedElement, GrStatement, NavigationItem {
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
@@ -41,4 +42,8 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement {
 
   @NotNull
   PsiElement getNameIdentifier();
+
+  //Allows to retrive a lightweight copy of java for this groovy class
+  //Most of java psi is not implemented
+  PsiClass getJavaClass();
 }
