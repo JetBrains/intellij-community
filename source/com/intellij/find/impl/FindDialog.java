@@ -54,7 +54,7 @@ final class FindDialog extends DialogWrapper {
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox useFileFilter;
   private ComboBox myFileFilter;
-  protected JCheckBox myCbToSkipResultsWhenOneUsage;
+  private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
 
   private Action myFindAllAction;

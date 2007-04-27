@@ -87,7 +87,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
   }
 
-  protected ActionListener createScopeChooserListener() {
+  private ActionListener createScopeChooserListener() {
     return new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final String selection = getSelectedScopeName();
@@ -110,7 +110,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     };
   }
 
-  protected void rebuildModel() {
+  private void rebuildModel() {
     getComboBox().setModel(createModel());
   }
 
@@ -145,7 +145,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     return model;
   }
 
-  protected void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
+  private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectScope(myProject)));
     if (mySuggestSearchInLibs) {
       model.addElement(new ScopeDescriptor(GlobalSearchScope.allScope(myProject)));
@@ -153,10 +153,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectProductionScope(myProject, true)));
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject, true)));
 
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(getProject());
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
     if (selectedTextEditor != null) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(selectedTextEditor.getDocument());
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(selectedTextEditor.getDocument());
       if (psiFile != null) {
         final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
         if (module != null) {
@@ -182,65 +182,63 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       model.addElement(new ModifiedFilesScopeDescriptor());
     }
 
-    UsageView selectedUsageView = UsageViewManager.getInstance(getProject()).getSelectedUsageView();
+    UsageView selectedUsageView = UsageViewManager.getInstance(myProject).getSelectedUsageView();
 
     if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
       final Set<Usage> usages = selectedUsageView.getUsages();
-      if (usages != null) {
-        final List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
+      final List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
 
-        if (myPrevSearchFiles) {
-          final Set<VirtualFile> files = new HashSet<VirtualFile>();
-          for (Usage usage : usages) {
-            if (usage instanceof PsiElementUsage) {
-              PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-              if (psiElement != null && psiElement.isValid()) {
-                PsiFile psiFile = psiElement.getContainingFile();
-                if (psiFile != null) {
-                  VirtualFile file = psiFile.getVirtualFile();
-                  if (file != null) files.add(file);
-                }
+      if (myPrevSearchFiles) {
+        final Set<VirtualFile> files = new HashSet<VirtualFile>();
+        for (Usage usage : usages) {
+          if (usage instanceof PsiElementUsage) {
+            PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+            if (psiElement != null && psiElement.isValid()) {
+              PsiFile psiFile = psiElement.getContainingFile();
+              if (psiFile != null) {
+                VirtualFile file = psiFile.getVirtualFile();
+                if (file != null) files.add(file);
               }
             }
-          }
-          if (!files.isEmpty()) {
-            model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
-              public String getDisplayName() {
-                return IdeBundle.message("scope.files.in.previous.search.result");
-              }
-
-              public boolean contains(VirtualFile file) {
-                return files.contains(file);
-              }
-
-              public int compare(VirtualFile file1, VirtualFile file2) {
-                return 0;
-              }
-
-              public boolean isSearchInModuleContent(Module aModule) {
-                return true;
-              }
-
-              public boolean isSearchInLibraries() {
-                return true;
-              }
-            }));
           }
         }
-        else {
-          for (Usage usage : usages) {
-            if (usage instanceof PsiElementUsage) {
-              final PsiElement element = ((PsiElementUsage)usage).getElement();
-              if (element != null && element.isValid()) {
-                results.add(element);
-              }
+        if (!files.isEmpty()) {
+          model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
+            public String getDisplayName() {
+              return IdeBundle.message("scope.files.in.previous.search.result");
+            }
+
+            public boolean contains(VirtualFile file) {
+              return files.contains(file);
+            }
+
+            public int compare(VirtualFile file1, VirtualFile file2) {
+              return 0;
+            }
+
+            public boolean isSearchInModuleContent(Module aModule) {
+              return true;
+            }
+
+            public boolean isSearchInLibraries() {
+              return true;
+            }
+          }));
+        }
+      }
+      else {
+        for (Usage usage : usages) {
+          if (usage instanceof PsiElementUsage) {
+            final PsiElement element = ((PsiElementUsage)usage).getElement();
+            if (element != null && element.isValid()) {
+              results.add(element);
             }
           }
+        }
 
-          if (!results.isEmpty()) {
-            model.addElement(new ScopeDescriptor(new LocalSearchScope(results.toArray(new PsiElement[results.size()]),
-                                                                      IdeBundle.message("scope.previous.search.results"))));
-          }
+        if (!results.isEmpty()) {
+          model.addElement(new ScopeDescriptor(new LocalSearchScope(results.toArray(new PsiElement[results.size()]),
+                                                                    IdeBundle.message("scope.previous.search.results"))));
         }
       }
     }
@@ -297,7 +295,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     @Nullable
     public SearchScope getScope() {
       if (myCachedScope == null) {
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
 
         chooser.showDialog();
 
@@ -336,7 +334,4 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     return ((ScopeDescriptor)combo.getSelectedItem()).getDisplay();
   }
 
-  public Project getProject() {
-    return myProject;
-  }
 }

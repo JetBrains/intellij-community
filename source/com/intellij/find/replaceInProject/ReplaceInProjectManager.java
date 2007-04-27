@@ -83,19 +83,15 @@ public class ReplaceInProjectManager {
         findModel.setStringToFind(s);
       }
     }
-    if (!findManager.showFindDialog(findModel)){
-      return;
-    }
+    if (!findManager.showFindDialog(findModel)) return;
     final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    if (!findModel.isProjectScope() && psiDirectory == null && findModel.getModuleName()==null){
+    if (!findModel.isProjectScope() && psiDirectory == null && findModel.getModuleName()==null && findModel.getCustomScope() == null){
       return;
     }
 
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
 
-    if (manager == null) {
-      return;
-    }
+    if (manager == null) return;
     findManager.getFindInProjectModel().copyFrom(findModel);
     final FindModel findModelCopy = (FindModel)findModel.clone();
 
