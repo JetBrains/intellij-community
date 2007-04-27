@@ -143,4 +143,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public SvnChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
     return new SvnChangeList(SvnVcs.getInstance(myProject), (SvnRepositoryLocation) location, stream);
   }
+
+  public boolean isMaxCountSupported() {
+    return true;
+  }
 }
