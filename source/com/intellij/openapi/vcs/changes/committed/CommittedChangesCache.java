@@ -368,6 +368,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
         public void run(final ProgressIndicator indicator) {
           try {
+            if (cache.isEmpty()) {
+              pendingUpdateProcessed();
+              return;
+            }
             LOG.info("Processing updated files in " + cache.getLocation());
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles);
             if (needRefresh) {
@@ -375,10 +379,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
             else {
-              myPendingUpdateCount--;
-              if (myPendingUpdateCount == 0) {
-                notifyIncomingChangesUpdated();
-              }
+              pendingUpdateProcessed();
             }
           }
           catch (IOException e) {
@@ -387,6 +388,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       };
       myTaskQueue.run(task);
+    }
+  }
+
+  private void pendingUpdateProcessed() {
+    myPendingUpdateCount--;
+    if (myPendingUpdateCount == 0) {
+      notifyIncomingChangesUpdated();
     }
   }
 
@@ -406,10 +414,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           if (result) {
             cache.refreshIncomingChanges();
           }
-          myPendingUpdateCount--;
-          if (myPendingUpdateCount == 0) {
-            notifyIncomingChangesUpdated();
-          }
+          pendingUpdateProcessed();
         }
         catch (IOException e) {
           LOG.error(e);
