@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -102,6 +103,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor, Disposable parentDisposable) {
+    return HEADLESS_WINDOW;
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
+    return HEADLESS_WINDOW;
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
+                                       final Disposable parentDisposable) {
     return HEADLESS_WINDOW;
   }
 

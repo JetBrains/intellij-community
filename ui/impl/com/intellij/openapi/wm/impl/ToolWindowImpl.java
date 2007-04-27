@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.Content;
@@ -39,7 +40,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private InternalDecorator myDecorator;
 
-  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, @Nullable final JComponent component) {
+  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
     myChangeSupport = new PropertyChangeSupport(this);
     myId = id;
@@ -48,13 +49,14 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
     myContentUI = new ToolWindowContentUi(this);
     myContentManager =
-      contentFactory.createContentManager(myContentUI, false, toolWindowManager.getProject());
+      contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content, false);
     }
+
 
 
     myComponent = myContentManager.getComponent();
@@ -227,14 +229,26 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   }
 
-  public void invokePopup(final Component comp, final int x, final int y) {
+  public void fireHidden() {
     if (myDecorator != null) {
-      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myDecorator.createPopupGroup());
-      popupMenu.getComponent().show(comp, x, y);
+      myDecorator.fireHidden();
     }
   }
+
+  public void fireHiddenSide() {
+    if (myDecorator != null) {
+      myDecorator.fireHiddenSide();
+    }
+  }
+
 
   public ToolWindowManagerImpl getToolWindowManager() {
     return myToolWindowManager;
   }
+
+  @Nullable
+  public ActionGroup getPopupGroup() {
+    return myDecorator != null ? myDecorator.createPopupGroup() : null;
+  }
+
 }

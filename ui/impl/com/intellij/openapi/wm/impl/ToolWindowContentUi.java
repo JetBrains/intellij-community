@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
@@ -212,16 +214,57 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myLastPoint[0] = e.getPoint();
         SwingUtilities.convertPointToScreen(myLastPoint[0], c);
         if (!e.isPopupTrigger()) {
-          myWindow.fireActivated();
+          if (e.getButton() == MouseEvent.BUTTON2) {
+            processHide(e);
+          } else {
+            myWindow.fireActivated();
+          }
         }
       }
     });
 
     c.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        myWindow.invokePopup(comp, x, y);
+        DefaultActionGroup group = new DefaultActionGroup();
+
+        if (comp instanceof ContentTab) {
+          final Content content = ((ContentTab)comp).myContent;
+          group.add(new TabbedContentAction.CloseAction(content));
+          if (myTabs.size() > 1) {
+            group.add(new TabbedContentAction.CloseAllAction(myManager));
+            group.add(new TabbedContentAction.CloseAllButThisAction(content));
+          }
+          group.addSeparator();
+          group.add(new TabbedContentAction.MyNextTabAction(myManager));
+          group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
+          group.addSeparator();
+        }
+
+        final ActionGroup windowPopup = myWindow.getPopupGroup();
+        if (windowPopup != null) {
+          group.addAll(windowPopup);
+        }
+
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+        popupMenu.getComponent().show(comp, x, y);
       }
     });
+  }
+
+  private void processHide(final MouseEvent e) {
+    final Component c = e.getComponent();
+    if (c instanceof ContentTab) {
+      final ContentTab tab = (ContentTab)c;
+      if (myManager.canCloseContents() && tab.myContent.isCloseable()) {
+        myManager.removeContent(tab.myContent);
+      }
+    } else {
+      if (e.isControlDown()) {
+        myWindow.fireHiddenSide();
+      } else {
+        myWindow.fireHidden();
+      }
+    }
   }
 
   private class BaseLabel extends JLabel {

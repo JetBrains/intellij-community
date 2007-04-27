@@ -117,8 +117,7 @@ public class RunContentManagerImpl implements RunContentManager {
       return;
     }
 
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, null,
-                                                                       ToolWindowAnchor.BOTTOM);
+    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM);
 
     final ContentManager contentManager = toolWindow.getContentManager();
     class MyDataProvider implements DataProvider {

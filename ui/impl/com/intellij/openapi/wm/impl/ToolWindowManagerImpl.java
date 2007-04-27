@@ -503,8 +503,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
-                                       @Nullable final JComponent component,
+                                       @NotNull final JComponent component,
                                        @NotNull final ToolWindowAnchor anchor) {
+    return registerToolWindow(id, component, anchor, false);
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
+    return registerToolWindow(id, null, anchor, canCloseContent);
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
+                                       final Disposable parentDisposable) {
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, canCloseContent));
+  }
+
+  private ToolWindow registerToolWindow(@NotNull final String id,
+                                       @Nullable final JComponent component,
+                                       @NotNull final ToolWindowAnchor anchor, boolean canCloseContent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -521,7 +536,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Create decorator
 
-    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, component);
+    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
     final InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
@@ -561,7 +576,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @Nullable JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
                                        Disposable parentDisposable) {
-    final ToolWindow window = registerToolWindow(id, component, anchor);
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor));
+  }
+
+  private ToolWindow registerDisposable(final String id, final Disposable parentDisposable, final ToolWindow window) {
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         unregisterToolWindow(id);

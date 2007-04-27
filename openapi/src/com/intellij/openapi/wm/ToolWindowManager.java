@@ -41,9 +41,13 @@ public abstract class ToolWindowManager {
    * of the parameters is <code>null</code>.
    * @return tool window
    */
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@Nullable JComponent component,@NotNull ToolWindowAnchor anchor);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor);
 
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@Nullable JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
+
+  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor);
+
+  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
 
   /**
    * @exception java.lang.IllegalArgumentException if tool window with specified isn't

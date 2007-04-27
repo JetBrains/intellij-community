@@ -162,7 +162,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
           ToolWindow toolWindow=ToolWindowManager.getInstance(myProject).registerToolWindow(
             ToolWindowId.TODO_VIEW,
-            null,
+            false,
             ToolWindowAnchor.BOTTOM
           );
           toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowTodo.png"));

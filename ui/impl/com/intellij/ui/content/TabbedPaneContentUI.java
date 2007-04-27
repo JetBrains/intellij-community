@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
@@ -99,149 +100,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     return myManager.getContent(selectedComponent);
   }
 
-  /**
-   * Removes specified content.
-   */
-  private class CloseAction extends AnAction {
-    private Content myContent;
 
-    public CloseAction(Content content) {
-      myContent = content;
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myManager.removeContent(myContent);
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myContent.isCloseable());
-      presentation.setVisible(myManager.canCloseContents() && myContent.isCloseable());
-      presentation.setText(myManager.getCloseActionName());
-    }
-  }
-
-  /**
-   * Removes all contents.
-   */
-  private class CloseAllAction extends AnAction {
-    public CloseAllAction() {
-      super(UIBundle.message("tabbed.pane.close.all.action.name"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Content[] contents = myManager.getContents();
-      for (Content content : contents) {
-        if (content.isCloseable()) {
-          myManager.removeContent(content);
-        }
-      }
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myManager.canCloseAllContents());
-      presentation.setVisible(myManager.canCloseAllContents());
-    }
-  }
-
-  /**
-   * Removes all contents but specified.
-   */
-  private class CloseAllButThisAction extends AnAction {
-    private Content myContent;
-
-    public CloseAllButThisAction(Content content) {
-      super(UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
-      myContent = content;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Content[] contents = myManager.getContents();
-      for (Content content : contents) {
-        if (myContent != content && content.isCloseable()) {
-          myManager.removeContent(content);
-        }
-      }
-      myManager.setSelectedContent(myContent);
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setText(myManager.getCloseAllButThisActionName());
-      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myManager.getContentCount() > 1);
-      presentation.setVisible(myManager.canCloseContents() && hasCloseableContents());
-    }
-
-    private boolean hasCloseableContents() {
-      Content[] contents = myManager.getContents();
-      for (Content content : contents) {
-        if (myContent != content && content.isCloseable()) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-
-  /**
-   * Pins tab that corresponds to the content
-   */
-  private static class MyPinTabAction extends ToggleAction {
-    private Content myContent;
-
-    public MyPinTabAction(Content content) {
-      myContent = content;
-      Presentation presentation = getTemplatePresentation();
-      presentation.setText(UIBundle.message("tabbed.pane.pin.tab.action.name"));
-      presentation.setDescription(UIBundle.message("tabbed.pane.pin.tab.action.description"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return myContent != null && myContent.isPinned();
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      myContent.setPinned(flag);
-    }
-
-    public void update(AnActionEvent event) {
-      super.update(event);
-      Presentation presentation = event.getPresentation();
-      boolean enabled = myContent != null && myContent.isPinnable();
-      presentation.setEnabled(enabled);
-      presentation.setVisible(enabled);
-    }
-  }
-
-  private final class MyNextTabAction extends AnAction {
-    public MyNextTabAction() {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myManager.selectNextContent();
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myManager.getContentCount() > 1);
-    }
-  }
-
-  private final class MyPreviousTabAction extends AnAction {
-    public MyPreviousTabAction() {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myManager.selectPreviousContent();
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myManager.getContentCount() > 1);
-    }
-  }
 
 
   private class MyTabbedPaneWrapper extends TabbedPaneWrapper {
@@ -364,16 +223,16 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
           return;
         }
         DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new CloseAction(content));
+        group.add(new TabbedContentAction.CloseAction(content));
         if (myTabbedPaneWrapper.getTabCount() > 1) {
-          group.add(new CloseAllAction());
-          group.add(new CloseAllButThisAction(content));
+          group.add(new TabbedContentAction.CloseAllAction(myManager));
+          group.add(new TabbedContentAction.CloseAllButThisAction(content));
         }
         group.addSeparator();
-        group.add(new MyPinTabAction(content));
+        group.add(new TabbedContentAction.MyPinTabAction(content));
         group.addSeparator();
-        group.add(new MyNextTabAction());
-        group.add(new MyPreviousTabAction());
+        group.add(new TabbedContentAction.MyNextTabAction(myManager));
+        group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
         final List<AnAction> additionalActions = myManager.getAdditionalPopupActions(content);
         if (additionalActions != null) {
           group.addSeparator();
