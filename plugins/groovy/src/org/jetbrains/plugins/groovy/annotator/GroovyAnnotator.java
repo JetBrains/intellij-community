@@ -2,7 +2,9 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.ProblemHighlightType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
@@ -34,7 +36,8 @@ public class GroovyAnnotator implements Annotator {
         PsiElement resolved = refElement.resolve();
         if (resolved == null) {
           String message = "Cannot resolve symbol " + refElement.getReferenceName();
-          holder.createErrorAnnotation(element, message);
+          Annotation annotation = holder.createErrorAnnotation(element, message);
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         }
       }
   }
