@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -56,7 +55,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
-  public final boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
     String newName = myNewName + "." + vFile.getExtension();
@@ -68,7 +67,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     String newName = myNewName + "." + vFile.getExtension();
     FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file));
@@ -76,7 +75,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
       vFile.rename(file.getManager(), newName);
     }
     catch(IOException e){
-      MessagesEx.error(project, e.getMessage()).showNow();
+      MessagesEx.error(project, e.getMessage()).showLater();
     }
     if (editor != null) {
       DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
