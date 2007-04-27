@@ -678,18 +678,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
          * these elements can exist only in context of another element and are defined as subclasses of its class
          * so we should manually update our type definitions map with such elements
          */
-        final AntInstrospector helper = getHelperExceptionSafe(typeClass);
-        if (helper != null) {
-          final Enumeration nestedEnum = helper.getNestedElements();
-          while (nestedEnum.hasMoreElements()) {
-            final String nestedElement = (String)nestedEnum.nextElement();
-            final Class clazz = helper.getElementType(nestedElement);
-            if (clazz != null && myTypeDefinitions.get(clazz.getName()) == null) {
-              final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
-              if (nestedDef != null) {
-                myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
-              }
-            }
+        registerNestedDefinitionsRecursively(typeClass);
+      }
+    }
+  }
+
+  private void registerNestedDefinitionsRecursively(final Class parentClass) {
+    final AntInstrospector helper = getHelperExceptionSafe(parentClass);
+    if (helper != null) {
+      final Enumeration nestedEnum = helper.getNestedElements();
+      while (nestedEnum.hasMoreElements()) {
+        final String nestedElement = (String)nestedEnum.nextElement();
+        final Class nestedElementClass = helper.getElementType(nestedElement);
+        if (nestedElementClass != null && myTypeDefinitions.get(nestedElementClass.getName()) == null) {
+          final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), nestedElementClass, false);
+          if (nestedDef != null) {
+            myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
+            registerNestedDefinitionsRecursively(nestedElementClass);
           }
         }
       }
