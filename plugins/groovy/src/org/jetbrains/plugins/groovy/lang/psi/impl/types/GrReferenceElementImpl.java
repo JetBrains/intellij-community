@@ -185,7 +185,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(groovyRef), groovyRef.getResolveScope());
           if (aClass != null) {
-            if (aClass instanceof GrJavaClass) return ((GrJavaClass) aClass).getGroovyTypeDefinition();
+            if (aClass instanceof GrJavaClass) return ((GrJavaClass) aClass).getGroovyElement();
             return aClass;
           }
           //fallthrough
