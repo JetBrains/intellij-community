@@ -17,37 +17,41 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Reference element
+        Type element
           Reference element
-            PsiElement(identifier)('A')
-          PsiElement(.)('.')
-          PsiElement(identifier)('B')
-          Type arguments
-            PsiElement(<)('<')
-            Type argument
-              Array type
-                Built in type
-                  PsiElement(int)('int')
-                PsiElement([)('[')
-                PsiElement(])(']')
-            PsiElement(,)(',')
-            PsiWhiteSpace(' ')
-            Type argument
-              Reference element
-                PsiElement(identifier)('B')
-                Type arguments
-                  PsiElement(<)('<')
-                  Type argument
-                    Reference element
-                      PsiElement(identifier)('String')
-                      Type arguments
-                        PsiElement(<)('<')
-                        Type argument
+            Reference element
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+            Type arguments
+              PsiElement(<)('<')
+              Type argument
+                Array type
+                  Built in type
+                    PsiElement(int)('int')
+                  PsiElement([)('[')
+                  PsiElement(])(']')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Type argument
+                Type element
+                  Reference element
+                    PsiElement(identifier)('B')
+                    Type arguments
+                      PsiElement(<)('<')
+                      Type argument
+                        Type element
                           Reference element
-                            PsiElement(identifier)('T')
-                        PsiElement(>)('>')
-                  PsiElement(>)('>')
-            PsiElement(>)('>')
+                            PsiElement(identifier)('String')
+                            Type arguments
+                              PsiElement(<)('<')
+                              Type argument
+                                Type element
+                                  Reference element
+                                    PsiElement(identifier)('T')
+                              PsiElement(>)('>')
+                      PsiElement(>)('>')
+              PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
     PsiElement())(')')

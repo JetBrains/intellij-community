@@ -8,12 +8,14 @@ Groovy script
     Type arguments
       PsiElement(<)('<')
       Type argument
-        Reference element
-          PsiElement(identifier)('T')
+        Type element
+          Reference element
+            PsiElement(identifier)('T')
       PsiElement(,)(',')
       Type argument
-        Reference element
-          PsiElement(identifier)('S')
+        Type element
+          Reference element
+            PsiElement(identifier)('S')
       PsiErrorElement:'>' expected
         <empty list>
     PsiWhiteSpace(' ')

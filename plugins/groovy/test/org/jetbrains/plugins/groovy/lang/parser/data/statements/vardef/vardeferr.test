@@ -2,8 +2,9 @@ A b, d =
 -----
 Groovy script
   Variable definitions
-    Reference element
-      PsiElement(identifier)('A')
+    Type element
+      Reference element
+        PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
     Variable
       PsiElement(identifier)('b')

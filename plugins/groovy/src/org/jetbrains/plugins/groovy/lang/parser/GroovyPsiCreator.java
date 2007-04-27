@@ -142,6 +142,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
       return new GrAnnotationTypeDefinitionImpl(node);
 
     if (elem.equals(REFERENCE_ELEMENT)) return new GrReferenceElementImpl(node);
+    if (elem.equals(TYPE_ELEMENT)) return new GrTypeElementImpl(node);
 
     //clauses
     if (elem.equals(IMPLEMENTS_CLAUSE)) return new GrImplementsClauseImpl(node);

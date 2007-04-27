@@ -14,29 +14,31 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Reference element
+        Type element
           Reference element
             Reference element
-              PsiElement(identifier)('A')
+              Reference element
+                PsiElement(identifier)('A')
+              PsiElement(.)('.')
+              PsiElement(identifier)('B')
+              Type arguments
+                PsiElement(<)('<')
+                Type argument
+                  Type element
+                    Reference element
+                      PsiElement(identifier)('String')
+                PsiElement(>)('>')
             PsiElement(.)('.')
-            PsiElement(identifier)('B')
+            PsiElement(identifier)('C')
             Type arguments
               PsiElement(<)('<')
               Type argument
-                Reference element
-                  PsiElement(identifier)('String')
+                Array type
+                  Built in type
+                    PsiElement(int)('int')
+                  PsiElement([)('[')
+                  PsiElement(])(']')
               PsiElement(>)('>')
-          PsiElement(.)('.')
-          PsiElement(identifier)('C')
-          Type arguments
-            PsiElement(<)('<')
-            Type argument
-              Array type
-                Built in type
-                  PsiElement(int)('int')
-                PsiElement([)('[')
-                PsiElement(])(']')
-            PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('f')
     PsiElement())(')')

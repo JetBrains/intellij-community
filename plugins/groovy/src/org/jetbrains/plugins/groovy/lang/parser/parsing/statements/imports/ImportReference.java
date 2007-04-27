@@ -36,7 +36,7 @@ public class ImportReference implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    ReferenceElement.parse(builder, false, false, true);
+    ReferenceElement.parseForImport(builder);
 
     if (ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
             ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) {

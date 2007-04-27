@@ -96,9 +96,9 @@ public class Declaration implements GroovyElementTypes {
       //if definition starts with lower case letter than it can be just call expression
 
       if (!builder.eof()
-              && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-              && builder.getTokenText() != null
-              && Character.isLowerCase(builder.getTokenText().charAt(0))) {
+          && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
+          && builder.getTokenText() != null
+          && Character.isLowerCase(builder.getTokenText().charAt(0))) {
         GroovyElementType exprType = ExpressionStatement.parse(builder);
         if (EXPRESSION_STATEMENT.equals(exprType)) {
           declmMarker.drop();
@@ -139,6 +139,12 @@ public class Declaration implements GroovyElementTypes {
         declmMarker.done(VARIABLE_DEFINITION);
         return VARIABLE_DEFINITION;
       }
+
+//      if (TYPE_CAST.equals(exprType)) {
+//        ExpressionStatement.parse(builder);
+//        declmMarker.done(TYPE_CAST);
+//        return TYPE_CAST;
+//      }
 
       if (!IDENTIFIER.equals(varDef) && !WRONGWAY.equals(varDef)) {
         varDef = VariableDefinitions.parse(builder);

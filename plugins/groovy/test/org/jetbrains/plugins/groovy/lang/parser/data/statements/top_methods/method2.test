@@ -13,8 +13,9 @@ Groovy script
     Throw clause
       PsiElement(throws)('throws')
       PsiWhiteSpace(' ')
-      Reference element
-        PsiElement(identifier)('A')
+      Type element
+        Reference element
+          PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')

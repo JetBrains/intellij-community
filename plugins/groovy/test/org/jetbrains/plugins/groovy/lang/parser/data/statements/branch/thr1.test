@@ -7,7 +7,8 @@ Groovy script
     NEW expression
       PsiElement(new)('new')
       PsiWhiteSpace(' ')
-      Reference element
-        PsiElement(identifier)('Exception')
+      Type element
+        Reference element
+          PsiElement(identifier)('Exception')
       PsiElement(()('(')
       PsiElement())(')')

@@ -19,9 +19,10 @@
   <property environment="env"/>
 
   <property name="production.dest" location="${project.dir}/classes/production/Groovy"/>
-  <property name="idea.dir" value="${production.dest}/lib/idea"/>
-  <property name="idea.lib" value="${production.dest}/lib/idea/lib"/>
+  <property name="idea.dir" value="${project.dir}/lib/idea"/>
+  <property name="idea.lib" value="${project.dir}/lib/idea/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
+  <property name="plugin.libs" value="${project.dir}/lib/special"/>
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
@@ -94,20 +95,38 @@
           description="builds and jar project and zip sources"/>
 
   <target name="jar.groovy" depends="make.project" description="makes groovy jar">
-    <mkdir dir="${project.dir}/tempjar/Groovy/lib"/>
+    <mkdir dir="${project.dir}/tempzip/Groovy/lib"/>
 
-    <jar destfile="${project.dir}/tempjar/Groovy/lib/Groovy.jar">
-      <fileset dir="${production.dest}" excludes="**/*build.xml, **/groovy.properties"/>
+    <mkdir dir="${project.dir}/tempjar/lib/"/>
+
+    <copy todir="${project.dir}/tempjar/lib">
+      <fileset dir="${groovy.lib}">
+        <include name="**/*antlr*.jar"/>
+        <include name="**/*asm*.jar"/>
+      </fileset>
+    </copy>
+
+    <jar destfile="${project.dir}/tempzip/Groovy/lib/Groovy.jar">
+      <fileset dir="${production.dest}" excludes="**/*build.xml, **/groovy.properties">
+      </fileset>
+
+      <fileset dir="${plugin.libs}">
+        <include id="**/*.jar"/>
+      </fileset>
+
+      <fileset dir="${project.dir}/tempjar">
+      </fileset>
     </jar>
 
-    <copy todir="${project.dir}/tempjar/Groovy/lib">
+    <copy todir="${project.dir}/tempzip/Groovy/lib">
       <fileset dir="${groovy.lib}">
         <include name="**/*.jar"/>
       </fileset>
     </copy>
 
-    <zip destfile="${project.dir}/Groovy.zip" basedir="${project.dir}/tempjar"/>
+    <zip destfile="${project.dir}/Groovy.zip" basedir="${project.dir}/tempzip"/>
 
+    <delete dir="${project.dir}/tempzip"/>
     <delete dir="${project.dir}/tempjar"/>
   </target>
 
@@ -123,7 +142,7 @@
          resources/**/*.*,
          META-INF/**/*.xml"
          excludes="src/**/*junit*"
-            />
+        />
   </target>
 
   <target name="build tests" depends="make.project">

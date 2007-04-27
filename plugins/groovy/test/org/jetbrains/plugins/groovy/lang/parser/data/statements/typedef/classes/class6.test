@@ -10,8 +10,9 @@ Groovy script
     Extends clause
       PsiElement(extends)('extends')
       PsiWhiteSpace(' ')
-      Reference element
-        PsiElement(identifier)('b')
+      Type element
+        Reference element
+          PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
     Class body
       PsiElement({)('{')

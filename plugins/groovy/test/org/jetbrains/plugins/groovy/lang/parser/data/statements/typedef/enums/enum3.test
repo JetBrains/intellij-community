@@ -21,14 +21,15 @@ Groovy script
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')
-      Reference element
+      Type element
         Reference element
           Reference element
-            PsiElement(identifier)('A')
+            Reference element
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
           PsiElement(.)('.')
-          PsiElement(identifier)('B')
-        PsiElement(.)('.')
-        PsiElement(identifier)('C')
+          PsiElement(identifier)('C')
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')
@@ -38,13 +39,15 @@ Groovy script
           Modifiers
             Annotation
               PsiElement(@)('@')
-              Reference element
-                PsiElement(identifier)('NotNull')
+              Type element
+                Reference element
+                  PsiElement(identifier)('NotNull')
             PsiWhiteSpace(' ')
             Annotation
               PsiElement(@)('@')
-              Reference element
-                PsiElement(identifier)('Property')
+              Type element
+                Reference element
+                  PsiElement(identifier)('Property')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('item1')
           PsiWhiteSpace(' ')
@@ -93,8 +96,9 @@ Groovy script
                 PsiWhiteSpace(' ')
                 PsiElement(def)('def')
               PsiWhiteSpace(' ')
-              Reference element
-                PsiElement(identifier)('String')
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
               PsiWhiteSpace(' ')
               Variable
                 PsiElement(identifier)('a')
@@ -112,8 +116,9 @@ Groovy script
             PsiElement(new line)('\n')
             PsiWhiteSpace('     ')
             Method
-              Reference element
-                PsiElement(identifier)('Integer')
+              Type element
+                Reference element
+                  PsiElement(identifier)('Integer')
               PsiWhiteSpace(' ')
               PsiElement(identifier)('getNumber')
               PsiElement(()('(')

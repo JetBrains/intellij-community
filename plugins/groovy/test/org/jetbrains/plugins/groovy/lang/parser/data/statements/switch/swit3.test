@@ -49,8 +49,9 @@ Groovy script
         NEW expression
           PsiElement(new)('new')
           PsiWhiteSpace(' ')
-          Reference element
-            PsiElement(identifier)('IllegalArgumentException')
+          Type element
+            Reference element
+              PsiElement(identifier)('IllegalArgumentException')
           PsiElement(()('(')
           PsiElement())(')')
       PsiElement(new line)('\n')

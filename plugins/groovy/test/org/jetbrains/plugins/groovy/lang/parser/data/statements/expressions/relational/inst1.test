@@ -11,14 +11,16 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(instanceof)('instanceof')
       PsiWhiteSpace(' ')
-      Reference element
-        PsiElement(identifier)('List')
-        Type arguments
-          PsiElement(<)('<')
-          Type argument
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(>)('>')
+      Type element
+        Reference element
+          PsiElement(identifier)('List')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+            PsiElement(>)('>')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Open block

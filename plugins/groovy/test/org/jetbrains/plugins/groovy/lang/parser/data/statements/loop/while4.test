@@ -19,11 +19,12 @@ Groovy script
   Import statement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
-    Reference element
+    Type element
       Reference element
         Reference element
-          PsiElement(identifier)('a')
+          Reference element
+            PsiElement(identifier)('a')
+          PsiElement(.)('.')
+          PsiElement(identifier)('b')
         PsiElement(.)('.')
-        PsiElement(identifier)('b')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
+        PsiElement(identifier)('c')

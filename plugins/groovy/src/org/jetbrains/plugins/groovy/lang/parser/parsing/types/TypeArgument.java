@@ -35,7 +35,7 @@ public class TypeArgument implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
 
         //todo: check for upper case type specification
-        if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+        if (WRONGWAY.equals(ReferenceElement.parseForTypeArgement(builder))) {
           taMarker.rollbackTo();
           return WRONGWAY;
         }

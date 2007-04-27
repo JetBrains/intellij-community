@@ -15,8 +15,9 @@ Groovy script
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        Reference element
-          PsiElement(identifier)('String')
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
         PsiWhiteSpace(' ')
         Variable
           PsiElement(identifier)('a')

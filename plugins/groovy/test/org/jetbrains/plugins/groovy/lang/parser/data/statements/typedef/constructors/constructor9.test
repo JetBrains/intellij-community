@@ -25,15 +25,17 @@ Groovy script
         Throw clause
           PsiElement(throws)('throws')
           PsiWhiteSpace(' ')
-          Reference element
+          Type element
             Reference element
-              PsiElement(identifier)('A')
-            PsiElement(.)('.')
-            PsiElement(identifier)('B')
+              Reference element
+                PsiElement(identifier)('A')
+              PsiElement(.)('.')
+              PsiElement(identifier)('B')
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
-          Reference element
-            PsiElement(identifier)('NullPointerException')
+          Type element
+            Reference element
+              PsiElement(identifier)('NullPointerException')
         PsiWhiteSpace(' ')
         Constructor body
           PsiElement({)('{')

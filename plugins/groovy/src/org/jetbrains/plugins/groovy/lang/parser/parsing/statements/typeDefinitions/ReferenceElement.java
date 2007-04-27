@@ -28,11 +28,24 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ReferenceElement implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false, true, false);
+  public static GroovyElementType parseForImport(PsiBuilder builder) {
+    return parse(builder, false, false, true, false);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport) {
+  public static GroovyElementType parseForPacakge(PsiBuilder builder) {
+    return parse(builder, false, false, false, true);
+  }
+
+  public static GroovyElementType parseForTypeArgement(PsiBuilder builder) {
+    //todo: does type arguments can starts only with upper case letters?
+    return parse(builder, false, true, false, false);
+  }
+
+  public static GroovyElementType parse(PsiBuilder builder) {
+    return parse(builder, false, true, false, false);
+  }
+
+  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
     char firstChar;
@@ -57,8 +70,8 @@ public class ReferenceElement implements GroovyElementTypes {
     while (mDOT.equals(builder.getTokenType())) {
 
       if ((ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
-              ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
-              forImport) {
+          ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
+          forImport) {
         internalTypeMarker.drop();
         return REFERENCE_ELEMENT;
       }
@@ -80,7 +93,12 @@ public class ReferenceElement implements GroovyElementTypes {
       internalTypeMarker = internalTypeMarker.precede();
     }
 
-    internalTypeMarker.drop();
-    return REFERENCE_ELEMENT;
+    if (forPackage) {
+      internalTypeMarker.drop();
+      return REFERENCE_ELEMENT;
+    }
+
+    internalTypeMarker.done(TYPE_ELEMENT);
+    return TYPE_ELEMENT;
   }
 }

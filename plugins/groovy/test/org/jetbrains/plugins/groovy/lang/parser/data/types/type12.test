@@ -3,23 +3,24 @@
 Groovy script
   Typecast expression
     PsiElement(()('(')
-    Reference element
+    Type element
       Reference element
         Reference element
           Reference element
             Reference element
               Reference element
-                PsiElement(identifier)('a')
+                Reference element
+                  PsiElement(identifier)('a')
+                PsiElement(.)('.')
+                PsiElement(identifier)('b')
               PsiElement(.)('.')
-              PsiElement(identifier)('b')
+              PsiElement(identifier)('c')
             PsiElement(.)('.')
-            PsiElement(identifier)('c')
+            PsiElement(identifier)('d')
           PsiElement(.)('.')
-          PsiElement(identifier)('d')
+          PsiElement(identifier)('e')
         PsiElement(.)('.')
-        PsiElement(identifier)('e')
-      PsiElement(.)('.')
-      PsiElement(identifier)('F')
+        PsiElement(identifier)('F')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Reference expression

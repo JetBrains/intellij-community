@@ -9,8 +9,9 @@ Groovy script
     PsiElement(useh)('use')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Reference element
-      PsiElement(identifier)('StringCalculationCategory')
+    Type element
+      Reference element
+        PsiElement(identifier)('StringCalculationCategory')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Open block

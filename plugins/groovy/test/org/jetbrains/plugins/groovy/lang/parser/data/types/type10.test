@@ -19,36 +19,39 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Reference element
+        Type element
           Reference element
-            PsiElement(identifier)('A')
-          PsiElement(.)('.')
-          PsiElement(identifier)('B')
-          Type arguments
-            PsiElement(<)('<')
-            Type argument
-              Built in type
-                PsiElement(int)('int')
-            PsiElement(,)(',')
-            PsiWhiteSpace(' ')
-            Type argument
-              Reference element
-                PsiElement(identifier)('String')
-            PsiElement(,)(',')
-            PsiWhiteSpace(' ')
-            Type argument
-              Reference element
-                PsiElement(identifier)('T')
-                Type arguments
-                  PsiElement(<)('<')
-                  Type argument
-                    Array type
-                      Built in type
-                        PsiElement(boolean)('boolean')
-                      PsiElement([)('[')
-                      PsiElement(])(']')
-                  PsiElement(>)('>')
-            PsiElement(>)('>')
+            Reference element
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+            Type arguments
+              PsiElement(<)('<')
+              Type argument
+                Built in type
+                  PsiElement(int)('int')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Type argument
+                Type element
+                  Reference element
+                    PsiElement(identifier)('String')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Type argument
+                Type element
+                  Reference element
+                    PsiElement(identifier)('T')
+                    Type arguments
+                      PsiElement(<)('<')
+                      Type argument
+                        Array type
+                          Built in type
+                            PsiElement(boolean)('boolean')
+                          PsiElement([)('[')
+                          PsiElement(])(']')
+                      PsiElement(>)('>')
+              PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
     PsiElement())(')')

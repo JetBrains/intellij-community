@@ -137,6 +137,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition");
 
   //types
+  GroovyElementType TYPE_ELEMENT = new GroovyElementType("type usage");
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");

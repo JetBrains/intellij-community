@@ -41,7 +41,7 @@ public class PackageDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
     if (ParserUtils.lookAhead(builder, mIDENT)) {
-      ReferenceElement.parse(builder, false, false, false);
+      ReferenceElement.parseForPacakge(builder);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));
     }

@@ -18,8 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+
+import java.util.Iterator;
 
 /**
  * @author Ilya.Sergey
@@ -30,5 +34,40 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
     super(node);
   }
 
+  public <T extends GroovyPsiElement> Iterable<T> childrenOfType(final TokenSet tokSet) {
+    return new Iterable<T>() {
 
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          private ASTNode findChild(ASTNode child) {
+            if (child == null) return null;
+
+            if (tokSet.contains(child.getElementType())) return child;
+
+            return findChild(child.getTreeNext());
+          }
+
+          PsiElement first = getFirstChild();
+
+          ASTNode n = first == null ? null : findChild(first.getNode());
+
+          public boolean hasNext() {
+            return n != null;
+          }
+
+          public T next() {
+            if (n == null) return null;
+            else {
+              final ASTNode res = n;
+              n = findChild(n.getTreeNext());
+              return (T) res.getPsi();
+            }
+          }
+
+          public void remove() {
+          }
+        };
+      }
+    };
+  }
 }

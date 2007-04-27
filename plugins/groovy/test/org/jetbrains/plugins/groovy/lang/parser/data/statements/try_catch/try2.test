@@ -20,8 +20,9 @@ Groovy script
           PsiElement(()('(')
           PsiWhiteSpace(' ')
           Variable definitions
-            Reference element
-              PsiElement(identifier)('Exception1')
+            Type element
+              Reference element
+                PsiElement(identifier)('Exception1')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('e1')
           PsiElement())(')')
@@ -38,8 +39,9 @@ Groovy script
           PsiElement(()('(')
           PsiWhiteSpace(' ')
           Variable definitions
-            Reference element
-              PsiElement(identifier)('Exception1')
+            Type element
+              Reference element
+                PsiElement(identifier)('Exception1')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('e2')
           PsiElement())(')')

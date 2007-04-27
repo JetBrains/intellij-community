@@ -9,14 +9,16 @@ Groovy script
       Modifiers
         PsiElement(def)('def')
       PsiWhiteSpace(' ')
-      Reference element
-        PsiElement(identifier)('Map')
-        Type arguments
-          PsiElement(<)('<')
-          Type argument
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(>)('>')
+      Type element
+        Reference element
+          PsiElement(identifier)('Map')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+            PsiElement(>)('>')
       PsiWhiteSpace(' ')
       Variable
         PsiElement(identifier)('map')

@@ -12,8 +12,9 @@ Groovy script
       PsiElement({)('{')
       PsiWhiteSpace('\n ')
       Method
-        Reference element
-          PsiElement(identifier)('String')
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')

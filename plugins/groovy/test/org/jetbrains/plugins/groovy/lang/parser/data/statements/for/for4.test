@@ -7,8 +7,9 @@ Groovy script
     PsiElement(()('(')
     In clause
       Variable definitions
-        Reference element
-          PsiElement(identifier)('MyClass')
+        Type element
+          Reference element
+            PsiElement(identifier)('MyClass')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('c')
       PsiWhiteSpace(' ')

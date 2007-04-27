@@ -12,17 +12,19 @@ Groovy script
       Parameter
         Parameter modifiers
           <empty list>
-        Reference element
+        Type element
           Reference element
-            PsiElement(identifier)('A')
-          PsiElement(.)('.')
-          PsiElement(identifier)('B')
-          Type arguments
-            PsiElement(<)('<')
-            Type argument
-              Reference element
-                PsiElement(identifier)('String')
-            PsiElement(>)('>')
+            Reference element
+              PsiElement(identifier)('A')
+            PsiElement(.)('.')
+            PsiElement(identifier)('B')
+            Type arguments
+              PsiElement(<)('<')
+              Type argument
+                Type element
+                  Reference element
+                    PsiElement(identifier)('String')
+              PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('s')
     PsiElement())(')')

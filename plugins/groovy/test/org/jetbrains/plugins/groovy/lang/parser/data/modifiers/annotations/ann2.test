@@ -5,8 +5,9 @@ Groovy script
     Modifiers
       Annotation
         PsiElement(@)('@')
-        Reference element
-          PsiElement(identifier)('Notnull')
+        Type element
+          Reference element
+            PsiElement(identifier)('Notnull')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         Annotation arguments
