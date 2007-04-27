@@ -74,6 +74,31 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   private static final String TYPE_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.TypeHierarchyBrowser";
   private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private final HashMap<Object, OccurenceNavigator> myOccurenceNavigators = new HashMap<Object, OccurenceNavigator>();
+  private final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
+    public boolean hasNextOccurence() {
+      return false;
+    }
+
+    public boolean hasPreviousOccurence() {
+      return false;
+    }
+
+    public OccurenceInfo goNextOccurence() {
+      return null;
+    }
+
+    public OccurenceInfo goPreviousOccurence() {
+      return null;
+    }
+
+    public String getNextOccurenceActionName() {
+      return "";
+    }
+
+    public String getPreviousOccurenceActionName() {
+      return "";
+    }
+  };
 
   public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
     myProject = project;
@@ -264,29 +289,37 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   }
 
   public boolean hasNextOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewName).hasNextOccurence();
+    return getOccurrenceNavigator().hasNextOccurence();
   }
 
   public boolean hasPreviousOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewName).hasPreviousOccurence();
+    return getOccurrenceNavigator().hasPreviousOccurence();
   }
 
   public OccurenceInfo goNextOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewName).goNextOccurence();
+    return getOccurrenceNavigator().goNextOccurence();
   }
 
   public OccurenceInfo goPreviousOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewName).goPreviousOccurence();
+    return getOccurrenceNavigator().goPreviousOccurence();
   }
 
   public String getNextOccurenceActionName() {
-    return myOccurenceNavigators.get(myCurrentViewName).getNextOccurenceActionName();
+    return getOccurrenceNavigator().getNextOccurenceActionName();
   }
 
   public String getPreviousOccurenceActionName() {
-    return myOccurenceNavigators.get(myCurrentViewName).getPreviousOccurenceActionName();
+    return getOccurrenceNavigator().getPreviousOccurenceActionName();
   }
 
+  private OccurenceNavigator getOccurrenceNavigator() {
+    if (myCurrentViewName == null) {
+      return EMPTY_NAVIGATOR;
+    }
+    final OccurenceNavigator navigator = myOccurenceNavigators.get(myCurrentViewName);
+    return navigator != null? navigator : EMPTY_NAVIGATOR;
+  }
+  
   final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
