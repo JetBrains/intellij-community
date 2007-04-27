@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.command.log;
 
 import com.intellij.util.text.SyncDateFormat;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
@@ -24,10 +25,7 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * @author Thomas Singer
@@ -83,8 +81,7 @@ final public class LogMessageParser extends AbstractMessageParser {
   private boolean addingSymNames;
   private boolean addingDescription;
   private boolean processingRevision;
-  private StringBuffer tempBuffer;
-  private String lastLogMessageString = null;
+  private List<String> logMessageBuffer;
 
   // Setup ==================================================================
 
@@ -103,14 +100,21 @@ final public class LogMessageParser extends AbstractMessageParser {
 
     if (addingDescription) {
       addingDescription = false;
-      logInfo.setDescription(tempBuffer.toString());
+      logInfo.setDescription(getMessageFromBuffer());
     }
     if (processingRevision) {
       logInfo.addRevision(revision);
-      if ((lastLogMessageString != null) && !lastLogMessageIsFinalSeparator()) {
-        appendLastLogMessageStringToTempBuffer();
+      if (logMessageBuffer.size() > 0 && lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-1))) {
+        logMessageBuffer.remove(logMessageBuffer.size()-1);
       }
-      revision.setMessage(tempBuffer.toString());
+      else if (logMessageBuffer.size() > 1 &&
+        lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-1)) &&
+        logMessageBuffer.get(logMessageBuffer.size()-1).length() == 0) {
+        logMessageBuffer.remove(logMessageBuffer.size()-2);
+        logMessageBuffer.remove(logMessageBuffer.size()-1);
+      }
+
+      revision.setMessage(getMessageFromBuffer());
 
       revision = null;
       processingRevision = false;
@@ -121,13 +125,18 @@ final public class LogMessageParser extends AbstractMessageParser {
       logInfo = null;
     }
 
-    tempBuffer = null;
-    lastLogMessageString = null;
-
+    logMessageBuffer = null;
   }
 
-  private boolean lastLogMessageIsFinalSeparator() {
-    return lastLogMessageString.startsWith(FINAL_SPLIT) || lastLogMessageString.startsWith(FINAL_SPLIT_WITH_TAB);
+  private String getMessageFromBuffer() {
+    if (logMessageBuffer.size() > 0) {
+      return StringUtil.join(logMessageBuffer, "\n") + "\n";
+    }
+    return "";
+  }
+
+  private static boolean lastLogMessageIsFinalSeparator(String logMessageString) {
+    return logMessageString.startsWith(FINAL_SPLIT) || logMessageString.startsWith(FINAL_SPLIT_WITH_TAB);
   }
 
   public void parseLine(String line,
@@ -154,10 +163,7 @@ final public class LogMessageParser extends AbstractMessageParser {
         processBranches(line.substring(BRANCHES.length()));
       }
       else {
-        if (lastLogMessageString != null) {
-          appendLastLogMessageStringToTempBuffer();
-        }
-        lastLogMessageString = line;
+        logMessageBuffer.add(line);
       }
       return;
     }
@@ -228,22 +234,15 @@ final public class LogMessageParser extends AbstractMessageParser {
       if (!processingRevision && line.startsWith(SPLITTER)) {
         return;
       }
-      if (lastLogMessageString != null) {
-        appendLastLogMessageStringToTempBuffer();
-      }
-      lastLogMessageString = line;
+      logMessageBuffer.add(line);
       return;
     }
 
     if (line.startsWith(DESCRIPTION)) {
-      tempBuffer = new StringBuffer(line.substring(DESCRIPTION.length()));
+      logMessageBuffer = new ArrayList<String>();
+      logMessageBuffer.add(line.substring(DESCRIPTION.length()));
       addingDescription = true;
     }
-  }
-
-  private void appendLastLogMessageStringToTempBuffer() {
-    tempBuffer.append(lastLogMessageString);
-    tempBuffer.append('\n');
   }
 
   // Utils ==================================================================
@@ -299,12 +298,11 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   private void revisionProcessingFinished() {
     if (revision != null) {
-      if ((lastLogMessageString != null) && !lastLogMessageString.startsWith(SPLITTER)) {
-        appendLastLogMessageStringToTempBuffer();
+      if (logMessageBuffer.size() > 0 && logMessageBuffer.get(logMessageBuffer.size()-1).startsWith(SPLITTER)) {
+        logMessageBuffer.remove(logMessageBuffer.size()-1);
       }
-      lastLogMessageString = null;
       processingRevision = false;
-      revision.setMessage(tempBuffer.toString());
+      revision.setMessage(getMessageFromBuffer());
 
       logInfo.addRevision(revision);
     }
@@ -356,7 +354,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     processingRevision = true;
-    tempBuffer = new StringBuffer();
+    logMessageBuffer = new ArrayList<String>();
   }
 
   private File createFile(String fileName) {
