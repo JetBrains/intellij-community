@@ -25,8 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.CompilationUnitsFactory;
-import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
-//import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
+import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -81,19 +80,10 @@ public class GroovyLoader implements ApplicationComponent {
             ScalaToolsFactory.getInstance().createScalaCompletionData());
 */
 
-
-//    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-//      public void projectOpened(Project project) {
-//        CompilerManager compilerManager = CompilerManager.getInstance(project);
-//        compilerManager.addCompiler(new GroovyCompiler(new CompilationUnitsFactory()));
-//        compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
-//      }
-//    });
-//
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
         CompilerManager compilerManager = CompilerManager.getInstance(project);
-        compilerManager.addCompiler(new GroovyCompilerProcess(new CompilationUnitsFactory()));
+        compilerManager.addCompiler(new GroovyCompiler(new CompilationUnitsFactory()));
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
       }
     });
