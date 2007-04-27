@@ -176,7 +176,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       assert currentSelection.length == 1;
       final String moduleName = currentSelection [0].getElementPath();
-      final CvsRepositoryLocation location = new CvsRepositoryLocation(myCvsRootConfiguration, moduleName);
+      final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
       AbstractVcsHelper.getInstance(myProject).showChangesBrowser(CvsVcs2.getInstance(myProject).getCommittedChangesProvider(),
                                                                   location,
                                                                   VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);

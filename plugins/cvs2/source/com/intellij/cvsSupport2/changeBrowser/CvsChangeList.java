@@ -17,8 +17,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.File;
@@ -37,6 +39,7 @@ public class CvsChangeList implements CommittedChangeList {
   private long myNumber;
   @NotNull private String myDescription;
 
+  private VirtualFile myRootFile;
   private String myRootPath;
 
   private final List<RevisionWrapper> myRevisions = new ArrayList<RevisionWrapper>();
@@ -51,8 +54,15 @@ public class CvsChangeList implements CommittedChangeList {
   @NonNls public static final String DEAD_STATE = "dead";
 
 
-  public CvsChangeList(final long number, @NotNull final String description, final long date,
-                       String user, String rootPath, final CvsEnvironment environment, final Project project) {
+  public CvsChangeList(final Project project,
+                       final CvsEnvironment environment,
+                       @Nullable final VirtualFile rootFile,
+                       final long number,
+                       @NotNull final String description,
+                       final long date,
+                       String user,
+                       String rootPath) {
+    myRootFile = rootFile;
     myDate = date;
     myFinishDate = date;
     myNumber = number;
@@ -63,9 +73,13 @@ public class CvsChangeList implements CommittedChangeList {
     myProject = project;
   }
 
-  public CvsChangeList(final Project project, final CvsEnvironment environment, final DataInput stream) throws IOException {
+  public CvsChangeList(final Project project,
+                       final CvsEnvironment environment,
+                       @Nullable final VirtualFile rootFile,
+                       final DataInput stream) throws IOException {
     myProject = project;
     myEnvironment = environment;
+    myRootFile = rootFile;
     readFromStream(stream);
   }
 
@@ -87,14 +101,23 @@ public class CvsChangeList implements CommittedChangeList {
       for(RevisionWrapper wrapper: myRevisions) {
         final Revision revision = wrapper.getRevision();
         final String state = revision.getState();
+        String path = wrapper.getFile();
+        File localFile;
+        if (myRootFile != null && path.startsWith(myRootPath + "/")) {
+          path = path.substring(myRootPath.length()+1);
+          localFile = new File(myRootFile.getPresentableUrl(), path);
+        }
+        else {
+          localFile = new File(wrapper.getFile());
+        }
         ContentRevision beforeRevision = isAdded(revision)
           ? null
-          : new CvsContentRevision(new File(wrapper.getFile()),
+          : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(new CvsRevisionNumber(revision.getNumber()).getPrevNumber().asString()),
                                    myEnvironment, myProject);
         ContentRevision afterRevision = (DEAD_STATE.equals(state))
           ? null
-          : new CvsContentRevision(new File(wrapper.getFile()),
+          : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(revision.getNumber()),
                                    myEnvironment, myProject);
         myChanges.add(new Change(beforeRevision, afterRevision));

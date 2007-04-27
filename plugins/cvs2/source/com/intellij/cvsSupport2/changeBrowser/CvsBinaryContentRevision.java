@@ -20,10 +20,11 @@ public class CvsBinaryContentRevision extends CvsContentRevision implements Bina
   private byte[] myContent;
 
   public CvsBinaryContentRevision(final File file,
+                                  final File localFile,
                                   final RevisionOrDate revision,
                                   final CvsEnvironment environment,
                                   final Project project) {
-    super(file, revision, environment, project);
+    super(file, localFile, revision, environment, project);
   }
 
   @Nullable

@@ -50,10 +50,10 @@ public class CvsDiffProvider implements DiffProvider{
       }
 
       if (selectedFile.getFileType().isBinary()) {
-        return new CvsBinaryContentRevision(file, versionInfo, settings, myProject);
+        return new CvsBinaryContentRevision(file, file, versionInfo, settings, myProject);
       }
       else {
-        return new CvsContentRevision(file, versionInfo, settings, myProject);
+        return new CvsContentRevision(file, file, versionInfo, settings, myProject);
       }
 
     } else {

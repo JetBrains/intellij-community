@@ -35,16 +35,19 @@ import java.io.UnsupportedEncodingException;
 public class CvsContentRevision implements ContentRevision {
   private final RevisionOrDate myRevision;
   private final File myFile;
+  private final File myLocalFile;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
 
   private String myContent;
 
   public CvsContentRevision(final File file,
+                            final File localFile,
                             final RevisionOrDate revision,
                             final CvsEnvironment environment,
                             final Project project) {
     myFile = file;
+    myLocalFile = localFile;
     myRevision = revision;
     myEnvironment = environment;
     myProject = project;
@@ -89,7 +92,7 @@ public class CvsContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(myFile);
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(myLocalFile);
   }
 
   @NotNull

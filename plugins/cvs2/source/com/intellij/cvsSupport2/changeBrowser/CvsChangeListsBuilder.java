@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.util.*;
@@ -13,11 +14,14 @@ public class CvsChangeListsBuilder {
   private final String myRootPath;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
+  private final VirtualFile myRootFile;
 
-  public CvsChangeListsBuilder(final String rootPath, final CvsEnvironment environment, final Project project) {
+  public CvsChangeListsBuilder(final String rootPath, final CvsEnvironment environment, final Project project,
+                               final VirtualFile rootFile) {
     myRootPath = rootPath;
     myEnvironment = environment;
     myProject = project;
+    myRootFile = rootFile;
   }
 
   public List<CvsChangeList> getVersions() {
@@ -51,7 +55,8 @@ public class CvsChangeListsBuilder {
       }
     }
 
-    final CvsChangeList result = new CvsChangeList(myLastNumber, message, date, author, myRootPath, myEnvironment, myProject);
+    final CvsChangeList result = new CvsChangeList(myProject, myEnvironment, myRootFile,
+                                                   myLastNumber, message, date, author, myRootPath);
     myLastNumber += 1;
 
     if (!myCache.containsKey(message)) {

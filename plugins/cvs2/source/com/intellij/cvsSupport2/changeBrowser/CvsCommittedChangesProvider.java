@@ -61,7 +61,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
     final String module = CvsUtil.getModuleName(root);
     final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
-    return new CvsRepositoryLocation(connectionSettings, module);
+    return new CvsRepositoryLocation(rootDir, connectionSettings, module);
   }
 
   public ChangeListColumn[] getColumns() {
@@ -70,13 +70,14 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
     CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
-    return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment());
+    return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment(), cvsLocation.getRootFile());
   }
 
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
                                                    final String module,
-                                                   final CvsEnvironment connectionSettings) throws VcsException {
-    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject);
+                                                   final CvsEnvironment connectionSettings,
+                                                   final VirtualFile rootFile) throws VcsException {
+    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, rootFile);
     Date dateTo = settings.getDateBeforeFilter();
     Date dateFrom = settings.getDateAfterFilter();
     if (dateFrom == null) {
@@ -133,6 +134,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
     CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
-    return new CvsChangeList(myProject, cvsLocation.getEnvironment(), stream);
+    return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 }
