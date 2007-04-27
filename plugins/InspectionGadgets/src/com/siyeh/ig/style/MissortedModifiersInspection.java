@@ -141,6 +141,9 @@ public class MissortedModifiersInspection extends BaseInspection {
         private void checkForMissortedModifiers(
                 PsiModifierListOwner listOwner) {
             final PsiModifierList modifierList = listOwner.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
             if (!isModifierListMissorted(modifierList)) {
                 return;
             }

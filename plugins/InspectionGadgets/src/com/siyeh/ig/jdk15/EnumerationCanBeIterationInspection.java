@@ -112,6 +112,9 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                             variableName);
             PsiStatement newStatement =
                     createDeclaration(methodCallExpression, variableName);
+            if (newStatement == null) {
+                return;
+            }
             final PsiElement statementParent = statement.getParent();
             statementParent.addAfter(newStatement, statement);
             if (deleteInitialization) {
@@ -123,6 +126,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             }
         }
 
+        @Nullable
         private static PsiStatement createDeclaration(
                 PsiMethodCallExpression methodCallExpression,
                 String variableName)

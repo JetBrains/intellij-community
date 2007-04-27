@@ -49,6 +49,9 @@ public class MethodReturnOfConcreteClassInspection extends BaseInspection {
                 return;
             }
             final PsiTypeElement typeElement = method.getReturnTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {
                 return;
             }

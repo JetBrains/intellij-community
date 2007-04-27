@@ -97,6 +97,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
                 return;
             }
             final PsiClass finalClass = referenceElements[0].resolve();
+            if (finalClass == null) {
+                return;
+            }
             final PsiManager manager = typeParameter.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
             final PsiJavaCodeReferenceElement classReference =

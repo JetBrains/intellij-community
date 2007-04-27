@@ -50,6 +50,9 @@ public class InstanceVariableOfConcreteClassInspection extends BaseInspection {
                 return;
             }
             final PsiTypeElement typeElement = field.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {
                 return;
             }

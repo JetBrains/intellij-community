@@ -15,18 +15,19 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.InitializationUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MakeFieldFinalFix extends InspectionGadgetsFix {
 
@@ -36,6 +37,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
         this.name = name;
     }
 
+    @Nullable
     public static InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiField field;
         if (location instanceof PsiReferenceExpression) {
