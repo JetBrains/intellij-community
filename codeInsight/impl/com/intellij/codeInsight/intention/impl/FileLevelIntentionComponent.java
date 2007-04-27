@@ -20,6 +20,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author max
@@ -57,9 +58,8 @@ public class FileLevelIntentionComponent extends JPanel {
     content.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor,
-                                                 new ArrayList<HighlightInfo.IntentionActionDescriptor>(),
-                                                 myIntentions,
-                                                 true);
+                                                 Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
+                                                 myIntentions, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(), true);
       }
     });
   }

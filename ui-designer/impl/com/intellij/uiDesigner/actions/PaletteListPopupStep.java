@@ -41,6 +41,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
     myTitle = title;
   }
 
+  @NotNull
   public List<ComponentItem> getValues() {
     return myItems;
   }

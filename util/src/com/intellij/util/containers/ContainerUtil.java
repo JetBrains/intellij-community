@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -331,6 +332,17 @@ public class ContainerUtil {
       result.addAll(ts);
     }
     return result;
+  }
+  public static <T> List<T> concat(@NotNull final List<T> list1, @NotNull final List<T> list2) {
+    return new AbstractList<T>() {
+      public T get(final int index) {
+        return index < list1.size() ? list1.get(index) : list2.get(index - list1.size());
+      }
+
+      public int size() {
+        return list1.size() + list2.size();
+      }
+    };
   }
 
   public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<? extends T>> fun) {

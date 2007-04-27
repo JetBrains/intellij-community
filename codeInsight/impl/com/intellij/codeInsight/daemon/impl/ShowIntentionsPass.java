@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.impl.IntentionActionComposite;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -43,6 +42,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,38 +133,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!visibleArea.contains(xy)) return;
     final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
     final PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
-    final PsiElement injectedElement = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-    LOG.assertTrue(injectedElement == null || injectedElement.isValid(), injectedElement);
-
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    List<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    int offset = myEditor.getCaretModel().getOffset();
-    HighlightInfo infoAtCursor = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
-    for (IntentionAction action : myIntentionActions) {
-      if (action instanceof IntentionActionComposite) {
-        if (action instanceof QuickFixAction) {
-          List<HighlightInfo.IntentionActionDescriptor> availableActions =
-            ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile, myPassIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    getActionsToShow(injectedEditor, injectedFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow,
+                     myIntentionActions, myPassIdToShowIntentionsFor);
 
-          if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
-            fixesToShow.addAll(availableActions);
-          }
-          else {
-            intentionsToShow.addAll(availableActions);
-          }
-        }
-      }
-      else if (action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(myProject, injectedEditor, injectedElement)
-               || action.isAvailable(myProject, injectedEditor, injectedFile)) {
-        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
-      }
-    }
-
-    if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
+    if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
       boolean showBulb = false;
-      for (HighlightInfo.IntentionActionDescriptor action : fixesToShow) {
+      for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(errorFixesToShow, inspectionFixesToShow)) {
         if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
           showBulb = true;
           break;
@@ -184,16 +161,47 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
 
         if (hintComponent != null) {
-          if (hintComponent.updateActions(fixesToShow, intentionsToShow)) {
+          if (hintComponent.updateActions(intentionsToShow, errorFixesToShow, inspectionFixesToShow)) {
             return;
           }
           codeAnalyzer.setLastIntentionHint(null);
         }
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedFile, injectedEditor, intentionsToShow, fixesToShow, false);
+          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedFile, injectedEditor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, false);
           codeAnalyzer.setLastIntentionHint(hintComponent);
         }
       }
+    }
+  }
+
+  public static void getActionsToShow(final Editor editor, final PsiFile psiFile,
+                                final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
+                                final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow,
+                                final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow,
+                                IntentionAction[] allIntentionActions, int passIdToShowIntentionsFor) {
+    final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
+
+    int offset = editor.getCaretModel().getOffset();
+    Project project = psiFile.getProject();
+    final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    HighlightInfo infoAtCursor = codeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, true);
+    for (IntentionAction action : allIntentionActions) {
+      if (action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
+               || action.isAvailable(project, editor, psiFile)) {
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+      }
+    }
+
+    QuickFixAction quickFixAction = new QuickFixAction();
+    List<HighlightInfo.IntentionActionDescriptor> actions = quickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
+    if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
+      errorFixesToShow.addAll(actions);
+    }
+    else {
+      inspectionFixesToShow.addAll(actions);
     }
   }
 
