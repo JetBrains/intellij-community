@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -390,12 +391,21 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private void processUpdatedFilesAfterRefresh(final ChangesCacheFile cache, final UpdatedFiles updatedFiles) {
-    refreshCacheAsync(cache, false, new Runnable() {
-      public void run() {
+    refreshCacheAsync(cache, false, new Consumer<List<CommittedChangeList>>() {
+      public void consume(final List<CommittedChangeList> committedChangeLists) {
         try {
           LOG.info("Processing updated files after refresh in " + cache.getLocation());
-          boolean result = cache.processUpdatedFiles(updatedFiles);
+          boolean result = true;
+          if (committedChangeLists.size() > 0) {
+            // received some new changelists, try to process updated files again
+            result = cache.processUpdatedFiles(updatedFiles);
+          }
           LOG.info(result ? "Still have unaccounted files" : "No more unaccounted files");
+          // for svn, we won't get exact revision numbers in updatedFiles, so we have to double-check by
+          // checking revisions we have locally
+          if (result) {
+            cache.refreshIncomingChanges();
+          }
           myPendingUpdateCount--;
           if (myPendingUpdateCount == 0) {
             notifyIncomingChangesUpdated();
@@ -459,7 +469,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
-  private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty, final Runnable postRunnable) {
+  private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
+                                 @Nullable final Consumer<List<CommittedChangeList>> postRunnable) {
     try {
       if (!initIfEmpty && cache.isEmpty()) {
         return;
@@ -479,8 +490,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           else {
             list = refreshCache(cache);
           }
-          if (list.size() > 0 && postRunnable != null) {
-            postRunnable.run();
+          if (postRunnable != null) {
+            postRunnable.consume(list);
           }
         }
         catch (Exception e) {

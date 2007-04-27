@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.File;
+import java.io.DataOutput;
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -31,14 +34,14 @@ public class CvsChangeList implements CommittedChangeList {
   private long myDate;
   private long myFinishDate;
 
-  private final long myNumber;
-  @NotNull private final String myDescription;
+  private long myNumber;
+  @NotNull private String myDescription;
 
-  private final String myRootPath;
+  private String myRootPath;
 
   private final List<RevisionWrapper> myRevisions = new ArrayList<RevisionWrapper>();
 
-  private final String myUser;
+  private String myUser;
   private static final int SUITABLE_DIFF = 2 * 60 * 1000;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
@@ -58,6 +61,12 @@ public class CvsChangeList implements CommittedChangeList {
     myRootPath = rootPath;
     myEnvironment = environment;
     myProject = project;
+  }
+
+  public CvsChangeList(final Project project, final CvsEnvironment environment, final DataInput stream) throws IOException {
+    myProject = project;
+    myEnvironment = environment;
+    readFromStream(stream);
   }
 
   public String getCommitterName() {
@@ -162,5 +171,31 @@ public class CvsChangeList implements CommittedChangeList {
 
   public int hashCode() {
     return myRevisions.hashCode();
+  }
+
+  public void writeToStream(DataOutput stream) throws IOException {
+    stream.writeLong(myDate);
+    stream.writeLong(myFinishDate);
+    stream.writeLong(myNumber);
+    stream.writeUTF(myDescription);
+    stream.writeUTF(myUser);
+    stream.writeUTF(myRootPath);
+    stream.writeInt(myRevisions.size());
+    for(RevisionWrapper revision: myRevisions) {
+      revision.writeToStream(stream);
+    }
+  }
+
+  private void readFromStream(final DataInput stream) throws IOException {
+    myDate = stream.readLong();
+    myFinishDate = stream.readLong();
+    myNumber = stream.readLong();
+    myDescription = stream.readUTF();
+    myUser = stream.readUTF();
+    myRootPath = stream.readUTF();
+    int revisionCount = stream.readInt();
+    for(int i=0; i<revisionCount; i++) {
+      myRevisions.add(RevisionWrapper.readFromStream(stream));
+    }
   }
 }

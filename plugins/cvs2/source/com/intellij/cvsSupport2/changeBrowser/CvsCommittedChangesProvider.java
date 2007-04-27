@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -28,10 +27,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.io.File;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.DataInput;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
-public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
+public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
@@ -68,57 +73,40 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment());
   }
 
-  private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings, final String module, final CvsEnvironment connectionSettings)
-    throws VcsException {
-    CvsHistoryCache cache = CvsHistoryCache.create();
-
-    try {
-      final CvsHistoryCacheElement cacheElement = cache.getCache(connectionSettings, module);
-
-      final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject);
-
-
-      Date date = settings.getDateBeforeFilter();
-      if (date == null) {
-        date = new Date();
-      }
-      final CvsResult executionResult = runRLogOperation(connectionSettings, module, cacheElement, date);
-
-      if (executionResult.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
-      else if (!executionResult.hasNoErrors()) {
-        throw executionResult.composeError();
-      }
-      else {
-        cacheElement.flush(date);
-        final List<LogInformationWrapper> logs = cacheElement.getLogInformationList();
-        builder.addLogs(logs);
-        final List<CvsChangeList> versions = builder.getVersions();
-        settings.filterChanges(versions);
-        if (settings.USE_USER_FILTER) {
-          for (Iterator<CvsChangeList> iterator = versions.iterator(); iterator.hasNext();) {
-            CvsChangeList repositoryVersion = iterator.next();
-            if (!Comparing.equal(settings.USER, repositoryVersion.getCommitterName())) {
-              iterator.remove();
-            }
-          }
-        }
-        return versions;
-      }
+  private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
+                                                   final String module,
+                                                   final CvsEnvironment connectionSettings) throws VcsException {
+    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject);
+    Date dateTo = settings.getDateBeforeFilter();
+    Date dateFrom = settings.getDateAfterFilter();
+    if (dateFrom == null) {
+      final Calendar calendar = Calendar.getInstance();
+      calendar.set(1970, 2, 2);
+      dateFrom = calendar.getTime();
     }
-    finally {
-      cache.dispose();
+    final List<LogInformationWrapper> log = new ArrayList<LogInformationWrapper>();
+    final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, log);
+
+    if (executionResult.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
+    else if (!executionResult.hasNoErrors()) {
+      throw executionResult.composeError();
+    }
+    else {
+      builder.addLogs(log);
+      final List<CvsChangeList> versions = builder.getVersions();
+      settings.filterChanges(versions);
+      return versions;
     }
   }
 
   private CvsResult runRLogOperation(final CvsEnvironment settings,
                                      final String module,
-                                     final CvsHistoryCacheElement cacheElement,
-                                     final Date date) {
-    LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, cacheElement, date);
-
-    operation.setDateFrom(cacheElement.getLastCachedDate());
+                                     final Date dateFrom,
+                                     final Date dateTo,
+                                     final List<LogInformationWrapper> log) {
+    LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, dateFrom, dateTo, log);
 
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
@@ -130,7 +118,8 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
       for (String message : error.getMessages()) {
         if (message.indexOf(INVALID_OPTION_S) >= 0) {
           LoadHistoryOperation.doesNotSuppressEmptyHeaders(settings);
-          return runRLogOperation(settings, module, cacheElement, date);
+          log.clear();
+          return runRLogOperation(settings, module, dateFrom, dateTo, log);
         }
       }
     }
@@ -138,4 +127,12 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return executionResult;
   }
 
+  public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {
+    list.writeToStream(stream);
+  }
+
+  public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
+    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    return new CvsChangeList(myProject, cvsLocation.getEnvironment(), stream);
+  }
 }

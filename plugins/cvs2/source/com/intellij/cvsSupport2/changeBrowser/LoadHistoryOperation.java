@@ -8,14 +8,12 @@ import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Locale;
+import java.util.*;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
@@ -25,15 +23,19 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   private final String myModule;
 
-  private final CvsHistoryCacheElement myCacheElement;
-  private Date myDateFrom;
+  private final Date myDateFrom;
   private final Date myDateTo;
+  private List<LogInformationWrapper> myLog;
 
-  public LoadHistoryOperation(CvsEnvironment environment, String module, final CvsHistoryCacheElement builder, @NotNull Date lastLogDate) {
+  public LoadHistoryOperation(CvsEnvironment environment, String module,
+                              @NotNull Date dateFrom,
+                              @Nullable Date dateTo,
+                              final List<LogInformationWrapper> log) {
     super(environment);
+    myLog = log;
     myModule = module;
-    myCacheElement = builder;
-    myDateTo = lastLogDate;
+    myDateFrom = dateFrom;
+    myDateTo = dateTo;
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
@@ -42,7 +44,9 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     command.setHeadersOnly(false);
     command.setNoTags(true);
     command.setDateFrom(DATE_FORMAT.format(myDateFrom));
-    command.setDateTo(DATE_FORMAT.format(myDateTo));
+    if (myDateTo != null) {
+      command.setDateTo(DATE_FORMAT.format(myDateTo));
+    }
 
     if (ourDoNotSupportingSOptionServers.contains(root.getCvsRootAsString())) {
       command.setSuppressEmptyHeaders(false);
@@ -63,11 +67,15 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (info instanceof LogInformation) {
-      myCacheElement.saveLogInformation((LogInformation)info);
+      final LogInformation logInfo = (LogInformation)info;
+      LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), logInfo);
+      if (wrapper != null) {
+        myLog.add(wrapper);
+      }
     }
   }
 
-  public void setDateFrom(final Date date) {
-    myDateFrom = date;
+  public List<LogInformationWrapper> getLog() {
+    return myLog;
   }
 }
