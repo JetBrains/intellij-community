@@ -330,7 +330,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static void renameNonCodeUsages(final Project project, final NonCodeUsageInfo[] usages) {
+  public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     HashMap<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new HashMap<Document, ArrayList<UsageOffset>>();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
@@ -367,7 +367,7 @@ public class RefactoringUtil {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
-  private static class UsageOffset implements Comparable {
+  private static class UsageOffset implements Comparable<UsageOffset> {
     final int startOffset;
     final int endOffset;
     final String newText;
@@ -378,8 +378,8 @@ public class RefactoringUtil {
       this.newText = newText;
     }
 
-    public int compareTo(Object o) {
-      return startOffset - ((UsageOffset)o).startOffset;
+    public int compareTo(final UsageOffset o) {
+      return startOffset - o.startOffset;
     }
   }
 
@@ -396,10 +396,7 @@ public class RefactoringUtil {
     if (element instanceof PsiReturnStatement) {
       vector.add(element);
     }
-    else if (element instanceof PsiClass) {
-      return;
-    }
-    else {
+    else if (!(element instanceof PsiClass)) {
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
         addReturnStatements(vector, child);
@@ -1014,15 +1011,6 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static void visitImplicitConstructorUsages(PsiClass aClass, final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor) {
-    PsiManager manager = aClass.getManager();
-    final PsiClass[] inheritors = manager.getSearchHelper().findInheritors(aClass, aClass.getUseScope(), false);
-
-    for (PsiClass inheritor : inheritors) {
-      visitImplicitSuperConstructorUsages(inheritor, implicitConstructorUsageVistor, aClass);
-    }
-  }
-
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
                                                          final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
                                                          PsiClass superClass) {
@@ -1423,7 +1411,7 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @NotNull PsiElement... elements) {
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {

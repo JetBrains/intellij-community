@@ -52,7 +52,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean myShouldRenameInheritors;
 
   private boolean myShouldRenameForms;
-  private NonCodeUsageInfo[] myNonCodeUsages;
+  private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
 
   public RenameProcessor(Project project,
