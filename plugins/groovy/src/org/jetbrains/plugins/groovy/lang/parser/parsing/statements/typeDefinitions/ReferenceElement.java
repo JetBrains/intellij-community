@@ -93,7 +93,7 @@ public class ReferenceElement implements GroovyElementTypes {
       internalTypeMarker = internalTypeMarker.precede();
     }
 
-    if (forPackage) {
+    if (forPackage || forImport) {
       internalTypeMarker.drop();
       return REFERENCE_ELEMENT;
     }

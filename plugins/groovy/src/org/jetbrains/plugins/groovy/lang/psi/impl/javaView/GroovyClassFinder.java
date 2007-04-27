@@ -18,6 +18,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -35,11 +38,10 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
   public PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope) {
     GrTypeDefinition typeDef = GroovyCachesManager.getInstance(myProject).getClassByName(qualifiedName, scope);
     if (typeDef == null) return null;
-    return new GrJavaClass(getJavaFile(typeDef), typeDef);
+    return new GrJavaClass(getJavaFile((GroovyFile) typeDef.getContainingFile()), typeDef);
   }
 
-  private GrJavaFile getJavaFile(GrTypeDefinition typeDef) {
-    GroovyFile file = (GroovyFile) typeDef.getContainingFile();
+  private GrJavaFile getJavaFile(GroovyFile file) {
     GrJavaFile javaFile = myJavaFiles.get(file);
     if (javaFile == null) {
       javaFile = new GrJavaFile(file);
@@ -56,7 +58,7 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
     PsiClass[] result = new PsiClass[typeDefs.length];
     for (int i = 0; i < result.length; i++) {
       GrTypeDefinition typeDef = typeDefs[i];
-      result[i] = new GrJavaClass(getJavaFile(typeDef), typeDef);
+      result[i] = new GrJavaClass(getJavaFile((GroovyFile) typeDef.getContainingFile()), typeDef);
     }
 
     return result;
@@ -74,7 +76,16 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
 
   @NotNull
   public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
-    return new PsiClass[0];  //To change body of implemented methods use File | Settings | File Templates.
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    for (final PsiDirectory dir : psiPackage.getDirectories(scope)) {
+      for (final PsiFile file : dir.getFiles()) {
+        if (file instanceof GroovyFile) {
+          result.addAll(Arrays.asList(getJavaFile((GroovyFile) file).getClasses()));
+        }
+      }
+    }
+
+    return result.toArray(new PsiClass[result.size()]);
   }
 
   public void projectOpened() {

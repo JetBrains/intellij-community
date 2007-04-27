@@ -181,7 +181,8 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
       String refName = groovyRef.getReferenceName();
       if (refName == null) return null;
       PsiManagerEx manager = groovyRef.getManager();
-      switch (groovyRef.getKind()) {
+      ReferenceKind kind = groovyRef.getKind();
+      switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(groovyRef), groovyRef.getResolveScope());
           if (aClass != null) {
@@ -195,6 +196,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
           return manager.findPackage(PsiUtil.getQualifiedReferenceText(groovyRef));
 
         case CLASS:
+        case CLASS_OR_PACKAGE:
           GrReferenceElement qualifier = groovyRef.getQualifier();
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
@@ -203,19 +205,28 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
               for (final PsiClass aClass : classes) {
                 if (refName.equals(aClass.getName())) return aClass;
               }
-            } else if (qualifierResolved instanceof PsiClass) {
-              return ((PsiClass) qualifierResolved).findInnerClassByName(refName, true);
+
+              if (kind == CLASS_OR_PACKAGE) {
+                for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages()) {
+                  if (refName.equals(subpackage.getName())) return subpackage;
+                }
+              }
             }
           } else {
             ClassResolver processor = new ClassResolver(refName);
             ResolveUtil.treeWalkUp(groovyRef, processor);
             List<PsiNamedElement> candidates = processor.getCandidates();
-            return candidates.size() == 1 ? candidates.get(0) : null;
+            if (candidates.size() == 1) return candidates.get(0);
+
+            if (kind == CLASS_OR_PACKAGE) {
+              PsiPackage defaultPackage = groovyRef.getManager().findPackage("");
+              if (defaultPackage != null) {
+                for (final PsiPackage subpackage : defaultPackage.getSubPackages()) {
+                  if (refName.equals(subpackage.getName())) return subpackage;
+                }
+              }
+            }
           }
-          break;
-
-          //todo other cases
-
       }
 
       return null;
