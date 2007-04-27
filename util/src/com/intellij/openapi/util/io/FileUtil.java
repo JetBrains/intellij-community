@@ -593,8 +593,7 @@ public class FileUtil {
     }
   }
 
-  public static boolean moveDirWithContent( File fromDir, File toDir )
-  {
+  public static boolean moveDirWithContent( File fromDir, File toDir ) {
     if( !toDir.exists() )
         return fromDir.renameTo( toDir );
 
@@ -635,5 +634,31 @@ public class FileUtil {
     }
 
     return result.toString();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
+    Process process;
+    if(SystemInfo.isWindows){
+      process=Runtime.getRuntime().exec(
+        new String[]{
+          "attrib",
+          readOnlyStatus ? "+r" : "-r",
+          path
+        }
+      );
+    }else{ // UNIXes go here
+      process=Runtime.getRuntime().exec(
+        new String[]{
+          "chmod",
+          readOnlyStatus ? "u-w" : "u+w",
+          path
+        }
+      );
+    }
+    try {
+      process.waitFor();
+    }catch (InterruptedException e) {
+    }
   }
 }

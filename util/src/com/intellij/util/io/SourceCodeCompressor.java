@@ -44,7 +44,7 @@ public class SourceCodeCompressor {
     INFLATE_BUFFER = new byte[4096];
   }
 
-  public static synchronized byte[] compress(byte[] source) {
+  public static synchronized byte[] compress(byte[] source, int off, int len) {
     try {
       DEFLATER.reset();
       DEFLATER.setDictionary(PRESET_BUF);
@@ -52,7 +52,7 @@ public class SourceCodeCompressor {
         DeflaterOutputStream output = null;
         try {
           output = new DeflaterOutputStream(OUTPUT, DEFLATER);
-          output.write(source);
+          output.write(source, off, len);
         }
         finally {
           if (output != null) {
@@ -68,13 +68,24 @@ public class SourceCodeCompressor {
     finally {
       OUTPUT.reset();
     }
+
+  }
+
+  public static synchronized byte[] compress(byte[] source) {
+    return compress(source, 0, source.length);
   }
 
   public static synchronized byte[] decompress(byte[] compressed) throws IOException {
+    final int len = compressed.length;
+    final int off = 0;
+    return decompress(compressed, len, off);
+  }
+
+  public static byte[] decompress(final byte[] compressed, final int len, final int off) throws IOException {
     INFLATER.reset();
     InflaterInputStream input = null;
     try {
-      input = new InflaterInputStream(new ByteArrayInputStream(compressed), INFLATER);
+      input = new InflaterInputStream(new ByteArrayInputStream(compressed, off, len), INFLATER);
       final int b = input.read();
       if (b == -1) {
         INFLATER.setDictionary(PRESET_BUF);

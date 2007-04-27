@@ -114,7 +114,6 @@ public final class PagedFileStorage {
 
   private void unmap() {
     if (myBuffer != null) {
-      flush();
       myBuffer.unmap();
       myBuffer = null;
     }

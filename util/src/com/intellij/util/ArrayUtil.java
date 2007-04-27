@@ -52,6 +52,28 @@ public class ArrayUtil {
     System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
     return result;
   }
+
+  public static int[] realloc (final int [] array, final int newSize) {
+    if (newSize == 0) {
+      return EMPTY_INT_ARRAY;
+    }
+
+    final int oldSize = array.length;
+    if (oldSize == newSize) {
+      return array;
+    }
+
+    final int [] result = new int [newSize];
+    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    return result;
+  }
+
+  public static int[] append(int[] array, int value) {
+    array = realloc(array, array.length + 1);
+    array[array.length - 1] = value;
+    return array;
+  }
+
   public static char[] realloc (final char[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_CHAR_ARRAY;
