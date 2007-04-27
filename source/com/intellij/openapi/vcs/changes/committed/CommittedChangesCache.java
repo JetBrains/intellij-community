@@ -55,6 +55,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   public static class State {
     private int myInitialCount = 500;
+    private int myInitialDays = 90;
     private int myRefreshInterval = 30;
     private boolean myRefreshEnabled = true;
 
@@ -64,6 +65,14 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
     public void setInitialCount(final int initialCount) {
       myInitialCount = initialCount;
+    }
+
+    public int getInitialDays() {
+      return myInitialDays;
+    }
+
+    public void setInitialDays(final int initialDays) {
+      myInitialDays = initialDays;
     }
 
     public int getRefreshInterval() {
@@ -129,6 +138,19 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
     assert provider != null;
     return provider;
+  }
+
+  public boolean isMaxCountSupportedForProject() {
+    for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
+      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+      if (provider instanceof CachingCommittedChangesProvider) {
+        final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+        if (!cachingProvider.isMaxCountSupported()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public void getProjectChangesAsync(final ChangeBrowserSettings settings,
@@ -309,10 +331,22 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     LOG.info("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
-    List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, myState.getInitialCount());
+    final ChangeBrowserSettings settings = provider.createDefaultSettings();
+    int maxCount = 0;
+    if (isMaxCountSupportedForProject()) {
+      maxCount = myState.getInitialCount();
+    }
+    else {
+      settings.USE_DATE_AFTER_FILTER = true;
+      Calendar calendar = Calendar.getInstance();
+      calendar.add(Calendar.DAY_OF_YEAR, -myState.getInitialDays());
+      settings.setDateAfter(calendar.getTime());
+    }
+    //noinspection unchecked
+    List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
     cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
-    if (changes.size() < myState.getInitialCount()) {
+    if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
     return changes;

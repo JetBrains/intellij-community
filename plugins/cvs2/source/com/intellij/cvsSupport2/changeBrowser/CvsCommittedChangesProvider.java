@@ -136,4 +136,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
+
+  public boolean isMaxCountSupported() {
+    return false;
+  }
 }

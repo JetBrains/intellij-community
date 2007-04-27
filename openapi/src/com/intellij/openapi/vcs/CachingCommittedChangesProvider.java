@@ -29,4 +29,12 @@ import java.io.IOException;
 public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
   void writeChangeList(final DataOutput stream, final T list) throws IOException;
   T readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException;
+
+  /**
+   * Returns true if the underlying VCS allows to limit the number of loaded changes. If the VCS does not
+   * support that, filtering by date will be used when initializing history cache.
+   *
+   * @return true if number limit is supported, false otherwise.
+   */
+  boolean isMaxCountSupported();
 }
