@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +86,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
                                                                                                             CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
-    return ServiceManager.getService(project, CommittedChangesCache.class);
+    return project.getComponent(CommittedChangesCache.class);
   }
 
   private Project myProject;
@@ -281,6 +280,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         settings.filterChanges(changes);
         return trimToSize(changes, maxCount);
       }
+      //noinspection unchecked
       return cacheFile.getProvider().getCommittedChanges(settings, location, maxCount);
     }
     else {
@@ -382,7 +382,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           }
           catch (IOException e) {
             LOG.error(e);
-            return;
           }
         }
       };

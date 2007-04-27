@@ -88,6 +88,10 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>
