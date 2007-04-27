@@ -16,6 +16,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,6 @@ import java.util.Map;
 /**
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
@@ -467,7 +467,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       for (Class interfaceClass : myComponentInterfaces) {
         final Class implClass = myInterfaceToClassMap.get(interfaceClass);
-        if (baseClass.isAssignableFrom(implClass)) {
+        if (ReflectionCache.isAssignable(baseClass, implClass)) {
           array.add((T)getComponent(interfaceClass));
         }
       }
