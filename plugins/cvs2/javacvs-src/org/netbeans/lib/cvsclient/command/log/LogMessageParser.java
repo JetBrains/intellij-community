@@ -104,16 +104,6 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
     if (processingRevision) {
       logInfo.addRevision(revision);
-      if (logMessageBuffer.size() > 0 && lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-1))) {
-        logMessageBuffer.remove(logMessageBuffer.size()-1);
-      }
-      else if (logMessageBuffer.size() > 1 &&
-        lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-1)) &&
-        logMessageBuffer.get(logMessageBuffer.size()-1).length() == 0) {
-        logMessageBuffer.remove(logMessageBuffer.size()-2);
-        logMessageBuffer.remove(logMessageBuffer.size()-1);
-      }
-
       revision.setMessage(getMessageFromBuffer());
 
       revision = null;
@@ -129,6 +119,16 @@ final public class LogMessageParser extends AbstractMessageParser {
   }
 
   private String getMessageFromBuffer() {
+    if (logMessageBuffer.size() > 0 && lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-1))) {
+      logMessageBuffer.remove(logMessageBuffer.size()-1);
+    }
+    else if (logMessageBuffer.size() > 1 &&
+      lastLogMessageIsFinalSeparator(logMessageBuffer.get(logMessageBuffer.size()-2)) &&
+      logMessageBuffer.get(logMessageBuffer.size()-1).length() == 0) {
+      logMessageBuffer.remove(logMessageBuffer.size()-2);
+      logMessageBuffer.remove(logMessageBuffer.size()-1);
+    }
+
     if (logMessageBuffer.size() > 0) {
       return StringUtil.join(logMessageBuffer, "\n") + "\n";
     }
