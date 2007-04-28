@@ -13,6 +13,7 @@ public interface Template {
   void addSelectionStartVariable();
   void addSelectionEndVariable();
 
+  String getId();
   String getKey();
 
   String getDescription();

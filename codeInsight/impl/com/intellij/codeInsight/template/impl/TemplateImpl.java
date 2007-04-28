@@ -23,12 +23,14 @@ public class TemplateImpl implements Template {
   private ArrayList<Variable> myVariables = new ArrayList<Variable>();
   private ArrayList<Segment> mySegments = null;
   private String myTemplateText = null;
+  private String myId;
 
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof TemplateImpl)) return false;
 
     final TemplateImpl template = (TemplateImpl) o;
+    if (myId != null && template.myId != null && myId.equals(template.myId)) return true;
 
     if (isToReformat != template.isToReformat) return false;
     if (isToShortenLongNames != template.isToShortenLongNames) return false;
@@ -50,6 +52,9 @@ public class TemplateImpl implements Template {
   }
 
   public int hashCode() {
+    if (myId != null) {
+      return myId.hashCode();
+    }
     int result;
     result = myKey.hashCode();
     result = 29 * result + myString.hashCode();
@@ -88,16 +93,22 @@ public class TemplateImpl implements Template {
 
 
   public TemplateImpl(String key, String group) {
+    this(key, null, group);
     toParseSegments = false;
-    myKey = key;
-    myGroupName = group;
     myTemplateText = "";
     mySegments = new ArrayList<Segment>();
   }
 
+  public TemplateImpl(String key, String string, String group) {
+    myKey = key;
+    myString = string;
+    myGroupName = group;
+  }
+
+
   public void addTextSegment(String text) {
     text = StringUtil.convertLineSeparators(text, "\n");
-    myTemplateText = myTemplateText + text;
+    myTemplateText += text;
   }
 
   public void addVariableSegment (String name) {
@@ -128,14 +139,13 @@ public class TemplateImpl implements Template {
     mySegments.add(segment);
   }
 
-  public TemplateImpl(String key, String string, String group) {
-    myKey = key;
-    myString = string;
-    myGroupName = group;
+  public String getId() {
+    return myId;
   }
 
   public TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, myString, myGroupName);
+    template.myId = myId;
     template.myDescription = myDescription;
     template.myShortcutChar = myShortcutChar;
     template.isToReformat = isToReformat;
@@ -350,6 +360,10 @@ public class TemplateImpl implements Template {
     }
 
     return false;
+  }
+
+  public void setId(final String id) {
+    myId = id;
   }
 
   private static class Segment {

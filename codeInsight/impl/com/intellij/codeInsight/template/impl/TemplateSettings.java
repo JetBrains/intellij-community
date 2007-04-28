@@ -2,7 +2,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
@@ -17,6 +16,8 @@ import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,25 +74,30 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String KEY = "key";
+  @NonNls private static final String ID = "id";
 
   private static final @NonNls String TEMPLATES_CONFIG_FOLDER = "templates";
 
-  private Map myTemplates = new LinkedHashMap();
-  private Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
+  private final Map<String,Template> myTemplates = new LinkedHashMap<String,Template>();
+  private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
+  private final Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
+
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
   private String myLastSelectedTemplateKey;
   @NonNls
   public static final String XML_EXTENSION = ".xml";
 
-  public TemplateSettings(Application application) {
-    loadTemplates(application);
+  public TemplateSettings() {
+    loadTemplates();
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{getTemplateDirectory(true),PathManager.getDefaultOptionsFile()};
   }
 
+  @NotNull
   public String getPresentableName() {
     return CodeInsightBundle.message("templates.export.display.name");
   }
@@ -128,7 +134,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       }
     }
 
-    loadTemplates(ApplicationManager.getApplication());
+    loadTemplates();
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -146,7 +152,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       Element deleted = new Element(DELETED_TEMPLATES);
       for (final String myDeletedTemplate : myDeletedTemplates) {
         Element template = new Element(TEMPLATE);
-        template.setAttribute(NAME, (String)myDeletedTemplate);
+        template.setAttribute(NAME, myDeletedTemplate);
         deleted.addContent(template);
 
       }
@@ -163,7 +169,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   }
 
   public TemplateImpl[] getTemplates() {
-    return (TemplateImpl[]) myTemplates.values().toArray(new TemplateImpl[myTemplates.size()]);
+    return myTemplates.values().toArray(new TemplateImpl[myTemplates.size()]);
   }
 
   public char getDefaultShortcutChar() {
@@ -178,6 +184,17 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     return (TemplateImpl) myTemplates.get(key);
   }
 
+  public Template getTemplateById(@NonNls String id) {
+    return myTemplatesById.get(id);
+  }
+
+  public void addTemplateWithId(Template template) {
+    final String id = template.getId();
+    if (id != null) {
+      myTemplatesById.put(id, template);
+    }
+  }
+
   public int getMaxKeyLength() {
     return myMaxKeyLength;
   }
@@ -188,6 +205,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     for (TemplateImpl template : newTemplates) {
       myTemplates.put(template.getKey(), template);
       myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
+      addTemplateWithId(template);
     }
 
     saveTemplates(newTemplates);
@@ -195,12 +213,15 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
   public void addTemplate(Template template) {
     myTemplates.put(template.getKey(), template);
+    addTemplateWithId(template);
     myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
     saveTemplates(getTemplates());
   }
 
-  private TemplateImpl addTemplate(String key, String string, String group, String description, String shortcut, boolean isDefault) {
+  private TemplateImpl addTemplate(String key, String string, String group, String description, String shortcut, boolean isDefault,
+                                   final String id) {
     TemplateImpl template = new TemplateImpl(key, string, group);
+    template.setId(id);
     template.setDescription(description);
     if (TAB.equals(shortcut)) {
       template.setShortcutChar(TAB_CHAR);
@@ -217,9 +238,11 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
     myTemplates.put(key, template);
     myMaxKeyLength = Math.max(myMaxKeyLength, key.length());
+    addTemplateWithId(template);
     return template;
   }
 
+  @Nullable
   private static File getTemplateDirectory(boolean toCreate) {
     String directoryPath = PathManager.getConfigPath() + File.separator + TEMPLATES_CONFIG_FOLDER;
     File directory = new File(directoryPath);
@@ -237,15 +260,16 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     return directory;
   }
 
+  @Nullable
   private static File[] getUserTemplateFiles() {
     File directory = getTemplateDirectory(false);
     if (directory == null || !directory.exists()) {
       directory = getTemplateDirectory(true);
     }
-    return directory.listFiles();
+    return directory == null ? null : directory.listFiles();
   }
 
-  private void loadTemplates(Application application) {
+  private void loadTemplates() {
     File[] files = getUserTemplateFiles();
     if (files == null) {
       return;
@@ -266,7 +290,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
   }
 
-  private String getDefaultTemplateName(String defTemplate) {
+  private static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf("/") + 1);
   }
 
@@ -301,6 +325,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       String description;
       String resourceBundle = element.getAttributeValue(RESOURCE_BUNDLE);
       String key = element.getAttributeValue(KEY);
+      String id = element.getAttributeValue(ID);
       if (resourceBundle != null && key != null) {
         ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle);
         description = bundle.getString(key);
@@ -310,10 +335,10 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       }
       String shortcut = element.getAttributeValue(SHORTCUT);
       if (isDefault && myDeletedTemplates.contains(name)) continue;
-      TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault);
-      template.setToReformat(Boolean.valueOf(element.getAttributeValue(TO_REFORMAT)));
-      template.setToShortenLongNames(Boolean.valueOf(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
-      template.setDeactivated(Boolean.valueOf(element.getAttributeValue(DEACTIVATED)));
+      TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
+      template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
+      template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
+      template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
 
 
       for (final Object o : element.getChildren(VARIABLE)) {
@@ -321,7 +346,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
         String variableName = e.getAttributeValue(NAME);
         String expression = e.getAttributeValue(EXPRESSION);
         String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
-        boolean isAlwaysStopAt = Boolean.valueOf(e.getAttributeValue(ALWAYS_STOP_AT));
+        boolean isAlwaysStopAt = Boolean.parseBoolean(e.getAttributeValue(ALWAYS_STOP_AT));
         template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
       }
 
@@ -336,12 +361,11 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         List<String> templateNames = new ArrayList<String>();
-        for (int i = 0; i < templates.length; i++) {
-          templateNames.add(templates[i].getKey());
+        for (TemplateImpl template1 : templates) {
+          templateNames.add(template1.getKey());
         }
         myDeletedTemplates.clear();
-        for (Iterator<String> it = myDefaultTemplates.keySet().iterator(); it.hasNext();) {
-          String defTemplateName = it.next();
+        for (String defTemplateName : myDefaultTemplates.keySet()) {
           if (!templateNames.contains(defTemplateName)) {
             myDeletedTemplates.add(defTemplateName);
           }
@@ -349,18 +373,17 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
         File[] files = getUserTemplateFiles();
         if (files != null) {
-          for (int i = 0; i < files.length; i++) {
-            files[i].delete();
+          for (File file : files) {
+            file.delete();
           }
         }
 
         if (templates.length == 0) return;
-        com.intellij.util.containers.HashMap<String,Element> groupToDocumentMap = new com.intellij.util.containers.HashMap<String, Element>();
-        for (int i = 0; i < templates.length; i++) {
-          TemplateImpl template = templates[i];
+        HashMap<String,Element> groupToDocumentMap = new HashMap<String, Element>();
+        for (TemplateImpl template : templates) {
           if (template.equals(myDefaultTemplates.get(template.getKey()))) continue;
 
-          String groupName = templates[i].getGroupName();
+          String groupName = template.getGroupName();
           Element templateSetElement = groupToDocumentMap.get(groupName);
           if (templateSetElement == null) {
             templateSetElement = new Element(TEMPLATE_SET);
@@ -369,7 +392,8 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
           }
           try {
             saveTemplate(template, templateSetElement);
-          } catch (IllegalDataException e) {
+          }
+          catch (IllegalDataException e) {
           }
         }
 
@@ -379,16 +403,17 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
         }
 
         Collection<Map.Entry<String,Element>> groups = groupToDocumentMap.entrySet();
-        for (Iterator<Map.Entry<String,Element>> it = groups.iterator(); it.hasNext();) {
-          Map.Entry<String,Element> entry = it.next();
+        for (Map.Entry<String, Element> entry : groups) {
           String groupName = entry.getKey();
           Element templateSetElement = entry.getValue();
 
           String fileName = convertName(groupName);
           String filePath = findFirstNotExistingFile(dir, fileName, XML_EXTENSION);
           try {
-            JDOMUtil.writeDocument(new Document(templateSetElement), filePath, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-          } catch (IOException e) {
+            JDOMUtil
+              .writeDocument(new Document(templateSetElement), filePath, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+          }
+          catch (IOException e) {
             LOG.error(e);
           }
         }
@@ -396,8 +421,12 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     });
   }
 
-  private void saveTemplate(TemplateImpl template, Element templateSetElement) {
+  private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
     Element element = new Element(TEMPLATE);
+    final String id = template.getId();
+    if (id != null) {
+      element.setAttribute(ID, id);
+    }
     element.setAttribute(NAME, template.getKey());
     element.setAttribute(VALUE, template.getString());
     if (template.getShortcutChar() == TAB_CHAR) {
@@ -434,7 +463,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     templateSetElement.addContent(element);
   }
 
-  private String findFirstNotExistingFile(File directory, String fileName, String extension) {
+  private static String findFirstNotExistingFile(File directory, String fileName, String extension) {
     String filePath = directory.getAbsolutePath() + File.separator + fileName + extension;
     File file = new File(filePath);
     if (!file.exists()) {
@@ -449,8 +478,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
   }
 
-
-  private String convertName(String s) {
+  private static String convertName(String s) {
     if (s == null || s.length() == 0) {
       return "_";
     }
@@ -466,6 +494,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     return buf.toString();
   }
 
+  @NotNull
   public String getComponentName() {
     return "TemplateSettings";
   }
