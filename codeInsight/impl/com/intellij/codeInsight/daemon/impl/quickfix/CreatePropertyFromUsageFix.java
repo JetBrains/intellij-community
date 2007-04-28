@@ -21,6 +21,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -32,11 +33,11 @@ import java.util.Set;
  */
 public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageFix");
-  private static final @NonNls String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
-  private static final @NonNls String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
-  private static final @NonNls String GET_PREFIX = "get";
-  private static final @NonNls String IS_PREFIX = "is";
-  private static final @NonNls String SET_PREFIX = "set";
+  @NonNls private static final String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
+  @NonNls private static final String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
+  @NonNls private static final String GET_PREFIX = "get";
+  @NonNls private static final String IS_PREFIX = "is";
+  @NonNls private static final String SET_PREFIX = "set";
 
   public CreatePropertyFromUsageFix(PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
@@ -44,6 +45,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
   private final PsiMethodCallExpression myMethodCall;
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.property.from.usage.family");
   }
@@ -57,6 +59,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
+    LOG.assertTrue(methodName != null);
     String propertyName = PropertyUtil.getPropertyName(methodName);
     if (propertyName == null || propertyName.length() == 0) return false;
 
@@ -140,7 +143,6 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
     PsiElementFactory factory = manager.getElementFactory();
@@ -148,10 +150,12 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     boolean isStatic = false;
     PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
     if (qualifierExpression != null) {
-      if (qualifierExpression.getReference() != null) {
-        isStatic = qualifierExpression.getReference().resolve() instanceof PsiClass;
+      PsiReference reference = qualifierExpression.getReference();
+      if (reference != null) {
+        isStatic = reference.resolve() instanceof PsiClass;
       }
-    } else {
+    }
+    else {
       PsiMethod method = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
       if (method != null) {
         isStatic = method.hasModifierProperty(PsiModifier.STATIC);
@@ -160,18 +164,21 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     String fieldName = getVariableName(myMethodCall, isStatic);
     LOG.assertTrue(fieldName != null);
     String callText = myMethodCall.getMethodExpression().getReferenceName();
+    LOG.assertTrue(callText != null, myMethodCall.getMethodExpression());
     PsiType[] expectedTypes;
     PsiType type;
     if (callText.startsWith(GET_PREFIX)) {
       expectedTypes = CreateFromUsageUtils.guessType(myMethodCall, false);
       type = expectedTypes[0];
-    } else if (callText.startsWith(IS_PREFIX)) {
+    }
+    else if (callText.startsWith(IS_PREFIX)) {
       type = PsiType.BOOLEAN;
-      expectedTypes = new PsiType[] {type};
-    } else {
+      expectedTypes = new PsiType[]{type};
+    }
+    else {
       type = myMethodCall.getArgumentList().getExpressions()[0].getType();
       if (type == null || type == PsiType.NULL) type = PsiType.getJavaLangObject(manager, myMethodCall.getResolveScope());
-      expectedTypes = new PsiType[] {type};
+      expectedTypes = new PsiType[]{type};
     }
 
     positionCursor(project, targetClass.getContainingFile(), targetClass);
@@ -187,14 +194,20 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       PsiMethod accessor;
       PsiElement fieldReference;
       PsiElement typeReference;
+      PsiCodeBlock body;
       if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-        accessor = (PsiMethod) targetClass.add(PropertyUtil.generateGetterPrototype(field));
-        fieldReference = ((PsiReturnStatement) accessor.getBody().getStatements()[0]).getReturnValue();
+        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
+        body = accessor.getBody();
+        LOG.assertTrue(body != null, accessor.getText());
+        fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
         typeReference = accessor.getReturnTypeElement();
-      } else {
-        accessor = (PsiMethod) targetClass.add(PropertyUtil.generateSetterPrototype(field));
-        PsiAssignmentExpression expr = (PsiAssignmentExpression) ((PsiExpressionStatement) accessor.getBody().getStatements()[0]).getExpression();
-        fieldReference = ((PsiReferenceExpression) expr.getLExpression()).getReferenceNameElement();
+      }
+      else {
+        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field));
+        body = accessor.getBody();
+        LOG.assertTrue(body != null, accessor.getText());
+        PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();
+        fieldReference = ((PsiReferenceExpression)expr.getLExpression()).getReferenceNameElement();
         typeReference = accessor.getParameterList().getParameters()[0].getTypeElement();
       }
       accessor.setName(callText);
@@ -203,11 +216,11 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       TemplateBuilder builder = new TemplateBuilder(accessor);
       builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);
       builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
-      builder.setEndVariableAfter(accessor.getBody().getLBrace());
+      builder.setEndVariableAfter(body.getLBrace());
 
       accessor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(accessor);
       targetClass = accessor.getContainingClass();
-      LOG.assertTrue (targetClass != null);
+      LOG.assertTrue(targetClass != null);
       Template template = builder.buildTemplate();
       TextRange textRange = accessor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
@@ -235,21 +248,22 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
                 PsiType type = factory.createTypeFromText(fieldType, aClass);
                 try {
                   PsiField field = factory.createField(fieldName, type);
-                  field = (PsiField) aClass.add(field);
+                  field = (PsiField)aClass.add(field);
                   field.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic1);
                   positionCursor(project, field.getContainingFile(), field);
-                } catch (IncorrectOperationException e) {
+                }
+                catch (IncorrectOperationException e) {
                   LOG.error(e);
                 }
-              } catch (IncorrectOperationException e) {
-                return;
+              }
+              catch (IncorrectOperationException e) {
               }
             }
           });
         }
       });
-
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
