@@ -89,8 +89,8 @@ public class ChangesCacheFile {
     return false;
   }
 
-  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, boolean assumeCompletelyDownloaded) throws IOException {
-    LOG.info("Writing " + changes.size() + (assumeCompletelyDownloaded ? " old changes" : " incoming changes"));
+  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
+    LOG.info("Writing " + changes.size() + " incoming changes");
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
@@ -129,10 +129,8 @@ public class ChangesCacheFile {
         if (list.getNumber() < myFirstCachedChangelist) {
           myFirstCachedChangelist = list.getNumber();
         }
-        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, assumeCompletelyDownloaded);
-        if (!assumeCompletelyDownloaded) {
-          myIncomingCount++;
-        }
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, false);
+        myIncomingCount++;
       }
       writeHeader();
       myHeaderLoaded = true;

@@ -345,7 +345,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     //noinspection unchecked
     List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
-    cacheFile.writeChanges(changes, true); // this sorts changes in chronological order
+    cacheFile.writeChanges(changes); // this sorts changes in chronological order
     if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
@@ -361,7 +361,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     defaultSettings.setDateAfter(date);
     defaultSettings.USE_DATE_AFTER_FILTER = true;
     List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
-    newChanges = cacheFile.writeChanges(newChanges, false);    // skip duplicates
+    newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
     if (newChanges.size() > 0) {
       myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
     }
