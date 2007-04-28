@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 /**
- * Visitor which can be used to visit Java, XML and AspectJ PSI elements.
+ * Visitor which can be used to visit Java, XML and JSP PSI elements.
  *
  * @see PsiRecursiveElementVisitor
  */

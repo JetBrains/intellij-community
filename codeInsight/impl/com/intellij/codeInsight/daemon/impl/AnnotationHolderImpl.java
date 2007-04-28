@@ -13,8 +13,6 @@ import com.intellij.xml.util.XmlStringUtil;
  * @author max
  */
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
-  private boolean writable = true;
-
   public Annotation createErrorAnnotation(PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
   }
@@ -64,7 +62,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-    if (!writable) throw new IllegalStateException();
     //noinspection HardCodedStringLiteral
     String tooltip = message == null ? null : "<html><body>" + XmlStringUtil.escapeString(message) + "</body></html>";
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
@@ -74,10 +71,5 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   public boolean hasAnnotations() {
     return !isEmpty();
-  }
-
-  public void setWritable(boolean writable) {
-    assert this.writable != writable;
-    this.writable = writable;
   }
 }

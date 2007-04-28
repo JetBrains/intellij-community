@@ -77,7 +77,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private HighlightVisitorImpl(PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
-    myAnnotationHolder.setWritable(false);
   }
 
   public HighlightVisitorImpl clone() {
@@ -93,6 +92,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       throw new UnsupportedOperationException();
     }
     myHolder = holder;
+    assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
 
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(element.isValid());
@@ -106,7 +106,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     myParameterIsReassigned.clear();
-    assert !myAnnotationHolder.hasAnnotations();
+    assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -114,10 +114,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitElement(PsiElement element) {
-    Language lang = element.getLanguage();
-    myAnnotationHolder.setWritable(true);
     boolean hasAnnotators = highlightInjectedPsi(element);
-    List<Annotator> annotators = lang.getAnnotators();
+    List<Annotator> annotators = element.getLanguage().getAnnotators();
 
     if (!annotators.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
@@ -127,20 +125,14 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       }
       hasAnnotators = true;
     }
-    if (element instanceof OuterLanguageElement) {
-      XmlHighlightVisitor.visitJspElement((OuterLanguageElement)element);
-    }
 
     if (hasAnnotators) {
       convertAnnotationsToHighlightInfos();
     }
-    myAnnotationHolder.setWritable(false);
   }
 
   private boolean highlightInjectedPsi(final PsiElement element) {
-    if (!(element instanceof PsiLanguageInjectionHost)) {
-      return false;
-    }
+    if (!(element instanceof PsiLanguageInjectionHost)) return false;
     PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
     List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
     if (injected == null) return false;
@@ -186,9 +178,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           HighlightInfo info = createErrorElementInfo(element);
           TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
           if (editable==null) return; //do not highlight generated header/footer
-          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, documentRange.injectedToHost(editable.getStartOffset()),
-                                                  documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
-          myHolder.add(fixed);
+          Annotation annotation = fixingOffsetsHolder.createErrorAnnotation(editable, info.description);
+          annotation.setTooltip(info.toolTip);
         }
       };
 
@@ -255,8 +246,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
     }
     else {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getFirstChild(),
-                                                     JavaErrorMessages.message("annotations.prior.15")));
+      PsiElement child = annotation.getFirstChild();
+      PsiElement toHighlight = child == null ? annotation : child;
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, toHighlight, JavaErrorMessages.message("annotations.prior.15")));
     }
   }
 
@@ -823,6 +815,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
+  }
+
+  public void visitOuterLanguageElement(OuterLanguageElement element) {
+    XmlHighlightVisitor.visitJspElement(element);
+    super.visitOuterLanguageElement(element);
   }
 
   public void visitPackageStatement(PsiPackageStatement statement) {

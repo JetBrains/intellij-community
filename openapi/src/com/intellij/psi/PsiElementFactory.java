@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Service for creating instances of Java, JavaDoc, AspectJ and XML PSI elements which don't have
+ * Service for creating instances of Java, JavaDoc, JSP and XML PSI elements which don't have
  * an underlying source code file.
  *
  * @see PsiManager#getElementFactory()

@@ -64,7 +64,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private int myEndOffset;
   private final int myPassIdToShowIntentionsFor;
 
-  ShowIntentionsPass(Project project, Editor editor, IntentionAction[] intentionActions, int passId) {
+  ShowIntentionsPass(Project project, Editor editor, int passId, IntentionAction... intentionActions) {
     super(project, editor.getDocument());
     myPassIdToShowIntentionsFor = passId;
     ApplicationManager.getApplication().assertIsDispatchThread();

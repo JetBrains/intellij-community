@@ -2,9 +2,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
@@ -49,8 +51,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
-
-  @NotNull private final HighlightVisitor[] myHighlightVisitors;
 
   private volatile Collection<HighlightInfo> myHighlights = Collections.emptyList();
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
@@ -63,36 +63,31 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull PsiFile file,
                                  @NotNull Document document,
                                  int startOffset,
-                                 int endOffset, boolean updateAll) {
+                                 int endOffset,
+                                 boolean updateAll) {
     super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
 
-    myHighlightVisitors = createHighlightVisitors();
     LOG.assertTrue(myFile.isValid());
     setId(Pass.UPDATE_ALL);
   }
 
-  private static final Key<Integer> HIGHLIGHT_VISITOR_THREADS_IN_USE = new Key<Integer>("HIGHLIGHT_VISITORS_POOL");
-
+  private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   private HighlightVisitor[] createHighlightVisitors() {
-    HighlightVisitor[] highlightVisitors;
-    synchronized (myProject) {
-      Integer num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE);
-      highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
-      if (num == null) {
-        num = 0;
+    AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
+    if (count == null) {
+      count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
+    }
+    HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
+    if (count.getAndIncrement() != 0) {
+      highlightVisitors = highlightVisitors.clone();
+      for (int i = 0; i < highlightVisitors.length; i++) {
+        HighlightVisitor highlightVisitor = highlightVisitors[i];
+        highlightVisitors[i] = highlightVisitor.clone();
       }
-      else {
-        highlightVisitors = highlightVisitors.clone();
-        for (int i = 0; i < highlightVisitors.length; i++) {
-          HighlightVisitor highlightVisitor = highlightVisitors[i];
-          highlightVisitors[i] = highlightVisitor.clone();
-        }
-      }
-      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num.intValue() + 1);
     }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
@@ -101,35 +96,36 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void releaseHighlightVisitors() {
-    synchronized (myProject) {
-      int num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE).intValue();
-      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num == 1 ? null : num - 1);
-    }
+    AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
+    int i = count.decrementAndGet();
+    assert i >=0 : i;
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
+    HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     RefCountHolder refCountHolder = null;
-    if (myUpdateAll) {
-      DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-      refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
-      setRefCountHolders(refCountHolder);
-
-      PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
-      if (dirtyScope != null) {
-        if (dirtyScope instanceof PsiFile) {
-          refCountHolder.clear();
-        }
-        else {
-          refCountHolder.removeInvalidRefs();
-        }
-      }
-    }
-    else {
-      setRefCountHolders(null);
-    }
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     try {
+      if (myUpdateAll) {
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+        refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
+        setRefCountHolders(refCountHolder, highlightVisitors);
+
+        PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
+        if (dirtyScope != null) {
+          if (dirtyScope instanceof PsiFile) {
+            refCountHolder.clear();
+          }
+          else {
+            refCountHolder.removeInvalidRefs();
+          }
+        }
+      }
+      else {
+        setRefCountHolders(null, highlightVisitors);
+      }
+
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
       for (Language language : relevantLanguages) {
@@ -146,12 +142,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         addLineMarkers(elements, lineMarkers);
         //LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
-        result.addAll(collectHighlights(elements));
+        result.addAll(collectHighlights(elements, highlightVisitors));
         result.addAll(collectTextHighlights());
       }
     }
     finally {
-      setRefCountHolders(null);
+      setRefCountHolders(null, highlightVisitors);
       releaseHighlightVisitors();
       if (refCountHolder != null) {
         refCountHolder.touch(); //assertions
@@ -162,8 +158,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     reportErrorsToWolf(result, myFile, myHasErrorElement);
   }
 
-  private void setRefCountHolders(RefCountHolder refCountHolder) {
-    for (HighlightVisitor visitor : myHighlightVisitors) {
+  private static void setRefCountHolders(RefCountHolder refCountHolder, final HighlightVisitor[] visitors) {
+    for (HighlightVisitor visitor : visitors) {
       visitor.setRefCountHolder(refCountHolder);
     }
   }
@@ -196,7 +192,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myHighlights;
   }
 
-  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements) {
+  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements, final HighlightVisitor[] highlightVisitors) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
@@ -207,7 +203,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     //}
 
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
-    for (HighlightVisitor visitor : myHighlightVisitors) {
+    for (HighlightVisitor visitor : highlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 

@@ -9,7 +9,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -42,7 +41,9 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     private final int[] completionPredecessorIds;
     private final boolean runIntentionsPassAfter;
 
-    public PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory, boolean runIntentionsPassAfter, @NotNull int[] completionPredecessorIds,
+    public PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
+                      boolean runIntentionsPassAfter,
+                      @NotNull int[] completionPredecessorIds,
                       @NotNull int[] startingPredecessorIds) {
       this.runIntentionsPassAfter = runIntentionsPassAfter;
       this.completionPredecessorIds = completionPredecessorIds;
@@ -72,10 +73,9 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                              boolean runIntentionsPassAfter,
                                                              int forcedPassId) {
     assert !checkedForCycles;
-    if (runAfterCompletionOf == null) runAfterCompletionOf = ArrayUtil.EMPTY_INT_ARRAY;
     PassConfig info = new PassConfig(factory, runIntentionsPassAfter,
-                                     runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
-                                     runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
+                                     runAfterCompletionOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
+                                     runAfterOfStartingOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
     myRegisteredPassFactories.put(passId, info);
     return passId;
@@ -113,7 +113,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           id2Pass.put(passId, pass);
           if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {
             Project project = psiFile.getProject();
-            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, new IntentionAction[]{new QuickFixAction()}, passId);
+            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, new QuickFixAction());
             intentionsPass.setCompletionPredecessorIds(new int[]{passId});
             int id = nextAvailableId++;
             intentionsPass.setId(id);
