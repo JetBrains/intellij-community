@@ -529,6 +529,7 @@ public class ChangesCacheFile {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
       final Set<FilePath> deletedFiles = new HashSet<FilePath>();
+      final Set<FilePath> createdFiles = new HashSet<FilePath>();
       for(IncomingChangeListData data: list) {
         LOG.info("Checking incoming changelist " + data.changeList.getNumber());
         boolean updated = false;
@@ -536,6 +537,11 @@ public class ChangesCacheFile {
           if (data.accountedChanges.contains(change)) continue;
           ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null) {
+            if (change.getBeforeRevision() == null) {
+              final FilePath path = change.getAfterRevision().getFile();
+              LOG.info("Marking created file " + path);
+              createdFiles.add(path);
+            }
             afterRevision.getFile().refresh();
             LOG.info("Checking file " + afterRevision.getFile().getPath());
             VirtualFile file = afterRevision.getFile().getVirtualFile();
@@ -549,8 +555,12 @@ public class ChangesCacheFile {
                   updated = true;
                 }
               }
+              else {
+                LOG.info("Failed to fetch revision");
+              }
             }
             else if (deletedFiles.contains(afterRevision.getFile())) {
+              LOG.info("Found deleted file");
               data.accountedChanges.add(change);
               updated = true;
             }
@@ -561,12 +571,16 @@ public class ChangesCacheFile {
           else {
             ContentRevision beforeRevision = change.getBeforeRevision();
             assert beforeRevision != null;
+            LOG.info("Checking deleted file " + beforeRevision.getFile());
             deletedFiles.add(beforeRevision.getFile());
             beforeRevision.getFile().refresh();
-            if (beforeRevision.getFile().getVirtualFile() == null) {
+            if (beforeRevision.getFile().getVirtualFile() == null || createdFiles.contains(beforeRevision.getFile())) {
               // file has already been deleted
               data.accountedChanges.add(change);
               updated = true;
+            }
+            else {
+              LOG.info("File exists locally and no 'create' change found for it");
             }
           }
         }
