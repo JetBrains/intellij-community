@@ -23,6 +23,13 @@ public final class ShadowAction {
   private Keymap.Listener myKeymapListener;
   private Keymap myKeymap;
 
+  private Presentation myPresentation;
+
+  public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, Presentation presentation) {
+    this(action, copyFromAction, component);
+    myPresentation = presentation;
+  }
+
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component) {
     myAction = action;
 
@@ -70,7 +77,12 @@ public final class ShadowAction {
 
   private void rebound() {
     myActionId = ActionManager.getInstance().getId(myCopyFromAction);
-    myAction.copyFrom(myCopyFromAction);
+    if (myPresentation == null) {
+      myAction.copyFrom(myCopyFromAction);
+    } else {
+      myAction.getTemplatePresentation().copyFrom(myPresentation);
+      myAction.copyShortcutFrom(myCopyFromAction);
+    }
 
     if (myShortcutSet != null) {
       myAction.unregisterCustomShortcutSet(myComponent);

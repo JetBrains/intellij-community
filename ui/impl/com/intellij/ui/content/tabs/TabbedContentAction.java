@@ -1,6 +1,7 @@
 package com.intellij.ui.content.tabs;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.UIBundle;
@@ -10,22 +11,25 @@ public abstract class TabbedContentAction extends AnAction {
 
   protected final ContentManager myManager;
 
-  protected TabbedContentAction(@NotNull final ContentManager manager, @NotNull String text) {
+  private ShadowAction myShadow;
+
+  protected TabbedContentAction(@NotNull final ContentManager manager, @NotNull AnAction shortcutTemplate, @NotNull String text) {
     super(text);
     myManager = manager;
+    myShadow = new ShadowAction(this, shortcutTemplate, manager.getComponent(), new Presentation(text));
   }
 
   protected TabbedContentAction(@NotNull final ContentManager manager, @NotNull AnAction template) {
     myManager = manager;
-    copyFrom(template);
+    myShadow = new ShadowAction(this, template, manager.getComponent());
   }
 
   public abstract static class ForContent extends TabbedContentAction {
 
     protected final Content myContent;
 
-    public ForContent(@NotNull Content content, final String text) {
-      super(content.getManager(), text);
+    public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final String text) {
+      super(content.getManager(), shortcutTemplate, text);
       myContent = content;
     }
 
@@ -57,7 +61,7 @@ public abstract class TabbedContentAction extends AnAction {
   public static class CloseAllButThisAction extends ForContent {
 
     public CloseAllButThisAction(Content content) {
-      super(content, UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
+      super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS), UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -117,7 +121,7 @@ public abstract class TabbedContentAction extends AnAction {
 
   public static class CloseAllAction extends TabbedContentAction {
     public CloseAllAction(ContentManager manager) {
-      super(manager, UIBundle.message("tabbed.pane.close.all.action.name"));
+      super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS), UIBundle.message("tabbed.pane.close.all.action.name"));
     }
 
     public void actionPerformed(AnActionEvent e) {

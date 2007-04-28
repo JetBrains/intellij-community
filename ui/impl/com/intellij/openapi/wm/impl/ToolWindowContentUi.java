@@ -35,6 +35,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private ToolWindowImpl myWindow;
 
   private JLabel myIdLabel = new BaseLabel() {
+    {
+      initMouseListeners(this);
+    }
+
     protected void paintComponent(final Graphics g) {
       final GraphicsConfig config = new GraphicsConfig(g);
 
@@ -58,6 +62,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       super.paintComponent(g);
     }
   };
+  private TabbedContentAction.CloseAllAction myCloseAllAction;
+  private TabbedContentAction.MyNextTabAction myNextTabAction;
+  private TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -69,9 +76,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 6));
     myIdLabel.setFont(UIManager.getFont("Label.font"));    
 
-    addMouseListeners(this);
-
-    update();
   }
 
   public JComponent getComponent() {
@@ -116,6 +120,14 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myContent.repaint();
       }
     });
+
+    initMouseListeners(this);
+    update();
+
+
+    myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
+    myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
+    myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(myManager);
   }
 
 
@@ -186,7 +198,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return false;
   }
 
-  private void addMouseListeners(final JComponent c) {
+  private void initMouseListeners(final JComponent c) {
     final Point[] myLastPoint = new Point[1];
 
     c.addMouseMotionListener(new MouseMotionAdapter() {
@@ -223,22 +235,23 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     });
 
+
+    final DefaultActionGroup contentGroup = new DefaultActionGroup();
+    if (c instanceof ContentTab) {
+      final Content content = ((ContentTab)c).myContent;
+      contentGroup.add(new TabbedContentAction.CloseAction(content));
+      contentGroup.add(myCloseAllAction);
+      contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
+      contentGroup.addSeparator();
+      contentGroup.add(myNextTabAction);
+      contentGroup.add(myPreviousTabAction);
+      contentGroup.addSeparator();
+    }
+
     c.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         DefaultActionGroup group = new DefaultActionGroup();
-
-        if (comp instanceof ContentTab) {
-          final Content content = ((ContentTab)comp).myContent;
-          group.add(new TabbedContentAction.CloseAction(content));
-          if (myTabs.size() > 1) {
-            group.add(new TabbedContentAction.CloseAllAction(myManager));
-            group.add(new TabbedContentAction.CloseAllButThisAction(content));
-          }
-          group.addSeparator();
-          group.add(new TabbedContentAction.MyNextTabAction(myManager));
-          group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
-          group.addSeparator();
-        }
+        group.addAll(contentGroup);
 
         final ActionGroup windowPopup = myWindow.getPopupGroup();
         if (windowPopup != null) {
@@ -272,9 +285,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     public BaseLabel() {
       setForeground(Color.white);
       setOpaque(false);
-
-
-      addMouseListeners(this);
     }
 
 
@@ -308,6 +318,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           setCursor(hovered && myTabs.size() > 1 ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
         }
       };
+
+      initMouseListeners(this);
     }
 
     public void updateUI() {

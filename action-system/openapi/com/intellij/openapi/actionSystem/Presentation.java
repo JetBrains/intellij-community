@@ -83,6 +83,11 @@ public final class Presentation implements Cloneable {
     myEnabled = true;
   }
 
+  public Presentation(final String text) {
+    this();
+    myText = text;
+  }
+
   public void addPropertyChangeListener(PropertyChangeListener l){
     myChangeSupport.addPropertyChangeListener(l);
   }

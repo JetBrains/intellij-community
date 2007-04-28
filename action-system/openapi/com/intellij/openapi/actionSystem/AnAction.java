@@ -158,8 +158,13 @@ public abstract class AnAction {
     presentation.setIcon(sourcePresentation.getIcon());
     presentation.setText(sourcePresentation.getTextWithMnemonic());
     presentation.setDescription(sourcePresentation.getDescription());
+    copyShortcutFrom(sourceAction);
+  }
+
+  public final void copyShortcutFrom(final AnAction sourceAction) {
     myShortcutSet = sourceAction.myShortcutSet;
   }
+
 
   public final boolean isEnabledInModalContext() {
     return myEnabledInModalContext;
