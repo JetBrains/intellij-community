@@ -101,6 +101,10 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     public int hashCode() {
       return (int)(myValue ^ (myValue >>> 32));
     }
+
+    public String toString() {
+      return asString();
+    }
   }
 
   String asString();

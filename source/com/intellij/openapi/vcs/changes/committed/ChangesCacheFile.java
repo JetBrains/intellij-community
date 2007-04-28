@@ -91,7 +91,6 @@ public class ChangesCacheFile {
   }
 
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
-    LOG.info("Writing " + changes.size() + " incoming changes");
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
@@ -117,6 +116,7 @@ public class ChangesCacheFile {
           }
         }
         if (duplicate) continue;
+        LOG.info("Writing incoming changelist " + list.getNumber());
         result.add(list);
         long position = myStream.getFilePointer();
         //noinspection unchecked
