@@ -469,8 +469,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     boolean hasChanges = false;
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile file: caches) {
-      LOG.info("Refreshing incoming changes for " + file.getLocation());
       try {
+        if (file.isEmpty()) {
+          continue;
+        }
+        LOG.info("Refreshing incoming changes for " + file.getLocation());
         boolean changesForCache = file.refreshIncomingChanges();
         hasChanges |= changesForCache;
       }
