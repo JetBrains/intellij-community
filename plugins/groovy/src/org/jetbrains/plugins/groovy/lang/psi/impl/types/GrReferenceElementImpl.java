@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
 
   @Nullable
   public PsiElement resolve() {
-    return getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
   }
 
   private ReferenceKind getKind() {
