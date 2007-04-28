@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.GroovyLoader;
 /**
  * @author ven
  */
-public class ResolveClassTest extends GroovyResolveTestCase {
+public class ResolveClassTest extends ResolveTestCase {
   protected String getTestDataPath() {
     return TestUtils.getTestDataPath() + "/resolve/class/";
   }
