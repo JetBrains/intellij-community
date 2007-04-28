@@ -844,23 +844,24 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     Map<String, Change> changes = diffEditor.getChangesMap();
     if (changes.isEmpty()) {
       // display no changes dialog.
-      final String text = "Not textual difference found between '"
-              + SVNPathUtil.tail(sourceURL.toString()) +
-              " and '" +
-              SVNPathUtil.tail(targetURL.toString()) + "'";
+      final String text = SvnBundle.message("repository.browser.compare.no.difference.message",
+                                            SVNPathUtil.tail(sourceURL.toString()),
+                                            SVNPathUtil.tail(targetURL.toString()));
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          Messages.showInfoMessage(myProject, text, "No Difference Found");
+          Messages.showInfoMessage(myProject, text, SvnBundle.message("repository.browser.compare.no.difference.title"));
         }
       });
       return;
     }
     final Collection<Change> changesList = changes.values();
 
-    final String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
+    final String title = SvnBundle.message("repository.browser.compare.title",
+                                           SVNPathUtil.tail(sourceURL.toString()),
+                                           SVNPathUtil.tail(targetURL.toString()));
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(getContentPane(), changesList, title);
+        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myRepositoryBrowser, changesList, title);
       }
     });
   }
