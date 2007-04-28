@@ -1,14 +1,13 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
@@ -20,58 +19,61 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceFilter;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicateStringLiteralInspection");
   private JTextField myMinStringLengthField;
   @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
-  private JLabel myMinStringLengthLabel;
+  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS = false;
   private JPanel myPanel;
+  private JCheckBox myIgnorePropertyKeyExpressions;
   @NonNls private static final String BR = "<br>";
 
   public DuplicateStringLiteralInspection() {
-    myMinStringLengthLabel.setLabelFor(myMinStringLengthField);
-    myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
+    myIgnorePropertyKeyExpressions.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        IGNORE_PROPERTY_KEYS = myIgnorePropertyKeyExpressions.isSelected();
+      }
+    });
+    myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        try {
+          MIN_STRING_LENGTH = Integer.parseInt(myMinStringLengthField.getText());
+        }
+        catch (NumberFormatException e1) {
+        }
+      }
+    });
   }
 
-  private List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager, final boolean onTheFly) {
-    if (element == null) return Collections.emptyList();
-    final List<ProblemDescriptor> allProblems = new ArrayList<ProblemDescriptor>();
-    element.acceptChildren(new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
-        // prevent double class checking
-      }
-
-      public void visitAnnotation(PsiAnnotation annotation) {
-        //prevent from @SuppressWarnings
-        if (!"java.lang.SuppressWarnings".equals(annotation.getQualifiedName())){
-          super.visitAnnotation(annotation);
-        }
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    return new PsiElementVisitor() {
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        visitExpression(expression);
       }
 
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        checkStringLiteralExpression(expression, manager, allProblems, onTheFly);
+        checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
-
-    });
-    return allProblems;
-  }
-
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final List<ProblemDescriptor> allProblems = visitExpressionsUnder(aClass, manager, isOnTheFly);
-    return allProblems.isEmpty() ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
+    };
   }
 
   @NotNull
@@ -90,11 +92,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private void checkStringLiteralExpression(final PsiLiteralExpression originalExpression,
-                                            InspectionManager manager,
-                                            final List<ProblemDescriptor> allProblems, final boolean isOnTheFly) {
-    if (!(originalExpression.getValue() instanceof String)) return;
+                                            ProblemsHolder holder,
+                                            final boolean isOnTheFly) {
+    Object value = originalExpression.getValue();
+    if (!(value instanceof String)) return;
+    if (!shouldCheck(originalExpression)) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
-    final String stringToFind = (String)originalExpression.getValue();
+    final String stringToFind = (String)value;
     final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
@@ -131,7 +135,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         PsiElement element = file.findElementAt(offset);
         if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) continue;
         PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
-        if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue())) {
+        if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression)) {
           foundExpr.add(expression);
         }
       }
@@ -180,13 +184,18 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
 
-    Collection<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    Collection<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
     final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
     fixes.add(introduceConstFix);
     createReplaceFixes(foundExpr, originalExpression, fixes);
     LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
-    ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, array, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-    allProblems.add(problemDescriptor);
+    holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
+  }
+
+  private boolean shouldCheck(final PsiLiteralExpression expression) {
+    if (IGNORE_PROPERTY_KEYS && I18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
+    return annotation == null || !"java.lang.SuppressWarnings".equals(annotation.getQualifiedName());
   }
 
   private static void createReplaceFixes(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression,
@@ -302,20 +311,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public JComponent createOptionsPanel() {
-    return myPanel;
-  }
-
-  public void readSettings(Element node) throws InvalidDataException {
-    super.readSettings(node);
+    myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
     myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
-  }
-
-  public void writeSettings(Element node) throws WriteExternalException {
-    try {
-      MIN_STRING_LENGTH = Integer.parseInt(myMinStringLengthField.getText());
-    }
-    catch (NumberFormatException e) {
-    }
-    super.writeSettings(node);
+    return myPanel;
   }
 }

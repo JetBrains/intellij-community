@@ -56,7 +56,7 @@ public class AnnotationUtil {
   @NonNls public static final String NON_NLS_SIMPLE_NAME = "NonNls";
   @NonNls public static final String PROPERTY_KEY_SIMPLE_NAME = "PropertyKey";
 
-  public final static Set<String> ALL_ANNOTATIONS;
+  public static final Set<String> ALL_ANNOTATIONS;
 
   static {
     ALL_ANNOTATIONS = new HashSet<String>(2);

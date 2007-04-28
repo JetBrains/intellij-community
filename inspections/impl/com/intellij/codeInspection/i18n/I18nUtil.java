@@ -4,18 +4,19 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -26,43 +27,40 @@ public class I18nUtil {
   private I18nUtil() {
   }
 
-  public static boolean mustBePropertyKey(final PsiLiteralExpression expression, final Map<String, Object> annotationAttributeValues) {
+  public static boolean mustBePropertyKey(final PsiLiteralExpression expression, @NotNull Map<String, Object> annotationAttributeValues) {
     return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
   }
 
   public static boolean isPassedToAnnotatedParam(PsiExpression expression,
                                                  final String annFqn,
-                                                 final Map<String, Object> annotationAttributeValues,
+                                                 @NotNull Map<String, Object> annotationAttributeValues,
                                                  @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
     expression = getToplevelExpression(expression);
     final PsiElement parent = expression.getParent();
 
-    if (parent instanceof PsiExpressionList) {
-      int idx = -1;
-      final PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
-      for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = args[i];
-        if (PsiTreeUtil.isAncestor(arg, expression, false)) {
-          idx = i;
-          break;
-        }
+    if (!(parent instanceof PsiExpressionList)) return false;
+    int idx = -1;
+    final PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
+    for (int i = 0; i < args.length; i++) {
+      PsiExpression arg = args[i];
+      if (PsiTreeUtil.isAncestor(arg, expression, false)) {
+        idx = i;
+        break;
       }
-      if (idx == -1) return false;
+    }
+    if (idx == -1) return false;
 
-      PsiElement grParent = parent.getParent();
+    PsiElement grParent = parent.getParent();
 
-      if (grParent instanceof PsiAnonymousClass) {
-        grParent = grParent.getParent();
-      }
+    if (grParent instanceof PsiAnonymousClass) {
+      grParent = grParent.getParent();
+    }
 
-      if (grParent instanceof PsiCall) {
-        PsiMethod method = ((PsiCall)grParent).resolveMethod();
-        if (method != null) {
-          if (isMethodParameterAnnotatedWith(method, idx, new HashSet<PsiMethod>(), annFqn,
-                                             annotationAttributeValues, nonNlsTargets)) {
-            return true;
-          }
-        }
+    if (grParent instanceof PsiCall) {
+      PsiMethod method = ((PsiCall)grParent).resolveMethod();
+      if (method != null &&
+          isMethodParameterAnnotatedWith(method, idx, new THashSet<PsiMethod>(), annFqn, annotationAttributeValues, nonNlsTargets)) {
+        return true;
       }
     }
 
@@ -81,7 +79,7 @@ public class I18nUtil {
                                                        final int idx,
                                                        Collection<PsiMethod> processed,
                                                        final String annFqn,
-                                                       Map<String, Object> annotationAttributeValues,
+                                                       @NotNull Map<String, Object> annotationAttributeValues,
                                                        @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
     if (processed.contains(method)) return false;
     processed.add(method);
