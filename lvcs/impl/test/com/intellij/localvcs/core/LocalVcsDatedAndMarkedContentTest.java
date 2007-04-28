@@ -1,36 +1,52 @@
 package com.intellij.localvcs.core;
 
 import com.intellij.localvcs.core.storage.IContentStorage;
+import com.intellij.localvcs.integration.RevisionTimestampComparator;
 import org.junit.Test;
 
 public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
 
   @Test
-  public void testContentAtDate() {
+  public void testGettingContent() {
     setCurrentTimestamp(10);
     vcs.createFile("f", b("one"), -1);
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", b("two"), -1);
 
-    assertEquals("one", new String(vcs.getByteContentAt("f", 10)));
-    assertEquals("one", new String(vcs.getByteContentAt("f", 15)));
-    assertEquals("one", new String(vcs.getByteContentAt("f", 19)));
+    assertNull(vcs.getByteContent("f", comparator(5)));
+    assertEquals("one", new String(vcs.getByteContent("f", comparator(10))));
+    assertNull(vcs.getByteContent("f", comparator(15)));
 
-    assertEquals("two", new String(vcs.getByteContentAt("f", 20)));
-    assertEquals("two", new String(vcs.getByteContentAt("f", 100)));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));
+    assertNull(vcs.getByteContent("f", comparator(100)));
   }
 
   @Test
-  public void testContentAtDateForUnavailableContentIsNull() {
+  public void testGettingMostRecentRevisionContent() {
+    setCurrentTimestamp(10);
+    vcs.createFile("f", b("one"), -1);
+    setCurrentTimestamp(20);
+    vcs.changeFileContent("f", b("two"), -1);
+
+    RevisionTimestampComparator c = new RevisionTimestampComparator() {
+      public boolean isSuitable(long revisionTimestamp) {
+        return revisionTimestamp < 100;
+      }
+    };
+    assertEquals("two", new String(vcs.getByteContent("f", c)));
+  }
+
+  @Test
+  public void testGettingContentForUnavailableContentIsNull() {
     setCurrentTimestamp(10);
     vcs.createFile("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
 
-    assertNull(vcs.getByteContentAt("f", 20));
+    assertNull(vcs.getByteContent("f", comparator(10)));
   }
 
   @Test
-  public void testContentAtDateIfPurgedIsNull() {
+  public void testGettingContentIfPurgedIsNull() {
     setCurrentTimestamp(10);
     vcs.createFile("f", b("one"), -1);
     setCurrentTimestamp(20);
@@ -38,8 +54,12 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
 
     vcs.purgeUpTo(15);
 
-    assertNull(vcs.getByteContentAt("f", 10));
-    assertEquals("two", new String(vcs.getByteContentAt("f", 20)));
+    assertNull(vcs.getByteContent("f", comparator(10)));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));
+  }
+
+  private RevisionTimestampComparator comparator(long timestamp) {
+    return new TestTimestampComparator(timestamp);
   }
 
   @Test

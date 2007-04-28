@@ -6,6 +6,8 @@ import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
+import com.intellij.localvcs.integration.Clock;
+import com.intellij.localvcs.integration.RevisionTimestampComparator;
 
 import java.util.*;
 
@@ -238,9 +240,9 @@ public class LocalVcs implements ILocalVcs {
     return c.getTimeInMillis();
   }
 
-  public byte[] getByteContentAt(String path, long timestamp) {
+  public byte[] getByteContent(String path, RevisionTimestampComparator c) {
     for (Revision r : getRevisionsFor(path)) {
-      if (r.getTimestamp() <= timestamp) return getByteContentOf(r);
+      if (c.isSuitable(r.getTimestamp())) return getByteContentOf(r);
     }
     return null;
   }

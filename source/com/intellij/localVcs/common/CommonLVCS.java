@@ -183,18 +183,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   @Nullable
-  public synchronized LvcsDirectory findDirectory(final String dirPath, final LvcsLabel label) {
-    //if (!isOldLvcsEnabled()) return null;
-    return myImplementation.findDirectory(dirPath, label);
-  }
-
-  @Nullable
-  public synchronized LvcsFile findFile(final String filePath, final LvcsLabel label) {
-    //if (!isOldLvcsEnabled()) return null;
-    return myImplementation.findFile(filePath, label);
-  }
-
-  @Nullable
   public synchronized LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
     //if (!isOldLvcsEnabled()) return null;
     return myImplementation.findFile(filePath, ignoreDeleted);

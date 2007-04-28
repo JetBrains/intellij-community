@@ -10,7 +10,7 @@ import java.util.zip.InflaterInputStream;
 
 public class CompressingContentStorage implements IContentStorage {
   private IContentStorage mySubject;
-  private Deflater myDeflater = new Deflater();
+  private Deflater myDeflater = new Deflater(Deflater.BEST_SPEED);
   private Inflater myInflater = new Inflater();
 
   public CompressingContentStorage(IContentStorage s) {

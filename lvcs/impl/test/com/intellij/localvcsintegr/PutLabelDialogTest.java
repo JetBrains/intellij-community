@@ -12,18 +12,9 @@ public class PutLabelDialogTest extends IntegrationTestCase {
   VirtualFile f;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          f = root.createChildData(null, "f.java");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    f = root.createChildData(null, "f.java");
   }
 
   @Override

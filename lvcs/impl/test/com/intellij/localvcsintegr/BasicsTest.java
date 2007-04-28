@@ -1,11 +1,13 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.TestTimestampComparator;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Storage;
+import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.localvcs.integration.RevisionTimestampComparator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -103,10 +105,10 @@ public class BasicsTest extends IntegrationTestCase {
     Clock.setCurrentTimestamp(20);
     f.setBinaryContent(new byte[]{2});
 
-    assertEquals(1, LocalHistory.getByteContentAt(myProject, f, 10)[0]);
-    assertEquals(1, LocalHistory.getByteContentAt(myProject, f, 15)[0]);
-    assertEquals(2, LocalHistory.getByteContentAt(myProject, f, 20)[0]);
-    assertEquals(2, LocalHistory.getByteContentAt(myProject, f, 30)[0]);
+    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(10))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(15)));
+    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(20))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(30)));
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {
@@ -114,7 +116,11 @@ public class BasicsTest extends IntegrationTestCase {
     Clock.setCurrentTimestamp(10);
     f.setBinaryContent(new byte[]{1});
 
-    assertNull(LocalHistory.getByteContentAt(myProject, f, 20));
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(10)));
+  }
+
+  private RevisionTimestampComparator comparator(long timestamp) {
+    return new TestTimestampComparator(timestamp);
   }
 
   public void testMarkedContent() throws Exception {

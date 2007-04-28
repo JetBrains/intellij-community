@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.storage.ByteContent;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.integration.Clock;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

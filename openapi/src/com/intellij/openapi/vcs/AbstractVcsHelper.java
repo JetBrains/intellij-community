@@ -61,12 +61,6 @@ public abstract class AbstractVcsHelper {
    */
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
-  /**
-   * If the file was moved/renamed, this method will return path
-   * to the last known up-to-date revision
-   */
-  public abstract String getUpToDateFilePath(VirtualFile file);
-
   public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
                                                       VcsConfiguration configuration,
                                                       Runnable finishAction,

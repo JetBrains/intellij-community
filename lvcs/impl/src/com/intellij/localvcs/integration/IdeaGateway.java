@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

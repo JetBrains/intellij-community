@@ -170,14 +170,20 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  protected byte[] getByteContentAt(VirtualFile f, long timestamp) {
+  protected byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c) {
     if (!isEnabled()) {
-      LvcsFileRevision r = getOldVcs().findFileRevisionByDate(f.getPath(), timestamp);
-      return r == null ? null : r.getByteContent();
+      LvcsFile ff = getOldVcs().findFile(f.getPath());
+      if (ff == null) return null;
+      LvcsFileRevision r = ff.getRevision();
+      while (r != null) {
+        if (c.isSuitable(r.getDate())) return r.getByteContent();
+        r = (LvcsFileRevision)r.getPrevRevision();
+      }
+      return null;
     }
 
     if (!isUnderControl(f)) return null;
-    return myVcs.getByteContentAt(f.getPath(), timestamp);
+    return myVcs.getByteContent(f.getPath(), c);
   }
 
   private com.intellij.openapi.localVcs.LocalVcs getOldVcs() {

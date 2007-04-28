@@ -18,8 +18,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsFile;
-import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -335,13 +333,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     return exceptions;
-  }
-
-  public String getUpToDateFilePath(VirtualFile file) {
-    LvcsFile lvcsFile = LocalVcs.getInstance(myProject).findFile(file.getPath());
-    if (lvcsFile == null) return null;
-    LvcsRevision lastUpToDateRevision = StatusUtil.findLastUpToDateRevision(lvcsFile);
-    return lastUpToDateRevision.getAbsolutePath().replace('/', File.separatorChar);
   }
 
   public void optimizeImportsAndReformatCode(final Collection<VirtualFile> files,

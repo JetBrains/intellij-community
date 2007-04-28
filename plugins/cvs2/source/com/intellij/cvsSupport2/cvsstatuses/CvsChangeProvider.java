@@ -11,11 +11,10 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.localvcs.integration.RevisionTimestampComparator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsFile;
-import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Date;
 import java.text.ParseException;
+import java.util.Date;
 
 /**
  * @author max
@@ -88,11 +87,11 @@ public class CvsChangeProvider implements ChangeProvider {
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
     }
-    for(VirtualFile file: dirContent.getIgnoredFiles()) {
+    for (VirtualFile file : dirContent.getIgnoredFiles()) {
       builder.processIgnoredFile(file);
     }
 
-    for(Entry entry: dirContent.getDeletedDirectories()) {
+    for (Entry entry : dirContent.getDeletedDirectories()) {
       builder.processLocallyDeletedFile(VcsUtil.getFilePath(CvsVfsUtil.getFileFor(dir, entry.getFileName()), true));
     }
 
@@ -218,14 +217,13 @@ public class CvsChangeProvider implements ChangeProvider {
                              final ChangelistBuilder builder) {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-        builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
-                                         CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
+        builder.processChange(
+          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
-                                       CurrentContentRevision.create(filePath), status));
+      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
       builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status));
@@ -245,29 +243,17 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Nullable
-  private byte[] getLastUpToDateContentFor(VirtualFile vFile) {
-    if (!myEntriesManager.isActive()) return null;
-    LvcsFile file = LocalVcs.getInstance(myVcs.getProject()).findFile(CvsVfsUtil.getPathFor(vFile));
-    if (file != null) {
-      LvcsRevision revision = file.getRevision();
-      long upToDateTime = getUpToDateTimeForFile(vFile);
-      while (revision != null) {
-        if (CvsStatusProvider.timeStampsAreEqual(upToDateTime, revision.getDate())) {
-          LvcsFile lvcsFile = (LvcsFile)revision.getObject();
-          return lvcsFile.getByteContent(revision.getImplicitLabel());
-
-        }
-        revision = revision.getPrevRevision();
+  public byte[] getLastUpToDateContentFor(final VirtualFile f) {
+    final long upToDateTimestamp = getUpToDateTimeForFile(f);
+    RevisionTimestampComparator c = new RevisionTimestampComparator() {
+      public boolean isSuitable(long revisionTimestamp) {
+        return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
       }
-
-      return null;
-    }
-    else {
-      return null;
-    }
+    };
+    return LocalHistory.getByteContent(myVcs.getProject(), f, c);
   }
 
-  long getUpToDateTimeForFile(VirtualFile vFile) {
+  public long getUpToDateTimeForFile(VirtualFile vFile) {
     Entry entry = myEntriesManager.getEntryFor(CvsVfsUtil.getParentFor(vFile), vFile.getName());
     if (entry == null) return -1;
     if (entry.isResultOfMerge()) {

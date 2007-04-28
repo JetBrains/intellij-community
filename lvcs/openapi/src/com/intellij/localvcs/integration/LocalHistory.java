@@ -30,8 +30,8 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     getInstance(p).mark(f);
   }
 
-  public static byte[] getByteContentAt(Project p, VirtualFile f, long timestamp) {
-    return getInstance(p).getByteContentAt(f, timestamp);
+  public static byte[] getByteContent(Project p, VirtualFile f, RevisionTimestampComparator c) {
+    return getInstance(p).getByteContent(f, c);
   }
 
   public static byte[] getLastMarkedByteContent(Project p, VirtualFile f) {
@@ -59,7 +59,7 @@ public abstract class LocalHistory implements SettingsSavingComponent {
 
   protected abstract byte[] getLastMarkedByteContent(VirtualFile f);
 
-  protected abstract byte[] getByteContentAt(VirtualFile f, long timestamp);
+  protected abstract byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c);
 
   protected abstract boolean isUnderControl(VirtualFile f);
 }

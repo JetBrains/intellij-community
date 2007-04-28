@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;

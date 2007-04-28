@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Test;
 

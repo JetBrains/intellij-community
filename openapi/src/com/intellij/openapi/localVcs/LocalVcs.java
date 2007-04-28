@@ -35,28 +35,25 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract String[] getRootPaths();
 
+  // CvsChangeProvider
   @Nullable
   public abstract LvcsFile findFile(String filePath);
 
+  // OldFileOperationsUndoProvider
   @Nullable
   public abstract LvcsFile findFile(String filePath, boolean ignoreDeleted);
 
+  // unused
   @Nullable
   public abstract LvcsFileRevision findFileRevisionByDate(final String filePath, long date);
 
-  /*unused*/
-  @Nullable
-  public abstract LvcsFile findFile(String filePath, LvcsLabel label);
-
+  // GlobalUndoTest.purgeRoot
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath);
 
+  // OldFileOperationsUndoProvider
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, boolean ignoreDeleted);
-
-  /*unused*/
-  @Nullable
-  public abstract LvcsDirectory findDirectory(String dirPath, LvcsLabel label);
 
   public abstract LvcsLabel addLabel(String name, String path);
 

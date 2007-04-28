@@ -1,4 +1,4 @@
-package com.intellij.localvcs.core;
+package com.intellij.localvcs.integration;
 
 public class Clock {
   private static long myTimestamp = -1;

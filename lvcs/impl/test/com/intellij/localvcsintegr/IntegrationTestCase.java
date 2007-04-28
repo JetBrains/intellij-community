@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.core.Clock;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -24,8 +24,8 @@ import java.util.concurrent.Callable;
 public abstract class IntegrationTestCase extends IdeaTestCase {
   private Locale myDefaultLocale;
 
-  String EXCLUDED_DIR_NAME = "CVS";
-  VirtualFile root;
+  protected String EXCLUDED_DIR_NAME = "CVS";
+  protected VirtualFile root;
 
   @Override
   public void setUp() throws Exception {
@@ -38,9 +38,18 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
     runWriteAction(new Runnable() {
       public void run() {
-        root = addContentRoot();
+        try {
+          setUpInWriteAction();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     });
+  }
+
+  protected void setUpInWriteAction() throws Exception {
+    root = addContentRoot();
   }
 
   @Override
