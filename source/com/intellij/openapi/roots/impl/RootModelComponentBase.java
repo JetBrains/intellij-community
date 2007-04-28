@@ -6,7 +6,7 @@ package com.intellij.openapi.roots.impl;
  *  @author dsl
  */
 public abstract class RootModelComponentBase {
-  RootModelImpl myRootModel;
+  final RootModelImpl myRootModel;
   private boolean myDisposed;
 
   RootModelComponentBase(RootModelImpl rootModel) {

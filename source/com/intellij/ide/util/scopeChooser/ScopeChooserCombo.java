@@ -53,7 +53,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     init(project, false, true, preselect);    
   }
 
-  private void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles,  final String preselect) {
+  public void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles,  final String preselect) {
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     final JComboBox combo = getComboBox();

@@ -420,7 +420,7 @@ final class FindDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(id);
   }
 
-  public boolean isSkipResultsWhenOneUsage() {
+  private boolean isSkipResultsWhenOneUsage() {
     return myCbToSkipResultsWhenOneUsage!=null &&
     myCbToSkipResultsWhenOneUsage.isSelected();
   }
@@ -840,7 +840,7 @@ final class FindDialog extends DialogWrapper {
         myRbCustomScope.setSelected(true);
 
         myScopeCombo.setEnabled(true);
-        myScopeCombo.init(myProject, myModel.getCustomScopeName());
+        myScopeCombo.init(myProject, true, true, myModel.getCustomScopeName());
 
         myCbWithSubdirectories.setEnabled(false);
         myDirectoryComboBox.setEnabled(false);

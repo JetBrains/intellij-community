@@ -19,7 +19,6 @@ import java.util.Map;
  */
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
-  protected final RootModelImpl myRootModel;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRootContainers;
   private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
   private RootProvider myCurrentlySubscribedRootProvider = null;
@@ -27,7 +26,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl, VirtualFilePointerManager filePointerManager) {
     super(rootModel);
-    myRootModel = rootModel;
     myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
     for (OrderRootType type : OrderRootType.ALL_TYPES) {
       myRootContainers.put(type, filePointerManager.createContainer(myRootModel.pointerFactory()));
@@ -40,7 +38,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     updatePathsFromProviderAndSubscribe(rootProvider);
   }
 
-  protected void updatePathsFromProviderAndSubscribe(final RootProvider rootProvider) {
+  private void updatePathsFromProviderAndSubscribe(final RootProvider rootProvider) {
     updatePathsFromProvider(rootProvider);
     resubscribe(rootProvider);
   }
@@ -144,12 +142,9 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     }
 
     public void rootSetChanged(RootProvider wrapper) {
-      if (LibraryOrderEntryBaseImpl.this.needUpdateFromProvider(wrapper)) {
-        LibraryOrderEntryBaseImpl.this.updateFromRootProvider(wrapper);
+      if (needUpdateFromProvider(wrapper)) {
+        updateFromRootProvider(wrapper);
       }
     }
-
-
   }
-
 }

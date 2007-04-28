@@ -18,6 +18,7 @@ import com.intellij.usages.*;
 import com.intellij.util.Processor;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class FindInProjectManager {
   private Project myProject;
@@ -34,15 +35,12 @@ public class FindInProjectManager {
   }
 
   public void findInProject(DataContext dataContext) {
-    ArrayList<Content> contentsToDelete = new ArrayList<Content>();
-    for (Content content : myUsagesContents) {
+    Iterator<Content> iterator = myUsagesContents.iterator();
+    while (iterator.hasNext()) {
+      Content content = iterator.next();
       if (content.getComponent().getParent() == null) {
-        contentsToDelete.add(content);
+        iterator.remove();
       }
-    }
-
-    for (Content aContentsToDelete : contentsToDelete) {
-      myUsagesContents.remove(aContentsToDelete);
     }
 
     boolean isOpenInNewTabEnabled;
@@ -88,38 +86,37 @@ public class FindInProjectManager {
 
     com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
 
-    if (manager!=null) {
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = (FindModel)findModel.clone();
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
-      final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
+    if (manager == null) return;
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = (FindModel)findModel.clone();
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
+    final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
-      FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+    FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
-      manager.searchAndShowUsages(
+    manager.searchAndShowUsages(
         new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
-        new Factory<UsageSearcher>() {
-          public UsageSearcher create() {
-            return new UsageSearcher() {
-              public void generate(final Processor<Usage> processor) {
-                myIsFindInProgress = true;
+      new Factory<UsageSearcher>() {
+        public UsageSearcher create() {
+          return new UsageSearcher() {
+            public void generate(final Processor<Usage> processor) {
+              myIsFindInProgress = true;
 
-                try {
-                  FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
-                                               new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor));
-                }
-                finally {
-                  myIsFindInProgress = false;
-                }
+              try {
+                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
+                                             new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor));
               }
-            };
-          }
-        },
-        processPresentation,
-        presentation,
-        null
-      );
-    }
+              finally {
+                myIsFindInProgress = false;
+              }
+            }
+          };
+        }
+      },
+      processPresentation,
+      presentation,
+      null
+    );
   }
 
   public boolean isWorkInProgress() {
