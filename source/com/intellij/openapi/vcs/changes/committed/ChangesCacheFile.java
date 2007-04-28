@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -513,11 +514,16 @@ public class ChangesCacheFile {
   }
 
   public boolean refreshIncomingChanges() throws IOException {
-    DiffProvider diffProvider = myVcs.getDiffProvider();
+    final DiffProvider diffProvider = myVcs.getDiffProvider();
     if (diffProvider == null) return false;
     boolean anyChanges = false;
     openStreams();
     loadHeader();
+    FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions = new FactoryMap<VirtualFile, VcsRevisionNumber>() {
+      protected VcsRevisionNumber create(final VirtualFile key) {
+        return diffProvider.getCurrentRevision(key);
+      }
+    };
     try {
       final List<IncomingChangeListData> list = loadIncomingChangeListData();
       // the incoming changelist pointers are actually sorted in reverse chronological order,
@@ -534,7 +540,7 @@ public class ChangesCacheFile {
             LOG.info("Checking file " + afterRevision.getFile().getPath());
             VirtualFile file = afterRevision.getFile().getVirtualFile();
             if (file != null) {
-              VcsRevisionNumber revision = diffProvider.getCurrentRevision(file);
+              VcsRevisionNumber revision = currentRevisions.get(file);
               if (revision != null) {
                 LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
                 int rc = revision.compareTo(afterRevision.getRevisionNumber());
@@ -547,6 +553,9 @@ public class ChangesCacheFile {
             else if (deletedFiles.contains(afterRevision.getFile())) {
               data.accountedChanges.add(change);
               updated = true;
+            }
+            else {
+              LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
             }
           }
           else {
