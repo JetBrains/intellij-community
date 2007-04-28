@@ -85,15 +85,15 @@ public class GroovyFile extends PsiFileBase {
       if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
+    for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
+      PsiPackage aPackage = getManager().findPackage(implicitlyImported);
+      if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    }
+
     String currentPackageName = getPackageName();
     PsiPackage currentPackage = getManager().findPackage(currentPackageName);
     if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place)) {
       return false;
-    }
-
-    for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
-      PsiPackage aPackage = getManager().findPackage(implicitlyImported);
-      if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
     return true;

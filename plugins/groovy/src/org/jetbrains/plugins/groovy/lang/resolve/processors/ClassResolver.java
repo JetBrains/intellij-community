@@ -44,7 +44,7 @@ public class ClassResolver implements PsiScopeProcessor, NameHint {
       myCandidates.add((PsiNamedElement) element);
     }
 
-    return myName == null || myCandidates.size() < 2;
+    return myName == null || myCandidates.size() == 0;
   }
 
   public List<PsiNamedElement> getCandidates() {
