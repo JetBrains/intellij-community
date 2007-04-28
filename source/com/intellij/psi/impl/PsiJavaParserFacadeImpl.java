@@ -261,7 +261,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   public PsiType createTypeFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, false);
   }
-
+ 
   protected PsiType createTypeInner(final String text, final PsiElement context, boolean markAsCopy) throws IncorrectOperationException {
     PsiPrimitiveType primitiveType = ourPrimitiveTypesMap.get(text);
     if (primitiveType != null) return primitiveType;
