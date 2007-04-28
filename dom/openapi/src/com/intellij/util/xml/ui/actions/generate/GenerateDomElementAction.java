@@ -14,6 +14,8 @@ import com.intellij.util.xml.DomElement;
  */
 public class GenerateDomElementAction extends BaseGenerateAction {
 
+  protected final GenerateDomElementProvider myProvider;
+
   public GenerateDomElementAction(final GenerateDomElementProvider generateProvider) {
     super(new CodeInsightActionHandler() {
       public void invoke(final Project project, final Editor editor, final PsiFile file) {
@@ -32,5 +34,7 @@ public class GenerateDomElementAction extends BaseGenerateAction {
 
     getTemplatePresentation().setDescription(generateProvider.getDescription());
     getTemplatePresentation().setText(generateProvider.getDescription());
+
+    myProvider = generateProvider;
   }
 }
