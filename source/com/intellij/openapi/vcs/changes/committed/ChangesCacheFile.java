@@ -559,7 +559,7 @@ public class ChangesCacheFile {
                 LOG.info("Failed to fetch revision");
               }
             }
-            else if (deletedFiles.contains(afterRevision.getFile())) {
+            else if (isDeletedFile(deletedFiles, afterRevision)) {
               LOG.info("Found deleted file");
               data.accountedChanges.add(change);
               updated = true;
@@ -597,6 +597,17 @@ public class ChangesCacheFile {
       closeStreams();
     }
     return anyChanges;
+  }
+
+  private static boolean isDeletedFile(final Set<FilePath> deletedFiles, final ContentRevision afterRevision) {
+    FilePath file = afterRevision.getFile();
+    while(file != null) {
+      if (deletedFiles.contains(file)) {
+        return true;
+      }
+      file = file.getParentPath();
+    }
+    return false;
   }
 
   private static class IndexEntry {
