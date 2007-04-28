@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 public class Comparing {
   private Comparing() { }
@@ -92,6 +93,20 @@ public class Comparing {
 
   public static boolean strEqual(String arg1, String arg2, boolean caseSensitive){
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
+  }
+
+  public static <T> boolean haveEqualElements(List<T> a, List<T> b) {
+    if (a.size() != b.size()) {
+      return false;
+    }
+
+    Set<T> aSet = new HashSet<T>(a);
+    for (T t : b) {
+      if (!aSet.contains(t)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static <T> boolean haveEqualElements(T[] a, T[] b) {

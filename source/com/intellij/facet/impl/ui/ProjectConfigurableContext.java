@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,8 @@ public class ProjectConfigurableContext extends FacetEditorContextBase implement
 
   public ProjectConfigurableContext(final @NotNull Facet facet, final boolean isNewFacet,
                                     @Nullable FacetEditorContext parentContext,
-                                    final ModuleConfigurationState state) {
-    super(parentContext, state.getFacetsProvider(), state.getModulesProvider());
+                                    final ModuleConfigurationState state, final UserDataHolder sharedModuleData) {
+    super(parentContext, state.getFacetsProvider(), state.getModulesProvider(), sharedModuleData);
     myModuleConfigurationState = state;
     myFacet = facet;
     myNewFacet = isNewFacet;

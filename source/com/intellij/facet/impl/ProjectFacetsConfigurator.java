@@ -16,6 +16,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
+  private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
 
@@ -94,13 +97,24 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     if (editor == null) {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
-      editor = new FacetEditor(new ProjectConfigurableContext(facet, isNewFacet(facet), parentContext, 
-                                                              myModuleStateProvider.fun(facet.getModule())), facet.getConfiguration());
+      final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
+      final ProjectConfigurableContext context = new ProjectConfigurableContext(facet, isNewFacet(facet), parentContext, state,
+                                                                                getSharedModuleData(facet.getModule()));
+      editor = new FacetEditor(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
       myEditors.put(facet, editor);
     }
     return editor;
+  }
+
+  private UserDataHolder getSharedModuleData(final Module module) {
+    UserDataHolder dataHolder = mySharedModuleData.get(module);
+    if (dataHolder == null) {
+      dataHolder = new UserDataHolderBase();
+      mySharedModuleData.put(module, dataHolder);
+    }
+    return dataHolder;
   }
 
   @NotNull

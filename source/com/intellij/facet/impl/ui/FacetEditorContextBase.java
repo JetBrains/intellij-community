@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +24,11 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private FacetsProvider myFacetsProvider;
   @Nullable private final FacetEditorContext myParentContext;
   private ModulesProvider myModulesProvider;
+  private UserDataHolder mySharedModuleData;
 
-  public FacetEditorContextBase(final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider) {
+  public FacetEditorContextBase(final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider,
+                                final UserDataHolder sharedModuleData) {
+    mySharedModuleData = sharedModuleData;
     myParentContext = parentContext;
     myModulesProvider = modulesProvider;
     myFacetsProvider = facetsProvider != null ? facetsProvider : DefaultFacetsProvider.INSTANCE;
@@ -47,6 +51,11 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
       }
     }
     return null;
+  }
+
+  //todo[nik] pull up to open API?
+  public UserDataHolder getSharedModuleData() {
+    return mySharedModuleData;
   }
 
   @Nullable
