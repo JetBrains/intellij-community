@@ -181,7 +181,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
       GrReferenceElementImpl groovyRef = (GrReferenceElementImpl) ref;
       String refName = groovyRef.getReferenceName();
       if (refName == null) return null;
-      PsiManagerEx manager = groovyRef.getManager();
+      PsiManager manager = groovyRef.getManager();
       ReferenceKind kind = groovyRef.getKind();
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
