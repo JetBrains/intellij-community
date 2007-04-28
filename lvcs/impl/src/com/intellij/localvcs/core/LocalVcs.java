@@ -71,6 +71,10 @@ public class LocalVcs implements ILocalVcs {
     return myRoot.findEntry(path);
   }
 
+  public RootEntry getRootEntry() {
+    return myRoot;
+  }
+
   public List<Entry> getRoots() {
     return myRoot.getRoots();
   }

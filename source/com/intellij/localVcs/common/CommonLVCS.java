@@ -86,13 +86,13 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
                     final StartupManager startupManager,
                     final LvcsConfiguration configuration) {
     myProject = project;
-    //if (!isOldLvcsEnabled()) return;
+    myVcsLocation = findProjectVcsLocation();
+    if (!isOldLvcsEnabled()) return;
 
     myFileIndex = projectRootManager.getFileIndex();
     myFileTypeManager = fileTypeManager;
     myConfiguration = configuration;
 
-    myVcsLocation = findProjectVcsLocation();
     myImplementation = new OldLvcsImplemetation(project, this);
 
     ((StartupManagerEx)startupManager).registerPreStartupActivity(new Runnable() {
@@ -110,22 +110,22 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public LvcsConfiguration getConfiguration() {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myConfiguration;
   }
 
   public synchronized void commitFile(final LvcsFileRevision lvcsFileRevision, final byte[] bytes) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     myImplementation.commitFile(lvcsFileRevision, bytes);
   }
 
   public synchronized void addLvcsLabelListener(final LvcsLabelListener listener) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     myImplementation.addLvcsLabelListener(listener);
   }
 
   public synchronized void removeLvcsLabelListener(final LvcsLabelListener listener) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     myImplementation.removeLvcsLabelListener(listener);
   }
 
@@ -139,7 +139,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       }
 
       public boolean itemCanBePurged(LvcsRevision lvcsRevisionFor) {
-        return false;
+        return true;
       }
     };
   }
@@ -152,57 +152,57 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
                                               final boolean requestConfirmation,
                                               final String confirmationMessage,
                                               final String confirmationTitle) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.rollbackToLabel(label, requestConfirmation, confirmationMessage, confirmationTitle);
   }
 
   public synchronized boolean rollbackToLabel(final LvcsLabel label, final boolean requestConfirmation) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.rollbackToLabel(label, requestConfirmation);
   }
 
   public synchronized LvcsLabel[] getAllLabels() {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.getAllLabels();
   }
 
   public synchronized LvcsRevision[] getChanges(final String path, final LvcsLabel label) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.getChanges(path, label);
   }
 
   public synchronized LvcsRevision[] getChanges(final LvcsLabel label1, final LvcsLabel label2) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.getChanges(label1, label2);
   }
 
   @Nullable
   public synchronized LvcsDirectory findDirectory(final String dirPath, final boolean ignoreDeleted) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
     return myImplementation.findDirectory(dirPath, ignoreDeleted);
   }
 
   @Nullable
   public synchronized LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
     return myImplementation.findFile(filePath, ignoreDeleted);
   }
 
   @Nullable
   public synchronized LvcsFileRevision findFileRevisionByDate(final String filePath, long date) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
     return myImplementation.findFileRevisionByDate(filePath, date);
   }
 
   @Nullable
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
     return myImplementation.findFileRevision(filePath, label);
   }
 
   @Nullable
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final boolean ignoreDeleted) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
     return myImplementation.findFileRevision(filePath, ignoreDeleted);
   }
 
@@ -237,6 +237,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized LvcsLabel addLabel(final String name, final String path) {
     if (isNewLvcsEnabled()) {
       putNewLocalHistoryLabel(name, path);
+      return null;
     }
 
     return myImplementation.addLabel(name, path);
@@ -245,6 +246,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized LvcsLabel addLabel(final byte type, final String name, final String path) {
     if (isNewLvcsEnabled()) {
       putNewLocalHistoryLabel(name, path);
+      return null;
     }
     return myImplementation.addLabel(type, name, path);
   }
@@ -259,12 +261,12 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void markModuleSourcesAsCurrent(final Module module, final String label) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     myImplementation.markModuleSourcesAsCurrent(module, label);
   }
 
   public synchronized void markSourcesAsCurrent(final String label) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     myImplementation.markSourcesAsCurrent(label);
   }
 
@@ -282,7 +284,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   @Nullable
   public synchronized LvcsDirectory findDirectory(final String path) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
 
     if (!myIsLocked) return null;
     return myImplementation.findDirectory(path);
@@ -295,20 +297,20 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   @Nullable
   public synchronized LvcsFile findFile(final String path) {
-    //if (!isOldLvcsEnabled()) return null;
+    checkOldLvcsEnabled();
 
     if (!myIsLocked) return null;
     return myImplementation.findFile(path);
   }
 
   public synchronized String[] getRootPaths() {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
     return myImplementation.getRootPaths();
   }
 
 
   public synchronized boolean isUnderVcs(VirtualFile file) {
-    //if (!isOldLvcsEnabled()) return false;
+    checkOldLvcsEnabled();
 
     if (!(file.getFileSystem() instanceof LocalFileSystem)) {
       return false;
@@ -329,7 +331,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized int purge() {
-    //if (!isOldLvcsEnabled()) return 0;
+    if (!isOldLvcsEnabled()) return 0;
 
     final LvcsConfiguration configuration = LvcsConfiguration.getInstance();
     if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
@@ -340,7 +342,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void shutdown() {
-    //if (!isOldLvcsEnabled()) return;
+    checkOldLvcsEnabled();
 
     if (myAction != null) {
       myAction.finish();
@@ -355,6 +357,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void close() {
+    checkOldLvcsEnabled();
+
     myIsLocked = false;
     try {
       myImplementation.close();
@@ -366,6 +370,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized VirtualFileListener getVirtualFileListener() {
+    checkOldLvcsEnabled();
     return myTracker;
   }
 
@@ -373,11 +378,14 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private DelayedSyncOperation myRefreshRootsOperation;
 
   public synchronized VirtualFile[] getRoots() {
+    checkOldLvcsEnabled();
     if (myRoots == null) refreshRoots();
     return myRoots;
   }
 
   public synchronized VirtualFile[] getCoveredDirectories() {
+    checkOldLvcsEnabled();
+
     //TODO: filter out roots from JarFilesystem.
     if (isOldLvcsEnabled()) {
       return getRoots();
@@ -389,7 +397,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   @Nullable
   public synchronized ProvidedContent getProvidedContent(VirtualFile file) {
-    //checkOldLvcsEnabled();
+    checkOldLvcsEnabled();
 
     String path = file.getPath();
     LOG.assertTrue(myCanProvideContents, path);
@@ -414,10 +422,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myTracker.contentRequestedFor(file);
   }
 
-  public synchronized LocalVcsUserActivitiesRegistry getLocalVcsUserActivitiesRegistry() {
-    return myUserActivitiesRegistry;
-  }
-
   private void checkLocalVCSWasSavedCorrectly() throws CouldNotLoadLvcsException {
     final File transactionFile = getTransactionFile();
     if (transactionFile.exists()) {
@@ -426,14 +430,20 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized File getTransactionFile() {
+    checkOldLvcsEnabled();
     return new File(myVcsLocation, TRANSACTION_LOC_FILE_NAME);
   }
 
   public LocalHistoryAction startExternalChangesAction() {
+    checkOldLvcsEnabled();
     return startAction_New(EXTERNAL_CHANGES_ACTION, "", true);
   }
 
   public synchronized LocalHistoryAction startAction_New(String action, String path, boolean isExternalChanges) {
+    if (!isOldLvcsEnabled()) {
+      return LocalHistory.startAction(myProject, action);
+    }
+
     if (action == null) return LvcsAction.EMPTY;
     if (action.length() > REASONABLE_ACTION_NAME_LENGTH) {
       action = action.substring(0, REASONABLE_ACTION_NAME_LENGTH);
@@ -448,6 +458,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized LvcsAction startAction(String action, String path, boolean isExternalChanges) {
+    if (!isOldLvcsEnabled()) {
+      return new LvcsActionImpl(null, action, -1, null);
+    }
+
     if (action == null) return LvcsAction.EMPTY;
     if (action.length() > REASONABLE_ACTION_NAME_LENGTH) {
       action = action.substring(0, REASONABLE_ACTION_NAME_LENGTH);
@@ -462,6 +476,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void endAction(LvcsActionImpl action) {
+    checkOldLvcsEnabled();
+
     commitAllUnsavedDocuments();
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: finished()");
@@ -507,7 +523,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void save() {
-    //if (!isOldLvcsEnabled()) return;
+    if (!isOldLvcsEnabled()) return;
 
     saveInternal(true);
   }
@@ -589,14 +605,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myCanProvideContents = canProvide;
   }
 
-  public synchronized LvcsFileTracker getTracker() {
-    return myTracker;
-  }
-
-  public synchronized boolean fileIsDeleted(VirtualFile file) {
-    return myTracker != null && myTracker.fileIsDeleted(file);
-  }
-
   private synchronized boolean fileOrParentIsDeleted(VirtualFile file) {
     if (myTracker == null) return false;
     VirtualFile current = file;
@@ -610,6 +618,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public boolean isOutsideOfProjectRoot(LvcsFileRevision file) {
+    checkOldLvcsEnabled();
+
     VirtualFile[] projectRoots = getProjectRoots();
     for (VirtualFile root : projectRoots) {
       VirtualFile virtualFile = root.getFileSystem().findFileByPath(file.getAbsolutePath());
@@ -620,6 +630,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void onUserAction() {
+    checkOldLvcsEnabled();
+
     myUserActivitiesRegistry.onUserAction(System.currentTimeMillis());
   }
 
@@ -642,6 +654,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void unregisterAll() {
+    checkOldLvcsEnabled();
+
     myIsActive = false;
     myInitialized = false;
     getVirtualFileManager().unregisterFileContentProvider(this);
@@ -654,6 +668,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void synchronizeRoots() {
+    checkOldLvcsEnabled();
+
     /*myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
       public void updatingDone() {
         synchronized (CommonLVCS.this) {
@@ -686,6 +702,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void initialize(boolean sync) {
+    checkOldLvcsEnabled();
+
     if (!myIsActive) registerAll();
     if (myIsLocked) return;
     _init();
@@ -707,7 +725,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  synchronized void _init() {
+  private synchronized void _init() {
     myInitialized = true;
     myVcsLocation.mkdirs();
     myVcsLocation.mkdir();
@@ -732,6 +750,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void rootsChanged(ModuleRootEvent event) {
+    checkOldLvcsEnabled();
+
     if (!myInitialized) return;
     refreshRoots();
     if (myTracker.isRefreshInProgress()) return;
@@ -748,7 +768,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public void disposeComponent() {
-    //if (!isOldLvcsEnabled()) return;
+    if (!isOldLvcsEnabled()) return;
     unregisterAll();
     ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRefreshRootsOperation);
     shutdown();
@@ -761,15 +781,19 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized boolean isAvailable() {
+    checkOldLvcsEnabled();
     //if (!isOldLvcsEnabled()) return false;
     return myIsLocked;
   }
 
   public synchronized LvcsAction getAction() {
+    checkOldLvcsEnabled();
     return myAction;
   }
 
   public void reportLvcsHistoryIsCorrupted(final String message) {
+    checkOldLvcsEnabled();
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("Local history is corrupt and will be rebuilt: \n" + message);
     }
@@ -806,30 +830,33 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void clear() {
-    //if (!isOldLvcsEnabled()) return;
+    if (!isOldLvcsEnabled()) return;
 
     myImplementation.clear(myVcsLocation);
     FileUtil.delete(myVcsLocation);
   }
 
   public synchronized File getVcsLocation() {
-    //if (!isOldLvcsEnabled()) return findProjectVcsLocation();
     return myVcsLocation;
   }
 
   public synchronized OldLvcsImplemetation getImplementation() {
+    checkOldLvcsEnabled();
     return myImplementation;
   }
 
   public synchronized LvcsFileRevision addFile(final LvcsDirectoryRevision dir1, final VirtualFileInfo virtualFileInfoOnVirtualFile) {
+    checkOldLvcsEnabled();
     return myImplementation.addFile(dir1, virtualFileInfoOnVirtualFile);
   }
 
   public synchronized LvcsFileRevision commitFile(final LvcsFileRevision file, final VirtualFileInfo virtualFileInfo) {
+    checkOldLvcsEnabled();
     return myImplementation.commitFile(file, virtualFileInfo);
   }
 
   public synchronized void checkConsistency(final boolean shouldntContainScheduledForRemoval) {
+    checkOldLvcsEnabled();
     myImplementation.checkConsistency(shouldntContainScheduledForRemoval);
   }
 
@@ -842,6 +869,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public boolean isInitialized() {
+    checkOldLvcsEnabled();
     return myInitialized;
   }
 
