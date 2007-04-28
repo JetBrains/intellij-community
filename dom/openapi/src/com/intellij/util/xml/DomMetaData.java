@@ -77,7 +77,7 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
   }
 
   public String getTypeName() {
-    return ElementPresentationManager.getTypeName(myElement.getClass());
+    return ElementPresentationManager.getTypeNameForObject(myElement);
   }
 
   public Icon getIcon() {
