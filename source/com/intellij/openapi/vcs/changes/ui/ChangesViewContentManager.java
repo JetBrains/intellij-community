@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -52,13 +54,12 @@ public class ChangesViewContentManager implements ProjectComponent {
   private VcsListener myVcsListener = new MyVcsListener();
   private Alarm myVcsChangeAlarm;
   private final MessageBusConnection myConnection;
+  private List<Content> myAddedContents = new ArrayList<Content>();
 
   public ChangesViewContentManager(final Project project) {
     myProject = project;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myConnection = project.getMessageBus().connect();
-    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
-    myContentManager.addContentManagerListener(new MyContentManagerListener());
   }
 
   public void projectOpened() {
@@ -67,12 +68,21 @@ public class ChangesViewContentManager implements ProjectComponent {
       public void run() {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) {
-          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
+          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM);
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
+          myContentManager = myToolWindow.getContentManager();
+          myContentManager.addContentManagerListener(new MyContentManagerListener());
+          for(Content content: myAddedContents) {
+            myContentManager.addContent(content);
+          }
+          myAddedContents.clear();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
           myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
           loadExtensionTabs();
+          if (myContentManager.getContentCount() > 0) {
+            myContentManager.setSelectedContent(myContentManager.getContent(0));
+          }
         }
       }
     });
@@ -146,7 +156,12 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   public void addContent(Content content) {
-    myContentManager.addContent(content);
+    if (myContentManager == null) {
+      myAddedContents.add(content);
+    }
+    else {
+      myContentManager.addContent(content);
+    }
   }
 
   public void initComponent() {
