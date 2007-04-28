@@ -17,17 +17,14 @@ import org.jetbrains.plugins.groovy.caches.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * @author ven
  */
 public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
   private Project myProject;
-  private Map<GroovyFile, GrJavaFile> myJavaFiles = new HashMap<GroovyFile, GrJavaFile>();
+  private Map<GroovyFile, GrJavaFile> myJavaFiles = new WeakHashMap<GroovyFile, GrJavaFile>();
   private GroovyClassFinder.MyVFSListener myVfsListener;
 
   public GroovyClassFinder(Project project) {
