@@ -32,8 +32,6 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
@@ -409,43 +407,46 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   private URL[] getClassPathLocalUrls() {
-    URL[] urls = ClassEntry.EMPTY_URL_ARRAY;
     final String classpath = getClassPath();
     if (classpath != null) {
-      final AntFile antFile = getAntFile();
-      final AntProject project = antFile.getAntProject();
-      VirtualFile vFile = antFile.getContainingPath();
-      String projectPath = (vFile != null) ? vFile.getPath() : "";
-      final String baseDir = project.getBaseDir();
-      if (baseDir != null && baseDir.length() > 0) {
-        projectPath = new File(projectPath, baseDir).getAbsolutePath();
-      }
-      File file;
+      final String projectPath = getProjectPath();
       try {
         if (classpath.indexOf(File.pathSeparatorChar) < 0) {
-          file = new File(classpath);
+          File file = new File(classpath);
           if (!file.isAbsolute()) {
             file = new File(projectPath, classpath);
           }
-          urls = new URL[]{file.toURL()};
+          return new URL[]{file.toURL()};
         }
-        else {
-          final List<URL> urlList = new ArrayList<URL>();
-          for (final String path : classpath.split(File.pathSeparator)) {
-            file = new File(path);
-            if (!file.isAbsolute()) {
-              file = new File(projectPath, path);
-            }
-            urlList.add(file.toURL());
+        
+        final String[] paths = classpath.split(File.pathSeparator);
+        final URL[] urlList = new URL[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+          final String path = paths[i];
+          File file = new File(path);
+          if (!file.isAbsolute()) {
+            file = new File(projectPath, path);
           }
-          urls = urlList.toArray(new URL[urlList.size()]);
+          urlList[i] = file.toURL();
         }
+        return urlList;
       }
-      catch (MalformedURLException e) {
-        urls = ClassEntry.EMPTY_URL_ARRAY;
+      catch (MalformedURLException ignored) {
       }
     }
-    return urls;
+    return ClassEntry.EMPTY_URL_ARRAY;
+  }
+
+  private String getProjectPath() {
+    final AntFile antFile = getAntFile();
+    final AntProject project = antFile.getAntProject();
+    VirtualFile vFile = antFile.getContainingPath();
+    String projectPath = (vFile != null) ? vFile.getPath() : "";
+    final String baseDir = project.getBaseDir();
+    if (baseDir != null && baseDir.length() > 0) {
+      projectPath = new File(projectPath, baseDir).getAbsolutePath();
+    }
+    return projectPath;
   }
 
   @Nullable

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: lex
@@ -36,7 +37,7 @@ import com.intellij.psi.util.PsiUtil;
  * Time: 8:23:06 PM
  */
 public abstract class SourcePosition implements Navigatable{
-
+  @NotNull
   public abstract PsiFile getFile();
 
   /**
@@ -50,7 +51,7 @@ public abstract class SourcePosition implements Navigatable{
 
   private abstract static class SourcePositionCache extends SourcePosition {
     private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition.SourcePositionCache");
-    private final PsiFile myFile;
+    private final @NotNull PsiFile myFile;
     private long myModificationStamp = -1L;
 
     private int myLine;
@@ -62,6 +63,7 @@ public abstract class SourcePosition implements Navigatable{
       updateData();
     }
 
+    @NotNull
     public PsiFile getFile() {
       return myFile;
     }
