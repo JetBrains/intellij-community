@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
-    
+
     @NotNull
     public String getName(){
         return InspectionGadgetsBundle.message(
@@ -68,6 +68,6 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
         } else if(PsiType.CHAR.equals(type)){
             return "(char)0";
         }
-      return PsiKeyword.NULL;
+        return PsiKeyword.NULL;
     }
 }

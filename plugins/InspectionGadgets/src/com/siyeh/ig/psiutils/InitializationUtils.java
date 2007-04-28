@@ -243,16 +243,16 @@ public class InitializationUtils{
             @NotNull PsiTryStatement tryStatement, PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods){
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        boolean initializedInTryOrCatch =
+        boolean initializedInTryAndCatch =
                 blockAssignsVariableOrFails(tryBlock, variable,
                         checkedMethods);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         for (final PsiCodeBlock catchBlock : catchBlocks){
-            initializedInTryOrCatch &=
+            initializedInTryAndCatch &=
             blockAssignsVariableOrFails(catchBlock, variable,
                     checkedMethods);
         }
-        if (initializedInTryOrCatch){
+        if (initializedInTryAndCatch){
             return true;
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -271,6 +271,13 @@ public class InitializationUtils{
         }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
+        if (BoolUtils.isTrue(condition)) {
+            return statementAssignsVariableOrFails(thenBranch, variable,
+                    checkedMethods);
+        } else if (BoolUtils.isFalse(condition)) {
+            return statementAssignsVariableOrFails(elseBranch, variable,
+                    checkedMethods);
+        }
         return statementAssignsVariableOrFails(thenBranch, variable,
                 checkedMethods) &&
                 statementAssignsVariableOrFails(elseBranch, variable,
@@ -437,9 +444,7 @@ public class InitializationUtils{
             }
             if(lhs instanceof PsiReferenceExpression){
                 final PsiElement element = ((PsiReference) lhs).resolve();
-                if(element != null &&
-                        variable != null &&
-                        element.equals(variable)){
+                if(element != null && element.equals(variable)){
                     return true;
                 }
             }

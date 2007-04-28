@@ -64,10 +64,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryDefaultVisitor();
+        return new EnumSwitchStatementWhichMissesCasesVisitor();
     }
 
-    private class UnnecessaryDefaultVisitor
+    private class EnumSwitchStatementWhichMissesCasesVisitor
             extends BaseInspectionVisitor {
 
         public void visitSwitchStatement(
