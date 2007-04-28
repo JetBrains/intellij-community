@@ -1249,9 +1249,7 @@ public class HighlightUtil {
     if (typeElement == null || typeElement.getParent() instanceof PsiTypeElement) return null;
 
     final PsiElement parent = typeElement.getParent();
-    if (PsiTreeUtil.getParentOfType(parent, PsiDocComment.class) != null) {
-      return null;
-    }
+    if (isInsideJavadocComment(typeElement)) return null;
 
     PsiType type = typeElement.getType();
     PsiType componentType = type.getDeepComponentType();
@@ -1832,9 +1830,7 @@ public class HighlightUtil {
         String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
-        if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
-          return null;
-        }
+        if (isInsideJavadocComment(ref)) return null;
 
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
         QuickFixAction.registerQuickFixAction(info, new ImportClassFix(ref));
@@ -1866,7 +1862,7 @@ public class HighlightUtil {
         return info;
       }
 
-      if (!result.isValidResult()) {
+      if (!result.isValidResult() && !isInsideJavadocComment(ref)) {
         if (!result.isAccessible()) {
           String description = buildProblemWithAccessDescription(ref, result);
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
@@ -1903,6 +1899,10 @@ public class HighlightUtil {
       element = element.getParent();
     }
     return false;
+  }
+
+  private static boolean isInsideJavadocComment(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, true) != null;
   }
 
   @Nullable
