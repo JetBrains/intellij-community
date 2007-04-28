@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,8 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   public int getAccessLevel() {
     final PsiClass superClass = getSuperClass();
-    return superClass != null ? PsiUtil.getAccessLevel(superClass.getModifierList()) : PsiUtil.ACCESS_LEVEL_PUBLIC;
+    PsiModifierList modifierList = superClass == null ? null : superClass.getModifierList();
+    return modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
   }
 
   public int getSubLevel() {
