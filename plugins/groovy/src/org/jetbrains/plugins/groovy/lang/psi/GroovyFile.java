@@ -85,6 +85,12 @@ public class GroovyFile extends PsiFileBase {
       if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
+    String currentPackageName = getPackageName();
+    PsiPackage currentPackage = getManager().findPackage(currentPackageName);
+    if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place)) {
+      return false;
+    }
+
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
       PsiPackage aPackage = getManager().findPackage(implicitlyImported);
       if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
@@ -96,7 +102,10 @@ public class GroovyFile extends PsiFileBase {
   private static final String[] IMPLICITLY_IMPORTED_PACKAGES = new String[] {
       "java.lang",
       "java.util",
-      /* todo check others*/
+      "java.io",
+      "java.net",
+      "groovy.lang",
+      "groovy.util",
   };
 }
 
