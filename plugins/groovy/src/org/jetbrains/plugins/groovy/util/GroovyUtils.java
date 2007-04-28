@@ -81,7 +81,10 @@ public abstract class GroovyUtils {
   public static String[] getModuleRootUrls(@NotNull final Module module) {
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (roots.length == 0) {
-      roots = new VirtualFile[]{(module.getModuleFile().getParent())};
+      VirtualFile moduleFile = module.getModuleFile();
+      if (moduleFile != null) {
+        roots = new VirtualFile[]{(moduleFile.getParent())};
+      }
     }
     String[] urls = new String[roots.length];
     int i = 0;
