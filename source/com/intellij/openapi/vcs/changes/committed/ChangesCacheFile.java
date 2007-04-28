@@ -535,54 +535,11 @@ public class ChangesCacheFile {
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
-          ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision != null) {
-            if (change.getBeforeRevision() == null) {
-              final FilePath path = change.getAfterRevision().getFile();
-              LOG.info("Marking created file " + path);
-              createdFiles.add(path);
-            }
-            afterRevision.getFile().refresh();
-            LOG.info("Checking file " + afterRevision.getFile().getPath());
-            VirtualFile file = afterRevision.getFile().getVirtualFile();
-            if (file != null) {
-              VcsRevisionNumber revision = currentRevisions.get(file);
-              if (revision != null) {
-                LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
-                int rc = revision.compareTo(afterRevision.getRevisionNumber());
-                if (rc >= 0) {
-                  data.accountedChanges.add(change);
-                  updated = true;
-                }
-              }
-              else {
-                LOG.info("Failed to fetch revision");
-              }
-            }
-            else if (isDeletedFile(deletedFiles, afterRevision)) {
-              LOG.info("Found deleted file");
-              data.accountedChanges.add(change);
-              updated = true;
-            }
-            else {
-              LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
-            }
+          final boolean changeFound = processIncomingChange(change, data, currentRevisions, deletedFiles, createdFiles);
+          if (changeFound) {
+            data.accountedChanges.add(change);
           }
-          else {
-            ContentRevision beforeRevision = change.getBeforeRevision();
-            assert beforeRevision != null;
-            LOG.info("Checking deleted file " + beforeRevision.getFile());
-            deletedFiles.add(beforeRevision.getFile());
-            beforeRevision.getFile().refresh();
-            if (beforeRevision.getFile().getVirtualFile() == null || createdFiles.contains(beforeRevision.getFile())) {
-              // file has already been deleted
-              data.accountedChanges.add(change);
-              updated = true;
-            }
-            else {
-              LOG.info("File exists locally and no 'create' change found for it");
-            }
-          }
+          updated |= changeFound;
         }
         if (updated) {
           anyChanges = true;
@@ -597,6 +554,63 @@ public class ChangesCacheFile {
       closeStreams();
     }
     return anyChanges;
+  }
+
+  private static boolean processIncomingChange(final Change change,
+                                               final IncomingChangeListData data,
+                                               final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
+                                               final Set<FilePath> deletedFiles,
+                                               final Set<FilePath> createdFiles) {
+    ContentRevision afterRevision = change.getAfterRevision();
+    if (afterRevision != null) {
+      if (afterRevision.getFile().isNonLocal()) {
+        // don't bother to search for nonlocal paths on local disk
+        return true;
+      }
+      if (change.getBeforeRevision() == null) {
+        final FilePath path = afterRevision.getFile();
+        LOG.info("Marking created file " + path);
+        createdFiles.add(path);
+      }
+      afterRevision.getFile().refresh();
+      LOG.info("Checking file " + afterRevision.getFile().getPath());
+      VirtualFile file = afterRevision.getFile().getVirtualFile();
+      if (file != null) {
+        VcsRevisionNumber revision = currentRevisions.get(file);
+        if (revision != null) {
+          LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
+          int rc = revision.compareTo(afterRevision.getRevisionNumber());
+          if (rc >= 0) {
+            return true;
+          }
+        }
+        else {
+          LOG.info("Failed to fetch revision");
+        }
+      }
+      else if (isDeletedFile(deletedFiles, afterRevision)) {
+        LOG.info("Found deleted file");
+        return true;
+      }
+      else {
+        LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
+      }
+    }
+    else {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      assert beforeRevision != null;
+      LOG.info("Checking deleted file " + beforeRevision.getFile());
+      deletedFiles.add(beforeRevision.getFile());
+      beforeRevision.getFile().refresh();
+      if (beforeRevision.getFile().getVirtualFile() == null || createdFiles.contains(beforeRevision.getFile())) {
+        // file has already been deleted
+        return true;
+      }
+      else {
+        LOG.info("File exists locally and no 'create' change found for it");
+      }
+    }
+    return false;
   }
 
   private static boolean isDeletedFile(final Set<FilePath> deletedFiles, final ContentRevision afterRevision) {

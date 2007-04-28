@@ -51,4 +51,6 @@ public interface FilePath {
 
   @Nullable
   FilePath getParentPath();
+
+  boolean isNonLocal();
 }

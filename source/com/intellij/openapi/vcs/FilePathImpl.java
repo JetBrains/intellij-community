@@ -255,4 +255,8 @@ public class FilePathImpl implements FilePath {
   public String toString() {
     return "FilePath[" + myFile + "]";
   }
+
+  public boolean isNonLocal() {
+    return myNonLocal;
+  }
 }
