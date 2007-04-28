@@ -349,6 +349,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
+    if (changes.size() > 0) {
+      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, changes);
+    }
     return changes;
   }
 
