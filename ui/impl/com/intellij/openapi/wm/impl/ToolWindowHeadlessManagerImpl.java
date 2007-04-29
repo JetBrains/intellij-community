@@ -18,8 +18,9 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -95,9 +96,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     public ContentManager getContentManager() {
-      return null;
+      return MOCK_CONTENT_MANAGER;
     }
   };
+
+  private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManagerImpl(null, true, null);
+
   public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor) {
     return HEADLESS_WINDOW;
   }
