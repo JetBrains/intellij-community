@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -62,6 +63,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,8 +79,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   static final @NonNls String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   static final @NonNls String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   static final @NonNls String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
-
-  public static final @NonNls String JAVA_STRATUM = "Java";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -1545,9 +1545,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     }
   }
-
-  public DebuggerSession getSession() {
-    return mySession;
+  
+  @NotNull
+  public GlobalSearchScope getSearchScope() {
+    LOG.assertTrue(mySession != null, "Accessing debug session before its initialization");
+    return mySession.getSearchScope();
   }
 
   public @Nullable ExecutionResult attachVirtualMachine(final DebuggerSession session,

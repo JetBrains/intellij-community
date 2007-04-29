@@ -28,9 +28,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface VirtualMachineProxy {
-  public List<ReferenceType> allClasses();
+  List<ReferenceType> allClasses();
 
-  public boolean versionHigher(String version);
+  boolean versionHigher(String version);
 
   boolean canWatchFieldModification();
 
@@ -39,4 +39,8 @@ public interface VirtualMachineProxy {
   boolean canInvokeMethods();
 
   DebugProcess getDebugProcess();
+
+  List<ReferenceType> nestedTypes(ReferenceType refType);
+
+  List<ReferenceType> classesByName(String s);
 }

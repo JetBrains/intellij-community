@@ -182,7 +182,7 @@ public class PositionManagerImpl implements PositionManager {
     final String originalQName = refType.name();
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
-    final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
+    final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     PsiClass psiClass = DebuggerUtils.findClass(qName, project, searchScope);
     if (psiClass == null && dollar >= 0 /*originalName and qName really differ*/) {
       psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name

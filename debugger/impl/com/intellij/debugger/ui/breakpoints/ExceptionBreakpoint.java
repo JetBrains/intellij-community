@@ -111,7 +111,7 @@ public class ExceptionBreakpoint extends Breakpoint {
 
     SourcePosition classPosition = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
-        PsiClass psiClass = DebuggerUtilsEx.findClass(myQualifiedName, myProject, debugProcess.getSession().getSearchScope());
+        PsiClass psiClass = DebuggerUtilsEx.findClass(myQualifiedName, myProject, debugProcess.getSearchScope());
 
         return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
       }

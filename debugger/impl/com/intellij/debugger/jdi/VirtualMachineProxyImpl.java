@@ -68,7 +68,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
     List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
     if (nestedTypes == null) {
-      nestedTypes = (List<ReferenceType>)refType.nestedTypes();
+      nestedTypes = refType.nestedTypes();
       myNestedClassesCache.put(refType, nestedTypes);
     }
     return nestedTypes;

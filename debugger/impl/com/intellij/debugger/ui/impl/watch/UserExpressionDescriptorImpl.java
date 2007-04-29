@@ -5,7 +5,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -59,7 +58,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     if(value instanceof ObjectReference) {
       final String typeName = value.type().name();
 
-      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject, ((DebugProcessImpl)context.getDebugProcess()).getSession().getSearchScope());
+      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject, context.getDebugProcess().getSearchScope());
 
       if (psiClass == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));

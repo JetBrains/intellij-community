@@ -145,7 +145,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
           public JVMName compute() {
             PsiClass psiClass =
-              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSession().getSearchScope());
+              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
             if (psiClass == null) {
               return null;
             }

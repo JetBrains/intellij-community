@@ -2,7 +2,6 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -184,7 +183,7 @@ public class ClassRenderer extends NodeRendererImpl{
     PsiElementFactory elementFactory = PsiManager.getInstance(node.getProject()).getElementFactory();
     try {
       return elementFactory.createExpressionFromText(fieldDescriptor.getField().name(), DebuggerUtils.findClass(
-        fieldDescriptor.getObject().referenceType().name(), context.getProject(), ((DebugProcessImpl)context.getDebugProcess()).getSession().getSearchScope())
+        fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
       );
     }
     catch (IncorrectOperationException e) {

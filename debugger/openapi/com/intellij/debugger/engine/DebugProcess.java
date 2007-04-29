@@ -24,7 +24,10 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,6 +39,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface DebugProcess {
+  @NonNls String JAVA_STRATUM = "Java";
+
   <T> T    getUserData(Key<T> key);  
   <T> void putUserData(Key<T> key, T value);
 
@@ -99,4 +104,10 @@ public interface DebugProcess {
   boolean isDetached();
 
   boolean isDetaching();
+
+  /**
+   * @return the search scope used by debugger to find sources corresponding to classes being executed
+   */
+  @NotNull
+  GlobalSearchScope getSearchScope();
 }
