@@ -11,18 +11,24 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.impl.ContentManagerImpl;
+import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -100,7 +106,39 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
   };
 
-  private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManagerImpl(null, true, null);
+  @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
+    public void addContent(final Content content) { }
+    public void addContent(final Content content, final Object constraints) { }
+    public void addContentManagerListener(final ContentManagerListener l) { }
+    public void addDataProvider(final DataProvider provider) { }
+    public void addSelectedContent(final Content content) { }
+    public boolean canCloseAllContents() { return false; }
+    public boolean canCloseContents() { return false; }
+    public Content findContent(final String displayName) { return null; }
+    public List<AnAction> getAdditionalPopupActions(final Content content) { return Collections.emptyList(); }
+    public String getCloseActionName() { return "close"; }
+    public String getCloseAllButThisActionName() { return "closeallbutthis"; }
+    public JComponent getComponent() { return new JLabel(); }
+    public Content getContent(final JComponent component) { return null; }
+    @Nullable
+    public Content getContent(final int index) { return null; }
+    public int getContentCount() { return 0; }
+    public Content[] getContents() { return new Content[0]; }
+    public int getIndexOfContent(final Content content) { return -1; }
+    @Nullable
+    public Content getSelectedContent() { return null; }
+    public Content[] getSelectedContents() { return new Content[0]; }
+    public boolean isSelected(final Content content) { return false; }
+    public void removeAllContents() { }
+    public boolean removeContent(final Content content) { return false; }
+    public void removeContentManagerListener(final ContentManagerListener l) { }
+    public void removeSelectedContent(final Content content) { }
+    public void requestFocus(@Nullable final Content content) { }
+    public void selectNextContent() { }
+    public void selectPreviousContent() { }
+    public void setSelectedContent(final Content content) { }
+    public void setSelectedContent(final Content content, final boolean requestFocus) { }
+  };
 
   public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor) {
     return HEADLESS_WINDOW;
