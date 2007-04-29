@@ -49,17 +49,8 @@
     </component>
   </module-components>
   <actions>
-    <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
-            text="Grails Controller" description="Generate Grails Controller">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
     <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"
             text="Grails Views" description="Generate Grails Views">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-    <action id="Grails.GenerateControllerAndViews"
-            class="org.jetbrains.plugins.grails.actions.GenerateControllerAndViewsAction"
-            text="Grails Controller and Views" description="Generate Grails Controller and Views">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
     <group id="Groovy" class="org.jetbrains.plugins.groovy.actions.GroovyGroup"
