@@ -43,6 +43,10 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GFacetListener</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleEditorsProvider</implementation-class>
+      <option name="type" value="GRAILS_MODULE"/>
+    </component>
   </module-components>
   <actions>
     <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
