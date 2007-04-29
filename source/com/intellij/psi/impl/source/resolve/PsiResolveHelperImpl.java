@@ -542,7 +542,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     if (guess == PsiType.NULL) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
       if (superType == null) superType = PsiType.getJavaLangObject(manager, methodCall.getResolveScope());
-      if (forCompletion) {
+      if (forCompletion && !(superType instanceof PsiWildcardType)) {
         return PsiWildcardType.createExtends(manager, superType);
       }
       else {
