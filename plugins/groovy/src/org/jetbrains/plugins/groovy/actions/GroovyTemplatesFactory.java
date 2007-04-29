@@ -16,27 +16,41 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
-import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
+import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.Icons;
 
-public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent {
+import java.util.Properties;
+
+public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent
+{
   @NonNls
   public static final String[] TEMPLATES = {
-          "GroovyClass.groovy", "GroovyScript.groovy"
+          "GroovyClass.groovy",
+          "GroovyScript.groovy",
+          "GrailsDomainClass.groovy",
+          "GrailsTests.groovy",
   };
+  @NonNls
+  static final String NAME_TEMPLATE_PROPERTY = "NAME";
+  static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
-  public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
+  public FileTemplateGroupDescriptor getFileTemplatesDescriptor()
+  {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
             Icons.SMALLEST);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    for (String template : TEMPLATES) {
+    for (String template : TEMPLATES)
+    {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
     }
     return group;
@@ -44,13 +58,47 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
   @NonNls
   @NotNull
-  public String getComponentName() {
+  public String getComponentName()
+  {
     return "GroovyTemplatesFactory";
   }
 
-  public void initComponent() {
+  public void initComponent()
+  {
   }
 
-  public void disposeComponent() {
+  public void disposeComponent()
+  {
+  }
+
+  public static PsiFile createFromTemplate(final PsiDirectory directory, final String name, String fileName, String templateName,
+                                           @NonNls String... parameters) throws IncorrectOperationException
+  {
+    final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
+
+    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
+    FileTemplateUtil.setPackageNameAttribute(properties, directory);
+    properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
+    properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));
+    for (int i = 0; i < parameters.length; i += 2)
+    {
+      properties.setProperty(parameters[i], parameters[i + 1]);
+    }
+    String text;
+    try
+    {
+      text = template.getText(properties);
+    }
+    catch (Exception e)
+    {
+      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
+    }
+
+    final PsiManager psiManager = PsiManager.getInstance(directory.getProject());
+    final PsiFile file = psiManager.getElementFactory().createFileFromText(fileName, text);
+
+    CodeStyleManager.getInstance(psiManager).reformat(file, false);
+
+    return (PsiFile) directory.add(file);
   }
 }

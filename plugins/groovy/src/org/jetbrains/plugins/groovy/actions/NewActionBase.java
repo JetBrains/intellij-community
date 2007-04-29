@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -36,8 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,18 +41,18 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
-public abstract class NewActionBase extends CreateElementActionBase {
-  @NonNls
-  private static final String NAME_TEMPLATE_PROPERTY = "NAME";
+public abstract class NewActionBase extends CreateElementActionBase
+{
 
-  public NewActionBase(String text, String description, Icon icon) {
+  public NewActionBase(String text, String description, Icon icon)
+  {
     super(text, description, icon);
   }
 
   @NotNull
-  protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
+  protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory)
+  {
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, getDialogPrompt(), getDialogTitle(), Messages.getQuestionIcon(), "", validator);
 
@@ -68,7 +63,8 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
   protected abstract String getDialogTitle();
 
-  public final void update(final AnActionEvent e) {
+  public final void update(final AnActionEvent e)
+  {
     final Presentation presentation = e.getPresentation();
 
     super.update(e);
@@ -82,19 +78,24 @@ public abstract class NewActionBase extends CreateElementActionBase {
     presentation.setVisible(false);
   }
 
-  public static boolean isUnderSourceRoots(final AnActionEvent e) {
+  public static boolean isUnderSourceRoots(final AnActionEvent e)
+  {
     final DataContext context = e.getDataContext();
     Module module = (Module) context.getData(DataConstants.MODULE);
-    if (module == null) {
+    if (module == null)
+    {
       return false;
     }
     final IdeView view = (IdeView) context.getData(DataConstants.IDE_VIEW);
     final Project project = (Project) context.getData(DataConstants.PROJECT);
-    if (view != null && project != null) {
+    if (view != null && project != null)
+    {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       PsiDirectory[] dirs = view.getDirectories();
-      for (PsiDirectory dir : dirs) {
-        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+      for (PsiDirectory dir : dirs)
+      {
+        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null)
+        {
           return true;
         }
       }
@@ -104,7 +105,8 @@ public abstract class NewActionBase extends CreateElementActionBase {
   }
 
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception
+  {
     return doCreate(newName, directory);
   }
 
@@ -112,52 +114,31 @@ public abstract class NewActionBase extends CreateElementActionBase {
   protected abstract PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception;
 
   protected static PsiFile createClassFromTemplate(final PsiDirectory directory, String className, String templateName,
-                                                   @NonNls String... parameters) throws IncorrectOperationException {
-    return createFromTemplateInternal(directory, className, className + ".groovy", templateName, parameters);
-  }
-
-  protected static PsiFile createFromTemplateInternal(final PsiDirectory directory, final String name, String fileName, String templateName,
-                                                      @NonNls String... parameters) throws IncorrectOperationException {
-    final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
-
-    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
-    FileTemplateUtil.setPackageNameAttribute(properties, directory);
-    properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
-    for (int i = 0; i < parameters.length; i += 2) {
-      properties.setProperty(parameters[i], parameters[i + 1]);
-    }
-    String text;
-    try {
-      text = template.getText(properties);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
-    }
-
-    final PsiManager psiManager = PsiManager.getInstance(directory.getProject());
-    final PsiFile file = psiManager.getElementFactory().createFileFromText(fileName, text);
-
-    CodeStyleManager.getInstance(psiManager).reformat(file);
-
-    return (PsiFile) directory.add(file);
+                                                   @NonNls String... parameters) throws IncorrectOperationException
+  {
+    return GroovyTemplatesFactory.createFromTemplate(directory, className, className + ".groovy", templateName, parameters);
   }
 
 
-  protected String getErrorTitle() {
+  protected String getErrorTitle()
+  {
     return CommonBundle.getErrorTitle();
   }
 
-  protected String getActionName(PsiDirectory directory, String newName) {
+  protected String getActionName(PsiDirectory directory, String newName)
+  {
     return GroovyBundle.message("newclass.progress.text", newName);
   }
 
-  protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
+  protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException
+  {
     doCheckBeforeCreate(newName, directory);
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     ReadonlyStatusHandler.getInstance(directory.getProject()).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
 
-  protected void doCheckBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
+  protected void doCheckBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException
+  {
     directory.checkCreateClass(newName);
   }
 }
