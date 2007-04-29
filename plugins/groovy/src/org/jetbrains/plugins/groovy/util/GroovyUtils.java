@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -81,11 +82,9 @@ public abstract class GroovyUtils {
   public static String[] getModuleRootUrls(@NotNull final Module module) {
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (roots.length == 0) {
-      VirtualFile moduleFile = module.getModuleFile();
-      if (moduleFile != null) {
-        roots = new VirtualFile[]{(moduleFile.getParent())};
-      }
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
+
     String[] urls = new String[roots.length];
     int i = 0;
     for (VirtualFile root : roots) {
