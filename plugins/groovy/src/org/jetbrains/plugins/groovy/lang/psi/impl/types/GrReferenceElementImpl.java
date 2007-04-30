@@ -20,10 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -79,6 +81,11 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
   }
 
   public TextRange getRangeInElement() {
+    final PsiElement refNameElement = getReferenceNameElement();
+    if (refNameElement != null) {
+      final int offsetInParent = refNameElement.getStartOffsetInParent();
+      return new TextRange(offsetInParent, offsetInParent + refNameElement.getTextLength());
+    }
     return new TextRange(0, getTextLength());
   }
 
@@ -146,9 +153,31 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
   }
 
   public Object[] getVariants() {
-    switch (getKind()) {
-      case CLASS:
+    PsiManager manager = getManager();
+    final ReferenceKind kind = getKind();
+    switch (kind) {
+      case PACKAGE_FQ:
+      case CLASS_OR_PACKAGE_FQ: {
+        final String refText = PsiUtil.getQualifiedReferenceText(this);
+        final int lastDot = refText.lastIndexOf(".");
+        String parentPackageFQName = lastDot > 0 ? refText.substring(0, lastDot) : "";
+        final PsiPackage parentPackage = manager.findPackage(parentPackageFQName);
+        if (parentPackage != null) {
+          final GlobalSearchScope scope = getResolveScope();
+          if (kind == PACKAGE_FQ) {
+            return parentPackage.getSubPackages(scope);
+          } else {
+            final PsiPackage[] subpackages = parentPackage.getSubPackages(scope);
+            final PsiClass[] classes = parentPackage.getClasses(scope);
+            PsiElement[] result = new PsiElement[subpackages.length + classes.length];
+            System.arraycopy(subpackages, 0, result, 0, subpackages.length);
+            System.arraycopy(classes, 0, result, subpackages.length, classes.length);
+            return result;
+          }
+        }
+      }
 
+      case CLASS: {
         GrReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
           PsiElement qualifierResolved = qualifier.resolve();
@@ -163,11 +192,10 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
           List<PsiNamedElement> candidates = processor.getCandidates();
           return candidates.toArray(PsiNamedElement.EMPTY_ARRAY);
         }
-        break;
-
-        //todo other cases
+      }
     }
-    return new Object[0];
+
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {
