@@ -169,6 +169,17 @@ public class ArrayUtil {
     return result;
   }
 
+  public static int[] remove(@NotNull final int[] src,int idx){
+    int length=src.length;
+    if (idx < 0 || idx >= length) {
+      throw new IllegalArgumentException("invalid index: " + idx);
+    }
+    int[] result = new int[src.length - 1];
+    System.arraycopy(src,0,result,0,idx);
+    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    return result;
+  }
+
   /**
    * @param src source array.
    * @param obj object to be found.
@@ -310,6 +321,14 @@ public class ArrayUtil {
   public static int indexOf(Object[] objects, Object object) {
     for (int i = 0; i < objects.length; i++) {
       if (ComparableObjectCheck.equals(objects[i], object)) return i;
+    }
+
+    return -1;
+  }
+
+  public static int indexOf(int[] ints, int value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
     }
 
     return -1;
