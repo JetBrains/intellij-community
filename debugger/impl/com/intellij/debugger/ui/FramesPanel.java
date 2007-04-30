@@ -135,10 +135,21 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
     private final boolean myRefreshOnly;
+    private final ThreadDescriptorImpl[] myThreadDescriptorsToUpdate;
 
     public RefreshFramePanelCommand(final boolean refreshOnly) {
       super(getContext());
       myRefreshOnly = refreshOnly;
+      if (refreshOnly) {
+        final int size = myThreadsCombo.getItemCount();
+        myThreadDescriptorsToUpdate = new ThreadDescriptorImpl[size];
+        for (int idx = 0; idx < size; idx++) {
+          myThreadDescriptorsToUpdate[idx] = (ThreadDescriptorImpl)myThreadsCombo.getItemAt(idx);
+        }
+      }
+      else {
+        myThreadDescriptorsToUpdate = null;
+      }
     }
 
     private java.util.List<ThreadDescriptorImpl> createThreadDescriptorsList() {
@@ -158,6 +169,11 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
 
     public void threadAction() {
+      if (myRefreshOnly && myThreadDescriptorsToUpdate.length != myThreadsCombo.getItemCount()) {
+        // there is no sense in refreshing combobox if thread list has changed since creation of this command
+        return;
+      }
+      
       final DebuggerContextImpl context = getDebuggerContext();
 
       final ThreadReferenceProxyImpl threadToSelect = context.getThreadProxy();
@@ -177,11 +193,8 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
 
       if (myRefreshOnly) {
-        final DefaultComboBoxModel model = (DefaultComboBoxModel)myThreadsCombo.getModel();
-        final int size = model.getSize();
         final EvaluationContextImpl evaluationContext = context.createEvaluationContext();
-        for (int idx = 0; idx < size; idx++) {
-          final ThreadDescriptorImpl descriptor = (ThreadDescriptorImpl)model.getElementAt(idx);
+        for (ThreadDescriptorImpl descriptor : myThreadDescriptorsToUpdate) {
           descriptor.setContext(evaluationContext);
           descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         }
