@@ -34,7 +34,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     return "Enumeration definition";
   }
 
-  public GrTypeDefinitionBody getBody() {
-    return null;
+  public boolean isEnum() {
+    return true;
   }
 }

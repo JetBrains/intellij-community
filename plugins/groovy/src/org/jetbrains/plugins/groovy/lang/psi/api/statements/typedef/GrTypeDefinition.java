@@ -29,7 +29,7 @@ import com.intellij.navigation.NavigationItem;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrNamedElement, GrStatement, NavigationItem {
+public interface GrTypeDefinition extends GrNamedElement, GrStatement, NavigationItem, PsiClass {
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
@@ -38,12 +38,8 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement, Navigatio
   @Nullable
   public String getQualifiedName();
 
-  GrTypeParameter[] getTypeParameters();
+  GrTypeParameter[] getTypeParametersGroovy();
 
   @NotNull
-  PsiElement getNameIdentifier();
-
-  //Allows to retrive a lightweight copy of java for this groovy class
-  //Most of java psi is not implemented
-  PsiClass getJavaClass();
+  PsiElement getNameIdentifierGroovy();
 }

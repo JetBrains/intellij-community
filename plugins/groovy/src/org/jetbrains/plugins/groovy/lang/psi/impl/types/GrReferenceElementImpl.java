@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GrJavaClass;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -187,7 +186,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(groovyRef), groovyRef.getResolveScope());
           if (aClass != null) {
-            if (aClass instanceof GrJavaClass) return ((GrJavaClass) aClass).getGroovyElement();
             return aClass;
           }
           //fallthrough

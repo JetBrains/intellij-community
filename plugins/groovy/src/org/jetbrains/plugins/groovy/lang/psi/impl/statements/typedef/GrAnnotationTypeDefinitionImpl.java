@@ -34,7 +34,7 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
     return "Annotation definition";
   }
 
-  public GrTypeDefinitionBody getBody() {
-    return null;
+  public boolean isAnnotationType() {
+    return true;
   }
 }

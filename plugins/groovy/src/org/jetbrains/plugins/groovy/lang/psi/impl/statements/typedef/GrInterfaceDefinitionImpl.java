@@ -34,7 +34,7 @@ public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements G
     return "Interface definition";
   }
 
-  public GrTypeDefinitionBody getBody() {
-    return this.findChildByClass(GrTypeDefinitionBody.class);
+  public boolean isInterface() {
+    return true;
   }
 }

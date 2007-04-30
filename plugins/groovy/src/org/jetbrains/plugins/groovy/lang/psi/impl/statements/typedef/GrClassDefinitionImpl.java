@@ -34,8 +34,4 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
   public String toString() {
     return "Class definition";
   }
-
-  public GrTypeDefinitionBody getBody() {
-    return this.findChildByClass(GrTypeDefinitionBody.class);
-  }
 }

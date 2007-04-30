@@ -17,27 +17,30 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.PomMemberOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GrJavaClass;
 import org.jetbrains.plugins.groovy.Icons;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Collections;
+import java.util.Collection;
 
 /**
  * @author Ilya Sergey
@@ -49,7 +52,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public int getTextOffset() {
-    return getNameIdentifier().getTextRange().getStartOffset();
+    return getNameIdentifierGroovy().getTextRange().getStartOffset();
   }
 
   @Nullable
@@ -65,8 +68,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
-  public GrTypeParameter[] getTypeParameters() {
+  public GrTypeParameter[] getTypeParametersGroovy() {
     return findChildrenByClass(GrTypeParameter.class);
+  }
+
+  public GrTypeDefinitionBody getBody() {
+    return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 
   public ItemPresentation getPresentation() {
@@ -95,18 +102,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
 
   @NotNull
-  public PsiElement getNameIdentifier() {
+  public PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
     assert result != null;
     return result;
-  }
-
-  public PsiClass getJavaClass() {
-    return new GrJavaClass(getParent(), this);
-  }
-
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY");
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
@@ -129,6 +128,220 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public String getName() {
-    return getNameIdentifier().getText();
+    return getNameIdentifierGroovy().getText();
+  }
+
+  //Fake java class implementation
+  public boolean isInterface() {
+    return false;
+  }
+
+  public boolean isAnnotationType() {
+    return false;
+  }
+
+  public boolean isEnum() {
+    return false;
+  }
+
+  @Nullable
+  public PsiReferenceList getExtendsList() {
+    return null;
+  }
+
+  @Nullable
+  public PsiReferenceList getImplementsList() {
+    return null;
+  }
+
+  @NotNull
+  public PsiClassType[] getExtendsListTypes() {
+    return PsiClassType.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClassType[] getImplementsListTypes() {
+    return PsiClassType.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public PsiClass getSuperClass() {
+    return null;
+  }
+
+  public PsiClass[] getInterfaces() {
+    return PsiClass.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClass[] getSupers() {
+    return PsiClass.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClassType[] getSuperTypes() {
+    return PsiClassType.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiField[] getFields() {
+    return PsiField.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] getMethods() {
+    return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] getConstructors() {
+    return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClass[] getInnerClasses() {
+    return PsiClass.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClassInitializer[] getInitializers() {
+    return PsiClassInitializer.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiField[] getAllFields() {
+    return PsiField.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] getAllMethods() {
+    return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClass[] getAllInnerClasses() {
+    return PsiClass.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public PsiField findFieldByName(String name, boolean checkBases) {
+    return null;
+  }
+
+  @Nullable
+  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+    return null;
+  }
+
+  @NotNull
+  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+    return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+    return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public PsiClass findInnerClassByName(String name, boolean checkBases) {
+    return null;
+  }
+
+  @Nullable
+  public PsiJavaToken getLBrace() {
+    return null;
+  }
+
+  @Nullable
+  public PsiJavaToken getRBrace() {
+    return null;
+  }
+
+  @Nullable
+  public PsiIdentifier getNameIdentifier() {
+    return null;
+  }
+
+  public PsiElement getScope() {
+    return null;
+  }
+
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
+    return false;
+  }
+
+  public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
+    return false;
+  }
+
+  @Nullable
+  public PomMemberOwner getPom() {
+    return null;
+  }
+
+  @Nullable
+  public PsiClass getContainingClass() {
+    return null;
+  }
+
+  @NotNull
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return Collections.emptyList();
+  }
+
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Should not call");
+  }
+
+  @Nullable
+  public PsiModifierList getModifierList() {
+    return null;
+  }
+
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
+    return false;
+  }
+
+  @Nullable
+  public PsiDocComment getDocComment() {
+    return null;
+  }
+
+  public boolean isDeprecated() {
+    return false;
+  }
+
+  @Nullable
+  public PsiMetaData getMetaData() {
+    return null;
+  }
+
+  public boolean isMetaEnough() {
+    return false;
+  }
+
+  public boolean hasTypeParameters() {
+    return false;
+  }
+
+  @Nullable
+  public PsiTypeParameterList getTypeParameterList() {
+    return null;
+  }
+
+  @NotNull
+  public PsiTypeParameter[] getTypeParameters() {
+    return PsiTypeParameter.EMPTY_ARRAY;
   }
 }

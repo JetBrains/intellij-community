@@ -27,7 +27,7 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.getParent() instanceof GrClassBody) {
-      holder.createErrorAnnotation(typeDefinition.getNameIdentifier(), "Inner classes are not supported in Groovy");
+      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
   }
 
