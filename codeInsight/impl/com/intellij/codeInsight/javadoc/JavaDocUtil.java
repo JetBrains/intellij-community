@@ -264,15 +264,16 @@ public class JavaDocUtil {
   }
 
   public static String getShortestClassName(PsiClass aClass, PsiElement context) {
+    String shortName = aClass.getName();
+    PsiClass containingClass = aClass.getContainingClass();
+    while (containingClass != null) {
+      shortName = containingClass.getName() + "." + shortName;
+      containingClass = aClass.getContainingClass();
+    }
+    LOG.assertTrue(shortName != null);
+
     String qName = aClass.getQualifiedName();
-
-    if (qName == null) return aClass.getName();
-
-    String packageName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
-
-    if (packageName.length() == 0) return qName;
-
-    String shortName = packageName.length() < qName.length() ? qName.substring(packageName.length() + 1) : qName;
+    if (qName == null) return shortName;
 
     final PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(aClass, manager.getResolveHelper().resolveReferencedClass(shortName, context))
