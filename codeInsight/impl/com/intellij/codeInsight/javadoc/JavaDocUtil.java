@@ -268,7 +268,7 @@ public class JavaDocUtil {
     PsiClass containingClass = aClass.getContainingClass();
     while (containingClass != null) {
       shortName = containingClass.getName() + "." + shortName;
-      containingClass = aClass.getContainingClass();
+      containingClass = containingClass.getContainingClass();
     }
     LOG.assertTrue(shortName != null);
 
