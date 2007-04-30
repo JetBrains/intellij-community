@@ -100,7 +100,7 @@ public class BuildPropertiesImpl extends BuildProperties {
       add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
 
       for (final ProjectJdk jdk : jdks) {
-        if (jdk.getHomeDirectory() == null) {
+        if (jdk.getHomeDirectory() == null || jdk.getBinPath() == null) {
           continue;
         }
         final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
