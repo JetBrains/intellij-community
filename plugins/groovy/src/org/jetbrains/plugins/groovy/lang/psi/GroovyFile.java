@@ -22,11 +22,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+
+import javax.swing.*;
 
 /**
  * Implements all abstractionos related to Groovy file
@@ -104,5 +107,10 @@ public class GroovyFile extends PsiFileBase {
       "groovy.lang",
       "groovy.util",
   };
+
+  @Nullable
+  public Icon getIcon(int flags) {
+    return GroovyFileType.GROOVY_LOGO;
+  }
 }
 
