@@ -32,6 +32,8 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
@@ -68,8 +70,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
   }
 
-  public String getFileReferenceAttribute() {
-    return AntFileImpl.FILE_ATTR;
+  @NotNull
+  public List<String> getFileReferenceAttributes() {
+    return Collections.singletonList(AntFileImpl.FILE_ATTR);
   }
 
   @Nullable

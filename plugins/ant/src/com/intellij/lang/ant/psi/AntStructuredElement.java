@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface AntStructuredElement extends AntElement {
 
   @NotNull
@@ -48,8 +50,8 @@ public interface AntStructuredElement extends AntElement {
   boolean hasIdElement();
 
   @NonNls
-  @Nullable
-  String getFileReferenceAttribute();
+  @NotNull
+  List<String> getFileReferenceAttributes();
 
   /**
    * @return true if is instance of a type defined by the <typedef> or <taskdef> task.

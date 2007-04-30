@@ -10,28 +10,37 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class AntFileReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     AntStructuredElement antElement = (AntStructuredElement)element;
-    final String referenceAttribute = antElement.getFileReferenceAttribute();
-    if (referenceAttribute == null) {
+    final List<String> referenceAttributes = antElement.getFileReferenceAttributes();
+    if (referenceAttributes.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final XmlAttribute attr = antElement.getSourceElement().getAttribute(referenceAttribute, null);
-    if (attr == null) {
-      return PsiReference.EMPTY_ARRAY;
+    final List<PsiReference> refList = new ArrayList<PsiReference>();
+    for (String attrib : referenceAttributes) {
+      final XmlAttribute attr = antElement.getSourceElement().getAttribute(attrib, null);
+      if (attr == null) {
+        continue;
+      }
+      final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
+      if (xmlAttributeValue == null) {
+        continue;
+      }
+      final String attrValue = attr.getValue();
+      if (attrValue == null || attrValue.indexOf("@{") >= 0) {
+        continue;
+      }
+      final AntFileReferenceSet refSet = new AntFileReferenceSet(antElement, xmlAttributeValue, this);
+      refList.addAll(Arrays.asList(refSet.getAllReferences()));
     }
-    final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
-    if (xmlAttributeValue == null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    final String attrValue = attr.getValue();
-    if (attrValue == null || attrValue.indexOf("@{") >= 0) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    return new AntFileReferenceSet(antElement, xmlAttributeValue, this).getAllReferences();
+    return refList.toArray(new PsiReference[refList.size()]);
   }
 
   @NotNull

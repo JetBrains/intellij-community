@@ -8,7 +8,11 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public class AntBuildNumberImpl extends AntTaskImpl implements AntProperty {
 
@@ -39,8 +43,9 @@ public class AntBuildNumberImpl extends AntTaskImpl implements AntProperty {
     return BUILD_NUMBER_PROPERTY;
   }
 
-  public String getFileReferenceAttribute() {
-    return AntFileImpl.FILE_ATTR;
+  @NotNull
+  public List<String> getFileReferenceAttributes() {
+    return Collections.singletonList(AntFileImpl.FILE_ATTR);
   }
 
   @Nullable

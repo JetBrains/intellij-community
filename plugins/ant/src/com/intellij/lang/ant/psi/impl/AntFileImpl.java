@@ -101,8 +101,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    */
   private volatile HashMap<AntTypeId, String> myProjectElements;
   private volatile long myModificationCount = 0;
-  private static final Class<Integer> INT_CLASS = int.class;
-  private static final Class<Boolean> BOOLEAN_CLASS = boolean.class;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -724,16 +722,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     final Enumeration attrEnum = helper.getAttributes();
     while (attrEnum.hasMoreElements()) {
       final String attr = AntStringInterner.intern(((String)attrEnum.nextElement()).toLowerCase(Locale.US));
-      final Class attrClass = helper.getAttributeType(attr);
-      if (INT_CLASS.equals(attrClass)) {
-        attributes.put(attr, AntAttributeType.INTEGER);
-      }
-      else if (BOOLEAN_CLASS.equals(attrClass)) {
-        attributes.put(attr, AntAttributeType.BOOLEAN);
-      }
-      else {
-        attributes.put(attr, AntAttributeType.STRING);
-      }
+      attributes.put(attr, AntAttributeType.create(helper.getAttributeType(attr)));
     }
     final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
     final Enumeration nestedEnum = helper.getNestedElements();

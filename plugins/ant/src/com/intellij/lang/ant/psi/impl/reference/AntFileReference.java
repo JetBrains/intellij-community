@@ -3,7 +3,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntImport;
-import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -52,8 +51,7 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   }
 
   public boolean shouldBeSkippedByAnnotator() {
-    final AntStructuredElement element = getElement();
-    return (element instanceof AntProperty) && ((AntProperty)element).getFileName() != null;
+    return isSoft();
   }
 
   public void setShouldBeSkippedByAnnotator(boolean value) {

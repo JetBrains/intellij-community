@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.introspection;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntTypeDefinition {
@@ -15,6 +16,7 @@ public interface AntTypeDefinition {
 
   boolean isTask();
 
+  @NotNull
   String[] getAttributes();
 
   AntAttributeType getAttributeType(final String attr);

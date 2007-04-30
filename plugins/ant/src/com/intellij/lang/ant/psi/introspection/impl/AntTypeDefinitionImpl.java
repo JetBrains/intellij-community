@@ -83,6 +83,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     return myIsTask;
   }
 
+  @NotNull
   public final String[] getAttributes() {
     synchronized (PsiLock.LOCK) {
       if (myAttributesArray == null || myAttributesArray.length != myAttributes.size()) {

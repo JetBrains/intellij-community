@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
@@ -25,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
@@ -283,8 +281,23 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return getIdElement() != ourNull;
   }
 
-  public String getFileReferenceAttribute() {
-    return null;
+  @NotNull
+  public List<String> getFileReferenceAttributes() {
+    final AntTypeDefinition typeDef = getTypeDefinition();
+    if (typeDef == null) {
+      return Collections.emptyList();
+    }
+    final String[] attribs = typeDef.getAttributes();
+    if (attribs.length == 0) {
+      return Collections.emptyList();
+    }
+    final List<String> fileRefAttributes = new ArrayList<String>(attribs.length);
+    for (String attrib : attribs) {
+      if (typeDef.getAttributeType(attrib) == AntAttributeType.FILE) {
+        fileRefAttributes.add(attrib);
+      }
+    }
+    return fileRefAttributes;
   }
 
   public boolean isTypeDefined() {

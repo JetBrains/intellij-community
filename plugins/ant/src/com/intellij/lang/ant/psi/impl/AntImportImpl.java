@@ -16,6 +16,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AntImportImpl extends AntTaskImpl implements AntImport {
 
   public AntImportImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
@@ -39,8 +42,9 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     }
   }
 
-  public String getFileReferenceAttribute() {
-    return AntFileImpl.FILE_ATTR;
+  @NotNull
+  public List<String> getFileReferenceAttributes() {
+    return Collections.singletonList(AntFileImpl.FILE_ATTR);
   }
 
   @Nullable

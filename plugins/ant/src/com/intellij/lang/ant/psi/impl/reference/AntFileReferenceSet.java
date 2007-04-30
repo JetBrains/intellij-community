@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntImport;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +28,20 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
     myValue = value;
   }
 
+  protected boolean isSoft() {
+    final AntStructuredElement element = getElement();
+    if (!(element instanceof AntImport   || 
+             element instanceof AntTypeDef  || 
+             element instanceof AntProperty || 
+             element instanceof AntAnt)) {
+      return true;
+    }
+    if (element instanceof AntProperty) {
+      return ((AntProperty)element).getFileName() != null;
+    }
+    return false;
+  }
+
   protected AntFileReference createFileReference(final TextRange range, final int index, final String text) {
     return new AntFileReference(this, range, index, text);
   }
@@ -47,7 +58,7 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   public boolean isAbsolutePathReference() {
     return super.isAbsolutePathReference() || new File(getPathString()).isAbsolute();
   }
-
+  // todo: correct context for "output" attribute file reference of the "ant" task
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntStructuredElement element = getElement();

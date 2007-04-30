@@ -26,14 +26,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @NonNls private static final String TSTAMP_TAG = "tstamp";
 
-  @NonNls private static final Map<String, String> ourFileRefAttributes;
-
-  static {
-    ourFileRefAttributes = new HashMap<String, String>();
-    ourFileRefAttributes.put(AntFileImpl.PROPERTY, AntFileImpl.FILE_ATTR);
-    ourFileRefAttributes.put("loadfile", "srcfile");
-  }
-
   private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
@@ -89,14 +81,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public boolean canRename() {
     return super.canRename() && (!isTstamp() || getTstampPropertyAttributeValue() != null);
-  }
-
-  public String getFileReferenceAttribute() {
-    final String attrName;
-    synchronized (ourFileRefAttributes) {
-      attrName = ourFileRefAttributes.get(getSourceElement().getName());
-    }
-    return (attrName != null) ? attrName : super.getFileReferenceAttribute();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

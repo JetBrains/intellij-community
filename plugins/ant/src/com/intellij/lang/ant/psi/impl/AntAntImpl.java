@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AntAntImpl extends AntTaskImpl implements AntAnt {
 
   @NonNls private static final String DEFAULT_ANTFILE = "build.xml";
@@ -33,8 +36,12 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
     }
   }
 
-  public String getFileReferenceAttribute() {
-    return "antfile";
+  @NotNull
+  public List<String> getFileReferenceAttributes() {
+    final ArrayList<String> attribs = new ArrayList<String>(super.getFileReferenceAttributes());
+    attribs.add("antfile");
+    attribs.add("output");
+    return attribs;
   }
 
   @Nullable
@@ -55,7 +62,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
 
   @NotNull
   private String getFileName() {
-    final String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
+    final String result = getSourceElement().getAttributeValue("antfile");
     if (result == null) {
       return DEFAULT_ANTFILE;
     }
