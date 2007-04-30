@@ -1,5 +1,7 @@
 package com.intellij.lang.ant.psi.introspection;
 
+import org.apache.tools.ant.types.Reference;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +11,7 @@ public enum AntAttributeType {
   BOOLEAN,
   STRING,
   FILE,
-  REFERENCE;
+  ID_REFERENCE;
   
   
   private static final Map<Class<?>, AntAttributeType> ourClassesMap = new HashMap<Class<?>, AntAttributeType>();
@@ -24,6 +26,20 @@ public enum AntAttributeType {
     if (type != null) {
       return type;
     }
+    if (isAssignableFrom(Reference.class, antDeclaredClass)) {
+      return ID_REFERENCE;
+    }
     return STRING; // default attribute type
+  }
+  
+  private static boolean isAssignableFrom(Class interfaceClass, Class antDeclaredClass) {
+    final ClassLoader loader = antDeclaredClass.getClassLoader();
+    try {
+      final Class ifaceClass = loader != null? loader.loadClass(interfaceClass.getName()) : interfaceClass;
+      return ifaceClass.isAssignableFrom(antDeclaredClass);
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    return false;
   }
 }

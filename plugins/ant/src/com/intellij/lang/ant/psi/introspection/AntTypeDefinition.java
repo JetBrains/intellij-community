@@ -19,6 +19,7 @@ public interface AntTypeDefinition {
   @NotNull
   String[] getAttributes();
 
+  @Nullable
   AntAttributeType getAttributeType(final String attr);
 
   AntTypeId[] getNestedElements();
