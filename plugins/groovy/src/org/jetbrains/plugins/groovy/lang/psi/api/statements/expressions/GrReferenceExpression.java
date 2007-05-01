@@ -17,10 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author Ilya.Sergey
  */
-public interface GrReferenceExpression extends GrExpression {
-  PsiElement getReferenceNameElement();
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement {
+  GrExpression getQualifierExpression();
 }

@@ -25,7 +25,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,7 +45,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (isOnDemand()) {
-      GrReferenceElement ref = getImportReference();
+      GrTypeOrPackageReferenceElement ref = getImportReference();
       if (ref != null) {
         String qName = PsiUtil.getQualifiedReferenceText(ref);
         if (qName != null) {
@@ -60,7 +60,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       if (name != null) {
         NameHint nameHint = processor.getHint(NameHint.class);
         if (nameHint == null || name.equals(nameHint.getName())) {
-          GrReferenceElement ref = getImportReference();
+          GrTypeOrPackageReferenceElement ref = getImportReference();
           if (ref != null) {
             String qName = PsiUtil.getQualifiedReferenceText(ref);
             if (qName!= null) {
@@ -75,8 +75,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     return true;
   }
 
-  public GrReferenceElement getImportReference() {
-    return findChildByClass(GrReferenceElement.class);
+  public GrTypeOrPackageReferenceElement getImportReference() {
+    return findChildByClass(GrTypeOrPackageReferenceElement.class);
   }
 
   public String getImportedName() {
@@ -86,7 +86,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       return identifier.getText();
     }
 
-    GrReferenceElement ref = findChildByClass(GrReferenceElement.class);
+    GrTypeOrPackageReferenceElement ref = findChildByClass(GrTypeOrPackageReferenceElement.class);
     return ref == null ? null : ref.getReferenceName();
   }
 

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.codeInspection.ProblemHighlightType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 
 /**
  * @author ven
@@ -18,8 +18,8 @@ public class GroovyAnnotator implements Annotator {
   public static final GroovyAnnotator INSTANCE = new GroovyAnnotator();
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
-    if (element instanceof GrReferenceElement) {
-      checkReferenceElement(element, holder, (GrReferenceElement) element);
+    if (element instanceof GrTypeOrPackageReferenceElement) {
+      checkReferenceElement(element, holder, (GrTypeOrPackageReferenceElement) element);
     } else if (element instanceof GrTypeDefinition) {
       checkTypeDefinition(holder, (GrTypeDefinition) element);
     }
@@ -31,7 +31,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkReferenceElement(PsiElement element, AnnotationHolder holder, GrReferenceElement refElement) {
+  private void checkReferenceElement(PsiElement element, AnnotationHolder holder, GrTypeOrPackageReferenceElement refElement) {
     if (!refElement.isSoft() && refElement.getReferenceName() != null) {
         PsiElement resolved = refElement.resolve();
         if (resolved == null) {

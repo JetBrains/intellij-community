@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,17 +24,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiUtil {
   @Nullable
-  public static String getQualifiedReferenceText(GrReferenceElement referenceElement) {
+  public static String getQualifiedReferenceText(GrTypeOrPackageReferenceElement referenceElement) {
     StringBuilder builder = new StringBuilder();
     if (!appendName(referenceElement, builder)) return null;
 
     return builder.toString();
   }
 
-  private static boolean appendName(GrReferenceElement referenceElement, StringBuilder builder) {
+  private static boolean appendName(GrTypeOrPackageReferenceElement referenceElement, StringBuilder builder) {
     String refName = referenceElement.getReferenceName();
     if (refName == null) return false;
-    GrReferenceElement qualifier = referenceElement.getQualifier();
+    GrTypeOrPackageReferenceElement qualifier = referenceElement.getQualifier();
     if (qualifier != null) {
       appendName(qualifier, builder);
       builder.append(".");

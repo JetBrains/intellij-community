@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -38,12 +38,12 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   }
 
   public String getPackageName() {
-    GrReferenceElement ref = getPackageReference();
+    GrTypeOrPackageReferenceElement ref = getPackageReference();
     if (ref == null) return "";
     return PsiUtil.getQualifiedReferenceText(ref);
   }
 
-  public GrReferenceElement getPackageReference() {
-    return (GrReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+  public GrTypeOrPackageReferenceElement getPackageReference() {
+    return (GrTypeOrPackageReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 }

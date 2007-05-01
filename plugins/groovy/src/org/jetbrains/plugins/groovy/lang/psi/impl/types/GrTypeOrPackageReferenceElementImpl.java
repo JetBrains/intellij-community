@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
@@ -34,9 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrReferenceElementImpl.ReferenceKind.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolver;
@@ -47,8 +47,8 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement {
-  public GrReferenceElementImpl(@NotNull ASTNode node) {
+public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl implements GrTypeOrPackageReferenceElement {
+  public GrTypeOrPackageReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -56,37 +56,8 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
     return "Reference element";
   }
 
-  public GrReferenceElement getQualifier() {
-    return (GrReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
-  }
-
-  public PsiReference getReference() {
-    return this;
-  }
-
-  public String getReferenceName() {
-    PsiElement nameElement = getReferenceNameElement();
-    if (nameElement != null) {
-      return nameElement.getText();
-    }
-    return null;
-  }
-
-  private PsiElement getReferenceNameElement() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
-  }
-
-  public PsiElement getElement() {
-    return this;
-  }
-
-  public TextRange getRangeInElement() {
-    final PsiElement refNameElement = getReferenceNameElement();
-    if (refNameElement != null) {
-      final int offsetInParent = refNameElement.getStartOffsetInParent();
-      return new TextRange(offsetInParent, offsetInParent + refNameElement.getTextLength());
-    }
-    return new TextRange(0, getTextLength());
+  public GrTypeOrPackageReferenceElement getQualifier() {
+    return (GrTypeOrPackageReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   enum ReferenceKind {
@@ -103,8 +74,8 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
 
   private ReferenceKind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrReferenceElement) {
-      ReferenceKind parentKind = ((GrReferenceElementImpl) parent).getKind();
+    if (parent instanceof GrTypeOrPackageReferenceElement) {
+      ReferenceKind parentKind = ((GrTypeOrPackageReferenceElementImpl) parent).getKind();
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
@@ -125,18 +96,6 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
       return ((PsiPackage) resolved).getQualifiedName();
     }
     return null;
-  }
-
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElement nameElement = getReferenceNameElement();
-    if (nameElement != null) {
-      ASTNode node = nameElement.getNode();
-      ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(newElementName).getNode();
-      assert newNameNode != null && node != null;
-      node.getTreeParent().replaceChild(node, newNameNode);
-    }
-
-    return this;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
@@ -178,7 +137,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
       }
 
       case CLASS: {
-        GrReferenceElement qualifier = getQualifier();
+        GrTypeOrPackageReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
           PsiElement qualifierResolved = qualifier.resolve();
           if (qualifierResolved instanceof PsiPackage) {
@@ -205,7 +164,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
   private static class MyResolver implements ResolveCache.Resolver {
 
     public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
-      GrReferenceElementImpl groovyRef = (GrReferenceElementImpl) ref;
+      GrTypeOrPackageReferenceElementImpl groovyRef = (GrTypeOrPackageReferenceElementImpl) ref;
       String refName = groovyRef.getReferenceName();
       if (refName == null) return null;
       PsiManager manager = groovyRef.getManager();
@@ -224,7 +183,7 @@ public class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrRe
 
         case CLASS:
         case CLASS_OR_PACKAGE:
-          GrReferenceElement qualifier = groovyRef.getQualifier();
+          GrTypeOrPackageReferenceElement qualifier = groovyRef.getQualifier();
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
             if (qualifierResolved instanceof PsiPackage) {
