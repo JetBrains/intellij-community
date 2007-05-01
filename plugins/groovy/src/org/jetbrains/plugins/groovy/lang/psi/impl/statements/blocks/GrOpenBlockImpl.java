@@ -25,14 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrOpenBlockImpl extends GroovyPsiElementImpl implements GrOpenBlock {
+public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock {
 
   public GrOpenBlockImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
   }
 
   public String toString() {

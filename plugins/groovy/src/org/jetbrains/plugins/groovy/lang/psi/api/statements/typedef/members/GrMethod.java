@@ -17,13 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrMethod extends GrMember {
+public interface GrMethod extends GrMember, GrNamedElement {
 
-  public GrOpenBlock getBody();
+  GrOpenBlock getBody();
 
+  GrParameter[] getParameters();
 }

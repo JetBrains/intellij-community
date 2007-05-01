@@ -17,9 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -32,5 +36,13 @@ public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements G
 
   public String toString() {
     return "Variable definitions";
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    for (final GrVariableImpl variable : findChildrenByClass(GrVariableImpl.class)) {
+      if (!processor.execute(variable, PsiSubstitutor.EMPTY)) return false;
+    }
+
+    return true;
   }
 }

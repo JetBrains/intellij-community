@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -27,19 +26,16 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolver;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
@@ -146,7 +142,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ClassResolver processor = new ClassResolver(null);
+          ResolverProcessor processor = new ResolverProcessor(null, PsiClass.class);
           ResolveUtil.treeWalkUp(this, processor);
           List<PsiNamedElement> candidates = processor.getCandidates();
           return candidates.toArray(PsiNamedElement.EMPTY_ARRAY);
@@ -199,7 +195,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
               }
             }
           } else {
-            ClassResolver processor = new ClassResolver(refName);
+            ResolverProcessor processor = new ResolverProcessor(refName, PsiClass.class);
             ResolveUtil.treeWalkUp(groovyRef, processor);
             List<PsiNamedElement> candidates = processor.getCandidates();
             if (candidates.size() == 1) return candidates.get(0);

@@ -17,10 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrParameter extends GroovyPsiElement {
+public interface GrParameter extends GrNamedElement {
+  public static final GrParameter[] EMPTY_ARRAY = new GrParameter[0];
 }

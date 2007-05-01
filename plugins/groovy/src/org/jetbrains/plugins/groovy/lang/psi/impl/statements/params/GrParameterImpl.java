@@ -17,20 +17,34 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrParameterImpl extends GroovyPsiElementImpl implements GrParameterList {
+public class GrParameterImpl extends GroovyPsiElementImpl implements GrParameter {
   public GrParameterImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Parameter";
+  }
+
+  public String getName() {
+    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
+    return nameElement == null ? null : nameElement.getText();
+  }
+
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException("NIY");
   }
 }

@@ -17,9 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -32,5 +36,14 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
 
   public String toString() {
     return "Variable";
+  }
+
+  public String getName() {
+    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
+    return nameElement == null ? null : nameElement.getText();
+  }
+
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException("NIY");
   }
 }

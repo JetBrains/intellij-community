@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author Ilya.Sergey
  */
-public class GrClosableBlockImpl extends GroovyPsiElementImpl implements GrClosableBlock {
+public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
 
   public GrClosableBlockImpl(@NotNull ASTNode node) {
     super(node);
@@ -33,9 +33,5 @@ public class GrClosableBlockImpl extends GroovyPsiElementImpl implements GrClosa
 
   public String toString() {
     return "Closable block";
-  }
-
-  public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
   }
 }

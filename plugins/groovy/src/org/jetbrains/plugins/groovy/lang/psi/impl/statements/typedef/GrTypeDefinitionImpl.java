@@ -301,7 +301,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Should not call");
+    throw new IncorrectOperationException("NIY");
   }
 
   @Nullable

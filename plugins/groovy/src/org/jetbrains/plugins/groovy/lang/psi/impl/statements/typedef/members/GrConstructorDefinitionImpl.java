@@ -20,22 +20,21 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrConstructorDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
+//todo remove
+public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implements GrMethod {
   public GrConstructorDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Constructor";
-  }
-
-  public GrOpenBlock getBody() {
-    return this.findChildByClass(GrOpenBlock.class);
   }
 }

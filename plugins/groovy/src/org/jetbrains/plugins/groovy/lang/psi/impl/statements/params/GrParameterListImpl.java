@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -32,5 +33,9 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
 
   public String toString() {
     return "Parameter list";
+  }
+
+  public GrParameter[] getParameters() {
+    return findChildrenByClass(GrParameter.class);
   }
 }

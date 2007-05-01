@@ -22,7 +22,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,18 +29,26 @@ import java.util.List;
 /**
  * @author ven
  */
-public class ClassResolver implements PsiScopeProcessor, NameHint {
+public class ResolverProcessor implements PsiScopeProcessor, NameHint {
   private String myName;
+  private Class<? extends PsiNamedElement>[] myClasses;
 
   private List<PsiNamedElement> myCandidates = new ArrayList<PsiNamedElement>();
 
-  public ClassResolver(String name) {
+  public ResolverProcessor(String name, Class<? extends PsiNamedElement>... classes) {
     myName = name;
+    myClasses = classes;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    if (element instanceof GrTypeDefinition || element instanceof PsiClass) {
-      myCandidates.add((PsiNamedElement) element);
+    for (final Class<? extends PsiNamedElement> clazz : myClasses) {
+      if (clazz.isInstance(element)) {
+        PsiNamedElement namedElement = (PsiNamedElement) element;
+        if (myName == null || myName.equals(namedElement.getName())) {
+          myCandidates.add(namedElement);
+          break;
+        }
+      }
     }
 
     return myName == null || myCandidates.size() == 0;

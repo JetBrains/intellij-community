@@ -23,4 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @date: 26.03.2007
  */
 public interface GrParameterList extends GroovyPsiElement {
+  GrParameter[] getParameters();
 }

@@ -16,9 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiNamedElement;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public interface GrVariable {
+public interface GrVariable extends PsiNamedElement {
 }

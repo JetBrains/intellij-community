@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
@@ -30,6 +32,17 @@ public class ResolveUtil {
       if (!place.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
       lastParent = place;
       place = place.getParent();
+    }
+
+    return true;
+  }
+
+  public static boolean processChildren(GroovyPsiElement element, PsiScopeProcessor processor,
+                                        PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+    PsiElement run = element.getFirstChild();
+    while(run != null && run != lastParent) {
+      if (!run.processDeclarations(processor, substitutor, null, place)) return false;
+      run = run.getNextSibling();
     }
 
     return true;
