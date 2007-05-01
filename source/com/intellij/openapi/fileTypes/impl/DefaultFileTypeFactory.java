@@ -3,126 +3,72 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.ide.highlighter.*;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
-import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class DefaultFileTypeFactory implements NullableFunction<String, Pair<Factory<FileType>, String>> {
-  public Pair<Factory<FileType>, String> fun(@NonNls final String s) {
-    if ("ARCHIVE".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new ArchiveFileType();
-        }
-      }, "zip;jar;war;ear");
-    }
-    if ("CLASS".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new JavaClassFileType();
-        }
-      }, "class");
-    }
-    if ("HTML".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new HtmlFileType();
-        }
-      }, "html;htm;sht;shtm;shtml");
-    }
-    if ("XHTML".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new XHtmlFileType();
-        }
-      }, "xhtml");
-    }
-    if ("JAVA".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new JavaFileType();
-        }
-      }, "java");
-    }
-    if ("PLAIN_TEXT".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new PlainTextFileType();
-        }
-      }, "txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam");
-    }
-    if ("XML".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new XmlFileType();
-        }
-      }, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml");
-    }
-    if ("DTD".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new DTDFileType();
-        }
-      }, "dtd;ent;mod");
-    }
-    if ("GUI_DESIGNER_FORM".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new GuiFormFileType();
-        }
-      }, "form");
-    }
-    if ("IDEA_WORKSPACE".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new WorkspaceFileType();
-        }
-      }, "iws");
-    }
-    if ("IDEA_PROJECT".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new ProjectFileType();
-        }
-      }, "ipr");
-    }
-    if ("IDEA_MODULE".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new ModuleFileType();
-        }
-      }, "iml");
-    }
-    if ("UNKNOWN".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new UnknownFileType();
-        }
-      }, null);
-    }
-    if ("PROPERTIES".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return PropertiesFileType.FILE_TYPE;
-        }
-      }, "properties");
-    }
-    if ("PATCH".equals(s)) {
-      return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
-        public FileType create() {
-          return new PatchFileType();
-        }
-      }, "patch;diff");
-    }
-    return null;
+public class DefaultFileTypeFactory extends FileTypeFactory {
+
+  public void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer) {
+    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear");
+    consumer.consume(new JavaClassFileType(), "class");
+
+    final FileType htmlFileType = new HtmlFileType();
+    consumer.consume(htmlFileType, "html;htm;sht;shtm;shtml");
+    CompletionUtil.registerCompletionData(htmlFileType, new NotNullLazyValue<CompletionData>() {
+      @NotNull
+      protected CompletionData compute() {
+        return new HtmlCompletionData();
+      }
+    });
+
+    final FileType xhtmlFileType = new XHtmlFileType();
+    consumer.consume(xhtmlFileType, "xhtml");
+    CompletionUtil.registerCompletionData(xhtmlFileType, new NotNullLazyValue<CompletionData>() {
+      @NotNull
+      protected CompletionData compute() {
+        return new XHtmlCompletionData();
+      }
+    });
+
+    final FileType dtdFileType = new DTDFileType();
+    consumer.consume(dtdFileType, "dtd;ent;mod");
+    CompletionUtil.registerCompletionData(dtdFileType, new NotNullLazyValue<CompletionData>() {
+      @NotNull
+      protected CompletionData compute() {
+        return new DtdCompletionData();
+      }
+    });
+
+    consumer.consume(new JavaFileType(), "java");
+    consumer.consume(new PlainTextFileType(), "txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam");
+
+    final XmlFileType xmlFileType = new XmlFileType();
+    consumer.consume(xmlFileType, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml");
+    CompletionUtil.registerCompletionData(xmlFileType, new NotNullLazyValue<CompletionData>() {
+      @NotNull
+      protected CompletionData compute() {
+        return new XmlCompletionData();
+      }
+    });
+
+    consumer.consume(new GuiFormFileType(), "form");
+    consumer.consume(new WorkspaceFileType(), "iws");
+    consumer.consume(new ModuleFileType(), "iml");
+    consumer.consume(new ProjectFileType(), "ipr");
+    consumer.consume(new UnknownFileType(), null);
+    consumer.consume(PropertiesFileType.FILE_TYPE, "properties");
+    consumer.consume(new PatchFileType(), "patch;diff");
   }
+
 }

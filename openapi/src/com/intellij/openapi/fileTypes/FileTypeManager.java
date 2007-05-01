@@ -206,4 +206,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
     }
     return new WildcardFileNameMatcher(pattern);
   }
+
+  public abstract FileType getStdFileType(@NotNull @NonNls String fileTypeName);
+  public abstract LanguageFileType getLanguageStdFileType(@NotNull @NonNls String fileTypeName);
 }

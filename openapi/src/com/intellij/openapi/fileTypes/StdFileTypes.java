@@ -16,21 +16,21 @@
 package com.intellij.openapi.fileTypes;
 
 public class StdFileTypes {
-  public static final LanguageFileType JAVA = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JAVA");
-  public static final FileType CLASS = FileTypeFactory.getFileTypeFactory().createFileType("CLASS");
-  public static final LanguageFileType JSP = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JSP");
-  public static final LanguageFileType JSPX = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JSPX");
-  public static final LanguageFileType XML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("XML");
-  public static final LanguageFileType DTD = FileTypeFactory.getFileTypeFactory().createLanguageFileType("DTD");
-  public static final LanguageFileType HTML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("HTML");
-  public static final LanguageFileType XHTML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("XHTML");
-  public static final LanguageFileType PROPERTIES = FileTypeFactory.getFileTypeFactory().createLanguageFileType("PROPERTIES");
-  public static final FileType PLAIN_TEXT = FileTypeFactory.getFileTypeFactory().createFileType("PLAIN_TEXT");
-  public static final FileType ARCHIVE = FileTypeFactory.getFileTypeFactory().createFileType("ARCHIVE");
-  public static final FileType UNKNOWN = FileTypeFactory.getFileTypeFactory().createFileType("UNKNOWN");
-  public static final FileType GUI_DESIGNER_FORM = FileTypeFactory.getFileTypeFactory().createFileType("GUI_DESIGNER_FORM");
-  public static final FileType IDEA_WORKSPACE = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_WORKSPACE");
-  public static final FileType IDEA_PROJECT = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_PROJECT");
-  public static final FileType IDEA_MODULE = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_MODULE");
-  public static final FileType PATCH = FileTypeFactory.getFileTypeFactory().createFileType("PATCH");
+  public static final LanguageFileType JAVA = FileTypeManager.getInstance().getLanguageStdFileType("JAVA");
+  public static final FileType CLASS = FileTypeManager.getInstance().getStdFileType("CLASS");
+  public static final LanguageFileType JSP = FileTypeManager.getInstance().getLanguageStdFileType("JSP");
+  public static final LanguageFileType JSPX = FileTypeManager.getInstance().getLanguageStdFileType("JSPX");
+  public static final LanguageFileType XML = FileTypeManager.getInstance().getLanguageStdFileType("XML");
+  public static final LanguageFileType DTD = FileTypeManager.getInstance().getLanguageStdFileType("DTD");
+  public static final LanguageFileType HTML = FileTypeManager.getInstance().getLanguageStdFileType("HTML");
+  public static final LanguageFileType XHTML = FileTypeManager.getInstance().getLanguageStdFileType("XHTML");
+  public static final LanguageFileType PROPERTIES = FileTypeManager.getInstance().getLanguageStdFileType("Properties");
+  public static final FileType PLAIN_TEXT = FileTypeManager.getInstance().getStdFileType("PLAIN_TEXT");
+  public static final FileType ARCHIVE = FileTypeManager.getInstance().getStdFileType("ARCHIVE");
+  public static final FileType UNKNOWN = FileTypeManager.getInstance().getStdFileType("UNKNOWN");
+  public static final FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
+  public static final FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
+  public static final FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");
+  public static final FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
+  public static final FileType PATCH = FileTypeManager.getInstance().getStdFileType("PATCH");
 }

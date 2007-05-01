@@ -16,24 +16,20 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public abstract class FileTypeFactory {
+  public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = ExtensionPointName.create("com.intellij.fileTypeFactory");
 
-  @NotNull
-  public static FileTypeFactory getFileTypeFactory() {
-    return ServiceManager.getService(FileTypeFactory.class);
-  }
-
-  @NotNull
-  public abstract FileType createFileType(@NonNls final String fileTypeName);
-
-  @NotNull
-  public abstract LanguageFileType createLanguageFileType(@NonNls final String fileTypeName);
+  /**
+   * @param consumer callback the newly created file types should be passed to. The String parameter contains semicolon-separated
+   * default file extensions
+   */
+  public abstract void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer);
 
 }

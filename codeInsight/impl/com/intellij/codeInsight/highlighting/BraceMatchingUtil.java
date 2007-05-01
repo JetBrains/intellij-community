@@ -145,7 +145,7 @@ public class BraceMatchingUtil {
     }
   }
 
-  private static class DefaultBraceMatcher implements BraceMatcher {
+  public static class DefaultBraceMatcher implements BraceMatcher {
     private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<IElementType, IElementType>();
     static {
       PAIRING_TOKENS.put(JavaTokenType.LPARENTH, JavaTokenType.RPARENTH);
@@ -424,18 +424,6 @@ public class BraceMatchingUtil {
   }
 
   private static final HashMap<FileType,BraceMatcher> BRACE_MATCHERS = new HashMap<FileType, BraceMatcher>();
-
-  static {
-    final BraceMatcher defaultBraceMatcher = new DefaultBraceMatcher();
-    registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
-    registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
-
-    HtmlBraceMatcher braceMatcher = new HtmlBraceMatcher();
-    registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
-    registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
-    registerBraceMatcher(StdFileTypes.JSP, braceMatcher);
-    registerBraceMatcher(StdFileTypes.JSPX, braceMatcher);
-  }
 
   public static void registerBraceMatcher(FileType fileType,BraceMatcher braceMatcher) {
     BRACE_MATCHERS.put(fileType, braceMatcher);

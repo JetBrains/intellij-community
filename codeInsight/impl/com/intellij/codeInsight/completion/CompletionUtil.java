@@ -10,13 +10,12 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -40,7 +39,6 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +48,19 @@ import java.util.Set;
 public class CompletionUtil {
   public static final Key TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
 
-  private static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR =
-    Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
-  private static final CompletionData ourJavaCompletionData = new JavaCompletionData();
-  private static final CompletionData ourJava15CompletionData = new Java15CompletionData();
-  @Nullable private static final CompletionData ourJSPCompletionData = JspSpiUtil.createJspCompletionData();
-  private static final CompletionData ourXmlCompletionData = new XmlCompletionData();
+  private static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
+  private static final NotNullLazyValue<CompletionData> ourJavaCompletionData = new NotNullLazyValue<CompletionData>() {
+    @NotNull
+    protected CompletionData compute() {
+      return new JavaCompletionData();
+    }
+  };
+  private static final NotNullLazyValue<CompletionData> ourJava15CompletionData = new NotNullLazyValue<CompletionData>() {
+    @NotNull
+    protected CompletionData compute() {
+      return new Java15CompletionData();
+    }
+  };
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
       final CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
@@ -64,10 +69,14 @@ public class CompletionUtil {
     }
   };
   private static final CompletionData ourWordCompletionData = new WordCompletionData();
-  private static final CompletionData ourJavaDocCompletionData = new JavaDocCompletionData();
+  private static final NotNullLazyValue<CompletionData> ourJavaDocCompletionData = new NotNullLazyValue<CompletionData>() {
+    @NotNull
+    protected CompletionData compute() {
+      return new JavaDocCompletionData();
+    }
+  };
 
-  private static HashMap<FileType, CompletionData> completionDatas;
-  public static final Key<CompletionData> ENFORCE_COMPLETION_DATA_KEY = new Key<CompletionData>("Enforce completionData");
+  private static HashMap<FileType, NotNullLazyValue<CompletionData>> ourCustomCompletionDatas = new HashMap<FileType, NotNullLazyValue<CompletionData>>();
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
   @NonNls
   public static final String GET_PREFIX = "get";
@@ -75,13 +84,6 @@ public class CompletionUtil {
   public static final String SET_PREFIX = "set";
   @NonNls
   public static final String IS_PREFIX = "is";
-
-  private static void initBuiltInCompletionDatas() {
-    completionDatas = new HashMap<FileType, CompletionData>();
-    registerCompletionData(StdFileTypes.HTML, new HtmlCompletionData());
-    registerCompletionData(StdFileTypes.XHTML, new XHtmlCompletionData());
-    registerCompletionData(StdFileTypes.DTD, new DtdCompletionData());
-  }
 
   public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = DUMMY_IDENTIFIER.trim();
@@ -177,47 +179,42 @@ public class CompletionUtil {
         textContainer = textContainer.getTreeParent();
       }
     }
-    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context, context.file);
+    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context.file);
     if (wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
     return completionDataByElementInner;
   }
 
-  public static CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context, final PsiFile file) {
-    if (file.getUserData(ENFORCE_COMPLETION_DATA_KEY) != null) {
-      return file.getUserData(ENFORCE_COMPLETION_DATA_KEY);
-    }
+  public static CompletionData getCompletionDataByElementInner(PsiElement element, final PsiFile file) {
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;
 
-    if ((file.getViewProvider().getPsi(StdLanguages.JAVA) != null) &&
-        !(PsiUtil.isInJspFile(file)) // TODO: we need to check the java context of JspX
-      ) {
+    if ((file.getViewProvider().getPsi(StdLanguages.JAVA) != null)) {
       if (element != null && new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())) {
-        return ourJavaDocCompletionData;
+        return ourJavaDocCompletionData.getValue();
       }
-      else {
-        return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
-               ? ourJava15CompletionData
-               : ourJavaCompletionData;
-      }
-    }
-    else if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSP) {
-      return ourJSPCompletionData;
-    }
-    else if (file.getViewProvider().getBaseLanguage() == StdLanguages.XML) {
-      return ourXmlCompletionData;
+      return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
+             ? ourJava15CompletionData.getValue()
+             : ourJavaCompletionData.getValue();
     }
     return ourGenericCompletionData;
   }
 
-  public static void registerCompletionData(FileType fileType, CompletionData completionData) {
-    if (completionDatas == null) initBuiltInCompletionDatas();
-    completionDatas.put(fileType, completionData);
+  public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {
+    ourCustomCompletionDatas.put(fileType, completionData);
+  }
+  
+  public static void registerCompletionData(FileType fileType, final CompletionData completionData) {
+    registerCompletionData(fileType, new NotNullLazyValue<CompletionData>() {
+      @NotNull
+      protected CompletionData compute() {
+        return completionData;
+      }
+    });
   }
 
   public static CompletionData getCompletionDataByFileType(FileType fileType) {
-    if (completionDatas == null) initBuiltInCompletionDatas();
-    return completionDatas.get(fileType);
+    final NotNullLazyValue<CompletionData> lazyValue = ourCustomCompletionDatas.get(fileType);
+    return lazyValue == null ? null : lazyValue.getValue();
   }
 
   public static boolean checkName(String name, CompletionContext context, boolean forceCaseInsensitive) {

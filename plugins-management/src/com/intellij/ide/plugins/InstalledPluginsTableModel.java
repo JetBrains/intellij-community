@@ -21,7 +21,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
     for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext();) {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
-      if ("com.intellij".equals(s) || "com.intellij.javaee".equals(s)) iterator.remove();
+      if ("com.intellij".equals(s)) iterator.remove();
     }
     sortByColumn(0);
   }

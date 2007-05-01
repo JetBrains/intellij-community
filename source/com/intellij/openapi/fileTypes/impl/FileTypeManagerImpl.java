@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -33,7 +35,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -49,7 +50,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final ArrayList<FakeFileType> mySpecialFileTypes = new ArrayList<FakeFileType>();
   private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
-  private FileTypeAssocTable myPaternsTable = new FileTypeAssocTable();
+  private FileTypeAssocTable myPatternsTable = new FileTypeAssocTable();
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
   private final Set<String> myNotIgnoredFiles = new ConcurrentHashSet<String>();
   private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
@@ -95,17 +96,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
   @NonNls private static final String XML_EXTENSION = ".xml";
   private final MessageBus myMessageBus;
+  private final Map<String,Pair<FileType,String>> myStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
+  @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
 
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
 
   public FileTypeManagerImpl(MessageBus bus) {
-    registerStandardFileTypes((FileTypeFactoryImpl)FileTypeFactory.getFileTypeFactory());
+    final PairConsumer<FileType, String> consumer = new PairConsumer<FileType, String>() {
+      public void consume(final FileType fileType, final String extensions) {
+        myStandardFileTypes.put(fileType.getName(), Pair.create(fileType, extensions));
+        registerFileTypeWithoutNotification(fileType, parse(extensions));
+      }
+    };
+    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+      factory.createFileTypes(consumer);
+    }
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
     }
     myMessageBus = bus;
+  }
+
+  public FileType getStdFileType(@NotNull @NonNls String name) {
+    Pair<FileType, String> pair = myStandardFileTypes.get(name);
+    return pair != null ? pair.first : new PlainTextFileType();
+  }
+
+  public LanguageFileType getLanguageStdFileType(@NotNull @NonNls final String name) {
+    return (LanguageFileType)getStdFileType(name);
   }
 
   @NotNull
@@ -143,7 +163,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public FileType getFileTypeByFileName(@NotNull String fileName) {
-    FileType type = myPaternsTable.findAssociatedFileType(fileName);
+    FileType type = myPatternsTable.findAssociatedFileType(fileName);
     return type == null ? StdFileTypes.UNKNOWN : type;
   }
 
@@ -264,12 +284,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(FileType type) {
-    return myPaternsTable.getAssociatedExtensions(type);
+    return myPatternsTable.getAssociatedExtensions(type);
   }
 
   @NotNull
   public List<FileNameMatcher> getAssociations(FileType type) {
-    return myPaternsTable.getAssociations(type);
+    return myPatternsTable.getAssociations(type);
   }
 
   public void associate(FileType type, FileNameMatcher matcher) {
@@ -281,7 +301,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void removeAllAssociations(FileType type) {
-    myPaternsTable.removeAllAssociations(type);
+    myPatternsTable.removeAllAssociations(type);
   }
 
   public void fireBeforeFileTypesChanged() {
@@ -302,7 +322,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(AppTopics.FILE_TYPES, listener);
     myAdapters.put(listener, connection);
- }
+  }
 
   public void removeFileTypeListener(FileTypeListener listener) {
     final MessageBusConnection connection = myAdapters.remove(listener);
@@ -425,28 +445,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void restoreStandardFileExtensions() {
-    restoreStandardFileExtensions(StdFileTypes.JSP);
-    restoreStandardFileExtensions(StdFileTypes.JSPX);
-    restoreStandardFileExtensions(StdFileTypes.DTD);
-    restoreStandardFileExtensions(StdFileTypes.HTML);
-    restoreStandardFileExtensions(StdFileTypes.PROPERTIES);
-    restoreStandardFileExtensions(StdFileTypes.XHTML);
-  }
+    for (final String name : FILE_TYPES_WITH_PREDEFINED_EXTENSIONS) {
+      final Pair<FileType, String> pair = myStandardFileTypes.get(name);
+      if (pair != null) {
+        FileType fileType = pair.first;
+        for (FileNameMatcher matcher : myPatternsTable.getAssociations(fileType)) {
+          FileType defaultFileType = myInitialAssociations.findAssociatedFileType(matcher);
+          if (defaultFileType != null && defaultFileType != fileType) {
+            removeAssociation(fileType, matcher, false);
+            associate(defaultFileType, matcher, false);
+          }
+        }
 
-  private void restoreStandardFileExtensions(FileType fileType) {
-    List<FileNameMatcher> currentAssocs = myPaternsTable.getAssociations(fileType);
-
-    for (FileNameMatcher matcher : currentAssocs) {
-      FileType defaultFileType = myInitialAssociations.findAssociatedFileType(matcher);
-      if (defaultFileType != null && defaultFileType != fileType) {
-        removeAssociation(fileType, matcher, false);
-        associate(defaultFileType, matcher, false);
+        for (FileNameMatcher matcher : myInitialAssociations.getAssociations(fileType)) {
+          associate(fileType, matcher, false);
+        }
       }
-    }
-
-    final List<FileNameMatcher> defaultAssocs = myInitialAssociations.getAssociations(fileType);
-    for (FileNameMatcher matcher : defaultAssocs) {
-      associate(fileType, matcher, false);
     }
   }
 
@@ -471,7 +485,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     parentNode.addContent(map);
 
     for (FileType type : getRegisteredFileTypes()) {
-      final List<FileNameMatcher> assocs = myPaternsTable.getAssociations(type);
+      final List<FileNameMatcher> assocs = myPatternsTable.getAssociations(type);
       final Set<FileNameMatcher> defaultAssocs = new HashSet<FileNameMatcher>(myInitialAssociations.getAssociations(type));
 
       for (FileNameMatcher matcher : assocs) {
@@ -526,20 +540,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return null;
   }
 
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private void registerStandardFileTypes(FileTypeFactoryImpl factory) {
-    try {
-      for (final Field field : StdFileTypes.class.getDeclaredFields()) {
-        if (FileType.class.isAssignableFrom(field.getType())) {
-          registerFileTypeWithoutNotification((FileType)field.get(null), parse(factory.getDefaultExtensions(field.getName())));
-        }
-      }
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-  }
-
   private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {
     if (semicolonDelimited == null) return Collections.emptyList();
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, ";", false);
@@ -556,7 +556,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void registerFileTypeWithoutNotification(FileType fileType, List<FileNameMatcher> matchers) {
     myFileTypes.add(fileType);
     for (FileNameMatcher matcher : matchers) {
-      myPaternsTable.addAssociation(matcher, fileType);
+      myPatternsTable.addAssociation(matcher, fileType);
       myInitialAssociations.addAssociation(matcher, fileType);
     }
 
@@ -568,7 +568,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (FileNameMatcher matcher : new THashSet<FileNameMatcher>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (Comparing.equal(name, fileType.getName())) {
-        myPaternsTable.addAssociation(matcher, fileType);
+        myPatternsTable.addAssociation(matcher, fileType);
         myUnresolvedMappings.remove(matcher);
       }
     }
@@ -868,13 +868,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public FileTypeAssocTable getExtensionMap() {
-    return myPaternsTable;
+    return myPatternsTable;
   }
 
   public void setPatternsTable(Set<FileType> fileTypes, FileTypeAssocTable assocTable) {
     fireBeforeFileTypesChanged();
     myFileTypes = new SetWithArray(fileTypes);
-    myPaternsTable = assocTable.copy();
+    myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
   }
 
@@ -923,11 +923,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void associate(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
-    if (!myPaternsTable.isAssociatedWith(fileType, matcher)) {
+    if (!myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
       }
-      myPaternsTable.addAssociation(matcher, fileType);
+      myPatternsTable.addAssociation(matcher, fileType);
       if (fireChange) {
         fireFileTypesChanged();
       }
@@ -935,11 +935,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void removeAssociation(FileType fileType, FileNameMatcher matcher, boolean fireChange){
-    if (myPaternsTable.isAssociatedWith(fileType, matcher)) {
+    if (myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
       }
-      myPaternsTable.removeAssociation(matcher, fileType);
+      myPatternsTable.removeAssociation(matcher, fileType);
       if (fireChange){
         fireFileTypesChanged();
       }
