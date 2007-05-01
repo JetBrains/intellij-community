@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 
-class PrefixSuffixStripperLexer extends LexerBase {
+public class PrefixSuffixStripperLexer extends LexerBase {
   private CharSequence myBuffer;
   private char[] myBufferArray;
   private int myTokenStart;
