@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module relativePaths="true" type="JAVA_MODULE" version="5">
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes/impl" />
     <exclude-output />
@@ -26,7 +27,6 @@
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="Eclipse" level="project" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="boot" />
     <orderEntryProperties />
   </component>
