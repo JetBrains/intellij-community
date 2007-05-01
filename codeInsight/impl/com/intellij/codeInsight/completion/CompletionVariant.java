@@ -34,7 +34,7 @@ import java.util.*;
  */
 
 public class CompletionVariant {
-  protected static TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
+  protected static final TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
 
   private final Set<Scope> myScopeClasses = new HashSet<Scope>();
   private ElementFilter myPosition;
