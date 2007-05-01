@@ -21,6 +21,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
+import org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesrovider;
 
 /**
  * All main properties for Groovy language
@@ -64,10 +66,14 @@ public class GroovyLanguage extends Language {
     return new GroovyCommenter();
   }
 
-
   @Nullable
   public Annotator getAnnotator() {
     return GroovyAnnotator.INSTANCE;
+  }
+
+  @NotNull
+  public FindUsagesProvider getFindUsagesProvider() {
+    return GroovyFindUsagesrovider.INSTANCE;
   }
 
   @Nullable

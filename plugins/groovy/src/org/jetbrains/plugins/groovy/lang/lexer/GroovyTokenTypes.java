@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Interface, that contains all tokens, retruned by GroovyLexer
@@ -209,4 +210,7 @@ public interface GroovyTokenTypes {
   IElementType kFALSE = new GroovyElementType("false");
   IElementType kNULL = new GroovyElementType("null");
 
+  TokenSet IDENTIFIER_SET = TokenSet.create(mIDENT);
+  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
+  TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL);
 }
