@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -28,6 +29,10 @@ public class GrOpenBlockImpl extends GroovyPsiElementImpl implements GrOpenBlock
 
   public GrOpenBlockImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrStatement[] getStatements() {
+    return findChildrenByClass(GrStatement.class);
   }
 
   public String toString() {

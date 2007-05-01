@@ -17,17 +17,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.*;
 
 /**
  * @author Ilya.Sergey
@@ -47,6 +48,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     }
     return null;
+  }
+
+  enum Kind {
+    PROPERTY,
+    METHOD,
+    TYPE_OR_PROPERTY
+  }
+
+  private Kind getKind() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrMethodCall) {
+      return METHOD;
+    } else if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
+      return TYPE_OR_PROPERTY;
+    }
+
+    return PROPERTY;
   }
 
   public String getCanonicalText() {
