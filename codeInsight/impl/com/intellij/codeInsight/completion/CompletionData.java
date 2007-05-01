@@ -212,7 +212,7 @@ public class CompletionData {
     return findPrefixStatic(insertedElement, offsetInFile);
   }
 
-  protected CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
+  public CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
     final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
     PsiElement scope = position;
     if(scope == null){
