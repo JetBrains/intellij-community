@@ -5,7 +5,7 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
     this(new XmlLexer(),false);
   }
 
-  protected XHtmlHighlightingLexer(Lexer baseLexer, boolean withEl) {
+  public XHtmlHighlightingLexer(Lexer baseLexer, boolean withEl) {
     super(baseLexer,false,withEl);
   }
 
