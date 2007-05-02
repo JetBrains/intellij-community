@@ -419,11 +419,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    });
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      // otherwise commitAllDocuments() must have been called before the whole process was started
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    }
     return new AntBuildModelImpl(buildFile);
   }
 
