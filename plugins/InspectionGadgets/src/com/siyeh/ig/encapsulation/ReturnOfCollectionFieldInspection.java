@@ -127,7 +127,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "return.of.collection.field.fix", replacementText);
+                    "return.of.collection.field.quickfix", replacementText);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)

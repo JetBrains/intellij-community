@@ -90,7 +90,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 577;
+    private static final int NUM_INSPECTIONS = 580;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList<Class<? extends InspectionProfileEntry>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -699,6 +699,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerStyleInspections() {
+        m_inspectionClasses.add(CallToStringConcatCanBeReplacedByOperatorInspection.class);
         m_inspectionClasses.add(CStyleArrayDeclarationInspection.class);
         m_inspectionClasses.add(ChainedEqualityInspection.class);
         m_inspectionClasses.add(ChainedMethodCallInspection.class);
