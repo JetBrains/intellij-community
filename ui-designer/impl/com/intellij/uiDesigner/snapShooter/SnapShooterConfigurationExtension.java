@@ -22,7 +22,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -70,7 +70,7 @@ public class SnapShooterConfigurationExtension implements RunConfigurationExtens
       paths.add(PathUtil.getJarPathForClass(Document.class));            // JDOM
       paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
       paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
-      paths.add(PathUtil.getJarPathForClass(XmlUtil.class));             // idea
+      paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));       // idea
       paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
       paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
       paths.add(PathUtil.getJarPathForClass(THashMap.class));            // trove4j
