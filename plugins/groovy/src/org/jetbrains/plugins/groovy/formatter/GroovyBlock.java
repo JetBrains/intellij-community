@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 
 import java.util.List;
 
@@ -103,6 +104,9 @@ public class GroovyBlock implements Block, GroovyElementTypes {
    */
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
+    if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
+      return GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2));
+    }
     return null;
   }
 
