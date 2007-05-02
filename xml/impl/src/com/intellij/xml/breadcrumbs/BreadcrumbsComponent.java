@@ -368,10 +368,11 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     private void moveEditorCaretTo(@NotNull final XmlElement element) {
-      assert element.isValid();
-      myBreadcrumbsComponent.setUserCaretChange(false);
-      getEditor().getCaretModel().moveToOffset(element.getTextOffset());
-      getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      if (element.isValid()) {
+        myBreadcrumbsComponent.setUserCaretChange(false);
+        getEditor().getCaretModel().moveToOffset(element.getTextOffset());
+        getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
     }
 
     private static Painter getPainter() {
