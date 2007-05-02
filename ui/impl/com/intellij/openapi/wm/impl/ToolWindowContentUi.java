@@ -34,6 +34,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private JPanel myContent = new JPanel(new BorderLayout());
   private ToolWindowImpl myWindow;
 
+  private TabbedContentAction.CloseAllAction myCloseAllAction;
+  private TabbedContentAction.MyNextTabAction myNextTabAction;
+  private TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
+
+
   private JLabel myIdLabel = new BaseLabel() {
     {
       initMouseListeners(this);
@@ -62,9 +67,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       super.paintComponent(g);
     }
   };
-  private TabbedContentAction.CloseAllAction myCloseAllAction;
-  private TabbedContentAction.MyNextTabAction myNextTabAction;
-  private TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -243,6 +245,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       contentGroup.add(myCloseAllAction);
       contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
       contentGroup.addSeparator();
+      if (content.isPinnable()) {
+        contentGroup.add(new TabbedContentAction.MyPinTabAction(content));
+        contentGroup.addSeparator();
+      }
+
       contentGroup.add(myNextTabAction);
       contentGroup.add(myPreviousTabAction);
       contentGroup.addSeparator();
