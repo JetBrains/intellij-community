@@ -398,6 +398,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return result;
   }
 
+  public void loadIncomingChangesAsync(final Consumer<List<CommittedChangeList>> consumer) {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Loading incoming changes") {
+      public void run(final ProgressIndicator indicator) {
+        consumer.consume(getIncomingChanges());
+      }
+    };
+    myTaskQueue.run(task);
+  }
+
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
     LOG.info("Processing updated files");
     final Collection<ChangesCacheFile> caches = getAllCaches();

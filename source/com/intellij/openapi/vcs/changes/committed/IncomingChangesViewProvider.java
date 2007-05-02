@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.util.List;
@@ -54,7 +55,11 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBrowser != null) {
-          myBrowser.setItems(CommittedChangesCache.getInstance(myProject).getIncomingChanges());
+          CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
+            public void consume(final List<CommittedChangeList> committedChangeLists) {
+              myBrowser.setItems(committedChangeLists);
+            }
+          });
         }
       }
     });
