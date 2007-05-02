@@ -78,6 +78,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
   );
 
   public static TokenSet KEYWORD_PROPERTY_NAMES = TokenSet.orSet(TokenSet.create(
+          kUSE,
           kCLASS,
           kIN,
           kAS,
@@ -93,6 +94,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
   ), BUILT_IN_TYPE);
 
   public static TokenSet MODIFIERS = TokenSet.create(
+          kABSTRACT,
           kPRIVATE,
           kPUBLIC,
           kPROTECTED,

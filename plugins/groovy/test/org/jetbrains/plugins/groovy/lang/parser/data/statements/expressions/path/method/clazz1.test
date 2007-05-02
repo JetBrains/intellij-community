@@ -1,0 +1,16 @@
+(1+2)?.class
+-----
+Groovy script
+  Property selection
+    Parenthesized expression
+      PsiElement(()('(')
+      Additive expression
+        Literal
+          PsiElement(number)('1')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(number)('2')
+      PsiElement())(')')
+    PsiElement(?.)('?.')
+    Property selector
+      PsiElement(class)('class')

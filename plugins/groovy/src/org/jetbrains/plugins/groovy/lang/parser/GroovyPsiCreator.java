@@ -45,10 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
@@ -222,6 +219,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //Paths
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
+    if (elem.equals(PATH_CLASS_ACCESS)) return new GrClassObjectAccessExprImpl(node);
     if (elem.equals(PATH_PROPERTY_REFERENCE)) return new GrPropertySelectionImpl(node);
     if (elem.equals(PATH_METHOD_CALL)) return new GrMethodCallImpl(node);
     if (elem.equals(PATH_INDEX_PROPERTY)) return new GrIndexPropertyImpl(node);
