@@ -716,14 +716,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(new BorderLayout());
       myArea.setText(dialog.getCommitMessage());
       JScrollPane scrollPane = new JScrollPane(myArea);
-      setBorder(IdeBorderFactory.createTitledBorder("Commit Message"));
+      setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("diff.commit.message.title")));
       add(scrollPane, BorderLayout.CENTER);
       myCommitDialog = dialog;
     }
 
     public void dispose() {
-      myCommitDialog.setCommitMessage(myArea.getText());
-      myCommitDialog = null;
+      if (myCommitDialog != null) {
+        myCommitDialog.setCommitMessage(myArea.getText());
+        myCommitDialog = null;
+      }
     }
 
     public Dimension getPreferredSize() {
