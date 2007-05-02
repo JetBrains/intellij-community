@@ -120,6 +120,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     updateRefreshTimer();
   }
 
+  @Nullable
   public CommittedChangesProvider getProviderForProject() {
     final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
     List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
@@ -129,14 +130,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     }
     assert vcsWithProviders.size() > 0;
-    final CommittedChangesProvider provider;
+    CommittedChangesProvider provider = null;
     if (vcsWithProviders.size() == 1) {
       provider = vcsWithProviders.get(0).getCommittedChangesProvider();
     }
     else {
       provider = new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
     }
-    assert provider != null;
     return provider;
   }
 

@@ -11,6 +11,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -43,6 +45,7 @@ import java.util.ArrayList;
 public class ChangesViewContentManager implements ProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
+  private ChangesViewContentManager.MyContentManagerListener myContentManagerListener;
 
   public static ChangesViewContentManager getInstance(Project project) {
     return project.getComponent(ChangesViewContentManager.class);
@@ -72,12 +75,14 @@ public class ChangesViewContentManager implements ProjectComponent {
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
           myContentManager = myToolWindow.getContentManager();
-          myContentManager.addContentManagerListener(new MyContentManagerListener());
+          myContentManagerListener = new MyContentManagerListener();
+          myContentManager.addContentManagerListener(myContentManagerListener);
           for(Content content: myAddedContents) {
             myContentManager.addContent(content);
           }
           myAddedContents.clear();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+          ProjectManager.getInstance().addProjectManagerListener(myProject, new MyProjectManagerListener());
           myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
           loadExtensionTabs();
           if (myContentManager.getContentCount() > 0) {
@@ -234,6 +239,15 @@ public class ChangesViewContentManager implements ProjectComponent {
         ChangesViewContentProvider provider = ep.getInstance(myProject);
         event.getContent().setComponent(provider.initContent());
       }
+    }
+  }
+
+  private class MyProjectManagerListener extends ProjectManagerAdapter {
+    public void projectClosing(final Project project) {
+      if (myContentManager != null) {
+        myContentManager.removeContentManagerListener(myContentManagerListener);
+      }
+      ProjectManager.getInstance().removeProjectManagerListener(project, this);
     }
   }
 }

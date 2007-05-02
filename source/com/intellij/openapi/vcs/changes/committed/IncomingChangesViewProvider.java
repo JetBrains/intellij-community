@@ -34,6 +34,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     final List<CommittedChangeList> list = cache.getIncomingChanges();
     final CommittedChangesProvider provider = cache.getProviderForProject();
+    assert provider != null;
     final CommittedChangesTableModel model = new CommittedChangesTableModel(list, provider.getColumns());
     myBrowser = new CommittedChangesBrowser(myProject, model);
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");

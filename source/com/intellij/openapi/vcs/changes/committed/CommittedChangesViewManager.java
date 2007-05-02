@@ -44,6 +44,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
   private void updateChangesContent() {
     final CommittedChangesProvider provider = CommittedChangesCache.getInstance(myProject).getProviderForProject();
+    if (provider == null) return;
 
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings());
