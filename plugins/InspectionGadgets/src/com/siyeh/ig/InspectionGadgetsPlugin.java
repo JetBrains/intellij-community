@@ -793,9 +793,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SerializableInnerClassWithNonSerializableOuterClassInspection.class);
         m_inspectionClasses.add(SerializableWithUnconstructableAncestorInspection.class);
         m_inspectionClasses.add(TransientFieldInNonSerializableClassInspection.class);
+        m_inspectionClasses.add(TransientFieldNotInitializedInspection.class);
     }
 
     private void registerThreadingInspections() {
+        m_inspectionClasses.add(AccessToNonThreadSafeStaticFieldFromInstanceInspection.class);
         m_inspectionClasses.add(AccessToStaticFieldLockedOnInstanceInspection.class);
         m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         m_inspectionClasses.add(AwaitNotInLoopInspection.class);

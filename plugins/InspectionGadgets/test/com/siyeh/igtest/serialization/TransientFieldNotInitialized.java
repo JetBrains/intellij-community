@@ -1,4 +1,4 @@
-package com.siyeh.ig.serialization;
+package com.siyeh.igtest.serialization;
 
 import java.io.*;
 

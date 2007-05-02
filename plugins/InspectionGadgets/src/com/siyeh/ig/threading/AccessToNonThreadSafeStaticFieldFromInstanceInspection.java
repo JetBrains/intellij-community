@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -40,10 +41,15 @@ import java.util.List;
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
         extends BaseInspection {
 
+    @NonNls
     @SuppressWarnings({"PublicField"})
-    public String nonThreadSafeTypes = "java.text.SimpleDateFormat," +
-            "java.util.Calendar";
+    public String nonThreadSafeTypes = "java.text.DateFormat" +
+            ',' + "java.util.Calendar";
     List<String> nonThreadSafeTypeList = new ArrayList();
+
+    public AccessToNonThreadSafeStaticFieldFromInstanceInspection() {
+        parseString(nonThreadSafeTypes, nonThreadSafeTypeList);
+    }
 
     @Nls
     @NotNull
@@ -123,9 +129,12 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
             String typeString = null;
             for (String nonThreadSafeType : nonThreadSafeTypeList) {
                 if (type.equalsToText(nonThreadSafeType)) {
-                   typeString = nonThreadSafeType;
+                    typeString = nonThreadSafeType;
                     break;
                 }
+            }
+            if (typeString == null) {
+                return;
             }
             final PsiElement target = expression.resolve();
             if (!(target instanceof PsiField)) {
