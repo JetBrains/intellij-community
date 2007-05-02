@@ -19,6 +19,7 @@ package com.intellij.ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author max
@@ -75,5 +76,11 @@ public class CaptionPanel extends JPanel {
     }
     add(component.getComponent(), BorderLayout.EAST);
     myButtonComponent = component;
+  }
+
+  public boolean isWithinPanel(MouseEvent e) {
+    final Point p = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), this);
+    final Component c = findComponentAt(p);
+    return c != null && c != myButtonComponent;
   }
 }
