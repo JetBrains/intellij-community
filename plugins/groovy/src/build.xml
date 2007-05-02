@@ -22,7 +22,7 @@
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" value="${idea.dir}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
-  <property name="plugin.libs" value="${project.dir}/lib/special"/>
+  <!--<property name="plugin.libs" value="${project.dir}/lib/special"/>-->
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
@@ -167,7 +167,7 @@
   <target name="run.tests" description="runs all tests" depends="build tests">
     <mkdir dir="${project.dir}/logs"/>
 
-    <echo append="${idea.lib}"/>
+    <echo message="${idea.lib}"/>
 
     <junit fork="yes"
            dir="${project.dir}"
