@@ -147,4 +147,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public boolean isMaxCountSupported() {
     return true;
   }
+
+  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
+    return null;
+  }
 }
