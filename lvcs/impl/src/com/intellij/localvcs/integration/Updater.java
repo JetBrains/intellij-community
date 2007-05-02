@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
+import com.intellij.localvcs.core.ContentHolder;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -63,15 +64,37 @@ public class Updater implements CacheUpdater {
     try {
       VirtualFile f = c.getVirtualFile();
       if (myFilesToCreate.contains(f)) {
-        myVcs.createFile(f.getPath(), c.getPhysicalBytes(), f.getTimeStamp());
+        myVcs.createFile(f.getPath(), contentHolderOn(c), f.getTimeStamp());
       }
       else {
-        myVcs.changeFileContent(f.getPath(), c.getPhysicalBytes(), f.getTimeStamp());
+        myVcs.changeFileContent(f.getPath(), contentHolderOn(c), f.getTimeStamp());
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private ContentHolder contentHolderOn(final FileContent c) throws IOException {
+    return new ContentHolder() {
+      public byte[] getBytes() {
+        try {
+          return c.getPhysicalBytes();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      public long getLength() {
+        try {
+          return c.getPhysicalLength();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
   }
 
   public void updatingDone() {

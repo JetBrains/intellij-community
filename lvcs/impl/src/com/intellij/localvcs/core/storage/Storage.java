@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.storage;
 
+import com.intellij.localvcs.core.ContentHolder;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.openapi.util.io.FileUtil;
@@ -143,16 +144,16 @@ public class Storage {
     }
   }
 
-  public Content storeContent(byte[] bytes) {
-    if (isBroken || isTooLong(bytes)) return new UnavailableContent();
-    return doStoreContent(bytes);
+  public Content storeContent(ContentHolder c) {
+    if (isBroken || isTooLong(c)) return new UnavailableContent();
+    return doStoreBytes(c.getBytes());
   }
 
-  private boolean isTooLong(byte[] bytes) {
-    return bytes.length > IContentStorage.MAX_CONTENT_LENGTH;
+  private boolean isTooLong(ContentHolder c) {
+    return c.getLength() > IContentStorage.MAX_CONTENT_LENGTH;
   }
 
-  protected Content doStoreContent(byte[] bytes) {
+  protected Content doStoreBytes(byte[] bytes) {
     try {
       int id = myContentStorage.store(bytes);
       return new Content(this, id);

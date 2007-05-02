@@ -2,7 +2,6 @@ package com.intellij.localvcs.core;
 
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Content;
-import com.intellij.localvcs.core.storage.IContentStorage;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,16 +15,16 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", b("one"), -1);
+    vcs.createFile("file", ch("one"), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", b("two"), -1);
+    vcs.changeFileContent("file", ch("two"), -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", b("three"), -1);
+    vcs.changeFileContent("file", ch("three"), -1);
 
     setCurrentTimestamp(40);
-    vcs.changeFileContent("file", b("four"), -1);
+    vcs.changeFileContent("file", ch("four"), -1);
   }
 
   @Test
@@ -53,8 +52,8 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     vcs = new TestLocalVcs(new PurgeLoggingStorage());
     setCurrentTimestamp(20);
 
-    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
-    vcs.changeFileContent("file", b("new content"), -1);
+    vcs.createFile("file", bigContentHolder(), -1);
+    vcs.changeFileContent("file", ch("new content"), -1);
 
     vcs.purgeUpTo(30);
 

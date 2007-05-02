@@ -65,10 +65,10 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testContent() throws Exception {
-    Content c = s.storeContent(new byte[]{1, 2, 3});
+    Content c = s.storeContent(ch("abc"));
     os.writeContent(c);
 
-    assertEquals(new byte[]{1, 2, 3}, is.readContent().getBytes());
+    assertEquals("abc".getBytes(), is.readContent().getBytes());
   }
 
   @Test
@@ -95,7 +95,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testFileEntry() throws Exception {
-    Content c = s.storeContent(b("content"));
+    Content c = s.storeContent(ch("content"));
     Entry e = new FileEntry(42, "file", c, 123L);
 
     os.writeEntry(e);
@@ -105,7 +105,7 @@ public class StreamTest extends LocalVcsTestCase {
 
     assertEquals(42, result.getId());
     assertEquals("file", result.getName());
-    assertEquals(b("content"), result.getContent().getBytes());
+    assertEquals("content".getBytes(), result.getContent().getBytes());
     assertEquals(123L, result.getTimestamp());
   }
 
@@ -201,7 +201,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(1, "file", s.storeContent(b("content")), 777L);
+    Change c = new CreateFileChange(1, "file", s.storeContent(ch("content")), 777L);
     c.applyTo(new RootEntry());
 
     os.writeChange(c);
@@ -230,9 +230,9 @@ public class StreamTest extends LocalVcsTestCase {
   @Test
   public void testChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.createFile(1, "file", s.storeContent(b("old content")), 1L);
+    root.createFile(1, "file", s.storeContent(ch("old content")), 1L);
 
-    Change c = new ChangeFileContentChange("file", s.storeContent(b("new content")), 2L);
+    Change c = new ChangeFileContentChange("file", s.storeContent(ch("new content")), 2L);
     c.applyTo(root);
 
     os.writeChange(c);

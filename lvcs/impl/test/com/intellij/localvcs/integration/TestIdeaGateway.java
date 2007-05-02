@@ -47,6 +47,11 @@ public class TestIdeaGateway extends IdeaGateway {
     return myPhysicalContent.getBytes();
   }
 
+  @Override
+  public long getPhysicalLength(VirtualFile f) throws IOException {
+    return getPhysicalContent(f).length;
+  }
+
   public void setPhysicalContent(String c) {
     myPhysicalContent = c;
   }

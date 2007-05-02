@@ -8,7 +8,7 @@ import java.util.List;
 public class FileListenerActionPerformingTest extends FileListenerTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringState() {
-    vcs.createFile("file", b("old"), 123L);
+    vcs.createFile("file", ch("old"), 123L);
 
     Clock.setCurrentTimestamp(456);
     gateway.addUnsavedDocument("file", "new");
@@ -38,11 +38,11 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
 
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
 
     gateway.addUnsavedDocument("f", "two");
     l.startAction(null);
-    vcs.changeFileContent("f", b("three"), -1);
+    vcs.changeFileContent("f", ch("three"), -1);
     l.finishAction();
 
     assertEquals(3, vcs.getRevisionsFor("f").size());
@@ -50,7 +50,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
 
   @Test
   public void testRegisteringUnsavedDocumentsBeforeExitingState() {
-    vcs.createFile("file", b("old"), 123L);
+    vcs.createFile("file", ch("old"), 123L);
     l.startAction(null);
 
     Clock.setCurrentTimestamp(789);
@@ -93,18 +93,18 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
 
   @Test
   public void testActionInsideCommand() {
-    vcs.createFile("f", b("1"), -1);
+    vcs.createFile("f", ch("1"), -1);
 
     l.commandStarted(createCommandEvent("command"));
-    vcs.changeFileContent("f", b("2"), -1);
+    vcs.changeFileContent("f", ch("2"), -1);
     gateway.addUnsavedDocument("f", "3");
 
     l.startAction("action");
-    vcs.changeFileContent("f", b("4"), -1);
+    vcs.changeFileContent("f", ch("4"), -1);
     gateway.addUnsavedDocument("f", "5");
     l.finishAction();
 
-    vcs.changeFileContent("f", b("6"), -1);
+    vcs.changeFileContent("f", ch("6"), -1);
     l.commandFinished(null);
 
     List<Revision> rr = vcs.getRevisionsFor("f");

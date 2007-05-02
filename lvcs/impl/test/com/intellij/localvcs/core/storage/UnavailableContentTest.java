@@ -17,7 +17,7 @@ public class UnavailableContentTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotEqualToAnyOtherContent() {
     final UnavailableContent u = new UnavailableContent();
-    ByteContent b = new ByteContent(b(""));
+    ByteContent b = new ByteContent(new byte[]{1, 2, 3});
 
     assertFalse(u.equals(b));
     assertFalse(b.equals(u));

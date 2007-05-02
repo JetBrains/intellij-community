@@ -28,6 +28,11 @@ public class CacheUpdaterHelper {
       public byte[] getPhysicalBytes() throws IOException {
         return physicalContent == null ? f.contentsToByteArray() : physicalContent.getBytes();
       }
+
+      @Override
+      public long getPhysicalLength() throws IOException {
+        return getPhysicalBytes().length;
+      }
     };
   }
 }

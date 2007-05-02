@@ -3,7 +3,6 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockEditorFactory;
@@ -21,7 +20,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsListAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", b(""), -1);
+    vcs.createFile("f", ch(""), -1);
     vcs.purgeUpTo(20);
 
     initModelFor("f");
@@ -36,9 +35,9 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCantShowDifferenceIfOneOfEntryHasUnavailableContent() {
-    vcs.createFile("f", b("abc"), -1);
-    vcs.changeFileContent("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
-    vcs.changeFileContent("f", b("def"), -1);
+    vcs.createFile("f", ch("abc"), -1);
+    vcs.changeFileContent("f", bigContentHolder(), -1);
+    vcs.changeFileContent("f", ch("def"), -1);
 
     initModelFor("f");
 
@@ -54,7 +53,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelTitles() {
-    vcs.createFile("old", b(""), 123L);
+    vcs.createFile("old", ch(""), 123L);
     vcs.rename("old", "new");
 
     initModelFor("new");
@@ -67,8 +66,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelContents() {
-    vcs.createFile("f", b("old"), -1);
-    vcs.changeFileContent("f", b("new"), -1);
+    vcs.createFile("f", ch("old"), -1);
+    vcs.changeFileContent("f", ch("new"), -1);
 
     initModelFor("f");
     m.selectRevisions(0, 1);
@@ -78,8 +77,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testContentsWhenOnlyOneRevisionSelected() {
-    vcs.createFile("f", b("old"), -1);
-    vcs.changeFileContent("f", b("new"), -1);
+    vcs.createFile("f", ch("old"), -1);
+    vcs.changeFileContent("f", ch("new"), -1);
 
     initModelFor("f");
     m.selectRevisions(1, 1);

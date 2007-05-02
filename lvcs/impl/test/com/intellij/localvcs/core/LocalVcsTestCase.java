@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.storage.ByteContent;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.Clock;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,11 +30,29 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static Content c(String data) {
-    return new ByteContent(b(data));
+    return new ByteContent(data.getBytes());
   }
 
-  protected static byte[] b(String data) {
-    return data == null ? null : data.getBytes();
+  public static ContentHolder ch(String data) {
+    final byte[] bytes = data.getBytes();
+
+    return createContentHolder(bytes);
+  }
+
+  public static ContentHolder bigContentHolder() {
+    return createContentHolder(new byte[IContentStorage.MAX_CONTENT_LENGTH + 1]);
+  }
+
+  private static ContentHolder createContentHolder(final byte[] bytes) {
+    return new ContentHolder() {
+      public byte[] getBytes() {
+        return bytes;
+      }
+
+      public long getLength() {
+        return bytes.length;
+      }
+    };
   }
 
   protected static <T> T[] a(T... objects) {

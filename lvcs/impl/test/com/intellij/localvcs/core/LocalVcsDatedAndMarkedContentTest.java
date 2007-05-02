@@ -1,6 +1,5 @@
 package com.intellij.localvcs.core;
 
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
 import org.junit.Test;
 
@@ -10,9 +9,9 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContent() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     assertNull(vcs.getByteContent("f", comparator(5)));
     assertEquals("one", new String(vcs.getByteContent("f", comparator(10))));
@@ -25,9 +24,9 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingMostRecentRevisionContent() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     RevisionTimestampComparator c = new RevisionTimestampComparator() {
       public boolean isSuitable(long revisionTimestamp) {
@@ -40,7 +39,7 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContentForUnavailableContentIsNull() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+    vcs.createFile("f", bigContentHolder(), -1);
 
     assertNull(vcs.getByteContent("f", comparator(10)));
   }
@@ -48,9 +47,9 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContentIfPurgedIsNull() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     vcs.purgeUpTo(15);
 
@@ -64,37 +63,37 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
 
   @Test
   public void testMarkingFiles() {
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
     vcs.mark("f");
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     assertEquals("one", new String(vcs.getLastMarkedByteContent("f")));
   }
 
   @Test
   public void testMarkedContentForUnmarkedFileIsNull() {
-    vcs.createFile("f", b("one"), -1);
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.createFile("f", ch("one"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     assertNull(vcs.getLastMarkedByteContent("f"));
   }
 
   @Test
   public void testMarkedContentBigFileIsNull() {
-    vcs.createFile("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+    vcs.createFile("f", bigContentHolder(), -1);
     vcs.mark("f");
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
 
     assertNull(vcs.getLastMarkedByteContent("f"));
   }
 
   @Test
   public void testTakingLastMarkedContent() {
-    vcs.createFile("f", b("one"), -1);
+    vcs.createFile("f", ch("one"), -1);
     vcs.mark("f");
-    vcs.changeFileContent("f", b("two"), -1);
+    vcs.changeFileContent("f", ch("two"), -1);
     vcs.mark("f");
-    vcs.changeFileContent("f", b("three"), -1);
+    vcs.changeFileContent("f", ch("three"), -1);
 
     assertEquals("two", new String(vcs.getLastMarkedByteContent("f")));
   }

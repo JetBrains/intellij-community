@@ -32,13 +32,13 @@ public class TestStorage extends Storage {
   }
 
   @Override
-  public Content storeContent(byte[] bytes) {
-    if (bytes == null) return null;
-    return super.storeContent(bytes);
+  public Content storeContent(ContentHolder c) {
+    if (c == null || c.getBytes() == null) return null;
+    return super.storeContent(c);
   }
 
   @Override
-  protected Content doStoreContent(byte[] bytes) {
+  protected Content doStoreBytes(byte[] bytes) {
     int id = myContents.size();
     myContents.put(id, bytes);
     return new Content(this, id);

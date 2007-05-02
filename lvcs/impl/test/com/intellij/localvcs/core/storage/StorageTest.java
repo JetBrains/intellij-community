@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.storage;
 
+import com.intellij.localvcs.core.ContentHolder;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.TempDirTestCase;
 import com.intellij.localvcs.core.changes.ChangeSet;
@@ -94,21 +95,38 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testCreatingContent() {
-    Content c = s.storeContent(new byte[]{1, 2, 3});
-    assertEquals(new byte[]{1, 2, 3}, c.getBytes());
+    Content c = s.storeContent(ch("abc"));
+    assertEquals("abc".getBytes(), c.getBytes());
   }
 
   @Test
   public void testCreatingLongContent() {
-    Content c = s.storeContent(new byte[IContentStorage.MAX_CONTENT_LENGTH + 1]);
+    Content c = s.storeContent(bigContentHolder());
     assertEquals(UnavailableContent.class, c.getClass());
   }
 
   @Test
+  public void testDoesNotAcquireContentOfItIsTooLong() {
+    final boolean[] isCalled = new boolean[]{false};
+    ContentHolder h = new ContentHolder() {
+      public byte[] getBytes() {
+        isCalled[0] = true;
+        return null;
+      }
+
+      public long getLength() {
+        return bigContentHolder().getLength();
+      }
+    };
+    s.storeContent(h);
+    assertFalse(isCalled[0]);
+  }
+
+  @Test
   public void testPurgingContents() {
-    Content c1 = s.storeContent(b("1"));
-    Content c2 = s.storeContent(b("2"));
-    Content c3 = s.storeContent(b("3"));
+    Content c1 = s.storeContent(ch("1"));
+    Content c2 = s.storeContent(ch("2"));
+    Content c3 = s.storeContent(ch("3"));
     s.purgeContents(Arrays.asList(c1, c3));
 
     assertTrue(s.isContentPurged(c1));
@@ -118,7 +136,7 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testRecreationOfStorageOnLoadingError() {
-    Content c = s.storeContent("abc".getBytes());
+    Content c = s.storeContent(ch("abc"));
     m.myEntryCounter = 10;
     s.store(m);
     s.close();
@@ -129,12 +147,12 @@ public class StorageTest extends TempDirTestCase {
     m = s.load();
     assertEquals(0, m.myEntryCounter);
 
-    assertEquals(c.getId(), s.storeContent("abc".getBytes()).getId());
+    assertEquals(c.getId(), s.storeContent(ch("abc")).getId());
   }
 
   @Test
   public void testRecreationOfStorageOnContentLoadingError() {
-    Content c = s.storeContent("abc".getBytes());
+    Content c = s.storeContent(ch("abc"));
     m.myEntryCounter = 10;
     s.store(m);
     s.close();
@@ -156,7 +174,7 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testThrowingExceptionForGoodContentWhenContentStorageIsBroken() {
-    Content c = s.storeContent("abc".getBytes());
+    Content c = s.storeContent(ch("abc"));
     try {
       s.loadContentData(123);
     }
@@ -173,13 +191,13 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testReturningBrokenContentWhenContentStorageBreaksOnSave() {
-    s.storeContent("abc".getBytes());
+    s.storeContent(ch("abc"));
     s.close();
 
     corruptFile("contents");
     initStorage();
 
-    Content c = s.storeContent("def".getBytes());
+    Content c = s.storeContent(ch("def"));
     assertEquals(UnavailableContent.class, c.getClass());
   }
 
@@ -191,7 +209,7 @@ public class StorageTest extends TempDirTestCase {
     catch (IOException e) {
     }
 
-    Content c = s.storeContent("abc".getBytes());
+    Content c = s.storeContent(ch("abc"));
     assertEquals(UnavailableContent.class, c.getClass());
   }
 

@@ -34,7 +34,7 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     final byte[][] compressed = new byte[1][];
     IContentStorage subject = createStoredBytesRecordingMock(compressed);
 
-    byte[] original = b("public void foo() {} public void foo() {}");
+    byte[] original = "public void foo() {} public void foo() {}".getBytes();
 
     CompressingContentStorage s = new CompressingContentStorage(subject);
     assertEquals(1, s.store(original));

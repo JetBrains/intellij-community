@@ -1,5 +1,6 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.ContentHolder;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -56,21 +57,34 @@ public abstract class ServiceState {
       for (VirtualFile child : f.getChildren()) createRecursively(child);
     }
     else {
-      myVcs.createFile(f.getPath(), physicalContentOf(f), f.getTimeStamp());
+      myVcs.createFile(f.getPath(), contentHolderOf(f), f.getTimeStamp());
     }
   }
 
   public void changeFileContent(VirtualFile f) {
-    myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
+    myVcs.changeFileContent(f.getPath(), contentHolderOf(f), f.getTimeStamp());
   }
 
-  private byte[] physicalContentOf(VirtualFile f) {
-    try {
-      return myGateway.getPhysicalContent(f);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private ContentHolder contentHolderOf(final VirtualFile f) {
+    return new ContentHolder() {
+      public byte[] getBytes() {
+        try {
+          return myGateway.getPhysicalContent(f);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      public long getLength() {
+        try {
+          return myGateway.getPhysicalLength(f);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
   }
 
   public void rename(VirtualFile f, String newName) {

@@ -12,7 +12,7 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
 
   @Test
   public void testCachingOnStore() throws Exception {
-    byte[] c = b("content");
+    byte[] c = "content".getBytes();
 
     expect(subject.store(c)).andReturn(3).times(1);
     replay(subject);
@@ -25,24 +25,24 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
 
   @Test
   public void testCachingOnLoad() throws Exception {
-    expect(subject.load(2)).andReturn(b("content")).times(1);
+    expect(subject.load(2)).andReturn("content".getBytes()).times(1);
     replay(subject);
 
-    assertEquals(b("content"), s.load(2));
-    assertEquals(b("content"), s.load(2));
+    assertEquals("content".getBytes(), s.load(2));
+    assertEquals("content".getBytes(), s.load(2));
 
     verify(subject);
   }
 
   @Test
   public void testRemovingFromCache() throws Exception {
-    expect(subject.load(1)).andReturn(b("content")).times(2);
+    expect(subject.load(1)).andReturn("content".getBytes()).times(2);
     subject.remove(1);
     replay(subject);
 
-    assertEquals(b("content"), s.load(1));
+    assertEquals("content".getBytes(), s.load(1));
     s.remove(1);
-    assertEquals(b("content"), s.load(1));
+    assertEquals("content".getBytes(), s.load(1));
 
     verify(subject);
   }

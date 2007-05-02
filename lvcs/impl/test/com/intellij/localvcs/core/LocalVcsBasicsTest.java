@@ -1,6 +1,5 @@
 package com.intellij.localvcs.core;
 
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.core.storage.UnavailableContent;
 import com.intellij.localvcs.core.tree.Entry;
 import org.junit.Test;
@@ -21,7 +20,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingFile() {
-    vcs.createFile("file", b("content"), 123L);
+    vcs.createFile("file", ch("content"), 123L);
 
     Entry e = vcs.findEntry("file");
 
@@ -32,7 +31,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingLongFiles() {
-    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], 777L);
+    vcs.createFile("file", bigContentHolder(), 777L);
 
     Entry e = vcs.findEntry("file");
 
@@ -60,10 +59,10 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", b("content"), -1);
+    vcs.createFile("file", ch("content"), -1);
     assertEquals(c("content"), vcs.getEntry("file").getContent());
 
-    vcs.changeFileContent("file", b("new content"), -1);
+    vcs.changeFileContent("file", ch("new content"), -1);
     assertEquals(c("new content"), vcs.getEntry("file").getContent());
   }
 
@@ -132,7 +131,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFile() {
-    vcs.createFile("file", b("content"), -1);
+    vcs.createFile("file", ch("content"), -1);
     assertTrue(vcs.hasEntry("file"));
 
     vcs.delete("file");
@@ -143,8 +142,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   public void testDeletingDirectoryWithContent() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir1/dir2");
-    vcs.createFile("dir1/file1", b("content1"), -1);
-    vcs.createFile("dir1/dir2/file2", b("content2"), -1);
+    vcs.createFile("dir1/file1", ch("content1"), -1);
+    vcs.createFile("dir1/dir2/file2", ch("content2"), -1);
 
     vcs.delete("dir1");
     assertFalse(vcs.hasEntry("dir1"));

@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,15 +20,15 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", b(""), -1);
+    vcs.createFile("f", ch(""), -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", b(""), -1);
+    vcs.changeFileContent("f", ch(""), -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", b(""), -1);
+    vcs.changeFileContent("f", ch(""), -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -122,8 +121,8 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCantRevertIfRevisionHasUnavailableContent() {
-    vcs.changeFileContent("f", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
-    vcs.changeFileContent("f", b("current"), -1);
+    vcs.changeFileContent("f", bigContentHolder(), -1);
+    vcs.changeFileContent("f", ch("current"), -1);
 
     m.selectRevisions(1, 1);
     assertFalse(m.canRevert());

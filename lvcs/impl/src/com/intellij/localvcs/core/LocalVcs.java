@@ -102,13 +102,13 @@ public class LocalVcs implements ILocalVcs {
     return myInnerChangeSetCounter > 0;
   }
 
-  public void createFile(String path, byte[] content, long timestamp) {
-    Content c = contentFromString(content);
+  public void createFile(String path, ContentHolder h, long timestamp) {
+    Content c = contentFrom(h);
     applyChange(new CreateFileChange(getNextId(), path, c, timestamp));
   }
 
-  private Content contentFromString(byte[] data) {
-    return myStorage.storeContent(data);
+  private Content contentFrom(ContentHolder h) {
+    return myStorage.storeContent(h);
   }
 
   public void createDirectory(String path) {
@@ -119,8 +119,8 @@ public class LocalVcs implements ILocalVcs {
     return myEntryCounter++;
   }
 
-  public void changeFileContent(String path, byte[] content, long timestamp) {
-    Content c = contentFromString(content);
+  public void changeFileContent(String path, ContentHolder h, long timestamp) {
+    Content c = contentFrom(h);
     applyChange(new ChangeFileContentChange(path, c, timestamp));
   }
 
