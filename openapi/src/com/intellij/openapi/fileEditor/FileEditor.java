@@ -17,8 +17,8 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,6 +124,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * The method is optional. Currently is used only by find usages subsystem
    * @return the location of user focus. Typically it's a caret or any other form of selection start.
    */
+  @Nullable
   FileEditorLocation getCurrentLocation();
 
   @Nullable
