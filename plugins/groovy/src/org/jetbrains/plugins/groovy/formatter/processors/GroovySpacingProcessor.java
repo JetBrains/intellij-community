@@ -4,6 +4,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameters;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import com.intellij.formatting.Spacing;
@@ -46,10 +47,20 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
             RIGHT_BRACES.contains(rightNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
+    // For type parameters
+    if ((mLT.equals(leftNode.getElementType()) || mGT.equals(rightNode.getElementType())) &&
+            leftNode.getPsi().getParent() != null &&
+            leftNode.getPsi().getParent() instanceof GrTypeParameters) {
+      return NO_SPACING_WITH_NEWLINE;
+    }
+
+    if (rightNode.getPsi() != null && rightNode.getPsi() instanceof GrTypeParameters) {
+      return NO_SPACING_WITH_NEWLINE;
+    }
 
 /********** punctuation marks ************/
     // For dots, commas etc.
-    if ((NO_SPACING_NO_NEWLINE_BEFORE.contains(rightNode.getElementType())) ||
+    if ((PUNCTUATION_SIGNS.contains(rightNode.getElementType())) ||
             (mCOLON.equals(rightNode.getElementType()) &&
                     !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
       return NO_SPACING;

@@ -11,7 +11,7 @@ public abstract class SpacingTokens implements GroovyElementTypes {
   protected final static TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
   protected final static TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
 
-  protected final static TokenSet NO_SPACING_NO_NEWLINE_BEFORE = TokenSet.create(mDOT,
+  protected final static TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT,
           mSPREAD_DOT,
           mOPTIONAL_DOT,
           mCOMMA,
