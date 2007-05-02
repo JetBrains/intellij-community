@@ -518,6 +518,7 @@ public abstract class Language {
     myFileType = type;
   }
 
+  @Nullable
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
     return null;
   }

@@ -36,7 +36,7 @@ public abstract class XmlElementVisitor extends JspElementVisitor {
 
   public void visitXmlDecl(XmlDecl decl) {
     visitXmlElement(decl);
-  }
+  }                                    
 
   public void visitXmlDocument(XmlDocument document) {
     visitXmlElement(document);
