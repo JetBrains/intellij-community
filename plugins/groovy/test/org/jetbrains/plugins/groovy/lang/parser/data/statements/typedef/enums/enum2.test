@@ -10,9 +10,8 @@ Groovy script
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')
-      Type element
-        Reference element
-          PsiElement(identifier)('b')
+      Reference element
+        PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')

@@ -15,9 +15,8 @@ Groovy script
         Modifiers
           Annotation
             PsiElement(@)('@')
-            Type element
-              Reference element
-                PsiElement(identifier)('Nullable')
+            Reference element
+              PsiElement(identifier)('Nullable')
           PsiWhiteSpace(' ')
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
@@ -34,9 +33,8 @@ Groovy script
               <empty list>
             Array type
               Array type
-                Type element
-                  Reference element
-                    PsiElement(identifier)('String')
+                Reference element
+                  PsiElement(identifier)('String')
                 PsiElement([)('[')
                 PsiElement(])(']')
               PsiElement([)('[')

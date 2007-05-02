@@ -13,20 +13,19 @@ Groovy script
       NEW expression
         PsiElement(new)('new')
         PsiWhiteSpace(' ')
-        Type element
+        Reference element
           Reference element
             Reference element
               Reference element
                 Reference element
-                  Reference element
-                    PsiElement(identifier)('org')
-                  PsiElement(.)('.')
-                  PsiElement(identifier)('jetbrains')
+                  PsiElement(identifier)('org')
                 PsiElement(.)('.')
-                PsiElement(identifier)('gwtjet')
+                PsiElement(identifier)('jetbrains')
               PsiElement(.)('.')
-              PsiElement(identifier)('groovy')
+              PsiElement(identifier)('gwtjet')
             PsiElement(.)('.')
-            PsiElement(identifier)('GwtBuilder')
+            PsiElement(identifier)('groovy')
+          PsiElement(.)('.')
+          PsiElement(identifier)('GwtBuilder')
         PsiElement(()('(')
         PsiElement())(')')

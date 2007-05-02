@@ -7,16 +7,14 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(static)('static')
     PsiWhiteSpace(' ')
-    Type element
-      Reference element
-        PsiElement(identifier)('a')
+    Reference element
+      PsiElement(identifier)('a')
   PsiElement(new line)('\n')
   Import statement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
-    Type element
-      Reference element
-        PsiElement(identifier)('b')
+    Reference element
+      PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
     PsiElement(as)('as')
     PsiWhiteSpace(' ')

@@ -18,9 +18,8 @@ Groovy script
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')
-      Type element
-        Reference element
-          PsiElement(identifier)('B')
+      Reference element
+        PsiElement(identifier)('B')
     PsiWhiteSpace(' ')
     Enumeration body
       PsiElement({)('{')
@@ -30,9 +29,8 @@ Groovy script
           Modifiers
             Annotation
               PsiElement(@)('@')
-              Type element
-                Reference element
-                  PsiElement(identifier)('Nullable')
+              Reference element
+                PsiElement(identifier)('Nullable')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
@@ -71,9 +69,8 @@ Groovy script
           Modifiers
             Annotation
               PsiElement(@)('@')
-              Type element
-                Reference element
-                  PsiElement(identifier)('Nullable')
+              Reference element
+                PsiElement(identifier)('Nullable')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('bar')
           PsiWhiteSpace(' ')
@@ -93,9 +90,8 @@ Groovy script
               NEW expression
                 PsiElement(new)('new')
                 PsiWhiteSpace(' ')
-                Type element
-                  Reference element
-                    PsiElement(identifier)('Integer')
+                Reference element
+                  PsiElement(identifier)('Integer')
                 PsiElement(()('(')
                 Arguments
                   Literal

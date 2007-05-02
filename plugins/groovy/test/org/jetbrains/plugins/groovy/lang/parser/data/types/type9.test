@@ -18,9 +18,8 @@ Groovy script
         Parameter modifiers
           <empty list>
         Array type
-          Type element
-            Reference element
-              PsiElement(identifier)('String')
+          Reference element
+            PsiElement(identifier)('String')
           PsiElement([)('[')
           PsiElement(])(']')
         PsiWhiteSpace(' ')
