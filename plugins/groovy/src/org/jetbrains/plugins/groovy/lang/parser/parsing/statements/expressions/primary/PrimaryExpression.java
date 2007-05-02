@@ -133,7 +133,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     } else if (mIDENT.equals(builder.getTokenType())) {
-      ReferenceElement.parse(builder);
+      ReferenceElement.parseReferenceElement(builder);
     } else {
       builder.error(GroovyBundle.message("type.specification.expected"));
       marker.done(NEW_EXPRESSION);

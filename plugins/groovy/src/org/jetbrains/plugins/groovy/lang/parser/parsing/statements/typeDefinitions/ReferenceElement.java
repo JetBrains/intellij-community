@@ -32,30 +32,40 @@ public class ReferenceElement implements GroovyElementTypes {
     return parse(builder, false, false, true, false);
   }
 
-  public static GroovyElementType parseForPacakge(PsiBuilder builder) {
+  public static GroovyElementType parseForPackage(PsiBuilder builder) {
     return parse(builder, false, false, false, true);
   }
 
-  public static GroovyElementType parseForTypeArgement(PsiBuilder builder) {
-    //todo: does type arguments can starts only with upper case letters?
+//  public static GroovyElementType parseReferenceElement(PsiBuilder builder) {
+//    return parse(builder, false, true, false, false);
+//  }
+
+  //it doesn't important first letter of identifier of ThrowClause, of Anootation, of UseStatement, of new Expresion, of implements, extends, superclass clauses
+  public static GroovyElementType parseReferenceElement(PsiBuilder builder) {
     return parse(builder, false, true, false, false);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false, true, false, false);
+  public static GroovyElementType parseReferenceElement(PsiBuilder builder, boolean isUpperCase) {
+    return parse(builder, isUpperCase, true, false, false);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
+//  public static GroovyElementType parse(PsiBuilder builder) {
+//    return parse(builder, false, false, false, false);
+//  }
+
+  private static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
-    char firstChar;
-    if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
-    else return WRONGWAY;
+//    char firstChar;
+//    if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
+//    else return WRONGWAY;
 
-    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
-      internalTypeMarker.rollbackTo();
-      return WRONGWAY;
-    }
+//    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
+//      internalTypeMarker.rollbackTo();
+//      return WRONGWAY;
+//    }
+
+    String lastIdentifier = builder.getTokenText();
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
       internalTypeMarker.rollbackTo();
@@ -82,6 +92,8 @@ public class ReferenceElement implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
       }
 
+      lastIdentifier = builder.getTokenText();
+
       if (!ParserUtils.getToken(builder, mIDENT)) {
         internalTypeMarker.rollbackTo();
         return WRONGWAY;
@@ -93,12 +105,38 @@ public class ReferenceElement implements GroovyElementTypes {
       internalTypeMarker = internalTypeMarker.precede();
     }
 
+    char firstChar;
+    if (lastIdentifier != null) firstChar = lastIdentifier.charAt(0);
+    else return WRONGWAY;
+
+    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
+      internalTypeMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
     if (forPackage || forImport) {
       internalTypeMarker.drop();
       return REFERENCE_ELEMENT;
     }
 
-    internalTypeMarker.done(TYPE_ELEMENT);
-    return TYPE_ELEMENT;
+//    internalTypeMarker.done(TYPE_ELEMENT);
+    internalTypeMarker.drop();
+    return REFERENCE_ELEMENT;
   }
+
+//  public static GroovyElementType parseType(PsiBuilder builder) {
+//    return parseType(builder, false);
+//  }
+//
+//  public static GroovyElementType parseType(PsiBuilder builder, boolean isUpperCase) {
+//    PsiBuilder.Marker typeMarker = builder.mark();
+//
+//    if (!REFERENCE_ELEMENT.equals(parseReferenceElement(builder, isUpperCase))) {
+//      typeMarker.rollbackTo();
+//      return WRONGWAY;
+//    }
+//
+//    typeMarker.done(TYPE_ELEMENT);
+//    return TYPE_ELEMENT;
+//  }
 }

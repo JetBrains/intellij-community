@@ -37,7 +37,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       throwClauseMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -45,7 +45,7 @@ public class ThrowClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+      if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
         throwClauseMarker.rollbackTo();
         return WRONGWAY;
       }

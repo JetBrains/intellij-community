@@ -41,7 +41,7 @@ public class Annotation implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       annMarker.rollbackTo();
       return WRONGWAY;
     }

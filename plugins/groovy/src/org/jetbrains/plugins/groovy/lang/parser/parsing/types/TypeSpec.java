@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class TypeSpec implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false);
+    return parse(builder, false); //allow lower and upper case first letter
   }
 
   public static GroovyElementType parse(PsiBuilder builder, boolean isUpper) {
@@ -86,7 +86,7 @@ public class TypeSpec implements GroovyElementTypes {
   private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder, boolean isUpper) {
     PsiBuilder.Marker arrMarker = builder.mark();
 
-    if (WRONGWAY.equals(ReferenceElement.parse(builder, isUpper, true, false, false))) {
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder, isUpper))) {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -94,7 +94,8 @@ public class TypeSpec implements GroovyElementTypes {
     if (mLBRACK.equals(builder.getTokenType())) {
       declarationBracketsParse(builder, arrMarker);
     } else {
-      arrMarker.drop();
+      arrMarker.done(TYPE_SPECIFICATION);
+//      arrMarker.drop();
     }
     return TYPE_SPECIFICATION;
   }
@@ -170,17 +171,16 @@ public class TypeSpec implements GroovyElementTypes {
    */
   private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
-    if (WRONGWAY.equals(ReferenceElement.parse(builder, true, true, false, false))) {
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
     if (mLBRACK.equals(builder.getTokenType())) {
       return declarationBracketsParseStrict(builder, arrMarker);
     } else {
-      arrMarker.drop();
+      arrMarker.done(TYPE_SPECIFICATION);
+//      arrMarker.drop();
       return TYPE_SPECIFICATION;
     }
   }
-
-
 }

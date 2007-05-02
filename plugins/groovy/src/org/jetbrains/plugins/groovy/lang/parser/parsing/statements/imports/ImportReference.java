@@ -39,7 +39,7 @@ public class ImportReference implements GroovyElementTypes {
     ReferenceElement.parseForImport(builder);
 
     if (ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
-            ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) {
+        ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) {
       ParserUtils.getToken(builder, mDOT);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mSTAR);
@@ -49,7 +49,7 @@ public class ImportReference implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, kAS)) {
       ParserUtils.getToken(builder, kAS);
       if (ParserUtils.lookAhead(builder, mNLS, mIDENT) ||
-              ParserUtils.lookAhead(builder, mIDENT)) {
+          ParserUtils.lookAhead(builder, mIDENT)) {
         ParserUtils.getToken(builder, mNLS);
         ParserUtils.getToken(builder, mIDENT);
       } else {
@@ -65,6 +65,4 @@ public class ImportReference implements GroovyElementTypes {
     return IMPORT_REFERENCE;
 
   }
-
-
 }
