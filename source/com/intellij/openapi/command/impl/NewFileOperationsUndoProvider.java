@@ -58,6 +58,7 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   }
 
   private void processEvent(VirtualFileEvent e) {
+    if (shouldNotProcess(e)) return;
     if (isUndoable(e)) {
       createUndoableAction();
     }
@@ -67,11 +68,13 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   }
 
   public void beforeContentsChange(VirtualFileEvent e) {
+    if (shouldNotProcess(e)) return;
     if (isUndoable(e)) return;
     createNonUndoableAction(e);
   }
 
   public void beforeFileDeletion(VirtualFileEvent e) {
+    if (shouldNotProcess(e)) return;
     if (isUndoable(e)) {
       e.getFile().putUserData(DELETE_WAS_UNDOABLE, true);
     }
@@ -89,8 +92,12 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
     }
   }
 
+  private boolean shouldNotProcess(VirtualFileEvent e) {
+    return !LocalHistory.isUnderControl(myProject, e.getFile());
+  }
+
   private boolean isUndoable(VirtualFileEvent e) {
-    return !e.isFromRefresh() && LocalHistory.isUnderControl(myProject, e.getFile());
+    return !e.isFromRefresh();
   }
 
   private void createNonUndoableAction(VirtualFileEvent e) {
