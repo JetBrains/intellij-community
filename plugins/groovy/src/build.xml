@@ -101,8 +101,9 @@
 
     <copy todir="${project.dir}/tempjar/lib">
       <fileset dir="${groovy.lib}">
-        <include name="**/*antlr*.jar"/>
-        <include name="**/*asm*.jar"/>
+        <!--<include name="**/*antlr*.jar"/>-->
+        <!--<include name="**/*asm*.jar"/>-->
+        <include name="**/*.jar"/>
       </fileset>
     </copy>
 
@@ -110,9 +111,9 @@
       <fileset dir="${production.dest}" excludes="**/*build.xml, **/groovy.properties">
       </fileset>
 
-      <fileset dir="${plugin.libs}">
-        <include id="**/*.jar"/>
-      </fileset>
+      <!--<fileset dir="${plugin.libs}">-->
+        <!--<include id="**/*.jar"/>-->
+      <!--</fileset>-->
 
       <fileset dir="${project.dir}/tempjar">
       </fileset>
