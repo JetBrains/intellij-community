@@ -61,7 +61,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     }
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
             mIDENT.equals(builder.getTokenType())) {
-      if (TypeSpec.parseStrict(builder).equals(WRONGWAY)) {
+      if (TypeSpec.parse(builder, false).equals(WRONGWAY)) {
         marker.rollbackTo();
         return WRONGWAY;
       }
