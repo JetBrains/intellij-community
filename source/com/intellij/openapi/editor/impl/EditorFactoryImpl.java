@@ -69,15 +69,19 @@ public class EditorFactoryImpl extends EditorFactory {
   public void validateEditorsAreReleased(Project project) {
     for (Editor editor : myEditors) {
       if (editor.getProject() == project) {
-        final String creator = editor.getUserData(EDITOR_CREATOR);
-        if (creator == null) {
-          LOG.error("Editor for the document with class:" + editor.getClass().getName() +
-                    " and the following text hasn't been released:\n" + editor.getDocument().getText());
-        }
-        else {
-          LOG.error("Editor with class:" + editor.getClass().getName() + " hasn't been released:\n" + creator);
-        }
+        fireEditorNoReleasedError(editor);
       }
+    }
+  }
+
+  public static void fireEditorNoReleasedError(final Editor editor) {
+    final String creator = editor.getUserData(EDITOR_CREATOR);
+    if (creator == null) {
+      LOG.error("Editor for the document with class:" + editor.getClass().getName() +
+                " and the following text hasn't been released:\n" + editor.getDocument().getText());
+    }
+    else {
+      LOG.error("Editor with class:" + editor.getClass().getName() + " hasn't been released:\n" + creator);
     }
   }
 

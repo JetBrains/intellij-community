@@ -1,6 +1,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,12 +30,15 @@ import java.util.List;
  * @author cdr
  */
 public class UsagePreviewPanel extends JPanel implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
   private final UsageViewImpl myUsageView;
+  private final Project myProject;
   private String myTitle;
 
-  public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView) {
+  public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView, final Project project) {
     myUsageView = usageView;
+    myProject = project;
     usageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -71,14 +76,16 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       revalidate();
     }
 
+    final Editor editor = myEditor;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        highlight(infos);
+        highlight(infos, editor);
       }
     });
   }
 
-  private void highlight(final List<UsageInfo> infos) {
+  private void highlight(final List<UsageInfo> infos, final Editor editor) {
+    if (editor != myEditor) return; //already disposed
     myEditor.getMarkupModel().removeAllHighlighters();
     for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there
       UsageInfo info = infos.get(i);
@@ -113,6 +120,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
+  private static final Key<String> PREVIEW_EDITOR_FLAG = Key.create("PREVIEW_EDITOR_FLAG");
   private static Editor createEditor(final PsiFile psiFile, Document document) {
     Project project = psiFile.getProject();
 
@@ -125,12 +133,19 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
 
+    editor.putUserData(PREVIEW_EDITOR_FLAG, "");
     return editor;
   }
 
   public void dispose() {
     releaseEditor();
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) != null) {
+        LOG.error("Editor was not released:"+editor);
+      }
+    }
   }
+
 
   private void releaseEditor() {
     if (myEditor != null) {

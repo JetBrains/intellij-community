@@ -201,7 +201,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-      myUsagePreviewPanel = new UsagePreviewPanel(myTree, this);
+      myUsagePreviewPanel = new UsagePreviewPanel(myTree, this, myProject);
       splitter.setSecondComponent(myUsagePreviewPanel);
       myCentralPanel.add(splitter, BorderLayout.CENTER);
     }
