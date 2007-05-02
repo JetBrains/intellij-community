@@ -22,7 +22,27 @@ public class ResolveClassTest extends ResolveTestCase {
   }
 
   public void testSamePackage() throws Exception {
-    PsiReference ref = configureByFile("samePackage/B.groovy");
+    doTest("samePackage/B.groovy");
+  }
+
+  public void testImplicitImport() throws Exception {
+    doTest("implicitImport/B.groovy");
+  }
+
+  public void testOnDemandImport() throws Exception {
+    doTest("onDemandImport/B.groovy");
+  }
+
+  public void testSimpleImport() throws Exception {
+    doTest("simpleImport/B.groovy");
+  }
+
+  public void testQualifiedName() throws Exception {
+    doTest("qualifiedName/B.groovy");
+  }
+
+  private void doTest(String fileName) throws Exception {
+    PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrTypeDefinition);
   }
