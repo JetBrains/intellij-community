@@ -100,7 +100,7 @@ public class ChangesCacheFile {
         writeHeader();
       }
       myStream.seek(myStream.length());
-      IndexEntry[] entries = readLastIndexEntries(0, 1);
+      IndexEntry[] entries = readLastIndexEntries(0, changes.size());
       // the list and index are sorted in direct chronological order
       Collections.sort(changes, new Comparator<CommittedChangeList>() {
         public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
@@ -115,7 +115,10 @@ public class ChangesCacheFile {
             break;
           }
         }
-        if (duplicate) continue;
+        if (duplicate) {
+          LOG.info("Skipping duplicate changelist " + list.getNumber());
+          continue;
+        }
         LOG.info("Writing incoming changelist " + list.getNumber());
         result.add(list);
         long position = myStream.getFilePointer();

@@ -364,6 +364,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     defaultSettings.setDateAfter(date);
     defaultSettings.USE_DATE_AFTER_FILTER = true;
     List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
+    LOG.info("Loaded " + newChanges.size() + " new changelists");
     newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
     if (newChanges.size() > 0) {
       myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
