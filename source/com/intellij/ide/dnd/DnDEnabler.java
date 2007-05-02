@@ -182,7 +182,6 @@ public class DnDEnabler implements Activatable, Disposable {
             }
           }
           else {
-            myDnDSource.processMouseEvent(e);
             if (!e.isConsumed()) {
               assert e.getComponent() != null : "component is null! IDEADEV-6339";
               final EventListener[][] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()][]);
