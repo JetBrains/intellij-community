@@ -2,6 +2,6 @@ class C{
 def foo(){}
 }
 -----
-class C{
-  def foo(){}
+class C {
+  def foo() {}
 }

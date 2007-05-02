@@ -5,7 +5,7 @@ switch (x){
   }
 }
 -----
-switch (x){
+switch (x) {
   case 1:
     {
       foo

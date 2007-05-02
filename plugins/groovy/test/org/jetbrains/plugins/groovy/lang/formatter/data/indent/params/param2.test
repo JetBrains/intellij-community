@@ -5,7 +5,7 @@ def boo = {def a,
 }
 -----
 def boo = {def a,
-           def int b ,
+           def int b,
            def final c ->
-  a+b+c
+  a + b + c
 }

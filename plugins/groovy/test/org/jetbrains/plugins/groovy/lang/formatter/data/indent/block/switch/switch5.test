@@ -5,7 +5,7 @@ switch (x) {
 }
 -----
 switch (x) {
-  case 1:{
+  case 1: {
     println it
   }
 }
