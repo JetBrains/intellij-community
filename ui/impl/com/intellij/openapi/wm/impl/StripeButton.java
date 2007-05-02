@@ -166,6 +166,15 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   }
 
   protected void processMouseEvent(final MouseEvent e) {
+    if (e.isPopupTrigger()) return;
+
+    if (e.getButton() == MouseEvent.BUTTON2) {
+      myDecorator.fireHiddenSide();
+      return;
+    }
+
+    if (e.getButton() != MouseEvent.BUTTON1) return;
+
     if (MouseEvent.MOUSE_PRESSED == e.getID()) {
       myPressedPoint = e.getPoint();
       myPressedWhenSelected = isSelected();
