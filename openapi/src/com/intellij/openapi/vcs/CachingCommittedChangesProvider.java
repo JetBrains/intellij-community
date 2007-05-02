@@ -18,10 +18,12 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -37,4 +39,15 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    * @return true if number limit is supported, false otherwise.
    */
   boolean isMaxCountSupported();
+
+  /**
+   * Returns the list of files under the specified repository root which may contain incoming changes.
+   * This method is an optional optimization: if null is returned, all files are checked through DiffProvider
+   * in a regular way.
+   *
+   * @param location the location where changes are requested.
+   * @return the files which may contain the changes, or null if the call is not supported.
+   */
+  @Nullable
+  Collection<FilePath> getIncomingFiles(final RepositoryLocation location);
 }

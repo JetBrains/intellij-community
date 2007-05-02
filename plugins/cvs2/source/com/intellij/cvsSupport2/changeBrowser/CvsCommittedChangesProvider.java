@@ -31,10 +31,7 @@ import java.io.File;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.DataInput;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
@@ -139,5 +136,9 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public boolean isMaxCountSupported() {
     return false;
+  }
+
+  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
+    return null;
   }
 }

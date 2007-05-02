@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -519,6 +520,7 @@ public class ChangesCacheFile {
   public boolean refreshIncomingChanges() throws IOException {
     final DiffProvider diffProvider = myVcs.getDiffProvider();
     if (diffProvider == null) return false;
+    final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
     boolean anyChanges = false;
     openStreams();
     loadHeader();
@@ -538,7 +540,7 @@ public class ChangesCacheFile {
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
-          final boolean changeFound = processIncomingChange(change, data, currentRevisions, deletedFiles, createdFiles);
+          final boolean changeFound = processIncomingChange(change, data, currentRevisions, incomingFiles, deletedFiles, createdFiles);
           if (changeFound) {
             data.accountedChanges.add(change);
           }
@@ -562,6 +564,7 @@ public class ChangesCacheFile {
   private static boolean processIncomingChange(final Change change,
                                                final IncomingChangeListData data,
                                                final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
+                                               @Nullable final Collection<FilePath> incomingFiles,
                                                final Set<FilePath> deletedFiles,
                                                final Set<FilePath> createdFiles) {
     ContentRevision afterRevision = change.getAfterRevision();
@@ -574,6 +577,10 @@ public class ChangesCacheFile {
         final FilePath path = afterRevision.getFile();
         LOG.info("Marking created file " + path);
         createdFiles.add(path);
+      }
+      if (incomingFiles != null && !incomingFiles.contains(afterRevision.getFile())) {
+        LOG.info("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
+        return true;
       }
       afterRevision.getFile().refresh();
       LOG.info("Checking file " + afterRevision.getFile().getPath());
@@ -604,6 +611,10 @@ public class ChangesCacheFile {
       assert beforeRevision != null;
       LOG.info("Checking deleted file " + beforeRevision.getFile());
       deletedFiles.add(beforeRevision.getFile());
+      if (incomingFiles != null && !incomingFiles.contains(beforeRevision.getFile())) {
+        LOG.info("Skipping deleted file outside of incoming files: " + beforeRevision.getFile());
+        return true;
+      }
       beforeRevision.getFile().refresh();
       if (beforeRevision.getFile().getVirtualFile() == null || createdFiles.contains(beforeRevision.getFile())) {
         // file has already been deleted
