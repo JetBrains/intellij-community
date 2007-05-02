@@ -31,7 +31,7 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
 
   private CompositeCommittable myComponent;
 
-  protected DomUINavigationProvider(final CompositeCommittable component) {
+  public DomUINavigationProvider(final CompositeCommittable component) {
     myComponent = component;
   }
 

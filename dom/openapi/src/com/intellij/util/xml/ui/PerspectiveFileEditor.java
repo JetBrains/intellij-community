@@ -243,7 +243,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  protected final boolean checkIsValid() {
+  protected boolean checkIsValid() {
     if (!myInvalidated && !isValid()) {
       myInvalidated = true;
       myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
