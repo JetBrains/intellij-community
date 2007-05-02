@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.GroovyLoader;
@@ -54,7 +55,11 @@ public class ResolveClassTest extends ResolveTestCase {
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
     assertNotNull(root);
     ContentEntry contentEntry = rootModel.addContentEntry(root);
-    contentEntry.addSourceFolder(root, false);
+    //rootModel.setJdk(JavaSdkImpl.getMockJdk15(""));
+    String testName = getTestName(true);
+    VirtualFile sourceRoot = root.findChild(testName);
+    assertNotNull(sourceRoot);
+    contentEntry.addSourceFolder(sourceRoot, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();
