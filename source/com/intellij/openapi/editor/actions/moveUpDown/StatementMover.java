@@ -51,7 +51,8 @@ class StatementMover extends LineMover {
                                   document.getLineNumber(blockChild.getTextRange().getStartOffset()));
         }
         else {
-          toMove2 = new LineRange(newCodeBlock.getRBrace(), newCodeBlock.getRBrace(), document);
+          int start = document.getLineNumber(newCodeBlock.getRBrace().getTextRange().getStartOffset());
+          toMove2 = new LineRange(start, toMove.startLine);
         }
       }
       catch (IncorrectOperationException e) {
