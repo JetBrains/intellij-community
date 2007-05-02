@@ -20,7 +20,7 @@
 
   <property name="production.dest" location="${project.dir}/classes/production/Groovy"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
-  <property name="idea.lib" value="${idea.dir}/lib"/>
+  <property name="idea.lib" location="${idea.dir}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <!--<property name="plugin.libs" value="${project.dir}/lib/special"/>-->
   <property name="test.dir" value="${project.dir}/test"/>
