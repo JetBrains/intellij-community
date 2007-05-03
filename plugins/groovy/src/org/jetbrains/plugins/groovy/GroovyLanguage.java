@@ -21,68 +21,78 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
+import org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider;
 import org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder;
 import org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher;
 import org.jetbrains.plugins.groovy.highlighter.GroovyCommenter;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
-import org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesrovider;
 
 /**
  * All main properties for Groovy language
  *
  * @author Ilya.Sergey
  */
-public class GroovyLanguage extends Language {
-  public GroovyLanguage() {
+public class GroovyLanguage extends Language
+{
+  public GroovyLanguage()
+  {
     super("Groovy");
   }
 
-  public ParserDefinition getParserDefinition() {
+  public ParserDefinition getParserDefinition()
+  {
     return new GroovyParserDefinition();
   }
 
-  public FoldingBuilder getFoldingBuilder() {
+  public FoldingBuilder getFoldingBuilder()
+  {
     return new GroovyFoldingBuilder();
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile)
+  {
     return new GroovySyntaxHighlighter();
   }
 
   @Nullable
-  public Commenter getCommenter() {
+  public Commenter getCommenter()
+  {
     return new GroovyCommenter();
   }
 
   @Nullable
-  public Annotator getAnnotator() {
+  public Annotator getAnnotator()
+  {
     return GroovyAnnotator.INSTANCE;
   }
 
   @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    return GroovyFindUsagesrovider.INSTANCE;
+  public FindUsagesProvider getFindUsagesProvider()
+  {
+    return GroovyFindUsagesProvider.INSTANCE;
   }
 
   @Nullable
-  public FormattingModelBuilder getFormattingModelBuilder() {
+  public FormattingModelBuilder getFormattingModelBuilder()
+  {
     return new GroovyFormattingModelBuilder();
   }
 
   @Nullable
-  public PairedBraceMatcher getPairedBraceMatcher() {
+  public PairedBraceMatcher getPairedBraceMatcher()
+  {
     return new GroovyBraceMatcher();
   }
 

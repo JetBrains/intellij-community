@@ -17,54 +17,63 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lexer.Lexer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author ven
  */
-public class GroovyFindUsagesrovider implements FindUsagesProvider {
-  private static class WordsScanner extends DefaultWordsScanner {
-    public WordsScanner() {
+public class GroovyFindUsagesProvider implements FindUsagesProvider
+{
+  private static class WordsScanner extends DefaultWordsScanner
+  {
+    public WordsScanner()
+    {
       super(new GroovyLexer(), GroovyElementTypes.IDENTIFIER_SET, GroovyElementTypes.COMMENT_SET, GroovyElementTypes.STRING_LITERAL_SET);
     }
   }
 
-  public static final GroovyFindUsagesrovider INSTANCE = new GroovyFindUsagesrovider();
+  public static final GroovyFindUsagesProvider INSTANCE = new GroovyFindUsagesProvider();
 
-  private GroovyFindUsagesrovider() {
+  private GroovyFindUsagesProvider()
+  {
   }
 
   @Nullable
-  public WordsScanner getWordsScanner() {
+  public WordsScanner getWordsScanner()
+  {
     return new WordsScanner();
   }
 
-  public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
+  public boolean canFindUsagesFor(@NotNull PsiElement psiElement)
+  {
     return psiElement instanceof PsiClass; //todo other cases
   }
 
   @Nullable
-  public String getHelpId(@NotNull PsiElement psiElement) {
+  public String getHelpId(@NotNull PsiElement psiElement)
+  {
     return null;
   }
 
   @NotNull
-  public String getType(@NotNull PsiElement element) {
+  public String getType(@NotNull PsiElement element)
+  {
     if (element instanceof PsiClass) return "class";
     return "";
   }
 
   @NotNull
-  public String getDescriptiveName(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      String qName =  aClass.getQualifiedName();
+  public String getDescriptiveName(@NotNull PsiElement element)
+  {
+    if (element instanceof PsiClass)
+    {
+      final PsiClass aClass = (PsiClass) element;
+      String qName = aClass.getQualifiedName();
       return qName == null ? "" : qName;
     }
 
@@ -72,11 +81,14 @@ public class GroovyFindUsagesrovider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-    if (element instanceof PsiClass) {
-      String name = ((PsiClass)element).getQualifiedName();
-      if (name == null || !useFullName) {
-        name = ((PsiClass)element).getName();
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName)
+  {
+    if (element instanceof PsiClass)
+    {
+      String name = ((PsiClass) element).getQualifiedName();
+      if (name == null || !useFullName)
+      {
+        name = ((PsiClass) element).getName();
       }
       if (name != null) return name;
     }
