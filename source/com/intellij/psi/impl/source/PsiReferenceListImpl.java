@@ -64,7 +64,8 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    PsiClassType[] types = myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get();
+    Reference<PsiClassType[]> repositoryTypesRef = myRepositoryTypesRef;
+    PsiClassType[] types = repositoryTypesRef == null ? null : repositoryTypesRef.get();
     if (types == null) {
       ASTNode treeElement = getTreeElement();
       final PsiElementFactory factory = getManager().getElementFactory();
