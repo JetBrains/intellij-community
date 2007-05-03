@@ -10,6 +10,7 @@ import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlAttlistDecl;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttlistDeclImpl");
 
   public XmlAttlistDeclImpl() {
-    super(XML_ATTLIST_DECL);
+    super(XmlElementType.XML_ATTLIST_DECL);
   }
 
   public int getChildRole(ASTNode child) {

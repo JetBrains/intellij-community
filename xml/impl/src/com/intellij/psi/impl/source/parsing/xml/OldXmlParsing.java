@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CharTable;
 import com.intellij.xml.XmlBundle;
@@ -24,7 +25,7 @@ import java.util.Set;
 /**
  * @author Mike
  */
-public class OldXmlParsing implements ElementType {
+public class OldXmlParsing implements ElementType, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.xml.XmlParser");
 
   public static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET =
@@ -124,7 +125,7 @@ public class OldXmlParsing implements ElementType {
   }
 
   public TreeElement parseNotationDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(ElementType.XML_NOTATION_DECL);
+    CompositeElement decl = Factory.createCompositeElement(XML_NOTATION_DECL);
 
     if (lexer.getTokenType() != XML_NOTATION_DECL_START) {
       return decl;
@@ -146,7 +147,7 @@ public class OldXmlParsing implements ElementType {
   }
 
   private TreeElement parseEntityDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(ElementType.XML_ENTITY_DECL);
+    CompositeElement decl = Factory.createCompositeElement(XML_ENTITY_DECL);
 
     if (lexer.getTokenType() != XML_ENTITY_DECL_START) {
       return decl;
@@ -494,7 +495,7 @@ public class OldXmlParsing implements ElementType {
   }
 
   private TreeElement parseElementDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(ElementType.XML_ELEMENT_DECL);
+    CompositeElement decl = Factory.createCompositeElement(XML_ELEMENT_DECL);
 
     if (lexer.getTokenType() != XML_ELEMENT_DECL_START) {
       return decl;
@@ -676,7 +677,7 @@ public class OldXmlParsing implements ElementType {
       return false;
     }
 
-    CompositeElement decl = Factory.createCompositeElement(ElementType.XML_ATTRIBUTE_DECL);
+    CompositeElement decl = Factory.createCompositeElement(XML_ATTRIBUTE_DECL);
     TreeUtil.addChildren(parent, decl);
 
     addToken(decl, lexer);
@@ -945,7 +946,7 @@ public class OldXmlParsing implements ElementType {
     }
 
     private TreeElement parseComment(Lexer lexer, ParsingContext context) {
-      final CompositeElement comment = Factory.createCompositeElement(ElementType.XML_COMMENT);
+      final CompositeElement comment = Factory.createCompositeElement(XML_COMMENT);
 
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
         final TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());

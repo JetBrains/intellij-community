@@ -37,12 +37,15 @@ public interface XmlElementType {
   IElementType XML_CDATA = new IXmlElementType("XML_CDATA");
   IElementType XML_DTD_DECL = new IXmlElementType("XML_DTD_DECL");
   IElementType XML_WHITE_SPACE_HOLDER = new IXmlElementType("XML_WHITE_SPACE_HOLDER");
+
+  //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
   IElementType HTML_TAG = new IXmlElementType("HTML_TAG");
+  IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML);
+
   IElementType XML_TEXT = new IXmlElementType("XML_TEXT");
 
 
-  IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML);
   IFileElementType XML_FILE = new IFileElementType(StdLanguages.XML);
   IElementType XHTML_FILE = new IFileElementType(StdLanguages.XHTML);
 

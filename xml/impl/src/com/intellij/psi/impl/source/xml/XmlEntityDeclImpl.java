@@ -14,7 +14,10 @@ import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -26,7 +29,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
+public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlEntityDeclImpl");
 
   public XmlEntityDeclImpl() {
@@ -48,14 +51,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   public XmlAttributeValue getValueElement() {
     if (isInternalReference()) {
       for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
-        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+        if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
           return (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
         }
       }
     }
     else {
       for (ASTNode e = getLastChildNode(); e != null; e = e.getTreePrev()) {
-        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+        if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
           return (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
         }
       }

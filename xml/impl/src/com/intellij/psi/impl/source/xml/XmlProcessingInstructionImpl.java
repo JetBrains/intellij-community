@@ -8,17 +8,17 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlProcessingInstructionImpl extends XmlElementImpl implements XmlProcessingInstruction {
   public XmlProcessingInstructionImpl() {
-    super(XML_PROCESSING_INSTRUCTION);
+    super(XmlElementType.XML_PROCESSING_INSTRUCTION);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

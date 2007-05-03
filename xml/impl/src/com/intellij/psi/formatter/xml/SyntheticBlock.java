@@ -1,13 +1,17 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.jsp.JspElementType;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -77,7 +81,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
       return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (type2 == ElementType.XML_ATTRIBUTE) {
+    if (type2 == XmlElementType.XML_ATTRIBUTE) {
       return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
@@ -129,7 +133,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   }
 
   private boolean isEntityRef(final ASTNode node) {
-    return node.getElementType() == ElementType.XML_ENTITY_REF;
+    return node.getElementType() == XmlElementType.XML_ENTITY_REF;
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {
@@ -154,7 +158,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   }
 
   private boolean isTextFragment(final ASTNode node) {
-    return node.getTreeParent().getElementType() == ElementType.XML_TEXT
+    return node.getTreeParent().getElementType() == XmlElementType.XML_TEXT
            || node.getElementType() == ElementType.XML_DATA_CHARACTERS
            || node.getElementType() == JspElementType.JSP_SCRIPTLET
            || node.getElementType() == JspElementType.JSP_DECLARATION

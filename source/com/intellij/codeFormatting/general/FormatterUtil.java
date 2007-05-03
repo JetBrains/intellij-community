@@ -37,13 +37,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
@@ -243,8 +243,8 @@ public class FormatterUtil {
   private static boolean isInsideTagBody(ASTNode place) {
     final ASTNode treeParent = place.getTreeParent();
     if(treeParent instanceof JspXmlRootTag) return true;
-    if(treeParent.getElementType() != ElementType.XML_TAG
-       && treeParent.getElementType() != ElementType.HTML_TAG) return false;
+    if(treeParent.getElementType() != XmlElementType.XML_TAG
+       && treeParent.getElementType() != XmlElementType.HTML_TAG) return false;
     while(place != null){
       if(place.getElementType() == XmlTokenType.XML_TAG_END) return true;
       place = place.getTreePrev();
@@ -373,7 +373,7 @@ public class FormatterUtil {
 
   public static void delete(final ASTNode prevElement) {
     final ASTNode treeParent = prevElement.getTreeParent();
-    if (treeParent.getElementType() == ElementType.XML_TEXT && treeParent.getTextRange().equals(prevElement.getTextRange())) {
+    if (treeParent.getElementType() == XmlElementType.XML_TEXT && treeParent.getTextRange().equals(prevElement.getTextRange())) {
       delete(treeParent);
     } else {
       treeParent.removeRange(prevElement, prevElement.getTreeNext());
@@ -383,22 +383,22 @@ public class FormatterUtil {
   public static boolean join(final ASTNode node1, final ASTNode node2) {
     if (node1 == null || node2 == null) return false;
 
-    if (node1.getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
+    if (node1.getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
       joinXmlTexts(node1, node2);
       return true;
     }
 
-    if (node1.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getTreeParent().getElementType() == ElementType.XML_TEXT) {
+    if (node1.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getTreeParent().getElementType() == XmlElementType.XML_TEXT) {
       joinXmlTexts(node1.getTreeParent(), node2.getTreeParent());
       return true;
     }
 
-    else if (node1.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
+    else if (node1.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
       joinXmlTexts(node1.getTreeParent(), node2);
       return true;
     }
 
-    else if (node2.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
+    else if (node2.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
       joinXmlTexts(node1, node2.getTreeParent());
       return true;
     }

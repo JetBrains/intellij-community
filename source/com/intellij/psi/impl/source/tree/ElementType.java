@@ -6,18 +6,14 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.xml.dtd.DTDElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 
 public interface ElementType extends
                              TokenTypeEx,
-                             DTDElementType,
                              JavaElementType,
-                             JavaDocElementType,
-                             XmlElementType {
+                             JavaDocElementType {
   IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
   IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
@@ -29,9 +25,6 @@ public interface ElementType extends
   TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
   TokenSet JAVA_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaTokenType.DOC_COMMENT, JavaDocElementType.DOC_COMMENT);
 
-  TokenSet COMMENT_BIT_SET = TokenSet.orSet(JAVA_COMMENT_BIT_SET, TokenSet.create(JspElementType.JSP_COMMENT, XML_COMMENT));
-
-  TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(WHITE_SPACE_BIT_SET, COMMENT_BIT_SET);
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET = TokenSet.create(ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD, CATCH_KEYWORD, CHAR_KEYWORD, CLASS_KEYWORD,

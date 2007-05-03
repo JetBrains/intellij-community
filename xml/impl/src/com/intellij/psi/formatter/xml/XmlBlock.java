@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +51,11 @@ public class XmlBlock extends AbstractXmlBlock {
 
   protected List<Block> buildChildren() {
 
-    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == ElementType.XML_COMMENT) {
+    if (myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == XmlElementType.XML_COMMENT) {
       return EMPTY;
     }
 
-    if (myNode.getElementType() == ElementType.XML_TEXT) {
+    if (myNode.getElementType() == XmlElementType.XML_TEXT) {
       if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
         return EMPTY;
       }
@@ -89,13 +90,13 @@ public class XmlBlock extends AbstractXmlBlock {
 
   @Nullable
   private Indent getChildDefaultIndent() {
-    if (myNode.getElementType() == ElementType.HTML_DOCUMENT) {
+    if (myNode.getElementType() == XmlElementType.HTML_DOCUMENT) {
       return Indent.getNoneIndent();
     }
     if (myNode.getElementType() == ElementType.DUMMY_HOLDER) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == ElementType.XML_PROLOG) {
+    if (myNode.getElementType() == XmlElementType.XML_PROLOG) {
       return Indent.getNoneIndent();
     }
     if (myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
@@ -124,7 +125,7 @@ public class XmlBlock extends AbstractXmlBlock {
     final ASTNode node2 = ((AbstractBlock)child2).getNode();
     final IElementType type2 = node2.getElementType();
 
-    if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
@@ -140,19 +141,19 @@ public class XmlBlock extends AbstractXmlBlock {
 
     }
 
-    if (elementType == ElementType.XML_TEXT) {
+    if (elementType == XmlElementType.XML_TEXT) {
       return getSpacesInsideText(type1, type2);
 
     }
-    else if (elementType == ElementType.XML_ATTRIBUTE) {
+    else if (elementType == XmlElementType.XML_ATTRIBUTE) {
       return getSpacesInsideAttribute(type1, type2);
     }
 
-    if (type1 == ElementType.XML_PROLOG) {
+    if (type1 == XmlElementType.XML_PROLOG) {
       return createDefaultSpace(true, false);
     }
 
-    if (elementType == ElementType.XML_DOCTYPE) {
+    if (elementType == XmlElementType.XML_DOCTYPE) {
       return createDefaultSpace(true, false);
     }
 
@@ -181,7 +182,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public Indent getIndent() {
-    if (myNode.getElementType() == ElementType.XML_PROLOG || myNode.getElementType() == ElementType.XML_DOCTYPE ||
+    if (myNode.getElementType() == XmlElementType.XML_PROLOG || myNode.getElementType() == XmlElementType.XML_DOCTYPE ||
         SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return Indent.getNoneIndent();
     }
@@ -233,7 +234,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public boolean isTextElement() {
-    return myNode.getElementType() == ElementType.XML_TEXT || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS ||
+    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS ||
            myNode.getElementType() == ElementType.XML_CHAR_ENTITY_REF;
   }
 

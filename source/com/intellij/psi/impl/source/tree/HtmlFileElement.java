@@ -1,9 +1,10 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.xml.XmlElementType;
 
-public class HtmlFileElement extends FileElement{
+public class HtmlFileElement extends FileElement implements XmlElementType  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.HtmlFileElement");
 
   public HtmlFileElement() {

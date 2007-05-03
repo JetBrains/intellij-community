@@ -8,17 +8,14 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlEnumeratedType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
  */
-public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
+public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeDeclImpl");
   @NonNls private static final String ID_ATT = "ID";
   @NonNls private static final String IDREF_ATT = "IDREF";

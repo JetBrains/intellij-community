@@ -19,13 +19,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
-public class XmlFileImpl extends PsiFileImpl implements XmlFile {
+public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType {
   public XmlFileImpl(FileViewProvider viewProvider) {
     super(getElementType(viewProvider), getElementType(viewProvider), viewProvider);
   }

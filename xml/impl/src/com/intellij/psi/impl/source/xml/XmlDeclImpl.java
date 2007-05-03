@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.xml.XmlDecl;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlDeclImpl extends XmlElementImpl implements XmlDecl{
   public XmlDeclImpl() {
-    super(XML_DECL);
+    super(XmlElementType.XML_DECL);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

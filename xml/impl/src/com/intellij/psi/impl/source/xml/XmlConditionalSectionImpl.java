@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlEntityRef;
-import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * Time: 6:55:25 PM
  * To change this template use File | Settings | File Templates.
  */
-public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlConditionalSection {
+public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlConditionalSection, XmlElementType {
   public XmlConditionalSectionImpl() {
     super(XML_CONDITIONAL_SECTION);
   }
@@ -50,7 +50,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
             
             if(decl.isInternalReference()) {
               for (ASTNode e = decl.getNode().getFirstChildNode(); e != null; e = e.getTreeNext()) {
-                if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+                if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
                   return StringUtil.stripQuotesAroundValue(e.getText()).equals("INCLUDE");
                 }
               }

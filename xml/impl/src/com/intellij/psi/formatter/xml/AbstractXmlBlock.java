@@ -12,7 +12,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -23,11 +22,13 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,10 +67,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
-    if (myNode.getElementType() == ElementType.XML_TEXT) return getAlignment();
+    if (myNode.getElementType() == XmlElementType.XML_TEXT) return getAlignment();
     final IElementType elementType = child.getElementType();
-    if (elementType == ElementType.XML_ATTRIBUTE && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
-    if (elementType == ElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
+    if (elementType == XmlElementType.XML_ATTRIBUTE && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
+    if (elementType == XmlElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
     return null;
   }
 
@@ -78,9 +79,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
-    if (myNode.getElementType() == ElementType.XML_TEXT) return textWrap;
+    if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
     final IElementType elementType = child.getElementType();
-    if (elementType == ElementType.XML_ATTRIBUTE) return attrWrap;
+    if (elementType == XmlElementType.XML_ATTRIBUTE) return attrWrap;
     if (elementType == ElementType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == ElementType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
@@ -92,7 +93,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == ElementType.XML_TEXT || elementType == ElementType.XML_DATA_CHARACTERS) return textWrap;
+    if (elementType == XmlElementType.XML_TEXT || elementType == ElementType.XML_DATA_CHARACTERS) return textWrap;
     return null;
   }
 
@@ -287,7 +288,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                             final Wrap wrap, final Alignment alignment) {
     Indent childIndent = indent;
 
-    if (myNode.getElementType() == ElementType.HTML_DOCUMENT
+    if (myNode.getElementType() == XmlElementType.HTML_DOCUMENT
         && tag.getParent() instanceof XmlTag
         && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())) {
       childIndent = Indent.getNormalIndent();
@@ -347,7 +348,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return myXmlFormattingPolicy.processJsp()
            && PsiUtil.getJspFile(myNode.getPsi()) != null
-           && (isXmlTag(myNode) || myNode.getElementType() == ElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
+           && (isXmlTag(myNode) || myNode.getElementType() == XmlElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
            (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == JspElementType.JSP_XML_TEXT ||
             child.getPsi() instanceof OuterLanguageElement);
 
@@ -372,10 +373,10 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {
-    if (child.getElementType() != ElementType.XML_TEXT) return false;
+    if (child.getElementType() != XmlElementType.XML_TEXT) return false;
     final ASTNode treeParent = child.getTreeParent();
     if (treeParent == null) return false;
-    if (treeParent.getElementType() != ElementType.XML_TAG) return false;
+    if (treeParent.getElementType() != XmlElementType.XML_TAG) return false;
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(treeParent);
     final String name = ((XmlTag)psiElement).getName();
     if (!(Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME)

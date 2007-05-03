@@ -19,6 +19,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -30,7 +31,7 @@ import java.util.List;
 /**
  *
  */
-public class Factory implements Constants {
+public class Factory implements Constants, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.Factory");
 
   private static final List<TreeElementFactory> ourElementFactories = new ArrayList<TreeElementFactory>();

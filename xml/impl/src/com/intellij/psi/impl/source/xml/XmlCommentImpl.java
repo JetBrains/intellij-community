@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike
  */
-public class XmlCommentImpl extends XmlElementImpl implements XmlComment {
+public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType {
   public XmlCommentImpl() {
     super(XML_COMMENT);
   }

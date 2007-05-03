@@ -45,7 +45,7 @@ import java.util.*;
  * @author Mike
  */
 
-public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, ModificationTracker */{
+public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType/*, ModificationTracker */{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
   private static final Class ourReferenceClass = XmlTag.class;
 

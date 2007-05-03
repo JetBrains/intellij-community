@@ -22,7 +22,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDoctypeImpl");
 
   public XmlDoctypeImpl() {
-    super(XML_DOCTYPE);
+    super(XmlElementType.XML_DOCTYPE);
   }
 
   public void clearCaches() {

@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * @author Mike
  */
-public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
+public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
 
   public XmlDocumentImpl() {

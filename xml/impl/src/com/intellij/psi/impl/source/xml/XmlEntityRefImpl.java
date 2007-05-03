@@ -29,7 +29,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   @NonNls private static final String QUOT_ENTITY = "&quot;";
 
   public XmlEntityRefImpl() {
-    super(XML_ENTITY_REF);
+    super(XmlElementType.XML_ENTITY_REF);
   }
 
   private static final Key<String> EVALUATION_IN_PROCESS = Key.create("EvalKey");

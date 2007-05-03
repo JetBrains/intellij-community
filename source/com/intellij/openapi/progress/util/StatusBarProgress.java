@@ -1,15 +1,14 @@
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import java.util.Iterator;
 
 public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
@@ -21,23 +20,21 @@ public class StatusBarProgress extends ProgressIndicatorBase {
       new Runnable() {
         public void run() {
           if (ApplicationManager.getApplication().isDisposed()) return;
+          final WindowManager windowManager = WindowManager.getInstance();
+          if (windowManager == null) return;
+
           Project[] projects=ProjectManager.getInstance().getOpenProjects();
           if(projects.length==0){
             projects=new Project[]{null};
           }
-          for(int i=0;i<projects.length;i++){
-            Project project=projects[i];
-            final WindowManager windowManager = WindowManager.getInstance();
-            if (windowManager != null) {
-              final StatusBarEx statusBar = (StatusBarEx) windowManager.getStatusBar(project);
-              if (statusBar != null) {
-                String info = statusBar.getInfo();
-                if (info == null) {
-                  info = "";
-                }
-                myStatusBar2SavedText.put(statusBar, new Pair<String, String>(info, info)); // initial value
-              }
-            }
+
+          for (Project project : projects) {
+            final StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
+            if (statusBar == null) continue;
+
+            String info = statusBar.getInfo();
+            if (info == null) info = "";
+            myStatusBar2SavedText.put(statusBar, new Pair<String, String>(info, info)); // initial value
           }
         }
       }
@@ -49,8 +46,7 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     SwingUtilities.invokeLater (
       new Runnable() {
         public void run() {
-          for(Iterator<StatusBarEx> i = myStatusBar2SavedText.keySet().iterator();i.hasNext();){
-            final StatusBarEx statusBar = i.next();
+          for (final StatusBarEx statusBar : myStatusBar2SavedText.keySet()) {
             final String textToRestore = updateRestoreText(statusBar);
             statusBar.setInfo(textToRestore);
           }
@@ -86,8 +82,8 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     SwingUtilities.invokeLater (
       new Runnable() {
         public void run() {
-          for(Iterator<StatusBarEx> i = myStatusBar2SavedText.keySet().iterator();i.hasNext();){
-            setStatusBarText(i.next(), text1);
+          for (final StatusBarEx statusBarEx : myStatusBar2SavedText.keySet()) {
+            setStatusBarText(statusBarEx, text1);
           }
         }
       }

@@ -1,25 +1,25 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
-public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl {
+public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementDeclImpl");
 
   public XmlElementDeclImpl() {

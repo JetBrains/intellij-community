@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +18,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementContentSpecImpl");
 
   public XmlElementContentSpecImpl() {
-    super(XML_ELEMENT_CONTENT_SPEC);
+    super(XmlElementType.XML_ELEMENT_CONTENT_SPEC);
   }
 
   public int getChildRole(ASTNode child) {

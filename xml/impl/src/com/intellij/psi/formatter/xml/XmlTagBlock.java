@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
   protected
   @Nullable
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
-    if (child.getElementType() == ElementType.XML_TEXT) {
+    if (child.getElementType() == XmlElementType.XML_TEXT) {
       return createXmlTextBlocks(result, child, wrap, alignment);
     } else {
       return super.processChild(result, child, wrap, alignment, indent);

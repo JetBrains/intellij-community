@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 
@@ -73,12 +74,12 @@ public abstract class AbstractSyntheticBlock implements Block{
     if (type1 == ElementType.XML_END_TAG_START && type2 == ElementType.XML_NAME) return true;
     if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_TAG_END) return true;
     if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
-    if (type1 == ElementType.XML_ATTRIBUTE && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
-    return type1 == ElementType.XML_ATTRIBUTE && type2 == ElementType.XML_TAG_END;
+    if (type1 == XmlElementType.XML_ATTRIBUTE && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
+    return type1 == XmlElementType.XML_ATTRIBUTE && type2 == ElementType.XML_TAG_END;
   }
 
   public boolean endsWithText() {
-    return myEndTreeNode.getElementType() == ElementType.XML_TEXT || myEndTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT || myEndTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean isTagDescription() {
@@ -91,7 +92,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public boolean startsWithText() {
-    return myStartTreeNode.getElementType() == ElementType.XML_TEXT || myStartTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT || myStartTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean endsWithTextElement() {
@@ -172,7 +173,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   private boolean isCDATA(final ASTNode node) {
-    return node != null && node.getElementType() == ElementType.XML_CDATA;
+    return node != null && node.getElementType() == XmlElementType.XML_CDATA;
   }
 
   public boolean endsWithCDATA() {
