@@ -18,10 +18,9 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
@@ -49,10 +48,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   public String getPath() {
-    return myPath;
-  }
-
-  public String getPathInCvs() {
     return myPath;
   }
 
@@ -120,5 +115,9 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
     if (postRunnable != null)
       postRunnable.run();
+  }
+
+  protected void setRevision(String revision) {
+    myRevision = revision;
   }
 }

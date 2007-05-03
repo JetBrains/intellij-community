@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,32 +20,42 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.WeakHashMap;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
- * author: lesya
+ * @author yole
  */
-public class VcsVirtualFile extends AbstractVcsVirtualFile {
-
+public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
+  private final ContentRevision myContentRevision;
   private byte[] myContent;
-  private final VcsFileRevision myFileRevision;
 
-  public VcsVirtualFile(String path,
-                        VcsFileRevision revision, VirtualFileSystem fileSystem) {
-    super(path, fileSystem);
-    myFileRevision = revision;
+  private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<ContentRevision, ContentRevisionVirtualFile>();
+
+  public static ContentRevisionVirtualFile create(ContentRevision contentRevision) {
+    synchronized(ourMap) {
+      ContentRevisionVirtualFile revisionVirtualFile = ourMap.get(contentRevision);
+      if (revisionVirtualFile == null) {
+        revisionVirtualFile = new ContentRevisionVirtualFile(contentRevision);
+        ourMap.put(contentRevision, revisionVirtualFile);
+      }
+      return revisionVirtualFile;
+    }
   }
 
-  public VcsVirtualFile(String path,
-                        byte[] content,
-                        String revision, VirtualFileSystem fileSystem) {
-    this(path, null, fileSystem);
-    myContent = content;
-    setRevision(revision);
+  private ContentRevisionVirtualFile(ContentRevision contentRevision) {
+    super(contentRevision.getFile().getPath(), VcsFileSystem.getInstance());
+    myContentRevision = contentRevision;
+    setCharset(CharsetToolkit.UTF8_CHARSET);
+  }
+
+  public boolean isDirectory() {
+    return false;
   }
 
   public byte[] contentsToByteArray() throws IOException {
@@ -55,25 +65,23 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     return myContent;
   }
 
-  private void loadContent() throws IOException {
-    if (myContent != null) return;
-    
+  private void loadContent() {
     final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
 
     try {
-      myFileRevision.loadContent();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          vcsFileSystem.fireBeforeContentsChange(this, VcsVirtualFile.this);
+          vcsFileSystem.fireBeforeContentsChange(this, ContentRevisionVirtualFile.this);
         }
       });
 
       myModificationStamp++;
-      setRevision(myFileRevision.getRevisionNumber().asString());
-      myContent = myFileRevision.getContent();
+      setRevision(myContentRevision.getRevisionNumber().asString());
+      final ByteBuffer byteBuffer = getCharset().encode(myContentRevision.getContent());
+      myContent = byteBuffer.compact().array();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          vcsFileSystem.fireContentsChanged(this, VcsVirtualFile.this, 0);
+          vcsFileSystem.fireContentsChanged(this, ContentRevisionVirtualFile.this, 0);
         }
       });
 
@@ -81,7 +89,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     catch (VcsException e) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          vcsFileSystem.fireBeforeFileDeletion(this, VcsVirtualFile.this);
+          vcsFileSystem.fireBeforeFileDeletion(this, ContentRevisionVirtualFile.this);
         }
       });
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -94,7 +102,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          vcsFileSystem.fireFileDeleted(this, VcsVirtualFile.this, getName(), getParent());
+          vcsFileSystem.fireFileDeleted(this, ContentRevisionVirtualFile.this, getName(), getParent());
         }
       });
 
@@ -102,23 +110,5 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     catch (ProcessCanceledException ex) {
       myContent = null;
     }
-
-  }
-
-
-  public boolean isDirectory() {
-    return false;
-  }
-
-  public String getRevision() {
-    if (myRevision == null) {
-      try {
-        loadContent();
-      }
-      catch (IOException e) {
-        e.printStackTrace(System.err);
-      }
-    }
-    return myRevision;
   }
 }

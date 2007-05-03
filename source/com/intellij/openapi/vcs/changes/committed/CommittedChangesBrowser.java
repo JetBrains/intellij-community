@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.PopupHandler;
@@ -47,6 +49,10 @@ public class CommittedChangesBrowser extends JPanel {
 
     myChangesView = new ChangesBrowser(project, tableModel.getItems(), Collections.<Change>emptyList(), null, false, false);
     myChangesView.getListPanel().setBorder(null);
+
+    OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
+    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    myChangesView.addToolbarAction(action);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

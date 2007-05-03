@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
@@ -34,6 +36,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
   private CommittedChangeList myChangeList;
   private ChangesBrowser myChangesBrowser;
   private JTextArea myCommitMessageArea;
+  private JPanel myMainPanel;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
@@ -55,6 +58,10 @@ public class ChangeListViewerDialog extends DialogWrapper {
     setModal(false);
 
     init();
+
+    OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
+    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myMainPanel);
+    myChangesBrowser.addToolbarAction(action);
   }
 
   private void initCommitMessageArea(final CommittedChangeList changeList) {
@@ -72,12 +79,12 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
+    myMainPanel = new JPanel();
+    myMainPanel.setLayout(new BorderLayout());
     myChangesBrowser = new ChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                           new ArrayList<Change>(myChangeList.getChanges()),
                                           myChangeList, false, false);
-    panel.add(myChangesBrowser, BorderLayout.CENTER);
+    myMainPanel.add(myChangesBrowser, BorderLayout.CENTER);
 
 
     if (myCommitMessageArea != null) {
@@ -86,10 +93,10 @@ public class ChangeListViewerDialog extends DialogWrapper {
       commitPanel.add(separator, BorderLayout.NORTH);
       commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
 
-      panel.add(commitPanel, BorderLayout.SOUTH);
+      myMainPanel.add(commitPanel, BorderLayout.SOUTH);
     }
 
-    return panel;
+    return myMainPanel;
   }
 
   @Override
