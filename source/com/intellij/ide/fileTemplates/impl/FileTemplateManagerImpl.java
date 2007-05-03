@@ -28,6 +28,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author MYakovlev
@@ -802,7 +803,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   private static class MyTemplates {
-    private List<FileTemplate> myTemplatesList = new ArrayList<FileTemplate>();
+    private List<FileTemplate> myTemplatesList = new CopyOnWriteArrayList<FileTemplate>();
 
     public int size() {
       return myTemplatesList.size();
