@@ -4,6 +4,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
+import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -48,6 +49,7 @@ public class VcsGeneralConfigurationPanel {
   private JButton myConfigureIgnoredFilesButton;
   private JCheckBox myCbEditInBackground;
   private JCheckBox myCbAddRemoveInBackground;
+  private JButton myConfigureHistoryCacheButton;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -79,10 +81,14 @@ public class VcsGeneralConfigurationPanel {
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
 
-
     myConfigureIgnoredFilesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         IgnoredSettingsDialog.configure(myProject);
+      }
+    });
+    myConfigureHistoryCacheButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        CacheSettingsDialog.showSettingsDialog(myProject);
       }
     });
   }
