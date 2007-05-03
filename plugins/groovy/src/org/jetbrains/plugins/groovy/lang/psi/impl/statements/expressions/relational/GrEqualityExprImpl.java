@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrEqualityExprImpl extends GrBinaryExpressionImpl {
 

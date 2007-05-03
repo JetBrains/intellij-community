@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrReturnStmtImpl extends GroovyPsiElementImpl implements GrReturnStatement {
   public GrReturnStmtImpl(@NotNull ASTNode node) {

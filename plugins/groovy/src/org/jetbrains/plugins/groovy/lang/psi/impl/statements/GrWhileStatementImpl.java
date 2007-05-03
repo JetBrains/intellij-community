@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhileStatement {
   public GrWhileStatementImpl(@NotNull ASTNode node) {

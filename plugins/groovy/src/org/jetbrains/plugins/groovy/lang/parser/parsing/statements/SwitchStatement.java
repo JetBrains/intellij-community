@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.S
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class SwitchStatement implements GroovyElementTypes {
 

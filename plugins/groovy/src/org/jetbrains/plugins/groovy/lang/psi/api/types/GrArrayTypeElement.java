@@ -22,7 +22,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
 }

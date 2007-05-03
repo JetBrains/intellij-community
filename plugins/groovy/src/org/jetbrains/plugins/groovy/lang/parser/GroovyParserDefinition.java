@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
 

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrP
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrPropertySelectorImpl extends GroovyPsiElementImpl implements GrPropertySelector {
 

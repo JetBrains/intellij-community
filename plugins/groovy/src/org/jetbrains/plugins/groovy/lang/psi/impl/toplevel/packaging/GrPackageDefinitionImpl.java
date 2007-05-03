@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrPackageDefinition {
 

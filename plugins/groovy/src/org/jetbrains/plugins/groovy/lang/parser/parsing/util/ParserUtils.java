@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  * Utility classdef, that contains various useful methods for
  * parser needs.
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public abstract class ParserUtils {
 

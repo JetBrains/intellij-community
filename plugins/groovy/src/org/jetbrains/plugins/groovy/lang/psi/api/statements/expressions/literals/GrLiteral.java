@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrLiteral extends GrExpression {
 }

@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author: Dmitry.Krasilschikov, Ilya Sergey
+ * @author: Dmitry.Krasilschikov, ilyas
  */
 public class ParameterDeclaration implements GroovyElementTypes {
 

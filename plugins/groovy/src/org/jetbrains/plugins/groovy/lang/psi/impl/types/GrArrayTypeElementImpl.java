@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrArrayTypeElement {
 

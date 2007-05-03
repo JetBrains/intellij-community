@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 /**
  * All main properties for Groovy language
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyLanguage extends Language
 {

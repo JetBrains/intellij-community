@@ -34,7 +34,7 @@ import javax.swing.*;
 /**
  * Implements all abstractionos related to Groovy file
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class GroovyFile extends PsiFileBase {
 

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrArgumentImpl extends GroovyPsiElementImpl implements GrArgument {
 

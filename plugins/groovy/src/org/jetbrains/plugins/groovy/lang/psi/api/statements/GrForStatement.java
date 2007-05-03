@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public interface GrForStatement extends GrStatement, GrControlStatement {
 

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * Parses import statement
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class ImportStatement implements GroovyElementTypes {
 

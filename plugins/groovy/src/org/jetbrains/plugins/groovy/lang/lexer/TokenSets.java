@@ -21,7 +21,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * Utility classdef, tha contains various useful TokenSets
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public abstract class TokenSets implements GroovyTokenTypes {
 

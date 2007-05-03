@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Main application component, that loads Groovy language support
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyLoader implements ApplicationComponent {
 

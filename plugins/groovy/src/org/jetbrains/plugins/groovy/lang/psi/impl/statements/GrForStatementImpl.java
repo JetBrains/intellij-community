@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForStatement {
   public GrForStatementImpl(@NotNull ASTNode node) {

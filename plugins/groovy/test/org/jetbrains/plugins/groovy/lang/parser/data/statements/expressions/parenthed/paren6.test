@@ -7,11 +7,10 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Arguments
-      Property selection
+      Reference expression
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
-        Property selector
-          PsiElement(identifier)('toString')
+        PsiElement(identifier)('toString')
     PsiErrorElement:')' expected
       <empty list>

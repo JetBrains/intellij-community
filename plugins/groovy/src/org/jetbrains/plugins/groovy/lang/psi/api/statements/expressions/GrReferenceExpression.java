@@ -18,10 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement {
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNested {
   GrExpression getQualifierExpression();
 }

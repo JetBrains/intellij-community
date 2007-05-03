@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
 

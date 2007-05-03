@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrImportStatement extends UserDataHolderEx, Cloneable, Iconable, NavigationItem, GrTopStatement {
   GrTypeOrPackageReferenceElement getImportReference();

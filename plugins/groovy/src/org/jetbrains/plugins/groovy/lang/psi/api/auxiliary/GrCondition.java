@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * Label interface for condition statements
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrCondition extends GroovyPsiElement {
 }

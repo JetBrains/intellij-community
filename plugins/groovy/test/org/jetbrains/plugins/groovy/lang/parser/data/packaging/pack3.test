@@ -10,10 +10,9 @@ Groovy script
     PsiElement(identifier)('a')
     PsiElement(.)('.')
   PsiElement(new line)('\n')
-  Property selection
+  Reference expression
     Reference expression
       PsiElement(identifier)('b')
     PsiElement(.)('.')
     PsiElement(new line)('\n')
-    Property selector
-      PsiElement(identifier)('c')
+    PsiElement(identifier)('c')

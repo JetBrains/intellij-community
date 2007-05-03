@@ -32,16 +32,16 @@ Groovy script
             PsiWhiteSpace(' ')
             Additive expression
               Method call
-                Property by index
-                  Reference expression
-                    PsiElement(identifier)('who')
-                  PsiElement([)('[')
-                  Arguments
-                    Literal
-                      PsiElement(number)('0')
-                  PsiElement(])(']')
-                PsiElement(.)('.')
-                Property selector
+                Reference expression
+                  Property by index
+                    Reference expression
+                      PsiElement(identifier)('who')
+                    PsiElement([)('[')
+                    Arguments
+                      Literal
+                        PsiElement(number)('0')
+                    PsiElement(])(']')
+                  PsiElement(.)('.')
                   PsiElement(identifier)('toUpperCase')
                 PsiElement(()('(')
                 PsiElement())(')')

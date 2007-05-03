@@ -14,14 +14,13 @@ Groovy script
       PsiElement({)('{')
       PsiWhiteSpace('\n')
       Method call
-        Property selection
+        Reference expression
           Reference expression
-            PsiElement(identifier)('System')
-          PsiElement(.)('.')
-          Property selector
+            Reference expression
+              PsiElement(identifier)('System')
+            PsiElement(.)('.')
             PsiElement(identifier)('out')
-        PsiElement(.)('.')
-        Property selector
+          PsiElement(.)('.')
           PsiElement(identifier)('println')
         PsiElement(()('(')
         Arguments

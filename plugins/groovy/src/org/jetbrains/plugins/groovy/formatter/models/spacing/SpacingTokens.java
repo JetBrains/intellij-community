@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public abstract class SpacingTokens implements GroovyElementTypes {
 

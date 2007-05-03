@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit
 /**
  * Parser for Groovy script files
  *
- * @author Ilya Sergey, Dmitry.Krasilschikov
+ * @author ilyas, Dmitry.Krasilschikov
  */
 public class GroovyParser implements PsiParser {
 

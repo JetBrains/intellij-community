@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrClosableBlock extends GrExpression, GrCodeBlock {
 }

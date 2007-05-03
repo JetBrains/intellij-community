@@ -22,7 +22,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * Interface, that contains all tokens, retruned by GroovyLexer
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public interface GroovyTokenTypes {
 

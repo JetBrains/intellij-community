@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * Parse separators
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class Separators implements GroovyElementTypes {
 

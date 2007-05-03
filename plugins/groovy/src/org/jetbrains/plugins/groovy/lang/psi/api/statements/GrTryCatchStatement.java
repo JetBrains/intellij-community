@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
 }

@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
 

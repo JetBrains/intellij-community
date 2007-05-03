@@ -3,26 +3,22 @@ d.e.f
 -----
 Groovy script
   Additive expression
-    Property selection
-      Property selection
+    Reference expression
+      Reference expression
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
-        Property selector
-          PsiElement(identifier)('b')
+        PsiElement(identifier)('b')
       PsiElement(.)('.')
-      Property selector
-        PsiElement(identifier)('c')
+      PsiElement(identifier)('c')
     PsiWhiteSpace(' ')
     PsiElement(+)('+')
     PsiElement(new line)('\n')
-    Property selection
-      Property selection
+    Reference expression
+      Reference expression
         Reference expression
           PsiElement(identifier)('d')
         PsiElement(.)('.')
-        Property selector
-          PsiElement(identifier)('e')
+        PsiElement(identifier)('e')
       PsiElement(.)('.')
-      Property selector
-        PsiElement(identifier)('f')
+      PsiElement(identifier)('f')

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class PathExpression implements GroovyElementTypes {
 
@@ -153,8 +153,8 @@ public class PathExpression implements GroovyElementTypes {
       return PATH_PROPERTY_REFERENCE;
     }
     if (TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, PATH_PROPERTY);
-      return PATH_PROPERTY_REFERENCE;
+      builder.advanceLexer();
+      return REFERENCE_EXPRESSION;
     }
     return WRONGWAY;
   }

@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrRegex extends GrString {
 }

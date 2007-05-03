@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrStatement {
   public GrLabeledStatementImpl(@NotNull ASTNode node) {

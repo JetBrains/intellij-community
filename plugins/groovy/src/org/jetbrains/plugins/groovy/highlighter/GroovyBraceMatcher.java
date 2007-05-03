@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 /**
  * Brace matcher for Groovy language
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 

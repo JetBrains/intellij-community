@@ -20,7 +20,7 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class GroovyLexer extends MergingLexerAdapter {
 

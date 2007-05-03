@@ -4,9 +4,9 @@ b,)
 Groovy script
   Method call
     Reference expression
-      PsiElement(identifier)('A')
-    PsiElement(.)('.')
-    Property selector
+      Reference expression
+        PsiElement(identifier)('A')
+      PsiElement(.)('.')
       PsiElement(identifier)('foo')
     PsiElement(()('(')
     Arguments

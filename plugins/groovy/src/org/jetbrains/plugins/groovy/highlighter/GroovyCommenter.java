@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.highlighter;
 import com.intellij.lang.Commenter;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 
 public class GroovyCommenter implements Commenter {

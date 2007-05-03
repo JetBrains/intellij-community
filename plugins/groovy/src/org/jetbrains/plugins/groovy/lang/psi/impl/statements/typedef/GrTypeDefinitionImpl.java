@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.Collection;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
 

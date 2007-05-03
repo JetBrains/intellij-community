@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRelati
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrRelationalExprImpl extends GrBinaryExpressionImpl implements GrRelationalExpression {
 

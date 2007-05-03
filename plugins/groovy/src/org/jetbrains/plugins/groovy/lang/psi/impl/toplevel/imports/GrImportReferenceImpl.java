@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrImportReferenceImpl extends GroovyPsiElementImpl implements GrImportReference {
 

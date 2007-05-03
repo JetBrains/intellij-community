@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyIndentProcessor implements GroovyElementTypes {
 

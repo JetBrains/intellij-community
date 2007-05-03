@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.formatter;
 /**
  * Label interface for control statements
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrControlStatement {
 }

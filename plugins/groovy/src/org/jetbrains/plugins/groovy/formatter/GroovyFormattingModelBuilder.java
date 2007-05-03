@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @NotNull

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement {
   public GrContinueStmtImpl(@NotNull ASTNode node) {

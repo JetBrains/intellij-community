@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @author: Dmitry.Krasilschikov, Ilya Sergey
+ * @author: Dmitry.Krasilschikov, ilyas
  * @date: 26.03.2007
  */
 public class ParameterDeclarationList implements GroovyElementTypes {

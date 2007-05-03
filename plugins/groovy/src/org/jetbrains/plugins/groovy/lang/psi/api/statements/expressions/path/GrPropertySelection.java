@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrPropertySelection extends GrExpression, GrNested {
 }

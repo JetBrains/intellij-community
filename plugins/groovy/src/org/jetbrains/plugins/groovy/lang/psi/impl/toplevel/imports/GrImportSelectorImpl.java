@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportSelect
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrImportSelectorImpl extends GroovyPsiElementImpl implements GrImportSelector {
 

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrOperationSign extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement, GrStatement {
 }

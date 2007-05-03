@@ -26,7 +26,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public abstract class GroovySpacingProcessor extends SpacingTokens implements GroovyElementTypes {
 

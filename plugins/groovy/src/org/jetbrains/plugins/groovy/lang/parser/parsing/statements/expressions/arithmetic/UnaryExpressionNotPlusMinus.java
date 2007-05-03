@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 

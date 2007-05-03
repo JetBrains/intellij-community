@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Black implementation for Groovy formatter
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyBlock implements Block, GroovyElementTypes {
 

@@ -25,7 +25,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyBundle {
 

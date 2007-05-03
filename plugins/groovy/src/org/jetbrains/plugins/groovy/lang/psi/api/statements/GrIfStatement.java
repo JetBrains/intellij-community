@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public interface GrIfStatement extends GrStatement, GrControlStatement {
 

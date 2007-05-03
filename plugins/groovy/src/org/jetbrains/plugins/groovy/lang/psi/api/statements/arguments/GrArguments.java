@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.formatter.models.ContiniousIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrArguments extends GroovyPsiElement, ContiniousIndent {
 }

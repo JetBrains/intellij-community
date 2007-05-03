@@ -2,17 +2,18 @@ a./foo${st}d/(1)
 -----
 Groovy script
   Method call
-    Reference expression
-      PsiElement(identifier)('a')
-    PsiElement(.)('.')
-    Compound regular expression
-      PsiElement(regex begin)('/foo$')
-      Open block
-        PsiElement({)('{')
-        Reference expression
-          PsiElement(identifier)('st')
-        PsiElement(})('}')
-      PsiElement(regex end)('d/')
+    Property selection
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(.)('.')
+      Compound regular expression
+        PsiElement(regex begin)('/foo$')
+        Open block
+          PsiElement({)('{')
+          Reference expression
+            PsiElement(identifier)('st')
+          PsiElement(})('}')
+        PsiElement(regex end)('d/')
     PsiElement(()('(')
     Arguments
       Literal

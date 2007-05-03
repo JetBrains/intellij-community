@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStatement {
   public GrBreakStmtImpl(@NotNull ASTNode node) {

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface Icons {
 

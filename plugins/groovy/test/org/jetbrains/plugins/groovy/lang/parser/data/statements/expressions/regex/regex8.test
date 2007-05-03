@@ -36,11 +36,12 @@ Groovy script
       Open block
         PsiElement({)('{')
         Method call
-          Reference expression
-            PsiElement(identifier)('frg')
-          PsiElement(.)('.')
-          Property selector
-            PsiElement(regexp)('/sdf/')
+          Property selection
+            Reference expression
+              PsiElement(identifier)('frg')
+            PsiElement(.)('.')
+            Property selector
+              PsiElement(regexp)('/sdf/')
           PsiElement(()('(')
           Arguments
             Literal

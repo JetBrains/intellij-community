@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 /**
  * Import identifier
  *
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class ImportReference implements GroovyElementTypes {
 

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import java.util.Iterator;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 

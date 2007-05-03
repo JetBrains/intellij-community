@@ -21,7 +21,7 @@ import com.intellij.lexer.FlexAdapter;
 import java.io.Reader;
 
 /**
- * @author Ilya Sergey
+ * @author ilyas
  */
 public class GroovyFlexLexer extends FlexAdapter {
   public GroovyFlexLexer() {

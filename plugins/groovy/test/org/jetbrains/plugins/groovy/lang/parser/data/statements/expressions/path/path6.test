@@ -1,12 +1,11 @@
 a.b.
 -----
 Groovy script
-  Property selection
+  Reference expression
     Reference expression
       PsiElement(identifier)('a')
     PsiElement(.)('.')
-    Property selector
-      PsiElement(identifier)('b')
+    PsiElement(identifier)('b')
   PsiElement(.)('.')
   PsiErrorElement:Property selector expected
     <empty list>

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayD
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrArrayDeclaration {
   public GrArrayDeclarationImpl(@NotNull ASTNode node) {

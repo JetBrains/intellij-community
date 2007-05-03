@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Utility class to generate myBlock hierarchy
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyBlockGenerator implements GroovyElementTypes {
 

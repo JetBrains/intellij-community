@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfStatement {
   public GrIfStatementImpl(@NotNull ASTNode node) {

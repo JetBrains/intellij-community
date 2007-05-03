@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 /**
  * Utility interface that contains all Groovy non-token element types
  *
- * @author Dmitry.Krasilschikov, Ilya Sergey
+ * @author Dmitry.Krasilschikov, ilyas
  */
 public interface GroovyElementTypes extends GroovyTokenTypes {
 

@@ -14,12 +14,11 @@ Groovy script
         Open block
           PsiElement({)('{')
           PsiWhiteSpace(' ')
-          Property selection
+          Reference expression
             Reference expression
               PsiElement(identifier)('list')
             PsiElement(.)('.')
-            Property selector
-              PsiElement(identifier)('each')
+            PsiElement(identifier)('each')
           PsiElement(;)(';')
           PsiElement(new line)('\n')
           Call expression

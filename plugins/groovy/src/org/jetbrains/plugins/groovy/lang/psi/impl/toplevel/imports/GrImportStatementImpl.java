@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImportStatement {
 

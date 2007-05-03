@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrCaseBlock extends GroovyPsiElement, BlockedIndent {
 }

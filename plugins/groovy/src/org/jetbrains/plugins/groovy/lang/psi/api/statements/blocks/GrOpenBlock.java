@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrOpenBlock extends GrCodeBlock {
 

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public class ForStatement implements GroovyElementTypes {
 

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrAssertStmtImpl extends GroovyPsiElementImpl implements GrAssertStatement {
   public GrAssertStmtImpl(@NotNull ASTNode node) {

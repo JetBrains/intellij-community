@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public abstract class GroovyUtils {
   /**

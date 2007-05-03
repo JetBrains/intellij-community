@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * Main node of any Groovy script
  *
- * @autor: Dmitry.Krasilschikov, Ilya Sergey
+ * @autor: Dmitry.Krasilschikov, ilyas
  */
 public class CompilationUnit implements GroovyElementTypes {
 

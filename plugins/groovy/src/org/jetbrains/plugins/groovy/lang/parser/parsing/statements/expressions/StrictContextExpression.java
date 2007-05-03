@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @autor: Dmitry.Krasilschikov, Ilya Sergey
+ * @autor: Dmitry.Krasilschikov, ilyas
  */
 public class StrictContextExpression implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {

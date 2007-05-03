@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrSimplePowerExprImpl extends GrPowerExprImpl {
 

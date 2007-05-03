@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrCallExpression extends GrStatement {
 }

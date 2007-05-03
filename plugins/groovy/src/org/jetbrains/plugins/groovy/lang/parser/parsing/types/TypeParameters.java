@@ -21,7 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
- * @autor: Ilya Sergey
+ * @autor: ilyas
  */
 public class TypeParameters implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {

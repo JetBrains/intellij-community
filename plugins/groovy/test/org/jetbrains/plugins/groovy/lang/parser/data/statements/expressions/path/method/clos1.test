@@ -3,9 +3,9 @@ C.foo{println it}
 Groovy script
   Method call
     Reference expression
-      PsiElement(identifier)('C')
-    PsiElement(.)('.')
-    Property selector
+      Reference expression
+        PsiElement(identifier)('C')
+      PsiElement(.)('.')
       PsiElement(identifier)('foo')
     Closable block
       PsiElement({)('{')

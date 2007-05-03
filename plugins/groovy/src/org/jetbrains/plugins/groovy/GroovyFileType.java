@@ -25,7 +25,7 @@ import javax.swing.*;
 /**
  * Represents Groovy file properites, such as extension etc.
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GroovyFileType extends LanguageFileType {
 

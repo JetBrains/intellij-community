@@ -5,15 +5,13 @@ b.c string """
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""My\n$')
-    Property selection
-      Property selection
+    Reference expression
+      Reference expression
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
         PsiElement(new line)('\n')
-        Property selector
-          PsiElement(identifier)('b')
+        PsiElement(identifier)('b')
       PsiElement(.)('.')
-      Property selector
-        PsiElement(identifier)('c')
+      PsiElement(identifier)('c')
     PsiElement(Gstring end)(' string """')

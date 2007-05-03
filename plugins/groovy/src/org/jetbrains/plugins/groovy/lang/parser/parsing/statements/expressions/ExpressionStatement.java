@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 /**
  * Main classdef for any general expression parsing
  *
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class ExpressionStatement implements GroovyElementTypes {
 

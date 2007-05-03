@@ -2,24 +2,24 @@
 -----
 Groovy script
   Method call
-    Parenthesized expression
-      PsiElement(()('(')
-      Multiplicative expression
-        Reference expression
-          PsiElement(identifier)('a')
-        PsiElement(*)('*')
-        Parenthesized expression
-          PsiElement(()('(')
-          Additive expression
-            Reference expression
-              PsiElement(identifier)('b')
-            PsiElement(+)('+')
-            Reference expression
-              PsiElement(identifier)('c')
-          PsiElement())(')')
-      PsiElement())(')')
-    PsiElement(.)('.')
-    Property selector
+    Reference expression
+      Parenthesized expression
+        PsiElement(()('(')
+        Multiplicative expression
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiElement(*)('*')
+          Parenthesized expression
+            PsiElement(()('(')
+            Additive expression
+              Reference expression
+                PsiElement(identifier)('b')
+              PsiElement(+)('+')
+              Reference expression
+                PsiElement(identifier)('c')
+            PsiElement())(')')
+        PsiElement())(')')
+      PsiElement(.)('.')
       PsiElement(identifier)('toString')
     PsiElement(()('(')
     PsiElement())(')')

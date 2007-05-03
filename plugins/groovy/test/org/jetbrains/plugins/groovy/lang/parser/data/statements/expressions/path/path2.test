@@ -2,12 +2,11 @@
 -----
 Groovy script
   Property selection
-    Property selection
+    Reference expression
       Literal
         PsiElement(number)('3')
       PsiElement(.)('.')
-      Property selector
-        PsiElement(identifier)('toString')
+      PsiElement(identifier)('toString')
     PsiElement(*.)('*.')
     Property selector
       PsiElement(string)(''preved'')

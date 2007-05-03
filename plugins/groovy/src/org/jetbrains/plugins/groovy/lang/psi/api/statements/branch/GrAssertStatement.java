@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrAssertStatement extends GrStatement, GrCondition {
 }

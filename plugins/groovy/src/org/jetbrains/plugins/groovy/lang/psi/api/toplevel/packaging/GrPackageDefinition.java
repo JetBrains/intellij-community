@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public interface GrPackageDefinition extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
   String getPackageName();

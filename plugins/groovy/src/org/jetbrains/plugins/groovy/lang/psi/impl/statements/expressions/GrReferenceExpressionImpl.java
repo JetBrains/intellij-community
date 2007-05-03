@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.List;
 
 /**
- * @author Ilya.Sergey
+ * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
