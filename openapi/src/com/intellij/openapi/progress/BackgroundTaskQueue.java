@@ -31,7 +31,7 @@ public class BackgroundTaskQueue {
   private boolean myHasActiveTask = false;
   private Task.Backgroundable myRunnerTask;
 
-  public BackgroundTaskQueue(Project project, String title) {
+  public BackgroundTaskQueue(final Project project, String title) {
     myRunnerTask = new Task.Backgroundable(project, title) {
       public void run(final ProgressIndicator indicator) {
         myHasActiveTask = true;
@@ -47,7 +47,9 @@ public class BackgroundTaskQueue {
           task.run(indicator);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              task.onSuccess();
+              if (!project.isDisposed()) {
+                task.onSuccess();
+              }
             }
           }, ModalityState.NON_MODAL);
         }
