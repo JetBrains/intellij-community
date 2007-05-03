@@ -96,22 +96,27 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
   @NonNls private static final String XML_EXTENSION = ".xml";
   private final MessageBus myMessageBus;
-  private final Map<String,Pair<FileType,String>> myStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
+  private static final Map<String,Pair<FileType,String>> ourStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
   @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
+
+  static {
+    final PairConsumer<FileType, String> consumer = new PairConsumer<FileType, String>() {
+      public void consume(final FileType fileType, final String extensions) {
+        ourStandardFileTypes.put(fileType.getName(), Pair.create(fileType, extensions));
+      }
+    };
+    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+      factory.createFileTypes(consumer);
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
 
   public FileTypeManagerImpl(MessageBus bus) {
-    final PairConsumer<FileType, String> consumer = new PairConsumer<FileType, String>() {
-      public void consume(final FileType fileType, final String extensions) {
-        myStandardFileTypes.put(fileType.getName(), Pair.create(fileType, extensions));
-        registerFileTypeWithoutNotification(fileType, parse(extensions));
-      }
-    };
-    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
-      factory.createFileTypes(consumer);
+    for (final Pair<FileType, String> pair : ourStandardFileTypes.values()) {
+      registerFileTypeWithoutNotification(pair.first, parse(pair.second));
     }
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
@@ -120,7 +125,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public FileType getStdFileType(@NotNull @NonNls String name) {
-    Pair<FileType, String> pair = myStandardFileTypes.get(name);
+    Pair<FileType, String> pair = ourStandardFileTypes.get(name);
     return pair != null ? pair.first : new PlainTextFileType();
   }
 
@@ -446,7 +451,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private void restoreStandardFileExtensions() {
     for (final String name : FILE_TYPES_WITH_PREDEFINED_EXTENSIONS) {
-      final Pair<FileType, String> pair = myStandardFileTypes.get(name);
+      final Pair<FileType, String> pair = ourStandardFileTypes.get(name);
       if (pair != null) {
         FileType fileType = pair.first;
         for (FileNameMatcher matcher : myPatternsTable.getAssociations(fileType)) {

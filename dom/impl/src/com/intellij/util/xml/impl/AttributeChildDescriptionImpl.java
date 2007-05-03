@@ -55,9 +55,13 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) {
-      return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod.getSignature()).getProxy();
+      return getDomAttributeValue(handler);
     }
     return (GenericAttributeValue)myGetterMethod.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
+  }
+
+  public GenericAttributeValue getDomAttributeValue(final DomInvocationHandler handler) {
+    return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod.getSignature()).getProxy();
   }
 
   public boolean equals(final Object o) {

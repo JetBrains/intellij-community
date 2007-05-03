@@ -26,10 +26,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FileTypeFactory {
   public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = ExtensionPointName.create("com.intellij.fileTypeFactory");
 
-  /**
-   * @param consumer callback the newly created file types should be passed to. The String parameter contains semicolon-separated
-   * default file extensions
-   */
   public abstract void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer);
 
 }

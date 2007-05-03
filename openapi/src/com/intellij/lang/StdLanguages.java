@@ -15,6 +15,8 @@
  */
 package com.intellij.lang;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
+
 /**
  * Defines the standard languages supported by IDEA.
  * @author max
@@ -23,32 +25,22 @@ public class StdLanguages {
   /**
    * The definition for the Java language.
    */
-  public static Language JAVA;
-
-  /**
-   * The definition for the CSS language.
-   */
-  public static Language CSS;
-
-  /**
-   * The definition for the AspectJ language.
-   */
-  public static Language ASPECTJ;
+  public static Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
    * The definition for the DTD language.
    */
-  public static Language DTD;
+  public static Language DTD = StdFileTypes.DTD.getLanguage();
 
   /**
    * The definition for the JSP language.
    */
-  public static Language JSP;
+  public static Language JSP = StdFileTypes.JSP.getLanguage();
 
   /**
    * The definition for the XML language.
    */
-  public static Language XML;
+  public static Language XML = StdFileTypes.XML.getLanguage();
 
   /**
    * The definition for the ANT language.
@@ -58,32 +50,30 @@ public class StdLanguages {
   /**
    * The definition for the HTML language.
    */
-  public static Language HTML;
+  public static Language HTML = StdFileTypes.HTML.getLanguage();
 
   /**
    * The definition for the XHTML language.
    */
-  public static Language XHTML;
+  public static Language XHTML = StdFileTypes.XHTML.getLanguage();
 
   /**
    * The definition for the JSP language (JSP with XML syntax).
    */
-  public static Language JSPX;
-
-  /**
-   * The definition for the JSP Expression Language language. 
-   */
-  public static Language EL;
+  public static Language JSPX = StdFileTypes.JSPX.getLanguage();
 
   /**
    * The definition for the Text language.
    */
-  public static Language TEXT;
+  public static Language TEXT = StdFileTypes.PLAIN_TEXT.getLanguage();
 
   /**
    * The definition for the Properties language.
    */
-  public static Language PROPERTIES;
+  public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
+
+  @Deprecated
+  public static Language CSS;
 
   private StdLanguages() {
   }

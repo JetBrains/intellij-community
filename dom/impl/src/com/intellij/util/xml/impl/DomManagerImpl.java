@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -100,7 +101,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
-  private final Map<DomFileDescription,Set<DomFileElementImpl>> myFileDescriptions = new THashMap<DomFileDescription,Set<DomFileElementImpl>>();
+  private final Map<DomFileDescription,Set<WeakReference<DomFileElementImpl>>> myFileDescriptions = new THashMap<DomFileDescription,Set<WeakReference<DomFileElementImpl>>>();
   private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
     protected Set<DomFileDescription> create(final String key) {
       return new THashSet<DomFileDescription>();
@@ -144,7 +145,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
     myReferenceProvidersRegistry = registry;
-    
+
     myElementFactory = psiManager.getElementFactory();
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
@@ -170,9 +171,26 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           }
 
           public void fileDeleted(VirtualFileEvent event) {
-            for (final Set<DomFileElementImpl> set : new HashSet<Set<DomFileElementImpl>>(myFileDescriptions.values())) {
-              for (final DomFileElementImpl fileElement : new HashSet<DomFileElementImpl>(set)) {
-                processFileChange(fileElement.getFile());
+            List<XmlFile> toChange = null;
+            for (final Set<WeakReference<DomFileElementImpl>> set : myFileDescriptions.values()) {
+              for (Iterator<WeakReference<DomFileElementImpl>> it = set.iterator(); it.hasNext();) {
+                WeakReference<DomFileElementImpl> reference = it.next();
+                final DomFileElementImpl element = reference.get();
+                if (element == null) {
+                  it.remove();
+                  continue;
+                }
+                final XmlFile file = element.getFile();
+                if (!file.isValid()) {
+                  it.remove();
+                  if (toChange == null) toChange = new ArrayList<XmlFile>();
+                  toChange.add(file);
+                }
+              }
+            }
+            if (toChange != null) {
+              for (final XmlFile file : toChange) {
+                processFileChange(file);
               }
             }
           }
@@ -346,7 +364,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return myAcceptingOtherRootTagNamesDescriptions;
   }
 
-  public final Map<DomFileDescription, Set<DomFileElementImpl>> getFileDescriptions() {
+  public final Map<DomFileDescription, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
     return myFileDescriptions;
   }
 
@@ -439,15 +457,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     final DomInvocationHandler handler = _getDomElement(attribute.getParent());
     if (handler == null) return null;
-    final List<AttributeChildDescriptionImpl> list = handler.getGenericInfo().getAttributeChildrenDescriptions();
-    final AttributeChildDescriptionImpl description = ContainerUtil.find(list, new Condition<AttributeChildDescriptionImpl>() {
-      public boolean value(AttributeChildDescriptionImpl attributeChildDescription) {
-        final EvaluatedXmlName name = attributeChildDescription.getXmlName().createEvaluatedXmlName(handler);
-        return attribute.getLocalName().equals(name.getLocalName()) && name.isNamespaceAllowed(handler, attribute.getNamespace());
+    for (final AttributeChildDescriptionImpl description : handler.getGenericInfo().getAttributeChildrenDescriptions()) {
+      final GenericAttributeValue value = description.getDomAttributeValue(handler);
+      if (attribute.equals(value.getXmlAttribute())) {
+        return value;
       }
-    });
-    if (description == null) return null;
-    return (GenericAttributeValue)handler.getAttributeChild(description.getXmlName().createEvaluatedXmlName(handler)).getProxy();
+    }
+    return null;
   }
 
   @Nullable
@@ -533,7 +549,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     final Class superClass = initial.getClass().getSuperclass();
     //noinspection unchecked
     final T proxy = (T)AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
-                                              handler, Collections.<JavaMethodSignature>emptySet());
+                                                 handler, Collections.<JavaMethodSignature>emptySet());
     final Set<Class> classes = new HashSet<Class>();
     classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     ContainerUtil.addIfNotNull(superClass, classes);
@@ -566,7 +582,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       myAnnotationsManager.registerDomElementsAnnotator(annotator, description.getRootElementClass());
     }
 
-    myFileDescriptions.put(description, new HashSet<DomFileElementImpl>());
+    myFileDescriptions.put(description, new HashSet<WeakReference<DomFileElementImpl>>());
     myRootTagName2FileDescription.get(description.getRootTagName()).add(description);
     if (description.acceptsOtherRootTagNames()) {
       myAcceptingOtherRootTagNamesDescriptions.add(description);

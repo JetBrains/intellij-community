@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.lang.ref.WeakReference;
 
 /**
  * @author peter
@@ -127,7 +128,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
         myModCount++;
         computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
         if (fireEvents && myLastResult != null) {
-          myDomManager.getFileDescriptions().get(myFileDescription).remove(myLastResult);
+          removeFileElementFromCache(myLastResult, myFileDescription);
           myLastResult.resetRoot(true);
           return Arrays.<DomEvent>asList(new ElementUndefinedEvent(myLastResult));
         }
@@ -210,7 +211,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
       assert oldFileDescription != null;
-      myDomManager.getFileDescriptions().get(oldFileDescription).remove(oldValue);
+      removeFileElementFromCache(oldValue, oldFileDescription);
       oldValue.resetRoot(true);
       if (fireEvents) {
         events.add(new ElementUndefinedEvent(oldValue));
@@ -235,11 +236,22 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Object[] dependencyItems = deps.toArray();
     computeCachedValue(dependencyItems);
 
-    myDomManager.getFileDescriptions().get(myFileDescription).add(myLastResult);
+    myDomManager.getFileDescriptions().get(myFileDescription).add(new WeakReference<DomFileElementImpl>(myLastResult));
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
     }
     return events;
+  }
+
+  private void removeFileElementFromCache(final DomFileElementImpl element, final DomFileDescription description) {
+    final Set<WeakReference<DomFileElementImpl>> references = myDomManager.getFileDescriptions().get(description);
+    for (Iterator<WeakReference<DomFileElementImpl>> iterator = references.iterator(); iterator.hasNext();) {
+      final DomFileElementImpl fileElement = iterator.next().get();
+      if (fileElement == null || fileElement == element) {
+        iterator.remove();
+        return;
+      }
+    }
   }
 
   private void computeCachedValue(final Object[] dependencyItems) {

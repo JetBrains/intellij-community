@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
@@ -52,7 +51,6 @@ public class PropertiesLanguage extends Language {
 
   public PropertiesLanguage() {
     super("Properties", "text/properties");
-    StdLanguages.PROPERTIES = this;
   }
 
   public ParserDefinition getParserDefinition() {

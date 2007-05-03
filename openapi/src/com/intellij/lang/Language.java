@@ -50,8 +50,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -65,8 +63,8 @@ import java.util.*;
 public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
-  private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
+  private static final SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   private String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
@@ -97,19 +95,6 @@ public abstract class Language {
       return;
     }
     ourRegisteredLanguages.put(langClass, this);
-
-    try {
-      final Field langField = StdLanguages.class.getDeclaredField(ID);
-      LOG.assertTrue(Modifier.isStatic(langField.getModifiers()));
-      LOG.assertTrue(Modifier.isPublic(langField.getModifiers()));
-      langField.set(null, this);
-    }
-    catch (NoSuchFieldException e) {
-      // Do nothing. Not a standard file type
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
   }
 
   /**

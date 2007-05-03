@@ -35,6 +35,7 @@ public class AntLanguage extends Language {
     super("ANT");
     myXmlLanguage = StdLanguages.XML;
     LOG.assertTrue(myXmlLanguage != null, "AntLanguage should be created after XmlLanguage has created.");
+    StdLanguages.ANT = this;
   }
 
   @Nullable
