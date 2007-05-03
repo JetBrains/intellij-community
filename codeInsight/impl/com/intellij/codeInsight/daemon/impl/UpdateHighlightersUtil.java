@@ -61,7 +61,15 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static HighlightInfo[] setHighlightersToEditor(Project project,
+  public static void setHighlightersToEditor(Project project,
+                                             Document document,
+                                             int startOffset,
+                                             int endOffset,
+                                             Collection<HighlightInfo> highlights,
+                                             int group) {
+    setAndGetHighlightersToEditor(project, document, startOffset, endOffset, highlights, group);
+  }
+  public static HighlightInfo[] setAndGetHighlightersToEditor(Project project,
                                              Document document,
                                              int startOffset,
                                              int endOffset,

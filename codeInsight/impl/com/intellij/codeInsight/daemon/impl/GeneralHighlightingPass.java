@@ -168,7 +168,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     // highlights from both passes should be in the same layer 
     HighlightInfo[] infos =
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
+      UpdateHighlightersUtil.setAndGetHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
 
     if (myUpdateAll) {
       reportErrorsToWolf(infos, myFile, myHasErrorElement);
