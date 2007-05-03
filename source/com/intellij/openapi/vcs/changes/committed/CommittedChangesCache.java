@@ -361,8 +361,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
     if (cacheFile.getProvider().refreshCacheByNumber()) {
       final long number = cacheFile.getLastCachedChangelist();
-      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since #" + (number+1));
-      defaultSettings.CHANGE_AFTER = Long.toString(number+1);
+      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since #" + number);
+      defaultSettings.CHANGE_AFTER = Long.toString(number);
       defaultSettings.USE_CHANGE_AFTER_FILTER = true;
     }
     else {
