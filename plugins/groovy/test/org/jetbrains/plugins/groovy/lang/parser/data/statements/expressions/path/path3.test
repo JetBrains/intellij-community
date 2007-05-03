@@ -4,14 +4,13 @@ parse
 -----
 Groovy script
   Reference expression
-    Property selection
+    Reference expression
       Reference expression
         PsiElement(identifier)('expr')
       PsiElement(.)('.')
       PsiElement(new line)('\n')
       PsiElement(@)('@')
-      Property selector
-        PsiElement(while)('while')
+      PsiElement(while)('while')
     PsiElement(.)('.')
     PsiElement(new line)('\n')
     PsiElement(identifier)('parse')

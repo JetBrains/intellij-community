@@ -2,17 +2,17 @@
 -----
 Groovy script
   Method call
-    Parenthesized expression
-      PsiElement(()('(')
-      Additive expression
-        Literal
-          PsiElement(number)('1')
-        PsiElement(+)('+')
-        Literal
-          PsiElement(number)('2')
-      PsiElement())(')')
-    PsiElement(?.)('?.')
-    Property selector
+    Reference expression
+      Parenthesized expression
+        PsiElement(()('(')
+        Additive expression
+          Literal
+            PsiElement(number)('1')
+          PsiElement(+)('+')
+          Literal
+            PsiElement(number)('2')
+        PsiElement())(')')
+      PsiElement(?.)('?.')
       PsiElement(class)('class')
     PsiElement(()('(')
     Arguments
