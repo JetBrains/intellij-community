@@ -84,15 +84,9 @@ public class PathExpression implements GroovyElementTypes {
 
       res = namePartParse(builder);
       if (!res.equals(WRONGWAY)) {
-        // If method call or appended block
-        if (mLPAREN.equals(builder.getTokenType()) ||
-                mLCURLY.equals(builder.getTokenType())) {
-          pathElementParse(builder, marker);
-        } else {
-          PsiBuilder.Marker newMarker = marker.precede();
-          marker.done(PATH_PROPERTY_REFERENCE);
-          pathElementParse(builder, newMarker);
-        }
+        PsiBuilder.Marker newMarker = marker.precede();
+        marker.done(res);
+        pathElementParse(builder, newMarker);
       } else {
         builder.error(GroovyBundle.message("path.selector.expected"));
         marker.drop();
@@ -133,34 +127,34 @@ public class PathExpression implements GroovyElementTypes {
   private static GroovyElementType namePartParse(PsiBuilder builder) {
     ParserUtils.getToken(builder, mAT);
     if (mIDENT.equals(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, PATH_PROPERTY);
-      return PATH_PROPERTY;
+      ParserUtils.getToken(builder, mIDENT);
+      return REFERENCE_EXPRESSION;
     }
     if (mSTRING_LITERAL.equals(builder.getTokenType()) ||
             mGSTRING_LITERAL.equals(builder.getTokenType()) ||
             mREGEX_LITERAL.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
       StringConstructorExpression.parse(builder);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     if (mREGEX_BEGIN.equals(builder.getTokenType())) {
       RegexConstructorExpression.parse(builder);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseOpenBlock(builder);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     if (mLPAREN.equals(builder.getTokenType())) {
       PrimaryExpression.parenthesizedExprParse(builder);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     if (TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
-      return PATH_PROPERTY;
+      return PATH_PROPERTY_REFERENCE;
     }
     return WRONGWAY;
   }
