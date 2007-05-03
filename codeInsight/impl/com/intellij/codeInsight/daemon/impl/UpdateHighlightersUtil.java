@@ -61,7 +61,7 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static void setHighlightersToEditor(Project project,
+  public static HighlightInfo[] setHighlightersToEditor(Project project,
                                              Document document,
                                              int startOffset,
                                              int endOffset,
@@ -191,6 +191,7 @@ public class UpdateHighlightersUtil {
       LOG.debug("Added segment highlighters:" + highlights.size());
     }
     clearWhiteSpaceOptimizationFlag(document);
+    return newHighlights;
   }
 
   public static void setLineMarkersToEditor(@NotNull Project project,

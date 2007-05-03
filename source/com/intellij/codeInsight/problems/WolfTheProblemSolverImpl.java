@@ -468,14 +468,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myProblems) {
       final ProblemFileInfo oldInfo = myProblems.remove(file);
       hasProblemsBefore = oldInfo != null;
-      ProblemFileInfo storedProblems = new ProblemFileInfo();
-      myProblems.put(file, storedProblems);
+      ProblemFileInfo newInfo = new ProblemFileInfo();
+      myProblems.put(file, newInfo);
       for (Problem problem : problems) {
-        storedProblems.problems.add(problem);
-        storedProblems.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
-        myCheckingQueue.addIfAbsent(file);
+        newInfo.problems.add(problem);
+        newInfo.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
       }
-      fireChanged = hasProblemsBefore && !oldInfo.equals(storedProblems);
+      myCheckingQueue.addIfAbsent(file);
+      fireChanged = hasProblemsBefore && !oldInfo.equals(newInfo);
     }
     if (!hasProblemsBefore) {
       fireProblemListeners.problemsAppeared(file);

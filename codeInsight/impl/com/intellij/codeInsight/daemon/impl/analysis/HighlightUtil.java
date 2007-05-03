@@ -2042,6 +2042,17 @@ public class HighlightUtil {
     }
     return problems;
   }
+  public static List<Problem> convertToProblems(final HighlightInfo[] infos, final VirtualFile file,
+                                                 final boolean hasErrorElement) {
+    List<Problem> problems = new SmartList<Problem>();
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        Problem problem = new ProblemImpl(file, info, hasErrorElement);
+        problems.add(problem);
+      }
+    }
+    return problems;
+  }
 
   public static void addErrorsToWolf(final List<HighlightInfo> infos, final PsiFile psiFile) {
     if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
