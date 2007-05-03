@@ -54,8 +54,8 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
     return super.getType();
   }
 
-  public PsiExpression getDescriptorEvaluation(DebuggerContext context) {
-    return null;
+  public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+    throw new EvaluateException("Evaluation not supported for method return value");
   }
 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {

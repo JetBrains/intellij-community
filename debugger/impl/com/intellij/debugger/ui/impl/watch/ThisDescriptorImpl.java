@@ -1,12 +1,10 @@
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.openapi.project.Project;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
@@ -40,14 +38,13 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
     return getName();
   }
 
-  public PsiExpression getDescriptorEvaluation(DebuggerContext context) {
+  public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = PsiManager.getInstance(context.getProject()).getElementFactory();
     try {
       return elementFactory.createExpressionFromText("this", null);
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+      throw new EvaluateException(e.getMessage(), e);
     }
   }
 

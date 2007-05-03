@@ -20,6 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 public class EvaluateException extends Exception {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.EvaluateException");
 
+  public EvaluateException(final String message) {
+    super(message);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message);
+    }
+  }
+
   public EvaluateException(String msg, Throwable th) {
     super(msg, th);
     if (LOG.isDebugEnabled()) {

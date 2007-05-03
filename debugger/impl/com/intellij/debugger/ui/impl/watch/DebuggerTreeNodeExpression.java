@@ -10,12 +10,12 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
@@ -176,8 +176,7 @@ public class DebuggerTreeNodeExpression {
       return howToEvaluateThis.getManager().getElementFactory().createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+      throw new EvaluateException(e.getMessage(), e);
     }
   }
 
