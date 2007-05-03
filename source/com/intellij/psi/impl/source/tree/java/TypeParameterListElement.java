@@ -90,12 +90,12 @@ public class TypeParameterListElement extends RepositoryTreeElement {
 
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getElementType() == TYPE_PARAMETER){
-      final ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){
         deleteChildInternal(next);
       }
       else{
-        final ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        final ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null && prev.getElementType() == COMMA){
           deleteChildInternal(prev);
         }
@@ -104,7 +104,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     super.deleteChildInternal(child);
     if (child.getElementType() == TYPE_PARAMETER) {
       final ASTNode lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
-      final ASTNode next = TreeUtil.skipElements(lt.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode next = TreeUtil.skipElements(lt.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == GT) {
         deleteChildInternal(lt);
         deleteChildInternal(next);

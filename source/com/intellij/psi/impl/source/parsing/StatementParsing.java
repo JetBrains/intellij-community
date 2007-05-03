@@ -4,9 +4,9 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class StatementParsing extends Parsing {
     if (lexer == null){
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
-    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
@@ -76,7 +76,7 @@ public class StatementParsing extends Parsing {
     if (lexer == null){
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
-    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
@@ -217,7 +217,7 @@ public class StatementParsing extends Parsing {
   @Nullable
   public TreeElement parseStatementText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
-    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, 0, buffer.length(), 0);
 
     TreeElement statement = parseStatement(filterLexer);
@@ -936,7 +936,7 @@ public class StatementParsing extends Parsing {
   @Nullable
   public TreeElement parseCatchSectionText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
-    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, 0, buffer.length(),0);
 
     CompositeElement catchSection = parseCatchSection(filterLexer);

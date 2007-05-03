@@ -13,10 +13,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -43,7 +40,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       return;
     }
     
-    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && ElementType.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
+    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
       myResult = Spacing
         .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
     }
@@ -764,7 +761,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     }
-    else if (ElementType.COMMENT_BIT_SET.contains(myChild1.getElementType())
+    else if (StdTokenSets.COMMENT_BIT_SET.contains(myChild1.getElementType())
              && (myRole2 == ChildRole.MODIFIER_LIST || myRole2 == ChildRole.TYPE_REFERENCE)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }

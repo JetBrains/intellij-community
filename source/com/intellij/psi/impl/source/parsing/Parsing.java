@@ -35,7 +35,7 @@ public class Parsing implements Constants{
                                                        CharTable table,
                                                        boolean eatAll) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset,0);
 
     JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
@@ -152,7 +152,7 @@ public class Parsing implements Constants{
 
   public static CompositeElement parseTypeText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset, 0);
     final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
@@ -255,7 +255,7 @@ public class Parsing implements Constants{
     if (lexer == null){
       lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     }
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
     final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());

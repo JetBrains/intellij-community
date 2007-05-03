@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       if (child.getElementType() == ElementType.ELSE_KEYWORD) {
         return AFTER_ELSE;
       }
-      if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
+      if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
         return BEFORE_FIRST;
       }
       if (child.getElementType() == ElementType.CATCH_SECTION) {
@@ -109,7 +110,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       else if (isSimpleStatement(child)){
         return getCodeBlockInternalIndent(1);
       }
-      else if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
+      else if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
         return getCodeBlockInternalIndent(1);
       }
       else {

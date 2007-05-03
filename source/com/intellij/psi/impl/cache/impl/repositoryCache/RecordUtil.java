@@ -11,9 +11,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -69,7 +69,7 @@ public class RecordUtil {
     if (psiFile instanceof PsiJavaFileImpl) {
       PsiJavaFileImpl impl = (PsiJavaFileImpl)psiFile;
       Lexer originalLexer = impl.createLexer();
-      FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+      FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
       final TextRange range = psiElement.getTextRange();
       lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset(),0);
       boolean isInNewExpression = false;

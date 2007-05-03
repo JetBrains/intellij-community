@@ -1,21 +1,21 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
@@ -31,8 +31,8 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
 
 import java.util.regex.Matcher;
@@ -117,11 +117,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
           lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
-          commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
+          commentTokens = TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
         else if (PsiUtil.isInJspFile(file)) {
           final JspFile jspFile = PsiUtil.getJspFile(file);
-          commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET);
+          commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
           final ParserDefinition parserDefinition = jspFile.getViewProvider().getTemplateDataLanguage().getParserDefinition();
           if (parserDefinition != null) {
             commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());

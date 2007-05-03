@@ -6,13 +6,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -458,7 +458,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     while (currentNode != null) {
       if (currentNode.getElementType() == ElementType.WHITE_SPACE
           || currentNode.getElementType() == ElementType.COMMA
-          || ElementType.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
+          || StdTokenSets.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
       }
       else if (currentNode.getElementType() == ElementType.FIELD) {
         if (((PsiVariable)currentNode.getPsi()).getTypeElement() != typeElement) {

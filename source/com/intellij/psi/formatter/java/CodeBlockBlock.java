@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,7 +171,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private int calcNewState(final ASTNode child, int state) {
     switch (state) {
       case BEFORE_FIRST: {
-        if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
+        if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
           return BEFORE_FIRST;
         }
         else if (isLBrace(child)) {

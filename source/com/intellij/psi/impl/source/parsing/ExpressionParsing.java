@@ -25,7 +25,7 @@ public class ExpressionParsing extends Parsing {
   public static CompositeElement parseExpressionText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     final LanguageLevel level = manager.getEffectiveLanguageLevel();
     Lexer originalLexer = new JavaLexer(level);
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset, 0);
     JavaParsingContext context = new JavaParsingContext(table, level);
     CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
@@ -44,7 +44,7 @@ public class ExpressionParsing extends Parsing {
                                          final int startOffset,
                                          final int endOffset,
                                          PsiManager manager) {
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset,0);
     CharTable table = myContext.getCharTable();
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
@@ -72,7 +72,7 @@ public class ExpressionParsing extends Parsing {
 
   public TreeElement parseExpressionTextFragment(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, int state) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state >= 0) {
       lexer.start(buffer, startOffset, endOffset, state);
     }

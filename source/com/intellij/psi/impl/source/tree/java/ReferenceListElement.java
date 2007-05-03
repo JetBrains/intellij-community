@@ -53,12 +53,12 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
 
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){
         deleteChildInternal(next);
       }
       else{
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null){
           if (prev.getElementType() == COMMA
               || prev.getElementType() == getKeywordType()

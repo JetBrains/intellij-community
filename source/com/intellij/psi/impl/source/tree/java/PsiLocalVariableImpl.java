@@ -126,7 +126,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         ASTNode modifierListCopy = getModifierList().copy().getNode();
         CompositeElement variable = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i]);
 
-        ASTNode comma = TreeUtil.skipElementsBack(variable.getTreePrev(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode comma = TreeUtil.skipElementsBack(variable.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (comma != null && comma.getElementType() == JavaTokenType.COMMA){
           CodeEditUtil.removeChildren(statement, comma, variable.getTreePrev());
         }

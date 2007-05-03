@@ -2,7 +2,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -39,9 +42,9 @@ public class SourceUtil implements Constants {
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
-    int length = toBuffer(element, null, 0, WHITE_SPACE_OR_COMMENT_BIT_SET);
+    int length = toBuffer(element, null, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
     char[] buffer = new char[length];
-    toBuffer(element, buffer, 0, WHITE_SPACE_OR_COMMENT_BIT_SET);
+    toBuffer(element, buffer, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
     return new String(buffer);
   }
 

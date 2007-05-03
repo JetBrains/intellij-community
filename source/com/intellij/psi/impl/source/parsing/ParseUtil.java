@@ -95,7 +95,7 @@ public class ParseUtil implements Constants {
     private final TokenSet myWhitespaceSet;
 
     public WhiteSpaceAndCommentsProcessor() {
-      this(WHITE_SPACE_OR_COMMENT_BIT_SET);
+      this(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
     }
 
     public WhiteSpaceAndCommentsProcessor(TokenSet whitespaceSet) {

@@ -44,7 +44,7 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseJavaDocReference(CharSequence myBuffer, Lexer originalLexer, boolean isType, PsiManager manager) {
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(myBuffer, 0, myBuffer.length(), 0);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();

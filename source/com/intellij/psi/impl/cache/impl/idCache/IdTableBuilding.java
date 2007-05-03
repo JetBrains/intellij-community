@@ -25,7 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -132,7 +132,7 @@ public class IdTableBuilding {
                       int[] todoCounts,
                       final PsiManager manager) {
       Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
-      lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+      lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
       lexer.start(chars, 0, length,0);
       while (lexer.getTokenType() != null) lexer.advance();
     }
@@ -151,7 +151,7 @@ public class IdTableBuilding {
                       final PsiManager manager) {
       Lexer lexer = createLexer();
       JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
-      lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+      lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
       lexer.start(chars, 0, length,0);
       while (lexer.getTokenType() != null) lexer.advance();
     }
@@ -373,7 +373,7 @@ public class IdTableBuilding {
 
   public static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
     public boolean reject(IElementType type) {
-      return !(type instanceof IJavaElementType) || ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type);
+      return !(type instanceof IJavaElementType) || StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type);
     }
   };
 

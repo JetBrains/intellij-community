@@ -77,7 +77,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   public JavaResolveResult resolveMethodGenerics() {
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     if (classRef != null){
-      ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
         PsiType aClass = getManager().getElementFactory().createType(
           (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));

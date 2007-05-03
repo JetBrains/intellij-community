@@ -3,12 +3,13 @@ package com.intellij.psi.formatter.java;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
     Indent indent = null;
     while (child != null) {
-      if (ElementType.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, null));
         indent = Indent.getNoneIndent();
       }

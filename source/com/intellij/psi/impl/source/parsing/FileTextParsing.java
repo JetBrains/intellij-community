@@ -28,7 +28,7 @@ public class FileTextParsing extends Parsing {
   private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
 
   public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, CharSequence buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset,0);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(), manager.getEffectiveLanguageLevel());
@@ -88,7 +88,7 @@ public class FileTextParsing extends Parsing {
           prevImportKeyword = false;
         }
         else {
-          prevImportKeyword = WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
+          prevImportKeyword = StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
           if (tokenType == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tokenType) || MODIFIER_BIT_SET.contains(tokenType)) break;
         }
         lastPos = lexer.getTokenEnd();
@@ -105,7 +105,7 @@ public class FileTextParsing extends Parsing {
     CompositeElement packageStatement = Factory.createCompositeElement(PACKAGE_STATEMENT);
 
     if (lexer.getTokenType() != PACKAGE_KEYWORD) {
-      FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+      FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
       TreeUtil.addChildren(packageStatement, myContext.getDeclarationParsing().parseAnnotationList(filterLexer));
       if (lexer.getTokenType() != PACKAGE_KEYWORD) {
         lexer.restore(startPos);

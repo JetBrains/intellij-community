@@ -172,13 +172,13 @@ public class SharedImplUtil {
     int arrayCount = 0;
     ASTNode element = name;
     while (true) {
-      element = TreeUtil.skipElements(element.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (element == null || element.getElementType() != ElementType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
       arrayCount++;
 
-      element = TreeUtil.skipElements(element.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (element == null || element.getElementType() != ElementType.RBRACKET) break;
       lastBracket = element;
     }
