@@ -61,9 +61,13 @@ public class GroovyFile extends PsiFileBase {
     if (packageDef != null) {
       return packageDef.getPackageName();
     }
-
     return "";
   }
+
+  public GrPackageDefinition getPackageDefinition(){
+    return findChildByClass(GrPackageDefinition.class);
+  }
+
 
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
