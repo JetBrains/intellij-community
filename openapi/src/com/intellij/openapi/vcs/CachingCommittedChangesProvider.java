@@ -50,4 +50,12 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    */
   @Nullable
   Collection<FilePath> getIncomingFiles(final RepositoryLocation location);
+
+  /**
+   * Returns true if the changelist number restriction should be used when refreshing the cache,
+   * or false if the date restriction should be used.
+   *
+   * @return true if restrict by number, false if restrict by date
+   */
+  boolean refreshCacheByNumber();
 }

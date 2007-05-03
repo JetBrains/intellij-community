@@ -141,4 +141,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
     return null;
   }
+
+  public boolean refreshCacheByNumber() {
+    return false;
+  }
 }

@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
 
   private File myPath;
   private File myIndexPath;
@@ -40,12 +40,13 @@ public class ChangesCacheFile {
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist = Long.MAX_VALUE;
+  private long myLastCachedChangelist = -1;
   private int myIncomingCount = 0;
   private boolean myHaveCompleteHistory = false;
   private boolean myHeaderLoaded = false;
   @NonNls private static final String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
-  private static final int HEADER_SIZE = 34;
+  private static final int HEADER_SIZE = 42;
 
   public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
     final Calendar date = Calendar.getInstance();
@@ -125,15 +126,7 @@ public class ChangesCacheFile {
         long position = myStream.getFilePointer();
         //noinspection unchecked
         myChangesProvider.writeChangeList(myStream, list);
-        if (list.getCommitDate().getTime() > myLastCachedDate.getTime()) {
-          myLastCachedDate = list.getCommitDate();
-        }
-        if (list.getCommitDate().getTime() < myFirstCachedDate.getTime()) {
-          myFirstCachedDate = list.getCommitDate();
-        }
-        if (list.getNumber() < myFirstCachedChangelist) {
-          myFirstCachedChangelist = list.getNumber();
-        }
+        updateCachedRange(list);
         writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, false);
         myIncomingCount++;
       }
@@ -144,6 +137,21 @@ public class ChangesCacheFile {
       closeStreams();
     }
     return result;
+  }
+
+  private void updateCachedRange(final CommittedChangeList list) {
+    if (list.getCommitDate().getTime() > myLastCachedDate.getTime()) {
+      myLastCachedDate = list.getCommitDate();
+    }
+    if (list.getCommitDate().getTime() < myFirstCachedDate.getTime()) {
+      myFirstCachedDate = list.getCommitDate();
+    }
+    if (list.getNumber() < myFirstCachedChangelist) {
+      myFirstCachedChangelist = list.getNumber();
+    }
+    if (list.getNumber() > myLastCachedChangelist) {
+      myLastCachedChangelist = list.getNumber();
+    }
   }
 
   private void writeIndexEntry(long number, long date, long offset, boolean completelyDownloaded) throws IOException {
@@ -176,9 +184,11 @@ public class ChangesCacheFile {
     myStream.writeLong(myLastCachedDate.getTime());
     myStream.writeLong(myFirstCachedDate.getTime());
     myStream.writeLong(myFirstCachedChangelist);
+    myStream.writeLong(myLastCachedChangelist);
     myStream.writeShort(myHaveCompleteHistory ? 1 : 0);
     myStream.writeInt(myIncomingCount);
-    LOG.info("Saved header for cache of " + myLocation + ": last cached date=" + myLastCachedDate + ", incoming count=" + myIncomingCount);
+    LOG.info("Saved header for cache of " + myLocation + ": last cached date=" + myLastCachedDate +
+             ", last cached number=" + myLastCachedChangelist + ", incoming count=" + myIncomingCount);
   }
 
   private IndexEntry[] readLastIndexEntries(int offset, int count) throws IOException {
@@ -223,6 +233,11 @@ public class ChangesCacheFile {
     return myFirstCachedChangelist;
   }
 
+  public long getLastCachedChangelist() throws IOException {
+    loadHeader();
+    return myLastCachedChangelist;
+  }
+
   private void loadHeader() throws IOException {
     if (!myHeaderLoaded) {
       RandomAccessFile stream = new RandomAccessFile(myPath, "r");
@@ -234,6 +249,7 @@ public class ChangesCacheFile {
         myLastCachedDate = new Date(stream.readLong());
         myFirstCachedDate = new Date(stream.readLong());
         myFirstCachedChangelist = stream.readLong();
+        myLastCachedChangelist = stream.readLong();
         myHaveCompleteHistory = (stream.readShort() != 0);
         myIncomingCount = stream.readInt();
         assert stream.getFilePointer() == HEADER_SIZE;

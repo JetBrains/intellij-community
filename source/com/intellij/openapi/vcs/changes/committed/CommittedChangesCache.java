@@ -356,13 +356,21 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
-    final Date date = cacheFile.getLastCachedDate();
-    LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since " + date);
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
-    defaultSettings.setDateAfter(date);
-    defaultSettings.USE_DATE_AFTER_FILTER = true;
+    if (cacheFile.getProvider().refreshCacheByNumber()) {
+      final long number = cacheFile.getLastCachedChangelist();
+      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since #" + (number+1));
+      defaultSettings.CHANGE_AFTER = Long.toString(number+1);
+      defaultSettings.USE_CHANGE_AFTER_FILTER = true;
+    }
+    else {
+      final Date date = cacheFile.getLastCachedDate();
+      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since " + date);
+      defaultSettings.setDateAfter(date);
+      defaultSettings.USE_DATE_AFTER_FILTER = true;
+    }
     List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
     LOG.info("Loaded " + newChanges.size() + " new changelists");
     newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
