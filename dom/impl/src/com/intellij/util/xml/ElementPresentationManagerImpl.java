@@ -10,7 +10,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
+import com.intellij.util.Icons;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +25,7 @@ import java.util.Collection;
  */
 public class ElementPresentationManagerImpl extends ElementPresentationManager {
   @NotNull
-  public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
+  public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags) {
     ArrayList<Object> result = new ArrayList<Object>(elements.size());
     for (T element: elements) {
       if (element instanceof PsiMethod) {
@@ -34,7 +37,7 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
 
         final PsiType returnType = method.getReturnType();
         final Object value = LookupValueFactory.createLookupValueWithHintAndTail(method.getName(),
-                                     method.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS),
+                                     method.getIcon(iconFlags),
                                      returnType == null ? null : returnType.getPresentableText(),
                                      tail);
         result.add(value);
@@ -42,6 +45,13 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
       String name = namer.fun(element);
       if (name != null) {
         Icon icon = getIcon(element);
+        if (icon != null && (iconFlags & Iconable.ICON_FLAG_VISIBILITY) != 0) {
+          RowIcon baseIcon = new RowIcon(2);
+          Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+          baseIcon.setIcon(icon, 0);
+          baseIcon.setIcon(emptyIcon, 1);
+          icon = baseIcon;
+        }
         Object value = LookupValueFactory.createLookupValue(name, icon);
         result.add(value);
       }

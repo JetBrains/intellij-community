@@ -65,7 +65,17 @@ public abstract class ElementPresentationManager {
   }
 
   @NotNull
-  public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer);
+  public <T> Object[] createVariants(Collection<T> elements, int iconFlags) {
+    return createVariants(elements, (Function<T, String>)DEFAULT_NAMER, iconFlags);
+  }
+
+  @NotNull
+  public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
+    return createVariants(elements, namer, 0);
+  }
+
+  @NotNull
+  public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
 
 
   private static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();
