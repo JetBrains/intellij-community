@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
           "GroovyClass.groovy",
           "GroovyScript.groovy",
           "GrailsDomainClass.groovy",
+          "GrailsController.groovy",
           "GrailsTests.groovy",
   };
   @NonNls
@@ -97,7 +97,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     final PsiManager psiManager = PsiManager.getInstance(directory.getProject());
     final PsiFile file = psiManager.getElementFactory().createFileFromText(fileName, text);
 
-    CodeStyleManager.getInstance(psiManager).reformat(file, false);
+//    CodeStyleManager.getInstance(psiManager).reformat(file, false);
 
     return (PsiFile) directory.add(file);
   }
