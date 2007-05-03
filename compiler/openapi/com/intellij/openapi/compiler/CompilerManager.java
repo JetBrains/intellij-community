@@ -215,4 +215,8 @@ public abstract class CompilerManager {
    * @return true if the file is excluded from compilation, false otherwise
    */
   public abstract boolean isExcludedFromCompilation(VirtualFile file);
+
+  public boolean isCompilationActive() {
+    return false; // TODO: jeka: commit real code
+  }
 }
