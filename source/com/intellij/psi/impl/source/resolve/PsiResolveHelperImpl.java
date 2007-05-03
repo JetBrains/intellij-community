@@ -116,6 +116,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                  PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
                                                  final boolean forCompletion) {
+    final Pair<PsiType, PsiType> bounds =
+      inferTypeForMethodTypeParameterInner(typeParameter, parameters, arguments, partialSubstitutor, parent, forCompletion);
+    if (bounds == null) return PsiType.NULL;
+    final PsiType lowerBound = bounds.getFirst();
+    if (lowerBound != PsiType.NULL) return lowerBound;
+    return bounds.getSecond();
+  }
+
+  public Pair<PsiType, PsiType> inferTypeForMethodTypeParameterInner(final PsiTypeParameter typeParameter,
+                                                 final PsiParameter[] parameters,
+                                                 PsiExpression[] arguments,
+                                                 PsiSubstitutor partialSubstitutor,
+                                                 PsiElement parent,
+                                                 final boolean forCompletion) {
     PsiWildcardType wildcardToCapture = null;
     PsiType lowerBound = PsiType.NULL;
     PsiType upperBound = PsiType.NULL;
@@ -138,7 +152,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                                             argumentType, true, PsiUtil.getLanguageLevel(argument));
         if (currentSubstitution == null) continue;
         if (currentSubstitution == FAILED_INFERENCE) {
-          return typeParameter.getManager().getElementFactory().createType(typeParameter);
+          final PsiClassType type = typeParameter.getManager().getElementFactory().createType(typeParameter);
+          return new Pair<PsiType, PsiType>(type, type);
         }
         
         final ConstraintType constraintType = currentSubstitution.getSecond();
@@ -146,8 +161,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (type == null) return null;
         switch(constraintType) {
           case EQUALS:
-            if (!(type instanceof PsiWildcardType)) return type;
-            if (wildcardToCapture != null) return PsiType.NULL;
+            if (!(type instanceof PsiWildcardType)) {
+              return new Pair<PsiType, PsiType>(type, type);
+            }
+            if (wildcardToCapture != null) return null;
             wildcardToCapture = (PsiWildcardType) type;
             break;
           case SUPERTYPE:
@@ -156,7 +173,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
             } else {
               if (!lowerBound.equals(type)) {
                 lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
-                if (lowerBound == null) return PsiType.NULL;
+                if (lowerBound == null) return null;
               }
             }
             break;
@@ -170,20 +187,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (wildcardToCapture != null) {
       if (lowerBound != PsiType.NULL) {
-        if (!wildcardToCapture.isAssignableFrom(lowerBound)) return PsiType.NULL;
+        if (!wildcardToCapture.isAssignableFrom(lowerBound)) return null;
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, typeParameter.getManager());
       } else {
-        if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return PsiType.NULL;
-        return wildcardToCapture;
+        if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return null;
+        return new Pair<PsiType, PsiType>(wildcardToCapture, wildcardToCapture);
       }
     }
-
-    if (lowerBound == PsiType.NULL) lowerBound = upperBound;
 
     if (lowerBound == PsiType.NULL && parent != null) {
       lowerBound = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
     }
-    return lowerBound;
+
+    return new Pair<PsiType, PsiType>(lowerBound, upperBound);
   }
 
   public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
