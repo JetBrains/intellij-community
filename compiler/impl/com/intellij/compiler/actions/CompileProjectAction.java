@@ -4,10 +4,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,11 @@ public class CompileProjectAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
+    super.update(event);
     Presentation presentation = event.getPresentation();
+    if (!presentation.isEnabled()) {
+      return;
+    }
     Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     presentation.setEnabled(project != null);
   }

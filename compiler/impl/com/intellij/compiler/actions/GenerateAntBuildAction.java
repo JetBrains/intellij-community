@@ -39,7 +39,6 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
-    super.update(event);
     Presentation presentation = event.getPresentation();
     Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     presentation.setEnabled(project != null);

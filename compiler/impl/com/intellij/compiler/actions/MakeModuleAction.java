@@ -2,11 +2,11 @@ package com.intellij.compiler.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ProfilingUtil;
 
 public class MakeModuleAction extends CompileActionBase {
@@ -33,7 +33,11 @@ public class MakeModuleAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
+    super.update(event);
     Presentation presentation = event.getPresentation();
+    if (!presentation.isEnabled()) {
+      return;
+    }
     final DataContext dataContext = event.getDataContext();
     final Module module = (Module)dataContext.getData(DataConstants.MODULE);
     Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);

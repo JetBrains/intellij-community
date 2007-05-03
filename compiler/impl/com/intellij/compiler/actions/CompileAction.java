@@ -4,7 +4,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -42,7 +41,11 @@ public class CompileAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
+    super.update(event);
     Presentation presentation = event.getPresentation();
+    if (!presentation.isEnabled()) {
+      return;
+    }
     DataContext dataContext = event.getDataContext();
 
     presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));

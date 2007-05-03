@@ -16,7 +16,11 @@ public class CompileDirtyAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
+    super.update(event);
     Presentation presentation = event.getPresentation();
+    if (!presentation.isEnabled()) {
+      return;
+    }
     presentation.setEnabled(event.getDataContext().getData(DataConstants.PROJECT) != null);
   }
 }
