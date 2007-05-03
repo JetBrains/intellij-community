@@ -172,7 +172,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private boolean findUsageInFile(@NotNull FileEditor editor, FileSearchScope direction) {
-    PsiElement[] elements = restorePsiElements(myLastSearchInFileData);
+    PsiElement[] elements = restorePsiElements(myLastSearchInFileData, true);
     if (elements == null) return false;
     if (elements.length == 0) return true;//all elements have invalidated
 
@@ -189,7 +189,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   // returns null if cannot find, empty Pair if all elements have been changed
-  private @Nullable PsiElement[] restorePsiElements(SearchData searchData) {
+  private @Nullable PsiElement[] restorePsiElements(SearchData searchData, final boolean showErrorMessage) {
     if (searchData == null) return null;
     SmartPsiElementPointer[] lastSearchElements = searchData.myElements;
     if (lastSearchElements == null) return null;
@@ -198,7 +198,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       PsiElement element = pointer.getElement();
       if (element != null) elements.add(element);
     }
-    if (elements.isEmpty()) {
+    if (elements.isEmpty() && showErrorMessage) {
       Messages.showMessageDialog(myProject, FindBundle.message("find.searched.elements.have.been.changed.error"),
                                  FindBundle.message("cannot.search.for.usages.title"), Messages.getInformationIcon());
       // SCR #10022
@@ -571,7 +571,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   public void rerunAndRecallFromHistory(SearchData searchData) {
     myFindUsagesHistory.remove(searchData);
-    PsiElement[] elements = restorePsiElements(searchData);
+    PsiElement[] elements = restorePsiElements(searchData, true);
     if (elements == null || elements.length == 0) return;
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
     findUsages(descriptor, false, false, searchData.myOptions);
@@ -585,7 +585,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   private void removeInvalidElementsFromHistory() {
     for (SearchData data : myFindUsagesHistory) {
-      PsiElement[] elements = restorePsiElements(data);
+      PsiElement[] elements = restorePsiElements(data, false);
       if (elements == null || elements.length == 0) myFindUsagesHistory.remove(data);
     }
   }

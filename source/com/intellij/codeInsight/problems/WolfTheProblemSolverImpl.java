@@ -253,6 +253,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       reportProblems(file, Collections.<Problem>singleton(problem));
       return false;
     }
+    clearProblems(file);
     return true;
   }
 
