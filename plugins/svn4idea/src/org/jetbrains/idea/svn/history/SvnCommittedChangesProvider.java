@@ -151,4 +151,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
     return null;
   }
+
+  public boolean refreshCacheByNumber() {
+    return true;
+  }
 }
