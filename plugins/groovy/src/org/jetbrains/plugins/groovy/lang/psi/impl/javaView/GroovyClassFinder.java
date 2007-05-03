@@ -7,7 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.caches.GroovyCachesManager;
+import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.util.ArrayList;

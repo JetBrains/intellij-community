@@ -1,11 +1,15 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.ui.LightweightHint;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
