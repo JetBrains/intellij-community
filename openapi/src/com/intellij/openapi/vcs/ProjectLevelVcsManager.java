@@ -228,6 +228,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void updateActiveVcss();
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
+  public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
   /**
    * This method can be used only when initially loading the project configuration!

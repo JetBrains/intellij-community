@@ -638,6 +638,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return Collections.unmodifiableList(myDirectoryMappings);
   }
 
+  public List<VcsDirectoryMapping> getDirectoryMappings(final AbstractVcs vcs) {
+    final ArrayList<VcsDirectoryMapping> result = new ArrayList<VcsDirectoryMapping>();
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      if (vcs.getName().equals(mapping.getVcs())) {
+        result.add(mapping);
+      }
+    }
+    return result;
+  }
+
   public void setDirectoryMapping(final String path, final String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
