@@ -1,11 +1,11 @@
 
 package com.intellij.tools;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +28,12 @@ public class ToolManager implements ExportableApplicationComponent {
     setTools(tools);
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{ToolSettings.getToolDirectory()};
   }
 
+  @NotNull
   public String getPresentableName() {
     return ToolsBundle.message("tools.settings");
   }

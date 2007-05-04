@@ -13,6 +13,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -232,10 +233,12 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     return "EditorSettings";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return OptionsBundle.message("options.editor.settings.presentable.name");
   }

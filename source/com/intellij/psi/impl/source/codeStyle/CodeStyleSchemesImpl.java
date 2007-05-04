@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
@@ -185,10 +186,12 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{getDir(true), PathManager.getDefaultOptionsFile()};
   }
 
+  @NotNull
   public String getPresentableName() {
     return PsiBundle.message("codestyle.export.display.name");
   }

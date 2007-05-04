@@ -21,6 +21,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -248,10 +249,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return "colors.scheme";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{getColorsDir(true), PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return OptionsBundle.message("options.color.schemes.presentable.name");
   }
