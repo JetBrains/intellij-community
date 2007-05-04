@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +29,6 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
   private ElementsChooser<ComponentElementProperties> myChooser;
   private FieldPanel myPathPanel;
-  private ActionListener myBrowseAction;
   @NonNls
   public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;
@@ -42,8 +42,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     myShowFilePath = showFilePath;
     Map<ExportableApplicationComponent, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<ExportableApplicationComponent, ComponentElementProperties>();
 
-    for (int i = 0; i < components.size(); i++) {
-      ExportableApplicationComponent component = components.get(i);
+    for (ExportableApplicationComponent component : components) {
       if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
         ComponentElementProperties componentElementProperties = new ComponentElementProperties();
         componentElementProperties.addComponent(component);
@@ -53,43 +52,40 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     final Set<ComponentElementProperties> componentElementProperties = new LinkedHashSet<ComponentElementProperties>(componentToContainingListElement.values());
     myChooser = new ElementsChooser<ComponentElementProperties>(true);
-    for (Iterator iterator = componentElementProperties.iterator(); iterator.hasNext();) {
-      ComponentElementProperties elementProperties = (ComponentElementProperties)iterator.next();
-      myChooser.addElement(elementProperties, true, elementProperties);
+    for (final ComponentElementProperties componentElementProperty : componentElementProperties) {
+      myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }
 
-    myBrowseAction = new ActionListener() {
+    final ActionListener browseAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         String oldPath = myPathPanel.getText();
-        String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"), 
+        String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"),
                                          IdeBundle.message("prompt.choose.export.settings.file.path"));
         if (path == null) return;
         myPathPanel.setText(FileUtil.toSystemDependentName(path));
       }
     };
 
-    myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, myBrowseAction, null);
+    myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, browseAction, null);
     myPathPanel.setText(DEFAULT_PATH);
 
     setTitle(title);
     init();
   }
 
-  private boolean addToExistingListElement(ExportableApplicationComponent component,
+  private static boolean addToExistingListElement(ExportableApplicationComponent component,
                                            Map<ExportableApplicationComponent,ComponentElementProperties> componentToContainingListElement,
                                            Map<File, Set<ExportableApplicationComponent>> fileToComponents) {
     final File[] exportFiles = component.getExportFiles();
     File file = null;
-    for (int i = 0; i < exportFiles.length; i++) {
-      File exportFile = exportFiles[i];
+    for (File exportFile : exportFiles) {
       final Set<ExportableApplicationComponent> tiedComponents = fileToComponents.get(exportFile);
 
-      for (Iterator iterator = tiedComponents.iterator(); iterator.hasNext();) {
-        ExportableApplicationComponent tiedComponent = (ExportableApplicationComponent)iterator.next();
+      for (final ExportableApplicationComponent tiedComponent : tiedComponents) {
         if (tiedComponent == component) continue;
         final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
         if (elementProperties != null && !exportFile.equals(file)) {
-          LOG.assertTrue(file == null, "Component "+component+" serialize itself into "+file+" and "+exportFile);
+          LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
           // found
           elementProperties.addComponent(component);
           componentToContainingListElement.put(component, elementProperties);
@@ -100,6 +96,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return file != null;
   }
 
+  @Nullable
   public static String chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
     FileChooserDescriptor chooserDescriptor;
     chooserDescriptor = new FileChooserDescriptor(true, true, true, true, false, false);
@@ -158,8 +155,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   Set<ExportableApplicationComponent> getExportableComponents() {
     final List<ComponentElementProperties> markedElements = myChooser.getMarkedElements();
     final Set<ExportableApplicationComponent> components = new HashSet<ExportableApplicationComponent>();
-    for (int i = 0; i < markedElements.size(); i++) {
-      ComponentElementProperties elementProperties = markedElements.get(i);
+    for (ComponentElementProperties elementProperties : markedElements) {
       components.addAll(elementProperties.myComponents);
     }
     return components;
@@ -172,18 +168,20 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       return myComponents.add(component);
     }
 
+    @Nullable
     public Icon getIcon() {
       return null;
     }
 
+    @Nullable
     public Color getColor() {
       return null;
     }
 
     public String toString() {
       String result = "";
-      for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-        ExportableApplicationComponent component = (ExportableApplicationComponent)iterator.next();
+
+      for (final ExportableApplicationComponent component : myComponents) {
         result += (result.length() == 0 ? "" : ", ") + component.getPresentableName();
       }
       return result;

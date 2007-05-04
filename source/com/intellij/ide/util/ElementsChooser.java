@@ -5,6 +5,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -205,7 +206,9 @@ public class ElementsChooser<T> extends JPanel {
   }
 
   public static interface ElementProperties {
+    @Nullable
     Icon getIcon();
+    @Nullable
     Color getColor();
   }
   public void addElement(T element, final boolean isMarked, ElementProperties elementProperties) {
