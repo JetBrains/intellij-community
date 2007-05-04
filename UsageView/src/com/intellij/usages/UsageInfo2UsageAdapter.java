@@ -332,7 +332,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     list.add(first);
     for (int i = 1; i < myRangeMarkers.size(); i++) {
       RangeMarker rangeMarker = myRangeMarkers.get(i);
-      PsiFile file = first.getElement().getContainingFile();
+      PsiElement element = first.getElement();
+      if (element == null) continue;
+      PsiFile file = element.getContainingFile();
       UsageInfo usageInfo = new UsageInfo(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
       list.add(usageInfo);
     }
