@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 import javax.swing.*;
 
@@ -71,6 +72,10 @@ public class GroovyFile extends PsiFileBase {
 
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
+  }
+
+  public GrTopStatement[] getTopStatements() {
+    return findChildrenByClass(GrTopStatement.class);
   }
 
   public GrImportStatement[] getImportStatements() {

@@ -94,7 +94,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
       return getReferenceElement().getReferenceName();
     }
 
-    @NonNls
+    @Nullable
     public String getCanonicalText() {
       PsiClass resolved = resolve();
       return resolved == null ? null : resolved.getQualifiedName();

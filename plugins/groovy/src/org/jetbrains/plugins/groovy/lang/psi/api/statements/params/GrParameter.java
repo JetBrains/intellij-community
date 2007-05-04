@@ -16,8 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -25,4 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
  */
 public interface GrParameter extends GrNamedElement {
   public static final GrParameter[] EMPTY_ARRAY = new GrParameter[0];
+
+  @Nullable
+  GrTypeElement getTypeElementGroovy();
 }

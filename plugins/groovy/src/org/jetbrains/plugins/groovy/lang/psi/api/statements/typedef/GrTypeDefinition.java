@@ -16,24 +16,26 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrNamedElement, GrStatement, NavigationItem, PsiClass {
+public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, NavigationItem, PsiClass {
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
   public GrTypeDefinitionBody getBody();
+
+  public GrTopStatement[] getStatements();
 
   @Nullable
   public String getQualifiedName();

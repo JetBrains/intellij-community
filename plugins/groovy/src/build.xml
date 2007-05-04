@@ -22,7 +22,6 @@
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" location="${idea.dir}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
-  <!--<property name="plugin.libs" value="${project.dir}/lib/special"/>-->
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
@@ -202,6 +201,7 @@
       <batchtest todir="${project.dir}/logs">
         <fileset dir="${test.dir}">
           <include name="**/ParserTest.java"/>
+          <include name="**/FormatterTest.java"/>
         </fileset>
       </batchtest>
 

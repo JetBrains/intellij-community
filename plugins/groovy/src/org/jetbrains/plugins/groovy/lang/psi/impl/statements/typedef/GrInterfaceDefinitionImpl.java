@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 /**
  * @autor: Dmitry.Krasilschikov

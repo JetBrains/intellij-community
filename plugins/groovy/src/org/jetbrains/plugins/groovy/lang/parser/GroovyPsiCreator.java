@@ -53,11 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrAnnotationBodyImplType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrClassBodyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumBodyImplType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrInterfaceBodyImplType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.enumConstantBody.GrEnumConstantBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
@@ -128,7 +125,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
       return new GrVariableDefinitionsImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
-    if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
+//    if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
@@ -146,10 +143,10 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(EXTENDS_CLAUSE)) return new GrExtendsClauseImpl(node);
 
     //bodies
-    if (elem.equals(CLASS_BLOCK)) return new GrClassBodyImpl(node);
-    if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBodyImplType(node);
-    if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
-    if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBodyImplType(node);
+    if (elem.equals(CLASS_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
+    if (elem.equals(INTERFACE_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
+    if (elem.equals(ENUM_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
+    if (elem.equals(ANNOTATION_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
     if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(CONSTRUCTOR_BODY)) return new GrConstructorBodyImpl(node);

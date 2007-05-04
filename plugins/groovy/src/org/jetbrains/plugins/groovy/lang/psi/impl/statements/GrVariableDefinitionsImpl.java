@@ -17,19 +17,23 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
  */
-public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrStatement {
+public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrVariableDeclarations {
   public GrVariableDefinitionsImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -44,5 +48,28 @@ public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements G
     }
 
     return true;
+  }
+
+  @NotNull
+  public GrModifiers getModifiersList() {
+    GrModifiers modifiers = findChildByClass(GrModifiers.class);
+    assert modifiers != null;
+    return modifiers;
+  }
+
+  @NotNull
+  public String getName() {
+    PsiElement variable = findChildByClass(GrVariable.class);
+    assert variable != null;
+    ASTNode node = variable.getNode();
+    assert node != null;
+    ASTNode variableName = node.findChildByType(GroovyTokenTypes.mIDENT);
+    assert variableName != null;
+    return variableName.getText();
+  }
+
+  @Nullable
+  public GrTypeElement getTypeElementGroovy() {
+    return findChildByClass(GrTypeElement.class);
   }
 }

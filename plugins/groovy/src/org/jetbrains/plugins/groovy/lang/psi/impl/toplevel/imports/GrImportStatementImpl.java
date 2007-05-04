@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -79,6 +80,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     return findChildByClass(GrTypeOrPackageReferenceElement.class);
   }
 
+  @Nullable
   public String getImportedName() {
     PsiElement identifier = findChildByType(GroovyTokenTypes.mIDENT);
     //this was aliased import

@@ -56,7 +56,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public GrParameter[] getParameters() {
     GrParameterListImpl parameterList = findChildByClass(GrParameterListImpl.class);
-    if (parameterList != null ) {
+    if (parameterList != null) {
       return parameterList.getParameters();
     }
 
@@ -97,7 +97,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Nullable
@@ -163,16 +163,19 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
+  @NotNull
   public String getName() {
-    return findChildByType(GroovyTokenTypes.mIDENT).getText();
+    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
+    assert nameElement != null;
+    return nameElement.getText();
   }
 
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -194,7 +197,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public PsiClass getContainingClass() {
-    return (PsiClass) getParent();
+    PsiElement parent = getParent();
+    if (parent instanceof PsiClass) return (PsiClass) parent;
+    return null;
   }
 
   @Nullable

@@ -16,21 +16,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import com.intellij.psi.PsiMethod;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrMethod extends GrMember, GrNamedElement, PsiMethod {
+public interface GrMethod extends GrMember, GrNamedElement, PsiMethod, GrStatement {
 
   GrOpenBlock getBlock();
 
   GrParameter[] getParameters();
 
+  @Nullable
   GrTypeElement getReturnTypeElementGroovy();
 }

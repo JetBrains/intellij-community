@@ -17,9 +17,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -32,5 +41,24 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
 
   public String toString() {
     return "Modifiers";
+  }
+
+  @NotNull
+  public GroovyPsiElement[] getModifierList() {
+    List<PsiElement> modifiers = new ArrayList<PsiElement>();
+    PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, GroovyPsiElement.class);
+    GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
+    PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);
+
+    if (modifiersKeywords.length != 0)
+      modifiers.addAll(Arrays.asList(modifiersKeywords));
+
+    if (modifiersAnnotations.length != 0)
+      modifiers.addAll(Arrays.asList(modifiersAnnotations));
+
+    if (defKeyword != null)
+      modifiers.add(defKeyword);
+
+    return modifiers.toArray(new GroovyPsiElement[0]);
   }
 }

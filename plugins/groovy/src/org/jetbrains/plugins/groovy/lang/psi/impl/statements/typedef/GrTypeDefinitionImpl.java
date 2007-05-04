@@ -17,31 +17,33 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.Icons;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Collections;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -77,8 +79,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 
+  @Nullable
+  public GrTopStatement[] getStatements() {
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) return null;
+    return body.getStatements();
+  }
+
   public ItemPresentation getPresentation() {
-    return new ItemPresentation(){
+    return new ItemPresentation() {
 
       public String getPresentableText() {
         return getName();
@@ -86,7 +95,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
       @Nullable
       public String getLocationString() {
-        return "in "+ getContainingFile().getVirtualFile().getName();                  // TODO implement
+        return "in " + getContainingFile().getVirtualFile().getName();                  // TODO implement
       }
 
       @Nullable

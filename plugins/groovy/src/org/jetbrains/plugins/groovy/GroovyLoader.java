@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
+import org.jetbrains.plugins.groovy.compiler.geterator.GroovyToJavaGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -67,11 +68,11 @@ public class GroovyLoader implements ApplicationComponent {
 
   public static void loadGroovy() {
     ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
-              }
-            }
+        new Runnable() {
+          public void run() {
+            FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
+          }
+        }
     );
 
 /*
@@ -83,6 +84,7 @@ public class GroovyLoader implements ApplicationComponent {
       public void projectOpened(Project project) {
         CompilerManager compilerManager = CompilerManager.getInstance(project);
         compilerManager.addCompiler(new GroovyCompilerProcess());
+        compilerManager.addCompiler(new GroovyToJavaGenerator());
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
       }
     });
