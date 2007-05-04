@@ -610,4 +610,13 @@ public class VcsUtil {
     }
     return sb.toString();
   }
+
+  public static VirtualFile[] paths2VFiles( String[] paths )
+  {
+    VirtualFile[] files = new VirtualFile[ paths.length ];
+    for( int i = 0; i < paths.length; i++ )
+      files[ i ] = getVirtualFile( paths[ i ] );
+
+    return files;
+  }
 }
