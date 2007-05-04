@@ -614,7 +614,10 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       myCurrentDragContext.setCursor(null);
     }
 
-    getLastProcessedTarget().cleanUpOnLeave();
+    final DnDTarget target = getLastProcessedTarget();
+    if (target != null) {
+      target.cleanUpOnLeave();
+    }
     hideCurrentHighlighter();
     myHightlighterShowRequest = null;
   }
