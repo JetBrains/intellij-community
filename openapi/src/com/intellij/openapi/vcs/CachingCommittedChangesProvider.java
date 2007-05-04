@@ -29,6 +29,7 @@ import java.util.Collection;
  * @author yole
  */
 public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
+  int getFormatVersion();
   void writeChangeList(final DataOutput stream, final T list) throws IOException;
   T readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException;
 

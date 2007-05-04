@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
 
   private File myPath;
   private File myIndexPath;
@@ -46,7 +46,7 @@ public class ChangesCacheFile {
   private boolean myHeaderLoaded = false;
   @NonNls private static final String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
-  private static final int HEADER_SIZE = 42;
+  private static final int HEADER_SIZE = 46;
 
   public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
     final Calendar date = Calendar.getInstance();
@@ -181,6 +181,7 @@ public class ChangesCacheFile {
     assert myStreamsOpen && myHeaderLoaded;
     myStream.seek(0);
     myStream.writeInt(VERSION);
+    myStream.writeInt(myChangesProvider.getFormatVersion());
     myStream.writeLong(myLastCachedDate.getTime());
     myStream.writeLong(myFirstCachedDate.getTime());
     myStream.writeLong(myFirstCachedChangelist);
@@ -244,6 +245,10 @@ public class ChangesCacheFile {
       try {
         int version = stream.readInt();
         if (version != VERSION) {
+          throw new VersionMismatchException();
+        }
+        int providerVersion = stream.readInt();
+        if (providerVersion != myChangesProvider.getFormatVersion()) {
           throw new VersionMismatchException();
         }
         myLastCachedDate = new Date(stream.readLong());
