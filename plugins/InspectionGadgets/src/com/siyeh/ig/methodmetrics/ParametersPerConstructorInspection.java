@@ -22,24 +22,24 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ParametersPerMethodInspection extends MethodMetricInspection {
+public class ParametersPerConstructorInspection extends MethodMetricInspection {
 
     @NotNull
     public String getID() {
-        return "MethodWithTooManyParameters";
+        return "ConstructorWithTooManyParameters";
     }
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "parameters.per.method.display.name");
+                "parameters.per.constructor.display.name");
     }
 
     @NotNull
     public String buildErrorString(Object... infos) {
         final Integer parameterCount = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
-                "parameters.per.method.problem.descriptor", parameterCount);
+                "parameters.per.constructor.problem.descriptor", parameterCount);
     }
 
     protected int getDefaultLimit() {
@@ -61,15 +61,12 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            if (method.isConstructor()) {
+            if (!method.isConstructor()) {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
             final int parametersCount = parameterList.getParametersCount();
             if (parametersCount <= getLimit()) {
-                return;
-            }
-            if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
                 return;
             }
             registerMethodError(method, Integer.valueOf(parametersCount));

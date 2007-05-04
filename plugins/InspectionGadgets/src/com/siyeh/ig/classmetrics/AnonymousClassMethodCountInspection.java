@@ -66,10 +66,11 @@ public class AnonymousClassMethodCountInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new MethodCountVisitor();
+        return new AnonymousClassMethodCountVisitor();
     }
 
-    private class MethodCountVisitor extends BaseInspectionVisitor {
+    private class AnonymousClassMethodCountVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting

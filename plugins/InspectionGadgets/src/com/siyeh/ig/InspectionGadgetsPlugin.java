@@ -847,6 +847,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerMethodMetricsInspections() {
+        m_inspectionClasses.add(ParametersPerConstructorInspection.class);
         m_inspectionClasses.add(CyclomaticComplexityInspection.class);
         m_inspectionClasses.add(MethodCouplingInspection.class);
         m_inspectionClasses.add(MethodWithMultipleLoopsInspection.class);

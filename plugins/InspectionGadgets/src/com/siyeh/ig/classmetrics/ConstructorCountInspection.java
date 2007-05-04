@@ -53,10 +53,10 @@ public class ConstructorCountInspection extends ClassMetricInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new MethodCountVisitor();
+        return new ConstructorCountVisitor();
     }
 
-    private class MethodCountVisitor extends BaseInspectionVisitor {
+    private class ConstructorCountVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
