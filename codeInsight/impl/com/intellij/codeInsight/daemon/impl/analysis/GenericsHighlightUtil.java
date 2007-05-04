@@ -474,30 +474,29 @@ public class GenericsHighlightUtil {
     if (lClass == null || rClass == null) return false;
     if (lClass instanceof PsiTypeParameter &&
         !InheritanceUtil.isInheritorOrSelf(rClass, lClass, true)) return true;
-    PsiClass base;
+
     if (!lClass.getManager().areElementsEquivalent(lClass, rClass)) {
       if (lClass.isInheritor(rClass, true)) {
-        base = rClass;
         lSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(rClass, lClass, lSubstitutor);
+        lClass = rClass;
       }
       else if (rClass.isInheritor(lClass, true)) {
-        base = lClass;
         rSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(lClass, rClass, rSubstitutor);
+        rClass = lClass;
       }
       else {
         return false;
       }
     }
-    else {
-      base = lClass;
-    }
 
-    LOG.assertTrue(lSubstitutor != null && rSubstitutor != null);
-    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(base);
-    while (it.hasNext()) {
-      PsiTypeParameter parameter = it.next();
-      PsiType lTypeArg = lSubstitutor.substitute(parameter);
-      PsiType rTypeArg = rSubstitutor.substituteWithBoundsPromotion(parameter);
+    Iterator<PsiTypeParameter> lIterator = PsiUtil.typeParametersIterator(lClass);
+    Iterator<PsiTypeParameter> rIterator = PsiUtil.typeParametersIterator(rClass);
+    while (lIterator.hasNext()) {
+      if (!rIterator.hasNext()) return false;
+      PsiTypeParameter lParameter = lIterator.next();
+      PsiTypeParameter rParameter = rIterator.next();
+      PsiType lTypeArg = lSubstitutor.substitute(lParameter);
+      PsiType rTypeArg = rSubstitutor.substituteWithBoundsPromotion(rParameter);
       if (lTypeArg == null) continue;
       if (rTypeArg == null) {
         if (!(lTypeArg instanceof PsiWildcardType) ||
