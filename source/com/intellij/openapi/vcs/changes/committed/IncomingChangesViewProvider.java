@@ -54,6 +54,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private void updateModel() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         if (myBrowser != null) {
           CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
             public void consume(final List<CommittedChangeList> committedChangeLists) {
