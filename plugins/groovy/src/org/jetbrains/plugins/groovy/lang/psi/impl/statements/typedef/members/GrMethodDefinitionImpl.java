@@ -41,6 +41,7 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
+
 public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
   public GrMethodDefinitionImpl(@NotNull ASTNode node) {
     super(node);
