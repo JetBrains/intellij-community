@@ -13,8 +13,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -23,8 +23,8 @@ import java.util.*;
  */
 public class ModuleContainerImpl implements ModuleContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.J2EEModuleContainerImpl");
-  private ModulesProvider myDefaultModulesProvider;
-  protected final Module myParentModule;
+  protected ModulesProvider myDefaultModulesProvider;
+  protected Module myParentModule;
   protected final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
 
   @NonNls public static final String TYPE_ATTRIBUTE_NAME = "type";
@@ -32,10 +32,17 @@ public class ModuleContainerImpl implements ModuleContainer {
   @NonNls public static final String MODULE_TYPE = "module";
   @NonNls private static final String LIBRARY_TYPE = "library";
 
-  public ModuleContainerImpl(Module module) {
-    LOG.assertTrue(module != null);
+  public ModuleContainerImpl(@NotNull Module module) {
     myParentModule = module;
     myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
+  }
+
+  public Module getParentModule() {
+    return myParentModule;
+  }
+
+  public ModuleContainerImpl(ModulesProvider modulesProvider) {
+    myDefaultModulesProvider = modulesProvider;
   }
 
   public void removeLibrary(final Library library) {
@@ -49,23 +56,24 @@ public class ModuleContainerImpl implements ModuleContainer {
 
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
+    LOG.assertTrue(myParentModule != null);
     final List<Element> children = element.getChildren(CONTAINER_ELEMENT_NAME);
     for (Element child : children) {
       final String type = child.getAttributeValue(TYPE_ATTRIBUTE_NAME);
       ContainerElement containerElement;
-      containerElement = createElement(child, type);
+      containerElement = createElement(child, myParentModule, type);
 
       containerElement.readExternal(child);
       addElement(containerElement);
     }
   }
 
-  protected ContainerElement createElement(final Element child, final String type) throws InvalidDataException {
+  protected ContainerElement createElement(final Element child, final Module module, final String type) throws InvalidDataException {
     if (MODULE_TYPE.equals(type)) {
-      return new ModuleLinkImpl((String)null, getModule());
+      return new ModuleLinkImpl((String)null, module);
     }
     else if (LIBRARY_TYPE.equals(type)) {
-      return new LibraryLinkImpl(null, getModule());
+      return new LibraryLinkImpl(null, module);
     }
     else {
       throw new InvalidDataException("invalid type: " + type + " " + child);
@@ -175,29 +183,8 @@ public class ModuleContainerImpl implements ModuleContainer {
     return result.toArray(new Module[result.size()]);
   }
 
-  @NotNull
-  public Module getModule() {
-    return myParentModule;
-  }
-
   private void clearContainer() {
     myContents.clear();
-  }
-
-  public void copyFrom(ModuleContainer from) {
-    copyContainerInfoFrom((ModuleContainerImpl)from);
-  }
-
-  protected ModuleContainerImpl createCopy() {
-    return new ModuleContainerImpl(getModule());
-  }
-
-  private void copyContainerInfoFrom(ModuleContainerImpl from) {
-    clearContainer();
-    final ContainerElement[] elements = from.getAllElements();
-    for (final ContainerElement element : elements) {
-      addElement(element.clone());
-    }
   }
 
   public void addElement(ContainerElement element) {
