@@ -110,7 +110,7 @@ public class CommittedChangesTreeBrowser extends JPanel {
 
     updateBySelectionChange();
 
-    new ChangeListDetailsAction().registerCustomShortcutSet(
+    ActionManager.getInstance().getAction("CommittedChanges.Details").registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_QUICK_JAVADOC)),
       this);
   }

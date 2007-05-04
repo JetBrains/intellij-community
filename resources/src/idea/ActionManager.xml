@@ -1482,6 +1482,8 @@
         icon="/vcs/refresh.png"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
         icon="/ant/filter.png"/>
+      <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
+        icon="/actions/showChangesOnly.png"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
     </group>
 
