@@ -183,6 +183,10 @@ public class SimpleColoredComponent extends JComponent {
 
   }
 
+  public synchronized String getFragmentText(int index) {
+    return myFragments.get(index);    
+  }
+
   public synchronized final Dimension computePreferredSize(final boolean mainTextOnly) {
     // Calculate width
     int width = myIpad.left + myIpad.right;
@@ -228,6 +232,30 @@ public class SimpleColoredComponent extends JComponent {
     height += insets.top + insets.bottom;
 
     return new Dimension(width, height);
+  }
+
+  public int findFragmentAt(int x) {
+    int curX = myIpad.left;
+    if (myIcon != null) {
+      curX += myIcon.getIconWidth() + myIconTextGap;
+    }
+
+    Font font = getFont();
+    LOG.assertTrue(font != null);
+
+    for (int i = 0; i < myAttributes.size(); i++) {
+      SimpleTextAttributes attributes = myAttributes.get(i);
+      if (font.getStyle() != attributes.getStyle()) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getStyle());
+      }
+      final FontMetrics metrics = getFontMetrics(font);
+      final int curWidth = metrics.stringWidth(myFragments.get(i));
+      if (x >= curX && x < curX + curWidth) {
+        return i;
+      }
+      curX += curWidth;
+    }
+    return -1;
   }
 
   protected void paintComponent(final Graphics g) {
@@ -332,6 +360,10 @@ public class SimpleColoredComponent extends JComponent {
           UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
           UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
         }
+      }
+      if (attributes.isUnderline()) {
+        final int underlineAt = textBaseline + 1;
+        UIUtil.drawLine(g, xOffset, underlineAt, xOffset + fragmentWidth, underlineAt);
       }
 
 

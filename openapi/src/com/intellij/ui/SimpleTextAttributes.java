@@ -31,6 +31,7 @@ public final class SimpleTextAttributes {
   public static final int FONT_MASK = STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC;
   public static final int STYLE_STRIKEOUT = STYLE_ITALIC << 1;
   public static final int STYLE_WAVED = STYLE_STRIKEOUT << 1;
+  public static final int STYLE_UNDERLINE = STYLE_WAVED << 1;
 
   private final Color myBgColor;
   private final Color myFgColor;
@@ -61,7 +62,7 @@ public final class SimpleTextAttributes {
   }
 
   public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, final int style) {
-    if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED) & style) != 0){
+    if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED | STYLE_UNDERLINE) & style) != 0){
       throw new IllegalArgumentException("wrong style: "+style);
     }
     myFgColor = fgColor;
@@ -111,8 +112,12 @@ public final class SimpleTextAttributes {
   /**
    * @return whether text is waved or not
    */
-  public boolean isWaved(){
+  public boolean isWaved() {
     return (myStyle & STYLE_WAVED) != 0;
+  }
+
+  public boolean isUnderline() {
+    return (myStyle & STYLE_UNDERLINE) != 0;
   }
 
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
@@ -130,6 +135,9 @@ public final class SimpleTextAttributes {
       else if (effectType == EffectType.WAVE_UNDERSCORE){
         style |= STYLE_WAVED;
       }
+      else if (effectType == EffectType.LINE_UNDERSCORE) {
+        style |= STYLE_UNDERLINE;
+      }
       else{
         // not supported
       }
@@ -146,7 +154,12 @@ public final class SimpleTextAttributes {
     } else if (isStrikeout()) {
       effectColor = myWaveColor;
       effectType = EffectType.STRIKEOUT;
-    } else{
+    }
+    else if (isUnderline()) {
+      effectColor = myWaveColor;
+      effectType = EffectType.LINE_UNDERSCORE;
+    }
+    else{
       effectColor = null;
       effectType = null;
     }
