@@ -21,11 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -134,7 +130,7 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
   private ASTNode findValueToken(final ASTNode node) {
     ASTNode child = node.getFirstChildNode();
     while (child != null){
-      if (child.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) return child;
+      if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) return child;
       child = child.getTreeNext();
     }
     return null;

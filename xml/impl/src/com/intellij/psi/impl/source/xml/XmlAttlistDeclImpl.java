@@ -28,7 +28,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XML_NAME) {
+    if (child.getElementType() == XmlElementType.XML_NAME) {
       return ChildRole.XML_NAME;
     }
     else {

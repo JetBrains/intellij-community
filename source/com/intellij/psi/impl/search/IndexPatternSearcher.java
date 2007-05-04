@@ -16,7 +16,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.search.IndexPattern;
@@ -26,6 +25,7 @@ import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
@@ -87,7 +87,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     return true;
   }
 
-  private static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(TreeElement.XML_COMMENT_CHARACTERS);
+  private static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlElementType.XML_COMMENT_CHARACTERS);
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
   private static void findCommentTokenRanges(final PsiFile file,

@@ -1,7 +1,8 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlMarkupDecl;
 
 /**
@@ -9,7 +10,7 @@ import com.intellij.psi.xml.XmlMarkupDecl;
  */
 public class XmlMarkupDeclImpl extends XmlElementImpl implements XmlMarkupDecl {
   public XmlMarkupDeclImpl() {
-    super(XML_MARKUP_DECL);
+    super(XmlElementType.XML_MARKUP_DECL);
   }
 
   public PsiMetaData getMetaData(){

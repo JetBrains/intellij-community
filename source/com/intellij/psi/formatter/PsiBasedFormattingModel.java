@@ -11,11 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBasedFormattingModel implements FormattingModel {
@@ -82,7 +83,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
           if (isNonEmptyWhiteSpace(leafElement)) return false;
           LOG.assertTrue(leafElement.getPsi().isValid());
           ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
-          if (prevNode != null && prevNode.getElementType() == ElementType.XML_CDATA_END) return false;
+          if (prevNode != null && prevNode.getElementType() == XmlElementType.XML_CDATA_END) return false;
           if (isNonEmptyWhiteSpace(prevNode)) {
             return false;
           }

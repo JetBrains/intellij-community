@@ -18,7 +18,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -82,8 +81,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
     final IElementType elementType = child.getElementType();
     if (elementType == XmlElementType.XML_ATTRIBUTE) return attrWrap;
-    if (elementType == ElementType.XML_START_TAG_START) return tagBeginWrap;
-    if (elementType == ElementType.XML_END_TAG_START) {
+    if (elementType == XmlElementType.XML_START_TAG_START) return tagBeginWrap;
+    if (elementType == XmlElementType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
       if (parent instanceof XmlTag) {
         final XmlTag tag = (XmlTag)parent;
@@ -93,7 +92,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == XmlElementType.XML_TEXT || elementType == ElementType.XML_DATA_CHARACTERS) return textWrap;
+    if (elementType == XmlElementType.XML_TEXT || elementType == XmlElementType.XML_DATA_CHARACTERS) return textWrap;
     return null;
   }
 
@@ -231,7 +230,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                          final Indent indent) {
     ASTNode resultNode = child;
     ASTNode currentChild = child.getTreeNext();
-    while (currentChild != null && currentChild.getElementType() != ElementType.XML_END_TAG_START) {
+    while (currentChild != null && currentChild.getElementType() != XmlElementType.XML_END_TAG_START) {
       if (!FormatterUtil.containsWhiteSpacesOnly(currentChild)) {
         currentChild = processChild(result, currentChild, wrap, alignment, indent);
         resultNode = currentChild;
@@ -349,7 +348,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return myXmlFormattingPolicy.processJsp()
            && PsiUtil.getJspFile(myNode.getPsi()) != null
            && (isXmlTag(myNode) || myNode.getElementType() == XmlElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
-           (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == JspElementType.JSP_XML_TEXT ||
+           (child.getElementType() == XmlElementType.XML_DATA_CHARACTERS || child.getElementType() == JspElementType.JSP_XML_TEXT ||
             child.getPsi() instanceof OuterLanguageElement);
 
   }

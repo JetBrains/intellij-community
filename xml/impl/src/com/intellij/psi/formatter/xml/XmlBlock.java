@@ -125,7 +125,7 @@ public class XmlBlock extends AbstractXmlBlock {
     final ASTNode node2 = ((AbstractBlock)child2).getNode();
     final IElementType type2 = node2.getElementType();
 
-    if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == XmlElementType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
@@ -161,7 +161,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
-    if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
+    if (type1 == XmlElementType.XML_EQ || type2 == XmlElementType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
       return Spacing
         .createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
@@ -172,7 +172,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private Spacing getSpacesInsideText(final IElementType type1, final IElementType type2) {
-    if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
+    if (type1 == XmlElementType.XML_DATA_CHARACTERS && type2 == XmlElementType.XML_DATA_CHARACTERS) {
       return Spacing
         .createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
@@ -234,8 +234,8 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public boolean isTextElement() {
-    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS ||
-           myNode.getElementType() == ElementType.XML_CHAR_ENTITY_REF;
+    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS ||
+           myNode.getElementType() == XmlElementType.XML_CHAR_ENTITY_REF;
   }
 
   @Override

@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 
@@ -36,7 +37,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
       return false;
     }
 
-    if (firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START) {
+    if (firstChild.getNode().getElementType() != XmlElementType.XML_START_TAG_START) {
       return false;
     }
 

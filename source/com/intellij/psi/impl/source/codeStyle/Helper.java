@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
@@ -231,7 +232,7 @@ public class Helper {
               if (commentIndent == 0) continue;
             }
           }
-          else if (next.getElementType() == ElementType.XML_DATA_CHARACTERS) {
+          else if (next.getElementType() == XmlElementType.XML_DATA_CHARACTERS) {
             continue;
           }
         }
@@ -286,10 +287,10 @@ public class Helper {
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == ElementType.WHITE_SPACE
-           || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || leaf.getElementType() == XmlElementType.XML_DATA_CHARACTERS
            || leaf.getElementType() == JspElementType.JAVA_CODE
            || leaf.getElementType() == JspElementType.JSP_SCRIPTLET
-           || leaf.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN;
+           || leaf.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
   private static boolean checkJspTexts(final ASTNode leaf) {

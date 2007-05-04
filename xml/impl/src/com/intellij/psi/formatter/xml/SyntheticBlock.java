@@ -7,7 +7,6 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -66,7 +65,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (type2 == ElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
+    if (type2 == XmlElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
       return Spacing.createSpacing(1, 1, 0,
                                    myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
@@ -137,8 +136,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {
-    if (node1.getElementType() == ElementType.XML_START_TAG_START && node1.textContains('%')) return true;
-    if (node2.getElementType() == ElementType.XML_EMPTY_ELEMENT_END && node2.textContains('%')) return true;
+    if (node1.getElementType() == XmlElementType.XML_START_TAG_START && node1.textContains('%')) return true;
+    if (node2.getElementType() == XmlElementType.XML_EMPTY_ELEMENT_END && node2.textContains('%')) return true;
     return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
@@ -159,7 +158,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
 
   private boolean isTextFragment(final ASTNode node) {
     return node.getTreeParent().getElementType() == XmlElementType.XML_TEXT
-           || node.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || node.getElementType() == XmlElementType.XML_DATA_CHARACTERS
            || node.getElementType() == JspElementType.JSP_SCRIPTLET
            || node.getElementType() == JspElementType.JSP_DECLARATION
            || node.getElementType() == JspElementType.JSP_EXPRESSION

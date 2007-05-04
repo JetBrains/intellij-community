@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
+public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDoctypeImpl");
 
   public XmlDoctypeImpl() {

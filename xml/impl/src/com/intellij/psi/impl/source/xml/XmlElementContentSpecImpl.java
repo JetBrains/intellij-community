@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike
  */
-public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec {
+public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementContentSpecImpl");
 
   public XmlElementContentSpecImpl() {

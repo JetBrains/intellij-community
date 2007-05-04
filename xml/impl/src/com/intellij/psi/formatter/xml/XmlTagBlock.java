@@ -4,7 +4,6 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -44,13 +43,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
 
-        if (child.getElementType() == ElementType.XML_TAG_END) {
+        if (child.getElementType() == XmlElementType.XML_TAG_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);
           insideTag = true;
         }
-        else if (child.getElementType() == ElementType.XML_START_TAG_START) {
+        else if (child.getElementType() == XmlElementType.XML_START_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
@@ -58,14 +57,14 @@ public class XmlTagBlock extends AbstractXmlBlock{
           localResult = new ArrayList<Block>(1);
           child = processChild(localResult,child, wrap, alignment, null);
         }
-        else if (child.getElementType() == ElementType.XML_END_TAG_START) {
+        else if (child.getElementType() == XmlElementType.XML_END_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
             localResult = new ArrayList<Block>(1);
           }
           child = processChild(localResult,child, wrap, alignment, null);
-        } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
+        } else if (child.getElementType() == XmlElementType.XML_EMPTY_ELEMENT_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);

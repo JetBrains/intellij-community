@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -54,7 +53,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   private boolean isEndOfTag() {
-    return myEndTreeNode.getElementType() == ElementType.XML_TAG_END;
+    return myEndTreeNode.getElementType() == XmlElementType.XML_TAG_END;
   }
 
   public Wrap getWrap() {
@@ -69,17 +68,17 @@ public abstract class AbstractSyntheticBlock implements Block{
     return null;
   }
 
-  protected boolean isXmlTagName(final IElementType type1, final IElementType type2) {
-    if (type1 == ElementType.XML_START_TAG_START && type2 == ElementType.XML_NAME) return true;
-    if (type1 == ElementType.XML_END_TAG_START && type2 == ElementType.XML_NAME) return true;
-    if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_TAG_END) return true;
-    if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
-    if (type1 == XmlElementType.XML_ATTRIBUTE && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
-    return type1 == XmlElementType.XML_ATTRIBUTE && type2 == ElementType.XML_TAG_END;
+  protected static boolean isXmlTagName(final IElementType type1, final IElementType type2) {
+    if (type1 == XmlElementType.XML_START_TAG_START && type2 == XmlElementType.XML_NAME) return true;
+    if (type1 == XmlElementType.XML_END_TAG_START && type2 == XmlElementType.XML_NAME) return true;
+    if (type1 == XmlElementType.XML_NAME && type2 == XmlElementType.XML_TAG_END) return true;
+    if (type1 == XmlElementType.XML_NAME && type2 == XmlElementType.XML_EMPTY_ELEMENT_END) return true;
+    if (type1 == XmlElementType.XML_ATTRIBUTE && type2 == XmlElementType.XML_EMPTY_ELEMENT_END) return true;
+    return type1 == XmlElementType.XML_ATTRIBUTE && type2 == XmlElementType.XML_TAG_END;
   }
 
   public boolean endsWithText() {
-    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT || myEndTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT || myEndTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean isTagDescription() {
@@ -88,11 +87,11 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   private static boolean isTagDescription(final ASTNode startTreeNode) {
-    return startTreeNode.getElementType() == ElementType.XML_START_TAG_START || startTreeNode.getElementType() == ElementType.XML_END_TAG_START;
+    return startTreeNode.getElementType() == XmlElementType.XML_START_TAG_START || startTreeNode.getElementType() == XmlElementType.XML_END_TAG_START;
   }
 
   public boolean startsWithText() {
-    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT || myStartTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT || myStartTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean endsWithTextElement() {
