@@ -136,6 +136,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     };
   }
 
+  public int getFormatVersion() {
+    return 1;
+  }
+
   public void writeChangeList(final DataOutput dataStream, final SvnChangeList list) throws IOException {
     list.writeToStream(dataStream);
   }
