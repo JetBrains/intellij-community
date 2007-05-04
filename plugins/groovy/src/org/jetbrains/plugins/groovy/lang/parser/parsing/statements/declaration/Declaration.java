@@ -47,7 +47,7 @@ public class Declaration implements GroovyElementTypes {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) { //if type wasn't recognized trying poarse VaribleDeclaration
+      if (WRONGWAY.equals(TypeSpec.parse(builder, false))) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder);
