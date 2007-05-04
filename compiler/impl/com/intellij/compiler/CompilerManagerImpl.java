@@ -4,8 +4,8 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompositeScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.OneProjectItemCompileScope;
-import com.intellij.compiler.impl.make.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
+import com.intellij.compiler.impl.make.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerManagerImpl extends CompilerManager {
   private final Project myProject;
@@ -32,6 +33,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private Set<FileType> myCompilableTypes = new HashSet<FileType>();
   private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
+  private AtomicBoolean myCompilationActive = new AtomicBoolean(false);
 
   public CompilerManagerImpl(Project project, CompilerConfiguration compilerConfiguration) {
     myProject = project;
@@ -47,6 +49,10 @@ public class CompilerManagerImpl extends CompilerManager {
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
+  }
+
+  public boolean isCompilationActive() {
+    return myCompilationActive.get();
   }
 
   public final void addCompiler(Compiler compiler) {
@@ -199,12 +205,18 @@ public class CompilerManagerImpl extends CompilerManager {
 
     public ListenerNotificator(CompileStatusNotification delegate) {
       myDelegate = delegate;
+      myCompilationActive.set(true);
     }
 
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
-      if (myDelegate != null) {
-        myDelegate.finished(aborted, errors, warnings, compileContext);
+      try {
+        myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
+        if (myDelegate != null) {
+          myDelegate.finished(aborted, errors, warnings, compileContext);
+        }
+      }
+      finally {
+        myCompilationActive.set(false);
       }
     }
   }
