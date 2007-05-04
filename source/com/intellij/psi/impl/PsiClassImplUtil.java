@@ -119,7 +119,6 @@ public class PsiClassImplUtil {
       final PsiSubstitutor substitutor;
       if (checkBases && !aClass.equals(superClass)) {
         substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(substitutor != null);
       }
       else {
         substitutor = PsiSubstitutor.EMPTY;

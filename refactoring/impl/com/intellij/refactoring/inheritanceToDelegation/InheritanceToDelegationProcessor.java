@@ -118,7 +118,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiSubstitutor result = mySuperClassesToSubstitutors.get(superClass);
     if (result == null) {
       result = TypeConversionUtil.getSuperClassSubstitutor(superClass, myClass, PsiSubstitutor.EMPTY);
-      LOG.assertTrue(result != null);
       mySuperClassesToSubstitutors.put(superClass, result);
     }
     return result;

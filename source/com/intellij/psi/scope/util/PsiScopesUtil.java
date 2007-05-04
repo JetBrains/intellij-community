@@ -206,7 +206,6 @@ public class PsiScopesUtil {
               do {
                 if (runSuper != null) {
                   PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(runSuper, aClass, PsiSubstitutor.EMPTY);
-                  LOG.assertTrue(superSubstitutor != null);
                   substitutor = substitutor.putAll(superSubstitutor);
                 }
                 if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;

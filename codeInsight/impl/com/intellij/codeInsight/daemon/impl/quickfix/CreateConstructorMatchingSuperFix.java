@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,11 +47,11 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     return true;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
-    LOG.assertTrue(baseClass != null && substitutor != null);
+    LOG.assertTrue(baseClass != null);
     List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
     PsiMethod[] baseConstrs = baseClass.getConstructors();
     for (PsiMethod baseConstr : baseConstrs) {

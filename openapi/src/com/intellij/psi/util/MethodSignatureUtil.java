@@ -118,7 +118,6 @@ public class MethodSignatureUtil {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
     final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass, PsiSubstitutor.EMPTY);
-    if (superSubstitutor == null) return false;
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
     return isSubsignature(superSignature, derivedSignature);

@@ -824,6 +824,7 @@ public class TypeConversionUtil {
    * @return substitutor (never returns <code>null</code>)
    * @see InheritanceUtil#isInheritor(PsiClass, PsiClass, boolean)
    */
+  @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(PsiClass superClass,
                                                         PsiClass derivedClass,
                                                         PsiSubstitutor derivedSubstitutor) {
@@ -847,7 +848,7 @@ public class TypeConversionUtil {
     if (derivedClass instanceof PsiAnonymousClass) {
       final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
       final JavaResolveResult result = baseType.resolveGenerics();
-      if (result.getElement() == null) return null;
+      if (result.getElement() == null) return PsiSubstitutor.UNKNOWN;
       substitutor = getSuperClassSubstitutorInner(superClass, (PsiClass)result.getElement(),
                                                   derivedSubstitutor.putAll(result.getSubstitutor()), visited, manager);
     }
@@ -1112,7 +1113,7 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Number) operand).intValue());
+          return Short.valueOf((short)((Number)operand).intValue());
         }
       }
       , new Caster() {
@@ -1122,12 +1123,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer(((Number) operand).intValue());
+          return Integer.valueOf(((Number)operand).intValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long(((Number) operand).intValue());
+          return Long.valueOf(((Number)operand).intValue());
         }
       }
       , new Caster() {
@@ -1145,12 +1146,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Short) operand).shortValue());
+          return Byte.valueOf((byte)((Short)operand).shortValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short(((Short) operand).shortValue());
+          return Short.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
@@ -1160,12 +1161,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer(((Short) operand).shortValue());
+          return Integer.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long(((Short) operand).shortValue());
+          return Long.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
@@ -1183,12 +1184,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Character) operand).charValue());
+          return Byte.valueOf((byte)((Character)operand).charValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Character) operand).charValue());
+          return Short.valueOf((short)((Character)operand).charValue());
         }
       }
       , new Caster() {
@@ -1198,12 +1199,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer(((Character) operand).charValue());
+          return Integer.valueOf(((Character)operand).charValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long(((Character) operand).charValue());
+          return Long.valueOf(((Character)operand).charValue());
         }
       }
       , new Caster() {
@@ -1221,12 +1222,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Integer) operand).intValue());
+          return Byte.valueOf((byte)((Integer)operand).intValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Integer) operand).intValue());
+          return Short.valueOf((short)((Integer)operand).intValue());
         }
       }
       , new Caster() {
@@ -1236,12 +1237,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer(((Integer) operand).intValue());
+          return Integer.valueOf(((Integer)operand).intValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long(((Integer) operand).intValue());
+          return Long.valueOf(((Integer)operand).intValue());
         }
       }
       , new Caster() {
@@ -1259,12 +1260,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Long) operand).longValue());
+          return Byte.valueOf((byte)((Long)operand).longValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Long) operand).longValue());
+          return Short.valueOf((short)((Long)operand).longValue());
         }
       }
       , new Caster() {
@@ -1274,12 +1275,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer((int) ((Long) operand).longValue());
+          return Integer.valueOf((int)((Long)operand).longValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long(((Long) operand).longValue());
+          return Long.valueOf(((Long)operand).longValue());
         }
       }
       , new Caster() {
@@ -1297,12 +1298,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Float) operand).floatValue());
+          return Byte.valueOf((byte)((Float)operand).floatValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Float) operand).floatValue());
+          return Short.valueOf((short)((Float)operand).floatValue());
         }
       }
       , new Caster() {
@@ -1312,12 +1313,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer((int) ((Float) operand).floatValue());
+          return Integer.valueOf((int)((Float)operand).floatValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long((long) ((Float) operand).floatValue());
+          return Long.valueOf((long)((Float)operand).floatValue());
         }
       }
       , new Caster() {
@@ -1335,12 +1336,12 @@ public class TypeConversionUtil {
     {
       new Caster() {
         public Object cast(Object operand) {
-          return new Byte((byte) ((Double) operand).doubleValue());
+          return Byte.valueOf((byte)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Short((short) ((Double) operand).doubleValue());
+          return Short.valueOf((short)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
@@ -1350,12 +1351,12 @@ public class TypeConversionUtil {
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Integer((int) ((Double) operand).doubleValue());
+          return Integer.valueOf((int)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
         public Object cast(Object operand) {
-          return new Long((long) ((Double) operand).doubleValue());
+          return Long.valueOf((long)((Double)operand).doubleValue());
         }
       }
       , new Caster() {

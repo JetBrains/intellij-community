@@ -103,7 +103,6 @@ public class GenericsUtil {
                                                                             classResolveResult1.getSubstitutor());
         PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass,
                                                                             classResolveResult2.getSubstitutor());
-        LOG.assertTrue(subst1 != null && subst2 != null);
         Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aSuper);
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
         while (iterator.hasNext()) {
