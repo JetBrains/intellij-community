@@ -51,7 +51,7 @@ public abstract class Animator {
           }
           else {
             if (myRepeatable) {
-              if (maxRepeatCount > 0 && myRepeatCount < maxRepeatCount) {
+              if (maxRepeatCount == -1 || myRepeatCount < maxRepeatCount) {
                 myRepeatCount++;
                 myCurrentFrame = 0;
                 if (interCycleGap > 0) {
