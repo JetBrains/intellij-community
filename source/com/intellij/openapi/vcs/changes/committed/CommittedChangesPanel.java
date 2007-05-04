@@ -38,7 +38,7 @@ import java.util.List;
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
 
-  private CommittedChangesBrowser myBrowser;
+  private CommittedChangesTreeBrowser myBrowser;
   private final Project myProject;
   private CommittedChangesProvider myProvider;
   private ChangeBrowserSettings mySettings;
@@ -52,12 +52,17 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     mySettings = settings;
     myProject = project;
     myProvider = provider;
-    myBrowser = new CommittedChangesBrowser(project, new CommittedChangesTableModel(new ArrayList<CommittedChangeList>()));
+    myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
     add(myBrowser, BorderLayout.CENTER);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(group);
+    toolbarGroup.addSeparator();
+    toolbarGroup.add(new SelectFilteringAction(myBrowser));
+    toolbarGroup.add(new SelectGroupingAction(myBrowser));
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
@@ -138,7 +143,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       return;
     }
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setModel(new CommittedChangesTableModel(myChangesFromProvider, myProvider.getColumns()));
+      myBrowser.setItems(myChangesFromProvider);
     }
     else {
       final String[] strings = myFilterComponent.getFilter().split(" ");
@@ -151,7 +156,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           filteredChanges.add(changeList);
         }
       }
-      myBrowser.setModel(new CommittedChangesTableModel(filteredChanges, myProvider.getColumns()));
+      myBrowser.setItems(filteredChanges);
     }
   }
 
