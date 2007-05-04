@@ -56,7 +56,7 @@ public class TypeSpec implements GroovyElementTypes {
     } else {
       arrMarker.drop();
     }
-    return TYPE_SPECIFICATION;
+    return CLASS_TYPE_ELEMENT;
   }
 
 
@@ -94,10 +94,10 @@ public class TypeSpec implements GroovyElementTypes {
     if (mLBRACK.equals(builder.getTokenType())) {
       declarationBracketsParse(builder, arrMarker);
     } else {
-      arrMarker.done(TYPE_SPECIFICATION);
+      arrMarker.done(CLASS_TYPE_ELEMENT);
 //      arrMarker.drop();
     }
-    return TYPE_SPECIFICATION;
+    return CLASS_TYPE_ELEMENT;
   }
 
   /**
@@ -135,7 +135,7 @@ public class TypeSpec implements GroovyElementTypes {
       return declarationBracketsParseStrict(builder, arrMarker);
     } else {
       arrMarker.drop();
-      return TYPE_SPECIFICATION;
+      return CLASS_TYPE_ELEMENT;
     }
   }
 
@@ -178,9 +178,9 @@ public class TypeSpec implements GroovyElementTypes {
     if (mLBRACK.equals(builder.getTokenType())) {
       return declarationBracketsParseStrict(builder, arrMarker);
     } else {
-      arrMarker.done(TYPE_SPECIFICATION);
+      arrMarker.done(CLASS_TYPE_ELEMENT);
 //      arrMarker.drop();
-      return TYPE_SPECIFICATION;
+      return CLASS_TYPE_ELEMENT;
     }
   }
 }

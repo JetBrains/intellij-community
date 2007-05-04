@@ -221,7 +221,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
 
   //types
-  GroovyElementType TYPE_SPECIFICATION = new GroovyElementType("specification of the type"); //node
+  GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
 
   //balanced tokens
   GroovyElementType BALANCED_TOKENS = new GroovyElementType("balanced tokens in the brackts"); //not a node

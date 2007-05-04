@@ -24,5 +24,5 @@ import com.intellij.psi.PsiElement;
 /**
  * @author ilyas
  */
-public interface GrBuiltInTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
+public interface GrBuiltInTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrTypeElement {
 }

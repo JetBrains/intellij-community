@@ -139,7 +139,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
       return new GrAnnotationTypeDefinitionImpl(node);
 
     if (elem.equals(REFERENCE_ELEMENT)) return new GrTypeOrPackageReferenceElementImpl(node);
-    if (elem.equals(TYPE_SPECIFICATION)) return new GrTypeElementImpl(node);
+    if (elem.equals(CLASS_TYPE_ELEMENT)) return new GrClassTypeElementImpl(node);
 
     //clauses
     if (elem.equals(IMPLEMENTS_CLAUSE)) return new GrImplementsClauseImpl(node);
@@ -209,7 +209,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CAST_EXPRESSION)) return new GrTypeCastExprImpl(node);
     if (elem.equals(TYPE_CAST)) return new GrTypeCastImpl(node);
     if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeElementImpl(node);
-    if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeImpl(node);
+    if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeElementImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);
     if (elem.equals(REGEX)) return new GrRegexImpl(node);
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExpressionImpl(node);

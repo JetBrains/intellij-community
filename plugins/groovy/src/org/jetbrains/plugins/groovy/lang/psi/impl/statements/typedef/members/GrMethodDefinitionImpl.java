@@ -18,17 +18,24 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.PomMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -43,7 +50,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return "Method";
   }
 
-  public GrOpenBlock getBody() {
+  public GrOpenBlock getBlock() {
     return this.findChildByClass(GrOpenBlock.class);
   }
 
@@ -56,6 +63,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return GrParameter.EMPTY_ARRAY;
   }
 
+  public GrTypeElement getReturnTypeElementGroovy() {
+    return findChildByClass(GrTypeElement.class);
+  }
+
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (!processor.execute(this, PsiSubstitutor.EMPTY)) return false;
 
@@ -66,12 +77,132 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return true;
   }
 
+  //PsiMethod implementation
+  @Nullable
+  public PsiType getReturnType() {
+    GrTypeElement element = getReturnTypeElementGroovy();
+    if (element == null) return null;
+    return element.getType();
+  }
+
+  @Nullable
+  public PsiTypeElement getReturnTypeElement() {
+    return null;
+  }
+
+  @NotNull
+  public PsiParameterList getParameterList() {
+    return null;
+  }
+
+  @NotNull
+  public PsiReferenceList getThrowsList() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Nullable
+  public PsiCodeBlock getBody() {
+    return null;
+  }
+
+  public boolean isConstructor() {
+    return false;
+  }
+
+  public boolean isVarArgs() {
+    return false;
+  }
+
+  @NotNull
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Nullable
+  public PsiIdentifier getNameIdentifier() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NotNull
+  public PsiMethod[] findSuperMethods() {
+    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NotNull
+  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NotNull
+  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NotNull
+  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Nullable
+  public PsiMethod findDeepestSuperMethod() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NotNull
+  public PsiMethod[] findDeepestSuperMethods() {
+    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public PomMethod getPom() {
+    return null;
+  }
+
+  @NotNull
+  public PsiModifierList getModifierList() {
+    return null;
+  }
+
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   public String getName() {
-    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
-    return nameElement == null ? null : nameElement.getText();
+    return findChildByType(GroovyTokenTypes.mIDENT).getText();
+  }
+
+  @NotNull
+  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("NIY");
+  }
+
+  public boolean hasTypeParameters() {
+    return false;
+  }
+
+  @Nullable
+  public PsiTypeParameterList getTypeParameterList() {
+    return null;
+  }
+
+  @NotNull
+  public PsiTypeParameter[] getTypeParameters() {
+    return PsiTypeParameter.EMPTY_ARRAY;
+  }
+
+  public PsiClass getContainingClass() {
+    return (PsiClass) getParent();
+  }
+
+  @Nullable
+  public PsiDocComment getDocComment() {
+    return null;
+  }
+
+  public boolean isDeprecated() {
+    return false;
   }
 }

@@ -37,4 +37,8 @@ public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implemen
   public String toString() {
     return "Constructor";
   }
+
+  public boolean isConstructor() {
+    return true;
+  }
 }

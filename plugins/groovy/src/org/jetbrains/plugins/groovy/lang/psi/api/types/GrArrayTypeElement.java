@@ -20,9 +20,12 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
+public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrTypeElement {
+  @NotNull
+  GrTypeElement getComponentTypeElement();
 }

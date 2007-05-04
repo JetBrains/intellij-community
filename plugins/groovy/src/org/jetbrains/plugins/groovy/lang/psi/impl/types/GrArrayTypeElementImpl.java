@@ -17,8 +17,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -32,5 +34,15 @@ public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrAr
 
   public String toString() {
     return "Array type";
+  }
+
+  @NotNull
+  public GrTypeElement getComponentTypeElement() {
+    return findChildByClass(GrTypeElement.class);
+  }
+
+  @NotNull
+  public PsiType getType() {
+    return getComponentTypeElement().getType().createArrayType();
   }
 }

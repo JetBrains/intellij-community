@@ -14,23 +14,11 @@
  *
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.types;
-
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
 /**
- * @author ilyas
+ * @author: Dmitry.Krasilschikov
+ * @date: 28.03.2007
  */
-public class GrBuiltInTypeImpl extends GroovyPsiElementImpl implements GrBuiltInTypeElement {
-
-  public GrBuiltInTypeImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Built in type";
-  }
+public interface GrTypeArgument extends GrTypeElement {
 }

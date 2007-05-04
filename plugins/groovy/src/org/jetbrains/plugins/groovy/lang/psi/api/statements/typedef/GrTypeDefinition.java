@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.navigation.NavigationItem;
@@ -38,7 +38,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrStatement, Navigatio
   @Nullable
   public String getQualifiedName();
 
-  GrTypeParameter[] getTypeParametersGroovy();
+  GrTypeArgument[] getTypeParametersGroovy();
 
   @NotNull
   PsiElement getNameIdentifierGroovy();

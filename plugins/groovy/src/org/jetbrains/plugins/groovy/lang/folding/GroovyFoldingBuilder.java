@@ -48,7 +48,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     // Method body
     if (node.getPsi() != null && node.getPsi() instanceof GrMethod) {
       GrMethod method = (GrMethod) node.getPsi();
-      GrOpenBlock body = method.getBody();
+      GrOpenBlock body = method.getBlock();
       if (body != null) {
         ASTNode myNode = body.getNode();
         if (myNode != null) {

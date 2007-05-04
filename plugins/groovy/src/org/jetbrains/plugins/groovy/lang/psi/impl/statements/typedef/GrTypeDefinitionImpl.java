@@ -33,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.Icons;
 
@@ -68,8 +69,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
-  public GrTypeParameter[] getTypeParametersGroovy() {
-    return findChildrenByClass(GrTypeParameter.class);
+  public GrTypeArgument[] getTypeParametersGroovy() {
+    return findChildrenByClass(GrTypeArgument.class);
   }
 
   public GrTypeDefinitionBody getBody() {
@@ -189,8 +190,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public PsiMethod[] getMethods() {
-    return PsiMethod.EMPTY_ARRAY;
+  public GrMethod[] getMethods() {
+    return findChildrenByClass(GrMethod.class);
   }
 
   @NotNull
