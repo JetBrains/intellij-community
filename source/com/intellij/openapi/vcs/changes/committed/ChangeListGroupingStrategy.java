@@ -1,9 +1,13 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NonNls;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * @author yole
@@ -13,8 +17,12 @@ public interface ChangeListGroupingStrategy {
   Comparator<CommittedChangeList> getComparator();
 
   ChangeListGroupingStrategy DATE = new ChangeListGroupingStrategy() {
+    @NonNls private SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+    @NonNls private SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
+    @NonNls private SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
+
     public String toString() {
-      return "Date";
+      return VcsBundle.message("date.group.title");
     }
 
     public String getGroupName(final CommittedChangeList list) {
@@ -22,12 +30,18 @@ public interface ChangeListGroupingStrategy {
       Calendar clCal = Calendar.getInstance();
       clCal.setTime(list.getCommitDate());
       if (curCal.get(Calendar.YEAR) == clCal.get(Calendar.YEAR)) {
-        if (curCal.get(Calendar.MONTH) == clCal.get(Calendar.MONTH)) {
-          return "This Month";
+        if (curCal.get(Calendar.DAY_OF_YEAR) == clCal.get(Calendar.DAY_OF_YEAR)) {
+          return VcsBundle.message("date.group.today");
         }
-        return "This Year";
+        if (curCal.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)) {
+          return myWeekdayFormat.format(list.getCommitDate());
+        }
+        if (curCal.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)+1) {
+          return VcsBundle.message("date.group.last.week");
+        }
+        return myMonthFormat.format(list.getCommitDate());
       }
-      return "Older";
+      return myMonthYearFormat.format(list.getCommitDate());
     }
 
     public Comparator<CommittedChangeList> getComparator() {
@@ -41,7 +55,7 @@ public interface ChangeListGroupingStrategy {
 
   ChangeListGroupingStrategy USER = new ChangeListGroupingStrategy() {
     public String toString() {
-      return "User";
+      return VcsBundle.message("user.group.title");
     }
 
     public String getGroupName(final CommittedChangeList changeList) {
