@@ -511,6 +511,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MisspelledHashcodeInspection.class);
         m_inspectionClasses.add(MisspelledEqualsInspection.class);
         m_inspectionClasses.add(MisspelledToStringInspection.class);
+        m_inspectionClasses.add(NewStringBufferWithCharArgumentInspection.class);
         m_inspectionClasses.add(NonShortCircuitBooleanInspection.class);
         m_inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
         m_inspectionClasses.add(NumberEqualityInspection.class);
