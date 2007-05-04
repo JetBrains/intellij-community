@@ -337,7 +337,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
     long purgingPeriod = configuration.LOCAL_VCS_PURGING_PERIOD;
     if (!isEnabled()) purgingPeriod = 0;
-    long timeToPurgeBefore = myUserActivitiesRegistry.getAbsoluteTimeForActivePeriod(System.currentTimeMillis(), purgingPeriod);
+    long timeToPurgeBefore = myUserActivitiesRegistry.getActivityPeriodStart(System.currentTimeMillis(), purgingPeriod);
     return myImplementation.purge(timeToPurgeBefore);
   }
 
@@ -632,7 +632,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized void onUserAction() {
     checkOldLvcsEnabled();
 
-    myUserActivitiesRegistry.onUserAction(System.currentTimeMillis());
+    myUserActivitiesRegistry.registerActivity(System.currentTimeMillis());
   }
 
   private synchronized void registerAll() {

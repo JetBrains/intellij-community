@@ -163,19 +163,6 @@ public class ChangeListTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testChangesAfterPurge() {
-    applyAndAddChange(cs(10, new CreateFileChange(1, "file", null, -1)));
-    applyAndAddChange(cs(20, new ChangeFileContentChange("file", null, -1)));
-    applyAndAddChange(cs(30, new ChangeFileContentChange("file", null, -1)));
-
-    assertEquals(3, getChangesFor("file").size());
-
-    cl.purgeUpTo(15);
-
-    assertEquals(2, getChangesFor("file").size());
-  }
-
-  @Test
   public void testChangesForComplexMovingCase() {
     applyAndAddChange(cs(new CreateDirectoryChange(1, "d1"), new CreateFileChange(2, "d1/file", null, -1),
                          new CreateDirectoryChange(3, "d1/d11"), new CreateDirectoryChange(4, "d1/d12"),

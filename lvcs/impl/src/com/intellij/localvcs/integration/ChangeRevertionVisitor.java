@@ -13,7 +13,6 @@ public class ChangeRevertionVisitor implements ChangeVisitor {
   private IdeaGateway myGateway;
 
   public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
-    // todo hack!!!
     myRootEntry = vcs.getRootEntry().copy();
     myGateway = gw;
   }

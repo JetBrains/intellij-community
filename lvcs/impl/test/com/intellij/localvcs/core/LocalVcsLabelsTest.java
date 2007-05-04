@@ -75,7 +75,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
     vcs.putLabel("file", "l");
 
-    vcs.purgeUpTo(15);
+    vcs.purgeObsolete(5);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());

@@ -66,11 +66,6 @@ public class ChangeFileContentChange extends StructuralChange {
   }
 
   @Override
-  public boolean isGlobal() {
-    return false;
-  }
-
-  @Override
   public void accept(ChangeVisitor v) throws Exception {
     v.visit(this);
   }

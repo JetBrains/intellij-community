@@ -41,7 +41,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   public void testIncludingCurrentVersionIntoRevisionsAfterPurge() {
     setCurrentTimestamp(10);
     vcs.createFile("file", ch("content"), -1);
-    vcs.purgeUpTo(20);
+    vcs.purgeObsolete(0);
 
     setCurrentTimestamp(30);
 
@@ -65,7 +65,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
     vcs.changeFileContent("file", ch("two"), -1);
 
-    vcs.purgeUpTo(15);
+    vcs.purgeObsolete(5);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(2, rr.size());
@@ -110,7 +110,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   public void testTimestampForCurrentRevisionAfterPurgeFromCurrentTimestamp() {
     setCurrentTimestamp(10);
     vcs.createFile("file", null, -1);
-    vcs.purgeUpTo(20);
+    vcs.purgeObsolete(0);
 
     setCurrentTimestamp(20);
     assertEquals(20L, vcs.getRevisionsFor("file").get(0).getTimestamp());
@@ -119,15 +119,15 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testTimestampForLastRevisionAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1);
+    vcs.createFile("file", ch(""), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", null, -1);
+    vcs.changeFileContent("file", ch(""), -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", null, -1);
+    vcs.changeFileContent("file", ch(""), -1);
 
-    vcs.purgeUpTo(15);
+    vcs.purgeObsolete(15);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(30L, rr.get(0).getTimestamp());

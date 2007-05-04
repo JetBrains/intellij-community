@@ -31,7 +31,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   public void testPurging() {
     assertEquals(4, vcs.getRevisionsFor("file").size());
 
-    vcs.purgeUpTo(35);
+    vcs.purgeObsolete(5);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(2, rr.size());
@@ -40,7 +40,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testPurgingContents() {
-    vcs.purgeUpTo(35);
+    vcs.purgeObsolete(5);
 
     assertEquals(2, purgedContent.size());
     assertEquals(c("one"), purgedContent.get(0));
@@ -50,34 +50,26 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotPurgeLongContentFromContentStorage() {
     vcs = new TestLocalVcs(new PurgeLoggingStorage());
-    setCurrentTimestamp(20);
-
+    setCurrentTimestamp(10);
     vcs.createFile("file", bigContentHolder(), -1);
-    vcs.changeFileContent("file", ch("new content"), -1);
 
-    vcs.purgeUpTo(30);
+    setCurrentTimestamp(20);
+    vcs.changeFileContent("file", ch("one"), -1);
+
+    setCurrentTimestamp(30);
+    vcs.changeFileContent("file", ch("twoo"), -1);
+
+    vcs.purgeObsolete(5);
 
     assertTrue(purgedContent.isEmpty());
   }
 
   @Test
   public void testPurgingOnSave() {
-    vcs.setPurgingInterval(30);
+    vcs.setPurgingPeriod(5);
 
-    assertRevisionsCountAfterPurgeOnSave(59, 3);
-    assertRevisionsCountAfterPurgeOnSave(61, 2);
-  }
-
-  private void assertRevisionsCountAfterPurgeOnSave(long timestamp, int count) {
-    setCurrentTimestamp(timestamp);
     vcs.save();
-    assertEquals(count, vcs.getRevisionsFor("file").size());
-  }
-
-  @Test
-  public void testDefaultPurgingInterval() {
-    LocalVcs vcs = new LocalVcs(new TestStorage());
-    assertEquals(5 * 24 * 60 * 60 * 1000L, vcs.getPurgingInterval());
+    assertEquals(2, vcs.getRevisionsFor("file").size());
   }
 
   class PurgeLoggingStorage extends TestStorage {

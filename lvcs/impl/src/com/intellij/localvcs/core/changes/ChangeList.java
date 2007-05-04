@@ -78,20 +78,44 @@ public class ChangeList {
     }
   }
 
-  public List<Content> purgeUpTo(long timestamp) {
+  public List<Content> purgeObsolete(long period) {
     List<Change> newChanges = new ArrayList<Change>();
-    List<Content> purgedContents = new ArrayList<Content>();
+    List<Content> contentsToPurge = new ArrayList<Content>();
 
-    for (Change c : myChanges) {
-      if (c.getTimestamp() < timestamp) {
-        purgedContents.addAll(c.getContentsToPurge());
-      }
-      else {
-        newChanges.add(c);
-      }
+    int index = getIndexOfLastObsoleteChange(period);
+
+    for (int i = index + 1; i < myChanges.size(); i++) {
+      newChanges.add(myChanges.get(i));
     }
-    myChanges = newChanges;
 
-    return purgedContents;
+    for (int i = 0; i <= index; i++) {
+      contentsToPurge.addAll(myChanges.get(i).getContentsToPurge());
+    }
+
+    myChanges = newChanges;
+    return contentsToPurge;
+  }
+
+  private int getIndexOfLastObsoleteChange(long period) {
+    long prevTimestamp = 0;
+    long length = 0;
+
+    for (int i = myChanges.size() - 1; i >= 0; i--) {
+      Change c = myChanges.get(i);
+      if (prevTimestamp == 0) prevTimestamp = c.getTimestamp();
+
+      long delta = prevTimestamp - c.getTimestamp();
+      prevTimestamp = c.getTimestamp();
+
+      length += delta < getIntervalBetweenActivities() ? delta : 1;
+
+      if (length >= period) return i;
+    }
+
+    return -1;
+  }
+
+  protected long getIntervalBetweenActivities() {
+    return 12 * 60 * 60 * 1000;
   }
 }

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.MAY, day = 15, user = "anton")
+@Bombed(month = Calendar.MAY, day = 31, user = "anton")
 public class ContentStorageTest extends PerformanceTestCase {
   int ITERATIONS_COUNT = 1000;
   int MAX_RECORD_SIZE = 20 * 1024;

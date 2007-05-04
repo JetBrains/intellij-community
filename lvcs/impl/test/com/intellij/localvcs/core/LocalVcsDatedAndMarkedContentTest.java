@@ -51,7 +51,7 @@ public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", ch("two"), -1);
 
-    vcs.purgeUpTo(15);
+    vcs.purgeObsolete(5);
 
     assertNull(vcs.getByteContent("f", comparator(10)));
     assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));

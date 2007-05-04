@@ -9,7 +9,9 @@ import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class LocalVcs implements ILocalVcs {
   private Storage myStorage;
@@ -41,7 +43,7 @@ public class LocalVcs implements ILocalVcs {
     // todo a bit of hack... move it to service state
     if (shouldPostpondSave()) return;
 
-    purgeUpTo(getCurrentTimestamp() - getPurgingInterval());
+    purgeObsolete(getPurgingPeriod());
 
     Memento m = new Memento();
     m.myRoot = myRoot;
@@ -156,7 +158,7 @@ public class LocalVcs implements ILocalVcs {
   private void applyChange(Change c) {
     c.applyTo(myRoot);
     myPendingChanges.add(c);
-    if (c.isGlobal()) myLastChange = c;
+    myLastChange = c;
 
     // todo forbid the ability of making changes outside of changeset
     if (!isInChangeSet()) registerChangeSet(null);
@@ -232,16 +234,13 @@ public class LocalVcs implements ILocalVcs {
     return result;
   }
 
-  public void purgeUpTo(long timestamp) {
-    List<Content> contentsToPurge = myChangeList.purgeUpTo(timestamp);
+  public void purgeObsolete(long period) {
+    List<Content> contentsToPurge = myChangeList.purgeObsolete(period);
     myStorage.purgeContents(contentsToPurge);
   }
 
-  protected long getPurgingInterval() {
-    GregorianCalendar c = new GregorianCalendar();
-    c.setTimeInMillis(0);
-    c.add(Calendar.DAY_OF_YEAR, 5);
-    return c.getTimeInMillis();
+  protected long getPurgingPeriod() {
+    return 3 * 24 * 60 * 60 * 1000;
   }
 
   public byte[] getByteContent(String path, RevisionTimestampComparator c) {

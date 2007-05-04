@@ -14,11 +14,11 @@ public class TestLocalVcs extends LocalVcs {
   }
 
   @Override
-  public long getPurgingInterval() {
+  public long getPurgingPeriod() {
     return myPurgingInterval;
   }
 
-  public void setPurgingInterval(long i) {
+  public void setPurgingPeriod(long i) {
     myPurgingInterval = i;
   }
 }

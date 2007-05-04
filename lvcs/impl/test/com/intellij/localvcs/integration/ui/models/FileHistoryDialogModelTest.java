@@ -18,10 +18,10 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   private FileHistoryDialogModel m;
 
   @Test
-  public void testRevisionsListAfterPurgeContainsCurrentVersion() {
+  public void testRevisionsAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
     vcs.createFile("f", ch(""), -1);
-    vcs.purgeUpTo(20);
+    vcs.purgeObsolete(0);
 
     initModelFor("f");
 

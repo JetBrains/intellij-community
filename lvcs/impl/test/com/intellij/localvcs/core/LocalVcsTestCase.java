@@ -101,7 +101,7 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected void assertEquals(long expected, long actual) {
-    assertEquals((Object)expected, (Object)actual);
+    Assert.assertEquals(expected, actual);
   }
 
   private static String notEqualsMessage(Object expected, Object actual) {
