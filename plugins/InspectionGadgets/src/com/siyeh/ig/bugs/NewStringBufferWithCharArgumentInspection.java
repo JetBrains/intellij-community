@@ -101,18 +101,15 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
             super.visitNewExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();
             if (argumentList == null) {
-                System.out.println("1");
                 return;
             }
             final PsiExpression[] arguments = argumentList.getExpressions();
             if (arguments.length != 1) {
-                System.out.println("2");
                 return;
             }
             final PsiExpression argument = arguments[0];
             final PsiType type = argument.getType();
             if (!PsiType.CHAR.equals(type)) {
-                System.out.println("3");
                 return;
             }
             final PsiMethod constructor = expression.resolveConstructor();
