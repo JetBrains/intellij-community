@@ -289,10 +289,9 @@ public class CompletionData {
 
   protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final Pattern<Character, ?> trimStart) {
     final String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset()).trim();
-    if (substr.length() > 0 && trimStart.accepts(substr.charAt(0))) {
-      return substr.substring(1);
-    }
-    return substr;
+    int i = 0;
+    while (substr.length() > i && trimStart.accepts(substr.charAt(i))) i++;
+    return substr.substring(i).trim();
   }
 
 }
