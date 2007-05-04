@@ -15,6 +15,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -46,10 +47,12 @@ public class MigrationMapSet implements ExportableApplicationComponent {
   public MigrationMapSet() {
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{getMapDirectory()};
   }
 
+  @NotNull
   public String getPresentableName() {
     return RefactoringBundle.message("migration.map.set.migration.maps");
   }

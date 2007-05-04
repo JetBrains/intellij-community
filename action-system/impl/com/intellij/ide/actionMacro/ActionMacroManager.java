@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -81,10 +82,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     return "macros";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return IdeBundle.message("title.macros");
   }

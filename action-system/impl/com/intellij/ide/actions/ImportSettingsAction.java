@@ -3,15 +3,15 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.ui.Messages;
@@ -65,13 +65,13 @@ public class ImportSettingsAction extends AnAction {
       if (!dialog.isOK()) return;
       final Set<ExportableApplicationComponent> chosenComponents = dialog.getExportableComponents();
       Set<String> relativeNamesToExtract = new HashSet<String>();
-      for (Iterator iterator = chosenComponents.iterator(); iterator.hasNext();) {
-        ExportableApplicationComponent chosenComponent = (ExportableApplicationComponent)iterator.next();
+      for (final ExportableApplicationComponent chosenComponent : chosenComponents) {
         final File[] exportFiles = chosenComponent.getExportFiles();
-        for (int j = 0; j < exportFiles.length; j++) {
-          File exportFile = exportFiles[j];
+        for (File exportFile : exportFiles) {
           final File configPath = new File(PathManager.getConfigPath());
-          final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, exportFile));
+          final String rPath = FileUtil.getRelativePath(configPath, exportFile);
+          assert rPath != null;
+          final String relativePath = FileUtil.toSystemIndependentName(rPath);
           relativeNamesToExtract.add(relativePath);
         }
       }
@@ -119,12 +119,12 @@ public class ImportSettingsAction extends AnAction {
     final File configPath = new File(PathManager.getConfigPath());
 
     final ArrayList<ExportableApplicationComponent> components = new ArrayList<ExportableApplicationComponent>();
-    for (int i = 0; i < registeredComponents.size(); i++) {
-      ExportableApplicationComponent component = registeredComponents.get(i);
+    for (ExportableApplicationComponent component : registeredComponents) {
       final File[] exportFiles = component.getExportFiles();
-      for (int j = 0; j < exportFiles.length; j++) {
-        File exportFile = exportFiles[j];
-        String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, exportFile));
+      for (File exportFile : exportFiles) {
+        final String rPath = FileUtil.getRelativePath(configPath, exportFile);
+        assert rPath != null;
+        String relativePath = FileUtil.toSystemIndependentName(rPath);
         if (exportFile.isDirectory()) relativePath += "/";
         if (ZipUtil.isZipContainsEntry(zipFile, relativePath)) {
           components.add(component);
@@ -144,9 +144,10 @@ public class ImportSettingsAction extends AnAction {
     public boolean accept(File dir, String name) {
       if (name.equals(ExportSettingsAction.SETTINGS_JAR_MARKER)) return false;
       final File configPath = new File(PathManager.getConfigPath());
-      final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, new File(dir, name)));
-      for (Iterator iterator = myRelativeNamesToExtract.iterator(); iterator.hasNext();) {
-        String allowedRelPath = (String)iterator.next();
+      final String rPath = FileUtil.getRelativePath(configPath, new File(dir, name));
+      assert rPath != null;
+      final String relativePath = FileUtil.toSystemIndependentName(rPath);
+      for (final String allowedRelPath : myRelativeNamesToExtract) {
         if (relativePath.startsWith(allowedRelPath)) return true;
       }
       return false;

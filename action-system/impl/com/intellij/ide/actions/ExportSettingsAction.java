@@ -56,7 +56,9 @@ public class ExportSettingsAction extends AnAction {
         final File configPath = new File(PathManager.getConfigPath());
         final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
         for (File file : exportFiles) {
-          final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, file));
+          final String rPath = FileUtil.getRelativePath(configPath, file);
+          assert rPath != null;
+          final String relativePath = FileUtil.toSystemIndependentName(rPath);
           if (file.exists()) {
             ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
           }

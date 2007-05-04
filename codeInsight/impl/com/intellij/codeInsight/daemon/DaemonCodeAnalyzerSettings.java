@@ -8,6 +8,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -28,10 +29,12 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return ApplicationManager.getApplication().getComponent(DaemonCodeAnalyzerSettings.class);
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return DaemonBundle.message("error.highlighting.settings");
   }
