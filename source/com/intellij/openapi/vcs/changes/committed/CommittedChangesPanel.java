@@ -82,47 +82,55 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void refreshChanges(final boolean cacheOnly) {
+    if (myLocation != null) {
+      refreshChangesFromLocation();
+    }
+    else {
+      refreshChangesFromCache(cacheOnly);
+    }
+  }
+
+  private void refreshChangesFromLocation() {
+    final Ref<VcsException> refEx = new Ref<VcsException>();
+    final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          changes.set(myProvider.getCommittedChanges(mySettings, myLocation, myMaxCount));
+        }
+        catch (VcsException ex) {
+          refEx.set(ex);
+        }
+      }
+    }, "Loading changes", true, myProject);
+    if (!refEx.isNull()) {
+      LOG.info(refEx.get());
+      Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
+    }
+    else if (completed) {
+      myChangesFromProvider = changes.get();
+      updateFilteredModel();
+    }
+  }
+
+  private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     if (!cache.hasCachesForAllRoots()) {
       if (cacheOnly) return;
       if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
     }
-    final Ref<VcsException> refEx = new Ref<VcsException>();
-    final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
-
-    if (myLocation != null) {
-      boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          try {
-            changes.set(myProvider.getCommittedChanges(mySettings, myLocation, myMaxCount));
-          }
-          catch (VcsException ex) {
-            refEx.set(ex);
-          }
-        }
-      }, "Loading changes", true, myProject);
-      if (!refEx.isNull()) {
-        LOG.info(refEx.get());
-        Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
-      }
-      else if (completed) {
-        myChangesFromProvider = changes.get();
-        updateFilteredModel();
-      }
-    }
-    else {
-      cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly, new Consumer<List<CommittedChangeList>>() {
-                                     public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                       myChangesFromProvider = committedChangeLists;
-                                       updateFilteredModel();
+    cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
+                                 new Consumer<List<CommittedChangeList>>() {
+                                   public void consume(final List<CommittedChangeList> committedChangeLists) {
+                                     myChangesFromProvider = committedChangeLists;
+                                     updateFilteredModel();
                                      }
                                    },
-                                   new Consumer<List<VcsException>>() {
-                                     public void consume(final List<VcsException> vcsExceptions) {
-                                       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
-                                     }
-                                   });
-    }
+                                 new Consumer<List<VcsException>>() {
+                                   public void consume(final List<VcsException> vcsExceptions) {
+                                     AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
+                                   }
+                                 });
   }
 
   private void updateFilteredModel() {
