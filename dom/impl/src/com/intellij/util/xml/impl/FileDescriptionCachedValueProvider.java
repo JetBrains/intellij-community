@@ -6,10 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.UserDataCache;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
@@ -147,12 +144,12 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
       myModCount++;
 
-      final DomFileDescription<T> description = findFileDescription(module, rootTagName);
+      final Pair<DomFileDescription<T>,Object[]> description = findFileDescription(module, rootTagName);
       if (myCachedValue.hasUpToDateValue()) {
         return Collections.emptyList();
       }
 
-      return saveResult(description, fireEvents);
+      return saveResult(description.first, fireEvents, description.second);
     }
     finally {
       myComputing = false;
@@ -176,11 +173,12 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return ((MyCachedValueProvider)myCachedValue.getValueProvider());
   }
 
-  @Nullable
-  private DomFileDescription<T> findFileDescription(Module module, final String rootTagName) {
+  @NotNull
+  private Pair<DomFileDescription<T>,Object[]> findFileDescription(Module module, final String rootTagName) {
     final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
     if (originalFile != null) {
-      return myDomManager.<T>getOrCreateCachedValueProvider(originalFile).getFileDescription();
+      final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);
+      return Pair.create(provider.getFileDescription(), provider.getCachedValueProvider().dependencies);
     }
 
     myCondition.module = module;
@@ -188,12 +186,17 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     w.unlock();
     try {
       //noinspection unchecked
-      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
-      if (description != null) {
-        return description;
+      DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
+      if (description == null) {
+        description = ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
       }
-      //noinspection unchecked
-      return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+      if (description == null) {
+        return Pair.create(description, getAllDependencyItems());
+      }
+      final Set<Object> deps = new HashSet<Object>(description.getDependencyItems(myXmlFile));
+      deps.add(this);
+      deps.add(myXmlFile);
+      return Pair.create(description, deps.toArray());
     }
     finally {
       w.lock();
@@ -205,7 +208,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : null;
   }
 
-  private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents) {
+  private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents, Object[] dependencyItems) {
     final DomFileElementImpl oldValue = getLastValue();
     final DomFileDescription oldFileDescription = myFileDescription;
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
@@ -221,19 +224,15 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myFileDescription = description;
     if (description == null) {
       myLastResult = null;
-      computeCachedValue(getAllDependencyItems());
+      computeCachedValue(dependencyItems);
       return events;
     }
 
-    final XmlName xmlName = XmlName.create(description.getRootTagName(), description.getRootElementClass(), null);
+    final Class<T> rootElementClass = description.getRootElementClass();
+    final XmlName xmlName = XmlName.create(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
     final EvaluatedXmlName rootTagName = xmlName.createEvaluatedXmlName(null);
-    myLastResult = new DomFileElementImpl<T>(myXmlFile, description.getRootElementClass(), rootTagName, myDomManager);
-
-    final Set<Object> deps = new HashSet<Object>(description.getDependencyItems(myXmlFile));
-    deps.add(this);
-    deps.add(myXmlFile);
-    final Object[] dependencyItems = deps.toArray();
+    myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
     computeCachedValue(dependencyItems);
 
     myDomManager.getFileDescriptions().get(myFileDescription).add(new WeakReference<DomFileElementImpl>(myLastResult));
