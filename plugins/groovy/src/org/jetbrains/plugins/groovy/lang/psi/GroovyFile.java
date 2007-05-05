@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -66,11 +68,6 @@ public class GroovyFile extends PsiFileBase {
 
   public GrPackageDefinition getPackageDefinition(){
     return findChildByClass(GrPackageDefinition.class);
-  }
-
-
-  public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
   }
 
   public GrTopStatement[] getTopStatements() {
@@ -120,5 +117,34 @@ public class GroovyFile extends PsiFileBase {
   public Icon getIcon(int flags) {
     return GroovyFileType.GROOVY_LOGO;
   }
+
+  public void insertExternalImportForClass(PsiClass aClass)  {
+    try {
+      // Calculating position
+      Project project = aClass.getProject();
+      GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+      GrImportStatement ourImportStatement = factory.createImportStatementFromText(aClass.getQualifiedName());
+      PsiElement whiteSpace = factory.createWhiteSpace();
+      GrImportStatement[] importStatements = getImportStatements();
+      PsiElement psiElementAfter = null;
+      if (importStatements.length > 0) {
+        psiElementAfter = importStatements[importStatements.length - 1];
+      } else if (getPackageDefinition() != null) {
+        psiElementAfter = getPackageDefinition();
+      }
+      if (psiElementAfter != null &&
+              psiElementAfter.getNode() != null) {
+//        psiElementAfter.getNode().addChild(whiteSpace.getNode());
+        addAfter(ourImportStatement, psiElementAfter);
+      } else {
+        addBefore(ourImportStatement, getFirstChild());
+      }
+    } catch (IncorrectOperationException e) {
+      e.printStackTrace();
+    }
+  }
+
+
+
 }
 

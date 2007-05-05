@@ -34,11 +34,15 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent {
   Project myProject;
 
+  public GroovyElementFactoryImpl(Project project){
+    myProject = project;
+  }
+
   private static String DUMMY = "dummy.";
 
   public PsiElement createIdentifierFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
-    return ((GrReferenceExpression) ((GroovyFile) file).getStatements()[0]).getReferenceNameElement();
+    return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
   }
 
   private PsiFile createGroovyFile(String idText) {
