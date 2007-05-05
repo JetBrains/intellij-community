@@ -36,26 +36,15 @@ public abstract class GroovyElementFactory {
 
   /**
    *
-   * @param aClass - class to be imported
-   * @param manager - PsiManager
+   * @param qName
    * @return import statement for given class
    */
-  public static GrImportStatement createImportStatementFromText(PsiClass aClass, PsiManager manager) {
-    PsiFile dummyFile = manager.getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-            "import " + aClass.getQualifiedName() + " ");
-    return ((GrImportStatement) dummyFile.getFirstChild());
-  }
+  public abstract GrImportStatement createImportStatementFromText(String qName);
 
   /**
-   * Creates white space
-   * @param manager given PsiManager
    * @return new line psi element
    */
-  public static PsiElement createWhiteSpace(PsiManager manager) {
-    PsiFile dummyFile = manager.getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-            " ");
-    return dummyFile.getFirstChild();
-  }
+  public abstract PsiElement createWhiteSpace();
 
   public abstract PsiElement createIdentifierFromText(String idText);
 }

@@ -25,12 +25,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
  */
 public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent {
   Project myProject;
+
+  private static String DUMMY = "dummy.";
 
   public PsiElement createIdentifierFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
@@ -58,4 +62,18 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public void disposeComponent() {
   }
+
+  public PsiElement createWhiteSpace() {
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+            " ");
+    return dummyFile.getFirstChild();
+  }
+
+  public GrImportStatement createImportStatementFromText(String qName) {
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+            "import " + qName + " ");
+    return ((GrImportStatement) dummyFile.getFirstChild());
+  }
+
+
 }
