@@ -22,9 +22,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
 import org.jetbrains.plugins.groovy.compiler.geterator.GroovyToJavaGenerator;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -74,10 +76,8 @@ public class GroovyLoader implements ApplicationComponent {
         }
     );
 
-/*
-    CompletionUtil.registerCompletionData(ScalaFileType.SCALA_FILE_TYPE,
-            ScalaToolsFactory.getInstance().createScalaCompletionData());
-*/
+    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
+            new GroovyCompletionData());
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
