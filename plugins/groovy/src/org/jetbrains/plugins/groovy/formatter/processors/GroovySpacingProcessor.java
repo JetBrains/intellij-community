@@ -33,6 +33,8 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
   private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);
   private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
   private static final Spacing COMMON_SPACING = Spacing.createSpacing(1, 1, 0, true, 100);
+  private static final Spacing IMPORT_BETWEEN_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
+  private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
 
   public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2) {
 
@@ -83,6 +85,20 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
 
     if (DOTS.contains(leftNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
+    }
+
+/********** imports ************/
+    if (IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
+            IMPORT_STATEMENT.equals(rightNode.getElementType())) {
+      return IMPORT_BETWEEN_SPACING;
+    }
+    if ((IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
+            (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
+                    !mSEMI.equals(rightNode.getElementType()))) ||
+            ((!IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
+                    !mSEMI.equals(leftNode.getElementType())) &&
+                    IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
+      return IMPORT_OTHER_SPACING;
     }
 
 /********** exclusions ************/
