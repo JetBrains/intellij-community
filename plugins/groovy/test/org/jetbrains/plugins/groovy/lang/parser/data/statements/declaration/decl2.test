@@ -1,7 +1,7 @@
 def a
 -----
 Groovy script
-  Variable definitions
+  Qualified identifier
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')

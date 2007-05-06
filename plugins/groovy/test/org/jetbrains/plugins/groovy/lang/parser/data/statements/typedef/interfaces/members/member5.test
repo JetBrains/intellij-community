@@ -9,7 +9,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    Interface block
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Interface definition
@@ -20,7 +20,7 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('b')
         PsiWhiteSpace(' ')
-        Interface block
+        Type definition body
           PsiElement({)('{')
           PsiWhiteSpace('\n  ')
           PsiElement(})('}')

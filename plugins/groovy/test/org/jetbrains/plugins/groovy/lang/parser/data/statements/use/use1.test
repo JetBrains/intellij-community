@@ -1,20 +1,25 @@
-use (StringCalculationCategory) {
+use (StringCalculationCategory, 3) {
   assert 1 == '1' + '0'
   assert 2 == '1' + '1'
   assert 'x1' == 'x' + '1'
 }
 -----
 Groovy script
-  USE statement
-    PsiElement(useh)('use')
+  Method call
+    Reference expression
+      PsiElement(identifier)('use')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Type element
-      Reference element
+    Arguments
+      Reference expression
         PsiElement(identifier)('StringCalculationCategory')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('3')
     PsiElement())(')')
     PsiWhiteSpace(' ')
-    Open block
+    Closable block
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       ASSERT statement

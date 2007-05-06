@@ -13,7 +13,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('d')
     PsiWhiteSpace(' ')
-    Class body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Variable definitions

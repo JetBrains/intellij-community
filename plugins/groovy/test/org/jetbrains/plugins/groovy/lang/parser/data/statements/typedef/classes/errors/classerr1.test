@@ -10,10 +10,10 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    Class body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Variable definitions
+      Qualified identifier
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')

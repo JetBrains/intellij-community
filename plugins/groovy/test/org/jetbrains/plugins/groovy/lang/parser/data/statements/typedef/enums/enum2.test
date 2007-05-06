@@ -13,7 +13,7 @@ Groovy script
       Reference element
         PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
-    Enumeration body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

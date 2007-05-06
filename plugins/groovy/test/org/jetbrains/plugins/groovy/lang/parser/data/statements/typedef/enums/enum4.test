@@ -21,7 +21,7 @@ Groovy script
       Reference element
         PsiElement(identifier)('B')
     PsiWhiteSpace(' ')
-    Enumeration body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Enumeration constants
@@ -44,7 +44,7 @@ Groovy script
               PsiElement(Gstring)('"bar"')
           PsiElement())(')')
           PsiWhiteSpace(' ')
-          Class body
+          Type definition body
             PsiElement({)('{')
             PsiWhiteSpace('\n    ')
             Variable definitions
@@ -99,7 +99,7 @@ Groovy script
                 PsiElement())(')')
           PsiElement())(')')
           PsiWhiteSpace(' ')
-          Class body
+          Type definition body
             PsiElement({)('{')
             PsiWhiteSpace('\n  ')
             PsiElement(})('}')

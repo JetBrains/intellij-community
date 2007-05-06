@@ -30,7 +30,7 @@ Groovy script
         PsiElement(.)('.')
         PsiElement(identifier)('C')
     PsiWhiteSpace(' ')
-    Enumeration body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Enumeration constants
@@ -58,7 +58,7 @@ Groovy script
               PsiElement(identifier)('b')
           PsiElement())(')')
           PsiWhiteSpace(' ')
-          Class body
+          Type definition body
             PsiElement({)('{')
             PsiWhiteSpace('\n    ')
             Class definition
@@ -69,7 +69,7 @@ Groovy script
               PsiWhiteSpace(' ')
               PsiElement(identifier)('a')
               PsiWhiteSpace(' ')
-              Class body
+              Type definition body
                 PsiElement({)('{')
                 PsiElement(})('}')
             PsiElement(new line)('\n')

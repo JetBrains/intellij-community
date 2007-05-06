@@ -8,7 +8,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('B')
     PsiWhiteSpace(' ')
-    Enumeration body
+    Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Enumeration constants

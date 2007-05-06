@@ -29,6 +29,6 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
-    Class body
+    Type definition body
       PsiElement({)('{')
       PsiElement(})('}')

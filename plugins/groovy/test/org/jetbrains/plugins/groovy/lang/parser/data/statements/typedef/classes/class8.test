@@ -18,6 +18,6 @@ Groovy script
       Reference element
         PsiElement(identifier)('c')
     PsiWhiteSpace(' ')
-    Class body
+    Type definition body
       PsiElement({)('{')
       PsiElement(})('}')
