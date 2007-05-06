@@ -170,7 +170,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.kELSE,
           GroovyTokenTypes.kWHILE,
           GroovyTokenTypes.kWITH,
-          GroovyTokenTypes.kUSE,
           GroovyTokenTypes.kSWITCH,
           GroovyTokenTypes.kFOR,
           GroovyTokenTypes.kIN,

@@ -189,7 +189,6 @@ public interface GroovyTokenTypes {
   IElementType kELSE = new GroovyElementType("else");
   IElementType kWHILE = new GroovyElementType("while");
   IElementType kWITH = new GroovyElementType("with");
-  IElementType kUSE = new GroovyElementType("useh");
   IElementType kSWITCH = new GroovyElementType("switch");
   IElementType kFOR = new GroovyElementType("for");
   IElementType kIN = new GroovyElementType("in");

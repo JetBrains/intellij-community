@@ -59,8 +59,7 @@ public class GroovyCompletionData extends CompletionData {
   private void registerTopLevelCompletions() {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     TopLevelFilter topLevelFiler = new TopLevelFilter();
-//    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), topLevelFiler));
-    CompletionVariant variant = new CompletionVariant(new NotFilter(afterDotFilter));
+    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), topLevelFiler));
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     addCompletions(variant,  "package", "import", "interface", "enum", "def", "class", "static",

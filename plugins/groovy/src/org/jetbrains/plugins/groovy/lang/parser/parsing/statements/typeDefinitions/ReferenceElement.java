@@ -39,7 +39,7 @@ public class ReferenceElement implements GroovyElementTypes {
 //    return parse(builder, false, true, false, false);
 //  }
 
-  //it doesn't important first letter of identifier of ThrowClause, of Anootation, of UseStatement, of new Expresion, of implements, extends, superclass clauses
+  //it doesn't important first letter of identifier of ThrowClause, of Annotation, of new Expresion, of implements, extends, superclass clauses
   public static GroovyElementType parseReferenceElement(PsiBuilder builder) {
     return parse(builder, false, true, false, false);
   }
