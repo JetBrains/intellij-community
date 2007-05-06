@@ -16,11 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
 public interface GrVariable extends GrNamedElement {
+  @NotNull
+  PsiElement getNameIdentifier();
 }

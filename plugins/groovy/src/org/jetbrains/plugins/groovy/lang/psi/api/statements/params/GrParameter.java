@@ -18,12 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrParameter extends GrNamedElement {
+public interface GrParameter extends GrVariable {
   public static final GrParameter[] EMPTY_ARRAY = new GrParameter[0];
 
   @Nullable

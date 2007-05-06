@@ -38,8 +38,16 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   public String getName() {
-    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
-    return nameElement == null ? null : nameElement.getText();
+    return getNameIdentifier().getText();
+  }
+
+  @NotNull
+  public PsiElement getNameIdentifier() {
+    return findChildByType(GroovyTokenTypes.mIDENT);
+  }
+
+  public int getTextOffset() {
+    return getNameIdentifier().getTextRange().getStartOffset();
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

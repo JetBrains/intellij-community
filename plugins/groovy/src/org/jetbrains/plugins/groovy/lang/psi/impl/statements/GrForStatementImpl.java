@@ -16,11 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 
 /**
  * @autor: ilyas
@@ -40,5 +44,14 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
 
   public GrStatement getBody() {
     return findChildByClass(GrStatement.class);
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    GrForClause forClause = getClause();
+    if (forClause instanceof GrForInClauseImpl) {
+
+    }
+
+    return true;
   }
 }
