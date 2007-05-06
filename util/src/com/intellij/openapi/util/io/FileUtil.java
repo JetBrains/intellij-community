@@ -559,37 +559,69 @@ public class FileUtil {
     }
   }
 
-  public static String convertAntToRegexp(String pattern) {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+  /**
+   * @param antPattern ant-style path pattern
+   * @return java regexp pattern. 
+   * Note that no matter whether forward or backward slashes were used in the antPattern
+   * the returned regexp pattern will use forward slashes ('/') as file separators. 
+   * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
+   * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
+   */
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
+  public static String convertAntToRegexp(String antPattern) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      int cur = 0;
-      boolean isAfterAsterix = false;
-      while (cur < pattern.length()) {
-        char curChar = pattern.charAt(cur);
-        if (curChar != '*' && isAfterAsterix) {
-          buf.append("[^\\/]*");
-          isAfterAsterix = false;
+      for (int idx = 0; idx < antPattern.length(); idx++) {
+        final char ch = antPattern.charAt(idx);
+        switch (ch) {
+          case '[': case ']': case '^': case '$': case '.': case '{': case '}': case '+': case '|':
+            // quote regexp-specific symbols
+            builder.append('\\').append(ch); 
+            break;
+        
+          case '\\' : 
+            builder.append("/"); 
+            break;
+          
+          case '?' : 
+            builder.append(".{1}"); 
+            break;
+          
+          case '*' :
+            int asteriskCount = 1;
+            while (++idx < antPattern.length()) {
+              if (antPattern.charAt(idx) != '*') {
+                break;
+              }
+              asteriskCount++;
+            }
+            final boolean isEnd = idx >= antPattern.length();
+            final boolean isSlash = !isEnd && (antPattern.charAt(idx) == '/' || antPattern.charAt(idx) == '\\');
+            if (!isEnd && !isSlash) {
+              idx--; // retract unprocessed
+            }
+            if (asteriskCount == 2 && isSlash) {
+              builder.append("(?:[^/]+/)*?");
+            }
+            else if (asteriskCount == 2 && isEnd) {
+              builder.append(".*");
+            }
+            else {
+              builder.append("[^/]*?");
+            }
+            break;
+          
+          default: builder.append(ch);
         }
-
-        if (curChar == '*') {
-          if (!isAfterAsterix) {
-            isAfterAsterix = true;
-          } else {
-            buf.append(".*");
-            isAfterAsterix = false;
-          }
-        } else {
-          buf.append(curChar);
-        }
-        cur++;
       }
-      if (isAfterAsterix) {
-        buf.append("[^\\/]*");
+      if (builder.length() > 0 && builder.charAt(builder.length() - 1) == '/') {
+        // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
+        builder.append(".*");
       }
-      return buf.toString();
+      return builder.toString();
     }
     finally {
-      StringBuilderSpinAllocator.dispose(buf);
+      StringBuilderSpinAllocator.dispose(builder);
     }
   }
 

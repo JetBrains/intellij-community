@@ -336,7 +336,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
     final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     builder.append("<project name=\"predefined properties\">");
     try {
       while (props.hasMoreElements()) {
@@ -376,7 +376,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (basedir == null) {
         basedir = ".";
       }
-      if (file != null) {
+      if (file != null && !new File(basedir).isAbsolute()) {
         final VirtualFile dir = file.getParent();
         if (dir != null) {
           try {

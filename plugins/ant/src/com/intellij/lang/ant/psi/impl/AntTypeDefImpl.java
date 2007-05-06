@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.impl.reference.AntRefIdReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
@@ -9,9 +10,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -32,8 +31,10 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
@@ -151,7 +152,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   public boolean typesLoaded() {
-    return myClassesLoaded || !isSupported();
+    return myClassesLoaded;
   }
 
   public void clearClassesCache() {
@@ -320,7 +321,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       return null;
     }
     boolean newlyLoaded = false;
-    final URL[] urls = getClassPathUrls();
+    final List<URL> urls = getClassPathUrls();
     Class clazz = CLASS_CACHE.getClass(urls, classname);
     if (clazz == null) {
       final ClassLoader loader = getClassLoader(urls);
@@ -394,71 +395,83 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return false;
   }
 
-  private URL[] getClassPathUrls() {
-    URL[] urls = getClassPathLocalUrls();
+  private List<URL> getClassPathUrls() {
+    final List<URL> urls = getClassPathLocalUrls();
     AntElement parent = getAntParent();
     while (parent != null && !(parent instanceof AntProject)) {
       if (parent instanceof AntTypeDefImpl) {
-        final URL[] localUrls = ((AntTypeDefImpl)parent).getClassPathLocalUrls();
-        if (localUrls.length > 0) {
-          urls = ArrayUtil.mergeArrays(urls, localUrls, URL.class);
-        }
+        urls.addAll(((AntTypeDefImpl)parent).getClassPathLocalUrls());
       }
       parent = parent.getAntParent();
     }
     return urls;
   }
 
-  private URL[] getClassPathLocalUrls() {
+  private List<URL> getClassPathLocalUrls() {
+    final List<URL> urls = new ArrayList<URL>();
+    final String baseDir = computeAttributeValue("${" + AntFileImpl.BASEDIR_ATTR + "}");
+    // check classpath attribute
     final String classpath = getClassPath();
     if (classpath != null) {
-      final String projectPath = getProjectPath();
+      final StringTokenizer tokenizer = new StringTokenizer(classpath, ":;", false);
+      while (tokenizer.hasMoreTokens()) {
+        addUrl(baseDir, urls, tokenizer.nextToken());
+      }
+    }
+    
+    final List<File> files = new ArrayList<File>();
+    // check 'classpathref'
+    for (PsiReference reference : getReferences()) {
+      if (reference instanceof AntRefIdReference) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof AntFilesProvider) {
+          files.addAll(((AntFilesProvider)resolved).getFiles());
+        }
+      }
+    }
+    // check nested elements
+    for (AntElement antElement : getChildren()) {
+      if (antElement instanceof AntFilesProvider) {
+        files.addAll(((AntFilesProvider)antElement).getFiles());
+      }
+    }
+    
+    for (File file : files) {
       try {
-        if (classpath.indexOf(File.pathSeparatorChar) < 0) {
-          File file = new File(classpath);
-          if (!file.isAbsolute()) {
-            file = new File(projectPath, classpath);
-          }
-          return new URL[]{file.toURL()};
+        urls.add(file.toURL());
+      }
+      catch (MalformedURLException e) {
+      }
+    }
+    
+    return urls;
+  }
+
+  private static void addUrl(final String baseDir, final List<URL> urls, final String path) {
+    if (path != null) {
+      try {
+        File file = new File(path);
+        if (file.isAbsolute()) {
+          urls.add(file.toURL());
         }
-        
-        final String[] paths = classpath.split(File.pathSeparator);
-        final URL[] urlList = new URL[paths.length];
-        for (int i = 0; i < paths.length; i++) {
-          final String path = paths[i];
-          File file = new File(path);
-          if (!file.isAbsolute()) {
-            file = new File(projectPath, path);
+        else {
+          if (baseDir != null) {
+            urls.add(new File(baseDir, path).toURL());
           }
-          urlList[i] = file.toURL();
         }
-        return urlList;
       }
       catch (MalformedURLException ignored) {
       }
     }
-    return ClassEntry.EMPTY_URL_ARRAY;
   }
-
-  private String getProjectPath() {
-    final AntFile antFile = getAntFile();
-    final AntProject project = antFile.getAntProject();
-    VirtualFile vFile = antFile.getContainingPath();
-    String projectPath = (vFile != null) ? vFile.getPath() : "";
-    final String baseDir = project.getBaseDir();
-    if (baseDir != null && baseDir.length() > 0) {
-      projectPath = new File(projectPath, baseDir).getAbsolutePath();
-    }
-    return projectPath;
-  }
-
+  
   @Nullable
-  private ClassLoader getClassLoader(final URL[] urls) {
+  private ClassLoader getClassLoader(final List<URL> urls) {
     ClassLoader loader = null;
     final AntFile file = getAntFile();
     if (file != null) {
       loader = file.getClassLoader();
-      if (urls.length > 0) {
+      if (urls.size() > 0) {
         loader = new UrlClassLoader(urls, loader);
       }
     }
@@ -467,11 +480,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   private boolean isTask() {
     return "taskdef".equals(getSourceElement().getName());
-  }
-
-  private boolean isSupported() {
-    final XmlTag se = getSourceElement();
-    return se.getAttributeValue("classpathref") == null && se.findFirstSubTag("classpath") == null;
   }
 
   private static PsiFile createDummyFile(@NonNls final String name,
@@ -484,36 +492,28 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private static class ClassEntry {
 
     public static final URL[] EMPTY_URL_ARRAY = new URL[0];
-    private final URL[] myUrls;
+    private final List<URL> myUrls;
     private final String myClassname;
 
-    public ClassEntry(@NotNull final URL[] urls, @NotNull final String classname) {
+    public ClassEntry(@NotNull final List<URL> urls, @NotNull final String classname) {
       myUrls = urls;
       myClassname = classname;
     }
 
     public final int hashCode() {
-      int hc = myClassname.hashCode();
-      for (final URL url : myUrls) {
-        hc += url.hashCode();
-      }
-      return hc;
+      return 31 * myClassname.hashCode() + myUrls.hashCode();
     }
 
     public final boolean equals(Object obj) {
-      if (!(obj instanceof ClassEntry)) return false;
+      if (!(obj instanceof ClassEntry)) {
+        return false;
+      }
       final ClassEntry entry = (ClassEntry)obj;
-      if (!myClassname.equals(entry.myClassname)) return false;
-      if (myUrls.length != entry.myUrls.length) return false;
-      for (final URL url : myUrls) {
-        boolean found = false;
-        for (final URL entryUrl : entry.myUrls) {
-          if (url.equals(entryUrl)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) return false;
+      if (!myClassname.equals(entry.myClassname)) {
+        return false;
+      }
+      if (!myUrls.equals(entry.myUrls)) {
+        return false;
       }
       return true;
     }
@@ -526,7 +526,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
 
     @Nullable
-    public final synchronized Class getClass(@NotNull final URL[] urls, @NotNull final String classname) {
+    public final synchronized Class getClass(@NotNull final List<URL> urls, @NotNull final String classname) {
       final ClassEntry key = new ClassEntry(urls, classname);
       final SoftReference<Class> ref = tryKey(key);
       final Class result = (ref == null) ? null : ref.get();
@@ -536,7 +536,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       return result;
     }
 
-    public final synchronized void setClass(@NotNull final URL[] urls, @NotNull final String classname, @NotNull final Class clazz) {
+    public final synchronized void setClass(@NotNull final List<URL> urls, @NotNull final String classname, @NotNull final Class clazz) {
       cacheObject(new ClassEntry(urls, classname), new SoftReference<Class>(clazz));
     }
   }

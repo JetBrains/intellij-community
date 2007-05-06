@@ -21,6 +21,10 @@ public class AntElementVisitor {
     }
   }
 
+  public void visitAntStructuredElement(final AntStructuredElement element) {
+    visitAntElement(element);
+  }
+
   public void visitAntTarget(final AntTarget target) {
     visitAntElement(target);
   }

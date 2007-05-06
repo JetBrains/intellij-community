@@ -16,6 +16,10 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.*;
 import org.apache.tools.ant.taskdefs.optional.extension.JarLibResolveTask;
 import org.apache.tools.ant.taskdefs.optional.perforce.P4Counter;
+import org.apache.tools.ant.types.DirSet;
+import org.apache.tools.ant.types.FileList;
+import org.apache.tools.ant.types.FileSet;
+import org.apache.tools.ant.types.Path;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,6 +260,33 @@ public class AntElementFactory {
             return new AntBuildNumberImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(BuildNumber.class.getName()));
           }
         });
+
+        ourAntTypeToKnownAntElementCreatorMap.put(DirSet.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntDirSetImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(DirSet.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(FileList.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntFileListImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(FileList.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(FileSet.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntFileSetImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(FileSet.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Path.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntPathImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Path.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Path.PathElement.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntPathImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Path.PathElement.class.getName()));
+          }
+        });
+        
       }
     }
   }

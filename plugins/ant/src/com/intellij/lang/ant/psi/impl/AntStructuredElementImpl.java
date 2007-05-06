@@ -91,6 +91,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
   }
 
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntStructuredElement(this);
+  }
+
   @NotNull
   public XmlTag getSourceElement() {
     return (XmlTag)super.getSourceElement();

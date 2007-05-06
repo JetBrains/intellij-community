@@ -42,6 +42,10 @@ public class AntReferenceProvidersRegistry {
     ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider,
       attrProvider, macroParamsProvider});
 
+    ourProviders.put(AntDirSetImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntFileListImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntFileSetImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntPathImpl.class, ourProviders.get(AntStructuredElementImpl.class));
   }
 
   private AntReferenceProvidersRegistry() {

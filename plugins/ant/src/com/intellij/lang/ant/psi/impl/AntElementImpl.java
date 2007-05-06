@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
@@ -212,9 +213,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     try {
       for (final GenericReferenceProvider provider : providers) {
         final PsiReference[] refs = provider.getReferencesByElement(this);
-        for (PsiReference ref : refs) {
-          result.add(ref);
-        }
+        result.addAll(Arrays.asList(refs));
       }
       return myReferences = result.toArray(new PsiReference[result.size()]);
     }
