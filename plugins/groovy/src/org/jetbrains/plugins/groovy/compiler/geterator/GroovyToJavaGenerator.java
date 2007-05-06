@@ -9,19 +9,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.FinalWrapper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -279,27 +279,25 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     text.append("{");
 
     for (GrTopStatement statement : statements) {
-      if (statement instanceof GrConstructor) {
-        writeConstructor(classNameToQualifiedName, text, statement);
-        text.append("\n");
-      }
-
       if (statement instanceof GrMethod) {
-        writeMethod(classNameToQualifiedName, text, statement);
+        GrMethod method = (GrMethod) statement;
+        if (method.isConstructor()) {
+          writeConstructor(classNameToQualifiedName, text, (GrMethod) statement);
+        } else {
+          writeMethod(classNameToQualifiedName, text, (GrMethod) statement);
+        }
         text.append("\n");
       }
 
       if (statement instanceof GrVariableDeclarations) {
-        writeVariableDeclarations(classNameToQualifiedName, text, statement);
+        writeVariableDeclarations(classNameToQualifiedName, text, (GrVariableDeclarations) statement);
       }
     }
 
     text.append("}");
   }
 
-  private void writeConstructor(Map<String, String> classNameToQualifiedName, StringBuffer text, GrTopStatement topStatement) {
-    GrMethod method = (GrMethod) topStatement;
-
+  private void writeConstructor(Map<String, String> classNameToQualifiedName, StringBuffer text, GrMethod method) {
     /************* name **********/
     //append method name
     text.append(method.getName());
@@ -333,9 +331,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     text.append("}");
   }
 
-  private void writeVariableDeclarations(Map<String, String> classNameToQualifiedName, StringBuffer text, GrTopStatement topStatement) {
-    GrVariableDeclarations variableDeclarations = (GrVariableDeclarations) topStatement;
-
+  private void writeVariableDeclarations(Map<String, String> classNameToQualifiedName, StringBuffer text, GrVariableDeclarations variableDeclarations) {
     GrTypeElement varTypeElement = variableDeclarations.getTypeElementGroovy();
     String varQualifiedTypeName = getResolvedType(classNameToQualifiedName, varTypeElement);
 
@@ -343,14 +339,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     text.append(varQualifiedTypeName);
     text.append(" ");
 
-    //append method name
-    text.append(variableDeclarations.getName());
+    for (final GrVariable variable : variableDeclarations.getVariables()) {
+      text.append(variable.getName());
 
-    text.append(" = ");
-    if (typesToInitialValues.containsKey(varQualifiedTypeName))
-      text.append(typesToInitialValues.get(varQualifiedTypeName));
-    else
-      text.append("null");
+      text.append(" = ");
+      if (typesToInitialValues.containsKey(varQualifiedTypeName))
+        text.append(typesToInitialValues.get(varQualifiedTypeName));
+      else
+        text.append("null");
+    }
 
     text.append(";");
   }
@@ -369,8 +366,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     classNameToQualifiedName.putAll(typesToInitialValues);
   }
 
-  private void writeMethod(Map<String, String> classNameToQualifiedName, StringBuffer text, GrTopStatement topStatement) {
-    GrMethod method = (GrMethod) topStatement;
+  private void writeMethod(Map<String, String> classNameToQualifiedName, StringBuffer text, GrMethod method) {
 
     /************* type and name **********/
     GrTypeElement typeElement = method.getReturnTypeElementGroovy();
@@ -470,7 +466,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
 
       context.addMessage(
           CompilerMessageCategory.ERROR,
-          GroovyBundle.message("Class") + " " + myFile.getName() + " " + GroovyBundle.message("already.exist"),
+          GroovyBundle.message("class.already.exists", myFile.getName()),
           url,
           -1,
           -1);

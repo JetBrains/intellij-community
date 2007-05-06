@@ -56,15 +56,8 @@ public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements G
     return modifiers;
   }
 
-  @NotNull
-  public String getName() {
-    PsiElement variable = findChildByClass(GrVariable.class);
-    assert variable != null;
-    ASTNode node = variable.getNode();
-    assert node != null;
-    ASTNode variableName = node.findChildByType(GroovyTokenTypes.mIDENT);
-    assert variableName != null;
-    return variableName.getText();
+  public GrVariable[] getVariables() {
+    return findChildrenByClass(GrVariable.class);
   }
 
   @Nullable

@@ -24,5 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
  * @date: 26.03.2007
  */
 public interface GrTypeOrPackageReferenceElement extends GrReferenceElement {
+  GrTypeOrPackageReferenceElement[] EMPTY_ARRAY = new GrTypeOrPackageReferenceElement[0];
+
   GrTypeOrPackageReferenceElement getQualifier();
 }

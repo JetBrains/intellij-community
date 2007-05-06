@@ -79,15 +79,12 @@ public class GroovyFile extends PsiFileBase {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    NameHint nameHint = processor.getHint(NameHint.class);
     for (final GrTypeDefinition typeDefinition : getTypeDefinitions()) {
-      if (nameHint == null || nameHint.getName().equals(typeDefinition.getName())) {
-        if (!processor.execute(typeDefinition, PsiSubstitutor.EMPTY)) return false;
-      }
+      if (!processor.execute(typeDefinition, PsiSubstitutor.EMPTY)) return false;
     }
     
-    for (final GrImportStatement importStatement : getImportStatements()) {
-      if (!importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    for (final GrTopStatement topStatement : getTopStatements()) {
+      if (!topStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
