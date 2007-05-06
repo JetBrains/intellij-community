@@ -98,12 +98,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiClass || element instanceof PsiPackage) {
-      if (Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
-        return element.equals(resolve());
-      }
-    }
-    return false;
+    return getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {
