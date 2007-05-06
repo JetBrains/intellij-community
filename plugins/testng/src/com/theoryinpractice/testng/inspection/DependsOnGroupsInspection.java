@@ -35,13 +35,13 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
     @NotNull
     @Override
     public String getDisplayName() {
-        return "dependsOnGroups problem";
+        return "Groups problem";
     }
 
     @NotNull
     @Override
     public String getShortName() {
-        return "dependsOnGroupsTestNG";
+        return "groupsTestNG";
     }
 
     public boolean isEnabledByDefault() {
@@ -54,17 +54,16 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
 
         if (!psiClass.getContainingFile().isWritable()) return null;
 
-
         PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
-        if(annotations.length == 0) return EMPTY;
-        
+        if (annotations.length == 0) return EMPTY;
+
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         for (PsiAnnotation annotation : annotations) {
 
             PsiNameValuePair dep = null;
             PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
             for (PsiNameValuePair param : params) {
-                if ("dependsOnGroups".equals(param.getName())) {
+                if (param.getName().matches("(groups|dependsOnGroups)")) {
                     dep = param;
                     break;
                 }
@@ -72,28 +71,26 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
 
             if (dep != null) {
                 if (dep.getValue() != null) {
-                    LOGGER.info("Found dependsOnGroups with: " + dep.getValue().getText());
+                    LOGGER.info("Found " + dep.getName() + " with: " + dep.getValue().getText());
                     Matcher matcher = PATTERN.matcher(dep.getValue().getText());
                     while (matcher.find()) {
                         String methodName = matcher.group(1);
-                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                        checkGroupNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
                     }
                 }
             }
         }
 
-        return problemDescriptors.toArray(new ProblemDescriptor[] {} );
+        return problemDescriptors.toArray(new ProblemDescriptor[] {});
     }
 
-    private void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String groupName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
-        
+    private void checkGroupNameDependency(InspectionManager manager, PsiClass psiClass, String groupName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
 
         TestNGDefaultConfigurationComponent defaultConfig = manager.getProject().getComponent(TestNGDefaultConfigurationComponent.class);
         List<String> groups = defaultConfig.getDefaultSettings().getGroups();
 
-
         if (!groups.contains(groupName)) {
-            LOGGER.info("dependsOnGroups group doesn't exist:" + groupName);
+            LOGGER.info("group doesn't exist:" + groupName);
             ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                            "Group '" + groupName + "' is undefined.",
                                                                            new GroupNameQuickFix(manager.getProject(), groupName),
@@ -104,7 +101,8 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
 
     }
 
-    private static class GroupNameQuickFix implements LocalQuickFix {
+    private static class GroupNameQuickFix implements LocalQuickFix
+    {
 
         Project project;
         String groupName;
