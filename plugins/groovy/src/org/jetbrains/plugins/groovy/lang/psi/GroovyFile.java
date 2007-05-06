@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
 
@@ -80,7 +81,7 @@ public class GroovyFile extends PsiFileBase {
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrTypeDefinition typeDefinition : getTypeDefinitions()) {
-      if (!processor.execute(typeDefinition, PsiSubstitutor.EMPTY)) return false;
+      if (!ResolveUtil.processElement(processor, typeDefinition)) return false;
     }
     
     for (final GrTopStatement topStatement : getTopStatements()) {

@@ -21,12 +21,12 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -43,7 +43,7 @@ public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements G
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrVariableImpl variable : findChildrenByClass(GrVariableImpl.class)) {
-      if (!processor.execute(variable, PsiSubstitutor.EMPTY)) return false;
+      if (!ResolveUtil.processElement(processor, variable)) return false;
     }
 
     return true;

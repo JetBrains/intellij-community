@@ -43,10 +43,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint {
     for (final Class<? extends PsiNamedElement> clazz : myClasses) {
       if (clazz.isInstance(element)) {
         PsiNamedElement namedElement = (PsiNamedElement) element;
-        if (myName == null || myName.equals(namedElement.getName())) {
-          myCandidates.add(namedElement);
-          break;
-        }
+        myCandidates.add(namedElement);
+        break;
       }
     }
 

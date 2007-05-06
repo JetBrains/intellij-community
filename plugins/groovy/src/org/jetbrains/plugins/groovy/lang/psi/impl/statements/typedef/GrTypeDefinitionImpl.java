@@ -129,18 +129,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
 /*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!process(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
     }
 */
 
-    return true;
-  }
-
-  private boolean process(PsiScopeProcessor processor, PsiNamedElement element) {
-    NameHint nameHint = processor.getHint(NameHint.class);
-    if (nameHint == null || getName().equals(nameHint.getName())) {
-      return processor.execute(element, PsiSubstitutor.EMPTY);
-    }
     return true;
   }
 

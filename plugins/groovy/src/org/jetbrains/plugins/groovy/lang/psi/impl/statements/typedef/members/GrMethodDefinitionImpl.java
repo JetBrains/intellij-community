@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
@@ -69,10 +70,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!processor.execute(this, PsiSubstitutor.EMPTY)) return false;
+    if (!ResolveUtil.processElement(processor, this)) return false;
 
     for (final GrParameter parameter : getParameters()) {
-      if (!processor.execute(parameter, PsiSubstitutor.EMPTY)) return false;
+      if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
 
     return true;

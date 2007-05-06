@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ContentEntry;
@@ -42,10 +43,14 @@ public class ResolveClassTest extends ResolveTestCase {
     doTest("qualifiedName/B.groovy");
   }
 
+  public void testImportAlias() throws Exception {
+    doTest("qualifiedName/B.groovy");
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrTypeDefinition);
+    assertTrue(resolved instanceof PsiClass);
   }
 
   protected void setUp() throws Exception {

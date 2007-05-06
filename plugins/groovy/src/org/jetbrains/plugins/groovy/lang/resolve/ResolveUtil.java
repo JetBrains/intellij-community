@@ -18,8 +18,11 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.NameHint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
  * @author ven
@@ -42,6 +45,16 @@ public class ResolveUtil {
     while(run != null && run != lastParent) {
       if (!run.processDeclarations(processor, substitutor, null, place)) return false;
       run = run.getNextSibling();
+    }
+
+    return true;
+  }
+
+  public static boolean processElement(PsiScopeProcessor processor, GrNamedElement namedElement) {
+    NameHint nameHint = processor.getHint(NameHint.class);
+    String name = nameHint == null ? null : nameHint.getName();
+    if (name == null || name.equals(namedElement.getName())) {
+      return processor.execute(namedElement, PsiSubstitutor.EMPTY);
     }
 
     return true;
