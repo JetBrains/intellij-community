@@ -715,7 +715,7 @@ public final class PsiUtil {
   @Nullable
   public static PsiElement getElementInclusiveRange(PsiElement scope, TextRange range) {
     PsiElement psiElement = scope.findElementAt(range.getStartOffset());
-    while (!psiElement.getTextRange().contains(range)) {
+    while (psiElement != null && !psiElement.getTextRange().contains(range)) {
       if (psiElement == scope) return null;
       psiElement = psiElement.getParent();
     }
