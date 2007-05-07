@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -36,11 +37,12 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author yole
  */
-public class CommittedChangesTreeBrowser extends JPanel {
+public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider {
   private final Tree myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
@@ -196,6 +198,31 @@ public class CommittedChangesTreeBrowser extends JPanel {
     }
     myFilterSplitter.doLayout();
     updateModel();
+  }
+
+  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup group) {
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(group);
+    toolbarGroup.addSeparator();
+    toolbarGroup.add(new SelectFilteringAction(project, this));
+    toolbarGroup.add(new SelectGroupingAction(this));
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+  }
+
+  public void calcData(DataKey key, DataSink sink) {
+    if (key.equals(DataKeys.CHANGES)) {
+      final CommittedChangeList list = getSelectedChangeList();
+      if (list != null) {
+        final Collection<Change> changes = list.getChanges();
+        sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+      }
+    }
+    else if (key.equals(DataKeys.CHANGE_LISTS)) {
+      final CommittedChangeList list = getSelectedChangeList();
+      if (list != null) {
+        sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
+      }
+    }
   }
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {

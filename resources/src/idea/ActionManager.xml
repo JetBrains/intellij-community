@@ -1490,7 +1490,8 @@
     <group id="IncomingChangesToolbar">
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
         icon="/vcs/refresh.png"/>
-    </group>
+      <reference ref="CommittedChanges.Details"/>
+    </group>                                     
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
   </actions>
