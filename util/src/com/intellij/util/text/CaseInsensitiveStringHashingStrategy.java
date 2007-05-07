@@ -7,6 +7,8 @@ import gnu.trove.TObjectHashingStrategy;
  * @author max
  */
 public class CaseInsensitiveStringHashingStrategy implements TObjectHashingStrategy<String> {
+  public static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
+  
   public int computeHashCode(final String s) {
     return StringUtil.stringHashCodeInsensitive(s);
   }

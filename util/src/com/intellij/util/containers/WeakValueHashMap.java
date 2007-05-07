@@ -15,12 +15,15 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
 public final class WeakValueHashMap<K,V> implements Map<K,V>{
-  private HashMap<K,MyReference<K,V>> myMap;
+  private THashMap<K,MyReference<K,V>> myMap;
   private ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   private static class MyReference<K,T> extends WeakReference<T> {
@@ -33,7 +36,11 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
   }
 
   public WeakValueHashMap() {
-    myMap = new HashMap<K, MyReference<K,V>>();
+    myMap = new THashMap<K, MyReference<K,V>>();
+  }
+
+  public WeakValueHashMap(TObjectHashingStrategy<K> strategy) {
+    myMap = new THashMap<K, MyReference<K,V>>(strategy);
   }
 
   private void processQueue() {
