@@ -18,36 +18,42 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class RenameWrongRefFix implements IntentionAction {
   private PsiReferenceExpression myRefExpr;
-  private static final @NonNls String INPUT_VARIABLE_NAME = "INPUTVAR";
-  private static final @NonNls String OTHER_VARIABLE_NAME = "OTHERVAR";
+  @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
+  @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
 
   public RenameWrongRefFix(PsiReferenceExpression refExpr) {
     myRefExpr = refExpr;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("rename.wrong.reference.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("rename.wrong.reference.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myRefExpr.isValid() || !myRefExpr.getManager().isInProject(myRefExpr)) return false;
     int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
-    if (offset < refName.getTextRange().getStartOffset() ||
-        offset > refName.getTextRange().getEndOffset()) {
+    if (refName == null) return false;
+    TextRange textRange = refName.getTextRange();
+    if (textRange == null || offset < textRange.getStartOffset() ||
+        offset > textRange.getEndOffset()) {
       return false;
     }
 
@@ -151,7 +157,7 @@ public class RenameWrongRefFix implements IntentionAction {
     return items.toArray(new LookupItem[items.size()]);
   }
 
-  public void invoke(Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
