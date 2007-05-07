@@ -54,7 +54,8 @@ import java.util.*;
  * @date: 16.04.2007
  */
 
-public class GroovyCompilerProcess implements TranslatingCompiler {
+public class GroovyCompilerProcess implements TranslatingCompiler
+{
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess");
 
   private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
@@ -66,7 +67,8 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
   private static final String antlrLibName = "antlr-2.7.5.jar";
 
   @Nullable
-  public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
+  public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles)
+  {
     Set<TranslatingCompiler.OutputItem> compiledItems = new HashSet<TranslatingCompiler.OutputItem>();
     Set<VirtualFile> allCompiling = new HashSet<VirtualFile>();
 
@@ -74,7 +76,8 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
     Map<Module, Set<VirtualFile>> mapModulesToVirtualFiles = buildModuleToFilesMap(compileContext, virtualFiles);
 
-    for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
+    for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet())
+    {
 
       commandLine = new GeneralCommandLine();
       commandLine.setExePath(JAVA_EXE);
@@ -94,28 +97,61 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
       String groovyLangJarPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "\\" + GROOVY_LANG_JAR;
 
       String myJarPath = PathUtil.getJarPathForClass(getClass());
-      commandLine.addParameter(new StringBuilder().append(myJarPath).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(groovyLangJarPath).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(antlrLib).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(asmLibPath).toString());
+      final StringBuilder classPathBuilder = new StringBuilder().append(myJarPath).
+              append(CLASS_PATH_LIST_SEPARATOR).
+              append(groovyLangJarPath).
+              append(CLASS_PATH_LIST_SEPARATOR).
+              append(antlrLib).
+              append(CLASS_PATH_LIST_SEPARATOR).
+              append(asmLibPath).
+              append(CLASS_PATH_LIST_SEPARATOR);
+
+      final Module key = entry.getKey();
+
+      ApplicationManager.getApplication().runReadAction(new Runnable()
+      {
+        public void run()
+        {
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(key);
+          ModifiableRootModel model = rootManager.getModifiableModel();
+          VirtualFile[] files = model.getOrderedRoots(OrderRootType.CLASSES_AND_OUTPUT);
+
+          for (VirtualFile file : files)
+          {
+            if (file.getFileSystem() instanceof JarFileSystem)
+            {
+              JarFileSystem jarFileSystem = (JarFileSystem) file.getFileSystem();
+              classPathBuilder
+                      .append(jarFileSystem.getVirtualFileForJar(file).getPath())
+                      .append(CLASS_PATH_LIST_SEPARATOR);
+            }
+            else
+              classPathBuilder
+                      .append(file.getPath())
+                      .append(CLASS_PATH_LIST_SEPARATOR);
+          }
+        }
+      });
+
+      commandLine.addParameter(classPathBuilder.toString());
 
       commandLine.addParameter(GROOVYC_RUNNER_QUALIFIED_NAME);
 
-      try {
+      try
+      {
         File fileWithParameters = File.createTempFile("toCompile", "");
         fillFileWithGroovycParameters(entry.getKey(), entry.getValue(), fileWithParameters);
 
         commandLine.addParameter(fileWithParameters.getPath());
-      } catch (IOException e) {
+      } catch (IOException e)
+      {
         e.printStackTrace();
       }
 
       GroovycOSProcessHandler processHandler;
 
-      try {
+      try
+      {
         processHandler = new GroovycOSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
 
         processHandler.startNotify();
@@ -127,7 +163,8 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
         VirtualFile toRecompileVirtualFile;
 
         int i = 0;
-        for (File toRecompileFile : toRecompileFiles) {
+        for (File toRecompileFile : toRecompileFiles)
+        {
           toRecompileVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
           toRecompileVirtualFiles[i] = toRecompileVirtualFile;
           i++;
@@ -135,7 +172,8 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
         CompilerMessage[] compilerMessages = processHandler.getCompilerMessages().toArray(new CompilerMessage[0]);
 
-        for (final CompilerMessage compileMessage : compilerMessages) {
+        for (final CompilerMessage compileMessage : compilerMessages)
+        {
           final CompilerMessageCategory category;
           category = getMessageCategory(compileMessage);
 
@@ -145,7 +183,8 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
           final GroovyFile[] myPsiFile = new GroovyFile[1];
           final VirtualFile myFile;
 
-          try {
+          try
+          {
             myFile = VfsUtil.findFileByURL(new URL("file://" + url));
             assert myFile != null;
 
@@ -153,14 +192,17 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
             final Project project = VfsUtil.guessProjectForFile(myFile);
             assert project != null;
 
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
+            ApplicationManager.getApplication().runReadAction(new Runnable()
+            {
+              public void run()
+              {
                 myPsiFile[0] = (GroovyFile) PsiManager.getInstance(project).findFile(myFile);
               }
             });
 
             assert myPsiFile[0] != null;
-          } catch (MalformedURLException e) {
+          } catch (MalformedURLException e)
+          {
             e.printStackTrace();
           }
 
@@ -176,19 +218,21 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
         return new GroovyCompileExitStatus(processHandler.getSuccessfullyCompiled(), toRecompileVirtualFiles);
 
 //        if (exitStatus == null) return new GroovyCompileExitStatus(new HashSet<OutputItem>(), VirtualFile.EMPTY_ARRAY);
-      } catch (ExecutionException e) {
+      } catch (ExecutionException e)
+      {
         e.printStackTrace();
       }
     }
 
     VirtualFile[] toRecompile = compiledItems.size() > 0 ?
-        VirtualFile.EMPTY_ARRAY :
-        allCompiling.toArray(new VirtualFile[allCompiling.size()]);
+            VirtualFile.EMPTY_ARRAY :
+            allCompiling.toArray(new VirtualFile[allCompiling.size()]);
 
     return new GroovyCompileExitStatus(compiledItems, toRecompile);
   }
 
-  private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
+  private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage)
+  {
     String cathegory;
     cathegory = compilerMessage.getCathegory();
 
@@ -200,28 +244,34 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  class GroovyCompileExitStatus implements ExitStatus {
+  class GroovyCompileExitStatus implements ExitStatus
+  {
     private OutputItem[] myCompiledItems;
     private VirtualFile[] myToRecompile;
 
-    public GroovyCompileExitStatus(Set<TranslatingCompiler.OutputItem> compiledItems, VirtualFile[] toRecompile) {
+    public GroovyCompileExitStatus(Set<TranslatingCompiler.OutputItem> compiledItems, VirtualFile[] toRecompile)
+    {
       myToRecompile = toRecompile;
       myCompiledItems = compiledItems.toArray(new OutputItem[compiledItems.size()]);
     }
 
-    public OutputItem[] getSuccessfullyCompiled() {
+    public OutputItem[] getSuccessfullyCompiled()
+    {
       return myCompiledItems;
     }
 
-    public VirtualFile[] getFilesToRecompile() {
+    public VirtualFile[] getFilesToRecompile()
+    {
       return myToRecompile;
     }
   }
 
-  private void fillFileWithGroovycParameters(Module module, Set<VirtualFile> virtualFiles, File f) {
+  private void fillFileWithGroovycParameters(Module module, Set<VirtualFile> virtualFiles, File f)
+  {
 
     PrintStream printer = null;
-    try {
+    try
+    {
       printer = new PrintStream(new FileOutputStream(f));
 
 /*    filename1
@@ -233,10 +283,14 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       //files
-      for (VirtualFile item : virtualFiles) {
-        if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
+      for (VirtualFile item : virtualFiles)
+      {
+        if (!moduleRootManager.getFileIndex().isInTestSourceContent(item))
+        {
           printer.print(GroovycRunner.SRC_FILE);
-        } else {
+        }
+        else
+        {
           printer.print(GroovycRunner.TEST_FILE);
         }
         printer.println();
@@ -282,51 +336,61 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
       printer.print(getNonExcludedModuleSourceFolders(module).getPathsString());
       printer.println();
 
-    } catch (IOException e) {
+    } catch (IOException e)
+    {
       e.printStackTrace();
-    } finally {
+    } finally
+    {
 
       assert printer != null;
       printer.close();
     }
   }
 
-  public boolean isCompilableFile(VirtualFile virtualFile, CompileContext compileContext) {
+  public boolean isCompilableFile(VirtualFile virtualFile, CompileContext compileContext)
+  {
     return GroovyFileType.GROOVY_FILE_TYPE.equals(virtualFile.getFileType());
   }
 
   @NotNull
-  public String getDescription() {
+  public String getDescription()
+  {
     return "groovy compiler";
   }
 
-  public boolean validateConfiguration(CompileScope compileScope) {
+  public boolean validateConfiguration(CompileScope compileScope)
+  {
     return true;
   }
 
-  private PathsList getCompilationClasspath(Module module) {
+  private PathsList getCompilationClasspath(Module module)
+  {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     OrderEntry[] entries = rootManager.getOrderEntries();
     Set<VirtualFile> cpVFiles = new HashSet<VirtualFile>();
 
-    for (OrderEntry orderEntry : entries) {
+    for (OrderEntry orderEntry : entries)
+    {
       cpVFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
     }
 
     StringBuffer path = new StringBuffer();
 
     VirtualFile[] filesArray = cpVFiles.toArray(new VirtualFile[cpVFiles.size()]);
-    for (int i = 0; i < filesArray.length; i++) {
+    for (int i = 0; i < filesArray.length; i++)
+    {
       VirtualFile file = filesArray[i];
       String filePath = file.getPath();
 
       int jarSeparatorIndex = filePath.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (jarSeparatorIndex > 0) {         
+      if (jarSeparatorIndex > 0)
+      {
         filePath = filePath.substring(0, jarSeparatorIndex);
       }
       path.append(filePath);
-      
-      if (i < filesArray.length - 1) {
+
+      if (i < filesArray.length - 1)
+      {
         path.append(CLASS_PATH_LIST_SEPARATOR);
       }
     }
@@ -337,20 +401,25 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
     return pathsList;
   }
 
-  public PathsList getNonExcludedModuleSourceFolders(Module module) {
+  public PathsList getNonExcludedModuleSourceFolders(Module module)
+  {
     ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     PathsList sourceFolders = findAllSourceFolders(contentEntries);
     sourceFolders.getPathList().removeAll(findExcludedFolders(contentEntries));
     return sourceFolders;
   }
 
-  private PathsList findAllSourceFolders(ContentEntry[] contentEntries) {
+  private PathsList findAllSourceFolders(ContentEntry[] contentEntries)
+  {
     PathsList sourceFolders = new PathsList();
-    for (ContentEntry contentEntry : contentEntries) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
+    for (ContentEntry contentEntry : contentEntries)
+    {
+      for (SourceFolder folder : contentEntry.getSourceFolders())
+      {
         VirtualFile file = folder.getFile();
         assert file != null;
-        if (file.isDirectory() && file.isWritable()) {
+        if (file.isDirectory() && file.isWritable())
+        {
           sourceFolders.add(file);
         }
       }
@@ -358,27 +427,35 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
     return sourceFolders;
   }
 
-  private Set<VirtualFile> findExcludedFolders(ContentEntry[] entries) {
+  private Set<VirtualFile> findExcludedFolders(ContentEntry[] entries)
+  {
     Set<VirtualFile> excludedFolders = new HashSet<VirtualFile>();
-    for (ContentEntry entry : entries) {
+    for (ContentEntry entry : entries)
+    {
       excludedFolders.addAll(Arrays.asList(entry.getExcludeFolderFiles()));
     }
     return excludedFolders;
   }
 
-  private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
+  private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files)
+  {
     final Map<Module, Set<VirtualFile>> map = new HashMap<Module, Set<VirtualFile>>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
+    ApplicationManager.getApplication().runReadAction(new Runnable()
+    {
+      public void run()
+      {
+        for (VirtualFile file : files)
+        {
           final Module module = context.getModuleByFile(file);
 
-          if (module == null) {
+          if (module == null)
+          {
             continue;
           }
 
           Set<VirtualFile> moduleFiles = map.get(module);
-          if (moduleFiles == null) {
+          if (moduleFiles == null)
+          {
             moduleFiles = new HashSet<VirtualFile>();
             map.put(module, moduleFiles);
           }

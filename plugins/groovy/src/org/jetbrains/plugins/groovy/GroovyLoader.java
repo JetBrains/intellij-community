@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -22,10 +23,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
-import org.jetbrains.plugins.groovy.compiler.geterator.GroovyToJavaGenerator;
+import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 
 import java.util.HashSet;
@@ -36,7 +36,8 @@ import java.util.Set;
  *
  * @author ilyas
  */
-public class GroovyLoader implements ApplicationComponent {
+public class GroovyLoader implements ApplicationComponent
+{
 
   @NotNull
   public static final String GROOVY_EXTENTION = "groovy";
@@ -53,34 +54,42 @@ public class GroovyLoader implements ApplicationComponent {
   @NotNull
   public static final Set<String> GROOVY_EXTENTIONS = new HashSet<String>();
 
-  static {
+  static
+  {
     GROOVY_EXTENTIONS.add(GROOVY_EXTENTION);
     GROOVY_EXTENTIONS.add(GVY_EXTENTION);
     GROOVY_EXTENTIONS.add(GY_EXTENTION);
     GROOVY_EXTENTIONS.add(GROOVY_SCRIPT_EXTENTION);
   }
 
-  public GroovyLoader() {
+  public GroovyLoader()
+  {
   }
 
-  public void initComponent() {
+  public void initComponent()
+  {
     loadGroovy();
   }
 
-  public static void loadGroovy() {
+  public static void loadGroovy()
+  {
     ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
-          }
-        }
+            new Runnable()
+            {
+              public void run()
+              {
+                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
+              }
+            }
     );
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
             new GroovyCompletionData());
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      public void projectOpened(Project project) {
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter()
+    {
+      public void projectOpened(Project project)
+      {
         CompilerManager compilerManager = CompilerManager.getInstance(project);
         compilerManager.addCompiler(new GroovyCompilerProcess());
         compilerManager.addCompiler(new GroovyToJavaGenerator());
@@ -89,11 +98,13 @@ public class GroovyLoader implements ApplicationComponent {
     });
   }
 
-  public void disposeComponent() {
+  public void disposeComponent()
+  {
   }
 
   @NotNull
-  public String getComponentName() {
+  public String getComponentName()
+  {
     return "groovy.support.loader";
   }
 }
