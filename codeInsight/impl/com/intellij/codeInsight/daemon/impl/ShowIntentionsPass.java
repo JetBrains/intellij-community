@@ -26,7 +26,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
@@ -131,13 +129,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
-    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
-    final PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    getActionsToShow(injectedEditor, injectedFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow,
-                     myIntentionActions, myPassIdToShowIntentionsFor);
+    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myIntentionActions, myPassIdToShowIntentionsFor);
 
     if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
       boolean showBulb = false;
@@ -150,7 +145,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (!showBulb) {
         for (HighlightInfo.IntentionActionDescriptor descriptor : intentionsToShow) {
           final IntentionAction action = descriptor.getAction();
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, injectedEditor, injectedFile)) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, myEditor, myFile)) {
             showBulb = true;
             break;
           }
@@ -167,7 +162,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           codeAnalyzer.setLastIntentionHint(null);
         }
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedFile, injectedEditor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, false);
+          hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, false);
           codeAnalyzer.setLastIntentionHint(hintComponent);
         }
       }
