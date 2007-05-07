@@ -22,8 +22,7 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         PsiElement())(')')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('\n  ')
+      PsiElement(new line)('\n\n  ')
       Method
         Modifiers
           PsiElement(def)('def')
@@ -33,8 +32,7 @@ Groovy script
         PsiElement(()('(')
         PsiElement())(')')
       PsiElement(;)(';')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiElement(new line)('\n  ')
       Method
         Type element
           Reference element

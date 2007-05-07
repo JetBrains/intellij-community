@@ -27,8 +27,7 @@ Groovy script
             PsiElement(wrong gstring)('"bugaga')
             PsiErrorElement:Wrong string literal
               <empty list>
-      PsiElement(new line)('\n')
-      PsiWhiteSpace(' ')
+      PsiElement(new line)('\n ')
       Literal
         PsiElement(number)('3')
       PsiElement(})('}')

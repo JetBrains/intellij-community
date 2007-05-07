@@ -21,10 +21,9 @@ Groovy script
           PsiElement(identifier)('a')
           PsiWhiteSpace(' ')
           PsiElement(=)('=')
-          PsiElement(new line)('\n')
+          PsiElement(new line)('\n\n  ')
           PsiErrorElement:Expression expected
             <empty list>
-      PsiWhiteSpace('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')

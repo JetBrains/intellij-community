@@ -40,8 +40,7 @@ Groovy script
             <empty list>
       PsiWhiteSpace(' ')
       PsiElement(for)('for')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('\n  ')
+      PsiElement(new line)('\n\n  ')
       Open block
         PsiElement({)('{')
         IF statement
@@ -72,8 +71,7 @@ Groovy script
               Open block
                 PsiElement({)('{')
                 PsiElement(})('}')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('  ')
+            PsiElement(new line)('\n  ')
             PsiElement(})('}')
         PsiElement(new line)('\n')
         PsiElement(})('}')

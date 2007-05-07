@@ -22,8 +22,7 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         PsiElement())(')')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('  ')
+      PsiElement(new line)('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')

@@ -29,8 +29,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Reference expression
               PsiElement(identifier)('d')
-        PsiElement(new line)('\n')
-        PsiWhiteSpace('  ')
+        PsiElement(new line)('\n  ')
         PsiElement(})('}')
       PsiErrorElement:static compound statement unexpected in interface
         <empty list>

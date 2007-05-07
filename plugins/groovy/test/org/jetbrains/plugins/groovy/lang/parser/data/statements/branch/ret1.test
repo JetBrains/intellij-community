@@ -51,8 +51,7 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('numberToSquare')
           PsiElement(;)(';')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('   ')
+          PsiElement(new line)('\n   ')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

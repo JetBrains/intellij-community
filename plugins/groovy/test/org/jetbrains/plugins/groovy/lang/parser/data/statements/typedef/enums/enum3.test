@@ -72,8 +72,7 @@ Groovy script
               Type definition body
                 PsiElement({)('{')
                 PsiElement(})('}')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('    ')
+            PsiElement(new line)('\n    ')
             Open block
               PsiElement({)('{')
               Assignment expression
@@ -85,8 +84,7 @@ Groovy script
                 Literal
                   PsiElement(number)('2')
               PsiElement(})('}')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('    ')
+            PsiElement(new line)('\n    ')
             Variable definitions
               Modifiers
                 PsiElement(native)('native')
@@ -110,8 +108,7 @@ Groovy script
                   PsiWhiteSpace(' ')
                   Literal
                     PsiElement(number)('4')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('     ')
+            PsiElement(new line)('\n     ')
             Method
               Type element
                 Reference element
@@ -132,12 +129,10 @@ Groovy script
                   PsiWhiteSpace(' ')
                   Literal
                     PsiElement(number)('3')
-                PsiElement(new line)('\n')
-                PsiWhiteSpace('     ')
+                PsiElement(new line)('\n     ')
                 PsiElement(})('}')
             PsiWhiteSpace(' ')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('  ')
+            PsiElement(new line)('\n  ')
             PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

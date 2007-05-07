@@ -49,8 +49,7 @@ Groovy script
             Type definition body
               PsiElement({)('{')
               PsiElement(})('}')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('  ')
+          PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

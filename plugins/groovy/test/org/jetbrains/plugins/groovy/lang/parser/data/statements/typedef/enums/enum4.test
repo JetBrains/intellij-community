@@ -59,13 +59,11 @@ Groovy script
                 Literal
                   PsiElement(number)('3')
             PsiElement(;)(';')
-            PsiElement(new line)('\n')
-            PsiWhiteSpace('  ')
+            PsiElement(new line)('\n  ')
             PsiElement(})('}')
         PsiElement(,)(',')
         Enumeration constant
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('\n  ')
+          PsiElement(new line)('\n\n  ')
           Modifiers
             Annotation
               PsiElement(@)('@')
@@ -104,8 +102,7 @@ Groovy script
             PsiWhiteSpace('\n  ')
             PsiElement(})('}')
         PsiElement(,)(',')
-      PsiElement(new line)('\n')
-      PsiWhiteSpace('\n  ')
+      PsiElement(new line)('\n\n  ')
       Open block
         PsiElement({)('{')
         PsiWhiteSpace(' ')

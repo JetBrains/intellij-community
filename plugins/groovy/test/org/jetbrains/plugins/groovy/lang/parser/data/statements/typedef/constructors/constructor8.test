@@ -40,8 +40,7 @@ Groovy script
           Arguments
             <empty list>
           PsiElement())(')')
-          PsiElement(new line)('\n')
-          PsiWhiteSpace('  ')
+          PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')
