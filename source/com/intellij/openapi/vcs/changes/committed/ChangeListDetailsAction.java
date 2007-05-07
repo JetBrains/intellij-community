@@ -1,17 +1,16 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.javadoc.JavaDocManager;
-import com.intellij.ide.DataManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 
@@ -52,7 +51,7 @@ public class ChangeListDetailsAction extends AnAction {
     JScrollPane scrollPane = new JScrollPane(editorPane);
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, editorPane)
-        .setDimensionServiceKey(project, JavaDocManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setDimensionServiceKey(project, "changelist.details.popup", false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)
