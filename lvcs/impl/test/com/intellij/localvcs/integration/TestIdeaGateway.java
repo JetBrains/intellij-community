@@ -2,16 +2,20 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class TestIdeaGateway extends IdeaGateway {
   private String myPhysicalContent;
   private List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
+  private Map<String, FileType> myFileTypes = new HashMap<String, FileType>();
 
   public TestIdeaGateway() {
     super(null);
@@ -78,6 +82,15 @@ public class TestIdeaGateway extends IdeaGateway {
       result.add(d.getFile());
     }
     return result.toArray(new VirtualFile[0]);
+  }
+
+  @Override
+  public FileType getFileType(String fileName) {
+    return myFileTypes.get(fileName);
+  }
+
+  public void addFileType(String fileName, FileType t) {
+    myFileTypes.put(fileName, t);
   }
 
   private class MyDocument extends MockDocument {

@@ -37,9 +37,9 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected JComponent createDiffPanel() {
-    myCanNotShowDifferenceLabel = new JLabel(
-      "<HTML><CENTER><B><FONT color='red'>The difference cannot be shown<br>because one of the selected revisions has very long file content</FONT></B></CENTER></HTML>",
-      JLabel.CENTER);
+    String message = "The difference cannot be shown<br>because one of the selected revisions has very long file content";
+    myCanNotShowDifferenceLabel =
+      new JLabel("<HTML><CENTER><B><FONT color='red'>" + message + "</FONT></B></CENTER></HTML>", JLabel.CENTER);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myGateway.getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();

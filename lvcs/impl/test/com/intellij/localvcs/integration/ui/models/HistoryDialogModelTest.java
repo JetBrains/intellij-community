@@ -102,6 +102,18 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testIsCurrentRevisionSelected() {
+    m.selectRevisions(1, 2);
+    assertFalse(m.isCurrentRevisionSelected());
+
+    m.selectRevisions(2, 2);
+    assertTrue(m.isCurrentRevisionSelected());
+
+    m.selectRevisions(-1, -1);
+    assertTrue(m.isCurrentRevisionSelected());
+  }
+
+  @Test
   public void testCanRevert() {
     m.selectRevisions(1, 1);
     assertTrue(m.canRevert());

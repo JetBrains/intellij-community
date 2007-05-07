@@ -2,10 +2,10 @@ package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.FormatUtil;
+import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 
 public class FileDifferenceModel {
   private Entry myLeft;
@@ -32,17 +32,16 @@ public class FileDifferenceModel {
     return FormatUtil.formatTimestamp(e.getTimestamp()) + " - " + e.getName();
   }
 
-  public SimpleContent getLeftDiffContent(FileTypeManager tm, EditorFactory ef) {
-    return getDiffContent(tm, ef, myLeft);
+  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef) {
+    return getDiffContent(gw, ef, myLeft);
   }
 
-  public SimpleContent getRightDiffContent(FileTypeManager tm, EditorFactory ef) {
-    return getDiffContent(tm, ef, myRight);
+  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef) {
+    return getDiffContent(gw, ef, myRight);
   }
 
-  private SimpleContent getDiffContent(FileTypeManager tm, EditorFactory ef, Entry e) {
-    FileType t = tm.getFileTypeByFileName(e.getName());
-    return new SimpleContent(getContentOf(e), t, ef);
+  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Entry e) {
+    return new SimpleContent(getContentOf(e), gw.getFileType(e.getName()), ef);
   }
 
   private String getContentOf(Entry e) {

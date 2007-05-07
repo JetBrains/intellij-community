@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
@@ -121,6 +122,10 @@ public class IdeaGateway {
     };
   }
 
+  public Document getDocumentFor(VirtualFile f) {
+    return getDocManager().getDocument(f);
+  }
+
   public void saveAllUnsavedDocuments() {
     getDocManager().saveAllDocuments();
   }
@@ -131,6 +136,10 @@ public class IdeaGateway {
 
   protected VirtualFile getDocumentFile(Document d) {
     return getDocManager().getFile(d);
+  }
+
+  public FileType getFileType(String fileName) {
+    return FileTypeManager.getInstance().getFileTypeByFileName(fileName);
   }
 
   private LocalFileSystem getFileSystem() {

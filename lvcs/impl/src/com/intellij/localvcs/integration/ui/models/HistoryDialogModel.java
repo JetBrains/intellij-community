@@ -60,12 +60,17 @@ public abstract class HistoryDialogModel {
     }
   }
 
+  protected boolean isCurrentRevisionSelected() {
+    return myRightRevision == 0;
+  }
+
   public boolean revert() {
     return Reverter.revert(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
   }
 
   public boolean canRevert() {
-    if (myRightRevision != 0 || myLeftRevision == 0) return false;
+    boolean isSelectionCorrect = isCurrentRevisionSelected() && myLeftRevision > 0;
+    if (!isSelectionCorrect) return false;
     return !getLeftEntry().hasUnavailableContent();
   }
 }

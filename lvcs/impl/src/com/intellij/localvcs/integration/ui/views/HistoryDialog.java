@@ -7,9 +7,9 @@ import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -131,11 +131,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   protected abstract void updateDiffs();
 
   protected SimpleDiffRequest createDifference(FileDifferenceModel m) {
-    FileTypeManager tm = FileTypeManager.getInstance();
     EditorFactory ef = EditorFactory.getInstance();
 
     SimpleDiffRequest r = new SimpleDiffRequest(myGateway.getProject(), m.getTitle());
-    r.setContents(m.getLeftDiffContent(tm, ef), m.getRightDiffContent(tm, ef));
+
+    DiffContent left = m.getLeftDiffContent(myGateway, ef);
+    DiffContent right = m.getRightDiffContent(myGateway, ef);
+
+    r.setContents(left, right);
     r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
 
     return r;

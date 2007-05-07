@@ -6,11 +6,10 @@ import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockEditorFactory;
-import com.intellij.mock.MockFileTypeManager;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 public class FileHistoryDialogModelTest extends LocalVcsTestCase {
@@ -34,7 +33,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCantShowDifferenceIfOneOfEntryHasUnavailableContent() {
+  public void testCanNotShowDifferenceIfOneOfEntriesHasUnavailableContent() {
     vcs.createFile("f", cf("abc"), -1);
     vcs.changeFileContent("f", bigContentFactory(), -1);
     vcs.changeFileContent("f", cf("def"), -1);
@@ -53,11 +52,12 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelTitles() {
-    vcs.createFile("old", cf(""), 123L);
+    vcs.createFile("old", cf(""), 123);
     vcs.rename("old", "new");
+    vcs.rename("new", "current");
 
-    initModelFor("new");
-    m.selectRevisions(0, 1);
+    initModelFor("current");
+    m.selectRevisions(1, 2);
 
     FileDifferenceModel dm = m.getDifferenceModel();
     assertTrue(dm.getLeftTitle().endsWith(" - old"));
@@ -65,35 +65,39 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testDifferenceModelContents() {
-    vcs.createFile("f", cf("old"), -1);
-    vcs.changeFileContent("f", cf("new"), -1);
-
+  public void testTitleForCurrentRevision() {
+    vcs.createFile("f", cf("content"), 123);
     initModelFor("f");
-    m.selectRevisions(0, 1);
 
-    assertDifferenceModelContents("old", "new");
+    FileDifferenceModel dm = m.getDifferenceModel();
+    assertTrue(dm.getLeftTitle().endsWith(" - f"));
+    assertEquals("Current", dm.getRightTitle());
   }
 
   @Test
-  public void testContentsWhenOnlyOneRevisionSelected() {
+  public void testDifferenceModelContents() {
     vcs.createFile("f", cf("old"), -1);
     vcs.changeFileContent("f", cf("new"), -1);
+    vcs.changeFileContent("f", cf("current"), -1);
 
     initModelFor("f");
-    m.selectRevisions(1, 1);
+    m.selectRevisions(1, 2);
 
     assertDifferenceModelContents("old", "new");
   }
 
   private void assertDifferenceModelContents(String left, String right) {
     FileDifferenceModel dm = m.getDifferenceModel();
-
-    FileTypeManager tm = new MockFileTypeManager();
+    TestIdeaGateway gw = new TestIdeaGateway();
     EditorFactory ef = new MockEditorFactory();
 
-    assertEquals(left, dm.getLeftDiffContent(tm, ef).getText());
-    assertEquals(right, dm.getRightDiffContent(tm, ef).getText());
+    try {
+      assertEquals(left, new String(dm.getLeftDiffContent(gw, ef).getBytes()));
+      assertEquals(right, new String(dm.getRightDiffContent(gw, ef).getBytes()));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void initModelFor(String path) {
