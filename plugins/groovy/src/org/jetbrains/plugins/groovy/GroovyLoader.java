@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
-import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 
 import java.util.HashSet;
@@ -92,7 +91,7 @@ public class GroovyLoader implements ApplicationComponent
       {
         CompilerManager compilerManager = CompilerManager.getInstance(project);
         compilerManager.addCompiler(new GroovyCompilerProcess());
-        compilerManager.addCompiler(new GroovyToJavaGenerator());
+//        compilerManager.addCompiler(new GroovyToJavaGenerator());
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
       }
     });
