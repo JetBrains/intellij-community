@@ -51,9 +51,14 @@ class LineMover extends Mover {
 
     PsiElement endingElement = firstNonWhiteElement(endOffset, file, false);
     if (endingElement == null) return null;
-    if (!PsiTreeUtil.isAncestor(startingElement, endingElement, false)
-        && startingElement.getTextRange().getEndOffset() > endingElement.getTextRange().getStartOffset()) return null;
-    return Pair.create(startingElement, endingElement);
+    if (PsiTreeUtil.isAncestor(startingElement, endingElement, false) ||
+        startingElement.getTextRange().getEndOffset() <= endingElement.getTextRange().getStartOffset()) {
+      return Pair.create(startingElement, endingElement);
+    }
+    if (PsiTreeUtil.isAncestor(endingElement, startingElement, false)) {
+      return Pair.create(startingElement, endingElement);
+    }
+    return null;
   }
 
   static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
