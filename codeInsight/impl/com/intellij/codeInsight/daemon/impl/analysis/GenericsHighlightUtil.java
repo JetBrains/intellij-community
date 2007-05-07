@@ -112,8 +112,7 @@ public class GenericsHighlightUtil {
         );
       }
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList,
-                                                                            description);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, description);
       if (registerIntentions) {
         PsiElement pparent = referenceParameterList.getParent().getParent();
         if (pparent instanceof PsiTypeElement) {
@@ -194,9 +193,9 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkElementInTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement element) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
-    HighlightInfo errorResult = null;
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom == null) return null;
+    HighlightInfo errorResult = null;
     if (!extendFrom.isInterface() && referenceElements.length != 0 && element != referenceElements[0]) {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
@@ -1104,6 +1103,14 @@ public class GenericsHighlightUtil {
                                                  parameterList, message);
         }
       }
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkCannotInheritFromTypeParameter(final PsiClass superClass, final PsiJavaCodeReferenceElement toHighlight) {
+    if (superClass instanceof PsiTypeParameter) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, toHighlight,
+                                               JavaErrorMessages.message("class.cannot.inherit.from.its.type.parameter"));
     }
     return null;
   }

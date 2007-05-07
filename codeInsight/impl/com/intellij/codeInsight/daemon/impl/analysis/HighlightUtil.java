@@ -1248,7 +1248,6 @@ public class HighlightUtil {
   public static HighlightInfo checkIllegalType(PsiTypeElement typeElement) {
     if (typeElement == null || typeElement.getParent() instanceof PsiTypeElement) return null;
 
-    final PsiElement parent = typeElement.getParent();
     if (isInsideJavadocComment(typeElement)) return null;
 
     PsiType type = typeElement.getType();
@@ -1924,6 +1923,9 @@ public class HighlightUtil {
         if (highlightInfo == null) {
           highlightInfo = GenericsHighlightUtil.checkCannotInheritFromEnum(resolved, ref);
         }
+        if (highlightInfo == null) {
+          highlightInfo = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(resolved, ref);
+        }
       }
     }
     else if (refGrandParent instanceof PsiMethod && ((PsiMethod)refGrandParent).getThrowsList() == referenceList) {
@@ -2031,7 +2033,7 @@ public class HighlightUtil {
     return info;
   }
 
-  public static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
+  private static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
                                                  final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {
