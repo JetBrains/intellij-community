@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.ui.Splitter;
@@ -68,12 +67,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setCellRenderer(myCellRenderer);
     TreeUtil.expandAll(myChangesTree);
 
-    myChangesView = new ChangesBrowser(project, changeLists, Collections.<Change>emptyList(), null, false, false);
+    myChangesView = new RepositoryChangesBrowser(project, changeLists);
     myChangesView.getListPanel().setBorder(null);
-
-    OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
-    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    myChangesView.addToolbarAction(action);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -261,4 +256,5 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       updateModel();
     }
   }
+
 }

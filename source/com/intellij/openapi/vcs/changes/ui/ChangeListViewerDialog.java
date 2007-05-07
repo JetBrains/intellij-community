@@ -15,18 +15,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
+import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Collection;
 
 /**
  * @author max
@@ -36,7 +35,6 @@ public class ChangeListViewerDialog extends DialogWrapper {
   private CommittedChangeList myChangeList;
   private ChangesBrowser myChangesBrowser;
   private JTextArea myCommitMessageArea;
-  private JPanel myMainPanel;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
@@ -58,10 +56,6 @@ public class ChangeListViewerDialog extends DialogWrapper {
     setModal(false);
 
     init();
-
-    OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
-    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myMainPanel);
-    myChangesBrowser.addToolbarAction(action);
   }
 
   private void initCommitMessageArea(final CommittedChangeList changeList) {
@@ -79,13 +73,12 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myMainPanel = new JPanel();
-    myMainPanel.setLayout(new BorderLayout());
-    myChangesBrowser = new ChangesBrowser(myProject, Collections.singletonList(myChangeList),
-                                          new ArrayList<Change>(myChangeList.getChanges()),
-                                          myChangeList, false, false);
-    myMainPanel.add(myChangesBrowser, BorderLayout.CENTER);
-
+    final JPanel mainPanel = new JPanel();
+    mainPanel.setLayout(new BorderLayout());
+    myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
+                                                    new ArrayList<Change>(myChangeList.getChanges()),
+                                                    myChangeList);
+    mainPanel.add(myChangesBrowser, BorderLayout.CENTER);
 
     if (myCommitMessageArea != null) {
       JPanel commitPanel = new JPanel(new BorderLayout());
@@ -93,10 +86,10 @@ public class ChangeListViewerDialog extends DialogWrapper {
       commitPanel.add(separator, BorderLayout.NORTH);
       commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
 
-      myMainPanel.add(commitPanel, BorderLayout.SOUTH);
+      mainPanel.add(commitPanel, BorderLayout.SOUTH);
     }
 
-    return myMainPanel;
+    return mainPanel;
   }
 
   @Override
