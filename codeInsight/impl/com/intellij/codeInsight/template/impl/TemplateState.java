@@ -81,16 +81,20 @@ public class TemplateState implements Disposable {
     };
 
     myCommandListener = new CommandAdapter() {
+      boolean started = false;
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
           myDocumentChangesTerminateTemplate = offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
                                    offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
         }
+        started = true;
       }
 
       public void beforeCommandFinished(CommandEvent event) {
+        if (started) {
         afterChangedUpdate();
+        }
       }
     };
 
@@ -895,7 +899,8 @@ public class TemplateState implements Disposable {
     }
     RangeHighlighter segmentHighlighter = myTabStopHighlighters.get(myCurrentVariableNumber);
     if (segmentHighlighter != null) {
-      RangeHighlighter newSegmentHighlighter = getSegmentHighlighter(getCurrentSegmentNumber(), toSelect, false);
+      final int segmentNumber = getCurrentSegmentNumber();
+      RangeHighlighter newSegmentHighlighter = getSegmentHighlighter(segmentNumber, toSelect, false);
       if (newSegmentHighlighter != null) {
         myEditor.getMarkupModel().removeHighlighter(segmentHighlighter);
         myTabStopHighlighters.set(myCurrentVariableNumber, newSegmentHighlighter);

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -48,16 +49,13 @@ public abstract class BaseCompleteMacro implements Macro {
     final Project project = context.getProject();
     final Editor editor = context.getEditor();
 
-    CommandProcessor.getInstance().executeCommand(
-        project, new Runnable() {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    new WriteCommandAction.Simple(project, psiFile) {
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          getCompletionHandler().invoke(project, editor, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+          getCompletionHandler().invoke(project, editor, psiFile);
         }
-      },
-        "",
-        null
-    );
+      }.execute();
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
