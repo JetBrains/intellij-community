@@ -35,8 +35,7 @@ abstract class FileTemplateTab {
     FileTemplate oldSelection = getSelectedTemplate();
     FileTemplate newSelection = null;
     Map<FileTemplate, FileTemplate> templatesToSave = new LinkedHashMap<FileTemplate, FileTemplate>();
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate aTemplate = templates[i];
+    for (FileTemplate aTemplate : templates) {
       FileTemplate copy = FileTemplateUtil.cloneTemplate(aTemplate);
       templatesToSave.put(aTemplate, copy);
       if (savedTemplates != null && savedTemplates.get(aTemplate) == oldSelection) {

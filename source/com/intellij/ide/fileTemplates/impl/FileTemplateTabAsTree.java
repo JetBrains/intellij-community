@@ -132,7 +132,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
 
   public void selectTemplate(FileTemplate template) {
     String name = template.getName();
-    if (template.getExtension() != null && template.getExtension().length() > 0) {
+    if (template.getExtension().length() > 0) {
       name += "." + template.getExtension();
     }
     
@@ -154,7 +154,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   @Nullable
   private FileTemplate getTemplate(final FileTemplateNode node) {
     final String template = node.getTemplate();
-    return template == null ? null : savedTemplates.get(FileTemplateManager.getInstance().getJ2eeTemplate(template));
+    return template == null || savedTemplates == null ? null : savedTemplates.get(FileTemplateManager.getInstance().getJ2eeTemplate(template));
   }
 
   public JComponent getComponent() {
