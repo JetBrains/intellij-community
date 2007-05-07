@@ -83,6 +83,19 @@ public class ChangesUtil {
     return selectedList;
   }
 
+  public static FilePath getCommittedPath(final Project project, FilePath filePath) {
+    // check if the file has just been renamed (IDEADEV-15494)
+    Change change = ChangeListManager.getInstance(project).getChange(filePath);
+    if (change != null) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision != null && afterRevision != null && !beforeRevision.getFile().equals(afterRevision.getFile())) {
+        filePath = beforeRevision.getFile();
+      }
+    }
+    return filePath;
+  }
+
   public interface PerVcsProcessor<T> {
     void process(AbstractVcs vcs, List<T> items);
   }
