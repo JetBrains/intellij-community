@@ -67,7 +67,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         if (project == myProject) {
           Content[] contents = myContents.toArray(new Content[myContents.size()]);
           for (Content content : contents) {
-            removeContent(content);
+            removeContent(content, false);
           }
         }
       }
@@ -148,8 +148,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
-  // [Valentin] Q: throw exception when failed?
   public boolean removeContent(Content content) {
+    return removeContent(content, true);
+  }
+
+  private boolean removeContent(final Content content, boolean trackSelection) {
     try {
       int selectedIndex = myContents.indexOf(mySelection);
       int indexToBeRemoved = myContents.indexOf(content);
@@ -187,7 +190,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       content.removePropertyChangeListener(this);
 
       int newSize = myContents.size();
-      if (newSize > 0) {
+      if (newSize > 0 && trackSelection) {
         if (indexToSelect > -1) {
           final Content toSelect = myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
