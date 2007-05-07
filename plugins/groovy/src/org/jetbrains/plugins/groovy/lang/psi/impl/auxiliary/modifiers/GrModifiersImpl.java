@@ -1,23 +1,28 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2000-2007 JetBrains s.r.o.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -59,5 +64,30 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
       modifiers.add(defKeyword);
 
     return modifiers.toArray(new GroovyPsiElement[0]);
+  }
+
+  //TODO: implement this
+  public boolean hasModifierProperty(@NotNull @NonNls String name) {
+    return false;
+  }
+
+  public boolean hasExplicitModifier(@NotNull @NonNls String name) {
+    return false;
+  }
+
+  public void setModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
+  }
+
+  public void checkSetModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
+  }
+
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    return new PsiAnnotation[0];
+  }
+
+  @Nullable
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+    return null;
   }
 }

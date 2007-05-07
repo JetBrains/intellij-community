@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -34,7 +35,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, Naviga
 
   public GrTypeDefinitionBody getBody();
 
-  public GrTopStatement[] getStatements();
+  public GrStatement[] getStatements();
 
   @Nullable
   public String getQualifiedName();

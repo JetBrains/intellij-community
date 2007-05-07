@@ -23,5 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceE
  * @date: 26.03.2007
  */
 public interface GrExtendsClause extends GroovyPsiElement {
-  GrTypeOrPackageReferenceElement getReferenceElement();
+  GrTypeOrPackageReferenceElement[] getReferenceElements();
 }

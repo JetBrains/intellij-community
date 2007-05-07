@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -33,5 +36,15 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
 
   public String toString() {
     return "Class definition";
+  }
+
+  @Nullable
+  public GrExtendsClause getExtendsClause() {
+    return findChildByClass(GrExtendsClause.class);
+  }
+
+  @Nullable
+  public GrImplementsClause getImplementsClause() {
+    return findChildByClass(GrImplementsClause.class);
   }
 }

@@ -35,7 +35,8 @@ public class GrExtendsClauseImpl extends GroovyPsiElementImpl implements GrExten
     return "Extends clause";
   }
 
-  public GrTypeOrPackageReferenceElement getReferenceElement() {
-    return findChildByClass(GrTypeOrPackageReferenceElement.class);
+  @NotNull
+  public GrTypeOrPackageReferenceElement[] getReferenceElements() {
+    return findChildrenByClass(GrTypeOrPackageReferenceElement.class);
   }
 }

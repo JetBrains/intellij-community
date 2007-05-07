@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -35,5 +37,10 @@ public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements G
 
   public boolean isInterface() {
     return true;
+  }
+
+  @Nullable
+  public GrImplementsClause getImplementsClause() {
+    return findChildByClass(GrImplementsClause.class);
   }
 }

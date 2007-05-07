@@ -15,14 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiModifierList;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrModifiers extends GroovyPsiElement {
-  @Nullable
+public interface GrModifiers extends GroovyPsiElement, PsiModifierList {
+  @NotNull
   GroovyPsiElement[] getModifierList();
 }
