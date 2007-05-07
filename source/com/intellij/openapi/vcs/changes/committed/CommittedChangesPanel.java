@@ -60,7 +60,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(group);
     toolbarGroup.addSeparator();
-    toolbarGroup.add(new SelectFilteringAction(myBrowser));
+    toolbarGroup.add(new SelectFilteringAction(project, myBrowser));
     toolbarGroup.add(new SelectGroupingAction(myBrowser));
     ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);

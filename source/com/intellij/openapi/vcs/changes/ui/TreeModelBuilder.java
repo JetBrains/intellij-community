@@ -57,7 +57,7 @@ public class TreeModelBuilder {
     return model;
   }
 
-  public DefaultTreeModel buildModelFromFilePaths(final List<FilePath> files) {
+  public DefaultTreeModel buildModelFromFilePaths(final Collection<FilePath> files) {
     buildFilePaths(files, root);
     collapseDirectories(model, root);
     sortNodes();
@@ -122,12 +122,16 @@ public class TreeModelBuilder {
     }
   }
 
-  private void buildFilePaths(final List<FilePath> filePaths, final ChangesBrowserNode baseNode) {
+  private void buildFilePaths(final Collection<FilePath> filePaths, final ChangesBrowserNode baseNode) {
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
     final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
     for (FilePath file : filePaths) {
-      final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
-      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, baseNode), 0);
+      ChangesBrowserNode oldNode = foldersCache.get(file);
+      if (oldNode == null) {
+        final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
+        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, baseNode), 0);
+        foldersCache.put(file, node);
+      }
     }
   }
 

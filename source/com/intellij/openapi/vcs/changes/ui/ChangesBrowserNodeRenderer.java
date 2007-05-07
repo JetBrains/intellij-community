@@ -12,7 +12,7 @@ import java.awt.*;
 /**
  * @author max
  */
-class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
+public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private WolfTheProblemSolver myProblemSolver;
   private final boolean myHighlightProblems;
