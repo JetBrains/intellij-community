@@ -1027,6 +1027,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
       }
     }
+    FileStatusManager.getInstance(getProject()).fileStatusesChanged();
     ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
