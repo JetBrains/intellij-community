@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SystemProperties;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(VirtualFileManager virtualFileManager, FileTypeManagerEx fileTypeManagerEx) {
+  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx fileTypeManagerEx) {
     this(".", "fileTemplates", virtualFileManager, fileTypeManagerEx);
 
     myInternalTemplatesManager =
@@ -101,8 +102,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private FileTemplateManagerImpl(@NotNull @NonNls String defaultTemplatesDir,
                                   @NotNull @NonNls String templatesDir,
-                                  VirtualFileManager virtualFileManager,
-                                  FileTypeManagerEx fileTypeManagerEx) {
+                                  @NotNull VirtualFileManager virtualFileManager,
+                                  @NotNull FileTypeManagerEx fileTypeManagerEx) {
     myDefaultTemplatesDir = defaultTemplatesDir;
     myTemplatesDir = templatesDir;
     myVirtualFileManager = virtualFileManager;
@@ -701,7 +702,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       return ourTopDirs;
     }
 
-    Set<VirtualFile> dirList = new HashSet<VirtualFile>();
+    Set<VirtualFile> dirList = new THashSet<VirtualFile>();
 
     appendDefaultTemplatesFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
     final Application app = ApplicationManager.getApplication();
@@ -726,7 +727,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
             VirtualFile dir = VfsUtil.findFileByURL(nextURL, myVirtualFileManager);
             if (dir == null) {
               LOG.error("Cannot find file by URL: " + nextURL);
-            } else {
+            }
+            else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Top directory: " + dir.getPresentableUrl());
               }
