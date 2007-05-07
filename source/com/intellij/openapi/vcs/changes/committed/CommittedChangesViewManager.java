@@ -48,7 +48,6 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings());
-      myComponent.setMaxCount(50);
     }
     else {
       myComponent.setProvider(provider);
