@@ -149,6 +149,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void launchAction(IntentionAction action) throws Throwable;
 
+  void configureByFile(String file) throws Throwable;
+
   /**
    * Compares current file against the given one.
    *

@@ -371,7 +371,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myEditor = null;
     int offset = -1;
     for (String filePath : filePaths) {
-      int fileOffset = configureByFile(filePath);
+      int fileOffset = configureByFileInner(filePath);
       if (fileOffset > 0) {
         offset = fileOffset;
       }
@@ -379,13 +379,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return offset;
   }
 
+  public void configureByFile(final String file) throws IOException {
+    new WriteCommandAction.Simple(getProject()) {
+      protected void run() throws Throwable {
+        configureByFileInner(file);
+
+      }
+    }.execute();
+  }
   /**
    *
    * @param filePath
    * @return caret offset or -1 if caret marker does not present
    * @throws IOException
    */
-  protected int configureByFile(@NonNls String filePath) throws IOException {
+  private int configureByFileInner(@NonNls String filePath) throws IOException {
     String fullPath = getTempDirPath() + "/" + filePath;
 
     final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -427,7 +435,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
+  private Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
     throws Exception {
     final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
@@ -460,7 +468,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  protected Collection<HighlightInfo> doHighlighting() {
+  private Collection<HighlightInfo> doHighlighting() {
 
     final Project project = myProjectFixture.getProject();
 
@@ -500,7 +508,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return list;
   }
 
-  public String getTestDataPath() {
+  private String getTestDataPath() {
     return myTestDataPath;
   }
 
@@ -550,7 +558,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
   }
-  protected void checkResultByFile(@NonNls String expectedFile,
+  private void checkResultByFile(@NonNls String expectedFile,
                                    @NotNull PsiFile originalFile,
                                    boolean stripTrailingSpaces) throws IOException {
 
