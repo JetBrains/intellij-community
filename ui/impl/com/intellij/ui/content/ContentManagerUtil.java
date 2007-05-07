@@ -6,9 +6,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.ide.DataManager;
-
-import javax.swing.*;
 
 public class ContentManagerUtil {
   /**
@@ -37,8 +34,6 @@ public class ContentManagerUtil {
       return null;
     }
 
-    JComponent component = toolWindow.getComponent();
-    ContentManager contentManager = (ContentManager)DataManager.getInstance().getDataContext(component).getData(DataConstantsEx.CONTENT_MANAGER);
-    return contentManager;
+    return (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
   }
 }
