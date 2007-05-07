@@ -16,8 +16,8 @@ public class Updater implements CacheUpdater {
   private ILocalVcs myVcs;
   private FileFilter myFilter;
   private VirtualFile[] myVfsRoots;
-  private Set<VirtualFile> myFilesToCreate = new HashSet<VirtualFile>();
-  private Set<VirtualFile> myFilesToUpdate = new HashSet<VirtualFile>();
+  private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
+  private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
   public Updater(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) {
     myVcs = vcs;
