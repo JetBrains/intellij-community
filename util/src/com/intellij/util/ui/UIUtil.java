@@ -15,10 +15,10 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
@@ -27,9 +27,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -672,6 +672,34 @@ public class UIUtil {
         Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
       }
     });
+  }
+
+  public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, final Color bgColor, final Color fgColor) {
+    g.setColor(bgColor);
+    drawLine(g, lineX, startY, lineX, endY);
+
+    g.setColor(fgColor);
+
+    for (int i = (startY / 2) * 2; i < endY; i += 2) {
+      g.drawRect(lineX, i, 0, 0);
+    }
+  }
+
+  public static void drawHDottedLine(Graphics2D g, int startX, int endX, int lineY, final Color bgColor, final Color fgColor) {
+    g.setColor(bgColor);
+    drawLine(g, startX, lineY, endX, lineY);
+
+    g.setColor(fgColor);
+
+    for (int i = (startX / 2) * 2; i < endX; i += 2) {
+      g.drawRect(i, lineY, 0, 0);
+    }
+  }
+
+  public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, final Color bgColor, final Color fgColor) {
+    if (x1 == x2) drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
+    else if (y1 == y2) drawHDottedLine(g, x1, x2, y1, bgColor, fgColor);
+    else throw new IllegalArgumentException("Only vertical or horizontal lines are supported");
   }
 }
 

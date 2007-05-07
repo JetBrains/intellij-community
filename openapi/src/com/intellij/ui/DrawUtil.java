@@ -23,6 +23,8 @@ import java.awt.*;
  * @author kir
  */
 public class DrawUtil {
+  private DrawUtil() {
+  }
 
   public static void drawRoundRect(Graphics g, double x1d, double y1d, double x2d, double y2d, Color color) {
     final Color oldColor = g.getColor();

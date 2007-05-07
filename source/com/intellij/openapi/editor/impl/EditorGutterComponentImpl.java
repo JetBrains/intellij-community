@@ -193,7 +193,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       g.setColor(Color.white);
       int x = getWhitespaceSeparatorOffset() - 1;
-      drawDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height);
+      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
     }
   }
 
@@ -653,7 +653,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isFoldingOutlineShown()) return;
     Rectangle clip = g.getClipBounds();
 
-    drawDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height);
+    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
 
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
@@ -810,17 +810,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       g.setColor(getFoldingColor(true));
       UIUtil.drawLine(g, lineX, startY, lineX, endY);
-    }
-  }
-
-  private void drawDottedLine(Graphics2D g, int lineX, int startY, int endY) {
-    g.setColor(myEditor.getBackroundColor());
-    UIUtil.drawLine(g, lineX, startY, lineX, endY);
-
-    g.setColor(getFoldingColor(false));
-
-    for (int i = startY / 2 * 2; i < endY; i += 2) {
-      g.drawRect(lineX, i, 0, 0);
     }
   }
 
