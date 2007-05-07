@@ -16,9 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 
 /**
  * @author ilyas
  */
 public interface GrClosableBlock extends GrExpression, GrCodeBlock {
+  GrParameter[] getParameters();
+
+  GrParameterList getParameterList();
 }
