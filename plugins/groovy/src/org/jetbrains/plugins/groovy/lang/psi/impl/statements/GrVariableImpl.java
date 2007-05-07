@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  * @date: 11.04.2007
  */
 public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
+
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
   }

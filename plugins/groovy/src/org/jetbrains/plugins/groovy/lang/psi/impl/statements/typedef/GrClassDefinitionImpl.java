@@ -29,6 +29,8 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
     super(node);
   }
 
+
+
   public String toString() {
     return "Class definition";
   }
