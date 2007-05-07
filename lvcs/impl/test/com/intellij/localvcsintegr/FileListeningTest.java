@@ -38,7 +38,8 @@ public class FileListeningTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(f));
   }
 
-  public void testChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
+  public void ignoreTestChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
+    // todo try to write reliable test for exception handling during file events and update
     final VirtualFile f = root.createChildData(null, "f.java");
 
     VirtualFileListener l = new VirtualFileAdapter() {
