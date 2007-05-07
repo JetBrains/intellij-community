@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.storage.ByteContent;
 import com.intellij.localvcs.core.storage.Content;
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.integration.Clock;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,26 +28,30 @@ public abstract class LocalVcsTestCase extends Assert {
     Locale.setDefault(myDefaultLocale);
   }
 
+  protected static byte[] b(String s) {
+    return s.getBytes();
+  }
+
   protected static Content c(String data) {
-    return new ByteContent(data.getBytes());
+    return new ByteContent(b(data));
   }
 
-  public static ContentHolder ch(String data) {
-    final byte[] bytes = data.getBytes();
-
-    return createContentHolder(bytes);
+  public static ContentFactory cf(String data) {
+    return createContentFactory(b(data));
   }
 
-  public static ContentHolder bigContentHolder() {
-    return createContentHolder(new byte[IContentStorage.MAX_CONTENT_LENGTH + 1]);
+  public static ContentFactory bigContentFactory() {
+    return createContentFactory(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
   }
 
-  private static ContentHolder createContentHolder(final byte[] bytes) {
-    return new ContentHolder() {
+  private static ContentFactory createContentFactory(final byte[] bytes) {
+    return new ContentFactory() {
+      @Override
       public byte[] getBytes() {
         return bytes;
       }
 
+      @Override
       public long getLength() {
         return bytes.length;
       }

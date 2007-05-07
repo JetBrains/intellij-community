@@ -57,9 +57,9 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testContent() {
-    vcs.createFile("file", ch("old"), -1);
+    vcs.createFile("file", cf("old"), -1);
     vcs.putLabel("file", "");
-    vcs.changeFileContent("file", ch("new"), -1);
+    vcs.changeFileContent("file", cf("new"), -1);
     vcs.putLabel("file", "");
 
     List<Revision> rr = vcs.getRevisionsFor("file");

@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class LocalVcs implements ILocalVcs {
-  private Storage myStorage;
+  protected Storage myStorage;
 
   private ChangeList myChangeList;
   private RootEntry myRoot;
@@ -104,13 +104,13 @@ public class LocalVcs implements ILocalVcs {
     return myInnerChangeSetCounter > 0;
   }
 
-  public void createFile(String path, ContentHolder h, long timestamp) {
-    Content c = contentFrom(h);
+  public void createFile(String path, ContentFactory f, long timestamp) {
+    Content c = createContentFrom(f);
     applyChange(new CreateFileChange(getNextId(), path, c, timestamp));
   }
 
-  private Content contentFrom(ContentHolder h) {
-    return myStorage.storeContent(h);
+  protected Content createContentFrom(ContentFactory h) {
+    return h.createContent(myStorage);
   }
 
   public void createDirectory(String path) {
@@ -121,8 +121,8 @@ public class LocalVcs implements ILocalVcs {
     return myEntryCounter++;
   }
 
-  public void changeFileContent(String path, ContentHolder h, long timestamp) {
-    Content c = contentFrom(h);
+  public void changeFileContent(String path, ContentFactory f, long timestamp) {
+    Content c = createContentFrom(f);
     applyChange(new ChangeFileContentChange(path, c, timestamp));
   }
 

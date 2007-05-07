@@ -13,8 +13,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisions() {
-    vcs.createFile("file", ch("old"), -1);
-    vcs.changeFileContent("file", ch("new"), -1);
+    vcs.createFile("file", cf("old"), -1);
+    vcs.changeFileContent("file", cf("new"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(2, rr.size());
@@ -40,7 +40,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testIncludingCurrentVersionIntoRevisionsAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
     vcs.purgeObsolete(0);
 
     setCurrentTimestamp(30);
@@ -61,9 +61,9 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testIncludingVersionBeforeFirstChangeAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", ch("one"), -1);
+    vcs.createFile("file", cf("one"), -1);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", ch("two"), -1);
+    vcs.changeFileContent("file", cf("two"), -1);
 
     vcs.purgeObsolete(5);
 
@@ -119,13 +119,13 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testTimestampForLastRevisionAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", ch(""), -1);
+    vcs.createFile("file", cf(""), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", ch(""), -1);
+    vcs.changeFileContent("file", cf(""), -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", ch(""), -1);
+    vcs.changeFileContent("file", cf(""), -1);
 
     vcs.purgeObsolete(15);
 
@@ -137,9 +137,9 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForFileCreatedWithSameNameAsDeletedOne() {
-    vcs.createFile("file", ch("old"), -1);
+    vcs.createFile("file", cf("old"), -1);
     vcs.delete("file");
-    vcs.createFile("file", ch("new"), -1);
+    vcs.createFile("file", cf("new"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());
@@ -151,9 +151,9 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForFileCreatenInPlaceOfRenamedOne() {
-    vcs.createFile("file1", ch("content1"), -1);
+    vcs.createFile("file1", cf("content1"), -1);
     vcs.rename("file1", "file2");
-    vcs.createFile("file1", ch("content2"), -1);
+    vcs.createFile("file1", cf("content2"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file1");
     assertEquals(1, rr.size());
@@ -176,8 +176,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingEntryFromRevision() {
-    vcs.createFile("file", ch("content"), 123L);
-    vcs.changeFileContent("file", ch("new content"), 456L);
+    vcs.createFile("file", cf("content"), 123L);
+    vcs.changeFileContent("file", cf("new content"), 456L);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
 
@@ -209,8 +209,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingEntryFromRevisionDoesNotChangeRootEntry() {
-    vcs.createFile("file", ch("content"), -1);
-    vcs.changeFileContent("file", ch("new content"), -1);
+    vcs.createFile("file", cf("content"), -1);
+    vcs.changeFileContent("file", cf("new content"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
 
@@ -220,8 +220,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingDifferenceBetweenRevisionls() {
-    vcs.createFile("file", ch("content"), -1);
-    vcs.changeFileContent("file", ch("new content"), -1);
+    vcs.createFile("file", cf("content"), -1);
+    vcs.changeFileContent("file", cf("new content"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
 
@@ -236,7 +236,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testNoDifferenceBetweenRevisions() {
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
 
@@ -286,7 +286,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir1/dir2");
     vcs.createDirectory("dir1/dir3");
-    vcs.createFile("dir1/dir2/file", ch(""), -1);
+    vcs.createFile("dir1/dir2/file", cf(""), -1);
     vcs.endChangeSet(null);
 
     vcs.createFile("dir1/dir3/file", null, -1);

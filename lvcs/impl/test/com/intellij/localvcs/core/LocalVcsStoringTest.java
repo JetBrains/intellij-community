@@ -25,7 +25,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringEntries() {
-    vcs.createFile("file", ch("content"), 123L);
+    vcs.createFile("file", cf("content"), 123L);
 
     vcs.save();
     initVcs();
@@ -38,8 +38,8 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringChangeList() {
-    vcs.createFile("file", ch("content"), -1);
-    vcs.changeFileContent("file", ch("new content"), -1);
+    vcs.createFile("file", cf("content"), -1);
+    vcs.changeFileContent("file", cf("new content"), -1);
 
     vcs.save();
     initVcs();
@@ -49,13 +49,13 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringObjectsCounter() {
-    vcs.createFile("file1", ch("content1"), -1);
-    vcs.createFile("file2", ch("content2"), -1);
+    vcs.createFile("file1", cf("content1"), -1);
+    vcs.createFile("file2", cf("content2"), -1);
 
     vcs.save();
     initVcs();
 
-    vcs.createFile("file3", ch("content3"), -1);
+    vcs.createFile("file3", cf("content3"), -1);
 
     int id2 = vcs.getEntry("file2").getId();
     int id3 = vcs.getEntry("file3").getId();
@@ -78,7 +78,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testPospondingSaveUntilChangeSetFinished() {
     vcs.beginChangeSet();
-    vcs.createFile("file", ch(""), -1);
+    vcs.createFile("file", cf(""), -1);
 
     vcs.save();
     assertFalse(hasSavedEntry("file"));
@@ -90,14 +90,14 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testDoesNotSaveAfterNextChangeSetIfSaveWasPospondedDuringPriorOne() {
     vcs.beginChangeSet();
-    vcs.createFile("one", ch(""), -1);
+    vcs.createFile("one", cf(""), -1);
     vcs.save();
     vcs.endChangeSet(null);
 
     assertTrue(hasSavedEntry("one"));
 
     vcs.beginChangeSet();
-    vcs.createFile("two", ch(""), -1);
+    vcs.createFile("two", cf(""), -1);
     vcs.endChangeSet(null);
 
     assertTrue(hasSavedEntry("one"));

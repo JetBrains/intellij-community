@@ -66,8 +66,8 @@ public class BasicsTest extends IntegrationTestCase {
 
       assertFalse(hasVcsEntry(f));
     }
-    catch (RuntimeException e) {
-      ProfilingUtil.captureMemorySnapshot("BasicsTest.testUpdatingOnFileTypesChange");
+    catch (Error e) {
+      ProfilingUtil.forceCaptureMemorySnapshot("BasicsTest.testUpdatingOnFileTypesChange");
       throw e;
     }
   }

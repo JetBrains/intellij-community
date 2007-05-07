@@ -389,7 +389,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root");
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/file", ch("old content"), 111L);
+    vcs.createFile("root/dir/file", cf("old content"), 111L);
 
     updateWith(root);
 
@@ -406,7 +406,7 @@ public class UpdaterTest extends LocalVcsTestCase {
     root.addChild(file);
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", ch("old content"), 111L);
+    vcs.createFile("root/file", cf("old content"), 111L);
 
     updateWith(root);
 

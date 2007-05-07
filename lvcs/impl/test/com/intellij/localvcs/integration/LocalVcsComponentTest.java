@@ -36,7 +36,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
     Storage s = new Storage(c.getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
-    vcs.createFile("file", ch(""), -1);
+    vcs.createFile("file", cf(""), -1);
     vcs.save();
     s.close();
 
@@ -57,7 +57,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     initComponent();
     sm.runPreStartupActivity();
 
-    c.getLocalVcs().createFile("file", ch(""), -1);
+    c.getLocalVcs().createFile("file", cf(""), -1);
     c.save();
 
     Storage s = new Storage(c.getStorageDir());

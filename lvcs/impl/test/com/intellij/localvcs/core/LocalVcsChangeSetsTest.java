@@ -13,7 +13,7 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
 
   @Test
   public void testClearingChangesOnEachChange() {
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
     assertTrue(vcs.isClean());
   }
 
@@ -21,7 +21,7 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
   public void testClearingChangesAfterChangeSetFinifhed() {
     vcs.beginChangeSet();
 
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
     assertFalse(vcs.isClean());
 
     vcs.endChangeSet(null);
@@ -30,10 +30,10 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
 
   @Test
   public void testApplyingChangesRightAfterChange() {
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
     assertEquals(c("content"), vcs.getEntry("file").getContent());
 
-    vcs.changeFileContent("file", ch("new content"), -1);
+    vcs.changeFileContent("file", cf("new content"), -1);
     assertEquals(c("new content"), vcs.getEntry("file").getContent());
   }
 
@@ -63,7 +63,7 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
   @Test
   public void testAskingForNewFileContentDuringChangeSet() {
     vcs.beginChangeSet();
-    vcs.createFile("file", ch("content"), -1);
+    vcs.createFile("file", cf("content"), -1);
 
     Entry e = vcs.findEntry("file");
 

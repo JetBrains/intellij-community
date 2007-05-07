@@ -15,16 +15,16 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", ch("one"), -1);
+    vcs.createFile("file", cf("one"), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", ch("two"), -1);
+    vcs.changeFileContent("file", cf("two"), -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", ch("three"), -1);
+    vcs.changeFileContent("file", cf("three"), -1);
 
     setCurrentTimestamp(40);
-    vcs.changeFileContent("file", ch("four"), -1);
+    vcs.changeFileContent("file", cf("four"), -1);
   }
 
   @Test
@@ -51,13 +51,13 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   public void testDoesNotPurgeLongContentFromContentStorage() {
     vcs = new TestLocalVcs(new PurgeLoggingStorage());
     setCurrentTimestamp(10);
-    vcs.createFile("file", bigContentHolder(), -1);
+    vcs.createFile("file", bigContentFactory(), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", ch("one"), -1);
+    vcs.changeFileContent("file", cf("one"), -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", ch("twoo"), -1);
+    vcs.changeFileContent("file", cf("twoo"), -1);
 
     vcs.purgeObsolete(5);
 

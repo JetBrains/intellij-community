@@ -82,7 +82,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", ch("old content"), -1);
+    vcs.createFile("file", cf("old content"), -1);
 
     VirtualFile f = new TestVirtualFile("file", "new content", 505L);
     fireContentChanged(f);
@@ -96,7 +96,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testTakingPhysicalFileContentOnContentChange() {
     configureToReturnPhysicalContent("physical");
 
-    vcs.createFile("f", ch("content"), -1);
+    vcs.createFile("f", cf("content"), -1);
 
     VirtualFile f = new TestVirtualFile("f", "memory", -1);
     fireContentChanged(f);
@@ -106,7 +106,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testRenaming() {
-    vcs.createFile("old name", ch("old content"), -1);
+    vcs.createFile("old name", cf("old content"), -1);
 
     VirtualFile f = new TestVirtualFile("new name", null, -1);
     fireRenamed(f, "old name");
@@ -129,7 +129,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testMoving() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir2");
-    vcs.createFile("dir1/file", ch("content"), -1);
+    vcs.createFile("dir1/file", cf("content"), -1);
 
     TestVirtualFile oldParent = new TestVirtualFile("dir1");
     TestVirtualFile newParent = new TestVirtualFile("dir2");

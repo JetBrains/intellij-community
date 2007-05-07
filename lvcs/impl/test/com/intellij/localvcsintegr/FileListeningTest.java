@@ -1,8 +1,8 @@
 package com.intellij.localvcsintegr;
 
 
+import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.Paths;
-import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.*;
 
@@ -36,6 +36,26 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testIgnoringDirectories() throws Exception {
     VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
     assertFalse(hasVcsEntry(f));
+  }
+
+  public void testChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
+    final VirtualFile f = root.createChildData(null, "f.java");
+
+    VirtualFileListener l = new VirtualFileAdapter() {
+      @Override
+      public void beforeContentsChange(VirtualFileEvent e) {
+        new File(e.getFile().getPath()).delete();
+      }
+    };
+
+    addFileListenerDuring(l, new Callable() {
+      public Object call() throws Exception {
+        f.setBinaryContent(new byte[]{1});
+        return null;
+      }
+    });
+
+    assertFalse(getVcs().getEntry(f.getPath()).getContent().isAvailable());
   }
 
   public void testChangingFileContent() throws Exception {
@@ -151,7 +171,7 @@ public class FileListeningTest extends IntegrationTestCase {
     File tempDir = createTempDirectory();
     File tempFile = new File(tempDir, "bigFile.java");
     OutputStream s = new FileOutputStream(tempFile);
-    s.write(new byte[IContentStorage.MAX_CONTENT_LENGTH + 1]);
+    s.write(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
     s.close();
 
     VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);

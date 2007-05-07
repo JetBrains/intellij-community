@@ -20,7 +20,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", ch(""), -1);
+    vcs.createFile("f", cf(""), -1);
     vcs.purgeObsolete(0);
 
     initModelFor("f");
@@ -35,9 +35,9 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCantShowDifferenceIfOneOfEntryHasUnavailableContent() {
-    vcs.createFile("f", ch("abc"), -1);
-    vcs.changeFileContent("f", bigContentHolder(), -1);
-    vcs.changeFileContent("f", ch("def"), -1);
+    vcs.createFile("f", cf("abc"), -1);
+    vcs.changeFileContent("f", bigContentFactory(), -1);
+    vcs.changeFileContent("f", cf("def"), -1);
 
     initModelFor("f");
 
@@ -53,7 +53,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelTitles() {
-    vcs.createFile("old", ch(""), 123L);
+    vcs.createFile("old", cf(""), 123L);
     vcs.rename("old", "new");
 
     initModelFor("new");
@@ -66,8 +66,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelContents() {
-    vcs.createFile("f", ch("old"), -1);
-    vcs.changeFileContent("f", ch("new"), -1);
+    vcs.createFile("f", cf("old"), -1);
+    vcs.changeFileContent("f", cf("new"), -1);
 
     initModelFor("f");
     m.selectRevisions(0, 1);
@@ -77,8 +77,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testContentsWhenOnlyOneRevisionSelected() {
-    vcs.createFile("f", ch("old"), -1);
-    vcs.changeFileContent("f", ch("new"), -1);
+    vcs.createFile("f", cf("old"), -1);
+    vcs.changeFileContent("f", cf("new"), -1);
 
     initModelFor("f");
     m.selectRevisions(1, 1);

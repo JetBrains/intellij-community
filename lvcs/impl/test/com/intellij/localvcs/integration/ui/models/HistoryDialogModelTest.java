@@ -20,15 +20,15 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", ch(""), -1);
+    vcs.createFile("f", cf(""), -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", ch(""), -1);
+    vcs.changeFileContent("f", cf(""), -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", ch(""), -1);
+    vcs.changeFileContent("f", cf(""), -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -121,8 +121,8 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCantRevertIfRevisionHasUnavailableContent() {
-    vcs.changeFileContent("f", bigContentHolder(), -1);
-    vcs.changeFileContent("f", ch("current"), -1);
+    vcs.changeFileContent("f", bigContentFactory(), -1);
+    vcs.changeFileContent("f", cf("current"), -1);
 
     m.selectRevisions(1, 1);
     assertFalse(m.canRevert());

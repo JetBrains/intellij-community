@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.core.ContentHolder;
+import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -103,16 +103,18 @@ public class IdeaGateway {
     for (Document d : getUnsavedDocuments()) {
       VirtualFile f = getDocumentFile(d);
       if (!getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
-      vcs.changeFileContent(f.getPath(), contentHolderOf(d), Clock.getCurrentTimestamp());
+      vcs.changeFileContent(f.getPath(), contentFactoryFor(d), Clock.getCurrentTimestamp());
     }
   }
 
-  private ContentHolder contentHolderOf(final Document d) {
-    return new ContentHolder() {
+  private ContentFactory contentFactoryFor(final Document d) {
+    return new ContentFactory() {
+      @Override
       public byte[] getBytes() {
         return d.getText().getBytes();
       }
 
+      @Override
       public long getLength() {
         return getBytes().length;
       }

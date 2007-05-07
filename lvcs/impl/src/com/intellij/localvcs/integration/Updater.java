@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
-import com.intellij.localvcs.core.ContentHolder;
+import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -64,10 +64,10 @@ public class Updater implements CacheUpdater {
     try {
       VirtualFile f = c.getVirtualFile();
       if (myFilesToCreate.contains(f)) {
-        myVcs.createFile(f.getPath(), contentHolderOn(c), f.getTimeStamp());
+        myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
       }
       else {
-        myVcs.changeFileContent(f.getPath(), contentHolderOn(c), f.getTimeStamp());
+        myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
       }
     }
     catch (IOException e) {
@@ -75,24 +75,16 @@ public class Updater implements CacheUpdater {
     }
   }
 
-  private ContentHolder contentHolderOn(final FileContent c) throws IOException {
-    return new ContentHolder() {
-      public byte[] getBytes() {
-        try {
-          return c.getPhysicalBytes();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+  private ContentFactory contentFactoryFor(final FileContent c) throws IOException {
+    return new ContentFactory() {
+      @Override
+      public byte[] getBytes() throws IOException {
+        return c.getPhysicalBytes();
       }
 
-      public long getLength() {
-        try {
-          return c.getPhysicalLength();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      @Override
+      public long getLength() throws IOException {
+        return c.getPhysicalLength();
       }
     };
   }

@@ -1,6 +1,9 @@
 package com.intellij.localvcs.core;
 
+import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Storage;
+
+import java.io.IOException;
 
 public class TestLocalVcs extends LocalVcs {
   private long myPurgingInterval;
@@ -11,6 +14,17 @@ public class TestLocalVcs extends LocalVcs {
 
   public TestLocalVcs(Storage s) {
     super(s);
+  }
+
+  @Override
+  protected Content createContentFrom(ContentFactory f) {
+    try {
+      if (f == null || f.getBytes() == null) return null;
+      return f.createContent(myStorage);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

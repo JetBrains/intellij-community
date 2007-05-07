@@ -34,7 +34,7 @@ public class LocalVcsServiceRootsOnStartupTest extends LocalVcsServiceTestCase {
   @Test
   public void testUpdatingOutdatedFiles() {
     vcs.createDirectory("c:/root");
-    vcs.createFile("c:/root/file", ch("old"), 111L);
+    vcs.createFile("c:/root/file", cf("old"), 111L);
 
     TestVirtualFile root = new TestVirtualFile("c:/root");
     root.addChild(new TestVirtualFile("file", "new", 222L));
