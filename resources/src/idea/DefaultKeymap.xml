@@ -216,6 +216,9 @@
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="control shift alt N"/>
     </action>
+    <action id="GotoAction">
+      <keyboard-shortcut first-keystroke="control shift A"/>
+    </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control F12"/>
     </action>

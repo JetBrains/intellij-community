@@ -226,8 +226,8 @@ public class SearchUtil {
     if (text == null || option == null) return false;
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> options =
-      searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable);
-    if (options.isEmpty()) {
+      configurable != null ? searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable) : null;
+    if (options == null || options.isEmpty()) {
       return text.indexOf(option) != -1;
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);

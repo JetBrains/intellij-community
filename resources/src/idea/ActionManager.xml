@@ -356,6 +356,7 @@
         <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
         <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
         <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
+        <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
         <separator/>
         <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
@@ -1491,7 +1492,7 @@
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
         icon="/vcs/refresh.png"/>
       <reference ref="CommittedChanges.Details"/>
-    </group>                                     
+    </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
   </actions>
