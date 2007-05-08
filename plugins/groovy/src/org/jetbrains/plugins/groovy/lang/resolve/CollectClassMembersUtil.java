@@ -22,8 +22,7 @@ import java.util.Set;
  */
 public class CollectClassMembersUtil {
   private static final Key<CachedValue<Pair<Map<String, PsiField>,
-      Map<String, List<PsiMethod>>>>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERSS");
-  private static final Key<CachedValue<Map<String, List<PsiMethod>>>> CACHED_METHODS = Key.create("CAHED_CLASS_METHODS");
+                                            Map<String, List<PsiMethod>>>>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
 
   public static Map<String, List<PsiMethod>> getAllMethods(final PsiClass aClass) {
     CachedValue<Pair<Map<String, PsiField>, Map<String, List<PsiMethod>>>> cachedValue = aClass.getUserData(CACHED_MEMBERS);
