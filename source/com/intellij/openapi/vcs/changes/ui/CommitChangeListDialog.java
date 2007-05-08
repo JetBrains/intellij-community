@@ -715,6 +715,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
       super(new BorderLayout());
       myArea.setText(dialog.getCommitMessage());
+      myArea.setLineWrap(true);      
+      myArea.setWrapStyleWord(true);      
       JScrollPane scrollPane = new JScrollPane(myArea);
       setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("diff.commit.message.title")));
       add(scrollPane, BorderLayout.CENTER);
