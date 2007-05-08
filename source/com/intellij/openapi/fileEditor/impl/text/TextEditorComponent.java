@@ -264,8 +264,10 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   public Object getData(final String dataId) {
-    final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, myEditor);
-    if (o != null) return o;
+    if (!myProject.isDisposed()) {
+      final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, myEditor);
+      if (o != null) return o;
+    }
 
     if (dataId.equals(DataConstants.EDITOR)) {
       return myEditor;
