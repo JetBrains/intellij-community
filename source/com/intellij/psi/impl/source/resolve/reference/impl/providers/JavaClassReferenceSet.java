@@ -21,7 +21,7 @@ import java.util.Map;
 */
 public class JavaClassReferenceSet {
   private static final char SEPARATOR = '.';
-  protected static final char SEPARATOR2 = '$';
+  public static final char SEPARATOR2 = '$';
 
   private PsiReference[] myReferences;
   private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
@@ -172,7 +172,7 @@ public class JavaClassReferenceSet {
     myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
   }
 
-  protected boolean isAllowDollarInNames() {
+  public boolean isAllowDollarInNames() {
     return myElement.getLanguage() instanceof XMLLanguage;
   }
 
@@ -191,11 +191,11 @@ public class JavaClassReferenceSet {
     reparse(text, element, false, myContext);
   }
 
-  protected PsiReference getReference(int index) {
+  public PsiReference getReference(int index) {
     return myReferences[index];
   }
 
-  protected PsiReference[] getAllReferences() {
+  public PsiReference[] getAllReferences() {
     PsiReference[] result = myReferences;
     if (myNestedGenericParameterReferences != null) {
       for(JavaClassReferenceSet set:myNestedGenericParameterReferences) {
@@ -212,7 +212,7 @@ public class JavaClassReferenceSet {
     return myType;
   }
 
-  protected boolean isSoft() {
+  public boolean isSoft() {
     return myProvider.isSoft();
   }
 

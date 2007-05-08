@@ -39,7 +39,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
       final int pos = identifier.indexOf('.');
       if(pos >= 0 && knownTopLevelPackages.contains(identifier.substring(0, pos))){
         results.addAll(Arrays.asList(new JavaClassReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false, this){
-          protected boolean isSoft(){
+          public boolean isSoft(){
             return true;
           }
         }.getAllReferences()));
