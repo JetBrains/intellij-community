@@ -122,6 +122,15 @@ public class ReflectionUtil {
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
   }
 
+  public static Field findAssignableField(Class clazz, Class type, String name) throws NoSuchFieldException {
+    final ArrayList<Field> fields = collectFields(clazz);
+    for (Field each : fields) {
+      if (name.equals(each.getName()) && type.isAssignableFrom(each.getType())) return each;
+    }
+
+    throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
+  }
+
   private static void collectFields(final Class clazz, final ArrayList<Field> result) {
     final Field[] fields = clazz.getDeclaredFields();
     for (Field field : fields) {
