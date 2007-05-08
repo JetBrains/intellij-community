@@ -355,7 +355,7 @@ public class VcsUtil {
 
   /**
    * File is considered to be a valid vcs file if it resides under the
-   * content root controlled by given vcs.
+   * content root controlled by the given vcs.
    */
   public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
     ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
