@@ -65,11 +65,15 @@ public class Storage {
 
   private void initContentStorage() {
     try {
-      myContentStorage = ContentStorage.createContentStorage(new File(myDir, CONTENTS_FILE));
+      myContentStorage = createContentStorage();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected IContentStorage createContentStorage() throws IOException {
+    return ContentStorage.createContentStorage(new File(myDir, CONTENTS_FILE));
   }
 
   public LocalVcs.Memento load() {
