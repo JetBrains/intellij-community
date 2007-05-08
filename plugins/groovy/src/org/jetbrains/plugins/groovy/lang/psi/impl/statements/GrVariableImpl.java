@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.PomField;
@@ -99,7 +100,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return new LightIdentifier(getManager(), getNameIdentifierGroovy().getText());
   }
 
   public PsiClass getContainingClass() {
