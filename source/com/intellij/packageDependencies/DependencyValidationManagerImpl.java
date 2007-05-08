@@ -40,7 +40,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String IS_DENY_KEY = "is_deny";
   private NamedScope myProjectTestScope;
   private NamedScope myProjectProductionScope;
-  private List<NamedScope> myPredifinedScopes;
   private NamedScope myProblemsScope;
   private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
 
@@ -128,19 +127,17 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
-    if (myPredifinedScopes == null){
-      myPredifinedScopes = new ArrayList<NamedScope>();
-      myPredifinedScopes.add(getProjectProductionScope());
-      myPredifinedScopes.add(getProjectTestScope());
-      myPredifinedScopes.add(getProblemsScope());
-      final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
-      if (scopesProviders != null) {
-        for (CustomScopesProvider scopesProvider : scopesProviders) {
-          myPredifinedScopes.addAll(scopesProvider.getCustomScopes());
-        }
+    final List<NamedScope> predifinedScopes = new ArrayList<NamedScope>();
+    predifinedScopes.add(getProjectProductionScope());
+    predifinedScopes.add(getProjectTestScope());
+    predifinedScopes.add(getProblemsScope());
+    final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
+    if (scopesProviders != null) {
+      for (CustomScopesProvider scopesProvider : scopesProviders) {
+        predifinedScopes.addAll(scopesProvider.getCustomScopes());
       }
     }
-    return myPredifinedScopes;
+    return predifinedScopes;
   }
 
   public boolean hasRules() {
