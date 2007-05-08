@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
@@ -27,6 +28,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.Tree;
+import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -49,7 +52,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource {
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource, CopyProvider {
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
@@ -188,6 +191,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
     else if (key == DataKeys.DELETE_ELEMENT_PROVIDER) {
       sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, this);
+    }
+    else if (key == DataKeys.COPY_PROVIDER) {
+      sink.put(DataKeys.COPY_PROVIDER, this);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
@@ -351,6 +357,17 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
+  }
+
+  public void performCopy(DataContext dataContext) {
+    if (SwingUtilities2.canAccessSystemClipboard()) {
+      final Clipboard clipboard = getToolkit().getSystemClipboard();
+      getTransferHandler().exportToClipboard(this, clipboard, TransferHandler.COPY);
+    }
+  }
+
+  public boolean isCopyEnabled(DataContext dataContext) {
+    return getSelectionPath() != null;
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})

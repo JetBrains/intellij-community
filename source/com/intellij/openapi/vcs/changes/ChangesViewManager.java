@@ -132,6 +132,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                                                                                              : KeyEvent.CTRL_DOWN_MASK)),
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
+    visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
