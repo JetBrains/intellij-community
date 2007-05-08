@@ -45,7 +45,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @NotNull
   public PsiType getType() {
-    GrTypeElement typeElement = findChildByClass(GrTypeElement.class);
+    GrTypeElement typeElement = ((GrVariableDeclarations) getParent()).getTypeElementGroovy();
     return typeElement == null ?
         getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope()) :
         typeElement.getType();
