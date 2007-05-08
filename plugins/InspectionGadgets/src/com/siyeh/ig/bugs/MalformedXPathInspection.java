@@ -35,7 +35,7 @@ public class MalformedXPathInspection extends BaseInspection {
 
     /** @noinspection StaticCollection*/
     @NonNls
-    private static final Set<String> xpathMethodNames = new HashSet<String>(5);
+    private static final Set<String> xpathMethodNames = new HashSet<String>(2);
 
     static{
       xpathMethodNames.add("compile");
@@ -67,26 +67,26 @@ public class MalformedXPathInspection extends BaseInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0){
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if(arguments.length == 0){
                 return;
             }
-            final PsiExpression xpathArg = args[0];
-            if(!TypeUtils.expressionHasType("java.lang.String", xpathArg)){
+            final PsiExpression xpathArgument = arguments[0];
+            if(!TypeUtils.expressionHasType("java.lang.String", xpathArgument)){
                 return;
             }
-            if(!PsiUtil.isConstantExpression(xpathArg)){
+            if(!PsiUtil.isConstantExpression(xpathArgument)){
                 return;
             }
-            final PsiType regexType = xpathArg.getType();
+            final PsiType type = xpathArgument.getType();
             final String value =
-                    (String) ConstantExpressionUtil.computeCastTo(xpathArg,
-                            regexType);
+                    (String) ConstantExpressionUtil.computeCastTo(xpathArgument,
+                            type);
             if(value == null){
                 return;
             }
-            if(!callTakesRegex(expression)){
+            if(!callTakesXPathExpression(expression)){
                 return;
             }
             final XPathFactory xpathFactory = XPathFactory.newInstance();
@@ -95,11 +95,11 @@ public class MalformedXPathInspection extends BaseInspection {
             try{
                 xpath.compile(value);
             }catch(XPathExpressionException ignore){
-                registerError(xpathArg);
+                registerError(xpathArgument);
             }
         }
 
-        private static boolean callTakesRegex(
+        private static boolean callTakesXPathExpression(
                 PsiMethodCallExpression expression){
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

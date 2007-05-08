@@ -53,7 +53,7 @@ public class LengthOneStringInIndexOfInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new LengthOneStringsInConcatenationVisitor();
+        return new LengthOneStringsInIndexOfVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -86,7 +86,7 @@ public class LengthOneStringInIndexOfInspection
         }
     }
 
-    private static class LengthOneStringsInConcatenationVisitor
+    private static class LengthOneStringsInIndexOfVisitor
             extends BaseInspectionVisitor {
 
         public void visitLiteralExpression(
