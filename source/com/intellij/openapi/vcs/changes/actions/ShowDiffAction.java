@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -248,10 +249,11 @@ public class ShowDiffAction extends AnAction {
     }
 
     if (actionsFactory != null) {
-      JComponent bottomComponent = actionsFactory.createBottomComponent();
-      if (bottomComponent != null) {
-        diffReq.setBottomComponent(bottomComponent);            
-      }
+      diffReq.setBottomComponentFactory(new NullableFactory<JComponent>() {
+        public JComponent create() {
+          return actionsFactory.createBottomComponent();
+        }
+      });
     }
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

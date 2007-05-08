@@ -18,13 +18,13 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-
-import java.util.Collection;
-import java.util.Collections;
-
+import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Several {@link DiffContent}s to compare
@@ -35,7 +35,7 @@ public abstract class DiffRequest {
   private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
   @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
-  private JComponent myBottomComponent = null;
+  private Factory<JComponent> myBottomComponentFactory = null;
 
   protected DiffRequest(Project project) {
     myProject = project;
@@ -111,11 +111,12 @@ public abstract class DiffRequest {
     void customize(DiffToolbar toolbar);
   }
 
+  @Nullable
   public JComponent getBottomComponent() {
-    return myBottomComponent;
+    return myBottomComponentFactory == null ? null : myBottomComponentFactory.create();
   }
 
-  public void setBottomComponent(final JComponent bottomComponent) {
-    myBottomComponent = bottomComponent;
+  public void setBottomComponentFactory(final Factory<JComponent> factory) {
+    myBottomComponentFactory = factory;
   }
 }

@@ -294,9 +294,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
     data.customizeToolbar(myPanel.resetToolbar());
     myPanel.registerToolbarActions();
-    if (data.getBottomComponent() != null) {
-      myPanel.setBottomComponent(data.getBottomComponent());
+
+    final JComponent oldBottomComponent = myPanel.getBottomComponent();
+    if (oldBottomComponent instanceof Disposable) {
+      ((Disposable) oldBottomComponent).dispose();
     }
+    final JComponent newBottomComponent = data.getBottomComponent();
+    myPanel.setBottomComponent(newBottomComponent);
   }
 
   private void setWindowTitle(Window window, String title) {
