@@ -2,9 +2,9 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  *
  */
-public class DummyFileSystem extends VirtualFileSystem implements ApplicationComponent {
+public class DummyFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
   @NonNls public static final String PROTOCOL = "dummy";
 
   public static DummyFileSystem getInstance() {

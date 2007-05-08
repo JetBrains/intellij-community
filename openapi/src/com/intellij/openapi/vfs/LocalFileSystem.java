@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-public abstract class LocalFileSystem extends VirtualFileSystem {
+public abstract class LocalFileSystem extends DeprecatedVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
 
   public static LocalFileSystem getInstance(){

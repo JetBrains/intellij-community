@@ -1,6 +1,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.LightVirtualFile;
@@ -11,7 +12,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 
-public class MockVirtualFileSystem extends VirtualFileSystem {
+public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
 

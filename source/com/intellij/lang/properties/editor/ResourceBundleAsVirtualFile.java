@@ -4,6 +4,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class ResourceBundleAsVirtualFile extends VirtualFile {
+public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
   private final ResourceBundle myResourceBundle;
 
   public ResourceBundleAsVirtualFile(ResourceBundle resourceBundle) {

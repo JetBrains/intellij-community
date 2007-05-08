@@ -1,6 +1,7 @@
 
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-abstract class VirtualFileImpl extends VirtualFile {
+abstract class VirtualFileImpl extends DeprecatedVirtualFile {
   protected final DummyFileSystem myFileSystem;
   protected VirtualFileDirectoryImpl myParent;
   private String myName;

@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.Paths;
 import com.intellij.mock.MockVirtualFileSystem;
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestVirtualFile extends VirtualFile {
+public class TestVirtualFile extends DeprecatedVirtualFile {
   private String myName;
   private String myContent;
   private long myTimestamp;

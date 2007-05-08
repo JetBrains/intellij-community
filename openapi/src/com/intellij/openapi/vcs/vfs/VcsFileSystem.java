@@ -18,13 +18,13 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 
 import java.io.IOException;
 
 
-public class VcsFileSystem extends VirtualFileSystem implements ApplicationComponent {
+public class VcsFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
 
   private final String myProtocol;
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");

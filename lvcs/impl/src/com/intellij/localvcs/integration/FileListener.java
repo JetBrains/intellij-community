@@ -153,7 +153,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     return myGateway.getFileFilter();
   }
 
-  private class ReparentedVirtualFile extends NullVirtualFile {
+  private static class ReparentedVirtualFile extends NullVirtualFile {
     private VirtualFile myParent;
     private VirtualFile myChild;
 
@@ -168,7 +168,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     }
   }
 
-  private class RenamedVirtualFile extends NullVirtualFile {
+  private static class RenamedVirtualFile extends NullVirtualFile {
     private VirtualFile myFile;
     private String myNewName;
 
@@ -177,6 +177,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
       myNewName = newName;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myNewName;
@@ -198,7 +199,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     }
   }
 
-  private class NullVirtualFile extends VirtualFile {
+  private static class NullVirtualFile extends DeprecatedVirtualFile {
     @NotNull
     @NonNls
     public String getName() {

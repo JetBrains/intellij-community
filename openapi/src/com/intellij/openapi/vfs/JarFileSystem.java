@@ -16,13 +16,12 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.zip.ZipFile;
 
-import org.jetbrains.annotations.NonNls;
-
-public abstract class JarFileSystem extends VirtualFileSystem {
+public abstract class JarFileSystem extends DeprecatedVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 

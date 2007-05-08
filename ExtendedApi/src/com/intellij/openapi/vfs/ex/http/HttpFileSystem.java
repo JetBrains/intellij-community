@@ -3,15 +3,15 @@ package com.intellij.openapi.vfs.ex.http;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class HttpFileSystem extends VirtualFileSystem implements ApplicationComponent {
+public class HttpFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
 
   @NonNls public static final String PROTOCOL = "http";
 

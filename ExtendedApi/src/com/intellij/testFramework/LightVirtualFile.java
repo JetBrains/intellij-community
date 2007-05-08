@@ -5,10 +5,7 @@ import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -21,7 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
-public class LightVirtualFile extends VirtualFile {
+public class LightVirtualFile extends DeprecatedVirtualFile {
   private FileType myFileType;
   private CharSequence myContent = "";
   private String myName = "";
@@ -76,7 +73,7 @@ public class LightVirtualFile extends VirtualFile {
     myModStamp = LocalTimeCounter.currentTime();
   }
 
-  private static class MyVirtualFileSystem extends VirtualFileSystem {
+  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
     @NonNls private final static String PROTOCOL = "mock";
 
     public String getProtocol() {

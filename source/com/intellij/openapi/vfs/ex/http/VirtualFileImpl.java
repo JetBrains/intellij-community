@@ -1,5 +1,6 @@
 package com.intellij.openapi.vfs.ex.http;
 
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class VirtualFileImpl extends VirtualFile {
+class VirtualFileImpl extends DeprecatedVirtualFile {
 
   private final HttpFileSystem myFileSystem;
 

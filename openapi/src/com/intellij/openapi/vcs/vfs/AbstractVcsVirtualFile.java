@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.vfs;
 
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
-public abstract class AbstractVcsVirtualFile extends VirtualFile {
+public abstract class AbstractVcsVirtualFile extends DeprecatedVirtualFile {
 
   protected final String myName;
   protected final String myPath;
