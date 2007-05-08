@@ -104,7 +104,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (tab != null) {
           myTabs.remove(tab);
           myContent2Tabs.remove(event.getContent());
-          event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
+          event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
+
+          ensureSelectedContentVisible();
+          
           rebuild();
         }
       }
@@ -113,8 +116,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
 
       public void selectionChanged(final ContentManagerEvent event) {
-        myContent.removeAll();
-        myContent.add(event.getContent().getComponent(), BorderLayout.CENTER);
+        ensureSelectedContentVisible();
 
         update();
 
@@ -130,6 +132,25 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
     myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
     myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(myManager);
+  }
+
+  private void ensureSelectedContentVisible() {
+    final Content selected = myManager.getSelectedContent();
+    if (selected == null) {
+      myContent.removeAll();
+      return;
+    }
+
+    if (myContent.getComponentCount() == 1) {
+      final Component visible = myContent.getComponent(0);
+      if (visible == selected.getComponent()) return;
+    }
+
+    myContent.removeAll();
+    myContent.add(selected.getComponent(), BorderLayout.CENTER);
+
+    myContent.revalidate();
+    myContent.repaint();
   }
 
 
