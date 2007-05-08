@@ -49,7 +49,7 @@ import java.io.File;
 
 public class CleanupAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return SvnBundle.message("action.Subversion.Clenaup.text");
+    return SvnBundle.message("cleanup.action.name");
   }
 
   protected boolean needsAllFiles() {
