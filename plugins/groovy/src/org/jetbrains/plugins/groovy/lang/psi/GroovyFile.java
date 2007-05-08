@@ -85,7 +85,9 @@ public class GroovyFile extends PsiFileBase {
     }
     
     for (final GrTopStatement topStatement : getTopStatements()) {
-      if (!topStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      if (!topStatement.equals(lastParent)) {
+        if (!topStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      }
     }
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {

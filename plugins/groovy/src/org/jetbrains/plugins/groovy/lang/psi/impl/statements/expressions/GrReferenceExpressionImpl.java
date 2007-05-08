@@ -20,25 +20,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.List;
 import java.util.EnumSet;
 
 /**
@@ -55,13 +51,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @Nullable
   public PsiElement resolve() {
-    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return results.length == 1 ? results[0].getElement() : null;
   }
 
   private static final MyResolver RESOLVER = new MyResolver();
 
-  private static class MyResolver implements ResolveCache.Resolver {
-    public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
+  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
+    public GroovyResolveResult[] resolve(GrReferenceExpressionImpl psiReference, boolean incompleteCode) {
       GrReferenceExpressionImpl refExpr = (GrReferenceExpressionImpl) psiReference;
       GrExpression qualifier = refExpr.getQualifierExpression();
       String name = refExpr.getReferenceName();
@@ -70,8 +67,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         ResolverProcessor processor = getResolveProcessor(refExpr, name);
 
         ResolveUtil.treeWalkUp(refExpr, processor);
-        List<PsiNamedElement> candidates = processor.getCandidates();
-        return candidates.size() == 1 ? candidates.get(0) : null;
+        return processor.getCandidates();
       } else {
         //todo real stuff
       }
@@ -84,11 +80,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
     if (kind == PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY));
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY), refExpr);
     } else if (kind == TYPE_OR_PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.CLASS)); //todo package?
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.CLASS), refExpr); //todo package?
     } else /*if (kind == METHOD)*/ {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD));
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD), refExpr);
     }
     return processor;
   }
@@ -128,8 +124,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public Object[] getVariants() {
     ResolverProcessor processor = getResolveProcessor(this, null);
     ResolveUtil.treeWalkUp(this, processor);
-    List<PsiNamedElement> candidates = processor.getCandidates();
-    return candidates.toArray(new PsiNamedElement[candidates.size()]);
+    GroovyResolveResult[] candidates = processor.getCandidates();
+    if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
+    return ResolveUtil.mapToElements(candidates);
   }
 
   public boolean isSoft() {
@@ -139,4 +136,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public GrExpression getQualifierExpression() {
     return findChildByClass(GrExpression.class);
   }
+
+  public GroovyResolveResult advanceResolve() {
+    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
+  }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean b) {
+    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  }
+
 }

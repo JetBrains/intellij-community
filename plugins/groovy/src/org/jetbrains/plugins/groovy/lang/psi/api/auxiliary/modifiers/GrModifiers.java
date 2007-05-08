@@ -25,5 +25,5 @@ import com.intellij.psi.PsiModifierList;
  */
 public interface GrModifiers extends GroovyPsiElement, PsiModifierList {
   @NotNull
-  GroovyPsiElement[] getModifierList();
+  GroovyPsiElement[] getModifiers();
 }

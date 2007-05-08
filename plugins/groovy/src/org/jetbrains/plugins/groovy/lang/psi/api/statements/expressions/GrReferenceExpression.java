@@ -15,9 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
 
 /**
  * @author ilyas

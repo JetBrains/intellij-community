@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +50,7 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
   }
 
   @NotNull
-  public GroovyPsiElement[] getModifierList() {
+  public GroovyPsiElement[] getModifiers() {
     List<PsiElement> modifiers = new ArrayList<PsiElement>();
     PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, GroovyPsiElement.class);
     GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
@@ -66,12 +68,22 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
     return modifiers.toArray(new GroovyPsiElement[0]);
   }
 
-  //TODO: implement this
   public boolean hasModifierProperty(@NotNull @NonNls String name) {
-    return false;
+    return hasExplicitModifier(name);
   }
 
   public boolean hasExplicitModifier(@NotNull @NonNls String name) {
+    if (name.equals(PsiModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
+    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
+    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
+    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
+    if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
+    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
+    if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
+    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
+    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
+    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
+    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
     return false;
   }
 

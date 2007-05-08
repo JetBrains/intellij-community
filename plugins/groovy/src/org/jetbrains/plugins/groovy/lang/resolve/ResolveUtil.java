@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
@@ -67,5 +68,14 @@ public class ResolveUtil {
     if (element instanceof PsiVariable) return ClassHint.ResolveKind.PROPERTY;
     else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
     else return ClassHint.ResolveKind.CLASS;
+  }
+
+  public static Object[] mapToElements(GroovyResolveResult[] candidates) {
+    PsiElement[] elements = new PsiElement[candidates.length];
+    for (int i = 0; i < elements.length; i++) {
+      elements[i] = candidates[i].getElement();
+    }
+
+    return elements;
   }
 }

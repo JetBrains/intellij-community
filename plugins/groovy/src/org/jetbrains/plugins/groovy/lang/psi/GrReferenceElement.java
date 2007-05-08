@@ -17,13 +17,17 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ven
  */
-public interface GrReferenceElement extends GroovyPsiElement, PsiReference {
+public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference {
   String getReferenceName();
   PsiElement getReferenceNameElement();
 
   PsiElement resolve();
+
+  GroovyResolveResult advanceResolve();
 }

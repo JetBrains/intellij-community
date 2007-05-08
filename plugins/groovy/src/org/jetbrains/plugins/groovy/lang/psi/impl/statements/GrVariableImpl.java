@@ -17,15 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.PomField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -100,11 +99,12 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    return new LightIdentifier(getManager(), getNameIdentifierGroovy().getText());
+    PsiElement nameId = getNameIdentifierGroovy();
+    return new JavaIdentifier(getManager(), getContainingFile(), nameId.getTextRange());
   }
 
   public PsiClass getContainingClass() {
-    PsiElement parent = getParent();
+    PsiElement parent = getParent().getParent();
     if (parent instanceof GrTypeDefinitionBody) {
       return (PsiClass) parent.getParent();
     }
@@ -113,11 +113,12 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @Nullable
   public PsiModifierList getModifierList() {
-    return null;
+    return ((GrVariableDeclarations) getParent()).findModifierList();
   }
 
-  public boolean hasModifierProperty(@NonNls @NotNull String s) {
-    //todo
+  public boolean hasModifierProperty(@NonNls @NotNull String property) {
+    PsiModifierList modifierList = getModifierList();
+    if (modifierList != null) return modifierList.hasModifierProperty(property);
     return false;
   }
 

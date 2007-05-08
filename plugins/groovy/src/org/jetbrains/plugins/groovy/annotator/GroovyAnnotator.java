@@ -16,20 +16,18 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ven
@@ -42,7 +40,9 @@ public class GroovyAnnotator implements Annotator {
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrTypeOrPackageReferenceElement) {
-      checkReferenceElement(element, holder, (GrTypeOrPackageReferenceElement) element);
+      checkReferenceElement(holder, (GrTypeOrPackageReferenceElement) element);
+    } else if (element instanceof GrReferenceExpression) {
+      checkReferenceExpression(holder, (GrReferenceExpression) element);
     } else if (element instanceof GrTypeDefinition) {
       checkTypeDefinition(holder, (GrTypeDefinition) element);
     }
@@ -54,19 +54,31 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkReferenceElement(final PsiElement element, AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
-    if (!refElement.isSoft() && refElement.getReferenceName() != null) {
-      final PsiElement resolved = refElement.resolve();
+  private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
+    GroovyResolveResult resolveResult = refExpr.advanceResolve();
+    if (resolveResult.getElement() != null && !resolveResult.isAccessible()) {
+      String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
+      holder.createErrorAnnotation(refExpr, message);
+    }
+  }
+
+  private void checkReferenceElement(AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
+    if (refElement.getReferenceName() != null) {
+      GroovyResolveResult resolveResult = refElement.advanceResolve();
+      final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
-        String message = GroovyBundle.message("cannot.resolve") + " " + refElement.getReferenceName();
+        String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
         // Register quickfix
-        final Annotation annotation = holder.createErrorAnnotation(element, message);
+        final Annotation annotation = holder.createErrorAnnotation(refElement, message);
         final IntentionAction[] actions = OuterImportsActionCreator.getOuterImportFixes(refElement, annotation, refElement.getProject());
         for (IntentionAction action : actions) {
           annotation.registerFix(action);
         }
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      } else if (!resolveResult.isAccessible()) {
+        String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
+        holder.createErrorAnnotation(refElement, message);
       }
     }
   }

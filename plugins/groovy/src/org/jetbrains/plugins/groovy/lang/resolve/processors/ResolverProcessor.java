@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.EnumSet;
 
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 /**
  * @author ven
@@ -31,25 +34,29 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint {
   private String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
+  private PsiElement myPlace;
 
-  private List<PsiNamedElement> myCandidates = new ArrayList<PsiNamedElement>();
+  private List<GroovyResolveResult> myCandidates = new ArrayList<GroovyResolveResult>();
 
-  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets) {
+  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, PsiElement place) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
+    myPlace = place;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
-      myCandidates.add(namedElement);
+      boolean isAccessible = !(namedElement instanceof PsiMember) || PsiUtil.isAccessible((PsiMember) namedElement, myPlace, null);
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible));
+      return myName == null || !isAccessible;
     }
 
-    return myName == null || myCandidates.size() == 0;
+    return true;
   }
 
-  public List<PsiNamedElement> getCandidates() {
-    return myCandidates;
+  public GroovyResolveResult[] getCandidates() {
+    return myCandidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   public <T> T getHint(Class<T> hintClass) {

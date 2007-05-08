@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -30,7 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -66,7 +67,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
   @Nullable
   public PsiElement resolve() {
-    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return results.length == 1 ? results[0].getElement() : null;
   }
 
   private ReferenceKind getKind() {
@@ -138,10 +140,10 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS));
+          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS), this);
           ResolveUtil.treeWalkUp(this, processor);
-          List<PsiNamedElement> candidates = processor.getCandidates();
-          return candidates.toArray(PsiNamedElement.EMPTY_ARRAY);
+          GroovyResolveResult[] candidates = processor.getCandidates();
+          return ResolveUtil.mapToElements(candidates);
         }
       }
     }
@@ -153,10 +155,9 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
     return false;
   }
 
-  private static class MyResolver implements ResolveCache.Resolver {
+  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrTypeOrPackageReferenceElementImpl> {
 
-    public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
-      GrTypeOrPackageReferenceElementImpl groovyRef = (GrTypeOrPackageReferenceElementImpl) ref;
+    public GroovyResolveResult[] resolve(GrTypeOrPackageReferenceElementImpl groovyRef, boolean incompleteCode) {
       String refName = groovyRef.getReferenceName();
       if (refName == null) return null;
       PsiManager manager = groovyRef.getManager();
@@ -165,13 +166,15 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(groovyRef), groovyRef.getResolveScope());
           if (aClass != null) {
-            return aClass;
+            boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, groovyRef, null);
+            return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
           }
           //fallthrough
         }
 
         case PACKAGE_FQ:
-          return manager.findPackage(PsiUtil.getQualifiedReferenceText(groovyRef));
+          PsiPackage aPackage = manager.findPackage(PsiUtil.getQualifiedReferenceText(groovyRef));
+          return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
 
         case CLASS:
         case CLASS_OR_PACKAGE:
@@ -181,26 +184,29 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             if (qualifierResolved instanceof PsiPackage) {
               PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses();
               for (final PsiClass aClass : classes) {
-                if (refName.equals(aClass.getName())) return aClass;
+                if (refName.equals(aClass.getName())) {
+                  boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, groovyRef, null);
+                  return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
+                }
               }
 
               if (kind == CLASS_OR_PACKAGE) {
                 for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages()) {
-                  if (refName.equals(subpackage.getName())) return subpackage;
+                  if (refName.equals(subpackage.getName())) return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
             }
           } else {
-            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS));
+            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), groovyRef);
             ResolveUtil.treeWalkUp(groovyRef, processor);
-            List<PsiNamedElement> candidates = processor.getCandidates();
-            if (candidates.size() == 1) return candidates.get(0);
+            GroovyResolveResult[] candidates = processor.getCandidates();
+            if (candidates.length > 0) return candidates;
 
             if (kind == CLASS_OR_PACKAGE) {
               PsiPackage defaultPackage = groovyRef.getManager().findPackage("");
               if (defaultPackage != null) {
                 for (final PsiPackage subpackage : defaultPackage.getSubPackages()) {
-                  if (refName.equals(subpackage.getName())) return subpackage;
+                  if (refName.equals(subpackage.getName())) return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
             }
@@ -212,4 +218,14 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
   }
 
   private static MyResolver RESOLVER = new MyResolver();
+
+  public GroovyResolveResult advanceResolve() {
+    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
+  }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean b) {
+    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  }
 }
