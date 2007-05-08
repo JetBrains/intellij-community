@@ -17,6 +17,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -118,21 +120,28 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       final Set<FilePath> filePaths = new HashSet<FilePath>();
       for(CommittedChangeList changeList: changeLists) {
         for(Change change: changeList.getChanges()) {
-          final FilePath filePath = ChangesUtil.getFilePath(change);
-          final FilePath parentPath = filePath.getParentPath();
-          if (parentPath == null) {
-            filePaths.add(filePath);
-          }
-          else {
-            filePaths.add(parentPath);
-          }
+          filePaths.add(ChangesUtil.getFilePath(change));
         }
       }
       final TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
-      myStructureTree.setModel(builder.buildModelFromFilePaths(filePaths));
+      final DefaultTreeModel model = builder.buildModelFromFilePaths(filePaths);
+      deleteLeafNodes((DefaultMutableTreeNode) model.getRoot());
+      myStructureTree.setModel(model);
       if (!myRendererInitialized) {
         myRendererInitialized = true;
         myStructureTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, false));
+      }
+    }
+
+    private void deleteLeafNodes(final DefaultMutableTreeNode node) {
+      for(int i=node.getChildCount()-1; i >= 0; i--) {
+        final TreeNode child = node.getChildAt(i);
+        if (child.isLeaf()) {
+          node.remove(i);
+        }
+        else {
+          deleteLeafNodes((DefaultMutableTreeNode) child);
+        }
       }
     }
   }
