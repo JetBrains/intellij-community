@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -193,7 +194,8 @@ public class DaemonListeners {
             if (document != null) {
               // highlight markers no more
               //todo clear all highlights regardless the pass id
-              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(), Collections.<HighlightInfo>emptyList(), Pass.UPDATE_ALL);
+              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
+                                                             Collections.<HighlightInfo>emptyList(), Pass.UPDATE_ALL);
             }
           }
         }
@@ -260,7 +262,7 @@ public class DaemonListeners {
 
     return status != FileStatus.NOT_CHANGED;
   }
-  
+
   private class MyApplicationListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
@@ -278,11 +280,16 @@ public class DaemonListeners {
   }
 
   private class MyCommandListener extends CommandAdapter {
-    private final String myCutActionName = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    private final String myCutActionName =
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     public void commandStarted(CommandEvent event) {
       Object id = event.getCommandGroupId();
-      if (id instanceof Document && !worthBothering((Document)id)) return;
+      Document affectedDocument = null;
+
+      if (id instanceof Document) affectedDocument = (Document)id;
+      if (id instanceof Ref && ((Ref)id).get() instanceof Document) affectedDocument = (Document)((Ref)id).get();
+      if (affectedDocument != null && !worthBothering(affectedDocument)) return;
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
@@ -319,7 +326,7 @@ public class DaemonListeners {
     }
   }
 
-  private class MyProfileChangeListener extends ProfileChangeAdapter{
+  private class MyProfileChangeListener extends ProfileChangeAdapter {
     public void profileChanged(Profile profile) {
       myDaemonCodeAnalyzer.restart();
     }
@@ -331,6 +338,7 @@ public class DaemonListeners {
 
   private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
       myEscPressed = action == escapeAction;
     }
@@ -366,7 +374,8 @@ public class DaemonListeners {
       myDaemonCodeAnalyzer.restart();
     }
   }
-  private static class MyEditorMouseListener extends EditorMouseAdapter{
+
+  private static class MyEditorMouseListener extends EditorMouseAdapter {
 
     public void mouseExited(EditorMouseEvent e) {
       DaemonTooltipUtil.cancelTooltips();

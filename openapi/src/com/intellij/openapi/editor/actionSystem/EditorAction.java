@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Ref;
 
 public abstract class EditorAction extends AnAction {
   private EditorActionHandler myHandler;
@@ -39,7 +40,7 @@ public abstract class EditorAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     actionPerformed(editor, dataContext);
   }
 
@@ -55,7 +56,8 @@ public abstract class EditorAction extends AnAction {
 
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
-    commandProcessor.executeCommand(editor.getProject(), command, commandName, editor.getDocument());
+    // use new Ref() here to avoid merging two consequential commands, and, in the same time, pass along the Document
+    commandProcessor.executeCommand(editor.getProject(), command, commandName, new Ref(editor.getDocument()));
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
@@ -65,7 +67,7 @@ public abstract class EditorAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor == null) {
       presentation.setEnabled(false);
     }
