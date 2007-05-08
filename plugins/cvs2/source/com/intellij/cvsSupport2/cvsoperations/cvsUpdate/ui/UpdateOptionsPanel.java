@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,17 +52,12 @@ public class UpdateOptionsPanel {
     CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
     CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
     myMergingGroup = new JRadioButton[]{myDoNotMerge, myMergeWithBranch, myMergeTwoBranches};
-    ButtonGroup mergingGroup = new ButtonGroup();
-    mergingGroup.add(myDoNotMerge);
-    mergingGroup.add(myMergeWithBranch);
-    mergingGroup.add(myMergeTwoBranches);
-
 
     myKeywordSubstitutionPanel.setLayout(new BorderLayout());
     myKeywordSubstitutionPanel.add(myChangeKeywordSubstitutionPanel.getPanel(), BorderLayout.CENTER);
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnVirtualFiles(files),
                                                                     project, false);
-    myDateOrRevisionOrTagSettings.setHeadCaption(com.intellij.CvsBundle.message("label.default.update.branch"));
+    myDateOrRevisionOrTagSettings.setHeadCaption(CvsBundle.message("label.default.update.branch"));
     myDateOrRevisionPanel.setLayout(new BorderLayout());
     myDateOrRevisionPanel.add(myDateOrRevisionOrTagSettings.getPanel(), BorderLayout.CENTER);
 
@@ -85,8 +81,7 @@ public class UpdateOptionsPanel {
 
     myDateOrRevisionOrTagSettings.updateFrom(config.UPDATE_DATE_OR_REVISION_SETTINGS);
 
-    for (int i = 0; i < myMergingGroup.length; i++) {
-      JRadioButton jRadioButton = myMergingGroup[i];
+    for (JRadioButton jRadioButton : myMergingGroup) {
       jRadioButton.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           enableBranchField();
@@ -129,8 +124,8 @@ public class UpdateOptionsPanel {
     configuration.CLEAN_COPY = false;
     if (myCleanCopy.isSelected()) {
       if (Messages.showYesNoDialog(
-        com.intellij.CvsBundle.message("confirmation.clean.copy"),
-        com.intellij.CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        CvsBundle.message("confirmation.clean.copy"),
+        CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
         configuration.CLEAN_COPY = true;
       }
     }
@@ -148,7 +143,7 @@ public class UpdateOptionsPanel {
     myDateOrRevisionOrTagSettings.saveTo(configuration.UPDATE_DATE_OR_REVISION_SETTINGS);
   }
 
-  private int getSelected(JRadioButton[] mergingGroup) {
+  private static int getSelected(JRadioButton[] mergingGroup) {
     for (int i = 0; i < mergingGroup.length; i++) {
       JRadioButton jRadioButton = mergingGroup[i];
       if (jRadioButton.isSelected()) return i;

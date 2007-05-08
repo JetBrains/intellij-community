@@ -1,51 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.UpdateOptionsPanel">
-  <grid id="d88f6" binding="myPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="d88f6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="6" left="6" bottom="6" right="6"/>
     <constraints>
       <xy x="70" y="73" width="1077" height="469"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <vspacer id="bf98b">
         <constraints>
-          <xy x="533" y="208" width="11" height="235"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="429fc" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="429fc" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="6" y="6" width="1065" height="202"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="9c053" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="9c053" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="5" right="5"/>
             <constraints>
-              <xy x="0" y="0" width="1065" height="103"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.branch.merging"/>
             <children>
-              <grid id="35830" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="35830" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="6" y="20" width="1048" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
                   <component id="c421c" class="javax.swing.JRadioButton" binding="myDoNotMerge">
                     <constraints>
-                      <xy x="0" y="0" width="85" height="22"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.update.options.dont.merge"/>
@@ -53,8 +47,7 @@
                   </component>
                   <component id="43566" class="javax.swing.JRadioButton" binding="myMergeWithBranch">
                     <constraints>
-                      <xy x="314" y="0" width="134" height="22"/>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.update.options.merge.with.branch.(-j)"/>
@@ -62,8 +55,7 @@
                   </component>
                   <component id="67e66" class="javax.swing.JRadioButton" binding="myMergeTwoBranches">
                     <constraints>
-                      <xy x="677" y="0" width="153" height="22"/>
-                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.update.options.merge.two.branches"/>
@@ -71,19 +63,17 @@
                   </component>
                 </children>
               </grid>
-              <grid id="1a3f2" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="1a3f2" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="20" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="6" y="47" width="1048" height="20"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
                   <component id="d5c4f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBranch">
                     <constraints>
-                      <xy x="20" y="0" width="1028" height="20"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                         <preferred-size width="150" height="-1"/>
                       </grid>
                     </constraints>
@@ -91,19 +81,17 @@
                   </component>
                 </children>
               </grid>
-              <grid id="6796f" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="6796f" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="20" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="6" y="72" width="1048" height="20"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
                   <component id="877da" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBranch2">
                     <constraints>
-                      <xy x="20" y="0" width="1028" height="20"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                         <preferred-size width="150" height="-1"/>
                       </grid>
                     </constraints>
@@ -113,39 +101,35 @@
               </grid>
             </children>
           </grid>
-          <xy id="3b98b" binding="myDateOrRevisionPanel" hgap="-1" vgap="-1">
+          <xy id="3b98b" binding="myDateOrRevisionPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="108" width="1065" height="20"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </xy>
-          <xy id="1a948" binding="myKeywordSubstitutionPanel" hgap="-1" vgap="-1">
+          <xy id="1a948" binding="myKeywordSubstitutionPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="182" width="1065" height="20"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </xy>
-          <grid id="bac20" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+          <grid id="bac20" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="133" width="1065" height="44"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="6887" class="javax.swing.JCheckBox" binding="mySwitchToHeadRevision">
                 <constraints>
-                  <xy x="0" y="0" width="131" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.reset.sticky.data"/>
@@ -153,8 +137,7 @@
               </component>
               <component id="417" class="javax.swing.JCheckBox" binding="myPruneEmptyDirectories">
                 <constraints>
-                  <xy x="0" y="22" width="161" height="22"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.prune.empty.directories"/>
@@ -162,8 +145,7 @@
               </component>
               <component id="72e36" class="javax.swing.JCheckBox" binding="myCreateNewDirectories">
                 <constraints>
-                  <xy x="540" y="0" width="156" height="22"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.create.new.directories"/>
@@ -171,12 +153,11 @@
               </component>
               <component id="e6b5f" class="javax.swing.JCheckBox" binding="myCleanCopy">
                 <constraints>
-                  <xy x="540" y="22" width="101" height="22"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <label resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.clean.copy"/>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.clean.copy"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.update.options.clean.copy.m"/>
                 </properties>
               </component>
             </children>
@@ -185,4 +166,11 @@
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="c421c"/>
+      <member id="43566"/>
+      <member id="67e66"/>
+    </group>
+  </buttonGroups>
 </form>
