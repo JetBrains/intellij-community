@@ -113,7 +113,11 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @Nullable
   public PsiModifierList getModifierList() {
-    return ((GrVariableDeclarations) getParent()).findModifierList();
+    PsiElement parent = getParent();
+    if (parent instanceof GrVariableDeclarations) {
+      return ((GrVariableDeclarations) parent).findModifierList();
+    }
+    return null;
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
