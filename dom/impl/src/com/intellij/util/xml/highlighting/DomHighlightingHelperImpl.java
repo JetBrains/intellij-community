@@ -255,7 +255,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     assert child.getXmlTag() != null;
 
     final String stringValue = child.getStringValue();
-    assert stringValue != null;
+    if (stringValue == null) return null;
+
     if (required.nonEmpty() && isEmpty(child, stringValue)) {
       return annotator.createProblem(child, IdeBundle.message("value.must.not.be.empty"));
     }
