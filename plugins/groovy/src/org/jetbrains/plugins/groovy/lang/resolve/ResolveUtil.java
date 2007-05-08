@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
@@ -66,6 +67,7 @@ public class ResolveUtil {
 
   public static ClassHint.ResolveKind getResolveKind(PsiElement element) {
     if (element instanceof PsiVariable) return ClassHint.ResolveKind.PROPERTY;
+    if (element instanceof GrVariable) return ClassHint.ResolveKind.PROPERTY;
     else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
     else return ClassHint.ResolveKind.CLASS;
   }
