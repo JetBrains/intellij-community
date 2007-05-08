@@ -556,4 +556,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public String toString() {
     return "VirtualFile: " + getPresentableUrl();
   }
+
+  public boolean exists() {
+    return isValid();
+  }
 }
