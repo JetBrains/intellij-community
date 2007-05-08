@@ -396,7 +396,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
-    return false;
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
   @Nullable
