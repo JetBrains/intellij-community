@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -237,7 +238,11 @@ public class ChangesViewContentManager implements ProjectComponent {
       if (event.getContent().getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) event.getContent().getComponent()).getEP();
         ChangesViewContentProvider provider = ep.getInstance(myProject);
-        event.getContent().setComponent(provider.initContent());
+        final JComponent contentComponent = provider.initContent();
+        event.getContent().setComponent(contentComponent);
+        if (contentComponent instanceof Disposable) {
+          event.getContent().setDisposer((Disposable) contentComponent);          
+        }
       }
     }
   }

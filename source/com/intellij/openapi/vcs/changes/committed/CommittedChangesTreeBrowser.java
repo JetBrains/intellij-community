@@ -14,11 +14,14 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.peer.PeerFactory;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -41,7 +44,7 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider {
+public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable {
   private final Tree myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
@@ -51,10 +54,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private Splitter myFilterSplitter;
   private JPanel myLeftPanel;
   private CommittedChangeListRenderer myCellRenderer;
-  private JScrollPane myChangesTreeScrollPane;
-  private Splitter mySplitter;
   private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private List<CommittedChangeList> myFilteredChangeLists;
+  private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -95,15 +97,17 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     });
 
     myLeftPanel = new JPanel(new BorderLayout());
-    myChangesTreeScrollPane = new JScrollPane(myChangesTree);
     myFilterSplitter = new Splitter(false, 0.5f);
-    myFilterSplitter.setSecondComponent(myChangesTreeScrollPane);
+    myFilterSplitter.setSecondComponent(new JScrollPane(myChangesTree));
     myLeftPanel.add(myFilterSplitter, BorderLayout.CENTER);
-    mySplitter = new Splitter(false, 0.7f);
-    mySplitter.setFirstComponent(myLeftPanel);
-    mySplitter.setSecondComponent(myChangesView);
+    final Splitter splitter = new Splitter(false, 0.7f);
+    splitter.setFirstComponent(myLeftPanel);
+    splitter.setSecondComponent(myChangesView);
 
-    add(mySplitter, BorderLayout.CENTER);
+    add(splitter, BorderLayout.CENTER);
+
+    mySplitterProportionsData.externalizeFromDimensionService("CommittedChanges.SplitterProportions");
+    mySplitterProportionsData.restoreSplitterProportions(this);
 
     updateBySelectionChange();
 
@@ -137,6 +141,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void dispose() {
+    mySplitterProportionsData.saveSplitterProportions(this);
+    mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
     myChangesView.dispose();
   }
 

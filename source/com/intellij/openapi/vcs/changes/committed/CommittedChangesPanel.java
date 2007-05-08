@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider {
+public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
 
   private CommittedChangesTreeBrowser myBrowser;
@@ -191,6 +192,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
       }
     }
+  }
+
+  public void dispose() {
+    myBrowser.dispose();
   }
 
   private class MyFilterComponent extends FilterComponent {

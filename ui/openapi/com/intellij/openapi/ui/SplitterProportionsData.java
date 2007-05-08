@@ -23,6 +23,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -32,7 +33,7 @@ public interface SplitterProportionsData extends JDOMExternalizable {
 
   void restoreSplitterProportions(Component root);
 
-  void externalizeToDimensionService(String key);
+  void externalizeToDimensionService(@NonNls String key);
 
-  void externalizeFromDimensionService(String key);
+  void externalizeFromDimensionService(@NonNls String key);
 }
