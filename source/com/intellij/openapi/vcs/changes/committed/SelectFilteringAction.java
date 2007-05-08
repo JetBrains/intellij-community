@@ -21,7 +21,8 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
     return new DefaultComboBoxModel(new Object[] {
       ChangeListFilteringStrategy.NONE,
       new UserFilteringStrategy(),
-      new StructureFilteringStrategy(myProject)
+      new StructureFilteringStrategy(myProject),
+      new IncomingChangesFilteringStrategy(myProject)
     });
   }
 
