@@ -70,10 +70,11 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   private static void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
     final AntFile file = getAntFile(el);
-    if (file == null) return;
+    if (file == null) {
+      return;
+    }
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
-    while (element != null && !(element instanceof AntFile) &&
-           (element.getTextLength() <= textRange.getLength() || element instanceof AntOuterProjectElement)) {
+    while (element != null && !(element instanceof AntFile) && (!element.isValid() || element.getTextLength() <= textRange.getLength() || element instanceof AntOuterProjectElement)) {
       element = element.getAntParent();
     }
     if (element == null) {
