@@ -149,8 +149,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (message != null && !(message.getThrowable() instanceof MessagePool.TooManyErrorsException)) {
       final PluginId pluginId = findPluginId(message.getThrowable());
       if (pluginId == null) {
-        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.core",
-                                                      ApplicationNamesInfo.getInstance().getProductName()));
+        if (message.getThrowable() instanceof AbstractMethodError) {
+          myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
+        }
+        else {
+          myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.core",
+                                                        ApplicationNamesInfo.getInstance().getProductName()));
+        }
       }
       else {
         final Application app = ApplicationManager.getApplication();
