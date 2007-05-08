@@ -15,7 +15,9 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,7 +31,6 @@ public class PropertiesBuilder extends AntElementVisitor {
 
   @NotNull private final AntFile myPropertyHolder;
   private Set<AntTarget> myVisitedTargets = new HashSet<AntTarget>();
-  private List<AntTarget> myProjectTargets = new ArrayList<AntTarget>();
   private Set<AntFile> myVisitedFiles = new HashSet<AntFile>();
   
   private PropertiesBuilder(@NotNull AntFile propertyHolder) {
@@ -63,19 +64,30 @@ public class PropertiesBuilder extends AntElementVisitor {
   }
 
   public void visitAntProject(final AntProject antProject) {
+    final Set<AntTarget> projectTargets = new LinkedHashSet<AntTarget>();
     for (PsiElement child : antProject.getChildren()) {
       if (child instanceof AntElement) {
         if (child instanceof AntTarget) {
           final AntTarget antTarget = (AntTarget)child;
-          if (myPropertyHolder.equals(antTarget.getAntFile())) {
+          if (antProject.equals(antTarget.getAntProject())) {
             // heuristic: do not collect imported targets
-            myProjectTargets.add(antTarget);
+            projectTargets.add(antTarget);
           }
         }
         else {
           ((AntElement)child).acceptAntElementVisitor(this);
         }
       }
+    }
+
+    final AntTarget entryTarget = antProject.getDefaultTarget();
+    if (entryTarget != null) {
+      entryTarget.acceptAntElementVisitor(this);
+    }
+
+    projectTargets.removeAll(myVisitedTargets);
+    for (AntTarget antTarget : projectTargets) {
+      antTarget.acceptAntElementVisitor(this);
     }
   }
 
@@ -163,30 +175,15 @@ public class PropertiesBuilder extends AntElementVisitor {
 
     final PropertiesBuilder builder = new PropertiesBuilder(file);
     file.acceptAntElementVisitor(builder);
-    
-    final AntTarget entryTarget = project.getDefaultTarget();
-    if (entryTarget != null) {
-      entryTarget.acceptAntElementVisitor(builder);
-    }
-    
-    for (AntTarget antTarget : builder.getUnvisitedTargets()) {
-      antTarget.acceptAntElementVisitor(builder);
-    }
-    
+
     for (AntTarget target : builder.myVisitedTargets) {
       if (target instanceof AntTargetImpl) {
-        definePseudoProperties((AntTargetImpl)target, file);
+        definePseudoProperties((AntTargetImpl)target);
       }
     }
   }
 
-  private Collection<AntTarget> getUnvisitedTargets() {
-    final Set<AntTarget> unvisited = new HashSet<AntTarget>(myProjectTargets);
-    unvisited.removeAll(myVisitedTargets);
-    return unvisited;
-  }
-
-  private static void definePseudoProperties(AntTargetImpl target, final AntFile propertyHolder) {
+  private static void definePseudoProperties(final AntTargetImpl target) {
     final XmlTag se = target.getSourceElement();
     XmlAttribute propNameAttribute = se.getAttribute(AntFileImpl.IF_ATTR, null);
     if (propNameAttribute == null) {
@@ -196,6 +193,7 @@ public class PropertiesBuilder extends AntElementVisitor {
       final XmlAttributeValue valueElement = propNameAttribute.getValueElement();
       if (valueElement != null) {
         final String value = target.computeAttributeValue(valueElement.getValue());
+        final AntFile propertyHolder = target.getAntFile();
         if (propertyHolder.getProperty(value) == null) {
           target.setPropertyDefinitionElement(valueElement);
           propertyHolder.setProperty(value, target);
