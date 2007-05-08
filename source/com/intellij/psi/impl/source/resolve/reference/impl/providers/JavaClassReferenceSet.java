@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author peter
 */
-class JavaClassReferenceSet {
+public class JavaClassReferenceSet {
   private static final char SEPARATOR = '.';
   protected static final char SEPARATOR2 = '$';
 
@@ -33,11 +33,11 @@ class JavaClassReferenceSet {
   private static final char SEPARATOR3 = '<';
   private static final char SEPARATOR4 = ',';
 
-  JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider) {
+  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider) {
     this(str, element, startInElement, type, isStatic, provider, null);
   }
 
-  JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider,
+  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider,
                         JavaClassReferenceSet context) {
     myType = type;
     myStartInElement = startInElement;
@@ -176,7 +176,7 @@ class JavaClassReferenceSet {
     return myElement.getLanguage() instanceof XMLLanguage;
   }
 
-  void reparse(PsiElement element, final TextRange range) {
+  public void reparse(PsiElement element, final TextRange range) {
     final String text = element.getText().substring(range.getStartOffset(), range.getEndOffset());
 
     //if (element instanceof XmlAttributeValue) {
@@ -205,7 +205,7 @@ class JavaClassReferenceSet {
     return result;
   }
 
-  ReferenceType getType(int index) {
+  public ReferenceType getType(int index) {
     if (index != myReferences.length - 1) {
       return new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
     }
@@ -220,7 +220,7 @@ class JavaClassReferenceSet {
     return myElement;
   }
 
-  PsiReference[] getReferences() {
+  public PsiReference[] getReferences() {
     return myReferences;
   }
 
