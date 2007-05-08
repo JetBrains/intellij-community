@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.project.Project;
@@ -81,7 +82,7 @@ public class GotoActionModel implements ChooseByNameModel {
           if (icon != null){
             layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
           }
-          final Shortcut[] shortcutSet = anAction.getShortcutSet().getShortcuts();
+          final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction));
           final String actionPresentation = templatePresentation.getText() + (shortcutSet != null && shortcutSet.length > 0
                                                                               ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
                                                                               : "");
