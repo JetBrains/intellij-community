@@ -35,8 +35,10 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageRe
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.List;
+import java.util.EnumSet;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -136,7 +138,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, PsiClass.class);
+          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS));
           ResolveUtil.treeWalkUp(this, processor);
           List<PsiNamedElement> candidates = processor.getCandidates();
           return candidates.toArray(PsiNamedElement.EMPTY_ARRAY);
@@ -189,7 +191,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
               }
             }
           } else {
-            ResolverProcessor processor = new ResolverProcessor(refName, PsiClass.class);
+            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS));
             ResolveUtil.treeWalkUp(groovyRef, processor);
             List<PsiNamedElement> candidates = processor.getCandidates();
             if (candidates.size() == 1) return candidates.get(0);

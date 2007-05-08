@@ -15,37 +15,34 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.EnumSet;
+
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ven
  */
-public class ResolverProcessor implements PsiScopeProcessor, NameHint {
+public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint {
   private String myName;
-  private Class<? extends PsiNamedElement>[] myClasses;
+  private EnumSet<ResolveKind> myResolveTargetKinds;
 
   private List<PsiNamedElement> myCandidates = new ArrayList<PsiNamedElement>();
 
-  public ResolverProcessor(String name, Class<? extends PsiNamedElement>... classes) {
+  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets) {
     myName = name;
-    myClasses = classes;
+    myResolveTargetKinds = resolveTargets;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    for (final Class<? extends PsiNamedElement> clazz : myClasses) {
-      if (clazz.isInstance(element)) {
-        PsiNamedElement namedElement = (PsiNamedElement) element;
-        myCandidates.add(namedElement);
-        break;
-      }
+    if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
+      PsiNamedElement namedElement = (PsiNamedElement) element;
+      myCandidates.add(namedElement);
     }
 
     return myName == null || myCandidates.size() == 0;
@@ -59,6 +56,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint {
     if (NameHint.class == hintClass && myName != null){
       return (T) this;
     }
+    else if (ClassHint.class == hintClass) {
+      return (T) this;
+    }
 
     return null;
   }
@@ -68,5 +68,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint {
 
   public String getName() {
     return myName;
+  }
+
+  public boolean shouldProcess(ResolveKind resolveKind) {
+    return myResolveTargetKinds.contains(resolveKind);
   }
 }

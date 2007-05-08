@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @date: 26.03.2007
  */
 public interface GrMethod extends GrMember, GrNamedElement, PsiMethod, GrStatement {
+  public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
 
   GrOpenBlock getBlock();
 

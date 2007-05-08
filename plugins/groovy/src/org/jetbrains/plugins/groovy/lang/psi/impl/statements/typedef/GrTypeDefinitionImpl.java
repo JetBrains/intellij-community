@@ -33,26 +33,31 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
+  private GrMethod[] myMethods;
+  private GrMethod[] myConstructors;
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -134,18 +139,31 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
 /*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!process(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
     }
 */
-
-    return true;
-  }
-
-  private boolean process(PsiScopeProcessor processor, PsiNamedElement element) {
     NameHint nameHint = processor.getHint(NameHint.class);
-    if (nameHint == null || getName().equals(nameHint.getName())) {
-      return processor.execute(element, PsiSubstitutor.EMPTY);
+    String name = nameHint == null ? null: nameHint.getName();
+    ClassHint classHint = processor.getHint(ClassHint.class);
+    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+      Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this);
+      if (name != null) {
+        PsiField field = fieldsMap.get(name);
+        if (field != null && !processor.execute(field, PsiSubstitutor.EMPTY)) return false;
+      }
+      else {
+        for (PsiField field : fieldsMap.values()) {
+          if (!processor.execute(field, PsiSubstitutor.EMPTY)) return false;
+        }
+      }
     }
+
+
+    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+      Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+      //todo
+    }
+
     return true;
   }
 
@@ -169,8 +187,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiReferenceList getExtendsList() {
-//    GrExtendsClause clause = getExtendsClause();
-//
     return null;
   }
 
@@ -181,37 +197,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    GrExtendsClause extendsClause = getExtendsClause();
-    GrClassReferenceType[] referenceTypes;
-
-    if (extendsClause != null) {
-      GrTypeOrPackageReferenceElement[] referenceElements = extendsClause.getReferenceElements();
-      referenceTypes = new GrClassReferenceType[referenceElements.length];
-
-      for (int i = 0; i < referenceElements.length; i++) {
-        referenceTypes[i] = new GrClassReferenceType(referenceElements[i]);
-      }
-      return referenceTypes;
-    }
-
     return PsiClassType.EMPTY_ARRAY;
   }
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    GrImplementsClause implementsClause = getImplementsClause();
-    GrClassReferenceType[] referenceTypes;
-
-    if (implementsClause != null) {
-      GrTypeOrPackageReferenceElement[] referenceElements = implementsClause.getReferenceElements();
-      referenceTypes = new GrClassReferenceType[referenceElements.length];
-
-      for (int i = 0; i < referenceElements.length; i++) {
-        referenceTypes[i] = new GrClassReferenceType(referenceElements[i]);
-      }
-      return referenceTypes;
-    }
-
     return PsiClassType.EMPTY_ARRAY;
   }
 
@@ -231,22 +221,85 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return PsiClassType.EMPTY_ARRAY;
+    GrExtendsClause extendsClause = findChildByClass(GrExtendsClause.class);
+    GrTypeOrPackageReferenceElement[] extendsRefs = GrTypeOrPackageReferenceElement.EMPTY_ARRAY;
+    GrTypeOrPackageReferenceElement[] implementsRefs = GrTypeOrPackageReferenceElement.EMPTY_ARRAY;
+    if (extendsClause != null) {
+      extendsRefs = extendsClause.getReferenceElements();
+    }
+
+    GrImplementsClause implementsClause = findChildByClass(GrImplementsClause.class);
+    if (implementsClause != null) {
+      implementsRefs = implementsClause.getReferenceElements();
+    }
+
+    int len = implementsRefs.length + extendsRefs.length;
+    if (!isInterface() && extendsRefs.length == 0) {
+      len++;
+    }
+    PsiClassType[] result = new PsiClassType[len];
+
+    int i = 0;
+    if (extendsRefs.length > 0) {
+      for (int j = 0; j < extendsRefs.length; j++) {
+        result[j] = new GrClassReferenceType(extendsRefs[j]);
+      }
+      i = extendsRefs.length;
+    } else if (!isInterface()) {
+      result[0] = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+      i = 1;
+    }
+
+    for (int j = 0; j < implementsRefs.length; i++, j++) {
+      result[i] = new GrClassReferenceType(implementsRefs[j]);
+    }
+
+    return result;
   }
 
   @NotNull
-  public PsiField[] getFields() {
-    return PsiField.EMPTY_ARRAY;
+  public GrField[] getFields() {
+    GrTypeDefinitionBody body = getBody();
+    if (body != null) {
+      return body.getFields();
+    }
+
+    return GrField.EMPTY_ARRAY;
   }
 
   @NotNull
   public GrMethod[] getMethods() {
-    return findChildrenByClass(GrMethod.class);
+    if (myMethods == null) {
+      GrTypeDefinitionBody body = getBody();
+      if (body != null) {
+        myMethods = body.getMethods();
+      } else {
+        myMethods = GrMethod.EMPTY_ARRAY;
+      }
+    }
+    return myMethods;
+  }
+
+  public void subtreeChanged() {
+    myMethods = null;
+    myConstructors = null;
+    super.subtreeChanged();
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    return PsiMethod.EMPTY_ARRAY;
+    if (myConstructors == null) {
+      List<GrMethod> result = new ArrayList<GrMethod>();
+      for (final GrMethod method : getMethods()) {
+        if (method.isConstructor()) {
+          result.add(method);
+        }
+      }
+
+      myConstructors = result.toArray(new GrMethod[result.size()]);
+      return myConstructors;
+    }
+    return myConstructors;
   }
 
   @NotNull

@@ -17,12 +17,15 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
  * @author ven
@@ -58,5 +61,11 @@ public class ResolveUtil {
     }
 
     return true;
+  }
+
+  public static ClassHint.ResolveKind getResolveKind(PsiElement element) {
+    if (element instanceof PsiVariable) return ClassHint.ResolveKind.PROPERTY;
+    else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
+    else return ClassHint.ResolveKind.CLASS;
   }
 }

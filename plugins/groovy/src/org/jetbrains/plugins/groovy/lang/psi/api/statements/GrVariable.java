@@ -26,5 +26,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GrVariable extends GrNamedElement {
   @NotNull
-  PsiElement getNameIdentifier();
+  PsiElement getNameIdentifierGroovy();
 }

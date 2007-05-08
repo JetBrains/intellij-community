@@ -34,9 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
+import java.util.EnumSet;
 
 /**
  * @author ilyas
@@ -81,11 +84,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
     if (kind == PROPERTY) {
-      processor = new ResolverProcessor(name, PsiField.class, GrVariable.class);
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY));
     } else if (kind == TYPE_OR_PROPERTY) {
-      processor = new ResolverProcessor(name, PsiField.class, GrVariable.class, PsiClass.class); //todo package?
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.CLASS)); //todo package?
     } else /*if (kind == METHOD)*/ {
-      processor = new ResolverProcessor(name, PsiMethod.class, GrMethod.class); //todo make GrMethod PsiMethod
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD));
     }
     return processor;
   }
