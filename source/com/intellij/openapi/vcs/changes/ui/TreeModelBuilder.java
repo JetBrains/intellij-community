@@ -126,6 +126,7 @@ public class TreeModelBuilder {
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
     final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
     for (FilePath file : filePaths) {
+      assert file != null;
       ChangesBrowserNode oldNode = foldersCache.get(file);
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);

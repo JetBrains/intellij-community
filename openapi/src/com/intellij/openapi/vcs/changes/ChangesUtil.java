@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -20,9 +21,13 @@ import java.util.*;
 public class ChangesUtil {
   private ChangesUtil() {}
 
+  @NotNull
   public static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
-    if (revision == null) revision = change.getBeforeRevision();
+    if (revision == null) {
+      revision = change.getBeforeRevision();
+      assert revision != null;
+    }
 
     return revision.getFile();
   }

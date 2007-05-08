@@ -118,7 +118,14 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       final Set<FilePath> filePaths = new HashSet<FilePath>();
       for(CommittedChangeList changeList: changeLists) {
         for(Change change: changeList.getChanges()) {
-          filePaths.add(ChangesUtil.getFilePath(change).getParentPath());
+          final FilePath filePath = ChangesUtil.getFilePath(change);
+          final FilePath parentPath = filePath.getParentPath();
+          if (parentPath == null) {
+            filePaths.add(filePath);
+          }
+          else {
+            filePaths.add(parentPath);
+          }
         }
       }
       final TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
