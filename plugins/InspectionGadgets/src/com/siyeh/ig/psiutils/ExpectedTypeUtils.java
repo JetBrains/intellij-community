@@ -331,6 +331,13 @@ public class ExpectedTypeUtils{
             if(parent instanceof PsiCallExpression){
                 final PsiCallExpression call = (PsiCallExpression) parent;
                 return call.resolveMethodGenerics();
+            } else if (parent instanceof PsiAnonymousClass) {
+                final PsiElement grandParent = parent.getParent();
+                if (grandParent instanceof PsiCallExpression){
+                    final PsiCallExpression callExpression =
+                            (PsiCallExpression)grandParent;
+                    return callExpression.resolveMethodGenerics();
+                }
             }
             return JavaResolveResult.EMPTY;
         }
