@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
@@ -216,7 +217,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiClass[] getSupers() {
-    return PsiClass.EMPTY_ARRAY;
+    PsiClassType[] superTypes = getSuperTypes();
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    for (PsiClassType superType : superTypes) {
+      PsiClass superClass = superType.resolve();
+      if (superClass != null) {
+        result.add(superClass);
+      }
+    }
+
+    return result.toArray(new PsiClass[result.size()]);
   }
 
   @NotNull
@@ -382,7 +392,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
-    return false;
+    return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
