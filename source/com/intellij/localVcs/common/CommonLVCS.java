@@ -459,7 +459,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized LvcsAction startAction(String action, String path, boolean isExternalChanges) {
     if (!isOldLvcsEnabled()) {
-      return new LvcsActionImpl(null, action, -1, null);
+      return new LvcsActionImpl(this, action, -1, null);
     }
 
     if (action == null) return LvcsAction.EMPTY;
