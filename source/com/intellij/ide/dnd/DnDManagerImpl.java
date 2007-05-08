@@ -98,13 +98,23 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   public void unregisterSource(DnDSource source, JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
 
-    _dispose();
+    cleanup();
   }
 
-  private void _dispose() {
-    myLastProcessedOverComponent = null;
-    myCurrentDragContext = null;
-    myCurrentEvent = null;
+  private void cleanup() {
+    Runnable cleanup = new Runnable() {
+      public void run() {
+        myLastProcessedOverComponent = null;
+        myCurrentDragContext = null;
+        myCurrentEvent = null;
+      }
+    };
+
+    if (myApp.isDispatchThread()) {
+      cleanup.run();
+    } else {
+      SwingUtilities.invokeLater(cleanup);
+    }
   }
 
   public void registerTarget(DnDTarget target, JComponent component) {
@@ -117,7 +127,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
 
-    _dispose();
+    cleanup();
   }
 
   private void updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction) {
