@@ -494,6 +494,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean hasSubstep(final ActionItem selectedValue) {
+      if (selectedValue == null) return false;
       return selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
     }
 
