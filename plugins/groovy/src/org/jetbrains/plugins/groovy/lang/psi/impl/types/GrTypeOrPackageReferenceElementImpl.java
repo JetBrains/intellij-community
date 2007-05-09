@@ -219,7 +219,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
   private static MyResolver RESOLVER = new MyResolver();
 
-  public GroovyResolveResult advanceResolve() {
+  public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }

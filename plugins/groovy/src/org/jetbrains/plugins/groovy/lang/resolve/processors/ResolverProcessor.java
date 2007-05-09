@@ -20,9 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.EnumSet;
+import java.util.*;
 
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -36,7 +34,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   private EnumSet<ResolveKind> myResolveTargetKinds;
   private PsiElement myPlace;
 
-  private List<GroovyResolveResult> myCandidates = new ArrayList<GroovyResolveResult>();
+  private Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
 
   public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, PsiElement place) {
     myName = name;

@@ -29,5 +29,5 @@ public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantRefe
 
   PsiElement resolve();
 
-  GroovyResolveResult advanceResolve();
+  GroovyResolveResult advancedResolve();
 }

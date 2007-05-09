@@ -28,4 +28,23 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   public boolean isValidResult() {
     return isAccessible();
   }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GroovyResolveResultImpl that = (GroovyResolveResultImpl) o;
+
+    if (myIsAccessible != that.myIsAccessible) return false;
+    if (!myElement.equals(that.myElement)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myElement.hashCode();
+    result = 31 * result + (myIsAccessible ? 1 : 0);
+    return result;
+  }
 }

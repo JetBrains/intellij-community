@@ -55,16 +55,16 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
-    GroovyResolveResult resolveResult = refExpr.advanceResolve();
+    GroovyResolveResult resolveResult = refExpr.advancedResolve();
     if (resolveResult.getElement() != null && !resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
-      holder.createErrorAnnotation(refExpr, message);
+      holder.createWarningAnnotation(refExpr, message);
     }
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
     if (refElement.getReferenceName() != null) {
-      GroovyResolveResult resolveResult = refElement.advanceResolve();
+      GroovyResolveResult resolveResult = refElement.advancedResolve();
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
         String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());

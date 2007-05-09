@@ -137,7 +137,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return findChildByClass(GrExpression.class);
   }
 
-  public GroovyResolveResult advanceResolve() {
+  public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
