@@ -1,5 +1,8 @@
 package com.siyeh.igtest.style;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Hashtable;
 
 final public class MissortedModifiersInspection
@@ -29,4 +32,14 @@ final public class MissortedModifiersInspection
        protected final static String C = "c";
        protected final static String D = "d";
     }
+
+    //@Type(type = "org.joda.time.contrib.hibernate.PersistentYearMonthDay")
+    //@Column(name = "current_month")
+    final
+    public
+    @Nullable
+    // commment
+    @NotNull
+    int //@Temporal(TemporalType.DATE)
+    x() {return -1;}
 }

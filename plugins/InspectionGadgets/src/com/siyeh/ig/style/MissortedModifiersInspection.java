@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -78,15 +79,23 @@ public class MissortedModifiersInspection extends BaseInspection {
             final List<String> modifiers = new ArrayList<String>();
             final PsiElement[] children = modifierList.getChildren();
             for (final PsiElement child : children) {
-                if (child instanceof PsiJavaToken) {
+                if (child instanceof PsiComment) {
+                    final PsiComment comment = (PsiComment)child;
+                    final IElementType tokenType = comment.getTokenType();
+                    if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
+                        @NonNls final String text = child.getText() + '\n';
+                        modifiers.add(text);
+                    } else {
+                        modifiers.add(child.getText());
+                    }
+                } else if (child instanceof PsiJavaToken) {
                     modifiers.add(child.getText());
-                }
-                if (child instanceof PsiAnnotation) {
+                } else if (child instanceof PsiAnnotation) {
                     modifiers.add(0, child.getText());
                 }
             }
             Collections.sort(modifiers, new ModifierComparator());
-            @NonNls final StringBuffer buffer = new StringBuffer();
+            @NonNls final StringBuilder buffer = new StringBuilder();
             for (String modifier : modifiers) {
                 buffer.append(modifier);
                 buffer.append(' ');
