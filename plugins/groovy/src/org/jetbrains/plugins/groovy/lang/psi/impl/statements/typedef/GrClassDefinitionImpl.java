@@ -32,19 +32,7 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
     super(node);
   }
 
-
-
   public String toString() {
     return "Class definition";
-  }
-
-  @Nullable
-  public GrExtendsClause getExtendsClause() {
-    return findChildByClass(GrExtendsClause.class);
-  }
-
-  @Nullable
-  public GrImplementsClause getImplementsClause() {
-    return findChildByClass(GrImplementsClause.class);
   }
 }

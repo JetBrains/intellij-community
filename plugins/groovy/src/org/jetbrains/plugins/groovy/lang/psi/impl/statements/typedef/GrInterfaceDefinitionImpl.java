@@ -38,9 +38,4 @@ public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements G
   public boolean isInterface() {
     return true;
   }
-
-  @Nullable
-  public GrImplementsClause getImplementsClause() {
-    return findChildByClass(GrImplementsClause.class);
-  }
 }

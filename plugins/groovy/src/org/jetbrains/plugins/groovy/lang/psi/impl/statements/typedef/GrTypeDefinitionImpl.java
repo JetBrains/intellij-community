@@ -119,13 +119,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
-  GrExtendsClause getExtendsClause() {
-    return null;
+  public GrExtendsClause getExtendsClause() {
+    return findChildByClass(GrExtendsClause.class);
   }
 
   @Nullable
-  GrImplementsClause getImplementsClause() {
-    return null;
+  public GrImplementsClause getImplementsClause() {
+    return findChildByClass(GrImplementsClause.class);
   }
 
   @NotNull
