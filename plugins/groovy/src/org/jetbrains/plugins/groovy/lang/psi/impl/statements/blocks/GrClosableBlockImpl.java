@@ -37,6 +37,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+
     for (final GrParameter parameter : getParameters()) {
       if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
