@@ -2,8 +2,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -11,10 +11,12 @@ import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.util.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -30,6 +32,7 @@ import java.util.*;
  */
 public class FileReferenceSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
+
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
 
@@ -37,19 +40,17 @@ public class FileReferenceSet {
   private PsiElement myElement;
   private final int myStartInElement;
   @NotNull private final ReferenceType myType;
-  private final PsiReferenceProvider myProvider;
   private boolean myCaseSensitive;
-  private String myPathString;
+  private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
 
-  private static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
+  public static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
 
   public boolean isEndingSlashNotAllowed() {
     return myEndingSlashNotAllowed;
   }
 
   private final boolean myEndingSlashNotAllowed;
-  private final boolean myUseIncludingJspFileAsContext;
 
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>>(PsiBundle.message("default.path.evaluator.option"));
@@ -85,7 +86,7 @@ public class FileReferenceSet {
       text = helper.trimUrl(text);
     }
 
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed, true) {
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed) {
       protected boolean isSoft() {
         return soft;
       }
@@ -98,7 +99,7 @@ public class FileReferenceSet {
                           int startInElement,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
-    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true, false);
+    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true);
   }
 
   public FileReferenceSet(String str,
@@ -107,7 +108,7 @@ public class FileReferenceSet {
                           @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
-    this(str, element, startInElement, type, provider, isCaseSensitive, true, false);
+    this(str, element, startInElement, type, provider, isCaseSensitive, true);
   }
 
   public FileReferenceSet(@NotNull String str,
@@ -116,16 +117,13 @@ public class FileReferenceSet {
                           @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
-                          boolean endingSlashNotAllowed,
-                          boolean useIncludingJspFileAsContext) {
+                          boolean endingSlashNotAllowed) {
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
-    myProvider = provider;
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
     myEndingSlashNotAllowed = endingSlashNotAllowed;
-    myUseIncludingJspFileAsContext = useIncludingJspFileAsContext;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
 
     reparse(str);
@@ -154,15 +152,11 @@ public class FileReferenceSet {
     return myStartInElement;
   }
 
-  PsiReferenceProvider getProvider() {
-    return myProvider;
-  }
-
   protected FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new FileReference(this, range, index, text);
   }
 
-  protected void reparse(String str) {
+  private void reparse(String str) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
     // skip white space
     int currentSlash = -1;
@@ -223,12 +217,7 @@ public class FileReferenceSet {
 
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
-    PsiFile file = myElement.getContainingFile();
-    if (file == null) {
-      LOG.assertTrue(false, "Invalid element: " + myElement);
-    }
-
-    if (!file.isPhysical()) file = file.getOriginalFile();
+    final PsiFile file = getContainingFile();
     if (file == null) return Collections.emptyList();
     
     if (myOptions != null) {
@@ -239,41 +228,44 @@ public class FileReferenceSet {
         return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
       }
     }
-
     if (isAbsolutePathReference()) {
       return ContainerUtil.createMaybeSingletonList(getAbsoluteTopLevelDirLocation(file));
     }
-    final Project project = myElement.getProject();
-    if (myUseIncludingJspFileAsContext) {
-        final JspContextManager manager = JspContextManager.getInstance(project);
-        if (manager != null) {
-          Set<PsiFile> visited = new HashSet<PsiFile>();
-          while (true) {
-            visited.add(file);
-            JspFile contextFile = manager.getContextFile(file);
-            if (contextFile == null || visited.contains(contextFile)) {
-              break;
-            }
-            file = contextFile;
-          }
-        }
-    }
 
-    final PsiFile fileToGetContext = file;
-    final CachedValueProvider<Collection<PsiFileSystemItem>> provider = new CachedValueProvider<Collection<PsiFileSystemItem>>() {
+    final CachedValueProvider<Collection<PsiFileSystemItem>> myDefaultContextProvider = new CachedValueProvider<Collection<PsiFileSystemItem>>() {
       public Result<Collection<PsiFileSystemItem>> compute() {
-        return Result.createSingleDependency(getContextByFile(fileToGetContext), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.createSingleDependency(getContextByFile(file), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     };
     final CachedValuesManager cachedValuesManager = PsiManager.getInstance(myElement.getProject()).getCachedValuesManager();
     final Collection<PsiFileSystemItem> value =
-      cachedValuesManager.getCachedValue(fileToGetContext, DEFAULT_CONTEXTS_KEY, provider, false);
+      cachedValuesManager.getCachedValue(file, DEFAULT_CONTEXTS_KEY, myDefaultContextProvider, false);
     assert value != null;
     return value;
   }
 
-  private static Collection<PsiFileSystemItem> getContextByFile(final PsiFile file) {
+  @Nullable
+  private PsiFile getContainingFile() {
+    PsiFile file = myElement.getContainingFile();
+    if (file == null) {
+      LOG.assertTrue(false, "Invalid element: " + myElement);
+    }
+
+    if (!file.isPhysical()) file = file.getOriginalFile();
+    return file;
+  }
+
+  private Collection<PsiFileSystemItem> getContextByFile(final PsiFile file) {
+
+
     final Project project = file.getProject();
+    final JspContextManager manager = JspContextManager.getInstance(project);
+    if (manager != null) {
+      final PsiFileSystemItem item = manager.getContextFolder(file);
+      if (item != null) {
+        return Collections.singleton(item);
+      }
+    }
     PsiFileSystemItem result = null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
@@ -299,7 +291,7 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final PsiFile file) {
+  public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final @NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
 
