@@ -1493,6 +1493,8 @@
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
         icon="/vcs/refresh.png"/>
       <reference ref="CommittedChanges.Details"/>
+      <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
+        icon="/actions/get.png"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
