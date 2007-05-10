@@ -540,7 +540,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
       context.addMessage(
           CompilerMessageCategory.ERROR,
-          GroovyBundle.message("Class") + " " + myFile.getName() + " " + GroovyBundle.message("already.exist"),
+          GroovyBundle.message("class.already.exists", myFile.getName()),
           url,
           -1,
           -1);
