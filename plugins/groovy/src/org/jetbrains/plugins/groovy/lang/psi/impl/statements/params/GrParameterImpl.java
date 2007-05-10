@@ -50,9 +50,7 @@ public class GrParameterImpl extends GroovyPsiElementImpl implements GrParameter
 
   @NotNull
   public String getName() {
-    PsiElement nameElement = getNameIdentifierGroovy();
-    assert nameElement != null;
-    return nameElement.getText();
+    return getNameIdentifierGroovy().getText();
   }
 
   @NotNull
