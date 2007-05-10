@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -135,11 +136,7 @@ public class VariableDefinitions implements GroovyElementTypes {
             isManyDef = true;
           }
 
-          if (isManyDef) {
-            return VARIABLE_DEFINITION;
-          } else {
-            return IDENTIFIER;
-          }
+          return VARIABLE_DEFINITION;
 
 //          return VARIABLE_DEFINITION_OR_METHOD_CALL;
         }
