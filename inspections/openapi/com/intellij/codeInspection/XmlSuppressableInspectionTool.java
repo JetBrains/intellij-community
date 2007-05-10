@@ -69,15 +69,15 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
     return text.contains(SUPPRESS_PREFIX) && (ArrayUtil.find(parts, getID()) != -1 || ArrayUtil.find(parts, ALL) != -1);
   }
 
-  private void suppress(PsiFile file, @Nullable XmlTag rootTag, final boolean firstLine) {
-    suppress(file, rootTag, firstLine, SUPPRESS_PREFIX + getID() + SUPPRESS_SUFFIX, new Function<String, String>() {
+  private void suppress(PsiFile file, @Nullable XmlTag rootTag) {
+    suppress(file, rootTag, SUPPRESS_PREFIX + getID() + SUPPRESS_SUFFIX, new Function<String, String>() {
       public String fun(final String text) {
         return text.replaceAll(SUPPRESS_SUFFIX, ", " + getID() + SUPPRESS_SUFFIX);
       }
     });
   }
 
-  private static void suppress(PsiFile file, @Nullable XmlTag rootTag, boolean firstLine, String suppressComment, Function<String, String> replace) {
+  private static void suppress(PsiFile file, @Nullable XmlTag rootTag, String suppressComment, Function<String, String> replace) {
     final Project project = file.getProject();
     if (ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
@@ -100,10 +100,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
       leaf = leaf.getPrevSibling();
     }
 
-    int offset = 0;
-    if (!firstLine && rootTag != null) {
-      offset = rootTag.getTextRange().getStartOffset();
-    }
+    final int offset = rootTag != null ? rootTag.getTextRange().getStartOffset() : 0;
     doc.insertString(offset, suppressComment);
     CodeStyleManager.getInstance(project).adjustLineIndent(doc, offset + suppressComment.length());
     UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
@@ -131,7 +128,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
     }
 
     public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      suppress(file, myTag, false);
+      suppress(file, myTag);
     }
 
     public boolean startInWriteAction() {
@@ -157,7 +154,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
 
     public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
       final XmlDocument document = ((XmlFile)file).getDocument();
-      suppress(file, document != null ? document.getRootTag() : null, true);
+      suppress(file, document != null ? document.getRootTag() : null);
     }
 
     public boolean startInWriteAction() {
@@ -184,7 +181,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
       final XmlDocument document = ((XmlFile)file).getDocument();
       final XmlTag rootTag = document != null ? document.getRootTag() : null;
       final String suppressComment = SUPPRESS_PREFIX + ALL + SUPPRESS_SUFFIX;
-      suppress(file, rootTag, true, suppressComment, new Function<String, String>() {
+      suppress(file, rootTag, suppressComment, new Function<String, String>() {
         public String fun(final String s) {
           return s.substring(0, s.indexOf(SUPPRESS_PREFIX)) + suppressComment;
         }
