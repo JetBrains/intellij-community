@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
@@ -97,7 +98,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private Kind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrMethodCall) {
+    if (parent instanceof GrMethodCall || parent instanceof GrApplicationExpression) {
       return METHOD;
     } else if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
       return TYPE_OR_PROPERTY;

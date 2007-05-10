@@ -17,19 +17,24 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrCallExpressionImpl extends GroovyPsiElementImpl implements GrCallExpression {
+public class GrApplicationExpressionImpl extends GroovyPsiElementImpl implements GrApplicationExpression {
 
-  public GrCallExpressionImpl(@NotNull ASTNode node) {
+  public GrApplicationExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Call expression";
+  }
+
+  public GrExpression getFunExpression() {
+    return findChildByClass(GrExpression.class);
   }
 }
