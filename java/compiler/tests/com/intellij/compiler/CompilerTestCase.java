@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Jeka
@@ -49,6 +50,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected final Set<String> myDeletedPaths = new HashSet<String>();
   protected final Set<String> myRecompiledPaths = new HashSet<String>();
   protected VirtualFile myModuleRoot;
+  private boolean myUsedMakeToCompile = false;
 
   protected CompilerTestCase(String groupName) {
     myDataRootPath = PathManagerEx.getTestDataPath() + "/compiler/" + groupName;
@@ -81,6 +83,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
         try {
+          myUsedMakeToCompile = false;
           CompilerTestCase.super.setUp();
           //((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
         }
@@ -144,7 +147,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     Thread.sleep(5);
 
     //System.out.println("\n\n=====================SECOND PASS===============================\n\n");
-
+    final AtomicBoolean upToDateStatus = new AtomicBoolean(false);
+    
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         //long start = System.currentTimeMillis();
@@ -164,6 +168,10 @@ public abstract class CompilerTestCase extends ModuleTestCase {
             throw ex[0];
           }
           up();
+          
+          final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+          upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
+          
           doCompile(new CompileStatusNotification() {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
@@ -220,7 +228,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }, ModalityState.NON_MODAL);
 
     waitFor();
-    checkResults();
+    checkResults(upToDateStatus.get());
   }
 
   protected void copyTestProjectFiles(VirtualFileFilter filter) throws Exception {
@@ -238,19 +246,26 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   // override this in order to change the compilation kind
   protected void doCompile(final CompileStatusNotification notification, int pass) {
+    myUsedMakeToCompile = true;
     CompilerManager.getInstance(myProject).make(notification);
   }
 
-  private void checkResults() {
+  private void checkResults(final boolean upToDateStatus) {
 
     final String[] deleted = myData.getDeletedByMake();
+    final String[] recompiled = myData.getToRecompile();
+
+    if (myUsedMakeToCompile) {
+      final boolean expectedUpToDate = deleted.length == 0 && recompiled.length == 0;
+      assertEquals("Up-to-date check error: ", expectedUpToDate, upToDateStatus);
+    }
+
     final String deletedPathsString = buildPathsMessage(myDeletedPaths);
     for (final String path : deleted) {
       assertTrue("file \"" + path + "\" should be deleted. | Reported as deleted:" + deletedPathsString, isDeleted(path));
     }
     assertEquals(deleted.length, getDeletedCount());
 
-    final String[] recompiled = myData.getToRecompile();
     final String recompiledpathsString = buildPathsMessage(myRecompiledPaths);
     for (final String path : recompiled) {
       assertTrue("file \"" + path + "\" should be recompiled | Reported as recompiled:" + recompiledpathsString, isRecompiled(path));
