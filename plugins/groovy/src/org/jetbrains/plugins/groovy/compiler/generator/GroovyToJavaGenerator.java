@@ -15,7 +15,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.FinalWrapper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import com.intellij.openapi.util.Computable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -66,14 +66,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     for (VirtualFile file : files) {
       final GroovyFile myPsiFile = findPsiFile(file);
 
-      final FinalWrapper<GrTopStatement[]> statementsWrapper = new FinalWrapper<GrTopStatement[]>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          statementsWrapper.myValue = myPsiFile.getTopStatements();
+      GrTopStatement[] statements = ApplicationManager.getApplication().runReadAction(new Computable<GrTopStatement[]>() {
+        public GrTopStatement[] compute() {
+          return myPsiFile.getTopStatements();
         }
       });
 
-      GrTopStatement[] statements = statementsWrapper.myValue;
 
       boolean needCreateTopLevelClass = !needsCreateClassFromFileName(statements);
 
@@ -87,14 +85,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
         generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", context.getModuleByFile(virtualFile), new TimestampValidityState(file.getTimeStamp())));
       }
 
-      final FinalWrapper<GrTypeDefinition[]> typeDefWrapper = new FinalWrapper<GrTypeDefinition[]>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          typeDefWrapper.myValue = myPsiFile.getTypeDefinitions();
+      GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
+        public GrTypeDefinition[] compute() {
+          return myPsiFile.getTypeDefinitions();
         }
       });
-
-      GrTypeDefinition[] typeDefinitions = typeDefWrapper.myValue;
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
         item = new GenerationItemImpl(getJavaClassPackage(statements) + typeDefinition.getNameIdentifierGroovy().getText() + "." + "java", context.getModuleByFile(file), new TimestampValidityState(file.getTimeStamp()));
@@ -208,14 +203,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       generatedItemsRelativePaths.add(topLevelGeneratedItemPath);
     }
 
-    final FinalWrapper<GrTypeDefinition[]> typeDefWrapper = new FinalWrapper<GrTypeDefinition[]>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        typeDefWrapper.myValue = myPsiFile.getTypeDefinitions();
+    GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
+      public GrTypeDefinition[] compute() {
+        return myPsiFile.getTypeDefinitions();
       }
     });
-
-    GrTypeDefinition[] typeDefinitions = typeDefWrapper.myValue;
 
     String generatedItemPath;
     for (final GrTypeDefinition typeDefinition : typeDefinitions) {
@@ -255,27 +247,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   private GrStatement[] getStatementsInReadAction(final GrTypeDefinition typeDefinition) {
     if (typeDefinition == null) return new GrStatement[0];
 
-    final FinalWrapper<GrStatement[]> statementsWrapper = new FinalWrapper<GrStatement[]>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        statementsWrapper.myValue = typeDefinition.getStatements();
+    return ApplicationManager.getApplication().runReadAction(new Computable<GrStatement[]>() {
+      public GrStatement[] compute() {
+        return typeDefinition.getStatements();
       }
     });
-
-    return statementsWrapper.myValue;
   }
 
   private GrTopStatement[] getTopStatementsInReadAction(final GroovyFile myPsiFile) {
     if (myPsiFile == null) return new GrTopStatement[0];
 
-    final FinalWrapper<GrTopStatement[]> statementsWrapper = new FinalWrapper<GrTopStatement[]>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        statementsWrapper.myValue = myPsiFile.getTopStatements();
+    return ApplicationManager.getApplication().runReadAction(new Computable<GrTopStatement[]>() {
+      public GrTopStatement[] compute() {
+        return myPsiFile.getTopStatements();
       }
     });
-
-    return statementsWrapper.myValue;
   }
 
   private boolean needsCreateClassFromFileName(GrTopStatement[] statements) {
@@ -516,14 +502,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     } else {
       final PsiType type = typeElement.getType();
 
-      final FinalWrapper<String> resolverTypeWrapper = new FinalWrapper<String>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          resolverTypeWrapper.myValue = type.getCanonicalText();
+      String resolvedType = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return type.getCanonicalText();
         }
       });
 
-      String resolvedType = resolverTypeWrapper.myValue;
       methodType = resolvedType == null ? "<dimaskin>" : resolvedType;
     }
 
