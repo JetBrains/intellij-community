@@ -69,6 +69,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public List<VirtualFile> getAllStorageFiles() {
         return Collections.emptyList();
       }
+
+      @Nullable
+      Element getRootElement() throws StateStorageException {
+        if (myElement == null) return null;
+        return super.getRootElement();
+      }
     };
 
     return new StateStorageManager(pathMacroManager, PROJECT) {
@@ -98,4 +104,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
+
+  public void load() throws IOException {
+    if (myElement == null) return;
+    super.load();
+  }
+
 }
