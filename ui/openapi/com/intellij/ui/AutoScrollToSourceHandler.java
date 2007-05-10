@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 public abstract class AutoScrollToSourceHandler {
   private Alarm myAutoScrollAlarm;
@@ -40,6 +41,11 @@ public abstract class AutoScrollToSourceHandler {
         if (location != null) {
           onMouseClicked(tree);
         }
+      }
+    });
+    tree.addMouseMotionListener(new MouseMotionAdapter() {
+      public void mouseDragged(final MouseEvent e) {
+        onSelectionChanged(tree);
       }
     });
     tree.addTreeSelectionListener(
