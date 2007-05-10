@@ -228,6 +228,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    private static final int MAX_VISIBLE_LENGTH = 75;
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
@@ -235,10 +236,21 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
 
         boolean truncated = false;
-        String description = changeList.getName();
+        String description = changeList.getName().trim();
         int pos = description.indexOf("\n");
         if (pos >= 0) {
           description = description.substring(0, pos).trim();
+          truncated = true;
+        }
+        if (description.length() > MAX_VISIBLE_LENGTH) {
+          pos = MAX_VISIBLE_LENGTH;
+          while(pos > 0 && description.charAt(pos) != ' ') {
+            pos--;
+          }
+          if (pos == 0) {
+            pos = MAX_VISIBLE_LENGTH;
+          }
+          description = description.substring(0, pos);
           truncated = true;
         }
         append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
