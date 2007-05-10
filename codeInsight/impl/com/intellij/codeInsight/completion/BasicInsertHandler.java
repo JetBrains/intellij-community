@@ -14,7 +14,7 @@ public class BasicInsertHandler implements InsertHandler {
       LookupItem item,
       boolean signatureSelected,
       char completionChar) {
-    context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - (context.selectionEndOffset - context.startOffset));
+    //context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - (context.selectionEndOffset - context.startOffset));
 
     if (context.identifierEndOffset != context.selectionEndOffset){
       boolean overwrite = completionChar != 0

@@ -71,9 +71,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       .fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset1 =
+    final int offset1 =
       editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    int offset2 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : offset1;
+    final int offset2 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : offset1;
     final CompletionContext context = new CompletionContext(project, editor, file, offset1, offset2);
 
     final LookupData data = getLookupData(context);
@@ -158,11 +158,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
       }
 
-      document.replaceString(offset1 - prefix.length(), offset1, uniqueText);
-      final int offset = offset1 - prefix.length() + uniqueText.length();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
+      insertLookupString(context, offset1, uniqueText, startOffset);
+      context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
       lookupItemSelected(context, startOffset, data, item, false, (char)0);
     }
@@ -190,19 +187,39 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         lookup.addLookupListener(new LookupAdapter() {
           public void itemSelected(LookupEvent event) {
-            int shift = startOffsetMarker.getStartOffset() - startOffset;
-            context.shiftOffsets(shift);
-            context.startOffset += shift;
             LookupItem item = event.getItem();
-            if (item != null) {
-              lookupItemSelected(context, startOffsetMarker.getStartOffset(), data, item,
-                                 settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                                 event.getCompletionChar());
-            }
+            if (item == null) return;
+
+            selectLookupItem(item, settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
+                             event.getCompletionChar(), startOffsetMarker.getStartOffset(), context, data);
+            
           }
         });
       }
     }
+  }
+
+  private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText,
+                                         final int startOffset) {
+    final Editor editor = context.editor;
+    editor.getDocument().replaceString(startOffset, currentOffset, newText);
+    context.shiftOffsets(startOffset + newText.length() - currentOffset);
+    editor.getCaretModel().moveToOffset(startOffset + newText.length());
+    editor.getSelectionModel().removeSelection();
+  }
+
+  protected final void selectLookupItem(final LookupItem item,
+                                  final boolean signatureSelected,
+                                  final char completionChar,
+                                  final int startOffset,
+                                  final CompletionContext context, final LookupData data) {
+    context.shiftOffsets(context.editor.getCaretModel().getOffset() - context.offset);
+    context.shiftOffsets(startOffset - (context.startOffset - context.getPrefix().length()));
+    insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString(), startOffset);
+    final int caretOffset = context.editor.getCaretModel().getOffset();
+    context.selectionEndOffset = caretOffset;
+    context.identifierEndOffset = Math.max(caretOffset, context.identifierEndOffset);
+    lookupItemSelected(context, startOffset, data, item, signatureSelected, completionChar);
   }
 
   private static String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor) {
@@ -398,10 +415,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Editor editor = context.editor;
 
     LOG.assertTrue(lookupData.items.length == 0);
-    if (lookupData.prefix == null) {
-//      Toolkit.getDefaultToolkit().beep();
-    }
-    else {
+    if (lookupData.prefix != null) {
       HintManager.getInstance().showErrorHint(editor, CompletionBundle.message("completion.no.suggestions"));
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);

@@ -105,8 +105,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private boolean handleInsertInner(CompletionContext context,
-                           int startOffset, LookupData data, LookupItem item,
-                           final boolean signatureSelected, final char completionChar) {
+                                    int startOffset, LookupData data, LookupItem item,
+                                    final boolean signatureSelected, final char completionChar) {
 
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     PsiDocumentManager.getInstance(context.project).commitDocument(context.editor.getDocument());
@@ -121,20 +121,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myDocument = myEditor.getDocument();
 
     if (isTemplateToBeCompleted(myLookupItem)){
-        handleTemplate(startOffset, signatureSelected, completionChar);
+      handleTemplate(startOffset, signatureSelected, completionChar);
       // we could not clear in this case since handleTemplate has templateFinished lisntener that works
       // with e.g. myLookupItem
-        return false;
+      return false;
     }
 
     TailType tailType = getTailType(completionChar);
 
-    adjustContextAfterLookupStringInsertion();
+    //adjustContextAfterLookupStringInsertion();
     myState = new InsertHandlerState(myContext.selectionEndOffset, myContext.selectionEndOffset);
 
     final boolean overwrite = completionChar != 0
-      ? completionChar == Lookup.REPLACE_SELECT_CHAR
-      : myLookupItem.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+                              ? completionChar == Lookup.REPLACE_SELECT_CHAR
+                              : myLookupItem.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
 
 
     final boolean needLeftParenth = isToInsertParenth(tailType);
@@ -158,8 +158,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
 
     myState.caretOffset = processTail(tailType, myState.caretOffset, myState.tailOffset);
-
-    myEditor.getCaretModel().moveToOffset(myState.caretOffset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
 
@@ -218,11 +216,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static boolean isTemplateToBeCompleted(final LookupItem lookupItem) {
     return lookupItem.getObject() instanceof Template
            && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
-  }
-
-  private void adjustContextAfterLookupStringInsertion(){
-    // Handling lookup auto insert
-    myContext.shiftOffsets(myLookupItem.getLookupString().length() - myContext.getPrefix().length() - (myContext.selectionEndOffset - myContext.startOffset));
   }
 
   private void handleBrackets(){
@@ -453,15 +446,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
           if (!offsetRangeMarker.isValid()) return;
 
-          final int offset = offsetRangeMarker.getStartOffset();
-
-          String lookupString =
-              myContext.editor.getDocument().getCharsSequence().subSequence(
-              offset,
-              myContext.editor.getCaretModel().getOffset()).toString();
+          final Editor editor = myContext.editor;
+          final int startOffset = offsetRangeMarker.getStartOffset();
+          final int endOffset = editor.getCaretModel().getOffset();
+          String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
           myLookupItem.setLookupString(lookupString);
 
-          CompletionContext newContext = new CompletionContext(myContext.project, myContext.editor, myContext.file, offset, offset);
+          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, startOffset, endOffset);
           handleInsert(newContext, myStartOffset, myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }
@@ -494,46 +485,46 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
     final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run(){
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-              PsiElement element = pointer.getElement();
-              if (element == null) return;
+      public void run(){
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+            PsiElement element = pointer.getElement();
+            if (element == null) return;
 
-              while(true){
-                if (element instanceof PsiFile) return;
-                PsiElement parent = element.getParent();
-                if (parent instanceof PsiAnonymousClass) break;
-                element = parent;
-              }
-              final PsiAnonymousClass aClass = (PsiAnonymousClass)element.getParent();
-
-              final CandidateInfo[] candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
-              boolean invokeOverride = candidatesToImplement.length == 0;
-              if (invokeOverride){
-                chooseAndOverrideMethodsInAdapter(myProject, myEditor, aClass);
-              }
-              else{
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    try{
-                      PsiGenerationInfo[] prototypes = OverrideImplementUtil.convert2GenerationInfos(OverrideImplementUtil.overrideOrImplementMethods(aClass, candidatesToImplement, false, false));
-                      PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                      GenerateMembersUtil.positionCaret(myEditor, resultMembers[0].getPsiMember(), true);
-                    }
-                    catch(IncorrectOperationException ioe){
-                      LOG.error(ioe);
-                    }
-                  }
-                });
-              }
-
-              clear();
+            while(true){
+              if (element instanceof PsiFile) return;
+              PsiElement parent = element.getParent();
+              if (parent instanceof PsiAnonymousClass) break;
+              element = parent;
             }
-          }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null);
-        }
-      });
+            final PsiAnonymousClass aClass = (PsiAnonymousClass)element.getParent();
+
+            final CandidateInfo[] candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
+            boolean invokeOverride = candidatesToImplement.length == 0;
+            if (invokeOverride){
+              chooseAndOverrideMethodsInAdapter(myProject, myEditor, aClass);
+            }
+            else{
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  try{
+                    PsiGenerationInfo[] prototypes = OverrideImplementUtil.convert2GenerationInfos(OverrideImplementUtil.overrideOrImplementMethods(aClass, candidatesToImplement, false, false));
+                    PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                    GenerateMembersUtil.positionCaret(myEditor, resultMembers[0].getPsiMember(), true);
+                  }
+                  catch(IncorrectOperationException ioe){
+                    LOG.error(ioe);
+                  }
+                }
+              });
+            }
+
+            clear();
+          }
+        }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null);
+      }
+    });
   }
 
   private static void chooseAndOverrideMethodsInAdapter(final Project project, final Editor editor, final PsiAnonymousClass aClass) {
@@ -564,17 +555,18 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       PsiMethodMember[] selectedArray = selected.toArray(new PsiMethodMember[selected.size()]);
       final PsiGenerationInfo<PsiMethod>[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedArray, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
-      for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
-        PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
-        if (statements.length > 0 && prototype.getPsiMember().getReturnType() == PsiType.VOID) {
-          statements[0].delete(); // remove "super(..)" call
-        }
-      }
-
       final int offset = editor.getCaretModel().getOffset();
+
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try{
+            for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
+              PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
+              if (statements.length > 0 && prototype.getPsiMember().getReturnType() == PsiType.VOID) {
+                statements[0].delete(); // remove "super(..)" call
+              }
+            }
+
             PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
             GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), true);
           }
