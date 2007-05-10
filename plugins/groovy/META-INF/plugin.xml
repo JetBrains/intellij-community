@@ -92,7 +92,7 @@
   <description>Plugin for Groovy language support</description>
   <version>0.01</version>
   <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="6727"/>
+  <idea-version since-build="6951"/>
 
   <application-components>
     <component>
