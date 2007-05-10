@@ -1,11 +1,12 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -28,7 +29,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.Tree;
-import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +53,8 @@ import java.util.Set;
  * @author max
  */
 public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource, CopyProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesListView");
+
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
@@ -360,9 +362,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public void performCopy(DataContext dataContext) {
-    if (SwingUtilities2.canAccessSystemClipboard()) {
+    try {
       final Clipboard clipboard = getToolkit().getSystemClipboard();
       getTransferHandler().exportToClipboard(this, clipboard, TransferHandler.COPY);
+    }
+    catch(Exception ex) {
+      // probably don't have clipboard access or something
+      LOG.info(ex);
     }
   }
 
