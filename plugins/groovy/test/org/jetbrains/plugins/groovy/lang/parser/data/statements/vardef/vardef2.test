@@ -1,14 +1,13 @@
 Map i+i
 -----
 Groovy script
-  Call expression
-    Reference expression
-      PsiElement(identifier)('Map')
+  Variable definitions
+    Type element
+      Reference element
+        PsiElement(identifier)('Map')
     PsiWhiteSpace(' ')
-    Command arguments
-      Additive expression
-        Reference expression
-          PsiElement(identifier)('i')
-        PsiElement(+)('+')
-        Reference expression
-          PsiElement(identifier)('i')
+    Variable
+      PsiElement(identifier)('i')
+  PsiErrorElement:';' or new line expected
+    PsiElement(+)('+')
+    PsiElement(identifier)('i')

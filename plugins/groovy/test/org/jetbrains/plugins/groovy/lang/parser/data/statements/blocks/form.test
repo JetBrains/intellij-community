@@ -1,0 +1,10 @@
+package
+
+
+-----
+Groovy script
+  Package definition
+    PsiElement(package)('package')
+    PsiErrorElement:Identifier expected
+      <empty list>
+  PsiElement(new line)('\n\n')

@@ -16,13 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import com.intellij.psi.PsiPolyVariantReference;
 
 /**
  * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNested {
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement {
   GrExpression getQualifierExpression();
 }

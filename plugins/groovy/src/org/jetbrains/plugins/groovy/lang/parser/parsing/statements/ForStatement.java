@@ -78,6 +78,7 @@ public class ForStatement implements GroovyElementTypes {
   }
 
   private static GroovyElementType forClauseParse(PsiBuilder builder) {
+    ParserUtils.getToken(builder, mNLS);
     GroovyElementType result = forInClauseParse(builder);
     if (!WRONGWAY.equals(result)) {
       return result;

@@ -215,7 +215,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //Paths
     if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
-    if (elem.equals(PATH_CLASS_ACCESS)) return new GrClassObjectAccessExprImpl(node);
     if (elem.equals(PATH_PROPERTY_REFERENCE)) return new GrPropertySelectionImpl(node);
     if (elem.equals(PATH_METHOD_CALL)) return new GrMethodCallImpl(node);
     if (elem.equals(PATH_INDEX_PROPERTY)) return new GrIndexPropertyImpl(node);

@@ -18,7 +18,8 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         In clause
-          PsiElement(identifier)('i')
+          Variable
+            PsiElement(identifier)('i')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')
           PsiWhiteSpace(' ')

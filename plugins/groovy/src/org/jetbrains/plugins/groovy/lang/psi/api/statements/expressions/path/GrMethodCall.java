@@ -15,11 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrNested;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public interface GrMethodCall extends GrExpression, GrNested {
+public interface GrMethodCall extends GrExpression {
 }
