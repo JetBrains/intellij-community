@@ -176,20 +176,27 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement);
-      boolean hasBadResolve = false;
-      boolean hasDomValueReference = false;
+      GenericDomValueReference domReference = null;
       for (final PsiReference reference : psiReferences) {
-        hasDomValueReference = hasDomValueReference || reference instanceof GenericDomValueReference;
-        if (hasBadResolve(element, reference)) {
-          hasBadResolve = true;
-          list.add(holder.createResolveProblem(element, reference));
+        if (reference instanceof GenericDomValueReference) {
+          domReference = (GenericDomValueReference)reference;
+          break;
         }
       }
-      if (!hasBadResolve && !hasDomValueReference && element.getConverter() instanceof ResolvingConverter) {
-        final GenericDomValueReference reference = new GenericDomValueReference(element);
-        if (hasBadResolve(element, reference)) {
+      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(element, domReference);
+      boolean hasBadResolve = false;
+      if (!domReferenceResolveOK) {
+        for (final PsiReference reference : psiReferences) {
+          if (reference != domReference && hasBadResolve(element, reference)) {
+            hasBadResolve = true;
+            list.add(holder.createResolveProblem(element, reference));
+          }
+        }
+        if (!hasBadResolve &&
+            (domReference != null || element.getConverter() instanceof ResolvingConverter &&
+                                                      hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
-          list.add(holder.createResolveProblem(element, reference));
+          list.add(holder.createResolveProblem(element, domReference));
         }
       }
       if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null) {
