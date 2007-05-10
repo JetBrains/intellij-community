@@ -33,8 +33,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
  */
-public class GrVariableDefinitionsImpl extends GroovyPsiElementImpl implements GrVariableDeclarations {
-  public GrVariableDefinitionsImpl(@NotNull ASTNode node) {
+public class GrVariableDeclarationsImpl extends GroovyPsiElementImpl implements GrVariableDeclarations {
+  public GrVariableDeclarationsImpl(@NotNull ASTNode node) {
     super(node);
   }
 

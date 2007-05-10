@@ -122,7 +122,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
-      return new GrVariableDefinitionsImpl(node);
+      return new GrVariableDeclarationsImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
 //    if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
 
