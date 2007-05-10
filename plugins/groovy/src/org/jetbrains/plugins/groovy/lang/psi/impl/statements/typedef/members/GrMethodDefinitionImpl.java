@@ -173,6 +173,13 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   @NotNull
   public String getName() {
     PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
+    if (nameElement == null) {
+      nameElement = findChildByType(GroovyTokenTypes.mSTRING_LITERAL);
+    }
+    if (nameElement == null) {
+      nameElement = findChildByType(GroovyTokenTypes.mGSTRING_LITERAL);
+    }
+
     assert nameElement != null;
     return nameElement.getText();
   }
