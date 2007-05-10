@@ -157,11 +157,13 @@ public class FrameDebuggerTree extends DebuggerTree {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
 
+    final int lastLine = doc.getLineCount() - 1;
+    
     int startLine = Math.max(0, line - 1);
+    startLine = Math.min(startLine, lastLine);
     while (startLine > 0 && isLineEmpty(doc, startLine)) startLine--;
     final int startOffset = doc.getLineStartOffset(startLine);
 
-    final int lastLine = doc.getLineCount() - 1;
     int endLine = Math.min(line + 2, lastLine);
     while (endLine < lastLine && isLineEmpty(doc, endLine)) endLine++;
     final int endOffset = doc.getLineEndOffset(endLine);
