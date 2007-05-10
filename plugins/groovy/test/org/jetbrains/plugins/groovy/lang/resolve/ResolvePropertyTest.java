@@ -44,6 +44,14 @@ public class ResolvePropertyTest extends ResolveTestCase {
     doTest("field2/A.groovy");
   }
 
+  public void testForVariable1() throws Exception {
+    doTest("forVariable1/ForVariable.groovy");
+  }
+
+  public void testForVariable2() throws Exception {
+    doTest("forVariable2/ForVariable.groovy");
+  }
+
   public void testField3() throws Exception {
     GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy");
     GroovyResolveResult resolveResult = ref.advancedResolve();
