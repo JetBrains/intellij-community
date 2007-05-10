@@ -124,16 +124,21 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
-    if (hasNameElement()) {
-      getNameElement().setName(name);
+    try {
+      if (hasNameElement()) {
+        getNameElement().setName(name);
+      }
+      else if (hasIdElement()) {
+        getIdElement().setName(name);
+      }
+      else {
+        super.setName(name);
+      }
+      return this;
     }
-    else if (hasIdElement()) {
-      getIdElement().setName(name);
+    finally {
+      clearCaches();
     }
-    else {
-      super.setName(name);
-    }
-    return this;
   }
 
   public boolean canRename() {

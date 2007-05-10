@@ -11,6 +11,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +38,17 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public AntPropertyImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
+  }
+
+  public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
+    final String oldName = getName();
+    synchronized (PsiLock.LOCK) {
+      final AntProperty element = (AntProperty)super.setName(name);
+      final AntFile antFile = getAntFile();
+      antFile.removeProperty(oldName);
+      antFile.setProperty(name, element);
+      return element;
+    }
   }
 
   public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {

@@ -459,6 +459,17 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
+  public boolean removeProperty(final String name) {
+    synchronized (PsiLock.LOCK) {
+      if (myProperties != null && myProperties.containsKey(name)) {
+        myProperties.remove(name);
+        myPropertiesArray = null;
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   public AntProperty[] getProperties() {
     synchronized (PsiLock.LOCK) {
