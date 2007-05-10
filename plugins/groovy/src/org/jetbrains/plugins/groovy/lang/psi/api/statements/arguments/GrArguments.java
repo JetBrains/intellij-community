@@ -15,11 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
-import org.jetbrains.plugins.groovy.formatter.models.ContiniousIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
  */
-public interface GrArguments extends GroovyPsiElement, ContiniousIndent {
+public interface GrArguments extends GroovyPsiElement {
 }

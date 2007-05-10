@@ -40,11 +40,11 @@ public class PrimaryExpression implements GroovyElementTypes {
       return PRIMARY_EXPRESSION;
     }
     if (kTHIS.equals(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
+      ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
       return PRIMARY_EXPRESSION;
     }
     if (kSUPER.equals(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
+      ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
       return PRIMARY_EXPRESSION;
     }
     if (kNEW.equals(builder.getTokenType())) {

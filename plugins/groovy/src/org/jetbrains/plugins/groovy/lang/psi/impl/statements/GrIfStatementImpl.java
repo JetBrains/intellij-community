@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -43,18 +44,25 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
-  public GrStatement getThenBranch() {
+  public GroovyPsiElement getThenBranch() {
     GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
     if (statements.length > 1 && (statements[1] instanceof GrStatement)) {
-      return (GrStatement) statements[1];
+      return statements[1];
     }
+    if (statements.length > 1 && (statements[1] instanceof GrOpenBlock)) {
+      return statements[1];
+    }
+
     return null;
   }
 
-  public GrStatement getElseBranch() {
+  public GroovyPsiElement getElseBranch() {
     GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
     if (statements.length == 3 && (statements[2] instanceof GrStatement)) {
-      return (GrStatement) statements[2];
+      return statements[2];
+    }
+    if (statements.length == 3 && (statements[2] instanceof GrOpenBlock)) {
+      return statements[2];
     }
     return null;
   }

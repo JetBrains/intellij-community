@@ -43,7 +43,8 @@ public class Modifiers implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
 
     if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))) {
-      modifiersMarker.rollbackTo();
+      modifiersMarker.done(MODIFIERS);
+      //modifiersMarker.rollbackTo();
       return WRONGWAY;
     }
 

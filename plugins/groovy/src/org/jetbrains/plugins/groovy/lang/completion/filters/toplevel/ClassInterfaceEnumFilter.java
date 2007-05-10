@@ -18,16 +18,25 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author ilyas
  */
-public class ClassInterfaceEnumFilter implements ElementFilter {
+public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTypes {
+
+  private static TokenSet KEYWORDS = TokenSet.create(kCLASS, kINTERFACE, kENUM);
+
+
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
+        !(context.getParent() instanceof GrTypeDefinition) &&
         !(context.getParent() instanceof PsiErrorElement) &&
         context.getParent().getParent() instanceof GroovyFile) {
       return true;

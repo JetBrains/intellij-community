@@ -64,9 +64,6 @@ public class ControlStructureFilter implements ElementFilter {
         }
       }
 
-      /*
-           context.getParent().getParent() instanceof GroovyFile
-      */
       return false;
     }
     return false;

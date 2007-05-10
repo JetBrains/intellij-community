@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @autor: ilyas
@@ -25,8 +26,8 @@ public interface GrIfStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 
-  public GrStatement getThenBranch();
+  public GroovyPsiElement getThenBranch();
 
-  public GrStatement getElseBranch();
+  public GroovyPsiElement getElseBranch();
 
 }

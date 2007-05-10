@@ -17,6 +17,11 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -24,12 +29,29 @@ import org.jetbrains.annotations.NonNls;
  */
 public class CatchFinallyFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-/*
-    if (context.getParent() != null &&
-            context.getParent().getParent() instanceof GroovyFile) {
-      return true;
+    if (context != null &&
+        GroovyCompletionData.nearestLeftSibling(context) instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context);
+      if (tryStatement.getFinallyBlock() == null) {
+        return true;
+      }
     }
-*/
+    if (context != null &&
+        GroovyCompletionData.nearestLeftSibling(context) instanceof PsiErrorElement &&
+        GroovyCompletionData.nearestLeftSibling(context).getPrevSibling() instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context).getPrevSibling();
+      if (tryStatement.getFinallyBlock() == null) {
+        return true;
+      }
+    }
+    if (context.getParent() != null &&
+        context.getParent() instanceof GrReferenceExpression &&
+        GroovyCompletionData.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context.getParent());
+      if (tryStatement.getFinallyBlock() == null) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -38,8 +60,8 @@ public class CatchFinallyFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
-    return "Control structure keywords filter";
+  public String toString() {
+    return "filter fo 'catch' and 'finally' keywords";
   }
 
 }

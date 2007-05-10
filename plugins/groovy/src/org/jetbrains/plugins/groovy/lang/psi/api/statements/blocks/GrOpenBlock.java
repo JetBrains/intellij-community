@@ -15,11 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 /**
  * @author ilyas
  */
-public interface GrOpenBlock extends GrCodeBlock {
+public interface GrOpenBlock extends GrCodeBlock, GrCondition {
 
 }

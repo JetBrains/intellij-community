@@ -20,6 +20,8 @@ import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.completion.WordCompletionData;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -34,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFil
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -43,6 +47,18 @@ public class GroovyCompletionData extends CompletionData {
   public GroovyCompletionData() {
     registerAllCompletions();
 
+  }
+
+  @Nullable
+  public static PsiElement nearestLeftSibling(PsiElement elem) {
+    elem = elem.getPrevSibling();
+    while (elem != null &&
+        (elem instanceof PsiWhiteSpace ||
+            elem instanceof PsiComment ||
+            GroovyTokenTypes.mNLS.equals(elem.getNode().getElementType()))) {
+      elem = elem.getPrevSibling();
+    }
+    return elem;
   }
 
   private void registerAllCompletions1() {
@@ -102,7 +118,7 @@ public class GroovyCompletionData extends CompletionData {
 
     registerStandardCompletion(new ExtendsFilter(), "extends");
     registerStandardCompletion(new ImplementsFilter(), "implements");
-}
+  }
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for",
@@ -122,7 +138,7 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new BuiltInTypeFilter(), builtInTypes);
   }
 
-  private void registerSimpleExprsCompletion(){
+  private void registerSimpleExprsCompletion() {
     String[] exprs = {"true", "false", "null", "super", "new", "this"};
     registerStandardCompletion(new SimpleExpressionFilter(), exprs);
   }

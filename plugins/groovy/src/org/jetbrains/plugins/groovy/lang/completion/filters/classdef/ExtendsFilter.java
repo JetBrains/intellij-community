@@ -21,6 +21,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiComment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,7 +30,8 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ExtendsFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() != null) {
+    if (context.getParent() != null &&
+        !(context.getParent() instanceof GrExtendsClause)) {
       PsiElement elem = context.getParent().getPrevSibling();
       while (elem != null &&
           (elem instanceof PsiWhiteSpace ||

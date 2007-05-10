@@ -47,6 +47,6 @@ public class CaseDefaultFilter implements ElementFilter {
 
   @NonNls
   public String toString(){
-    return "Control structure keywords filter";
+    return "filter for 'case' and 'default' keywords ";
   }
 }

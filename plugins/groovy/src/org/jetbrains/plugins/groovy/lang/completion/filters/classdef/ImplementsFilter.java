@@ -19,8 +19,9 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiComment;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,7 +30,8 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ImplementsFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() != null) {
+    if (context.getParent() != null &&
+        !(context.getParent() instanceof GrImplementsClause)) {
       PsiElement elem = context.getParent().getPrevSibling();
       while (elem != null &&
           (elem instanceof PsiWhiteSpace ||

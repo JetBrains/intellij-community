@@ -110,6 +110,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
+  GroovyElementType THIS_REFERENCE_EXPRESSION = new GroovyElementType("This reference expressions");
+  GroovyElementType SUPER_REFERENCE_EXPRESSION = new GroovyElementType("Super reference expressions");
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 

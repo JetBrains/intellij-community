@@ -18,18 +18,40 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArguments;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 
 /**
  * @author ilyas
  */
 public class ElseFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-/*
     if (context.getParent() != null &&
-            context.getParent().getParent() instanceof GroovyFile) {
+        GroovyCompletionData.nearestLeftSibling(context.getParent()) instanceof GrIfStatement) {
+      GrIfStatement statement = (GrIfStatement) GroovyCompletionData.nearestLeftSibling(context.getParent());
+      if (statement.getElseBranch() == null) { 
+        return true;
+      }
       return true;
     }
-*/
+    if (context.getParent() != null &&
+        GroovyCompletionData.nearestLeftSibling(context) != null &&
+        GroovyCompletionData.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {
+      GrIfStatement statement = (GrIfStatement) GroovyCompletionData.nearestLeftSibling(context).getPrevSibling();
+      if (statement.getElseBranch() == null) {
+        return true;
+      }
+    }
+    if (context.getParent() != null &&
+        context.getParent().getParent() instanceof GrCommandArguments &&
+        context.getParent().getParent().getParent().getParent() instanceof GrIfStatement) {
+      GrIfStatement statement = (GrIfStatement) context.getParent().getParent().getParent().getParent();
+      if (statement.getElseBranch() == null) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -38,8 +60,8 @@ public class ElseFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
-    return "Control structure keywords filter";
+  public String toString() {
+    return "filter for 'else' keyword";
   }
 
 }

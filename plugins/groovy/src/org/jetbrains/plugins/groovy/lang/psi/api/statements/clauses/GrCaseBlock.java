@@ -15,11 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
-import org.jetbrains.plugins.groovy.formatter.models.BlockedIndent;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
  */
-public interface GrCaseBlock extends GroovyPsiElement, BlockedIndent {
+public interface GrCaseBlock extends GroovyPsiElement {
 }
