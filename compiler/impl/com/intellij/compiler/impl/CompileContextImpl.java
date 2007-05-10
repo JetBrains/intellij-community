@@ -50,6 +50,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final VirtualFile[] myOutputDirectories;
   private final Set<VirtualFile> myTestOutputDirectories;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
+  private final ProjectCompileScope myProjectCompileScope;
 
   public CompileContextImpl(Project project,
                             CompilerProgressIndicator indicator,
@@ -88,6 +89,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     testOutputDirs.removeAll(productionOutputDirs);  
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    myProjectCompileScope = new ProjectCompileScope(myProject);
+    
   }
 
   public DependencyCache getDependencyCache() {
@@ -143,7 +146,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public CompileScope getProjectCompileScope() {
-    return myCompileDriver.myProjectCompileScope;
+    return myProjectCompileScope;
   }
 
   public void requestRebuildNextTime(String message) {

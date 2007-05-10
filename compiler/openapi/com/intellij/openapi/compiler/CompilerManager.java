@@ -179,6 +179,12 @@ public abstract class CompilerManager {
   public abstract void make(CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
+   * Checks if compile scope given is up-to-date
+   * @param scope
+   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted 
+   */
+  public abstract boolean isUpToDate(CompileScope scope);
+  /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.
    *
    * @param callback a notification callback, or null if no notifications needed
@@ -217,4 +223,17 @@ public abstract class CompilerManager {
    * @return true if the file is excluded from compilation, false otherwise
    */
   public abstract boolean isExcludedFromCompilation(VirtualFile file);
+
+
+  /*
+   * Convetience methods for creating frequently-used compile scopes
+   */
+  public abstract CompileScope createFilesCompileScope(VirtualFile[] files);
+  
+  public abstract CompileScope createModuleCompileScope(Module module, final boolean includeDependentModules);
+
+  public abstract CompileScope createModuleGroupCompileScope(Project project, Module[] modules, final boolean includeDependentModules);
+
+  public abstract CompileScope createProjectCompileScope(final Project project);
+  
 }

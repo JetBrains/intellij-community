@@ -81,7 +81,6 @@ public class CompileDriver {
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
-  final ProjectCompileScope myProjectCompileScope;
 
   public CompileDriver(Project project) {
     myProject = project;
@@ -90,27 +89,29 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new com.intellij.util.containers.HashMap<Pair<Compiler, Module>, VirtualFile>();
 
-    final GeneratingCompiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(GeneratingCompiler.class);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-        for (GeneratingCompiler compiler : compilers) {
-          for (final Module module : allModules) {
-            final String path = getGenerationOutputPath(compiler, module);
-            final File file = new File(path);
-            final VirtualFile vFile;
-            if (file.mkdirs()) {
-              vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    final GeneratingCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(GeneratingCompiler.class);
+    if (generatingCompilers.length > 0) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+          for (GeneratingCompiler compiler : generatingCompilers) {
+            for (final Module module : allModules) {
+              final String path = getGenerationOutputPath(compiler, module);
+              final File file = new File(path);
+              final VirtualFile vFile;
+              if (file.mkdirs()) {
+                vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+              }
+              else {
+                vFile = LocalFileSystem.getInstance().findFileByPath(path);
+              }
+              Pair<Compiler, Module> pair = new Pair<Compiler, Module>(compiler, module);
+              myGenerationCompilerModuleToOutputDirMap.put(pair, vFile);
             }
-            else {
-              vFile = LocalFileSystem.getInstance().findFileByPath(path);
-            }
-            Pair<Compiler, Module> pair = new Pair<Compiler, Module>(compiler, module);
-            myGenerationCompilerModuleToOutputDirMap.put(pair, vFile);
           }
         }
-      }
-    });
+      });
+    }
 
     myProjectRootManager = ProjectRootManager.getInstance(myProject);
     myProcessingCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
@@ -128,23 +129,10 @@ public class CompileDriver {
         return new FixedTimestampCompilerAdapter(context, compiler);
       }
     };
-    myProjectCompileScope = new ProjectCompileScope(myProject);
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, true, addAdditionalRoots(myProjectCompileScope));
-  }
-
-  public void make(CompileStatusNotification callback) {
-    make(myProjectCompileScope, callback);
-  }
-
-  public void make(Project project, Module[] modules, CompileStatusNotification callback) {
-    make(new ModuleCompileScope(project, modules, true), callback);
-  }
-
-  public void make(Module module, CompileStatusNotification callback) {
-    make(new ModuleCompileScope(module, true), callback);
+    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject)));
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -154,6 +142,26 @@ public class CompileDriver {
     }
   }
 
+  public boolean isUpToDate(CompileScope scope) {
+    scope = addAdditionalRoots(scope);
+
+    final CompileContextImpl compileContext = new CompileContextImpl(
+      myProject, new CompilerProgressIndicator(myProject, true, "", true), scope, new DependencyCache(myCachesDirectoryPath), this, true
+    );
+
+    checkCachesVersion(compileContext);
+    if (compileContext.isRebuildRequested()) {
+      return false;
+    }
+
+    for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
+    }
+
+    final ExitStatus status = doCompile(compileContext, false, false, false, getAllOutputDirectories(), true);
+    return ExitStatus.UP_TO_DATE.equals(status);
+  }
+  
   public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies) {
     if (trackDependencies) {
       scope = new TrackDependenciesScope(scope);
@@ -255,7 +263,7 @@ public class CompileDriver {
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
-      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make"));
+      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make"), false);
     WindowManager.getInstance().getStatusBar(myProject).setInfo("");
 
     final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath);
@@ -305,16 +313,7 @@ public class CompileDriver {
     try {
       compileContext.getProgressIndicator().pushState();
       if (checkCachesVersion) {
-        final CompileStatus compileStatus = readStatus();
-        if (compileStatus == null) {
-          compileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
-        }
-        else if (compileStatus.CACHE_FORMAT_VERSION != -1 && compileStatus.CACHE_FORMAT_VERSION != CompilerConfiguration.DEPENDENCY_FORMAT_VERSION) {
-          compileContext.requestRebuildNextTime(CompilerBundle.message("error.caches.old.format"));
-        }
-        else if (compileStatus.COMPILATION_IN_PROGRESS) {
-          compileContext.requestRebuildNextTime(CompilerBundle.message("error.previous.compilation.failed"));
-        }
+        checkCachesVersion(compileContext);
         if (compileContext.isRebuildRequested()) {
           return;
         }
@@ -324,7 +323,7 @@ public class CompileDriver {
         return;
       }
 
-      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, getAllOutputDirectories());
+      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, getAllOutputDirectories(), false);
     }
     catch (Throwable ex) {
       wereExceptions = true;
@@ -365,6 +364,19 @@ public class CompileDriver {
           }
         }, ModalityState.NON_MODAL);
       }
+    }
+  }
+
+  private void checkCachesVersion(final CompileContextImpl compileContext) {
+    final CompileStatus compileStatus = readStatus();
+    if (compileStatus == null) {
+      compileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
+    }
+    else if (compileStatus.CACHE_FORMAT_VERSION != -1 && compileStatus.CACHE_FORMAT_VERSION != CompilerConfiguration.DEPENDENCY_FORMAT_VERSION) {
+      compileContext.requestRebuildNextTime(CompilerBundle.message("error.caches.old.format"));
+    }
+    else if (compileStatus.COMPILATION_IN_PROGRESS) {
+      compileContext.requestRebuildNextTime(CompilerBundle.message("error.previous.compilation.failed"));
     }
   }
 
@@ -411,7 +423,7 @@ public class CompileDriver {
   }
 
   private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies,
-                               final Set<File> outputDirectories) {
+                               final Set<File> outputDirectories, final boolean onlyCheckStatus) {
     try {
       if (isRebuild) {
         deleteAll(context, outputDirectories);
@@ -420,14 +432,16 @@ public class CompileDriver {
         }
       }
 
-      try {
-        context.getProgressIndicator().pushState();
-        if (!executeCompileTasks(context, true)) {
-          return ExitStatus.CANCELLED;
+      if (!onlyCheckStatus) {
+        try {
+          context.getProgressIndicator().pushState();
+          if (!executeCompileTasks(context, true)) {
+            return ExitStatus.CANCELLED;
+          }
         }
-      }
-      finally {
-        context.getProgressIndicator().popState();
+        finally {
+          context.getProgressIndicator().popState();
+        }
       }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -452,22 +466,22 @@ public class CompileDriver {
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
 
       try {
-        didSomething |= generateSources(compilerManager, context, forceCompile);
+        didSomething |= generateSources(compilerManager, context, forceCompile, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile, true);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile, true, onlyCheckStatus);
 
-        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories);
+        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, true);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, true, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, forceCompile, true);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, forceCompile, true, onlyCheckStatus);
       }
       catch (ExitException e) {
         return e.getExitStatus();
@@ -477,14 +491,16 @@ public class CompileDriver {
         dropDependencyCache(context);
       }
 
-      try {
-        context.getProgressIndicator().pushState();
-        if (!executeCompileTasks(context, false)) {
-          return ExitStatus.CANCELLED;
+      if (!onlyCheckStatus) {
+        try {
+          context.getProgressIndicator().pushState();
+          if (!executeCompileTasks(context, false)) {
+            return ExitStatus.CANCELLED;
+          }
         }
-      }
-      finally {
-        context.getProgressIndicator().popState();
+        finally {
+          context.getProgressIndicator().popState();
+        }
       }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -511,7 +527,8 @@ public class CompileDriver {
     }
   }
 
-  private boolean generateSources(final CompilerManager compilerManager, CompileContextImpl context, final boolean forceCompile) throws ExitException{
+  private boolean generateSources(final CompilerManager compilerManager, CompileContextImpl context, final boolean forceCompile,
+                                  final boolean onlyCheckStatus) throws ExitException{
     boolean didSomething = false;
 
     final SourceGeneratingCompiler[] sourceGenerators = compilerManager.getCompilers(SourceGeneratingCompiler.class);
@@ -520,7 +537,7 @@ public class CompileDriver {
         throw new ExitException(ExitStatus.CANCELLED);
       }
 
-      final boolean generatedSomething = generateOutput(context, sourceGenerator, forceCompile);
+      final boolean generatedSomething = generateOutput(context, sourceGenerator, forceCompile, onlyCheckStatus);
 
       dropInternalCache(sourceGenerator);
 
@@ -536,7 +553,7 @@ public class CompileDriver {
                             final CompilerManager compilerManager,
                             final boolean forceCompile,
                             boolean isRebuild,
-                            final boolean trackDependencies, final Set<File> outputDirectories) throws ExitException {
+                            final boolean trackDependencies, final Set<File> outputDirectories, final boolean onlyCheckStatus) throws ExitException {
 
     boolean didSomething = false;
 
@@ -552,7 +569,7 @@ public class CompileDriver {
         throw new ExitException(ExitStatus.CANCELLED);
       }
 
-      final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies, outputDirectories);
+      final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies, outputDirectories, onlyCheckStatus);
 
       // free memory earlier to leave other compilers more space
       dropDependencyCache(context);
@@ -576,7 +593,7 @@ public class CompileDriver {
                                                 Class<? extends FileProcessingCompiler> fileProcessingCompilerClass,
                                                 FileProcessingCompilerAdapterFactory factory,
                                                 boolean forceCompile,
-                                                final boolean checkScope) throws ExitException {
+                                                final boolean checkScope, final boolean onlyCheckStatus) throws ExitException {
     LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
     final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
@@ -587,7 +604,7 @@ public class CompileDriver {
             throw new ExitException(ExitStatus.CANCELLED);
           }
 
-          final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope);
+          final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope, onlyCheckStatus);
 
           dropInternalCache(compiler);
 
@@ -803,7 +820,8 @@ public class CompileDriver {
            (module.getName().replace(' ', '_') + "." + Integer.toHexString(module.getModuleFilePath().hashCode()));
   }
 
-  private boolean generateOutput(final CompileContextImpl context, final GeneratingCompiler compiler, final boolean forceGenerate) {
+  private boolean generateOutput(final CompileContextImpl context, final GeneratingCompiler compiler, final boolean forceGenerate, final boolean onlyCheckStatus)
+    throws ExitException {
     final GeneratingCompiler.GenerationItem[] allItems = compiler.getGenerationItems(context);
     final List<GeneratingCompiler.GenerationItem> toGenerate = new ArrayList<GeneratingCompiler.GenerationItem>();
     final StateCache<ValidityState> cache = getGeneratingCompilerCache(compiler);
@@ -829,6 +847,13 @@ public class CompileDriver {
         }
       }
     });
+    
+    if (onlyCheckStatus) {
+      if ((toGenerate.isEmpty() && pathsToRemove.isEmpty())) {
+        return false;
+      }
+      throw new ExitException(ExitStatus.CANCELLED);
+    }
 
     final List<File> filesToRefresh = new ArrayList<File>();
     final List<File> generatedFiles = new ArrayList<File>();
@@ -919,7 +944,7 @@ public class CompileDriver {
                                  final TranslatingCompiler compiler,
                                  final boolean forceCompile,
                                  final boolean isRebuild,
-                                 final boolean trackDependencies, final Set<File> outputDirectories) {
+                                 final boolean trackDependencies, final Set<File> outputDirectories, final boolean onlyCheckStatus) throws ExitException {
     final TranslatingCompilerStateCache cache = getTranslatingCompilerCache(compiler);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
@@ -962,7 +987,14 @@ public class CompileDriver {
 
         }
       });
-
+      
+      if (onlyCheckStatus) {
+        if (toDelete.isEmpty() && toCompile.isEmpty()) {
+          return false;
+        }
+        throw new ExitException(ExitStatus.CANCELLED);
+      }
+      
       if (!toDelete.isEmpty()) {
         try {
           wereFilesDeleted[0] = syncOutputDir(urlsWithSourceRemoved, context, toDelete, cache, outputDirectories);
@@ -1262,7 +1294,8 @@ public class CompileDriver {
     return path;
   }
 
-  private boolean processFiles(final FileProcessingCompilerAdapter adapter, final boolean forceCompile, final boolean checkScope) {
+  private boolean processFiles(final FileProcessingCompilerAdapter adapter, final boolean forceCompile, final boolean checkScope, final boolean onlyCheckStatus)
+    throws ExitException {
     final CompileContext context = adapter.getCompileContext();
     final FileProcessingCompilerStateCache cache = getFileProcessingCompilerCache(adapter.getCompiler());
     final FileProcessingCompiler.ProcessingItem[] items = adapter.getProcessingItems();
@@ -1291,10 +1324,10 @@ public class CompileDriver {
     });
 
     final String[] urls = cache.getUrls();
+    final List<String> urlsToRemove = new ArrayList<String>();
     if (urls.length > 0) {
       context.getProgressIndicator().pushState();
       context.getProgressIndicator().setText(CompilerBundle.message("progress.processing.outdated.files"));
-      final List<String> urlsToRemove = new ArrayList<String>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (final String url : urls) {
@@ -1306,7 +1339,7 @@ public class CompileDriver {
           }
         }
       });
-      if (!urlsToRemove.isEmpty()) {
+      if (!onlyCheckStatus && !urlsToRemove.isEmpty()) {
         for (final String url : urlsToRemove) {
           adapter.processOutdatedItem(context, url, cache.getExtState(url));
           cache.remove(url);
@@ -1314,7 +1347,14 @@ public class CompileDriver {
       }
       context.getProgressIndicator().popState();
     }
-
+    
+    if (onlyCheckStatus) {
+      if (urlsToRemove.isEmpty() && toProcess.isEmpty()) {
+        return false;
+      }
+      throw new ExitException(ExitStatus.CANCELLED);
+    }
+    
     if (toProcess.isEmpty()) {
       return false;
     }
@@ -1406,7 +1446,7 @@ public class CompileDriver {
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
-      contentName);
+      contentName, false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, null, this, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();

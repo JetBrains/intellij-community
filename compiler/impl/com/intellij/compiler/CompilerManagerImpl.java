@@ -1,9 +1,6 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.CompileDriver;
-import com.intellij.compiler.impl.CompositeScope;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.OneProjectItemCompileScope;
+import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.make.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
@@ -103,15 +100,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public void compile(VirtualFile[] files, CompileStatusNotification callback, final boolean trackDependencies) {
-    CompileScope[] scopes = new CompileScope[files.length];
-    for(int i = 0; i < files.length; i++){
-      scopes[i] = new OneProjectItemCompileScope(myProject, files[i]);
-    }
-    compile(new CompositeScope(scopes), callback, trackDependencies);
+    compile(createFilesCompileScope(files), callback, trackDependencies);
   }
 
   public void compile(Module module, CompileStatusNotification callback, final boolean trackDependencies) {
-    compile(new ModuleCompileScope(module, false), callback, trackDependencies);
+    compile(createModuleCompileScope(module, false), callback, trackDependencies);
   }
 
   public void compile(CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies) {
@@ -119,19 +112,23 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public void make(CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(new ListenerNotificator(callback));
+    new CompileDriver(myProject).make(createProjectCompileScope(myProject), new ListenerNotificator(callback));
   }
 
   public void make(Module module, CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(module, new ListenerNotificator(callback));
+    new CompileDriver(myProject).make(createModuleCompileScope(module, true), new ListenerNotificator(callback));
   }
 
   public void make(Project project, Module[] modules, CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(project, modules, new ListenerNotificator(callback));
+    new CompileDriver(myProject).make(createModuleGroupCompileScope(project, modules, true), new ListenerNotificator(callback));
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
     new CompileDriver(myProject).make(scope, new ListenerNotificator(callback));
+  }
+
+  public boolean isUpToDate(final CompileScope scope) {
+    return new CompileDriver(myProject).isUpToDate(scope);
   }
 
   public void rebuild(CompileStatusNotification callback) {
@@ -198,6 +195,26 @@ public class CompilerManagerImpl extends CompilerManager {
 
   public boolean isExcludedFromCompilation(VirtualFile file) {
     return CompilerConfiguration.getInstance(myProject).isExcludedFromCompilation(file);
+  }
+
+  public CompileScope createFilesCompileScope(final VirtualFile[] files) {
+    CompileScope[] scopes = new CompileScope[files.length];
+    for(int i = 0; i < files.length; i++){
+      scopes[i] = new OneProjectItemCompileScope(myProject, files[i]);
+    }
+    return new CompositeScope(scopes);
+  }
+
+  public CompileScope createModuleCompileScope(final Module module, final boolean includeDependentModules) {
+    return new ModuleCompileScope(module, includeDependentModules);
+  }
+
+  public CompileScope createModuleGroupCompileScope(final Project project, final Module[] modules, final boolean includeDependentModules) {
+    return new ModuleCompileScope(project, modules, includeDependentModules);
+  }
+
+  public CompileScope createProjectCompileScope(final Project project) {
+    return new ProjectCompileScope(project);
   }
 
   private class ListenerNotificator implements CompileStatusNotification {

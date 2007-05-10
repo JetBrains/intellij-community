@@ -55,16 +55,18 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private final Object myMessageViewLock = new Object();
   private final Project myProject;
   private final String myContentName;
+  private final boolean myHeadlessMode;
   private boolean myIsBackgroundMode;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  public CompilerProgressIndicator(@NotNull Project project, boolean compileInBackground, String contentName) {
+  public CompilerProgressIndicator(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     myProject = project;
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
+    myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
   }
 
   public void cancel() {
@@ -182,7 +184,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
   public void start() {
     super.start();
-    if (IS_UNIT_TEST_MODE) {
+    if (isHeadlessMode()) {
       return;
     }
     if (myIsBackgroundMode) {
@@ -215,7 +217,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void updateProgressText() {
-    if (IS_UNIT_TEST_MODE) {
+    if (isHeadlessMode()) {
       return;
     }
     if (myAlarm.getActiveRequestCount() == 0) {
@@ -272,7 +274,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   // error tree view handling:
 
   private void openMessageView() {
-    if (IS_UNIT_TEST_MODE) {
+    if (isHeadlessMode()) {
       return;
     }
     if (isCanceled()) {
@@ -359,7 +361,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void closeUI() {
-    if (IS_UNIT_TEST_MODE) {
+    if (isHeadlessMode()) {
       return;
     }
     Window window = getWindow();
@@ -414,6 +416,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         myDialog = null;
       }
     }
+  }
+
+  private boolean isHeadlessMode() {
+    return myHeadlessMode;
   }
 
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
