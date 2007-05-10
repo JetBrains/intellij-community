@@ -37,9 +37,9 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.io.File;
 import java.io.FileOutputStream;

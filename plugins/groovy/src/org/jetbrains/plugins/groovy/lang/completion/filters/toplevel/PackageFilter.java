@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  *  @author ilyas

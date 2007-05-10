@@ -20,7 +20,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +57,7 @@ import java.util.Set;
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
-  private final DebugProcessImpl myDebugProcess;
+  private final DebugProcess myDebugProcess;
 
   public GroovyPositionManager(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
@@ -176,7 +176,7 @@ public class GroovyPositionManager implements PositionManager {
     final String originalQName = refType.name().replace('/', '.');
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
-    final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
+    final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
 
     GrTypeDefinition clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
     if (clazz != null) return clazz.getContainingFile();
@@ -264,7 +264,7 @@ public class GroovyPositionManager implements PositionManager {
 
   @Nullable
   private ReferenceType findNested(ReferenceType fromClass, final GroovyPsiElement toFind, SourcePosition classPosition) {
-    final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
+    final VirtualMachineProxy vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
 
       final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import com.intellij.openapi.util.Computable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -64,11 +64,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
     for (VirtualFile file : files) {
-      final GroovyFile myPsiFile = findPsiFile(file);
+      final GroovyFile groovyFile = findPsiFile(file);
 
       GrTopStatement[] statements = ApplicationManager.getApplication().runReadAction(new Computable<GrTopStatement[]>() {
         public GrTopStatement[] compute() {
-          return myPsiFile.getTopStatements();
+          return groovyFile.getTopStatements();
         }
       });
 
@@ -79,7 +79,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       VirtualFile virtualFile;
       if (needCreateTopLevelClass) {
         String prefix = getJavaClassPackage(statements);
-        virtualFile = myPsiFile.getVirtualFile();
+        virtualFile = groovyFile.getVirtualFile();
         assert virtualFile != null;
         //todo: use parent directory in path if needs
         generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", context.getModuleByFile(virtualFile), new TimestampValidityState(file.getTimeStamp())));
@@ -87,7 +87,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
         public GrTypeDefinition[] compute() {
-          return myPsiFile.getTypeDefinitions();
+          return groovyFile.getTypeDefinitions();
         }
       });
 
@@ -151,16 +151,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   private GroovyFile findPsiFile(final VirtualFile virtualFile) {
     final Project project = VfsUtil.guessProjectForFile(virtualFile);
     assert project != null;
-    final GroovyFile[] myFindPsiFile = new GroovyFile[1];
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        myFindPsiFile[0] = (GroovyFile) PsiManager.getInstance(project).findFile(virtualFile);
+    return ApplicationManager.getApplication().runReadAction(new Computable<GroovyFile>() {
+      public GroovyFile compute() {
+        return (GroovyFile) PsiManager.getInstance(project).findFile(virtualFile);
       }
     });
-
-    assert myFindPsiFile[0] != null;
-    return myFindPsiFile[0];
   }
 
   //virtualFile -> PsiFile
@@ -232,15 +227,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     return prefix;
   }
 
-  private String createJavaSourceFile(CompileContext context, VirtualFile outputRootDirectory, GroovyFile myPsiFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition) {
+  private String createJavaSourceFile(CompileContext context, VirtualFile outputRootDirectory, GroovyFile groovyFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition) {
     GrStatement[] statements = getStatementsInReadAction(typeDefinition);
     String prefix = getJavaClassPackage(statements);
     writeTypeDefinition(text, typeDefinitionName, typeDefinition);
 
-    VirtualFile virtualFile = myPsiFile.getVirtualFile();
+    VirtualFile virtualFile = groovyFile.getVirtualFile();
     assert virtualFile != null;
     String generatedFileRelativePath = typeDefinitionName + "." + "java";
-    createGeneratedFile(context, text, outputRootDirectory.getPath(), prefix, generatedFileRelativePath, myPsiFile);
+    createGeneratedFile(context, text, outputRootDirectory.getPath(), prefix, generatedFileRelativePath, groovyFile);
     return generatedFileRelativePath;
   }
 
