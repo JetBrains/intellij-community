@@ -22,9 +22,11 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @autor: ilyas
@@ -48,8 +50,11 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     GrForClause forClause = getClause();
-    if (forClause instanceof GrForInClauseImpl) {
-
+    if (forClause != null) {
+      GrVariable[] vars = forClause.getDeclaredVariables();
+      for (final GrVariable var : vars) {
+        if (!ResolveUtil.processElement(processor, var)) return false;
+      }
     }
 
     return true;

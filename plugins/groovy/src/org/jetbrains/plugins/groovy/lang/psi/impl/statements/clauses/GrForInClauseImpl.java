@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author ilyas
@@ -31,5 +32,10 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClau
 
   public String toString() {
     return "In clause";
+  }
+
+  public GrVariable[] getDeclaredVariables() {
+    GrVariable var = findChildByClass(GrVariable.class);
+    return var != null ? new GrVariable[]{var} : GrVariable.EMPTY_ARRAY;
   }
 }

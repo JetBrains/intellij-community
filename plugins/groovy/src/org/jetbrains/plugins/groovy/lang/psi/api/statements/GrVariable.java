@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * @date: 11.04.2007
  */
 public interface GrVariable extends GrNamedElement {
+  public static final GrVariable[] EMPTY_ARRAY = new GrVariable[0];
+
   @NotNull
   PsiElement getNameIdentifierGroovy();
 }
