@@ -164,7 +164,7 @@ public class ForStatement implements GroovyElementTypes {
     PsiBuilder.Marker declMarker = builder.mark();
 
     if (ParserUtils.lookAhead(builder, mIDENT, kIN)) {
-      ParserUtils.getToken(builder, mIDENT);
+      ParserUtils.eatElement(builder, VARIABLE);
       declMarker.drop();
       ParserUtils.getToken(builder, kIN);
       if (WRONGWAY.equals(ShiftExpression.parse(builder))) {
@@ -195,7 +195,7 @@ public class ForStatement implements GroovyElementTypes {
                                                          PsiBuilder.Marker declMarker) {
     if (ParserUtils.getToken(builder, mIDENT)) {
       if (kIN.equals(builder.getTokenType())) {
-        declMarker.done(VARIABLE_DEFINITION);
+        declMarker.done(VARIABLE);
         ParserUtils.getToken(builder, kIN);
         if (WRONGWAY.equals(ShiftExpression.parse(builder))) {
           builder.error(GroovyBundle.message("expression.expected"));
