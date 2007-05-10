@@ -49,8 +49,13 @@ public class SwitchStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
     }
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      marker.done(SWITCH_STATEMENT);
-      return SWITCH_STATEMENT;
+      while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
+        builder.advanceLexer();
+      }
+      if (!ParserUtils.getToken(builder, mRPAREN)) {
+        marker.done(SWITCH_STATEMENT);
+        return SWITCH_STATEMENT;
+      }
     }
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
@@ -82,17 +87,17 @@ public class SwitchStatement implements GroovyElementTypes {
       return;
     }
     if (!kCASE.equals(builder.getTokenType()) &&
-            !kDEFAULT.equals(builder.getTokenType())) {
+        !kDEFAULT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("case.expected"));
       marker.done(CASE_BLOCK);
       return;
     }
 
     while (kCASE.equals(builder.getTokenType()) ||
-            kDEFAULT.equals(builder.getTokenType())) {
+        kDEFAULT.equals(builder.getTokenType())) {
       parseCaseLabel(builder);
       if (ParserUtils.lookAhead(builder, mRCURLY) ||
-              ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
+          ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
         parseCaseList(builder);
@@ -126,7 +131,7 @@ public class SwitchStatement implements GroovyElementTypes {
     label.done(CASE_LABEL);
     ParserUtils.getToken(builder, mNLS);
     if (ParserUtils.lookAhead(builder, kCASE) ||
-            ParserUtils.lookAhead(builder, kDEFAULT)) {
+        ParserUtils.lookAhead(builder, kDEFAULT)) {
       parseCaseLabel(builder);
     }
   }
@@ -139,8 +144,8 @@ public class SwitchStatement implements GroovyElementTypes {
   private static void parseCaseList(PsiBuilder builder) {
 
     if (kCASE.equals(builder.getTokenType()) ||
-            kDEFAULT.equals(builder.getTokenType()) ||
-            mRCURLY.equals(builder.getTokenType())) {
+        kDEFAULT.equals(builder.getTokenType()) ||
+        mRCURLY.equals(builder.getTokenType())) {
       return;
     }
     GroovyElementType result = Statement.parse(builder);
@@ -154,18 +159,18 @@ public class SwitchStatement implements GroovyElementTypes {
     }
 
     if (kCASE.equals(builder.getTokenType()) ||
-            kDEFAULT.equals(builder.getTokenType()) ||
-            mRCURLY.equals(builder.getTokenType())) {
+        kDEFAULT.equals(builder.getTokenType()) ||
+        mRCURLY.equals(builder.getTokenType())) {
       return;
     }
     result = Statement.parse(builder);
     while (!result.equals(WRONGWAY) &&
-            (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
+        (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
 
       if (kCASE.equals(builder.getTokenType()) ||
-              kDEFAULT.equals(builder.getTokenType()) ||
-              mRCURLY.equals(builder.getTokenType())) {
+          kDEFAULT.equals(builder.getTokenType()) ||
+          mRCURLY.equals(builder.getTokenType())) {
         break;
       }
 

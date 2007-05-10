@@ -40,6 +40,6 @@ public class ImportFilter implements ElementFilter {
 
   @NonNls
   public String toString(){
-    return "import keyword filter";
+    return "'import' keyword filter";
   }
 }

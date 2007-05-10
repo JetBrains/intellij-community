@@ -39,7 +39,7 @@ public class BuiltInTypeFilter implements ElementFilter {
 
   @NonNls
   public String toString(){
-    return "Control structure keywords filter";
+    return "built-in-types keywords filter";
   }
 
 }

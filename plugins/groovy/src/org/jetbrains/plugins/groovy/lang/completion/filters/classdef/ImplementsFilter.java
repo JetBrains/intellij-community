@@ -65,6 +65,6 @@ public class ImplementsFilter implements ElementFilter {
 
   @NonNls
   public String toString() {
-    return "Control structure keywords filter";
+    return "'implements' keyword filter";
   }
 }

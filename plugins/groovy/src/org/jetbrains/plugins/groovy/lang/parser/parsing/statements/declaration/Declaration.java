@@ -99,7 +99,7 @@ public class Declaration implements GroovyElementTypes {
           && builder.getTokenText() != null
           && Character.isLowerCase(builder.getTokenText().charAt(0))) {
         GroovyElementType exprType = ExpressionStatement.parse(builder);
-        if (EXPRESSION_STATEMENT.equals(exprType)) {
+        if (CALL_EXPRESSION.equals(exprType)) {
           declmMarker.drop();
           return exprType;
         } else {
@@ -165,8 +165,8 @@ public class Declaration implements GroovyElementTypes {
 //
 //        GroovyElementType exprType = ExpressionStatement.parse(builder);
 //        if (!WRONGWAY.equals(exprType) && !IDENTIFIER.equals(exprType)) {
-//          declmMarker.done(EXPRESSION_STATEMENT);
-//          return EXPRESSION_STATEMENT;
+//          declmMarker.done(CALL_EXPRESSION);
+//          return CALL_EXPRESSION;
 //        }
 //
 //        declmMarker.done(VARIABLE_DEFINITION_OR_METHOD_CALL);

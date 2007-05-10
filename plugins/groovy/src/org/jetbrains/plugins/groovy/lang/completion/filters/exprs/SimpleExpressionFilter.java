@@ -27,29 +27,11 @@ import org.jetbrains.annotations.NonNls;
  */
 public class SimpleExpressionFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() != null) {
-      PsiElement parent = context.getParent();
-
-      if (!(parent instanceof GrExpression) &&
-          parent.getParent() instanceof GroovyFile) {
-        return false;
-      }
-
-      if (parent instanceof GrReferenceExpression) {
-
-        PsiElement superParent = parent.getParent();
-
-        
-
-
-
-      }
-
-      /*
-           context.getParent().getParent() instanceof GroovyFile
-      */
-      return false;
+    if (context.getParent() != null &&
+        context.getParent() instanceof GrExpression) {
+      return true;
     }
+
     return false;
   }
 
@@ -59,6 +41,6 @@ public class SimpleExpressionFilter implements ElementFilter {
 
   @NonNls
   public String toString() {
-    return "Control structure keywords filter";
+    return "Simple expressions keywords filter";
   }
 }

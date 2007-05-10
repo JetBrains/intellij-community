@@ -17,17 +17,19 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
- *  @author ilyas
+ * @author ilyas
  */
 public class PackageFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() != null && 
-            context.getParent().getParent() instanceof GroovyFile &&
-            ((GroovyFile) context.getParent().getParent()).getPackageDefinition() == null) {
+    if (context.getParent() != null &&
+        !(context.getParent() instanceof PsiErrorElement) &&
+        context.getParent().getParent() instanceof GroovyFile &&
+        ((GroovyFile) context.getParent().getParent()).getPackageDefinition() == null) {
       return true;
     }
     return false;
@@ -38,7 +40,7 @@ public class PackageFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
-    return "package keyword filter";
+  public String toString() {
+    return "'package' keyword filter";
   }
 }

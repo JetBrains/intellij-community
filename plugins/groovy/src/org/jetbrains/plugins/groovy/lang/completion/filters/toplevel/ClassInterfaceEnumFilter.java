@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.filters.ElementFilter;
@@ -36,9 +37,8 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
 
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
-        !(context.getParent() instanceof GrTypeDefinition) &&
-        !(context.getParent() instanceof PsiErrorElement) &&
-        context.getParent().getParent() instanceof GroovyFile) {
+        context.getParent() instanceof GrReferenceExpression &&
+    context.getParent().getParent() instanceof GroovyFile) {
       return true;
     }
     return false;
@@ -50,6 +50,6 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
 
   @NonNls
   public String toString() {
-    return "class, interface, enum keywords filter";
+    return "'class', 'interface', 'enum' keywords filter";
   }
 }

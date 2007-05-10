@@ -36,7 +36,7 @@ public class ExpressionStatement implements GroovyElementTypes {
     if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
       GroovyElementType res = CommandArguments.parse(builder);
       if (!res.equals(WRONGWAY)) {
-        marker.done(EXPRESSION_STATEMENT);
+        marker.done(CALL_EXPRESSION);
       } else {
         marker.drop();
       }
@@ -56,7 +56,7 @@ public class ExpressionStatement implements GroovyElementTypes {
   public static GroovyElementType argParse(PsiBuilder builder) {
     GroovyElementType result = AssignmentExpression.parse(builder);
     if (!WRONGWAY.equals(result)) {
-      return EXPRESSION_STATEMENT;
+      return CALL_EXPRESSION;
     }
     return result;
   }

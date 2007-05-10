@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFil
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,22 +70,18 @@ public class GroovyCompletionData extends CompletionData {
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     String[] keywords = new String[]{
         "class", "interface", "enum",   // Types
-
         "extends", "implements",  // Other
-
-        "true", "false", "null", "super", "new", "this", // Expressions
-
-        "try", "while", "with", "switch", "for", "return", "break", "continue", "throw", "assert", // Control
-
+        "try", "while", "with", "switch", "for", "return", "break", "continue", "throw", "assert", "synchronized",  // Control
         "finally", "catch", // Additional 1
         "case", "default", // Additional 2
         "else", // Additional 3
+        "true", "false", "null", "super", "new", "this", // Expressions
+        "instanceof",
 
         "boolean", "byte", "char", "short", "int", "float", "long", "double", "any", // Built-in Types
+        "private", "public", "protected", "transient", "native", "threadsafe", "volatile", "static", "def", "void",
+        "throws",
 
-        "static", "def", "void", "as",
-        "private", "public", "protected", "transient", "native", "threadsafe", "synchronized", "volatile",
-        "throws", "in", "instanceof",
 
 
     };
@@ -105,6 +102,8 @@ public class GroovyCompletionData extends CompletionData {
     registerControlCompletion();
     registerSimpleExprsCompletion();
     registerBuiltInTypeCompletion();
+    registerInstanceofCompletion();
+    registerThrowsCompletion();
 
   }
 
@@ -122,8 +121,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for",
-        "return", "break", "continue", "throw", "assert"};
-
+        "return", "break", "continue", "throw", "assert", "synchronized", };
 
     registerStandardCompletion(new ControlStructureFilter(), controlKeywords);
     registerStandardCompletion(new CaseDefaultFilter(), "case", "default");
@@ -143,9 +141,15 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new SimpleExpressionFilter(), exprs);
   }
 
+  private void registerThrowsCompletion() {
+    registerStandardCompletion(new SimpleExpressionFilter(), "throws");
+  }
 
   private void registerImportCompletion() {
     registerStandardCompletion(new ImportFilter(), "import");
+  }
+  private void registerInstanceofCompletion() {
+    registerStandardCompletion(new InstanceOfFilter(), "instanceof");
   }
 
   /**

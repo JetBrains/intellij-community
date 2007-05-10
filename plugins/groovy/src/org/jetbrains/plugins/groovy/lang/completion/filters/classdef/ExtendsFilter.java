@@ -60,7 +60,7 @@ public class ExtendsFilter implements ElementFilter {
 
   @NonNls
   public String toString() {
-    return "Control structure keywords filter";
+    return "'extends' keyword filter";
   }
 
 }
