@@ -146,6 +146,17 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
                 if (!(lockExpression instanceof PsiThisExpression)) {
                     return;
                 }
+                final PsiThisExpression thisExpression =
+                        (PsiThisExpression)lockExpression;
+                final PsiJavaCodeReferenceElement qualifier =
+                        thisExpression.getQualifier();
+                if (qualifier != null) {
+                    final PsiElement target = qualifier.resolve();
+                    final PsiClass containingClass = method.getContainingClass();
+                    if (!containingClass.equals(target)) {
+                        return;
+                    }
+                }
                 registerMethodError(method);
             }
         }
