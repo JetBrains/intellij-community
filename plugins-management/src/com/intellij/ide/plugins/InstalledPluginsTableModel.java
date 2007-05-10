@@ -38,13 +38,22 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       PluginId descrId = descr.getPluginId();
       IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
       if (existing != null) {
-        updateExistingPluginInfo((PluginNode)descr, existing);
+        if (descr instanceof PluginNode) {
+          updateExistingPluginInfo(descr, existing);
+        } else {
+          view.add(descr);
+        }
       }
     }
     safeSort();
   }
 
-  private static void updateExistingPluginInfo(PluginNode descr, IdeaPluginDescriptor existing) {
+  public void clearData() {
+    view.clear();
+    NewVersions2Plugins.clear();
+  }
+
+  private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
     int state = PluginManagerColumnInfo.compareVersion(descr.getVersion(), existing.getVersion());
     if (state > 0) {
       NewVersions2Plugins.put(existing.getPluginId(), 1);

@@ -84,4 +84,9 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     safeSort();
   }
 
+  public void clearData() {
+    view.clear();
+    UpdateVersions.clear();
+  }
+
 }

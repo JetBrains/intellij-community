@@ -96,6 +96,8 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public abstract void modifyData(ArrayList<IdeaPluginDescriptor> list);
 
+  public abstract void clearData();
+
   protected void safeSort() {
     final int sortColumn = sortableProvider.getSortColumn();
     sortByColumn(-1 < sortColumn && sortColumn < getColumnCount() ? sortColumn : 0);

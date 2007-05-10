@@ -60,4 +60,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getVendorLogoPath();
 
   boolean getUseIdeaClassLoader();
+
+  String getDownloads();
 }

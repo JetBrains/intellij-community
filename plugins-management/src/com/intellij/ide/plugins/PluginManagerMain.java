@@ -3,6 +3,8 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -47,11 +49,11 @@ import java.util.zip.ZipException;
 public class PluginManagerMain {
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
-  @NonNls public static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
-  @NonNls public static final String TEXT_SUFIX = "</body></html>";
+  @NonNls private static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
+  @NonNls private static final String TEXT_SUFIX = "</body></html>";
 
-  @NonNls public static final String HTML_PREFIX = "<html><body><a href=\"\">";
-  @NonNls public static final String HTML_SUFIX = "</a></body></html>";
+  @NonNls private static final String HTML_PREFIX = "<html><body><a href=\"\">";
+  @NonNls private static final String HTML_SUFIX = "</a></body></html>";
 
   private boolean requireShutdown = false;
 
@@ -84,6 +86,8 @@ public class PluginManagerMain {
   private ArrayList<IdeaPluginDescriptor> pluginsList;
   private ActionToolbar myActionToolbar;
 
+  private FilterComponent myFilter = new MyPluginsFilter();
+
   public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
@@ -113,6 +117,7 @@ public class PluginManagerMain {
     myReloadButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         loadAvailablePlugins();
+        myFilter.setFilter("");
       }
     });
 
@@ -127,6 +132,11 @@ public class PluginManagerMain {
         TableUtil.ensureSelectionExists(pluginTable);
         pluginInfoUpdate(pluginTable.getSelectedObject());
         myActionToolbar.updateActionsImmediately();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myFilter.filter();
+          }
+        });
       }
     });
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
@@ -134,6 +144,7 @@ public class PluginManagerMain {
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
     myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
+    myToolbarPanel.add(myFilter, BorderLayout.EAST);
     myActionToolbar.updateActionsImmediately();
   }
 
@@ -212,7 +223,7 @@ public class PluginManagerMain {
     return installedPluginsModel.dependent(pluginDescriptor);
   }
 
-  void loadAvailablePlugins() {
+  private void loadAvailablePlugins() {
     ArrayList<IdeaPluginDescriptor> list;
     try {
       //  If we already have a file with downloaded plugins from the last time,
@@ -452,7 +463,7 @@ public class PluginManagerMain {
       IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
       myVendorLabel.setText(pluginDescriptor.getVendor());
-      setTextValue(pluginDescriptor.getDescription(), myDescriptionTextArea);
+      setTextValue(SearchUtil.markup(pluginDescriptor.getDescription(), myFilter.getFilter()), myDescriptionTextArea);
       setTextValue(pluginDescriptor.getChangeNotes(), myChangeNotesTextArea);
       setHtmlValue(pluginDescriptor.getVendorEmail(), myVendorEmailLabel);
       setHtmlValue(pluginDescriptor.getVendorUrl(), myVendorUrlLabel);
@@ -535,5 +546,76 @@ public class PluginManagerMain {
 
   public void select(IdeaPluginDescriptor... descriptors) {
     installedPluginTable.select(descriptors);
+  }
+
+  private class MyPluginsFilter extends FilterComponent {
+    private List<IdeaPluginDescriptor> myFilteredInstalled = new ArrayList<IdeaPluginDescriptor>();
+    private List<IdeaPluginDescriptor> myFilteredAvailable = new ArrayList<IdeaPluginDescriptor>();
+
+    public MyPluginsFilter() {
+      super("PLUGIN_FILTER", 5);
+    }
+
+    public void filter() {
+      if (installedPluginTable.isShowing()) {
+        filter(installedPluginsModel, myFilteredInstalled);
+      }
+      else {
+        filter(availablePluginsModel, myFilteredAvailable);
+      }
+    }
+
+    private void filter(PluginTableModel model, final List<IdeaPluginDescriptor> filtered) {
+      final String filter = getFilter();
+      final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+      final Set<String> search = optionsRegistrar.getProcessedWords(filter);
+      final ArrayList<IdeaPluginDescriptor> current = new ArrayList<IdeaPluginDescriptor>();
+      final List<IdeaPluginDescriptor> view = model.view;
+      final LinkedHashSet<IdeaPluginDescriptor> toBeProcessed = new LinkedHashSet<IdeaPluginDescriptor>(view);
+      toBeProcessed.addAll(filtered);
+      filtered.clear();
+      for (IdeaPluginDescriptor descriptor : toBeProcessed) {
+        if (isAccepted(search, current, descriptor, descriptor.getName())) {
+          continue;
+        }
+        else {
+          final String description = descriptor.getDescription();
+          if (description != null && isAccepted(search, current, descriptor, description)) {
+            continue;
+          }
+          final String category = descriptor.getCategory();
+          if (category != null && isAccepted(search, current, descriptor, category)) {
+            continue;
+          }
+          final String changeNotes = descriptor.getChangeNotes();
+          if (changeNotes != null && isAccepted(search, current, descriptor, changeNotes)) {
+            continue;
+          }
+        }
+        filtered.add(descriptor);
+      }
+      model.clearData();
+      model.addData(current);
+    }
+
+    private boolean isAccepted(final Set<String> search,
+                               final ArrayList<IdeaPluginDescriptor> current,
+                               final IdeaPluginDescriptor descriptor,
+                               final String description) {
+      final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+      final HashSet<String> descriptionSet = new HashSet<String>(search);
+      descriptionSet.removeAll(optionsRegistrar.getProcessedWords(description));
+      if (descriptionSet.isEmpty()) {
+        current.add(descriptor);
+        return true;
+      }
+      return false;
+    }
+
+    public void dispose() {
+      super.dispose();
+      myFilteredInstalled.clear();
+      myFilteredAvailable.clear();
+    }
   }
 }
