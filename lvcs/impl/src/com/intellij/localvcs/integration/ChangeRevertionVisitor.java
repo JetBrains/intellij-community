@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ChangeRevertionVisitor implements ChangeVisitor {
+public class ChangeRevertionVisitor extends ChangeVisitor {
   private RootEntry myRootEntry;
   private IdeaGateway myGateway;
 

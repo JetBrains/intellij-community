@@ -94,4 +94,11 @@ public class ChangeSet extends Change {
     }
     return result;
   }
+
+  @Override
+  public void accept(final ChangeVisitor v) throws Exception {
+    for (Change c : Reversed.list(myChanges)) {
+      c.accept(v);
+    }
+  }
 }

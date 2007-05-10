@@ -257,6 +257,17 @@ public class LocalVcs implements ILocalVcs {
     return null;
   }
 
+  public void accept(final ChangeVisitor visitor) throws Exception {
+    try {
+      for (Change c : Reversed.list(myPendingChanges)) {
+        c.accept(visitor);
+      }
+      myChangeList.accept(visitor);
+    }
+    catch (ChangeVisitor.StopVisitorException e) {
+    }
+  }
+
   private byte[] getByteContentOf(Revision r) {
     Content c = r.getEntry().getContent();
     return c.isAvailable() ? c.getBytes() : null;

@@ -39,6 +39,12 @@ public class ChangeList {
     return result;
   }
 
+  public void accept(final ChangeVisitor visitor) throws Exception {
+    for (Change change : Reversed.list(myChanges)) {
+      change.accept(visitor);
+    }
+  }
+
   public List<Change> getPlainChangesAfter(Change target) {
     List<Change> result = new ArrayList<Change>();
 
