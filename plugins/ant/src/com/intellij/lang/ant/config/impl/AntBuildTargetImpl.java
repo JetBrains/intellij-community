@@ -69,8 +69,10 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public String getActionId() {
-    String modelName = myModel.getName();
-    if (modelName == null || modelName.trim().length() == 0) return null;
+    final String modelName = myModel.getName();
+    if (modelName == null || modelName.length() == 0) {
+      return null;
+    }
     final StringBuilder name = StringBuilderSpinAllocator.alloc();
     try {
       name.append(AntConfiguration.ACTION_ID_PREFIX);

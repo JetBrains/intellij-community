@@ -51,11 +51,16 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   public String getActionId() {
+    final String modelName = myBuildFile.getModel().getName();
+    if (modelName == null || modelName.length() == 0) {
+      return null;
+    }
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append(AntConfiguration.ACTION_ID_PREFIX);
+      builder.append(modelName);
       builder.append('_');
-      builder.append(myName);
+      builder.append(getName());
       return builder.toString();
     }
     finally {
