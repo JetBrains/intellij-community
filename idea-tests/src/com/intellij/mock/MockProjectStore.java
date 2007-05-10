@@ -99,7 +99,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method commit is not yet implemented in " + getClass().getName());
   }
 
-  public void save() throws IOException {
+  public boolean save() throws IOException {
     throw new UnsupportedOperationException("Method save is not yet implemented in " + getClass().getName());
   }
 

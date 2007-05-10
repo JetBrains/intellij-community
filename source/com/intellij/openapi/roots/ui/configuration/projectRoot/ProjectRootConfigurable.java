@@ -9,6 +9,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -1272,6 +1273,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
       }
       else if (editableObject instanceof Facet) {
         Facet facet = (Facet)editableObject;
+        if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId())) {
+          return false;
+        }
         getFacetConfigurator().removeFacet(facet);
       }
       else if (editableObject instanceof Library) {

@@ -9,7 +9,7 @@ public interface IComponentStore {
   void initComponent(Object component);
 
   void commit();
-  void save() throws IOException;
+  boolean save() throws IOException;
   void load() throws IOException;
 
   List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures);

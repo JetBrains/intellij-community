@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
@@ -70,10 +71,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     super.beforeSave();
 
     //is needed for compatibility with demetra
-    writeWsVerrsion();
+    writeWsVersion();
   }
 
-  private void writeWsVerrsion() throws StateStorage.StateStorageException {
+  private void writeWsVersion() throws StateStorage.StateStorageException {
     final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
 
     if (wsStorage == null) return;
@@ -195,7 +196,32 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       throw new SaveCancelledException();
     }
 
+    final ProjectConversionHelper conversionHelper = getConversionHelper();
+    final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
+    if (conversionHelper != null && wsStorage != null) {
+      try {
+        final Element root = wsStorage.getRootElement();
+        if (root != null) {
+          conversionHelper.convertWorkspaceRootToOldFormat(root);
+        }
+      }
+      catch (StateStorage.StateStorageException e) {
+      }
+    }
+
     super.saveStorageManager();
+
+    if (conversionHelper != null && wsStorage != null) {
+      try {
+        final Element root = wsStorage.getDocument().getRootElement();
+        if (root != null) {
+          conversionHelper.convertWorkspaceRootToNewFormat(root);
+        }
+      }
+      catch (StateStorage.StateStorageException e) {
+      }
+    }
+
   }
 
   @Override
@@ -312,11 +338,28 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           }
         }
       }
+
+      ProjectConversionHelper conversionHelper = getConversionHelper();
+      if (conversionHelper != null) {
+        final StateStorage workspaceStorage = getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
+        if (workspaceStorage instanceof XmlElementStorage) {
+          final XmlElementStorage xmlElementStorage = (XmlElementStorage)workspaceStorage;
+          final Element root = xmlElementStorage.getRootElement();
+          if (root != null) {
+            conversionHelper.convertWorkspaceRootToNewFormat(root);
+          }
+        }
+      }
     }
     catch (StateStorage.StateStorageException e) {
       LOG.info(e);
       throw new IOException(e.getMessage());
     }
+  }
+
+  @Nullable
+  private ProjectConversionHelper getConversionHelper() {
+    return (ProjectConversionHelper)myProject.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
   private boolean checkMacros(Set<String> definedMacros) throws IOException, JDOMException {

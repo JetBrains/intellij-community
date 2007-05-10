@@ -3,7 +3,6 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -242,10 +241,6 @@ public class ProjectUtil {
       else if (exitCode != 0) { // not "Yes"
         return null;
       }
-    }
-
-    if (!ProjectConversionUtil.convertProject(path)) {
-      return null;
     }
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();

@@ -11,10 +11,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,6 +33,7 @@ public class ModuleContainerImpl implements ModuleContainer {
   @NonNls public static final String CONTAINER_ELEMENT_NAME = "containerElement";
   @NonNls public static final String MODULE_TYPE = "module";
   @NonNls private static final String LIBRARY_TYPE = "library";
+  public static final TObjectHashingStrategy<ContainerElement> IGNORING_ATTRIBUTES_EQUALITY = new ElementIgnoringAttributesEquality();
 
   public ModuleContainerImpl(@NotNull Module module) {
     myParentModule = module;
@@ -57,6 +60,8 @@ public class ModuleContainerImpl implements ModuleContainer {
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
     LOG.assertTrue(myParentModule != null);
+    Set<ContainerElement> created = new THashSet<ContainerElement>(IGNORING_ATTRIBUTES_EQUALITY);
+
     final List<Element> children = element.getChildren(CONTAINER_ELEMENT_NAME);
     for (Element child : children) {
       final String type = child.getAttributeValue(TYPE_ATTRIBUTE_NAME);
@@ -64,7 +69,10 @@ public class ModuleContainerImpl implements ModuleContainer {
       containerElement = createElement(child, myParentModule, type);
 
       containerElement.readExternal(child);
-      addElement(containerElement);
+
+      if (created.add(containerElement)) {
+        addElement(containerElement);
+      }
     }
   }
 
@@ -140,10 +148,6 @@ public class ModuleContainerImpl implements ModuleContainer {
     return getElements(myDefaultModulesProvider, DefaultFacetsProvider.INSTANCE, true, false, false);
   }
 
-  public ContainerElement[] getAllElements() {
-    return getElements(myDefaultModulesProvider, DefaultFacetsProvider.INSTANCE, true, true, true);
-  }
-
   public ContainerElement[] getElements(ModulesProvider provider, final FacetsProvider facetsProvider,
                                         final boolean includeResolved, final boolean includeUnresolved, final boolean includeNonPackaged) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
@@ -191,4 +195,20 @@ public class ModuleContainerImpl implements ModuleContainer {
     myContents.add(element);
   }
 
+  public static class ElementIgnoringAttributesEquality implements TObjectHashingStrategy<ContainerElement> {
+    public boolean equals(ContainerElement object, ContainerElement object1) {
+      if (object1 == null || object == null) {
+        return object == object1;
+      }
+      return object.equalsIgnoreAttributes(object1);
+    }
+
+    public int computeHashCode(ContainerElement object) {
+      String presentableName = object.getPresentableName();
+      if (presentableName == null) {
+        return 0;
+      }
+      return presentableName.hashCode();
+    }
+  }
 }

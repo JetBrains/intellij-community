@@ -62,21 +62,23 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
 
-  public final void save() throws IOException {
+  public final boolean save() throws IOException {
     try {
       try {
         beforeSave();
       }
       catch (SaveCancelledException e) {
-        return;
+        return false;
       }
 
       try {
         //noinspection EmptyCatchBlock
         try {
           doSave();
+          return true;
         }
         catch (SaveCancelledException e) {
+          return false;
         }
       }
       finally {
@@ -94,7 +96,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "WeakerAccess"})
   protected void afterSave() {
     ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
   }

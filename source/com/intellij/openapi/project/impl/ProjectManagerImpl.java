@@ -2,6 +2,8 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.convert.ProjectConversionUtil;
+import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -40,7 +42,7 @@ import java.util.*;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
-  public static final int CURRENT_FORMAT_VERSION = 5;
+  public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<ArrayList<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
   @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
@@ -130,7 +132,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
-    ProjectImpl project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode());
+    ProjectImpl project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(), null);
 
     if (useDefaultProjectSettings) {
       try {
@@ -144,13 +146,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
-  private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed) {
+  private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
+                                    @Nullable ProjectConversionHelper conversionHelper) {
     final ProjectImpl project;
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
     else {
       project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
+      if (conversionHelper != null) {
+        project.getPicoContainer().registerComponentInstance(ProjectConversionHelper.class, conversionHelper);
+      }
     }
 
     try {
@@ -166,8 +172,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+    return loadProject(filePath, false);
+  }
+
+  @Nullable
+  private Project loadProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException {
     filePath = canonicalize(filePath);
-    ProjectImpl project = createProject(filePath, false, false, false);
+
+    ProjectConversionHelper conversionHelper = null;
+    if (convert) {
+      final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(filePath);
+      if (result.isOpeningCancelled()) {
+        return null;
+      }
+      conversionHelper = result.getConversionHelper();
+    }
+
+    ProjectImpl project = createProject(filePath, false, false, false, conversionHelper);
     project.getStateStore().loadProject();
     return project;
   }
@@ -209,7 +230,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
-      myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode());
+      myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);
 
       myDefaultProjectRootElement = null;
 
@@ -258,8 +279,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
-    Project project = loadProject(filePath);
-    if (!openProject(project)) {
+    Project project = loadProject(filePath, true);
+    if (project == null || !openProject(project)) {
       return null;
     }
     return project;

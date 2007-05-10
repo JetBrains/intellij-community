@@ -224,6 +224,7 @@
         <separator/>
         <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
         <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+        <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction"/>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
         <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>

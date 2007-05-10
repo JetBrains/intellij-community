@@ -4,12 +4,13 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.facet.impl.ui.FacetEditorFacade;
-import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.*;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.Module;
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.ui.FacetEditorFacade;
+import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +89,14 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   public FacetInfo getParent(final FacetInfo facetInfo) {
     final Module module = getFacetConfigurator().getFacet(facetInfo).getModule();
     return getFacetConfigurator().getTreeModel(module).getParent(facetInfo);
+  }
+
+  public boolean isProjectVersionSupportsFacetAddition(final FacetType type) {
+    final ProjectFileVersion instance = ProjectFileVersion.getInstance(myConfigurable.getProject());
+    if (!instance.isFacetAdditionEnabled(type.getId())) {
+      return false;
+    }
+    return true;
   }
 
   private ProjectFacetsConfigurator getFacetConfigurator() {

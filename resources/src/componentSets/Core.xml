@@ -130,6 +130,10 @@
       <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.ide.impl.convert.ProjectFileVersion</interface-class>
+      <implementation-class>com.intellij.ide.impl.convert.ProjectFileVersionImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.util.xml.DomManager</interface-class>
       <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
       <skipForDummyProject/>

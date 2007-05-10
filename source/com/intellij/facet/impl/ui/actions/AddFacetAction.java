@@ -5,13 +5,13 @@
 package com.intellij.facet.impl.ui.actions;
 
 import com.intellij.facet.FacetInfo;
-import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleType;
 
 import java.util.Collection;
 
@@ -30,6 +30,10 @@ public class AddFacetAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    if (!myEditor.isProjectVersionSupportsFacetAddition(myType)) {
+      return;
+    }
+
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final Collection<FacetInfo> facetInfos = myEditor.getFacetsByType(myType);
     String facetName = myType.getPresentableName();

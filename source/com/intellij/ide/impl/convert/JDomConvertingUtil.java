@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.javaee.converting;
+package com.intellij.ide.impl.convert;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Condition;
@@ -128,6 +128,11 @@ public class JDomConvertingUtil {
 
   public static void addComponent(final Element root, final Element component) {
     String componentName = component.getAttributeValue(NAME_ATTRIBUTE);
+    final Element old = findComponent(root, componentName);
+    if (old != null) {
+      root.removeContent(old);
+    }
+
     for (int i = 0; i < root.getContent().size(); i++) {
       Object o = root.getContent().get(i);
       if (o instanceof Element) {

@@ -5,32 +5,31 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.convert.ui.ProjectConversionWizard;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.extensions.Extensions;
-import org.jdom.JDOMException;
-import org.jdom.Element;
 import org.jdom.Document;
-import org.jetbrains.annotations.NonNls;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author nik
  */
 public class ProjectConversionUtil {
-  @NonNls private static final String VERSION_ATTRIBUTE = "version";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectConversionUtil");
+  @NonNls private static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
 
-  public static int getVersion(Element root) {
-    try {
-      return Integer.parseInt(root.getAttributeValue(VERSION_ATTRIBUTE));
-    }
-    catch (NumberFormatException e) {
-      return -1;
-    }
+  private static boolean isConverted(Element versionComponent) {
+    return Boolean.parseBoolean(versionComponent.getAttributeValue(ProjectFileVersionImpl.CONVERTED_ATTRIBUTE));
   }
 
   private static Element loadProjectFileRoot(String path) throws JDOMException, IOException {
@@ -38,59 +37,100 @@ public class ProjectConversionUtil {
     return document.getRootElement();
   }
 
-  public static boolean convertProject(String projectFilePath) {
+  @NotNull
+  public static ProjectConversionResult convertProject(String projectFilePath) {
     try {
-      String projectName = FileUtil.getNameWithoutExtension(new File(projectFilePath));
       final Element root = loadProjectFileRoot(projectFilePath);
-      final int version = getVersion(root);
 
-      final ProjectConverter converter = getConverter(version, projectFilePath);
+      final Element versionComponent = JDomConvertingUtil.findComponent(root, ProjectFileVersionImpl.COMPONENT_NAME);
+      if (versionComponent != null && isConverted(versionComponent)) {
+        return ProjectConversionResult.OK;
+      }
+
+      final ProjectConverter converter = getConverter(projectFilePath);
       if (converter == null) {
-        return true;
+        return ProjectConversionResult.OK;
       }
 
       converter.prepare();
       if (!converter.isConversionNeeded()) {
-        return true;
+        return ProjectConversionResult.OK;
       }
 
-      /*
-      final ConvertOrNotConvertDialog convertConfirmationDialog = new ConvertOrNotConvertDialog();
-      convertConfirmationDialog.show();
-      if (!convertConfirmationDialog.isOK()) {
-        return false; 
+      if (versionComponent != null) {
+        LOG.assertTrue(!isConverted(versionComponent));
+        return new ProjectConversionResult(converter.createHelper());
       }
-      */
 
-      final ProjectConversionDialog dialog = new ProjectConversionDialog(projectName, converter);
-      dialog.show();
+      String projectName = FileUtil.getNameWithoutExtension(new File(projectFilePath));
+      ProjectConversionWizard wizard = new ProjectConversionWizard(converter, projectName);
+      wizard.show();
+      if (!wizard.isOK()) {
+        return ProjectConversionResult.DO_NOT_OPEN;
+      }
 
-      return dialog.isConverted();
+      if (wizard.isConverted()) {
+        return ProjectConversionResult.OK;
+      }
+
+      return new ProjectConversionResult(converter.createHelper());
     }
     catch (IOException e) {
       Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
                                IdeBundle.message("title.cannot.convert.project"));
-      return false;
+      return ProjectConversionResult.DO_NOT_OPEN;
     }
     catch (JDOMException e) {
       Messages.showErrorDialog(IdeBundle.message("error.project.file.is.corrupted"),
                                IdeBundle.message("title.cannot.convert.project"));
-      return false;
+      return ProjectConversionResult.DO_NOT_OPEN;
     }
 
   }
 
   @Nullable
-  private static ProjectConverter getConverter(final int version, final String projectFilePath) {
+  public static ProjectConverter getConverter(final String projectFilePath) {
     for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
-      if (converterFactory.isApplicable(version)) {
-        final ProjectConverter converter = converterFactory.createConverter(projectFilePath);
-        if (converter != null) {
-          return converter;
-        }
+      final ProjectConverter converter = converterFactory.createConverter(projectFilePath);
+      if (converter != null) {
+        return converter;
       }
     }
     return null;
   }
 
+  public static File backupFiles(final File[] files, final File parentDir) throws IOException {
+    final String dirName = FileUtil.createSequentFileName(parentDir, PROJECT_FILES_BACKUP, "");
+    File backupDir = new File(parentDir, dirName);
+    backupDir.mkdirs();
+    for (File file : files) {
+      FileUtil.copy(file, new File(backupDir, file.getName()));
+    }
+    return backupDir;
+  }
+
+  public static class ProjectConversionResult {
+    public static final ProjectConversionResult OK = new ProjectConversionResult(false, null);
+    public static final ProjectConversionResult DO_NOT_OPEN = new ProjectConversionResult(true, null);
+
+    private boolean myOpeningCancelled;
+    private ProjectConversionHelper myConversionHelper;
+
+    public ProjectConversionResult(ProjectConversionHelper helper) {
+      this(false, helper);
+    }
+
+    private ProjectConversionResult(final boolean openingCancelled, final ProjectConversionHelper conversionHelper) {
+      myOpeningCancelled = openingCancelled;
+      myConversionHelper = conversionHelper;
+    }
+
+    public boolean isOpeningCancelled() {
+      return myOpeningCancelled;
+    }
+
+    public ProjectConversionHelper getConversionHelper() {
+      return myConversionHelper;
+    }
+  }
 }

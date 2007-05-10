@@ -13,6 +13,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -60,6 +61,33 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     return storage;
   }
 
+  protected void saveStorageManager() throws IOException {
+    final ProjectConversionHelper conversionHelper = getConversionHelper();
+    if (conversionHelper != null) {
+      try {
+        final Element root = getMainStorage().getRootElement();
+        if (root != null) {
+          conversionHelper.convertModuleRootToOldFormat(root);
+        }
+      }
+      catch (StateStorage.StateStorageException e) {
+      }
+    }
+
+    super.saveStorageManager();
+
+    if (conversionHelper != null) {
+      try {
+        final Element root = getMainStorage().getRootElement();
+        if (root != null) {
+          conversionHelper.convertModuleRootToNewFormat(root, myModule.getName());
+        }
+      }
+      catch (StateStorage.StateStorageException e) {
+      }
+    }
+  }
+
   @Override
   public void load() throws IOException {
     super.load();
@@ -71,6 +99,11 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
       Document doc = fileBasedStorage.getDocument();
       final Element element = doc.getRootElement();
+
+      final ProjectConversionHelper conversionHelper = getConversionHelper();
+      if (conversionHelper != null) {
+        conversionHelper.convertModuleRootToNewFormat(element, myModule.getName());
+      }
 
       final List attributes = element.getAttributes();
       for (Object attribute : attributes) {
@@ -92,6 +125,11 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
       LOG.error(e);
       throw new IOException(e.getMessage());
     }
+  }
+
+  @Nullable
+  private ProjectConversionHelper getConversionHelper() {
+    return (ProjectConversionHelper)myModule.getProject().getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
   public void setModuleFilePath(final String filePath) {
