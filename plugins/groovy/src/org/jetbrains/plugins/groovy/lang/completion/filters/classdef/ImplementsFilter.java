@@ -19,7 +19,10 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.impl.PsiElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -40,9 +43,15 @@ public class ImplementsFilter implements ElementFilter {
         elem = elem.getPrevSibling();
       }
 
-      // TODO implement case with 'implements' double occurence
       if (elem instanceof GrEnumTypeDefinition ||
           (elem instanceof GrClassDefinition)) {
+        PsiElement[] children = elem.getChildren();
+        for (PsiElement child : children) {
+          if (child instanceof GrImplementsClause ||
+              child instanceof GrTypeDefinitionBody) {
+            return false;
+          }
+        }
         return true;
       }
       return false;
@@ -55,7 +64,7 @@ public class ImplementsFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
+  public String toString() {
     return "Control structure keywords filter";
   }
 }

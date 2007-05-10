@@ -19,9 +19,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiComment;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,9 +37,16 @@ public class ExtendsFilter implements ElementFilter {
               GroovyElementTypes.mNLS.equals(elem.getNode().getElementType()))) {
         elem = elem.getPrevSibling();
       }
-      // TODO implement case with 'implements' or 'extends' double occurence
       if (elem instanceof GrInterfaceDefinition ||
           elem instanceof GrClassDefinition) {
+        PsiElement[] children = elem.getChildren();
+        for (PsiElement child : children) {
+          if (child instanceof GrImplementsClause ||
+              child instanceof GrExtendsClause ||
+              child instanceof GrTypeDefinitionBody) {
+            return false;
+          }
+        }
         return true;
       }
       return false;
