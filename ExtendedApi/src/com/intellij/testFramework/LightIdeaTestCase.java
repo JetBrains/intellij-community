@@ -36,8 +36,8 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -57,8 +57,8 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -413,7 +413,7 @@ import java.util.Map;
           try {
             cleanupApplicationCaches();
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             e.printStackTrace();
           }
         }
