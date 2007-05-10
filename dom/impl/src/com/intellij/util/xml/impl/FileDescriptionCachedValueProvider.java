@@ -84,24 +84,22 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   public final DomFileElementImpl<T> getFileElement() {
     r.lock();
     try {
+      if (myCachedValue.hasUpToDateValue()) return myLastResult;
+    }
+    finally {
+      r.unlock();
+    }
+
+    final String rootTagName = getRootTag();
+    w.lock();
+    try {
       if (!myCachedValue.hasUpToDateValue()) {
-        r.unlock();
-        final String rootTagName = getRootTag();
-        w.lock();
-        try {
-          if (!myCachedValue.hasUpToDateValue()) {
-            _computeFileElement(false, rootTagName);
-          }
-        }
-        finally{
-          r.lock();
-          w.unlock();
-        }
+        _computeFileElement(false, rootTagName);
       }
       return myLastResult;
     }
     finally {
-      r.unlock();
+      w.unlock();
     }
   }
 
