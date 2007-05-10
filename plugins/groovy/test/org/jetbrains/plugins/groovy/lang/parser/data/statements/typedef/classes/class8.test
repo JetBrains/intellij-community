@@ -2,6 +2,8 @@ class a extends b implements c {}
 -----
 Groovy script
   Class definition
+    Modifiers
+      <empty list>
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')

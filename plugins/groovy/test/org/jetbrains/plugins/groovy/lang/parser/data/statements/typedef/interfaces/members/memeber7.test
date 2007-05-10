@@ -7,6 +7,8 @@ interface a {
 -----
 Groovy script
   Interface definition
+    Modifiers
+      <empty list>
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
@@ -34,6 +36,8 @@ Groovy script
       PsiElement(;)(';')
       PsiElement(new line)('\n  ')
       Method
+        Modifiers
+          <empty list>
         Type element
           Reference element
             PsiElement(identifier)('String')

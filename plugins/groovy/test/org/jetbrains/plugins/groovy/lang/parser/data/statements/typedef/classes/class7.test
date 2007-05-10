@@ -3,6 +3,8 @@ class a implements b {
 -----
 Groovy script
   Class definition
+    Modifiers
+      <empty list>
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')

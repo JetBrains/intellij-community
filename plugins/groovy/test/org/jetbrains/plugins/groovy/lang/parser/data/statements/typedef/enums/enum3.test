@@ -14,6 +14,8 @@ Groovy script
   PsiComment(line comment)('//full')
   PsiElement(new line)('\n')
   Enumeration definition
+    Modifiers
+      <empty list>
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
@@ -110,6 +112,8 @@ Groovy script
                     PsiElement(number)('4')
             PsiElement(new line)('\n     ')
             Method
+              Modifiers
+                <empty list>
               Type element
                 Reference element
                   PsiElement(identifier)('Integer')

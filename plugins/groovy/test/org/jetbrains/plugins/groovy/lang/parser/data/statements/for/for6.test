@@ -7,6 +7,8 @@ Groovy script
     PsiElement(()('(')
     Traditional FOR clause
       Variable definitions
+        Modifiers
+          <empty list>
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')

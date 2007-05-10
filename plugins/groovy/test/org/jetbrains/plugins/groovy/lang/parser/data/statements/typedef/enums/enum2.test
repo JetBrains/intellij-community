@@ -3,6 +3,8 @@ enum a implements b {
 -----
 Groovy script
   Enumeration definition
+    Modifiers
+      <empty list>
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')

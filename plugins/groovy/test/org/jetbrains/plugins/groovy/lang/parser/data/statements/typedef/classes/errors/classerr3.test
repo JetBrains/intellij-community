@@ -4,6 +4,8 @@ class a {
 -----
 Groovy script
   Class definition
+    Modifiers
+      <empty list>
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
@@ -12,6 +14,8 @@ Groovy script
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
       Class definition
+        Modifiers
+          <empty list>
         PsiElement(class)('class')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('b')

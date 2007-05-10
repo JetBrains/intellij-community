@@ -4,6 +4,8 @@ enum B {
 -----
 Groovy script
   Enumeration definition
+    Modifiers
+      <empty list>
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('B')

@@ -8,6 +8,8 @@ interface q {
 -----
 Groovy script
   Interface definition
+    Modifiers
+      <empty list>
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('q')
