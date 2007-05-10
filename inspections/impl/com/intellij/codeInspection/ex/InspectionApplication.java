@@ -100,7 +100,7 @@ public class InspectionApplication {
       }
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath);
+      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath, false);
 
       //fetch profile by name from project file (project profiles can be disabled)
       Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfiles().get(myProfileName);

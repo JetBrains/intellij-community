@@ -38,4 +38,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project getCurrentTestProject();
   public abstract void setCurrentTestProject(@Nullable Project project);
+
+  @Nullable
+  public abstract Project loadAndOpenProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException;
 }

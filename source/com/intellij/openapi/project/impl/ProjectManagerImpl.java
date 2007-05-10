@@ -279,7 +279,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
-    Project project = loadProject(filePath, true);
+    return loadAndOpenProject(filePath, true);
+  }
+
+  @Nullable
+  public Project loadAndOpenProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException {
+    Project project = loadProject(filePath, convert);
     if (project == null || !openProject(project)) {
       return null;
     }
