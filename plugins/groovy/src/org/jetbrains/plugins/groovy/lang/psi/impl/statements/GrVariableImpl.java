@@ -115,7 +115,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   public PsiModifierList getModifierList() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclarations) {
-      return ((GrVariableDeclarations) parent).findModifierList();
+      return ((GrVariableDeclarations) parent).getModifierList();
     }
     return null;
   }

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -40,8 +40,8 @@ import java.util.List;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers {
-  public GrModifiersImpl(@NotNull ASTNode node) {
+public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifierList {
+  public GrModifierListImpl(@NotNull ASTNode node) {
     super(node);
   }
 

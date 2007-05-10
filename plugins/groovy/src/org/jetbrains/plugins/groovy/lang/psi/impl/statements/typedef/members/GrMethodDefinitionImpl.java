@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -162,7 +162,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiModifierList getModifierList() {
-    return findChildByClass(GrModifiersImpl.class);
+    return findChildByClass(GrModifierListImpl.class);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
@@ -89,7 +89,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //Lists, mapetc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
-    if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
+    if (elem.equals(MODIFIERS)) return new GrModifierListImpl(node);
     if (elem.equals(ANNOTATION)) return new GrAnnotationImpl(node);
     if (elem.equals(ANNOTATION_ARGUMENTS)) return new GrAnnotationArgumentsImpl(node);
     if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIR)) return new GrAnnotationMemberValuePairImpl(node);

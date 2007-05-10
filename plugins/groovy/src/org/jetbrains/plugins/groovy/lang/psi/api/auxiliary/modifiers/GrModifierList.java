@@ -23,7 +23,7 @@ import com.intellij.psi.PsiModifierList;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrModifiers extends GroovyPsiElement, PsiModifierList {
+public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @NotNull
   GroovyPsiElement[] getModifiers();
 }

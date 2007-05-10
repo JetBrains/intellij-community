@@ -18,11 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifiers;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -51,18 +50,14 @@ public class GrVariableDeclarationsImpl extends GroovyPsiElementImpl implements 
   }
 
   @NotNull
-  public GrModifiers getModifiersList() {
-    GrModifiers modifiers = findChildByClass(GrModifiers.class);
-    assert modifiers != null;
-    return modifiers;
+  public GrModifierList getModifierList() {
+    GrModifierList modifierList = findChildByClass(GrModifierList.class);
+    assert modifierList != null;
+    return modifierList;
   }
 
   public GrVariable[] getVariables() {
     return findChildrenByClass(GrVariable.class);
-  }
-
-  public PsiModifierList findModifierList() {
-    return findChildByClass(GrModifiers.class);
   }
 
   @Nullable
