@@ -25,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 /**
  * @author ilyas
  */
-public class GrForTradClauseImpl extends GroovyPsiElementImpl implements GrForClause {
-  public GrForTradClauseImpl(@NotNull ASTNode node) {
+public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements GrForClause {
+  public GrTraditionalForClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
 

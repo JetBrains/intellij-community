@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForTradClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -111,7 +111,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(IF_STATEMENT)) return new GrIfStatementImpl(node);
     if (elem.equals(FOR_STATEMENT)) return new GrForStatementImpl(node);
     if (elem.equals(FOR_IN_CLAUSE)) return new GrForInClauseImpl(node);
-    if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrForTradClauseImpl(node);
+    if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrTraditionalForClauseImpl(node);
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStmtImpl(node);
