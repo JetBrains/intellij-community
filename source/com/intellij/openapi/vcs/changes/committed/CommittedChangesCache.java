@@ -52,6 +52,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private int myPendingUpdateCount = 0;
   private State myState = new State();
   private ScheduledFuture myFuture;
+  private List<CommittedChangeList> myCachedIncomingChanges;
 
   public static class State {
     private int myInitialCount = 500;
@@ -389,7 +390,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  public List<CommittedChangeList> getIncomingChanges() {
+  private List<CommittedChangeList> getIncomingChanges() {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cache: caches) {
@@ -409,10 +410,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void loadIncomingChangesAsync(final Consumer<List<CommittedChangeList>> consumer) {
     final Task.Backgroundable task = new Task.Backgroundable(myProject, "Loading incoming changes") {
       public void run(final ProgressIndicator indicator) {
-        consumer.consume(getIncomingChanges());
+        myCachedIncomingChanges = getIncomingChanges();
+        consumer.consume(myCachedIncomingChanges);
       }
     };
     myTaskQueue.run(task);
+  }
+
+  public List<CommittedChangeList> getCachedIncomingChanges() {
+    return myCachedIncomingChanges;
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {

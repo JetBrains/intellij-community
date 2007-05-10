@@ -15,6 +15,7 @@ import com.intellij.util.messages.MessageBusConnection;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -32,15 +33,15 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   public JComponent initContent() {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    final List<CommittedChangeList> list = cache.getIncomingChanges();
     final CommittedChangesProvider provider = cache.getProviderForProject();
     assert provider != null;
-    myBrowser = new CommittedChangesTreeBrowser(myProject, list);
+    myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group);
     myBrowser.addToolBar(toolbar.getComponent());
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
+    loadChangesToBrowser();
     return myBrowser;
   }
 
@@ -54,12 +55,16 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       public void run() {
         if (myProject.isDisposed()) return;
         if (myBrowser != null) {
-          CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
-            public void consume(final List<CommittedChangeList> committedChangeLists) {
-              myBrowser.setItems(committedChangeLists);
-            }
-          });
+          loadChangesToBrowser();
         }
+      }
+    });
+  }
+
+  private void loadChangesToBrowser() {
+    CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
+      public void consume(final List<CommittedChangeList> committedChangeLists) {
+        myBrowser.setItems(committedChangeLists);
       }
     });
   }
