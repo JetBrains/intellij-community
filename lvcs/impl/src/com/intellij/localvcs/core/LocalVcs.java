@@ -184,7 +184,7 @@ public class LocalVcs implements ILocalVcs {
     return myPendingChanges.isEmpty();
   }
 
-  public Change getLastGlobalChange() {
+  public Change getLastChange() {
     return myLastChange;
   }
 
@@ -195,7 +195,7 @@ public class LocalVcs implements ILocalVcs {
       if (c == target) return result;
       result.add(c);
     }
-    result.addAll(myChangeList.getChangesAfter(target));
+    result.addAll(myChangeList.getPlainChangesAfter(target));
 
     return result;
   }

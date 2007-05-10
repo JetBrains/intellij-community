@@ -7,14 +7,14 @@ import com.intellij.localvcs.core.changes.ChangeVisitor;
 import java.util.List;
 
 public class CheckpointImpl implements Checkpoint {
-  private Change myLastGlobalChange;
+  private Change myLastChange;
   private IdeaGateway myGateway;
   private ILocalVcs myVcs;
 
   public CheckpointImpl(IdeaGateway gw, ILocalVcs vcs) {
     myGateway = gw;
     myVcs = vcs;
-    myLastGlobalChange = myVcs.getLastGlobalChange();
+    myLastChange = myVcs.getLastChange();
   }
 
   public void revertToPreviousState() {
@@ -27,12 +27,12 @@ public class CheckpointImpl implements Checkpoint {
 
   private void doRevert(boolean revertLastChange) {
     try {
-      List<Change> cc = myVcs.getChangesAfter(myLastGlobalChange);
+      List<Change> cc = myVcs.getChangesAfter(myLastChange);
 
       ChangeVisitor v = new ChangeRevertionVisitor(myVcs, myGateway);
       for (Change c : cc) c.accept(v);
 
-      if (revertLastChange) myLastGlobalChange.accept(v);
+      if (revertLastChange) myLastChange.accept(v);
 
     }
     catch (Exception e) {

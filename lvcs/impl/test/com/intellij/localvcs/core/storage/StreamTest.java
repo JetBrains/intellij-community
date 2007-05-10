@@ -210,7 +210,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateFileChange.class, read.getClass());
     CreateFileChange result = (CreateFileChange)read;
 
-    assertEquals(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(1)), result.getAffectedIdPaths());
   }
 
   @Test
@@ -224,7 +224,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateDirectoryChange.class, read.getClass());
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
-    assertEquals(a(idp(2)), result.getAffectedIdPaths());
+    assertEquals(list(idp(2)), result.getAffectedIdPaths());
   }
 
   @Test
@@ -241,7 +241,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(ChangeFileContentChange.class, read.getClass());
     ChangeFileContentChange result = (ChangeFileContentChange)read;
 
-    assertEquals(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(1)), result.getAffectedIdPaths());
     assertEquals(c("old content"), result.getOldContent());
     assertEquals(1L, result.getOldTimestamp());
   }
@@ -263,7 +263,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
 
-    assertEquals(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(1)), result.getAffectedIdPaths());
 
     Entry e = result.getAffectedEntry();
 
@@ -289,7 +289,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
 
-    assertEquals(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(1)), result.getAffectedIdPaths());
     assertEquals("old name", result.getOldName());
   }
 
@@ -309,7 +309,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(MoveChange.class, read.getClass());
     MoveChange result = ((MoveChange)read);
 
-    assertEquals(a(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
+    assertEquals(list(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
   }
 
   @Test

@@ -11,7 +11,6 @@ import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Locale;
 
 public abstract class LocalVcsTestCase extends Assert {
@@ -58,7 +57,7 @@ public abstract class LocalVcsTestCase extends Assert {
     };
   }
 
-  protected static <T> T[] a(T... objects) {
+  protected static <T> T[] list(T... objects) {
     return objects;
   }
 
@@ -87,11 +86,7 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static void assertEquals(Object[] expected, Collection actual) {
-    List<Object> expectedList = Arrays.asList(expected);
-    String message = notEqualsMessage(expectedList, actual);
-
-    assertTrue(message, expectedList.size() == actual.size());
-    assertTrue(message, actual.containsAll(expectedList));
+    assertEquals(expected, actual.toArray());
   }
 
   protected static void assertEquals(byte[] expected, byte[] actual) {

@@ -16,6 +16,8 @@ public class Updater implements CacheUpdater {
   private ILocalVcs myVcs;
   private FileFilter myFilter;
   private VirtualFile[] myVfsRoots;
+  // usage of Set is for quick search
+  // usage of LinkedHashSet is for preserving order of files
   private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
   private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
@@ -60,22 +62,16 @@ public class Updater implements CacheUpdater {
   }
 
   public void processFile(FileContent c) {
-    // todo catch possible exceptions here.
-    try {
-      VirtualFile f = c.getVirtualFile();
-      if (myFilesToCreate.contains(f)) {
-        myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
-      }
-      else {
-        myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
-      }
+    VirtualFile f = c.getVirtualFile();
+    if (myFilesToCreate.contains(f)) {
+      myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    else {
+      myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
     }
   }
 
-  private ContentFactory contentFactoryFor(final FileContent c) throws IOException {
+  private ContentFactory contentFactoryFor(final FileContent c) {
     return new ContentFactory() {
       @Override
       public byte[] getBytes() throws IOException {

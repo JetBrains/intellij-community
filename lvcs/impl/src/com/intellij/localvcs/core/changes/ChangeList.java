@@ -39,10 +39,11 @@ public class ChangeList {
     return result;
   }
 
-  public List<Change> getChangesAfter(Change target) {
+  public List<Change> getPlainChangesAfter(Change target) {
     List<Change> result = new ArrayList<Change>();
 
     for (Change changeSet : Reversed.list(myChanges)) {
+      if (changeSet == target) return result;
       for (Change c : Reversed.list(changeSet.getChanges())) {
         if (c == target) return result;
         result.add(c);

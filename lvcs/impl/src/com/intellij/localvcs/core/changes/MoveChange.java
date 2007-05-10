@@ -3,13 +3,14 @@ package com.intellij.localvcs.core.changes;
 import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.storage.Stream;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 
 public class MoveChange extends StructuralChange {
   private String myNewParentPath; // transient
-  private IdPath mySecondAffectedIdPath;
+  private IdPath myTargetIdPath;
 
   public MoveChange(String path, String newParentPath) {
     super(path);
@@ -18,13 +19,13 @@ public class MoveChange extends StructuralChange {
 
   public MoveChange(Stream s) throws IOException {
     super(s);
-    mySecondAffectedIdPath = s.readIdPath();
+    myTargetIdPath = s.readIdPath();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeIdPath(mySecondAffectedIdPath);
+    s.writeIdPath(myTargetIdPath);
   }
 
   @Override
@@ -32,7 +33,7 @@ public class MoveChange extends StructuralChange {
     IdPath firstIdPath = root.getEntry(myPath).getIdPath();
 
     root.move(myPath, myNewParentPath);
-    mySecondAffectedIdPath = root.getEntry(getNewPath()).getIdPath();
+    myTargetIdPath = root.getEntry(getNewPath()).getIdPath();
 
     return firstIdPath;
   }
@@ -43,14 +44,19 @@ public class MoveChange extends StructuralChange {
 
   @Override
   public void revertOn(RootEntry root) {
-    IdPath newPath = mySecondAffectedIdPath;
+    IdPath newPath = myTargetIdPath;
     IdPath oldParentPath = myAffectedIdPath.getParent();
     root.move(newPath, oldParentPath);
   }
 
   @Override
   public IdPath[] getAffectedIdPaths() {
-    return new IdPath[]{myAffectedIdPath, mySecondAffectedIdPath};
+    return new IdPath[]{myAffectedIdPath, myTargetIdPath};
+  }
+
+  @Override
+  public boolean affectsOnly(Entry e) {
+    return affectsIdPath(e, myAffectedIdPath) && affectsIdPath(e, myTargetIdPath);
   }
 
   @Override

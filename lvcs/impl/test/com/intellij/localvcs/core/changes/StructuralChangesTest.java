@@ -19,7 +19,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new CreateFileChange(1, "dir/name", null, -1);
     c.applyTo(root);
 
-    assertEquals(a(idp(99, 1)), c.getAffectedIdPaths());
+    assertEquals(list(idp(99, 1)), c.getAffectedIdPaths());
 
   }
 
@@ -28,7 +28,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new CreateDirectoryChange(2, "name");
     c.applyTo(root);
 
-    assertEquals(a(idp(2)), c.getAffectedIdPaths());
+    assertEquals(list(idp(2)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -38,7 +38,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new ChangeFileContentChange("file", c("new content"), -1);
     c.applyTo(root);
 
-    assertEquals(a(idp(16)), c.getAffectedIdPaths());
+    assertEquals(list(idp(16)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -48,7 +48,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new RenameChange("name", "new name");
     c.applyTo(root);
 
-    assertEquals(a(idp(42)), c.getAffectedIdPaths());
+    assertEquals(list(idp(42)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -60,7 +60,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
-    assertEquals(a(idp(1, 13), idp(2, 13)), c.getAffectedIdPaths());
+    assertEquals(list(idp(1, 13), idp(2, 13)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -71,6 +71,20 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new DeleteChange("dir/file");
     c.applyTo(root);
 
-    assertEquals(a(idp(99, 7)), c.getAffectedIdPaths());
+    assertEquals(list(idp(99, 7)), c.getAffectedIdPaths());
+  }
+
+  @Test
+  public void testAffectsOnly() {
+    root.createDirectory(1, "root");
+    root.createDirectory(2, "root/dir1");
+    root.createDirectory(3, "root/dir2");
+    root.createFile(4, "root/dir1/file", null, -1);
+
+    StructuralChange c = new MoveChange("root/dir1/file", "root/dir2");
+    c.applyTo(root);
+    assertTrue(c.affectsOnly(root.getEntry("root")));
+    assertFalse(c.affectsOnly(root.getEntry("root/dir1")));
+    assertFalse(c.affectsOnly(root.getEntry("root/dir2")));
   }
 }

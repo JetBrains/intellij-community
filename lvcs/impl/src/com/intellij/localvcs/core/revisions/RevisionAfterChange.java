@@ -16,7 +16,7 @@ public class RevisionAfterChange extends RevisionBeforeChange {
   }
 
   @Override
-  protected boolean revertMyChange() {
+  protected boolean includeMyChange() {
     return false;
   }
 }
