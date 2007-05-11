@@ -79,12 +79,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     });
     myChangesTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
+        if (e.isPopupTrigger()) return;
         final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           final Rectangle rectangle = myChangesTree.getPathBounds(path);
           int dx = e.getX() - rectangle.x;
           final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-          myCellRenderer.customizeCellRenderer(myChangesTree, treeNode, false, false, false, -1, false);
+          myCellRenderer.getTreeCellRendererComponent(myChangesTree, treeNode, false, false, false, -1, false);
           int i = myCellRenderer.findFragmentAt(dx);
           if (i >= 0) {
             String text = myCellRenderer.getFragmentText(i);
