@@ -181,32 +181,40 @@ public class VcsUtil {
     return new VcsSelection(editor.getDocument(), selectionModel);
   }
 
-  @Nullable
-  public static AbstractVcs getVcsFor(Project project, FilePath file) {
-    AbstractVcs vcs = null;
-    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
-    VirtualFile virtualFile = file.getVirtualFile();
-    VirtualFile virtualFileParent = file.getVirtualFileParent();
-    if (virtualFile != null) {
-      vcs = projectLevelVcsManager.getVcsFor(virtualFile);
-    }
-    else if (virtualFileParent != null) vcs = projectLevelVcsManager.getVcsFor(virtualFileParent);
-
-    return vcs;
-  }
-
   /**
    * @param project Project component
    * @param file    File to check
    * @return true if the given file resides under the root associated with any
-   *         Version Control.
+   *
    */
-  public static boolean isFileUnderVcs(Project project, String file) {
-    return isFileUnderVcs(project, getFilePath(file));
+  public static boolean isFileUnderVcs( Project project, String file ) {
+    return getVcsFor( project, getFilePath( file ) ) != null;
   }
 
-  public static boolean isFileUnderVcs(Project project, FilePath file) {
-    return getVcsFor(project, file) != null;
+  public static boolean isFileUnderVcs( Project project, FilePath file ) {
+    return getVcsFor( project, file ) != null;
+  }
+
+  /**
+   * File is considered to be a valid vcs file if it resides under the content
+   * root controlled by the given vcs.
+   */
+  public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
+    ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
+    return mgr.getVcsFor(file) == host;
+  }
+
+  //  NB: do not reduce this method to the method above since PLVcsMgr uses
+  //      different methods for computing its predicate (since FilePath can
+  //      refer to the deleted files).
+  public static boolean isFileForVcs( FilePath path, Project project, AbstractVcs host ) {
+    return getVcsFor( project, path ) == host;
+  }
+
+  @Nullable
+  public static AbstractVcs getVcsFor( Project project, FilePath file )
+  {
+    return ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );
   }
 
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
@@ -300,14 +308,6 @@ public class VcsUtil {
     });
   }
 
-  public static File getIOFile(final VirtualFile parent) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<File>() {
-      public File compute() {
-        return VfsUtil.virtualToIoFile(parent);
-      }
-    });
-  }
-
   public static String getFileContent(final String path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
@@ -353,19 +353,7 @@ public class VcsUtil {
     return false;
   }
 
-  /**
-   * File is considered to be a valid vcs file if it resides under the
-   * content root controlled by the given vcs.
-   */
-  public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
-    ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
-    return mgr.getVcsFor(file) == host;
-  }
-
-  public static FilePath getFilePath(String path) {
-    return getFilePath(new File(path));
-  }
-
+  public static FilePath getFilePath(String path) {  return getFilePath(new File(path));  }
   public static FilePath getFilePath(File file) {
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
   }

@@ -296,7 +296,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             try {
               changeProvider.getChanges(scope, new ChangelistBuilder() {
                 public void processChange(final Change change) {
-                  processChangeInList(change, null);
+                  processChangeInList( change, (ChangeList)null );
+                }
+
+                public void processChangeInList(final Change change, final String changeListName ) {
+                  LocalChangeList list = null;
+                  if( changeListName != null ){
+                    list = findChangeList( changeListName );
+                    if( list == null ){
+                      list = addChangeList( changeListName, null );
+                    }
+                  }
+                  processChangeInList( change, list );
                 }
 
                 public void processChangeInList(final Change change, final ChangeList changeList) {
