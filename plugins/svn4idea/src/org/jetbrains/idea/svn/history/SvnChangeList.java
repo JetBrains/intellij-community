@@ -24,6 +24,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.peer.PeerFactory;
@@ -154,6 +155,10 @@ public class SvnChangeList implements CommittedChangeList {
 
   public long getNumber() {
     return myRevision;
+  }
+
+  public AbstractVcs getVcs() {
+    return myVcs;
   }
 
   public boolean equals(final Object o) {

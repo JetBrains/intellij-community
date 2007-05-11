@@ -159,4 +159,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public boolean refreshCacheByNumber() {
     return true;
   }
+
+  public String getChangelistTitle() {
+    return SvnBundle.message("changes.browser.revision.term");
+  }
 }
