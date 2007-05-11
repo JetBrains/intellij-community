@@ -46,7 +46,7 @@ public class AntPathImpl extends AntFilesProviderImpl{
     
     final String pathString = computeAttributeValue(getSourceElement().getAttributeValue("path"));
     if (pathString != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(pathString, ":;", false);
+      final StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         addLocation(baseDir, files, tokenizer.nextToken());
       }

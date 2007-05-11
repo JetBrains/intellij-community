@@ -413,7 +413,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     // check classpath attribute
     final String classpath = getClassPath();
     if (classpath != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(classpath, ":;", false);
+      final StringTokenizer tokenizer = new StringTokenizer(classpath, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         addUrl(baseDir, urls, tokenizer.nextToken());
       }
