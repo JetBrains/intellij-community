@@ -1,0 +1,11 @@
+while (true) {
+  if (true) {
+    b<caret>
+  }
+}
+-----
+while (true) {
+  if (true) {
+    break;<caret>
+  }
+}
