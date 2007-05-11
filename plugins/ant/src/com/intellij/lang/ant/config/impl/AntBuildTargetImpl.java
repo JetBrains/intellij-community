@@ -75,9 +75,9 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     }
     final StringBuilder name = StringBuilderSpinAllocator.alloc();
     try {
-      name.append(AntConfiguration.ACTION_ID_PREFIX);
+      name.append(AntConfiguration.getActionIdPrefix(myModel.getBuildFile().getProject()));
+      name.append("_");
       name.append(modelName);
-      name.append(myModel.getBuildFile().getProject().getLocationHash());
       name.append('_');
       name.append(getName());
       return name.toString();

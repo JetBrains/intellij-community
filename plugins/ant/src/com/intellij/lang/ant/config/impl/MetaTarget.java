@@ -57,9 +57,9 @@ public class MetaTarget implements AntBuildTargetBase {
     }
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append(AntConfiguration.ACTION_ID_PREFIX);
+      builder.append(AntConfiguration.getActionIdPrefix(myBuildFile.getProject()));
+      builder.append("_");
       builder.append(modelName);
-      builder.append(myBuildFile.getProject().getLocationHash());
       builder.append('_');
       builder.append(getName());
       return builder.toString();

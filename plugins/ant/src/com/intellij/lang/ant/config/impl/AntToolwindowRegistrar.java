@@ -74,7 +74,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
 
   public void projectClosed() {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final String[] oldIds = actionManager.getActionIds(AntConfiguration.ACTION_ID_PREFIX);
+    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(myProject));
     for (String oldId : oldIds) {
       actionManager.unregisterAction(oldId);
     }

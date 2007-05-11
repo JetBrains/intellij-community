@@ -56,7 +56,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     if (modelName == null || modelName.trim().length() == 0) {
       return null;
     }
-    return AntConfiguration.ACTION_ID_PREFIX + modelName + getBuildFile().getProject().getLocationHash();
+    return AntConfiguration.getActionIdPrefix(getBuildFile().getProject()) + modelName;
 
   }
 

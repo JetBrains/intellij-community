@@ -442,7 +442,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private synchronized void updateRegisteredActions() {
     // unregister Ant actions
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final String[] oldIds = actionManager.getActionIds(ACTION_ID_PREFIX);
+    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(getProject()));
     for (String oldId : oldIds) {
       actionManager.unregisterAction(oldId);
     }

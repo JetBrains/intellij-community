@@ -45,6 +45,14 @@ public abstract class AntConfiguration {
     return myProject;
   }
 
+  /**
+   * @param project
+   * @return prefix for all ant actions registered withing this project
+   */
+  public static String getActionIdPrefix(Project project) {
+    return ACTION_ID_PREFIX + project.getLocationHash();
+  }
+  
   public abstract AntBuildFile[] getBuildFiles();
 
   public abstract AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;

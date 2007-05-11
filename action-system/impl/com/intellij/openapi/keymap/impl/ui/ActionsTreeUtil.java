@@ -216,7 +216,7 @@ public class ActionsTreeUtil {
 
   private static Group createAntGroup(Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(AntConfiguration.ACTION_ID_PREFIX);
+    String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
     Arrays.sort(ids);
     Group group = new Group(KeyMapBundle.message("ant.targets.group.title"), ANT_ICON, ANT_OPEN_ICON);
 
