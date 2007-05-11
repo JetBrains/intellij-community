@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -83,7 +82,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @NonNls private static final String EXECUTE_ON_ELEMENT = "executeOn";
   @NonNls private static final String EVENT_ELEMENT = "event";
   @NonNls private static final String TARGET_ELEMENT = "target";
-  private final static Object myLock = new Object();
 
   private final PsiManager myPsiManager;
   private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
@@ -441,39 +439,32 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return buildFile;
   }
 
-  private static void updateRegisteredActions() {
-    synchronized (myLock) {
-      // unregister Ant actions
-      ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final String[] oldIds = actionManager.getActionIds(ACTION_ID_PREFIX);
-      for (String oldId : oldIds) {
-        actionManager.unregisterAction(oldId);
-      }
-
-      final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      final Set<String> registeredIds = StringSetSpinAllocator.alloc();
-      try {
-        for (Project project : openProjects) {
-          final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-          for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
-            final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
-            String defaultTargetActionId = model.getDefaultTargetActionId();
-            if (defaultTargetActionId != null && !registeredIds.contains(defaultTargetActionId)) {
-              registeredIds.add(defaultTargetActionId);
-              actionManager.registerAction(defaultTargetActionId, new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME,
-                                                                                   new String[]{TargetAction.DEFAULT_TARGET_NAME}, null));
-            }
-
-            registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
-            registerTargetActions(antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager, buildFile);
-          }
-        }
-      }
-      finally {
-        StringSetSpinAllocator.dispose(registeredIds);
-      }
+  private synchronized void updateRegisteredActions() {
+    // unregister Ant actions
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final String[] oldIds = actionManager.getActionIds(ACTION_ID_PREFIX);
+    for (String oldId : oldIds) {
+      actionManager.unregisterAction(oldId);
     }
 
+    final Set<String> registeredIds = StringSetSpinAllocator.alloc();
+    try {
+      for (final AntBuildFile buildFile : getBuildFiles()) {
+        final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
+        String defaultTargetActionId = model.getDefaultTargetActionId();
+        if (defaultTargetActionId != null && !registeredIds.contains(defaultTargetActionId)) {
+          registeredIds.add(defaultTargetActionId);
+          actionManager.registerAction(defaultTargetActionId, new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME,
+                                                                               new String[]{TargetAction.DEFAULT_TARGET_NAME}, null));
+        }
+
+        registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
+        registerTargetActions(getMetaTargets(buildFile), registeredIds, actionManager, buildFile);
+      }
+    }
+    finally {
+      StringSetSpinAllocator.dispose(registeredIds);
+    }
   }
 
   private static void registerTargetActions(final AntBuildTarget[] targets,
