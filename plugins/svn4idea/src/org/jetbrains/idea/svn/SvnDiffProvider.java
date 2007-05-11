@@ -44,7 +44,7 @@ public class SvnDiffProvider implements DiffProvider {
       return new SvnRevisionNumber(svnStatus.getCommittedRevision());
     }
     catch (SVNException e) {
-      LOG.error(e);
+      LOG.debug(e);    // most likely the file is unversioned
       return null;
     }
   }
