@@ -6,7 +6,6 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -30,20 +29,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   @Nullable
   public String getName() {
     final AntProject project = getAntProject();
-    if ((project == null)) {
-      return null;
-    }
-    final String name = project.getName();
-    if (name == null) {
-      return null;
-    }
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      return builder.append(name).append("_").append(project.getProject().getLocationHash()).toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return project != null? project.getName() : null;
   }
 
   public AntBuildTarget[] getTargets() {
@@ -63,10 +49,14 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public String getDefaultTargetActionId() {
-    if (getDefaultTargetName() == null) return null;
+    if (getDefaultTargetName() == null) {
+      return null;
+    }
     final String modelName = getName();
-    if (modelName == null || modelName.trim().length() == 0) return null;
-    return AntConfiguration.ACTION_ID_PREFIX + modelName;
+    if (modelName == null || modelName.trim().length() == 0) {
+      return null;
+    }
+    return AntConfiguration.ACTION_ID_PREFIX + modelName + getBuildFile().getProject().getLocationHash();
 
   }
 

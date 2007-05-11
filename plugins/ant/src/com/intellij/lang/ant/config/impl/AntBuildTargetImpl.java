@@ -77,6 +77,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     try {
       name.append(AntConfiguration.ACTION_ID_PREFIX);
       name.append(modelName);
+      name.append(myModel.getBuildFile().getProject().getLocationHash());
       name.append('_');
       name.append(getName());
       return name.toString();
