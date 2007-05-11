@@ -488,13 +488,13 @@ public class InjectedLanguageUtil {
             TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
           }
           oldFileElement.setCharTable(newFileElement.getCharTable());
-          oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
           FileDocumentManagerImpl.registerDocument(documentRange, oldFile.getVirtualFile());
           oldFile.subtreeChanged();
 
           SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
           viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
         }
+        oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
         return oldFile;
       }
     }
