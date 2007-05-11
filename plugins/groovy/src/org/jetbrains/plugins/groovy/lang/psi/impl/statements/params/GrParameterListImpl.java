@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -34,7 +35,21 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
     return "Parameter list";
   }
 
+  @NotNull
   public GrParameter[] getParameters() {
     return findChildrenByClass(GrParameter.class);
+  }
+
+  public int getParameterIndex(PsiParameter parameter) {
+    PsiParameter[] parameters = getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      if (parameters[i].equals(parameter)) return i;
+    }
+
+    return -1;
+  }
+
+  public int getParametersCount() {
+    return getParameters().length;
   }
 }

@@ -13,21 +13,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import com.intellij.psi.PsiParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author ven
  */
-public interface GrParameter extends PsiParameter, GrVariable {
-  public static final GrParameter[] EMPTY_ARRAY = new GrParameter[0];
-
-  @Nullable
-  GrTypeElement getTypeElementGroovy();
+public interface GrParametersOwner extends GroovyPsiElement {
+  GrParameter[] getParameters();
 }

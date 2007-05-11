@@ -160,7 +160,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
       Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
-      //todo
+      if (name == null) {
+        for (List<PsiMethod> list : methodsMap.values()) {
+          for (PsiMethod method : list) {
+            if (!processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+          }
+        }
+      } else {
+        List<PsiMethod> byName = methodsMap.get(name);
+        if (byName != null) {
+          for (PsiMethod method : byName) {
+            if (!processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+          }
+        }
+      }
     }
 
     return true;

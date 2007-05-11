@@ -17,20 +17,26 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrParameterImpl extends GroovyPsiElementImpl implements GrParameter {
+public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   public GrParameterImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -60,5 +66,19 @@ public class GrParameterImpl extends GroovyPsiElementImpl implements GrParameter
 
   public int getTextOffset() {
     return getNameIdentifierGroovy().getTextRange().getStartOffset();
+  }
+
+  @NotNull
+  public PsiElement getDeclarationScope() {
+    return PsiTreeUtil.getParentOfType(this, GrParametersOwner.class);
+  }
+
+  public boolean isVarArgs() {
+    return false;
+  }
+
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    return PsiAnnotation.EMPTY_ARRAY;
   }
 }
