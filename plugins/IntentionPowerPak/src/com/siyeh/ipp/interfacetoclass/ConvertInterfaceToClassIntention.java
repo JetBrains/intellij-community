@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class ConvertInterfaceToClassIntention extends Intention {
 
@@ -34,14 +38,18 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		assert whiteSpace != null;
 		final PsiElement interfaceToken = whiteSpace.getPrevSibling();
 		assert interfaceToken != null;
-		final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
+		final PsiKeyword interfaceKeyword =
+                (PsiKeyword)interfaceToken.getOriginalElement();
 		final PsiManager manager = anInterface.getManager();
 		final PsiElementFactory factory = manager.getElementFactory();
 		final PsiKeyword classKeyword = factory.createKeyword("class");
 		interfaceKeyword.replace(classKeyword);
 
 		final PsiModifierList classModifierList = anInterface.getModifierList();
-		classModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+        if (classModifierList == null) {
+            return;
+        }
+        classModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
 		final PsiElement parent = anInterface.getParent();
 		if (parent instanceof PsiClass) {
 			classModifierList.setModifierProperty(PsiModifier.STATIC, true);
@@ -55,17 +63,22 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		final PsiField[] fields = anInterface.getFields();
 		for (final PsiField field : fields) {
 			final PsiModifierList modifierList = field.getModifierList();
-			modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-			modifierList.setModifierProperty(PsiModifier.STATIC, true);
-			modifierList.setModifierProperty(PsiModifier.FINAL, true);
-		}
+            if (modifierList != null) {
+                modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+                modifierList.setModifierProperty(PsiModifier.STATIC, true);
+                modifierList.setModifierProperty(PsiModifier.FINAL, true);
+            }
+        }
 	}
 
 	protected void processIntention(@NotNull PsiElement element)
 			throws IncorrectOperationException {
 		final PsiClass anInterface = (PsiClass)element.getParent();
-		moveSubClassImplementsToExtends(anInterface);
-		changeInterfaceToClass(anInterface);
+        final boolean succes = moveSubClassImplementsToExtends(anInterface);
+        if (!succes) {
+            return;
+        }
+        changeInterfaceToClass(anInterface);
 		moveExtendsToImplements(anInterface);
 	}
 
@@ -81,15 +94,15 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		assert extendsList != null;
 		final PsiJavaCodeReferenceElement[] referenceElements =
 				extendsList.getReferenceElements();
-		for (final PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+		for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
 			assert implementsList != null;
 			implementsList.add(referenceElement);
 			referenceElement.delete();
 		}
 	}
 
-	private static void moveSubClassImplementsToExtends(PsiClass oldInterface)
-			throws IncorrectOperationException {
+	private static boolean moveSubClassImplementsToExtends(
+            PsiClass oldInterface) throws IncorrectOperationException {
 		final PsiManager psiManager = oldInterface.getManager();
 		final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
 		final PsiElementFactory elementFactory = psiManager.getElementFactory();
@@ -98,24 +111,37 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		final SearchScope searchScope = oldInterface.getUseScope();
 		final PsiClass[] inheritors =
 				searchHelper.findInheritors(oldInterface, searchScope, false);
-		for (final PsiClass inheritor : inheritors) {
-			final PsiReferenceList implementsList = inheritor.getImplementsList();
+        final Project project = oldInterface.getProject();
+        final boolean succes =
+                CommonRefactoringUtil.checkReadOnlyStatusRecursively(
+                        project, Arrays.asList(inheritors), false);
+        if (!succes) {
+            return false;
+        }
+        for (PsiClass inheritor : inheritors) {
+			final PsiReferenceList implementsList =
+                    inheritor.getImplementsList();
 			final PsiReferenceList extendsList = inheritor.getExtendsList();
 			if (implementsList != null) {
-				moveReference(implementsList, extendsList, oldInterfaceReference);
+				moveReference(implementsList, extendsList,
+                              oldInterfaceReference);
 			}
 		}
-	}
+        return true;
+    }
 
-	private static void moveReference(@NotNull PsiReferenceList source,
-	                                  @Nullable PsiReferenceList target,
-	                                  @NotNull PsiJavaCodeReferenceElement reference)
+	private static void moveReference(
+            @NotNull PsiReferenceList source,
+            @Nullable PsiReferenceList target,
+            @NotNull PsiJavaCodeReferenceElement reference)
 			throws IncorrectOperationException {
 		final PsiJavaCodeReferenceElement[] implementsReferences =
 				source.getReferenceElements();
 		final String fqName = reference.getQualifiedName();
-		for (final PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
-			final String implementsReferenceFqName = implementsReference.getQualifiedName();
+		for (PsiJavaCodeReferenceElement implementsReference :
+                implementsReferences) {
+			final String implementsReferenceFqName =
+                    implementsReference.getQualifiedName();
 			if (fqName.equals(implementsReferenceFqName)) {
 				if (target != null) {
 					target.add(implementsReference);
