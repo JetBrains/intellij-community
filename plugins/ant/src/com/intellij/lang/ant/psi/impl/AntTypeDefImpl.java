@@ -20,6 +20,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.lang.UrlClassLoader;
+import org.apache.tools.ant.PathTokenizer;
 import org.apache.tools.ant.Task;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
@@ -413,7 +413,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     // check classpath attribute
     final String classpath = getClassPath();
     if (classpath != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(classpath, File.pathSeparator, false);
+      final PathTokenizer tokenizer = new PathTokenizer(classpath);
       while (tokenizer.hasMoreTokens()) {
         addUrl(baseDir, urls, tokenizer.nextToken());
       }

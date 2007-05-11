@@ -8,13 +8,13 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
+import org.apache.tools.ant.PathTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,7 +46,7 @@ public class AntPathImpl extends AntFilesProviderImpl{
     
     final String pathString = computeAttributeValue(getSourceElement().getAttributeValue("path"));
     if (pathString != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator, false);
+      final PathTokenizer tokenizer = new PathTokenizer(pathString);
       while (tokenizer.hasMoreTokens()) {
         addLocation(baseDir, files, tokenizer.nextToken());
       }
