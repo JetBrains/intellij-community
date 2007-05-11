@@ -39,7 +39,14 @@ public class ChangeList {
     return result;
   }
 
-  public void accept(final ChangeVisitor visitor) throws Exception {
+  public boolean isBefore(Change before, Change after, boolean canBeEqual) {
+    int beforeIndex = myChanges.indexOf(before);
+    int afterIndex = myChanges.indexOf(after);
+
+    return beforeIndex < afterIndex || (canBeEqual && beforeIndex == afterIndex);
+  }
+
+  public void accept(ChangeVisitor visitor) throws Exception {
     for (Change change : Reversed.list(myChanges)) {
       change.accept(visitor);
     }

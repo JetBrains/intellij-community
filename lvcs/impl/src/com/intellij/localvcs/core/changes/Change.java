@@ -30,9 +30,7 @@ public abstract class Change {
 
   public abstract boolean affects(Entry e);
 
-  public boolean affectsOnly(Entry e) {
-    return affects(e);
-  }
+  public abstract boolean affectsOnly(Entry e);
 
   public abstract boolean isCreationalFor(Entry e);
 

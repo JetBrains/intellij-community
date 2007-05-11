@@ -11,7 +11,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("createDir createFile ");
+    assertVisitorLog("changeSet createDir changeSet createFile ");
   }
 
   @Test
@@ -21,7 +21,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
-    assertVisitorLog("createDir createFile ");
+    assertVisitorLog("changeSet createDir createFile ");
   }
 
   @Test
@@ -42,7 +42,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.rename("dir", "newDir");
 
-    assertVisitorLog("rename createDir createFile ");
+    assertVisitorLog("rename changeSet createDir changeSet createFile ");
   }
 
   @Test
@@ -51,13 +51,16 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
 
     TestVisitor visitor = new TestVisitor() {
+      int count = 0;
+
       @Override
-      public void visit(final CreateFileChange c) throws Exception {
-        stop();
+      public void visit(final ChangeSet c) throws Exception {
+        if (++count == 2) stop();
+        super.visit(c);
       }
     };
     vcs.accept(visitor);
-    assertEquals("createDir ", visitor.getLog());
+    assertEquals("changeSet createDir ", visitor.getLog());
   }
 
   private void assertVisitorLog(final String expected) throws Exception {
@@ -68,6 +71,10 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
 
   private class TestVisitor extends ChangeVisitor {
     private String log = "";
+
+    public void visit(final ChangeSet c) throws Exception {
+      log += "changeSet ";
+    }
 
     public void visit(CreateFileChange c) throws Exception {
       log += "createFile ";

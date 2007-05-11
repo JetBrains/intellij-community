@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.Clock;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -26,6 +27,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
   protected String EXCLUDED_DIR_NAME = "CVS";
   protected VirtualFile root;
+  protected IdeaGateway gateway;
 
   @Override
   public void setUp() throws Exception {
@@ -35,6 +37,8 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
     myDefaultLocale = Locale.getDefault();
     Locale.setDefault(new Locale("ru", "RU"));
+
+    gateway = new IdeaGateway(myProject);
 
     runWriteAction(new Runnable() {
       public void run() {

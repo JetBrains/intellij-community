@@ -1,6 +1,5 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.views.PutLabelDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -25,12 +24,12 @@ public class PutLabelDialogTest extends IntegrationTestCase {
   }
 
   public void testPutLabelDialogWorks() {
-    d1 = new PutLabelDialog(new IdeaGateway(myProject), null);
-    d2 = new PutLabelDialog(new IdeaGateway(myProject), root);
+    d1 = new PutLabelDialog(gateway, null);
+    d2 = new PutLabelDialog(gateway, root);
   }
 
   public void testPutGlobalLabel() throws IOException {
-    d1 = new PutLabelDialog(new IdeaGateway(myProject), null);
+    d1 = new PutLabelDialog(gateway, null);
     d1.doOKAction();
 
     assertEquals(3, getVcsRevisionsFor(root).size());
@@ -38,7 +37,7 @@ public class PutLabelDialogTest extends IntegrationTestCase {
   }
 
   public void testPutFileLabel() throws IOException {
-    d1 = new PutLabelDialog(new IdeaGateway(myProject), f);
+    d1 = new PutLabelDialog(gateway, f);
     d1.doOKAction();
 
     assertEquals(3, getVcsRevisionsFor(root).size()); // whole project is selected by default

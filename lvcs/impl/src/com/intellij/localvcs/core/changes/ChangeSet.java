@@ -79,6 +79,11 @@ public class ChangeSet extends Change {
   }
 
   @Override
+  public boolean affectsOnly(Entry e) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isCreationalFor(Entry e) {
     for (Change c : myChanges) {
       if (c.isCreationalFor(e)) return true;
@@ -97,6 +102,7 @@ public class ChangeSet extends Change {
 
   @Override
   public void accept(final ChangeVisitor v) throws Exception {
+    v.visit(this);
     for (Change c : Reversed.list(myChanges)) {
       c.accept(v);
     }

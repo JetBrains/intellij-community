@@ -40,13 +40,21 @@ public abstract class StructuralChange extends Change {
   @Override
   public boolean affects(Entry e) {
     for (IdPath p : getAffectedIdPaths()) {
-      if (affectsIdPath(e, p)) return true;
+      if (p.contains(e.getId()) || e.getIdPath().contains(p.getId())) {
+        return true;
+      }
     }
     return false;
   }
 
-  protected boolean affectsIdPath(Entry e, IdPath p) {
-    return p.contains(e.getId()) || e.getIdPath().contains(p.getId());
+  @Override
+  public boolean affectsOnly(final Entry e) {
+    for (IdPath p : getAffectedIdPaths()) {
+      if (!p.startsWith(e.getIdPath())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

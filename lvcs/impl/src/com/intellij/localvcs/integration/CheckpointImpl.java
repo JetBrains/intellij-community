@@ -29,7 +29,7 @@ public class CheckpointImpl implements Checkpoint {
     try {
       List<Change> cc = myVcs.getChangesAfter(myLastChange);
 
-      ChangeVisitor v = new ChangeRevertionVisitor(myVcs, myGateway);
+      ChangeVisitor v = new UndoingRevertionVisitor(myVcs, myGateway);
       for (Change c : cc) c.accept(v);
 
       if (revertLastChange) myLastChange.accept(v);

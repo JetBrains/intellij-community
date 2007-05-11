@@ -55,6 +55,11 @@ public class PutLabelChange extends Change {
     return true;
   }
 
+  @Override
+  public boolean affectsOnly(Entry e) {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean isCreationalFor(Entry e) {
     return false;
   }

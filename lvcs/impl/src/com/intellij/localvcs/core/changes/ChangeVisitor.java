@@ -1,6 +1,8 @@
 package com.intellij.localvcs.core.changes;
 
 public abstract class ChangeVisitor {
+  public abstract void visit(ChangeSet c) throws Exception;
+
   public abstract void visit(CreateFileChange c) throws Exception;
 
   public abstract void visit(CreateDirectoryChange c) throws Exception;

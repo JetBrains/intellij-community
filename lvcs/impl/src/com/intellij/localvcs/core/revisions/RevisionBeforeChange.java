@@ -2,6 +2,7 @@ package com.intellij.localvcs.core.revisions;
 
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeList;
+import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 
@@ -39,6 +40,11 @@ public class RevisionBeforeChange extends Revision {
     result.addAll(myChangeList.getPlainChangesAfter(myChange));
     if (includeMyChange()) result.add(myChange);
     return result;
+  }
+
+  @Override
+  public boolean isBefore(ChangeSet c) {
+    return myChangeList.isBefore(myChange, c, includeMyChange());
   }
 
   protected boolean includeMyChange() {

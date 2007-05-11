@@ -8,13 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ChangeRevertionVisitor extends ChangeVisitor {
-  private RootEntry myRootEntry;
+public abstract class ChangeRevertionVisitor extends ChangeVisitor {
+  protected RootEntry myRootEntry;
   private IdeaGateway myGateway;
 
   public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
     myRootEntry = vcs.getRootEntry().copy();
     myGateway = gw;
+  }
+
+  public void visit(ChangeSet c) throws Exception {
   }
 
   public void visit(CreateFileChange c) throws Exception {
@@ -28,12 +31,23 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   private void revertCreation(StructuralChange c) throws Exception {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
-    f.delete(null);
+
+    if (shouldProcess(c)) {
+      f.delete(null);
+    }
 
     c.revertOn(myRootEntry);
   }
 
   public void visit(ChangeFileContentChange c) throws Exception {
+    c.revertOn(myRootEntry);
+
+    Entry e = getAffectedEntry(c);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
+
+    if (shouldProcess(c)) {
+      f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
+    }
   }
 
   public void visit(RenameChange c) throws Exception {
@@ -42,7 +56,9 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
     c.revertOn(myRootEntry);
 
-    f.rename(null, e.getName());
+    if (shouldProcess(c)) {
+      f.rename(null, e.getName());
+    }
   }
 
   public void visit(MoveChange c) throws Exception {
@@ -53,13 +69,18 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry parentEntry = getAffectedEntry(c).getParent();
     VirtualFile parent = myGateway.findVirtualFile(parentEntry.getPath());
 
-    f.move(null, parent);
+    if (shouldProcess(c)) {
+      f.move(null, parent);
+    }
   }
 
   public void visit(DeleteChange c) throws Exception {
     c.revertOn(myRootEntry);
     Entry e = getAffectedEntry(c);
-    revertDeletion(e);
+
+    if (shouldProcess(c)) {
+      revertDeletion(e);
+    }
   }
 
   private void revertDeletion(Entry e) throws IOException {
@@ -73,6 +94,8 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
       f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
     }
   }
+
+  protected abstract boolean shouldProcess(Change c);
 
   private Entry getAffectedEntry(StructuralChange c) {
     return getAffectedEntry(c, 0);
