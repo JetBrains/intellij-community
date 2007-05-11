@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeVisitor;
+import com.intellij.localvcs.integration.revert.GlobalChangesRevertionVisitor;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class CheckpointImpl implements Checkpoint {
     try {
       List<Change> cc = myVcs.getChangesAfter(myLastChange);
 
-      ChangeVisitor v = new UndoingRevertionVisitor(myVcs, myGateway);
+      ChangeVisitor v = new GlobalChangesRevertionVisitor(myVcs, myGateway);
       for (Change c : cc) c.accept(v);
 
       if (revertLastChange) myLastChange.accept(v);

@@ -26,37 +26,6 @@ public class RevisionChangesTest extends LocalVcsTestCase {
     applyAndAdd(cs3);
   }
 
-  //@Test
-  //public void testChangesForCurrentRevision() {
-  //  Revision r = new CurrentRevision(root.getEntry("ff"), -1);
-  //  assertTrue(r.getSubsequentChanges().isEmpty());
-  //}
-  //
-  //@Test
-  //public void testChangesForRevisionAfterChange() {
-  //  Revision r = new RevisionAfterChange(root.getEntry("ff"), root, list, cs1);
-  //  assertEquals(list(cs3, cs2), r.getSubsequentChanges());
-  //}
-  //
-  //@Test
-  //public void testChangesForRevisionBeforeChange() {
-  //  Revision r = new RevisionBeforeChange(root.getEntry("ff"), root, list, cs2);
-  //  assertEquals(list(cs3, cs2), r.getSubsequentChanges());
-  //}
-  //
-  @Test
-  public void testConsideringChangeSets() {
-    Change c1 = cs(new CreateFileChange(1, "file", null, -1));
-    RenameChange renameChange = new RenameChange("file", "newFile");
-    Change c2 = cs(renameChange);
-
-    applyAndAdd(c1);
-    applyAndAdd(c2);
-
-    Revision r = new RevisionAfterChange(root.getEntry("newFile"), root, list, c1);
-    assertEquals(list(renameChange), r.getSubsequentChanges());
-  }
-
   @Test
   public void testCurrentRevisionIsBefore() {
     Revision r = new CurrentRevision(root.getEntry("ff"), -1);

@@ -4,7 +4,7 @@ import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.Reverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.Icons;
 

@@ -4,7 +4,7 @@ import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.Reverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;

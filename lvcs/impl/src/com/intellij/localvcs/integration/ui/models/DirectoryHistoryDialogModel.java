@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.Reverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {

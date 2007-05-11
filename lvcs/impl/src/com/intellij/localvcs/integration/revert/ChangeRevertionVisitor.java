@@ -1,9 +1,10 @@
-package com.intellij.localvcs.integration;
+package com.intellij.localvcs.integration.revert;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.*;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

@@ -1,11 +1,7 @@
 package com.intellij.localvcs.core.revisions;
 
-import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.tree.Entry;
-
-import java.util.Collections;
-import java.util.List;
 
 public abstract class Revision {
   public String getName() {
@@ -29,10 +25,6 @@ public abstract class Revision {
 
   public boolean isMarked() {
     return false;
-  }
-
-  public List<Change> getSubsequentChanges() {
-    return Collections.emptyList();
   }
 
   public boolean isBefore(ChangeSet c) {
