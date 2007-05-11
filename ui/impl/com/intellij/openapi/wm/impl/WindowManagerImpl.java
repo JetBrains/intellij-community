@@ -538,4 +538,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       myAlarm.addRequest(myClearSelectedPathRunnable, 150);
     }
   }
+
+  public WindowWatcher getWindowWatcher() {
+    return myWindowWatcher;
+  }
 }

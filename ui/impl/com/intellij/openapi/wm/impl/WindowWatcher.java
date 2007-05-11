@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ import java.util.Iterator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class WindowWatcher implements PropertyChangeListener{
+public final class WindowWatcher implements PropertyChangeListener{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
   private final Object myLock;
   private final HashMap<Window, WindowInfo> myWindow2Info;
@@ -195,6 +196,13 @@ final class WindowWatcher implements PropertyChangeListener{
     }
   }
 
+  @Nullable
+  public FocusWatcher getFocusWatcherFor(Component c) {
+    final Window window = SwingUtilities.getWindowAncestor(c);
+    final WindowInfo info = myWindow2Info.get(window);
+    return info == null ? null : info.myFocusWatcherRef.get();
+  }
+
   /**
    * @param project may be null (for example, if no projects are opened)
    */
@@ -285,5 +293,8 @@ final class WindowWatcher implements PropertyChangeListener{
       myFocusWatcherRef=new WeakReference<FocusWatcher>(focusWatcher);
       mySuggestAsParent=suggestAsParent;
     }
+
   }
+
+
 }

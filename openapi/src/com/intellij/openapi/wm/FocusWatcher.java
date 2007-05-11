@@ -127,7 +127,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     component.addFocusListener(this);
   }
 
-  private void setFocusedComponentImpl(Component component){
+  public void setFocusedComponentImpl(Component component){
     myFocusedComponent=component;
     focusedComponentChanged(component);
   }
