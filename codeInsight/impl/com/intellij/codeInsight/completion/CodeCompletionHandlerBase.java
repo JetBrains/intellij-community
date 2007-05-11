@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import com.intellij.patterns.impl.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,6 +41,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
   private LookupItemPreferencePolicy myPreferencePolicy = null;
+  private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
     final Document document = editor.getDocument();
@@ -289,8 +292,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (parent instanceof PsiLocalVariable || parent instanceof PsiParameter) {
         final PsiVariable variable = (PsiVariable)parent;
         if (lastElement.equals(variable.getNameIdentifier())) {
-          myPreferencePolicy = completionData.completeLocalVariableName(lookupSet, context, variable);
-          return;
+          if (!INSIDE_TYPE_PARAMS_PATTERN.accepts(lastElement)) {
+            myPreferencePolicy = completionData.completeLocalVariableName(lookupSet, context, variable);
+            return;
+          }
         }
       }
 
