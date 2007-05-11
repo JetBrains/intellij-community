@@ -62,8 +62,13 @@ public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements 
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     GrExpression lValue = getLValue();
-    if (lValue instanceof GrReferenceExpressionImpl && lastParent != lValue && lastParent != getRValue()) {
-      if (!ResolveUtil.processElement(processor, (GrNamedElement) lValue)) return false;
+    if (lastParent != lValue && lastParent != getRValue()) {
+      if (lValue instanceof GrReferenceExpressionImpl) {
+        GrReferenceExpressionImpl lRefExpr = (GrReferenceExpressionImpl) lValue;
+        if (lRefExpr.resolve() == null) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
+          if (!ResolveUtil.processElement(processor, lRefExpr)) return false;
+        }
+      }
     }
 
     return true;
