@@ -52,23 +52,25 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void addTestResult(TestResultMessage result) {
-        List<Printable> list = null;
-        if (result.getResult() == MessageHelper.TEST_STARTED) {
-            mark();
-        } else {
-            String stackTrace = result.getStackTrace();
-            if (stackTrace != null && stackTrace.length() > 10) {
-                //trim useless crud from stacktrace
-                String trimmed = trimStackTrace(stackTrace);
-                List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
-                synchronized (allOutput) {
-                    allOutput.addAll(printables);
+        if (testNGResults != null) {
+            List<Printable> list = null;
+            if (result.getResult() == MessageHelper.TEST_STARTED) {
+                mark();
+            } else {
+                String stackTrace = result.getStackTrace();
+                if (stackTrace != null && stackTrace.length() > 10) {
+                    //trim useless crud from stacktrace
+                    String trimmed = trimStackTrace(stackTrace);
+                    List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
+                    synchronized (allOutput) {
+                        allOutput.addAll(printables);
+                    }
                 }
+                list = getPrintablesSinceMark();
             }
-            list = getPrintablesSinceMark();
-        }
 
-        testNGResults.addTestResult(result, list);
+            testNGResults.addTestResult(result, list);
+        }
     }
 
     private String trimStackTrace(String stackTrace) {

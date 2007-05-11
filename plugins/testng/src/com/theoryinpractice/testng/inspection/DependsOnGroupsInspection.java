@@ -63,7 +63,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool
             PsiNameValuePair dep = null;
             PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
             for (PsiNameValuePair param : params) {
-                if (param.getName().matches("(groups|dependsOnGroups)")) {
+                if (param.getName() != null && param.getName().matches("(groups|dependsOnGroups)")) {
                     dep = param;
                     break;
                 }

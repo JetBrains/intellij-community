@@ -81,7 +81,7 @@ public class DependsOnMethodInspection extends LocalInspectionTool
 
     private void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
         LOGGER.debug("Found dependsOnMethods with text: " + methodName);
-        if (methodName.charAt(methodName.length() - 1) == ')') {
+        if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
 
             LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
             // TODO Add quick fix for removing brackets on annotation
