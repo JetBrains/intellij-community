@@ -19,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.peer.PeerFactory;
@@ -208,6 +210,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.addSeparator();
     toolbarGroup.add(new SelectFilteringAction(project, this));
     toolbarGroup.add(new SelectGroupingAction(this));
+    final ExpandAllAction expandAllAction = new ExpandAllAction(myChangesTree);
+    final CollapseAllAction collapseAllAction = new CollapseAllAction(myChangesTree);
+    expandAllAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
+      myChangesTree);
+    collapseAllAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
+      myChangesTree);
+    toolbarGroup.add(expandAllAction);
+    toolbarGroup.add(collapseAllAction);
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
   }
 
