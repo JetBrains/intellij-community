@@ -438,6 +438,7 @@
         <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
         <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
         <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
+        <separator/>
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
         <separator/>
         <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>

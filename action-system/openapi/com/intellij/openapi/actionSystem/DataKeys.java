@@ -22,19 +22,22 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.*;
+import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
-import com.intellij.ide.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.lang.Language;
+import com.intellij.ui.content.ContentManager;
 
 import java.awt.*;
 
@@ -71,5 +74,8 @@ public final class DataKeys {
   public static final DataKey<CutProvider> CUT_PROVIDER = DataKey.create(DataConstants.CUT_PROVIDER);
   public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create(DataConstants.PASTE_PROVIDER);
   public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create(DataConstants.DELETE_ELEMENT_PROVIDER);
+
+  public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create(DataConstantsEx.CONTENT_MANAGER);
+  public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
 }
 

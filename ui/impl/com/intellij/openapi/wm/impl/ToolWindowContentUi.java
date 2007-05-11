@@ -1,15 +1,17 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,7 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener {
+public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
 
   private ContentManager myManager;
 
@@ -306,6 +308,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myWindow.fireHidden();
       }
     }
+  }
+
+  @Nullable
+  public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataKeys.TOOL_WINDOW.getName())) return myWindow;
+
+    return null;
   }
 
   private class BaseLabel extends JLabel {

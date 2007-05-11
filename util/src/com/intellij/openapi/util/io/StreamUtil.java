@@ -29,8 +29,12 @@ public class StreamUtil {
 
   public static byte[] loadFromStream(InputStream inputStream) throws IOException {
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    copyStreamContent(inputStream, outputStream);
-    inputStream.close();
+    try {
+      copyStreamContent(inputStream, outputStream);
+    }
+    finally {
+      inputStream.close();
+    }
     return outputStream.toByteArray();
   }
 

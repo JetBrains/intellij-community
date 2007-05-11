@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -86,6 +87,7 @@ public class CompilerPaths {
    * @return a directory to which the sources (or test sources depending on the second partameter) should be compiled.
    * Null is returned if output directory is not specified or is not valid
    */
+  @Nullable
   public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     VirtualFile outPath;
@@ -111,6 +113,7 @@ public class CompilerPaths {
    * The same as {@link #getModuleOutputDirectory} but returns String.
    * The method still returns a non-null value if the output path is specified in Settings but does not exist on disk.
    */
+  @Nullable
   public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final String outPathUrl;
