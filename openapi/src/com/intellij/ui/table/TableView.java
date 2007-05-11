@@ -111,7 +111,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   @Nullable
   public Item getSelectedObject() {
     final int row = getSelectedRow();
-    return row >= 0 ? getItems().get(row) : null;    
+    final List<Item> list = getItems();
+    return row >= 0 && row < list.size() ? list.get(row) : null;    
   }
 
   public void addSelection(Object item) {
