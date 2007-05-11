@@ -185,7 +185,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CALL_EXPRESSION)) return new GrApplicationExpressionImpl(node);
     if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgsImpl(node);
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
-    if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExprImpl(node);
+    if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExpressionImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
     if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExprImpl(node);
     if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExprImpl(node);

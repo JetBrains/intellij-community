@@ -17,17 +17,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
  */
-public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssignmentExpression {
+public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements GrAssignmentExpression {
 
-  public GrAssignmentExprImpl(@NotNull ASTNode node) {
+  public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -53,5 +58,14 @@ public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssi
 
   public PsiType getType() {
     return null;
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    GrExpression lValue = getLValue();
+    if (lValue instanceof GrReferenceExpressionImpl) {
+      if (!ResolveUtil.processElement(processor, (GrNamedElement) lValue)) return false;
+    }
+
+    return true;
   }
 }

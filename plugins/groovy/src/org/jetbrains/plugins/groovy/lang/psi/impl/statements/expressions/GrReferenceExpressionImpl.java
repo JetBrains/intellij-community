@@ -23,12 +23,14 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.PROPERTY;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY;
@@ -59,6 +61,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final MyResolver RESOLVER = new MyResolver();
 
   public PsiType getType() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrAssignmentExpression) {
+      GrAssignmentExpression assignment = (GrAssignmentExpression) parent;
+      if (this.equals(assignment.getLValue())) {
+        GrExpression rValue = assignment.getRValue();
+        if (rValue != null) {
+          PsiType rType = rValue.getType();
+          if (rType != null) return rType;
+        }
+      }
+    }
+    
     PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) {
       return getManager().getElementFactory().createType((PsiClass) resolved);
@@ -69,6 +83,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
 
     return null;
+  }
+
+  public String getName() {
+    return getReferenceName();
+  }
+
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Not implemented");
   }
 
   private static class MyResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
