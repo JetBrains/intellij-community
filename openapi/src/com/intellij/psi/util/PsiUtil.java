@@ -1148,9 +1148,10 @@ public final class PsiUtil {
   }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
-    PsiElement[] psiRoots = root.getPsiRoots();
-    for (PsiElement psiRoot : psiRoots) {
-      if (PsiTreeUtil.isAncestor(psiRoot, element, false)) return true;
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == root) return true;
+    for (PsiFile psiRoot : root.getPsiRoots()) {
+      if (containingFile == psiRoot) return true;
     }
     return false;
   }
