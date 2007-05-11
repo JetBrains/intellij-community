@@ -50,12 +50,13 @@ public class ChangeListDetailsAction extends AnAction {
     }
     detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
     detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
-    detailsBuilder.append(XmlStringUtil.escapeString(changeList.getComment()));
+    detailsBuilder.append(XmlStringUtil.escapeString(changeList.getComment()).replace("\n", "<br>"));
     detailsBuilder.append("</body></html>");
 
     JEditorPane editorPane = new JEditorPane(UIUtil.HTML_MIME, detailsBuilder.toString());
     editorPane.setEditable(false);
     editorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    editorPane.select(0, 0);
     JScrollPane scrollPane = new JScrollPane(editorPane);
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, editorPane)
