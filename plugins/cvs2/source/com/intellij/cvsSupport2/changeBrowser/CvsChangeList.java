@@ -13,10 +13,12 @@ package com.intellij.cvsSupport2.changeBrowser;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,10 @@ public class CvsChangeList implements CommittedChangeList {
 
   public long getNumber() {
     return myNumber;
+  }
+
+  public AbstractVcs getVcs() {
+    return CvsVcs2.getInstance(myProject);
   }
 
   public Collection<Change> getChanges() {

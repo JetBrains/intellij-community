@@ -205,6 +205,15 @@ public abstract class AbstractVcs {
     return null;
   }
 
+  @Nullable
+  public final CachingCommittedChangesProvider getCachingCommittedChangesProvider() {
+    CommittedChangesProvider provider = getCommittedChangesProvider();
+    if (provider instanceof CachingCommittedChangesProvider) {
+      return (CachingCommittedChangesProvider) provider;
+    }
+    return null;
+  }
+
   public void rollbackIfUnchanged(VirtualFile file) {
   }
 

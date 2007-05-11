@@ -18,6 +18,7 @@
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.AbstractVcs;
 
 import java.util.Date;
 
@@ -28,4 +29,5 @@ public interface CommittedChangeList extends ChangeList {
   String getCommitterName();
   Date getCommitDate();
   long getNumber();
+  AbstractVcs getVcs();
 }

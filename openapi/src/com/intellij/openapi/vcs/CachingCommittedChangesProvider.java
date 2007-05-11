@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -59,4 +60,12 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    * @return true if restrict by number, false if restrict by date
    */
   boolean refreshCacheByNumber();
+
+  /**
+   * Returns the name of the "changelist" concept in the specified VCS (changelist, revision etc.)
+   *
+   * @return the name of the concept, or null if the VCS (like CVS) does not use changelist numbering.
+   */
+  @Nullable @Nls
+  String getChangelistTitle();
 }

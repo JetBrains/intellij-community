@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -39,8 +41,14 @@ public class ChangeListDetailsAction extends AnAction {
   public static void showDetailsPopup(final Project project, final CommittedChangeList changeList) {
     StringBuilder detailsBuilder = new StringBuilder("<html><body>");
     DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
-    detailsBuilder.append("Changelist #").append(changeList.getNumber());
-    detailsBuilder.append("<br>Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
+    final AbstractVcs vcs = changeList.getVcs();
+    if (vcs != null) {
+      CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
+      if (provider != null && provider.getChangelistTitle() != null) {
+        detailsBuilder.append(provider.getChangelistTitle()).append(" #").append(changeList.getNumber()).append("<br>");
+      }
+    }
+    detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
     detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
     detailsBuilder.append(XmlStringUtil.escapeString(changeList.getComment()));
     detailsBuilder.append("</body></html>");

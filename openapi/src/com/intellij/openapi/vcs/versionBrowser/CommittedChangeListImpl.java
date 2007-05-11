@@ -24,6 +24,7 @@
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -58,6 +59,10 @@ public class CommittedChangeListImpl implements CommittedChangeList {
 
   public long getNumber() {
     return myNumber;
+  }
+
+  public AbstractVcs getVcs() {
+    return null;
   }
 
   public Collection<Change> getChanges() {

@@ -149,4 +149,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   public boolean refreshCacheByNumber() {
     return false;
   }
+
+  public String getChangelistTitle() {
+    return null;
+  }
 }
