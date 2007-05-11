@@ -15,13 +15,19 @@ public final class TargetAction extends AnAction {
 
   private final String myBuildName;
   private final String[] myTargets;
-
+  private final String myDebugString;
+  
   public TargetAction(final AntBuildFile buildFile, final String displayName, final String[] targets, final String description) {
     Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(displayName, false);
     templatePresentation.setDescription(description);
     myBuildName = buildFile.getPresentableName();
     myTargets = targets;
+    myDebugString = "Target action: " + displayName+ "; Build: " + buildFile.getPresentableName() + "; Project: " + buildFile.getProject().getLocation();
+  }
+
+  public String toString() {
+    return myDebugString;
   }
 
   public void actionPerformed(AnActionEvent e) {

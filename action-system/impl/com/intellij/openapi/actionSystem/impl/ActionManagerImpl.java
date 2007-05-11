@@ -781,7 +781,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
-        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Registered action is " +
+        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action.toString() + 
+                                    "; Registered action is " +
                                        myId2Action.get(actionId) + getPluginInfo(pluginId));
         return;
       }
