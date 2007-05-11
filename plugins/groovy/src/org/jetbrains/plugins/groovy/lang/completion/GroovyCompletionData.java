@@ -80,9 +80,7 @@ public class GroovyCompletionData extends CompletionData {
 
         "boolean", "byte", "char", "short", "int", "float", "long", "double", "any", // Built-in Types
         "private", "public", "protected", "transient", "native", "threadsafe", "volatile", "static", "def", "void",
-        "throws",
-
-
+        "throws"
 
     };
 
@@ -121,7 +119,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for",
-        "return", "break", "continue", "throw", "assert", "synchronized", };
+        "return", "break", "continue", "throw", "assert", "synchronized",};
 
     registerStandardCompletion(new ControlStructureFilter(), controlKeywords);
     registerStandardCompletion(new CaseDefaultFilter(), "case", "default");
@@ -148,6 +146,7 @@ public class GroovyCompletionData extends CompletionData {
   private void registerImportCompletion() {
     registerStandardCompletion(new ImportFilter(), "import");
   }
+
   private void registerInstanceofCompletion() {
     registerStandardCompletion(new InstanceOfFilter(), "instanceof");
   }
