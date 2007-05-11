@@ -14,17 +14,20 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.impl.FileComparator;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.deployment.DeploymentItemUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -35,8 +38,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -261,6 +262,42 @@ public class FileSystemTreeImpl implements FileSystemTree {
           }
         },
         UIBundle.message("file.chooser.create.new.folder.command.name"),
+        null
+    );
+    return failReason[0];
+  }
+
+  public Exception createNewFile(final VirtualFile parentDirectory, final String newFileName, final FileType fileType, final String initialContent) {
+    final Exception[] failReason = new Exception[] { null };
+    CommandProcessor.getInstance().executeCommand(
+        myProject, new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                try {
+                  final String newFileNameWithExtension = newFileName.endsWith('.'+fileType.getDefaultExtension())? newFileName : newFileName+'.'+fileType.getDefaultExtension();
+                  VirtualFile file = parentDirectory.createChildData(this, newFileNameWithExtension);
+                  DeploymentItemUtil.setFileText(myProject, file, initialContent);
+                  updateTree();
+                  FileElement fileDesc = new FileElement(file, file.getName());
+                  myTreeBuilder.buildNodeForElement(fileDesc);
+                  DefaultMutableTreeNode fileNode =
+                      myTreeBuilder.getNodeForElement(fileDesc);
+                  if (fileNode != null) {
+                    TreePath treePath = new TreePath(fileNode.getPath());
+                    myTree.setSelectionPath(treePath);
+                    myTree.scrollPathToVisible(treePath);
+                    myTree.expandPath(treePath);
+                  }
+                }
+                catch (IOException e) {
+                  failReason[0] = e;
+                }
+              }
+            });
+          }
+        },
+        UIBundle.message("file.chooser.create.new.file.command.name"),
         null
     );
     return failReason[0];

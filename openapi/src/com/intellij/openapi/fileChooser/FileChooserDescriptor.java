@@ -17,19 +17,19 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
-import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class FileChooserDescriptor implements Cloneable{
   private final boolean myChooseFiles;
@@ -47,6 +47,9 @@ public class FileChooserDescriptor implements Cloneable{
   private boolean myShowFileSystemRoots = true;
   private boolean myIsTreeRootVisible = false;
   private Module myContextModule = null;
+
+  private String myNewFileTemplateText = null;
+  private FileType myNewFileType = null;
 
   /**
    * @param chooseFiles controls whether files can be chosen
@@ -269,5 +272,21 @@ public class FileChooserDescriptor implements Cloneable{
 
   public void setContextModule(final Module contextModule) {
     myContextModule = contextModule;
+  }
+
+  public String getNewFileTemplateText() {
+    return myNewFileTemplateText;
+  }
+
+  public void setNewFileTemplateText(final String newFileTemplateText) {
+    myNewFileTemplateText = newFileTemplateText;
+  }
+
+  public FileType getNewFileType() {
+    return myNewFileType;
+  }
+
+  public void setNewFileType(final FileType newFileType) {
+    myNewFileType = newFileType;
   }
 }

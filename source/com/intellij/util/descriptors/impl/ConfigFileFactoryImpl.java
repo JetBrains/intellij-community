@@ -57,26 +57,32 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   }
 
   @Nullable
-  public VirtualFile createFile(Project project, String url, ConfigFileVersion version) {
-    return createFileFromTemplate(project, url, version.getTemplateName());
+  public VirtualFile createFile(Project project, String url, ConfigFileVersion version, final boolean forceNew) {
+    return createFileFromTemplate(project, url, version.getTemplateName(), forceNew);
   }
 
   @Nullable
-  private VirtualFile createFileFromTemplate(final Project project, String url, final String templateName) {
+  private VirtualFile createFileFromTemplate(final Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtil.urlToPath(url));
     final VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
-    if (existingFile != null) {
+    if (existingFile != null && !forceNew) {
       return existingFile;
     }
     try {
       String text = getText(templateName);
       final VirtualFile virtualFile;
-      if (!FileUtil.createParentDirs(file) ||
-          (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
-        throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));
+      final VirtualFile childData;
+      if (existingFile == null || existingFile.isDirectory()) {
+        if (!FileUtil.createParentDirs(file) ||
+            (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
+          throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));
+        }
+        childData = virtualFile.createChildData(this, file.getName());
       }
-      final VirtualFile childData = virtualFile.createChildData(this, file.getName());
+      else {
+        childData = existingFile;
+      }
       DeploymentItemUtil.setFileText(project, childData, text);
       return childData;
     }

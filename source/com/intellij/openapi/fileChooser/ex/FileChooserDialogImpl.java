@@ -102,6 +102,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     addToGroup(group, new GotoModuleDirectory(myFileSystemTree, myChooserDescriptor.getContextModule()));
 
     group.addSeparator();
+    if (myChooserDescriptor.getNewFileType() != null) {
+      addToGroup(group, new NewFileAction(myFileSystemTree, myChooserDescriptor.getNewFileType(), myChooserDescriptor.getNewFileTemplateText()));
+    }
     addToGroup(group, new NewFolderAction(myFileSystemTree));
     addToGroup(group, new FileDeleteAction(myFileSystemTree));
     group.addSeparator();
