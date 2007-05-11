@@ -201,6 +201,7 @@
         <fileset dir="${test.dir}">
           <include name="**/ParserTest.java"/>
           <include name="**/FormatterTest.java"/>
+          <include name="**/CompletionActionTest.java"/>
         </fileset>
       </batchtest>
 
