@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.facet.Facet;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -21,7 +20,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -157,10 +155,6 @@ public class CellAppearanceUtils {
     else {
       throw new RuntimeException(folder.getClass().getName());
     }
-  }
-
-  public static CellAppearance forFacet(@NotNull Facet facet) {
-    return SimpleTextCellAppearance.normal(facet.getName(), facet.getType().getIcon());
   }
 
   public static CellAppearance forModule(Module module) {
