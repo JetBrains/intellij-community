@@ -22,7 +22,7 @@ public class ChangesUtil {
   private ChangesUtil() {}
 
   @NotNull
-  public static FilePath getFilePath(final Change change) {
+  public static FilePath getFilePath(@NotNull final Change change) {
     ContentRevision revision = change.getAfterRevision();
     if (revision == null) {
       revision = change.getBeforeRevision();

@@ -2,22 +2,21 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.SeparatorFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -168,7 +167,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
       ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
     }
-    else {
+    else if (leadSelection != null) {
       ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, myDiffExtendUIFactory, isInFrame());
     }
   }
