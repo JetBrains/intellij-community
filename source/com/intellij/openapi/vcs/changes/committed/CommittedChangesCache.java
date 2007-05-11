@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -562,6 +563,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           if (postRunnable != null) {
             postRunnable.consume(list);
           }
+        }
+        catch(ProcessCanceledException ex) {
+          // ignore
         }
         catch (Exception e) {
           LOG.error(e);
