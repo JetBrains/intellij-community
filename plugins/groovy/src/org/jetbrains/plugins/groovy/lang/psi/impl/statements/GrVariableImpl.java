@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -45,7 +46,8 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
 
   @NotNull
   public PsiType getType() {
-    GrTypeElement typeElement = ((GrVariableDeclarations) getParent()).getTypeElementGroovy();
+    PsiElement parent = getParent();
+    GrTypeElement typeElement = parent instanceof GrParameter ? ((GrParameter) parent).getTypeElementGroovy() : ((GrVariableDeclarations) parent).getTypeElementGroovy();
     return typeElement == null ?
         getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope()) :
         typeElement.getType();
