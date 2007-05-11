@@ -19,7 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.NameHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -62,11 +65,14 @@ public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements 
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     GrExpression lValue = getLValue();
-    if (lastParent != lValue && lastParent != getRValue()) {
+    if (lastParent == null || !PsiTreeUtil.isAncestor(this, lastParent, false)) {
       if (lValue instanceof GrReferenceExpressionImpl) {
         GrReferenceExpressionImpl lRefExpr = (GrReferenceExpressionImpl) lValue;
-        if (lRefExpr.resolve() == null) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
-          if (!ResolveUtil.processElement(processor, lRefExpr)) return false;
+        String name = lRefExpr.getName();
+        NameHint hint = processor.getHint(NameHint.class);
+        if (hint == null ||
+            (hint.getName().equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
+          if (!processor.execute(lRefExpr, PsiSubstitutor.EMPTY)) return false;
         }
       }
     }

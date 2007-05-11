@@ -45,12 +45,12 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean processChildren(GroovyPsiElement element, PsiScopeProcessor processor,
+  public static boolean processChildren(PsiElement element, PsiScopeProcessor processor,
                                         PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    PsiElement run = element.getFirstChild();
-    while(run != null && run != lastParent) {
+    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
+    while(run != null) {
       if (!run.processDeclarations(processor, substitutor, null, place)) return false;
-      run = run.getNextSibling();
+      run = run.getPrevSibling();
     }
 
     return true;

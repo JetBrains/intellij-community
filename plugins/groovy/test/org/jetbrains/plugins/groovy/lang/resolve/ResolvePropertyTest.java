@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ContentEntry;
@@ -13,8 +12,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ven
@@ -59,10 +62,32 @@ public class ResolvePropertyTest extends ResolveTestCase {
     assertFalse(resolveResult.isValidResult());
   }
 
+  public void testUndefinedVar1() throws Exception {
+    PsiReference ref = configureByFile("undefinedVar1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrReferenceExpression);
+    GrTopStatement statement = ((GroovyFile) resolved.getContainingFile()).getTopStatements()[2];
+    assertTrue(resolved.equals(((GrAssignmentExpression) statement).getLValue()));
+  }
+
+  public void testUndefinedVar2() throws Exception {
+    doUndefinedVarTest("undefinedVar2/A.groovy");
+  }
+
+  public void testDefinedVar1() throws Exception {
+    doTest("definedVar1/A.groovy");
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrVariable);
+  }
+
+  private void doUndefinedVarTest(String fileName) throws Exception {
+    PsiReference ref = configureByFile(fileName);
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrReferenceExpression);
   }
 
   protected void setUp() throws Exception {
