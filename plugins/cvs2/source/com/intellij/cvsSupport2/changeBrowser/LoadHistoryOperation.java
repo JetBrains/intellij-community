@@ -75,7 +75,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     }
   }
 
-  public List<LogInformationWrapper> getLog() {
-    return myLog;
+  public boolean runInReadThread() {
+    return false;
   }
 }
