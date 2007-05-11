@@ -83,12 +83,13 @@ public class ComlpetionActionTest extends ActionTest {
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
 
-      if (items.length > 0) {
-        result = result + "\n#####";
+      if (items.length > 1) {
         Arrays.sort(items);
+        result = "";
         for (LookupItem item : items) {
           result = result + "\n" + item.getLookupString();
         }
+        result = result.trim();
       }
 
     } finally {
@@ -109,18 +110,17 @@ public class ComlpetionActionTest extends ActionTest {
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     final PsiElement elem = myFile.findElementAt(myOffset);
 
-    String whitePrefix = "";
-    for (int i = 0; i < myOffset; i++) {
-      whitePrefix += " ";
-    }
-
+    /**
+     * Create fake file with dummy element
+     */
     String newFileText = myFile.getText().substring(0, myOffset + 1) + "IntellijIdeaRulezzz" +
         myFile.getText().substring(myOffset + 1);
     try {
-      PsiFile newFile = createGroovyFile(newFileText);
+      /**
+       * Hack for IDEA completion
+       */
+      PsiFile newFile = TestUtils.createPseudoPhysicalFile(project, newFileText);
       PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
-
-
       final int offset1 =
           myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
       final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
@@ -146,20 +146,6 @@ public class ComlpetionActionTest extends ActionTest {
       e.printStackTrace();
       return new LookupItem[0];
     }
-  }
-
-  private PsiElement createIdentifierFromText(String idText) {
-    PsiFile file = null;
-    try {
-      file = createGroovyFile(idText);
-    } catch (IncorrectOperationException e) {
-      e.printStackTrace();
-    }
-    return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
-  }
-
-  private PsiFile createGroovyFile(String idText) throws IncorrectOperationException {
-    return TestUtils.createPseudoPhysicalFile(project, idText);
   }
 
   public String transform(String testName, String[] data) throws Exception {
