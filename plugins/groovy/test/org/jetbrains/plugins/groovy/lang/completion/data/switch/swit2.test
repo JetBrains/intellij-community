@@ -1,0 +1,17 @@
+class A {
+  def foo() {
+    switch (x){
+      c<caret>
+    }
+  }
+}
+-----
+class A {
+  def foo() {
+    switch (x){
+      case <caret>
+    }
+  }
+}
+#####
+case

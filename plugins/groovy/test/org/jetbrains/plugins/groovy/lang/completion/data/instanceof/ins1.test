@@ -1,0 +1,5 @@
+return a i<caret> b
+-----
+return a instanceof <caret>b
+#####
+instanceof

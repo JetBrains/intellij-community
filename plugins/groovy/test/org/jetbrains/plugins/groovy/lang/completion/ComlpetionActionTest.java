@@ -7,25 +7,26 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.CompletionData;
+import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ActionRunner;
 
 
 import java.io.IOException;
+import java.util.*;
 
 import junit.framework.Test;
 
@@ -67,12 +68,13 @@ public class ComlpetionActionTest extends ActionTest {
     myEditor.getCaretModel().moveToOffset(offset);
 
     final CodeInsightActionHandler handler = getCompetionHandler();
-    final CompletionContext context = new CompletionContext(project, myEditor, myFile , 0 , myOffset);
+    final CompletionContext context = new CompletionContext(project, myEditor, myFile, 0, myOffset);
+    CompletionData data = CompletionUtil.getCompletionDataByElement(myFile.findElementAt(myOffset), context);
+    LookupItem[] items = getAcceptableItems(data);
 
     try {
       performAction(project, new Runnable() {
         public void run() {
-//          CompletionData data = CompletionUtil.getCompletionDataByElement(myFile.findElementAt(myOffset), context);
           handler.invoke(project, myEditor, myFile);
         }
       });
@@ -81,11 +83,83 @@ public class ComlpetionActionTest extends ActionTest {
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
 
+      if (items.length > 0) {
+        result = result + "\n#####";
+        Arrays.sort(items);
+        for (LookupItem item : items) {
+          result = result + "\n" + item.getLookupString();
+        }
+      }
+
     } finally {
       fileEditorManager.closeFile(myFile.getVirtualFile());
       myEditor = null;
     }
     return result;
+  }
+
+  /**
+   * retrurns acceptable variant for this completion
+   *
+   * @param completionData
+   * @return
+   */
+  protected LookupItem[] getAcceptableItems(CompletionData completionData) {
+
+    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+    final PsiElement elem = myFile.findElementAt(myOffset);
+
+    String whitePrefix = "";
+    for (int i = 0; i < myOffset; i++) {
+      whitePrefix += " ";
+    }
+
+    String newFileText = myFile.getText().substring(0, myOffset + 1) + "IntellijIdeaRulezzz" +
+        myFile.getText().substring(myOffset + 1);
+    try {
+      PsiFile newFile = createGroovyFile(newFileText);
+      PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
+
+
+      final int offset1 =
+          myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+      final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
+      final CompletionContext context = new CompletionContext(project, myEditor, myFile, offset1, offset2);
+      context.setPrefix(elem, context.startOffset, completionData);
+
+      if (lookupSet.size() == 0 || !CodeInsightUtil.isAntFile(myFile)) {
+        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+      }
+
+      ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
+      final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
+      for (LookupItem item : items) {
+        if (CompletionUtil.checkName(item.getLookupString(), context, false)) {
+          lookupItems.add(item);
+        }
+      }
+
+      return lookupItems.toArray(new LookupItem[0]);
+    } catch (IncorrectOperationException e) {
+      e.printStackTrace();
+      return new LookupItem[0];
+    }
+  }
+
+  private PsiElement createIdentifierFromText(String idText) {
+    PsiFile file = null;
+    try {
+      file = createGroovyFile(idText);
+    } catch (IncorrectOperationException e) {
+      e.printStackTrace();
+    }
+    return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
+  }
+
+  private PsiFile createGroovyFile(String idText) throws IncorrectOperationException {
+    return TestUtils.createPseudoPhysicalFile(project, idText);
   }
 
   public String transform(String testName, String[] data) throws Exception {
