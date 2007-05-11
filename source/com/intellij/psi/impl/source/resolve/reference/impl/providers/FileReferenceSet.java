@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -44,7 +45,7 @@ public class FileReferenceSet {
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
 
-  public static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
+  public static final Key<CachedValue<PsiFileSystemItem>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<PsiFileSystemItem>>("default file contexts");
 
   public boolean isEndingSlashNotAllowed() {
     return myEndingSlashNotAllowed;
@@ -232,16 +233,17 @@ public class FileReferenceSet {
       return ContainerUtil.createMaybeSingletonList(getAbsoluteTopLevelDirLocation(file));
     }
 
-    final CachedValueProvider<Collection<PsiFileSystemItem>> myDefaultContextProvider = new CachedValueProvider<Collection<PsiFileSystemItem>>() {
-      public Result<Collection<PsiFileSystemItem>> compute() {
-        return Result.createSingleDependency(getContextByFile(file), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    final CachedValueProvider<PsiFileSystemItem> myDefaultContextProvider = new CachedValueProvider<PsiFileSystemItem>() {
+      public Result<PsiFileSystemItem> compute() {
+        final PsiFileSystemItem context = getContextByFile(file);
+        return Result.createSingleDependency(context,
+                                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     };
     final CachedValuesManager cachedValuesManager = PsiManager.getInstance(myElement.getProject()).getCachedValuesManager();
-    final Collection<PsiFileSystemItem> value =
+    final PsiFileSystemItem value =
       cachedValuesManager.getCachedValue(file, DEFAULT_CONTEXTS_KEY, myDefaultContextProvider, false);
-    assert value != null;
-    return value;
+    return value == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(value);
   }
 
   @Nullable
@@ -255,26 +257,31 @@ public class FileReferenceSet {
     return file;
   }
 
-  private Collection<PsiFileSystemItem> getContextByFile(final PsiFile file) {
-
+  @Nullable
+  private PsiFileSystemItem getContextByFile(final PsiFile file) {
 
     final Project project = file.getProject();
     final JspContextManager manager = JspContextManager.getInstance(project);
     if (manager != null) {
       final PsiFileSystemItem item = manager.getContextFolder(file);
       if (item != null) {
-        return Collections.singleton(item);
+        return item;
+      }
+      if (useIncludingFileAsContext()) {
+        final JspFile contextFile = manager.getContextFile(file);
+        if (contextFile != null) {
+          return contextFile.getParent();
+        }
       }
     }
-    PsiFileSystemItem result = null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final PsiFileSystemItem item = FileReferenceHelperRegistrar.getNotNullHelper(file).getPsiFileSystemItem(project, virtualFile);
       if (item != null) {
-        result = item.getParent();
+        return item.getParent();
       }
     }
-    return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
+    return file.getParent();
   }
 
   public String getPathString() {
@@ -283,6 +290,10 @@ public class FileReferenceSet {
 
   public boolean isAbsolutePathReference() {
     return myPathString.startsWith(SEPARATOR_STRING);
+  }
+
+  protected boolean useIncludingFileAsContext() {
+    return true;
   }
 
   @Nullable
