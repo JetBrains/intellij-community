@@ -17,6 +17,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiFile;
 import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.util.IncorrectOperationException;
@@ -41,8 +44,8 @@ public class ComlpetionActionTest extends ActionTest {
 
   public ComlpetionActionTest() {
     super(System.getProperty("path") != null ?
-      System.getProperty("path") :
-      DATA_PATH
+        System.getProperty("path") :
+        DATA_PATH
     );
   }
 
@@ -63,12 +66,13 @@ public class ComlpetionActionTest extends ActionTest {
     myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), false);
     myEditor.getCaretModel().moveToOffset(offset);
 
-    final myDataContext dataContext = getDataContext(myFile);
     final CodeInsightActionHandler handler = getCompetionHandler();
+    final CompletionContext context = new CompletionContext(project, myEditor, myFile , 0 , myOffset);
 
     try {
       performAction(project, new Runnable() {
         public void run() {
+//          CompletionData data = CompletionUtil.getCompletionDataByElement(myFile.findElementAt(myOffset), context);
           handler.invoke(project, myEditor, myFile);
         }
       });
