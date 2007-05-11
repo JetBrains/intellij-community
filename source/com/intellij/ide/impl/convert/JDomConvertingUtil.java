@@ -7,13 +7,18 @@ package com.intellij.ide.impl.convert;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author nik
@@ -26,6 +31,18 @@ public class JDomConvertingUtil {
   @NonNls private static final String VALUE_ATTRIBUTE = "value";
 
   private JDomConvertingUtil() {
+  }
+
+  public static Document loadDocument(File file) throws QualifiedJDomException, IOException {
+    try {
+      return JDOMUtil.loadDocument(file);
+    }
+    catch (JDOMException e) {
+      throw new QualifiedJDomException(e, file.getAbsolutePath());
+    }
+    catch (IOException e) {
+      throw e;
+    }
   }
 
   public static String getOptionValue(Element element, String optionName) {

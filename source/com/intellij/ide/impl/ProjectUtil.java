@@ -253,10 +253,14 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     catch (JDOMException e) {
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
+      LOG.info(e);
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"),
+                                 IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
     catch (InvalidDataException e) {
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
+      LOG.info(e);
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), 
+                                 IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
     return project;
   }

@@ -9,11 +9,9 @@ import com.intellij.ide.impl.convert.ui.ProjectConversionWizard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -28,12 +26,15 @@ public class ProjectConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectConversionUtil");
   @NonNls private static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
 
+  private ProjectConversionUtil() {
+  }
+
   private static boolean isConverted(Element versionComponent) {
     return Boolean.parseBoolean(versionComponent.getAttributeValue(ProjectFileVersionImpl.CONVERTED_ATTRIBUTE));
   }
 
-  private static Element loadProjectFileRoot(String path) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadDocument(new File(FileUtil.toSystemDependentName(path)));
+  private static Element loadProjectFileRoot(String path) throws QualifiedJDomException, IOException {
+    final Document document = JDomConvertingUtil.loadDocument(new File(FileUtil.toSystemDependentName(path)));
     return document.getRootElement();
   }
 
@@ -80,8 +81,9 @@ public class ProjectConversionUtil {
                                IdeBundle.message("title.cannot.convert.project"));
       return ProjectConversionResult.DO_NOT_OPEN;
     }
-    catch (JDOMException e) {
-      Messages.showErrorDialog(IdeBundle.message("error.project.file.is.corrupted"),
+    catch (QualifiedJDomException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(IdeBundle.message("error.some.file.is.corrupted.message", e.getFilePath(), e.getCause().getMessage()),
                                IdeBundle.message("title.cannot.convert.project"));
       return ProjectConversionResult.DO_NOT_OPEN;
     }
