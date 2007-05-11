@@ -22,14 +22,13 @@ public final class NavigationUtil {
   }
 
   public static JBPopup getPsiElementPopup(PsiElement[] elements, String title) {
-    PsiElementListCellRenderer renderer = new GotoSymbolCellRenderer();
-    return getPsiElementPopup(elements, renderer, title);
+    return getPsiElementPopup(elements, new GotoSymbolCellRenderer(), title);
   }
 
   public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
       public boolean execute(final PsiElement element) {
-        Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
+        Navigatable descriptor = EditSourceUtil.getDescriptor(element);
         if (descriptor != null && descriptor.canNavigate()) {
           descriptor.navigate(true);
         }
@@ -46,8 +45,7 @@ public final class NavigationUtil {
       public void run() {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
-        Object [] selectedElements = list.getSelectedValues();
-        for (Object element : selectedElements) {
+        for (Object element : list.getSelectedValues()) {
           processor.execute((PsiElement)element);
         }
       }

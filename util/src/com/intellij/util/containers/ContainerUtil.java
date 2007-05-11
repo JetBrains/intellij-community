@@ -345,7 +345,7 @@ public class ContainerUtil {
     };
   }
 
-  public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<? extends T>> fun) {
+  public static <T,V> List<T> concat(Iterable<? extends V> list, Function<V,Collection<? extends T>> fun) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(fun.fun(v));

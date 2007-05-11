@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.proxy.Factory;
@@ -98,7 +99,7 @@ public abstract class ElementPresentationManager {
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
 
-  public static final Function<Object, String> NAMER = new Function<Object, String>() {
+  public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
     public String fun(final Object o) {
       return getElementName(o);
     }
