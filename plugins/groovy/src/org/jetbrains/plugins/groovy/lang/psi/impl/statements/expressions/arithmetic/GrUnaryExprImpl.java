@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,5 +32,9 @@ public class GrUnaryExprImpl extends GroovyPsiElementImpl implements GrUnaryExpr
 
   public String toString() {
     return "Unary expression";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -61,5 +62,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   public GrParameterListImpl getParameterList() {
     return findChildByClass(GrParameterListImpl.class);
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +44,14 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
 
   public String toString() {
     return "Parameter";
+  }
+
+  @NotNull
+  public PsiType getType() {
+    GrTypeElement typeElement = getTypeElementGroovy();
+    return typeElement != null ?
+        typeElement.getType() : 
+        getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

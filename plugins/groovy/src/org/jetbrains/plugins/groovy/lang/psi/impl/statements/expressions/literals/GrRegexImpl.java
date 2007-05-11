@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,6 +32,10 @@ public class GrRegexImpl extends GroovyPsiElementImpl implements GrRegex {
 
   public String toString() {
     return "Compound regular expression";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }
 

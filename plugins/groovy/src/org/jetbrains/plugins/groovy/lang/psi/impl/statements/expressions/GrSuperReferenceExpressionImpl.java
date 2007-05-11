@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisRe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 
 /**
  * @author ilyas
@@ -20,5 +21,9 @@ public class GrSuperReferenceExpressionImpl extends GroovyPsiElementImpl impleme
 
   public String toString() {
     return "'super'reference expression";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

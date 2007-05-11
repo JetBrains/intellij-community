@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import com.intellij.psi.PsiType;
 
 /**
  * @author ilyas
  */
 public interface GrExpression extends GrStatement, GrCondition {
+  public PsiType getType();
 }

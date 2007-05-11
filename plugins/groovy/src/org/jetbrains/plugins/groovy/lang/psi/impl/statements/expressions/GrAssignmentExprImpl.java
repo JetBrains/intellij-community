@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -47,6 +48,10 @@ public class GrAssignmentExprImpl extends GroovyPsiElementImpl implements GrAssi
     if (exprs.length > 1) {
       return exprs[1];
     }
+    return null;
+  }
+
+  public PsiType getType() {
     return null;
   }
 }

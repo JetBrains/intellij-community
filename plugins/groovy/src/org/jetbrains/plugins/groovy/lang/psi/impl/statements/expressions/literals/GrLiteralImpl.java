@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,5 +32,9 @@ public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
 
   public String toString() {
     return "Literal";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

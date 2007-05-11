@@ -16,19 +16,44 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author ilyas
  */
-public class GrNewExprImpl extends GroovyPsiElementImpl implements GrNewExpression {
-  public GrNewExprImpl(@NotNull ASTNode node) {
+public class GrNewExpressionImpl extends GroovyPsiElementImpl implements GrNewExpression {
+  public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "NEW expression";
+  }
+
+  public PsiType getType() {
+    GrTypeOrPackageReferenceElement refElement = getReferenceElement();
+    if (refElement != null) {
+      PsiType type = new GrClassReferenceType(refElement);
+      for(int i = 0; i < getArrayCount(); i++) {
+        type = type.createArrayType();
+      }
+      return type;
+    }
+
+    return null;
+  }
+
+  public GrTypeOrPackageReferenceElement getReferenceElement() {
+    return findChildByClass(GrTypeOrPackageReferenceElement.class);
+  }
+
+  public int getArrayCount() {
+    return findChildrenByClass(GrArrayDeclarationImpl.class).length;
   }
 }

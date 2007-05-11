@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.PomMethod;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.List;
 
@@ -48,6 +50,14 @@ import java.util.List;
 public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
   public GrMethodDefinitionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public int getTextOffset() {
+    return getNameIdentifierGroovy().getTextRange().getStartOffset();
+  }
+
+  public PsiElement getNameIdentifierGroovy() {
+    return findChildByType(GroovyElementTypes.mIDENT);
   }
 
   public String toString() {
@@ -119,12 +129,12 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return MethodSignatureUtil.createMethodSignature(getName(), getParameterList(), null, PsiSubstitutor.EMPTY);
   }
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @NotNull
@@ -173,7 +183,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public String getName() {
-    PsiElement nameElement = findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement nameElement = getNameIdentifierGroovy();
     if (nameElement == null) {
       nameElement = findChildByType(GroovyTokenTypes.mSTRING_LITERAL);
     }

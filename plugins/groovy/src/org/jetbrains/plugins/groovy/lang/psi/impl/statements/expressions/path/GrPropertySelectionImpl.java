@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,5 +32,9 @@ public class GrPropertySelectionImpl extends GroovyPsiElementImpl implements GrP
 
   public String toString() {
     return "Property selection";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

@@ -15,8 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+
 /**
  * @author ilyas
  */
 public interface GrNewExpression extends GrExpression {
+  GrTypeOrPackageReferenceElement getReferenceElement();
+
+  int getArrayCount();
 }

@@ -18,23 +18,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.PROPERTY;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.EnumSet;
 
@@ -58,49 +58,62 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static final MyResolver RESOLVER = new MyResolver();
 
+  public PsiType getType() {
+    PsiElement resolved = resolve();
+    if (resolved instanceof PsiClass) {
+      return getManager().getElementFactory().createType((PsiClass) resolved);
+    } else if (resolved instanceof PsiVariable) {
+      return ((PsiVariable) resolved).getType();
+    } else if (resolved instanceof PsiMethod) {
+      //todo
+    }
+
+    return null;
+  }
+
   private static class MyResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
-    public GroovyResolveResult[] resolve(GrReferenceExpressionImpl psiReference, boolean incompleteCode) {
-      GrReferenceExpressionImpl refExpr = (GrReferenceExpressionImpl) psiReference;
+    public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       String name = refExpr.getReferenceName();
       if (name == null) return null;
-      if (qualifier == null) {
-        ResolverProcessor processor = getResolveProcessor(refExpr, name);
+      ResolverProcessor processor = getResolveProcessor(refExpr, name);
 
+      if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
-        return processor.getCandidates();
       } else {
-        //todo real stuff
+        PsiType qualifierType = qualifier.getType();
+        if (qualifierType instanceof PsiClassType) {
+          PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+          if (qualifierClass != null) {
+            qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+          }
+        }
       }
 
-      return null;
+      return processor.getCandidates();
     }
   }
 
   private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name) {
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
-    if (kind == PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY), refExpr);
-    } else if (kind == TYPE_OR_PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.CLASS), refExpr); //todo package?
-    } else /*if (kind == METHOD)*/ {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD), refExpr);
+    if (kind == TYPE_OR_PROPERTY) {
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.METHOD, ResolveKind.CLASS), refExpr); //todo package?
+    } else {
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr);
     }
+
     return processor;
   }
 
   enum Kind {
     PROPERTY,
-    METHOD,
     TYPE_OR_PROPERTY
   }
 
   private Kind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrMethodCall || parent instanceof GrApplicationExpression) {
-      return METHOD;
-    } else if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
+    if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
       return TYPE_OR_PROPERTY;
     }
 

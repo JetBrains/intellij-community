@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -35,4 +36,6 @@ public interface GrMethod extends GrMember, GrNamedElement, PsiMethod, GrStateme
 
   @Nullable
   GrTypeElement getReturnTypeElementGroovy();
+
+  PsiElement getNameIdentifierGroovy();
 }

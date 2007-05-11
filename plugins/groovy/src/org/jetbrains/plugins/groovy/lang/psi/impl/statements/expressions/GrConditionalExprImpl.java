@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -55,6 +56,10 @@ public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrCon
     if (exprs.length > 2) {
       return exprs[2];
     }
+    return null;
+  }
+
+  public PsiType getType() {
     return null;
   }
 }
