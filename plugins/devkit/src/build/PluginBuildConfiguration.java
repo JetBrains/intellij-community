@@ -142,7 +142,8 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   private ConfigFile createDescriptor(final String url) {
     final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
     myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
-    ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion());
+    ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion(),
+                                               false);
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
