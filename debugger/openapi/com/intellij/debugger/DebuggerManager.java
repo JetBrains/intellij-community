@@ -47,4 +47,7 @@ public abstract class DebuggerManager implements ProjectComponent, JDOMExternali
   
   public abstract String getVMClassQualifiedName(PsiClass aClass); 
   
+  public abstract void registerPositionManager(PositionManager positionManager);
+  public abstract void unregisterPositionManager(PositionManager positionManager);
+  
 }

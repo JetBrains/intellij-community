@@ -3,6 +3,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.NameMapper;
+import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private BreakpointManager myBreakpointManager;
   private List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
+  private List<PositionManager> myCustomPositionManagers = new ArrayList<PositionManager>();
   
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -158,7 +161,22 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
                                               boolean pollConnection
   ) throws ExecutionException {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    DebuggerSession session = new DebuggerSession(sessionName, new DebugProcessEvents(myProject));
+    final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
+    debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+      public void processAttached(final DebugProcess process) {
+        process.removeDebugProcessListener(this);
+        for (PositionManager positionManager : myCustomPositionManagers) {
+          process.appendPositionManager(positionManager);
+        }
+      }
+      public void processDetached(final DebugProcess process, final boolean closedByUser) {
+        debugProcess.removeDebugProcessListener(this);
+      }
+      public void attachException(final RunProfileState state, final ExecutionException exception, final RemoteConnection remoteConnection) {
+        debugProcess.removeDebugProcessListener(this);
+      }
+    });
+    DebuggerSession session = new DebuggerSession(sessionName, debugProcess);
 
     final ExecutionResult executionResult = session.attach(state, remoteConnection, pollConnection);
     if (executionResult == null) {
@@ -247,6 +265,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     return DebuggerManagerThreadImpl.isManagerThread();
   }
 
+  @NotNull
   public String getComponentName() {
     return "DebuggerManager";
   }
@@ -258,6 +277,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public DebuggerContextImpl getContext() { return getContextManager().getContext(); }
 
   public DebuggerStateManager getContextManager() { return myDebuggerStateManager;}
+
+  public void registerPositionManager(final PositionManager positionManager) {
+    myCustomPositionManagers.add(positionManager);
+  }
+
+  public void unregisterPositionManager(final PositionManager positionManager) {
+    myCustomPositionManagers.remove(positionManager);
+  }
 
   static private boolean hasWhitespace(String string) {
     int length = string.length();
@@ -403,7 +430,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)
     throws ExecutionException {
     return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.DEBUG_PORT, checkValidity);
-
   }
 
   private static class MyDebuggerStateManager extends DebuggerStateManager {
