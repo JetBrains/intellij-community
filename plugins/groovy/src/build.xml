@@ -160,6 +160,9 @@
       </classpath>
 
     </javac>
+
+    <copy srcdir="../test/testdata"
+           destdir="${test.dest}/testdata"/>
   </target>
 
   <target name="run.tests" description="runs all tests" depends="build tests">
