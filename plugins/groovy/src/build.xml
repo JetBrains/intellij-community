@@ -200,9 +200,7 @@
 
       <batchtest todir="${project.dir}/logs">
         <fileset dir="${test.dir}">
-          <include name="**/ParserTest.java"/>
-          <include name="**/FormatterTest.java"/>
-          <include name="**/CompletionActionTest.java"/>
+          <include name="**/*Test.java"/>
         </fileset>
       </batchtest>
 
