@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -46,9 +48,17 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   @NotNull
   public PsiType getType() {
     GrTypeElement typeElement = ((GrVariableDeclarations) getParent()).getTypeElementGroovy();
-    return typeElement == null ?
-        getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope()) :
-        typeElement.getType();
+    if (typeElement != null) return typeElement.getType();
+
+    GrExpression initializer = getInitializerGroovy();
+    if (initializer != null) {
+      if (!(initializer instanceof GrReferenceExpression) || !initializer.getText().equals(getName())) { //prevent infinite recursion
+        PsiType initializerType = initializer.getType();
+        if (initializerType != null) return initializerType;
+      }
+    }
+
+    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
   @Nullable
@@ -80,6 +90,11 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return findChildByType(GroovyTokenTypes.mIDENT);
+  }
+
+  @Nullable
+  public GrExpression getInitializerGroovy() {
+    return findChildByClass(GrExpression.class);
   }
 
   public int getTextOffset() {

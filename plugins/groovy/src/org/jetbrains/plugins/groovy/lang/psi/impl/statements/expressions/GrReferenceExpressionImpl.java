@@ -159,7 +159,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public Object[] getVariants() {
     ResolverProcessor processor = getResolveProcessor(this, null);
-    ResolveUtil.treeWalkUp(this, processor);
+    GrExpression qualifierExpression = getQualifierExpression();
+    if (qualifierExpression == null) {
+      ResolveUtil.treeWalkUp(this, processor);
+    } else {
+      PsiType qualifierType = qualifierExpression.getType();
+      if (qualifierType instanceof PsiClassType) {
+        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+        if (qualifierClass != null) {
+          qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+        }
+      }
+    }
+
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     return ResolveUtil.mapToElements(candidates);
