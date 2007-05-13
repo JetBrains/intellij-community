@@ -135,7 +135,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private Kind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrCodeBlock) return TYPE_OR_PROPERTY;
+    if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
+      return TYPE_OR_PROPERTY;
+    }
 
     return PROPERTY;
   }
