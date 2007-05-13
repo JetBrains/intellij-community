@@ -19,9 +19,12 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.completion.WordCompletionData;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -39,6 +42,8 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressi
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -151,7 +156,11 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new InstanceOfFilter(), "instanceof");
   }
 
-  /**
+    public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
+      ourGenericVariant.addReferenceCompletions(reference, position, set, context);
+    }
+
+    /**
    * Template to add all standard keywords complettions
    *
    * @param filter   - Semantic filter for given keywords
