@@ -156,9 +156,9 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new InstanceOfFilter(), "instanceof");
   }
 
-    public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
-      ourGenericVariant.addReferenceCompletions(reference, position, set, context);
-    }
+  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
+    ourGenericVariant.addReferenceCompletions(reference, position, set, context);
+  }
 
     /**
    * Template to add all standard keywords complettions
