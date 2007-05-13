@@ -54,6 +54,7 @@ public class ResolveClassTest extends ResolveTestCase {
   }
 
   protected void setUp() throws Exception {
+    GroovyLoader.loadGroovy();
     super.setUp();
 
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
