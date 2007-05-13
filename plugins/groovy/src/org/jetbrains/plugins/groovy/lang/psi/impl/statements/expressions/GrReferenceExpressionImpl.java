@@ -61,18 +61,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final MyResolver RESOLVER = new MyResolver();
 
   public PsiType getType() {
-    PsiElement parent = getParent();
-    if (parent instanceof GrAssignmentExpression) {
-      GrAssignmentExpression assignment = (GrAssignmentExpression) parent;
-      if (this.equals(assignment.getLValue())) {
-        GrExpression rValue = assignment.getRValue();
-        if (rValue != null) {
-          PsiType rType = rValue.getType();
-          if (rType != null) return rType;
-        }
-      }
-    }
-    
+
     PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) {
       return getManager().getElementFactory().createType((PsiClass) resolved);
@@ -80,6 +69,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       return ((PsiVariable) resolved).getType();
     } else if (resolved instanceof PsiMethod) {
       //todo
+    } else if (resolved instanceof GrReferenceExpression) {
+      PsiElement parent = resolved.getParent();
+      if (parent instanceof GrAssignmentExpression) {
+        GrAssignmentExpression assignment = (GrAssignmentExpression) parent;
+        if (resolved.equals(assignment.getLValue())) {
+          GrExpression rValue = assignment.getRValue();
+          if (rValue != null) {
+            PsiType rType = rValue.getType();
+            if (rType != null) return rType;
+          }
+        }
+      }
     }
 
     return null;
