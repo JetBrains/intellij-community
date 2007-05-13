@@ -15,8 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+
 /**
  * @author ilyas
  */
 public interface GrTypeCastExpression extends GrExpression {
+  GrTypeElement getCastTypeElement();
+  GrExpression getOperand();
 }
