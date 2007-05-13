@@ -80,7 +80,7 @@ public class GuiFormFileType implements FileType {
     return new XmlFileHighlighter();
   }
 
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     return null;
   }
 

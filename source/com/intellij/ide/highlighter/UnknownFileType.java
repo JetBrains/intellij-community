@@ -72,7 +72,7 @@ public class UnknownFileType implements FileType {
     return false;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -80,7 +80,7 @@ public class UnknownFileType implements FileType {
     return null;
   }
 
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     return null;
   }
 }

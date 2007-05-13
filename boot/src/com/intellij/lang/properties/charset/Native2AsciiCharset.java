@@ -19,8 +19,10 @@ public class Native2AsciiCharset extends Charset {
       baseCharset = Charset.forName(baseCharsetName);
     }
     catch (IllegalCharsetNameException e) {
+      //ignore
     }
     catch(UnsupportedCharsetException e){
+      //ignore
     }
     myBaseCharset = baseCharset == null ? Charset.forName(DEAFULT_ENCODING_NAME) : baseCharset;
   }

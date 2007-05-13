@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -70,6 +71,7 @@ public abstract class ProjectManager {
    *
    * @return the array of currently opened projects.
    */
+  @NotNull
   public abstract Project[] getOpenProjects();
 
   /**

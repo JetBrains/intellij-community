@@ -93,7 +93,7 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
   }
 
   private boolean shouldNotProcess(VirtualFileEvent e) {
-    return !LocalHistory.isUnderControl(myProject, e.getFile());
+    return myProject.isDisposed() || !LocalHistory.isUnderControl(myProject, e.getFile());
   }
 
   private boolean isUndoable(VirtualFileEvent e) {

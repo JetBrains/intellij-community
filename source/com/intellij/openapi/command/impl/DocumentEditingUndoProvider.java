@@ -23,8 +23,8 @@ class DocumentEditingUndoProvider {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.openapi.command.impl.DocumentEditingUndoProvider");
 
-  private MyEditorDocumentListener myDocumentListener;
-  private Project myProject;
+  private final MyEditorDocumentListener myDocumentListener;
+  private final Project myProject;
 
   public DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
     myDocumentListener = new MyEditorDocumentListener();

@@ -79,7 +79,7 @@ public class JavaClassFileType implements FileType {
     return false;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -87,7 +87,7 @@ public class JavaClassFileType implements FileType {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 
-  public StructureViewBuilder getStructureViewBuilder(final VirtualFile file, final Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final VirtualFile file, @NotNull final Project project) {
     final PsiJavaFile javaFile = (PsiJavaFile) PsiManager.getInstance(project).findFile(file);
     if (javaFile == null) return null;
     return new TreeBasedStructureViewBuilder() {

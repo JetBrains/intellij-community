@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
 
 /**
@@ -67,7 +69,7 @@ import java.util.Collection;
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
-  public static final @NonNls String UTF8 = "UTF-8";
+  @NonNls public static final String UTF8 = "UTF-8";
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
 
   private byte[] buffer;
@@ -167,12 +169,11 @@ public class CharsetToolkit {
    * @return the Charset recognized.
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public Charset guessEncoding( int guess_length ) {
+  public Charset guessEncoding( int guess_length, Charset defaultCharset) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
-    if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
-    if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
-    if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
+    Charset charset = guessFromBOM();
+    if (charset != null) return charset;
 
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
@@ -263,6 +264,19 @@ public class CharsetToolkit {
     return defaultCharset;
   }
 
+  public Charset guessFromBOM() {
+    if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
+    if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
+    if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
+
+    return null;
+  }
+
+  public Charset guessEncoding( int guess_length ) {
+    return guessEncoding(guess_length, defaultCharset);
+  }
+
+
   public static Charset guessEncoding(File f, int bufferLength) throws IOException {
     return guessEncoding(f, bufferLength, getIDEOptionsCharset());
   }
@@ -277,8 +291,8 @@ public class CharsetToolkit {
     String charsetName = settings.getCharsetName();
     if (CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals(charsetName)) return getDefaultSystemCharset();
     if (!Charset.isSupported(charsetName)) return getDefaultSystemCharset();
-    Charset charset = Charset.forName(charsetName);
-    return charset != null ? charset :  getDefaultSystemCharset();
+    Charset charset = forName(charsetName);
+    return charset == null ? getDefaultSystemCharset() : charset;
   }
 
   public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws IOException {
@@ -424,7 +438,7 @@ public class CharsetToolkit {
 
   public static int getBOMLength(byte[] content, Charset charset) {
     if (Patches.SUN_BUG_ID_4508058) {
-      if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && hasUTF8Bom(content)) {
+      if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
         return UTF8_BOM.length;
       }
     }
@@ -435,5 +449,22 @@ public class CharsetToolkit {
       return UTF16BE_BOM.length;
     }
     return 0;
+  }
+
+  public static Charset forName(String name) {
+    Charset charset = null;
+    if (name != null) {
+      try {
+        charset = Charset.forName(name);
+      }
+      catch (IllegalCharsetNameException e) {
+        //ignore
+      }
+      catch(UnsupportedCharsetException e){
+        //ignore
+      }
+    }
+
+    return charset;
   }
 }

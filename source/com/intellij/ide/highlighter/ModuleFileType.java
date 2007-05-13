@@ -78,7 +78,7 @@ public class ModuleFileType implements FileType {
     return true;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     return CharsetToolkit.UTF8;
   }
 
@@ -86,7 +86,7 @@ public class ModuleFileType implements FileType {
     return new XmlFileHighlighter();
   }
 
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     return null;
   }
 

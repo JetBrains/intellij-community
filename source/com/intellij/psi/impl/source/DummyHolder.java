@@ -5,7 +5,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 
 public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.DummyHolder");
-
   private PsiElement myContext;
   private CharTable myTable = null;
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
@@ -35,28 +32,26 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   private FileElement myFileElement = null;
 
-  public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
   }
 
-  public DummyHolder(PsiManager manager, CharTable table, boolean validity) {
+  public DummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
     this(manager, null, null, table);
     myExplicitlyValid = Boolean.valueOf(validity);
   }
 
-  public DummyHolder(PsiManager manager, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
     super(DUMMY_HOLDER, DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
-    LOG.assertTrue(manager != null);
     myContext = context;
     if (context != null) {
       myLanguage = context.getLanguage();
     }
   }
 
-  public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
+  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
     this(manager, context);
-    LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
     if(contentElement != null) {
@@ -65,12 +60,12 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     }
   }
 
-  public DummyHolder(PsiManager manager, PsiElement context, CharTable table) {
+  public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
     this(manager, context);
     myTable = table;
   }
 
-  public DummyHolder(final PsiManager manager, final CharTable table, final Language language) {
+  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
     this(manager, null, table);
     myLanguage = language;
   }

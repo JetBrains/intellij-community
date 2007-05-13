@@ -410,8 +410,9 @@ public class VirtualFileImpl extends DeprecatedVirtualFile {
     }
     ourFileSystem.fireBeforeContentsChange(requestor, this);
     final OutputStream out = new BufferedOutputStream(new FileOutputStream(physicalFile));
-    if (getBOM() != null) {
-      out.write(getBOM());
+    byte[] bom = getBOM();
+    if (bom != null) {
+      out.write(bom);
     }
     return new OutputStream() {
       public void write(int b) throws IOException {

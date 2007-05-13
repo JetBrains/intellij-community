@@ -230,6 +230,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void dispose() {
     myDisposed = true;
+    myActive = false;
     clearWaiter();
   }
 

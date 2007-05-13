@@ -71,7 +71,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     return false;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -84,7 +84,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     myIcon = icon;
   }
 
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     return null;
   }
 }

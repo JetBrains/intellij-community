@@ -68,6 +68,7 @@ public class RunContentManagerImpl implements RunContentManager {
     // To ensure ToolwindowManager had already initialized in its projectOpened.
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
           public void stateChanged() {
             ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);

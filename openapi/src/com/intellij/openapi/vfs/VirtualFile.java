@@ -544,11 +544,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract InputStream getInputStream() throws IOException;
 
-  protected byte[] getBOM() {
+  @Nullable
+  public byte[] getBOM() {
     return getUserData(BOM_KEY);
   }
 
-  public void setBOM(final byte[] BOM) {
+  public void setBOM(@Nullable byte[] BOM) {
     putUserData(BOM_KEY, BOM);
   }
 
