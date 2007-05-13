@@ -475,6 +475,7 @@ public class InjectedLanguageUtil {
       assert injectedNode != null;
       assert oldFileNode != null;
       if (oldTextRange.intersects(textRange)) {
+        oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
         if (!injectedNode.getText().equals(oldFileNode.getText())) {
           // replace psi
           FileElement newFileElement = (FileElement)injectedNode;//.copyElement();
@@ -494,7 +495,6 @@ public class InjectedLanguageUtil {
           SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
           viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
         }
-        oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
         return oldFile;
       }
     }
