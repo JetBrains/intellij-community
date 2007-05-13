@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.GroovyLoader;
 
 /**
  * @author ven
@@ -92,6 +93,7 @@ public class ResolvePropertyTest extends ResolveTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
+    GroovyLoader.loadGroovy();
 
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
