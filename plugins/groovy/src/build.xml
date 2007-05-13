@@ -162,7 +162,7 @@
     </javac>
 
     <copy toDir="${test.dest}/testdata">
-      <fileset dir="../test/testdata"/>
+      <fileset dir="${test.dir}/testdata"/>
      </copy>
   </target>
 
