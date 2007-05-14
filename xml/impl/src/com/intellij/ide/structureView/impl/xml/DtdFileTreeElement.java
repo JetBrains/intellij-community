@@ -94,7 +94,8 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     }
 
     public String getPresentableText() {
-      return getElement().getName();
+      final PsiNamedElement namedElement = getElement();
+      return namedElement != null ? namedElement.getName():"";
     }
 
     public Icon getIcon(final boolean open) {
