@@ -137,11 +137,7 @@ public class AntElementFactory {
       // HACK for the <tstamp> properties
       result = (!AntFileImpl.FORMAT_TAG.equals(tag.getName()))
                ? new AntStructuredElementImpl(parent, tag, typeDef)
-               : new AntStructuredElementImpl(parent, tag, typeDef, AntFileImpl.PROPERTY) {
-                 public String getName() {
-                   return super.getName();//getSourceElement().getName();
-                 }
-               };
+               : new AntStructuredElementImpl(parent, tag, typeDef, AntFileImpl.PROPERTY);
     }
     result.setImportedTypeDefinition(importedType);
     return result;
