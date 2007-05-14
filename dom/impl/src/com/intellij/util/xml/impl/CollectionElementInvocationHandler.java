@@ -18,18 +18,24 @@ import java.util.List;
  * @author peter
  */
 public class CollectionElementInvocationHandler extends DomInvocationHandler{
+  private final String myNamespace;
 
   public CollectionElementInvocationHandler(final Type type,
                                             final EvaluatedXmlName name,
                                             @NotNull final XmlTag tag,
                                             final DomInvocationHandler parent) {
     super(type, tag, parent, name, parent.getManager());
+    myNamespace = tag.getNamespace();
   }
 
   protected final XmlTag setEmptyXmlTag() {
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called;" +
                                             "\nparent=" + getParent() + ";\n" +
                                             "xmlElementName=" + getXmlElementName());
+  }
+
+  public String getNamespace() {
+    return myNamespace;
   }
 
   public boolean isValid() {
