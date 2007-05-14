@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -89,10 +88,6 @@ public abstract class AbstractVcs {
   @Nullable
   public LocalVcsItemsLocker getItemsLocker() {
     return null;
-  }
-
-  public void doActivateActions(Module module) {
-    // TODO[yole]: change as appropriate for per-directory mapping
   }
 
   public void activate() {}
