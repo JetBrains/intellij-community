@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ilyas
  */
-public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrType {
+public interface GrArrayTypeElement extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrTypeElement {
   @NotNull
   GrTypeElement getComponentTypeElement();
 }

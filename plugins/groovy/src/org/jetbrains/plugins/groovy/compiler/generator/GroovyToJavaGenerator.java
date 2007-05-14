@@ -301,19 +301,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
     GrStatement[] statements = getStatementsInReadAction(typeDefinition);
 
-//    Map<String, String> classNameToQualifiedName = new HashMap<String, String>();
-//    List<GrImportStatement> importStatements = new ArrayList<GrImportStatement>();
+    boolean isClassDef = typeDefinition instanceof GrClassDefinition;
+    boolean isInteraface = typeDefinition instanceof GrInterfaceDefinition;
 
-//    for (GrTopStatement statement : statements) {
-//      if (statement instanceof GrImportStatement)
-//        importStatements.add((GrImportStatement) statement);
-//    }
-
-//    fillClassNameToQualifiedNameMap(importStatements.toArray(new GrImportStatement[0]), classNameToQualifiedName);
-
-    if (typeDefinition instanceof GrClassDefinition) text.append("class");
-    else if (typeDefinition instanceof GrInterfaceDefinition) text.append("interface");
+    if (isInteraface) text.append("interface");
     else text.append("class");
+
     text.append(" ");
 
     text.append(typeDefinitionName);
@@ -376,7 +369,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
           writeConstructor(text, (GrMethod) statement);
           text.append("\n");
         }
-        writeMethod(text, (GrMethod) statement);
+        writeMethod(text, (GrMethod) statement, isInteraface);
         text.append("\n");
       }
 
@@ -459,7 +452,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
   }
 
-  private void writeMethod(StringBuffer text, GrMethod method) {
+  private void writeMethod(StringBuffer text, GrMethod method, boolean isIntefraceMethod) {
     /************* type and name **********/
     GrTypeElement typeElement = method.getReturnTypeElementGroovy();
     String qualifiedTypeName = getResolvedType(typeElement);
@@ -500,18 +493,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     }
     text.append(")");
 
-    /************* body **********/
-    text.append("{");
-    text.append("return ");
+    if (!isIntefraceMethod) {
+      /************* body **********/
+      text.append("{");
+      text.append("return ");
 
-    if (typesToInitialValues.containsKey(qualifiedTypeName))
-      text.append(typesToInitialValues.get(qualifiedTypeName));
-    else
-      text.append("null");
+      if (typesToInitialValues.containsKey(qualifiedTypeName))
+        text.append(typesToInitialValues.get(qualifiedTypeName));
+      else
+        text.append("null");
 
-    text.append(";");
+      text.append(";");
 
-    text.append("}");
+      text.append("}");
+    } else {
+      text.append(";");
+    }
 
   }
 

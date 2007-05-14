@@ -84,17 +84,21 @@ public class TypeSpec implements GroovyElementTypes {
 
   private static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder, boolean isUpper) {
     PsiBuilder.Marker arrMarker = builder.mark();
+    PsiBuilder.Marker typeElementMarker = builder.mark();
 
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder, isUpper))) {
+      typeElementMarker.drop();
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
 
+    typeElementMarker.done(CLASS_TYPE_ELEMENT);
+
     if (mLBRACK.equals(builder.getTokenType())) {
       declarationBracketsParse(builder, arrMarker);
     } else {
-      arrMarker.done(CLASS_TYPE_ELEMENT);
-//      arrMarker.drop();
+//      arrMarker.done(CLASS_TYPE_ELEMENT);      
+      arrMarker.drop();
     }
     return CLASS_TYPE_ELEMENT;
   }
@@ -170,15 +174,21 @@ public class TypeSpec implements GroovyElementTypes {
    */
   private static GroovyElementType parseClassOrInterfaceTypeStrict(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
+    PsiBuilder.Marker typeElementMarker = builder.mark();
+
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
+      typeElementMarker.drop();
       arrMarker.rollbackTo();
       return WRONGWAY;
     }
+
+    typeElementMarker.done(CLASS_TYPE_ELEMENT);
+
     if (mLBRACK.equals(builder.getTokenType())) {
       return declarationBracketsParseStrict(builder, arrMarker);
     } else {
-      arrMarker.done(CLASS_TYPE_ELEMENT);
-//      arrMarker.drop();
+//      arrMarker.done(CLASS_TYPE_ELEMENT);
+      arrMarker.drop();
       return CLASS_TYPE_ELEMENT;
     }
   }
