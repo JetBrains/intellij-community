@@ -18,6 +18,7 @@
 package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class VcsDirectoryMapping {
   private String myDirectory;
   private String myVcs;
+  private VcsRootSettings myRootSettings;
 
   public VcsDirectoryMapping() {
   }
@@ -32,6 +34,12 @@ public class VcsDirectoryMapping {
   public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
     myDirectory = directory;
     myVcs = vcs;
+  }
+
+  public VcsDirectoryMapping(final String directory, final String vcs, final VcsRootSettings rootSettings) {
+    myDirectory = directory;
+    myVcs = vcs;
+    myRootSettings = rootSettings;
   }
 
   @NotNull
@@ -51,6 +59,26 @@ public class VcsDirectoryMapping {
     myDirectory = directory;
   }
 
+  /**
+   * Returns the VCS-specific settings for the given mapping.
+   *
+   * @return VCS-specific settings, or null if none have been defined.
+   * @see AbstractVcs#getRootConfigurable(VcsDirectoryMapping)
+   */
+  @Nullable
+  public VcsRootSettings getRootSettings() {
+    return myRootSettings;
+  }
+
+  /**
+   * Sets the VCS-specific settings for the given mapping.
+   *
+   * @param rootSettings the VCS-specific settings.
+   */
+  public void setRootSettings(final VcsRootSettings rootSettings) {
+    myRootSettings = rootSettings;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -59,6 +87,7 @@ public class VcsDirectoryMapping {
 
     if (myDirectory != null ? !myDirectory.equals(mapping.myDirectory) : mapping.myDirectory != null) return false;
     if (myVcs != null ? !myVcs.equals(mapping.myVcs) : mapping.myVcs != null) return false;
+    if (myRootSettings != null ? !myRootSettings.equals(mapping.myRootSettings) : mapping.myRootSettings != null) return false;
 
     return true;
   }

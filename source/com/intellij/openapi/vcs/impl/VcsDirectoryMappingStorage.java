@@ -6,8 +6,6 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,24 +34,13 @@ public class VcsDirectoryMappingStorage implements ProjectComponent, PersistentS
   }
 
   public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
+    final Element e = new Element("state");
+    ((ProjectLevelVcsManagerImpl) myVcsManager).writeDirectoryMappings(e);
+    return e;
   }
 
   public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    ((ProjectLevelVcsManagerImpl) myVcsManager).readDirectoryMappings(state);
   }
 
   public void projectOpened() {
@@ -72,13 +59,5 @@ public class VcsDirectoryMappingStorage implements ProjectComponent, PersistentS
   }
 
   public void disposeComponent() {
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    ((ProjectLevelVcsManagerImpl) myVcsManager).readDirectoryMappings(element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    ((ProjectLevelVcsManagerImpl) myVcsManager).writeDirectoryMappings(element);
   }
 }

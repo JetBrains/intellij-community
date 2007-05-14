@@ -119,6 +119,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
   @NonNls private static final String ATTRIBUTE_VCS = "vcs";
   @NonNls private static final String ATTRIBUTE_DEFAULT_PROJECT = "defaultProject";
+  @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
@@ -945,6 +946,23 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
       VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY), vcs);
       myDirectoryMappings.add(mapping);
+
+      Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
+      if (rootSettingsElement != null) {
+        String className = rootSettingsElement.getAttributeValue("class");
+        AbstractVcs vcsInstance = findVcsByName(mapping.getVcs());
+        if (vcsInstance != null && className != null) {
+          try {
+            final Class<?> aClass = vcsInstance.getClass().getClassLoader().loadClass(className);
+            final VcsRootSettings instance = (VcsRootSettings) aClass.newInstance();
+            instance.readExternal(rootSettingsElement);
+            mapping.setRootSettings(instance);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }
     }
     boolean defaultProject = Boolean.TRUE.toString().equals(element.getAttributeValue(ATTRIBUTE_DEFAULT_PROJECT));
     // run autodetection if there's no VCS in default project and 
@@ -961,6 +979,18 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       Element child = new Element(ELEMENT_MAPPING);
       child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
       child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
+      final VcsRootSettings rootSettings = mapping.getRootSettings();
+      if (rootSettings != null) {
+        Element rootSettingsElement = new Element(ELEMENT_ROOT_SETTINGS);
+        rootSettingsElement.setAttribute("class", rootSettings.getClass().getName());
+        try {
+          rootSettings.writeExternal(rootSettingsElement);
+          child.addContent(rootSettingsElement);
+        }
+        catch (WriteExternalException e) {
+          // don't add element
+        }
+      }
       element.addContent(child);
     }
   }

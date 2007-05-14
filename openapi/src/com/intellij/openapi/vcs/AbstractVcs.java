@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -226,6 +227,19 @@ public abstract class AbstractVcs {
    */
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
+  }
+
+  /**
+   * Returns the configurable to be shown in the VCS directory mapping dialog which should be displayed
+   * for configuring VCS-specific settings for the specified root, or null if no such configuration is required.
+   * The VCS-specific settings are stored in {@link com.intellij.openapi.vcs.VcsDirectoryMapping#getRootSettings()}.
+   *
+   * @param mapping the mapping being configured
+   * @return the configurable instance, or null if no configuration is required.
+   */
+  @Nullable
+  public UnnamedConfigurable getRootConfigurable(VcsDirectoryMapping mapping) {
+    return null;
   }
 }
 
