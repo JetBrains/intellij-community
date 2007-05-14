@@ -202,6 +202,10 @@ public class CvsChangeList implements CommittedChangeList {
     return myRevisions.hashCode();
   }
 
+  public String toString() {
+    return myDescription;
+  }
+
   public void writeToStream(DataOutput stream) throws IOException {
     stream.writeLong(myDate);
     stream.writeLong(myFinishDate);
