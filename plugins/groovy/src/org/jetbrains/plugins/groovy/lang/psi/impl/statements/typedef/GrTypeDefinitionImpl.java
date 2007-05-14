@@ -142,15 +142,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     }
 */
     NameHint nameHint = processor.getHint(NameHint.class);
-    String name = nameHint == null ? null: nameHint.getName();
+    String name = nameHint == null ? null : nameHint.getName();
     ClassHint classHint = processor.getHint(ClassHint.class);
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
       Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this);
       if (name != null) {
         PsiField field = fieldsMap.get(name);
         if (field != null && !processor.execute(field, PsiSubstitutor.EMPTY)) return false;
-      }
-      else {
+      } else {
         for (PsiField field : fieldsMap.values()) {
           if (!processor.execute(field, PsiSubstitutor.EMPTY)) return false;
         }
@@ -209,12 +208,43 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return PsiClassType.EMPTY_ARRAY;
+    GrExtendsClause extendsClause = getExtendsClause();
+
+    PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
+
+    if (extendsClause != null) {
+      GrTypeOrPackageReferenceElement[] extendsRefElements = extendsClause.getReferenceElements();
+
+      result = new PsiClassType[extendsRefElements.length];
+
+      if (extendsRefElements.length > 0) {
+        for (int j = 0; j < extendsRefElements.length; j++) {
+          result[j] = new GrClassReferenceType(extendsRefElements[j]);
+        }
+      } else if (!isInterface()) {
+        result[0] = getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope());
+      }
+    }
+
+    return result;
   }
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    return PsiClassType.EMPTY_ARRAY;
+    GrImplementsClause implementsClause = getImplementsClause();
+
+    PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
+    if (implementsClause != null) {
+      GrTypeOrPackageReferenceElement[] implementsRefElements = implementsClause.getReferenceElements();
+
+      result = new PsiClassType[implementsRefElements.length];
+
+      for (int j = 0; j < implementsRefElements.length; j++) {
+        result[j] = new GrClassReferenceType(implementsRefElements[j]);
+      }
+    }
+
+    return result;
   }
 
   @Nullable
@@ -267,6 +297,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       }
       i = extendsRefs.length;
     } else if (!isInterface()) {
+      //todo: java.lang.GroovyObject or groovy.lang.GroovyObject
       result[0] = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
       i = 1;
     }

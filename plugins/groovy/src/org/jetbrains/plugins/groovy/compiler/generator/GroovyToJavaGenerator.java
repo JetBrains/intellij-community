@@ -93,7 +93,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
       boolean needCreateTopLevelClass = !needsCreateClassFromFileName(statements);
 
-      String prefix = getJavaClassPackage(statements);
+      String prefix = "";
+      if (statements[0] instanceof GrPackageDefinition) {
+        prefix = getJavaClassPackage((GrPackageDefinition) statements[0]);
+      }
 
       //top level class
       VirtualFile virtualFile;
@@ -183,10 +186,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     //there is member on top level
     boolean isOnlyInnerTypeDef = needsCreateClassFromFileName(statements);
 
-    //prefix defines structure of directories tree
-    String prefix = "";
-    if (statements.length != 0 && statements[0] instanceof GrPackageDefinition) {
-      prefix = getJavaClassPackage(statements);
+    GrPackageDefinition packageDefinition = null;
+    if (statements[0] instanceof GrPackageDefinition) {
+      packageDefinition = (GrPackageDefinition) statements[0];
     }
 
     if (statements.length != 0 && !isOnlyInnerTypeDef) {
@@ -194,7 +196,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       assert virtualFile != null;
       String fileDefinitionName = virtualFile.getNameWithoutExtension();
 
-      String topLevelGeneratedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, fileDefinitionName, null, prefix);
+      String topLevelGeneratedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, fileDefinitionName, null, packageDefinition);
       generatedItemsRelativePaths.add(topLevelGeneratedItemPath);
     }
 
@@ -212,7 +214,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       text.setLength(0);
       PsiElement element = typeDefinition.getNameIdentifierGroovy();
 
-      generatedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, element.getText(), typeDefinition, prefix);
+      generatedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, element.getText(), typeDefinition, packageDefinition);
       generatedItemsRelativePaths.add(generatedItemPath);
     }
 
@@ -223,19 +225,25 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   * prefix = (path + File.separator) | ""
   */
 
-  private String getJavaClassPackage(GrTopStatement[] statements) {
+  private String getJavaClassPackage(GrPackageDefinition packageDefinition) {
+    if (packageDefinition == null) return "";
+
     String prefix = "";
-    if (statements != null && statements.length > 0 && statements[0] instanceof GrPackageDefinition) {
-      prefix = ((GrPackageDefinition) statements[0]).getPackageName();
-//      prefix = prefix.replace(".", File.separator);
-      prefix = prefix.replace(".", PREFIX_SEPARATOR);
-      prefix += PREFIX_SEPARATOR;
-    }
+    prefix = packageDefinition.getPackageName();
+    prefix = prefix.replace(".", PREFIX_SEPARATOR);
+    prefix += PREFIX_SEPARATOR;
+
     return prefix;
   }
 
-  private String createJavaSourceFile(CompileContext context, VirtualFile outputRootDirectory, GroovyFile myPsiFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, String prefix) {
-    writeTypeDefinition(text, typeDefinitionName, typeDefinition);
+  private String createJavaSourceFile(CompileContext context, VirtualFile outputRootDirectory, GroovyFile myPsiFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+    //prefix defines structure of directories tree
+    String prefix = "";
+    if (packageDefinition != null) {
+      prefix = getJavaClassPackage(packageDefinition);
+    }
+
+    writeTypeDefinition(text, typeDefinitionName, typeDefinition, packageDefinition);
 
     VirtualFile virtualFile = myPsiFile.getVirtualFile();
     assert virtualFile != null;
@@ -283,10 +291,17 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     return isOnlyInnerTypeDef;
   }
 
-  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition) {
+  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+    if (packageDefinition != null) {
+      text.append("package ");
+      text.append(packageDefinition.getPackageName());
+      text.append(";");
+      text.append("\n");
+    }
+
     GrStatement[] statements = getStatementsInReadAction(typeDefinition);
 
-    Map<String, String> classNameToQualifiedName = new HashMap<String, String>();
+//    Map<String, String> classNameToQualifiedName = new HashMap<String, String>();
 //    List<GrImportStatement> importStatements = new ArrayList<GrImportStatement>();
 
 //    for (GrTopStatement statement : statements) {
@@ -345,6 +360,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
           String implTypeCanonicalText = implementTypeWrapper.myValue;
           text.append(implTypeCanonicalText);
+          i++;
         }
         text.append(" ");
       }
@@ -352,6 +368,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
     text.append(" ");
     text.append("{");
+    text.append("\n");
 
     for (GrTopStatement statement : statements) {
       if (statement instanceof GrMethod) {
