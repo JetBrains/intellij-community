@@ -7,6 +7,7 @@ import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -250,6 +251,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myDefaultProjectRootElement;
   }
 
+  @NotNull
   public Project[] getOpenProjects() {
     return myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
@@ -266,6 +268,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myCountOfProjectsBeingOpen++;
     myOpenProjects.add(project);
     fireProjectOpened(project);
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
+      }
+    }, ProjectBundle.message("project.load.progress"), false, project);
+    ((StartupManagerImpl)StartupManager.getInstance(project)).runPostStartupActivities();
+
+    myCountOfProjectsBeingOpen--;
+    return true;
+  }
+  public boolean openProjectNoFire(final Project project) {
+    if (myOpenProjects.contains(project)) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
+
+
+    myCountOfProjectsBeingOpen++;
+    myOpenProjects.add(project);
+    //fireProjectOpened(project);
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -500,7 +521,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myOpenProjects.remove(project);
       fireProjectClosed(project);
 
-      ApplicationManagerEx.getApplicationEx().saveSettings();
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      if (!application.isUnitTestMode()) application.saveSettings();
     }
     finally {
       ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());

@@ -5,10 +5,14 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
+import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
@@ -22,9 +26,13 @@ import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashSet;
+import org.apache.commons.collections.Bag;
+import org.apache.commons.collections.bag.HashBag;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +47,7 @@ import java.util.StringTokenizer;
  */
 public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
+  @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = { 
@@ -278,4 +287,73 @@ public class HtmlUtil {
     }
     return descriptors;
   }
+
+  private static class TerminateException extends RuntimeException {
+    private static final TerminateException INSTANCE = new TerminateException();
+  }
+  public static Charset detectCharsetFromMetaHttpEquiv(@NotNull String content) {
+    final Ref<String> charsetNameRef = new Ref<String>();
+    try {
+      new XmlBuilderDriver(content).build(new XmlBuilder() {
+        Bag inTag = new HashBag();
+        boolean metHttpEquiv = false;
+        public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
+                                        final int headerEndOffset) {
+          String name = localName.toString().toLowerCase();
+          inTag.add(name);
+          if (!inTag.contains("head") && !"html".equals(name)) terminate();
+          return ProcessingOrder.TAGS_AND_ATTRIBUTES;
+        }
+
+        private void terminate() {
+          throw TerminateException.INSTANCE;
+        }
+
+        public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
+          final String name = localName.toString().toLowerCase();
+          if ("head".equals(name)) {
+            terminate();  
+          }
+          inTag.remove(name);
+          metHttpEquiv = false;
+        }
+
+        public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
+          final String name = localName.toString().toLowerCase();
+          if (inTag.contains("meta")) {
+            String value = v.toString();
+            if (name.equals("http-equiv")) {
+              metHttpEquiv |= value.equals("Content-Type");
+            }
+            if (metHttpEquiv && name.equals("content")) {
+              int start = value.indexOf(CHARSET_PREFIX);
+              if (start == -1) return;
+              start += CHARSET_PREFIX.length();
+              int end = value.indexOf(';', start);
+              if (end == -1) end = value.length();
+              String charsetName = value.substring(start, end);
+              charsetNameRef.set(charsetName);
+              terminate();
+            }
+          }
+        }
+
+        public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
+
+        }
+
+        public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
+
+        }
+      });
+    }
+    catch (TerminateException e) {
+     //ignore
+      int i = 0;
+    }
+
+    String name = charsetNameRef.get();
+    return CharsetToolkit.forName(name);
+  }
+
 }

@@ -113,7 +113,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     EditorInfo editorInfo = new EditorInfo(document.getText());
 
     String newFileText = editorInfo.getNewFileText();
-    document.setText(newFileText);
+    if (!document.getText().equals(newFileText)) {
+      document.setText(newFileText);
+    }
 
     PsiFile file = myPsiManager.findFile(virtualFile);
     if (myFile == null) myFile = file;

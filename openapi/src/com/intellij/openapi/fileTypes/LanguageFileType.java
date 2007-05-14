@@ -24,6 +24,8 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
+
 /**
  * Kind of file types capable to provide {@link Language}.
  */
@@ -88,5 +90,9 @@ public abstract class LanguageFileType implements FileType{
 
   public boolean isJVMDebuggingSupported() {
     return false;
+  }
+
+  public Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile file, @NotNull String content) {
+    return null;
   }
 }

@@ -1,7 +1,9 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
@@ -51,7 +53,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
 
-  static public class ReferenceProviderType {
+  public static class ReferenceProviderType {
     private final String myId;
     public ReferenceProviderType(@NonNls String id) { myId = id; }
     public String toString() { return myId; }
@@ -264,10 +266,26 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     );
 
     registerXmlAttributeValueReferenceProvider(
+      new String[] {"content"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new ClassFilter(XmlTag.class),
+            new TextFilter("meta")
+          ), 2
+        )
+      ),
+      new HtmlHttpEquivEncodingReferenceProvider()
+    );
+
+    registerXmlAttributeValueReferenceProvider(
       new String[] {"encoding"},
       new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))),
       new XmlEncodingReferenceProvider()
     );
+    registerXmlAttributeValueReferenceProvider(new String[]{"contentType", "pageEncoding",},
+                                               new ScopeFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.JSP_URI), 2)),
+                                               new JspEncodingInAttributeReferenceProvider());
   }
 
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
@@ -348,7 +366,8 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
-  public @Nullable PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
+  @Nullable
+  public PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
     return myReferenceTypeToProviderMap.get(type);
   }
 
@@ -356,7 +375,8 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerReferenceProvider(null, scope, provider);
   }
 
-  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  @NotNull
+  public PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
 
     List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
@@ -374,7 +394,8 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     return ret.isEmpty() ? PsiReferenceProvider.EMPTY_ARRAY : ret.toArray(new PsiReferenceProvider[ret.size()]);
   }
 
-  public @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
+  @Nullable
+  public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
       if (ReflectionCache.isAssignable(pair.getFirst(), element.getClass())) {
         return (ElementManipulator<T>)pair.getSecond();

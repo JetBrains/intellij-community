@@ -244,7 +244,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (!lineSeparator.equals("\n")){
           text = StringUtil.convertLineSeparators(text, lineSeparator);
         }
-        writer = LoadTextUtil.getWriter(file, this, text, document.getModificationStamp());
+        Project project = VfsUtil.guessProjectForFile(file);
+        writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
         writer.write(text);
         committed = true;
       }

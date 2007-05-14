@@ -576,7 +576,9 @@ public class VfsUtil {
 
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager == null) return null;
+    final Project[] projects = projectManager.getOpenProjects();
     if (projects.length == 1) return projects[0];
 
     for (Project project : projects) {
@@ -589,8 +591,7 @@ public class VfsUtil {
   }
 
   public static boolean isValidName(String name) {
-    if (name.indexOf('\\') >= 0) return false;
-    return name.indexOf('/') < 0;
+    return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   public static String getUrlForLibraryRoot(File libraryRoot) {

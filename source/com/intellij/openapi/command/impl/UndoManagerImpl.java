@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.CommonBundle;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -223,7 +224,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void projectOpened() {
-    initialize();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      initialize();
+    }
   }
 
   public void projectClosed() {

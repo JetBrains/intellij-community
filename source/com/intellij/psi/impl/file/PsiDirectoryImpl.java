@@ -560,7 +560,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
               text = StringUtil.convertLineSeparators(text, lineSeparator);
             }
 
-            final Writer writer = LoadTextUtil.getWriter(newVFile, myManager, text, -1);
+            final Writer writer = LoadTextUtil.getWriter(getProject(), newVFile, myManager, text, -1);
             try {
               writer.write(text);
             }

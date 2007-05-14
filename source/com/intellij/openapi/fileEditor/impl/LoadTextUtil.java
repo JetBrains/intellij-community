@@ -1,31 +1,28 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.SmartEncodingInputStream;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
   static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
@@ -88,32 +85,31 @@ public final class LoadTextUtil {
   }
 
   public static void detectCharset(final VirtualFile virtualFile, final byte[] content) {
+    Charset charset = dodetectCharset(virtualFile, content);
+    virtualFile.setCharset(charset == null ? CharsetToolkit.getIDEOptionsCharset() : charset);
+  }
+
+  private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
+    CharsetSettings settings = CharsetSettings.getInstance();
+    boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
+    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
+    if (shouldGuess) {
+      toolkit.setEnforce8Bit(true);
+      Charset charset = toolkit.guessFromBOM();
+      if (charset != null) return charset;
+    }
+
     FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
     if (charsetName != null) {
-      Charset charset = null;
-      try {
-        charset = Charset.forName(charsetName);
-      }
-      catch (IllegalCharsetNameException e) {
-      }
-      catch (UnsupportedCharsetException e) {
-      }
-      virtualFile.setCharset(charset);
-      return;
+      return CharsetToolkit.forName(charsetName);
     }
 
-    CharsetSettings settings = CharsetSettings.getInstance();
-    if (settings != null && settings.isUseUTFGuessing()) {
-      CharsetToolkit toolkit = new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset());
-      toolkit.setEnforce8Bit(true);
-      Charset charset = toolkit.guessEncoding(SmartEncodingInputStream.BUFFER_LENGTH_4KB);
-
-      virtualFile.setCharset(charset);
+    if (shouldGuess) {
+      Charset charset = toolkit.guessEncoding(content.length);
+      if (charset != null) return charset;
     }
-    else {
-      virtualFile.setCharset(CharsetToolkit.getIDEOptionsCharset());
-    }
+    return null;
   }
 
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
@@ -141,40 +137,34 @@ public final class LoadTextUtil {
    * <p/>
    * Normally you should not use this method.
    *
-   * @param virtualFile
+   * @param project
+   *@param virtualFile
    * @param requestor            any object to control who called this method. Note that
-   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+ *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+ *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param text
-   * @param newModificationStamp new modification stamp or -1 if no special value should be set
-   * @return <code>Writer</code>
+   * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
    * @throws java.io.IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp)
+  public static Writer getWriter(@Nullable Project project, final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp)
     throws IOException {
-    Charset charset = getCharsetForWriting(virtualFile, text);
+    Charset charset = getCharsetForWriting(project, virtualFile, text);
+    if (charset != null) {
+      virtualFile.setCharset(charset);
+    }
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
 
-  private static Charset getCharsetForWriting(final VirtualFile virtualFile, final String text) {
+  private static Charset getCharsetForWriting(@Nullable Project project, final VirtualFile virtualFile, final String text) {
     FileType fileType = virtualFile.getFileType();
-    Charset charset = virtualFile.getCharset();
-    if (fileType instanceof XmlFileType) {
-      charset = CharsetToolkit.UTF8_CHARSET;
-      String name = XmlUtil.extractXmlEncodingFromProlog(text);
-      if (name != null) {
-        try {
-          charset = Charset.forName(name);
-        }
-        catch (IllegalCharsetNameException e) {
-        }
-        catch (UnsupportedCharsetException e) {
-        }
-      }
+    Charset charset = null;
+    if (fileType instanceof LanguageFileType) {
+      charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
     }
+    if (charset == null) charset = virtualFile.getCharset();
     return charset;
   }
 

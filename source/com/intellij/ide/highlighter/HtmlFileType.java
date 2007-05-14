@@ -33,14 +33,19 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class HtmlFileType extends XmlLikeFileType {
-  @NonNls public static final String DEFAULT_EXTENSION = "html";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/html.png");
 
@@ -65,5 +70,21 @@ public class HtmlFileType extends XmlLikeFileType {
 
   public Icon getIcon() {
     return ICON;
+  }
+
+  public String getCharset(@NotNull final VirtualFile file) {
+    @NonNls String content;
+    try {
+      content = new String(file.contentsToByteArray(), "ISO-8859-1");
+    }
+    catch (IOException e) {
+      return null;
+    }
+    Charset charset = HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
+    return charset == null ? null : charset.name();
+  }
+
+  public Charset extractCharsetFromFileContent(@Nullable final Project project, @NotNull final VirtualFile file, @NotNull final String content) {
+    return HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
   }
 }
