@@ -27,7 +27,19 @@ import javax.swing.*;
  * @author peter
  */
 public class SimpleLookupItem extends LookupItem {
+  private static final OverwriteHandler DEFAULT_OVERWRITE_HANDLER = new OverwriteHandler() {
+    public void handleOverwrite(final Editor editor) {
+      final int offset = editor.getCaretModel().getOffset();
+      final Document document = editor.getDocument();
+      final CharSequence sequence = document.getCharsSequence();
+      int i = offset;
+      while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
+      document.deleteString(offset, i);
+      PsiDocumentManager.getInstance(editor.getProject()).commitDocument(document);
+    }
+  };
   public static final SimpleLookupItem[] EMPTY_ARRAY = new SimpleLookupItem[0];
+  @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
 
   public SimpleLookupItem(@NotNull @NonNls final String lookupString) {
     super(lookupString, lookupString);
@@ -48,6 +60,11 @@ public class SimpleLookupItem extends LookupItem {
 
   public SimpleLookupItem setInsertHandler(@NotNull final SimpleInsertHandler handler) {
     setAttribute(LookupItem.INSERT_HANDLER_ATTR, new MyInsertHandler(handler));
+    return this;
+  }
+
+  public SimpleLookupItem setOverwriteHandler(@NotNull final OverwriteHandler overwriteHandler) {
+    myOverwriteHandler = overwriteHandler;
     return this;
   }
 
@@ -91,14 +108,8 @@ public class SimpleLookupItem extends LookupItem {
                              final int startOffset, final LookupData data, final LookupItem item,
                              final boolean signatureSelected, final char completionChar) {
       final Editor editor = context.editor;
-      final int offset = editor.getCaretModel().getOffset();
       if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
-        final Document document = editor.getDocument();
-        final CharSequence sequence = document.getCharsSequence();
-        int i = offset;
-        while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
-        document.deleteString(offset, i);
-        PsiDocumentManager.getInstance(editor.getProject()).commitDocument(document);
+        myOverwriteHandler.handleOverwrite(editor);
       }
       final TailType tailType = DefaultInsertHandler.getTailType(completionChar, item);
       final int tailOffset = myHandler.handleInsert(editor, startOffset, SimpleLookupItem.this, data.items, tailType);
