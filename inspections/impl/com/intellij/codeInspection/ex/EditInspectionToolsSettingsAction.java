@@ -43,11 +43,11 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
@@ -75,7 +75,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                          final String selectedToolShortName) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     if (!canChooseDifferentProfile) {
-      final @NonNls String dimensionServiceKey = "#Errors";
+      @NonNls final String dimensionServiceKey = "#Errors";
       return settingsUtil.editConfigurable(project, dimensionServiceKey,
                                            new InspectionToolsConfigurable(project, inspectionProfile, selectedToolShortName));
     }

@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
@@ -55,22 +54,28 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     return null;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myId = getSuppressedId(editor, file);
     if (myId != null) {
-      final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-      final InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile(file);
-      InspectionProfileEntry tool = inspectionProfile.getInspectionTool(myId);
+      InspectionProfileEntry tool = getTool(project, file);
       if (tool == null) return false;
       myDisplayName = tool.getDisplayName();
     }
     return myId != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  private InspectionProfileEntry getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile(file);
-    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, myId);
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile(file);
+    return inspectionProfile.getToolById(myId);
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    InspectionProfileEntry tool = getTool(project, file);
+    if (tool == null) return;
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile(file);
+    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, tool.getShortName());
   }
 
   public boolean startInWriteAction() {

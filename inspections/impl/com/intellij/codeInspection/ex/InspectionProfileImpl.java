@@ -307,6 +307,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     initInspectionTools();
     return myTools.get(shortName);
   }
+  
+  public InspectionProfileEntry getToolById(String id) {
+    initInspectionTools();
+    for (InspectionTool tool : myTools.values()) {
+      String toolId = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getID() : tool.getShortName();
+      if (id.equals(toolId)) return tool;
+    }
+    return null;
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void save() {
@@ -584,25 +593,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myEnabled = enabled;
     }
 
-    public ToolState(final HighlightDisplayLevel level) {
-      myLevel = level;
-      myEnabled = true;
-    }
-
     public HighlightDisplayLevel getLevel() {
       return myLevel;
     }
 
-    public void setLevel(final HighlightDisplayLevel level) {
-      myLevel = level;
-    }
-
     public boolean isEnabled() {
       return myEnabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-      myEnabled = enabled;
     }
 
     public boolean equals(Object object) {
