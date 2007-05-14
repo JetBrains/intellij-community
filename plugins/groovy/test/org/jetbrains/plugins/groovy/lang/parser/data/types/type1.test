@@ -25,6 +25,8 @@ Groovy script
         PsiElement(identifier)('x')
     PsiElement())(')')
     PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.psi.PsiReferenceList;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
-public interface GrThrowClause extends GroovyPsiElement {
+public interface GrThrowClause extends GroovyPsiElement, PsiReferenceList {
 }

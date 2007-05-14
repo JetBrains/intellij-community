@@ -24,8 +24,12 @@ Groovy script
         PsiElement(identifier)('w')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
         Constructor body
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

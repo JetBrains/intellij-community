@@ -23,7 +23,11 @@ Groovy script
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
+        Throw clause
+          <empty list>
       PsiElement(new line)('\n\n  ')
       Method
         Modifiers
@@ -32,7 +36,11 @@ Groovy script
         PsiElement(identifier)('b')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
+        Throw clause
+          <empty list>
       PsiElement(;)(';')
       PsiElement(new line)('\n  ')
       Method
@@ -45,8 +53,12 @@ Groovy script
         PsiElement(identifier)('c')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
         Open block
           PsiElement({)('{')
           PsiElement(})('}')

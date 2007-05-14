@@ -23,7 +23,11 @@ Groovy script
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
+        Throw clause
+          <empty list>
       PsiElement(new line)('\n  ')
       Variable definitions
         Modifiers

@@ -35,8 +35,9 @@ Groovy script
               <empty list>
             Array type
               Array type
-                Reference element
-                  PsiElement(identifier)('String')
+                Type element
+                  Reference element
+                    PsiElement(identifier)('String')
                 PsiElement([)('[')
                 PsiElement(])(']')
               PsiElement([)('[')
@@ -59,5 +60,7 @@ Groovy script
             Literal
               PsiElement(number)('5')
         PsiElement())(')')
+        Throw clause
+          <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

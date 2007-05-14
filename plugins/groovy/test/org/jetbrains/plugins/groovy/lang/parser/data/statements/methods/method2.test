@@ -27,3 +27,5 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('param2')
     PsiElement())(')')
+    Throw clause
+      <empty list>

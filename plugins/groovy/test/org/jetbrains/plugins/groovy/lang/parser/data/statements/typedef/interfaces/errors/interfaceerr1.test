@@ -24,8 +24,12 @@ Groovy script
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('   ')
@@ -38,8 +42,12 @@ Groovy script
         PsiElement(identifier)('q')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
+        Parameter list
+          <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
         Constructor body
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

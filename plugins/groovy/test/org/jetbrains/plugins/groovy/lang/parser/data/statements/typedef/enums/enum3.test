@@ -120,8 +120,12 @@ Groovy script
               PsiWhiteSpace(' ')
               PsiElement(identifier)('getNumber')
               PsiElement(()('(')
+              Parameter list
+                <empty list>
               PsiElement())(')')
               PsiWhiteSpace(' ')
+              Throw clause
+                <empty list>
               Open block
                 PsiElement({)('{')
                 PsiWhiteSpace('\n       ')

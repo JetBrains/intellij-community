@@ -8,6 +8,8 @@ Groovy script
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
+    Parameter list
+      <empty list>
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Throw clause

@@ -8,8 +8,12 @@ Groovy script
     PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
+    Parameter list
+      <empty list>
     PsiElement())(')')
     PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

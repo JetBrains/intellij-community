@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -32,7 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
@@ -41,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -111,7 +115,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return null;
+    return findChildByClass(GrThrowClause.class);
   }
 
   @Nullable
@@ -154,7 +158,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -177,8 +181,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
-    PsiModifierList modifierList = getModifierList();
-    return modifierList != null && modifierList.hasModifierProperty(name);
+    return getModifierList().hasModifierProperty(name);
   }
 
   @NotNull
@@ -197,7 +200,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
-    return null;
+    return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -220,7 +223,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
-    if (parent instanceof PsiClass) return (PsiClass) parent;
+    if (parent instanceof GrTypeDefinitionBody) return (PsiClass) parent.getParent();
     return null;
   }
 

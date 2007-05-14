@@ -34,6 +34,8 @@ Groovy script
         PsiElement(identifier)('f')
     PsiElement())(')')
     PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

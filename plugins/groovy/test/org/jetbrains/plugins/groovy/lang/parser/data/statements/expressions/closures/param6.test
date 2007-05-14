@@ -33,6 +33,8 @@ Groovy script
           PsiElement(number)('3')
     PsiElement())(')')
     PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

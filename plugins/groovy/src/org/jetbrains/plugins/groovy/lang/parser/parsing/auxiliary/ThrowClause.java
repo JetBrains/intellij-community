@@ -26,33 +26,32 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 26.03.2007
  */
 public class ThrowClause implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static void parse(PsiBuilder builder) {
     PsiBuilder.Marker throwClauseMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, kTHROWS)) {
-      throwClauseMarker.rollbackTo();
-      return WRONGWAY;
+      throwClauseMarker.done(THROW_CLAUSE);
+      return;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
-      throwClauseMarker.rollbackTo();
-      return WRONGWAY;
+      throwClauseMarker.done(THROW_CLAUSE);
+      return;
     }
 
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
       if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
-        throwClauseMarker.rollbackTo();
-        return WRONGWAY;
+        throwClauseMarker.done(THROW_CLAUSE);
+        return;
       }
     }
 
     ParserUtils.getToken(builder, mNLS);
 
     throwClauseMarker.done(THROW_CLAUSE);
-    return THROW_CLAUSE;
   }
 }

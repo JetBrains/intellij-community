@@ -11,4 +11,8 @@ Groovy script
     PsiElement(Gstring)('"abc"')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
+    Parameter list
+      <empty list>
     PsiElement())(')')
+    Throw clause
+      <empty list>
