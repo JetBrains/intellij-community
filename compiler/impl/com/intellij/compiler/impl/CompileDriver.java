@@ -1395,7 +1395,7 @@ public class CompileDriver {
   public TranslatingCompilerStateCache getTranslatingCompilerCache(TranslatingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler), myStringInterner);
+      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler), myStringInterner);
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1407,7 +1407,7 @@ public class CompileDriver {
   private FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler), compiler, myStringInterner);
+      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler), compiler, myStringInterner);
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1419,7 +1419,7 @@ public class CompileDriver {
   private StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getIdPrefix(compiler) + "_timestamp.dat", myStringInterner) {
+      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getCompilerIdString(compiler) + "_timestamp.dat", myStringInterner) {
         public ValidityState read(DataInputStream stream) throws IOException {
           return compiler.createValidityState(stream);
         }
@@ -1437,7 +1437,7 @@ public class CompileDriver {
     myCompilerToCacheMap.remove(compiler);
   }
 
-  private static String getIdPrefix(Compiler compiler) {
+  public static String getCompilerIdString(Compiler compiler) {
     @NonNls String description = compiler.getDescription();
     return description.replaceAll("\\s+", "_").toLowerCase();
   }

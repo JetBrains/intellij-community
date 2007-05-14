@@ -13,8 +13,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.StringInterner;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -197,6 +200,17 @@ public class CompilerManagerImpl extends CompilerManager {
     return CompilerConfiguration.getInstance(myProject).isExcludedFromCompilation(file);
   }
 
+  public OutputToSourceMapping getJavaCompilerOutputMapping() {
+    final String cachesDir = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
+    final StringInterner interner = new StringInterner();
+    final JavaCompiler[] javaCompilers = getCompilers(JavaCompiler.class);
+    final TranslatingCompilerStateCache[] caches = new TranslatingCompilerStateCache[javaCompilers.length];
+    for (int idx = 0; idx < javaCompilers.length; idx++) {
+      caches[idx] = new TranslatingCompilerStateCache(cachesDir, CompileDriver.getCompilerIdString(javaCompilers[idx]), interner);
+    }
+    return new OutputToSourceMappingImpl(caches);
+  }
+
   public CompileScope createFilesCompileScope(final VirtualFile[] files) {
     CompileScope[] scopes = new CompileScope[files.length];
     for(int i = 0; i < files.length; i++){
@@ -238,4 +252,21 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
+  private static class OutputToSourceMappingImpl implements OutputToSourceMapping {
+    private final TranslatingCompilerStateCache[] myCaches;
+
+    public OutputToSourceMappingImpl(final TranslatingCompilerStateCache[] caches) {
+      myCaches = caches;
+    }
+
+    public String getSourcePath(final String outputPath) {
+      for (TranslatingCompilerStateCache cache : myCaches) {
+        final String sourceUrl = cache.getSourceUrl(outputPath);
+        if (sourceUrl != null) {
+          return VirtualFileManager.extractPath(sourceUrl);
+        }
+      }
+      return null;
+    }
+  }
 }
