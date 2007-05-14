@@ -101,7 +101,7 @@ public class ChangeSet extends Change {
   }
 
   @Override
-  public void accept(final ChangeVisitor v) throws Exception {
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
     v.visit(this);
     for (Change c : Reversed.list(myChanges)) {
       c.accept(v);

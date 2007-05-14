@@ -52,6 +52,10 @@ public class IdeaGateway {
     return result == 0 ? true : false;
   }
 
+  public void showError(String s) {
+    Messages.showErrorDialog(myProject, s, "Error");
+  }
+
   public <T> T performCommandInsideWriteAction(final String name, final Callable<T> c) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<T>() {
       public T compute() {
@@ -90,6 +94,22 @@ public class IdeaGateway {
 
     getFileSystem().refresh(false);
     return getFileSystem().findFileByPath(path);
+  }
+
+  public List<VirtualFile> getAllFilesFrom(String path) {
+    return collectFiles(findVirtualFile(path), new ArrayList<VirtualFile>());
+  }
+
+  private List<VirtualFile> collectFiles(VirtualFile f, List<VirtualFile> result) {
+    if (f.isDirectory()) {
+      for (VirtualFile child : f.getChildren()) {
+        collectFiles(child, result);
+      }
+    }
+    else {
+      result.add(f);
+    }
+    return result;
   }
 
   public byte[] getPhysicalContent(VirtualFile f) throws IOException {

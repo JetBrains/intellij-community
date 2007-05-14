@@ -9,6 +9,7 @@ import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -257,14 +258,14 @@ public class LocalVcs implements ILocalVcs {
     return null;
   }
 
-  public void accept(final ChangeVisitor visitor) throws Exception {
+  public void accept(ChangeVisitor v) throws IOException {
     try {
       for (Change c : Reversed.list(myPendingChanges)) {
-        c.accept(visitor);
+        c.accept(v);
       }
-      myChangeList.accept(visitor);
+      myChangeList.accept(v);
     }
-    catch (ChangeVisitor.StopVisitorException e) {
+    catch (ChangeVisitor.StopVisitingException e) {
     }
   }
 

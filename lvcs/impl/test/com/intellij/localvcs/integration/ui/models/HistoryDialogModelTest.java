@@ -114,30 +114,30 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCanRevert() {
+  public void testIsRevertEnabled() {
     m.selectRevisions(1, 1);
-    assertTrue(m.canRevert());
+    assertTrue(m.isRevertEnabled());
 
     m.selectRevisions(2, 2);
-    assertTrue(m.canRevert());
+    assertTrue(m.isRevertEnabled());
 
     m.selectRevisions(0, 0);
-    assertFalse(m.canRevert());
+    assertFalse(m.isRevertEnabled());
 
     m.selectRevisions(-1, -1);
-    assertFalse(m.canRevert());
+    assertFalse(m.isRevertEnabled());
 
     m.selectRevisions(1, 2);
-    assertFalse(m.canRevert());
+    assertFalse(m.isRevertEnabled());
   }
 
   @Test
-  public void testCantRevertIfRevisionHasUnavailableContent() {
+  public void testRevertIsDisabledIfRevisionHasUnavailableContent() {
     vcs.changeFileContent("f", bigContentFactory(), -1);
     vcs.changeFileContent("f", cf("current"), -1);
 
     m.selectRevisions(1, 1);
-    assertFalse(m.canRevert());
+    assertFalse(m.isRevertEnabled());
   }
 
   private void initModelFor(String name) {

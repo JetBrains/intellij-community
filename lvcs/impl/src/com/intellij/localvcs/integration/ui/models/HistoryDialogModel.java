@@ -7,6 +7,7 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
@@ -64,11 +65,11 @@ public abstract class HistoryDialogModel {
     return myRightRevision == 0;
   }
 
-  public boolean revert() {
+  public boolean revert() throws IOException {
     return Reverter.revert(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
   }
 
-  public boolean canRevert() {
+  public boolean isRevertEnabled() {
     boolean isSelectionCorrect = isCurrentRevisionSelected() && myLeftRevision > 0;
     if (!isSelectionCorrect) return false;
     return !getLeftEntry().hasUnavailableContent();

@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.io.IOException;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected IdeaGateway myGateway;
@@ -179,14 +180,19 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (!myModel.revert()) return;
-      close(0);
+      try {
+        if (!myModel.revert()) return;
+        close(0);
+      }
+      catch (IOException ex) {
+        myGateway.showError("Error reverting changes: " + ex);
+      }
     }
 
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
-      p.setEnabled(myModel.canRevert());
+      p.setEnabled(myModel.isRevertEnabled());
     }
   }
 }

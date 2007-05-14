@@ -54,11 +54,12 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
       int count = 0;
 
       @Override
-      public void visit(final ChangeSet c) throws Exception {
+      public void visit(final ChangeSet c) throws StopVisitingException {
         if (++count == 2) stop();
         super.visit(c);
       }
     };
+
     vcs.accept(visitor);
     assertEquals("changeSet createDir ", visitor.getLog());
   }
@@ -72,29 +73,36 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
   private class TestVisitor extends ChangeVisitor {
     private String log = "";
 
-    public void visit(final ChangeSet c) throws Exception {
+    @Override
+    public void visit(final ChangeSet c) throws StopVisitingException {
       log += "changeSet ";
     }
 
-    public void visit(CreateFileChange c) throws Exception {
+    @Override
+    public void visit(CreateFileChange c) {
       log += "createFile ";
     }
 
-    public void visit(CreateDirectoryChange c) throws Exception {
+    @Override
+    public void visit(CreateDirectoryChange c) {
       log += "createDir ";
     }
 
-    public void visit(ChangeFileContentChange c) throws Exception {
+    @Override
+    public void visit(ChangeFileContentChange c) {
     }
 
-    public void visit(RenameChange c) throws Exception {
+    @Override
+    public void visit(RenameChange c) {
       log += "rename ";
     }
 
-    public void visit(MoveChange c) throws Exception {
+    @Override
+    public void visit(MoveChange c) {
     }
 
-    public void visit(DeleteChange c) throws Exception {
+    @Override
+    public void visit(DeleteChange c) {
     }
 
     public String getLog() {

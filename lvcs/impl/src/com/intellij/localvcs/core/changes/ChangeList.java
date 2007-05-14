@@ -46,9 +46,9 @@ public class ChangeList {
     return beforeIndex < afterIndex || (canBeEqual && beforeIndex == afterIndex);
   }
 
-  public void accept(ChangeVisitor visitor) throws Exception {
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
     for (Change change : Reversed.list(myChanges)) {
-      change.accept(visitor);
+      change.accept(v);
     }
   }
 

@@ -109,7 +109,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected boolean canPerformOn(DirectoryDifferenceNode n) {
-      return myModel.canRevert();
+      return myModel.isRevertEnabled();
     }
   }
 

@@ -18,18 +18,17 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     myGateway = gw;
   }
 
-  public void visit(ChangeSet c) throws Exception {
-  }
-
-  public void visit(CreateFileChange c) throws Exception {
+  @Override
+  public void visit(CreateFileChange c) throws IOException {
     revertCreation(c);
   }
 
-  public void visit(CreateDirectoryChange c) throws Exception {
+  @Override
+  public void visit(CreateDirectoryChange c) throws IOException {
     revertCreation(c);
   }
 
-  private void revertCreation(StructuralChange c) throws Exception {
+  private void revertCreation(StructuralChange c) throws IOException {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
@@ -40,7 +39,8 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     c.revertOn(myRootEntry);
   }
 
-  public void visit(ChangeFileContentChange c) throws Exception {
+  @Override
+  public void visit(ChangeFileContentChange c) throws IOException {
     c.revertOn(myRootEntry);
 
     Entry e = getAffectedEntry(c);
@@ -51,7 +51,8 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     }
   }
 
-  public void visit(RenameChange c) throws Exception {
+  @Override
+  public void visit(RenameChange c) throws IOException {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
@@ -62,7 +63,8 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     }
   }
 
-  public void visit(MoveChange c) throws Exception {
+  @Override
+  public void visit(MoveChange c) throws IOException {
     Entry e = getAffectedEntry(c, 1);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
@@ -75,7 +77,8 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     }
   }
 
-  public void visit(DeleteChange c) throws Exception {
+  @Override
+  public void visit(DeleteChange c) throws IOException {
     c.revertOn(myRootEntry);
     Entry e = getAffectedEntry(c);
 

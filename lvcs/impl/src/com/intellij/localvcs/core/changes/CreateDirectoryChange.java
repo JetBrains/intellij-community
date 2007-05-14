@@ -35,7 +35,7 @@ public class CreateDirectoryChange extends StructuralChange {
   }
 
   @Override
-  public void accept(ChangeVisitor v) throws Exception {
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
 }

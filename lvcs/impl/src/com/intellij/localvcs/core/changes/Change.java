@@ -44,6 +44,6 @@ public abstract class Change {
     return false;
   }
 
-  public void accept(ChangeVisitor v) throws Exception {
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
   }
 }
