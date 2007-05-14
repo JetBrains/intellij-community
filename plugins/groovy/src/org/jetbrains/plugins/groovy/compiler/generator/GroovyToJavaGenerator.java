@@ -69,6 +69,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       PsiModifier.TRANSIENT,
       PsiModifier.VOLATILE
   };
+  private static final CharSequence PREFIX_SEPARATOR = "/";
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -121,24 +122,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {
-//    VirtualFile[] children = outputRootDirectory.getChildren();
-
-//    for (final VirtualFile child : children) {
-//      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-//        public void run() {
-//          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-//            public void run() {
-//              try {
-//                child.delete(this);
-//              } catch (IOException e) {
-//                e.printStackTrace();
-//              }
-//            }
-//          });
-//        }
-//      }, ModalityState.NON_MODAL);
-//    }
-
     VirtualFile[] files = context.getCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
 
     List<GenerationItem> generatedItems = new ArrayList<GenerationItem>();
@@ -244,8 +227,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     String prefix = "";
     if (statements != null && statements.length > 0 && statements[0] instanceof GrPackageDefinition) {
       prefix = ((GrPackageDefinition) statements[0]).getPackageName();
-      prefix = prefix.replace(".", File.separator);
-      prefix += File.separator;
+//      prefix = prefix.replace(".", File.separator);
+      prefix = prefix.replace(".", PREFIX_SEPARATOR);
+      prefix += PREFIX_SEPARATOR;
     }
     return prefix;
   }
@@ -550,7 +534,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     String prefixWithoutSeparator = prefix;
 
     if (!"".equals(prefix)) {
-      prefixWithoutSeparator = prefix.substring(0, prefix.length() - File.separator.length());
+      prefixWithoutSeparator = prefix.substring(0, prefix.length() - PREFIX_SEPARATOR.length());
       new File(outputDir, prefixWithoutSeparator).mkdirs();
     }
 
@@ -605,14 +589,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
   //todo: change it
   public ValidityState createValidityState(DataInputStream is) throws IOException {
-    return new ValidityState() {
-      public boolean equalsTo(ValidityState otherState) {
-        return this.equals(otherState);
-      }
-
-      public void save(DataOutputStream os) throws IOException {
-      }
-    };
+    return TimestampValidityState.load(is);
   }
 
   /*
