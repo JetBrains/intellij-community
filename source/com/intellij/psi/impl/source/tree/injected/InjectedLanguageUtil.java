@@ -286,26 +286,11 @@ public class InjectedLanguageUtil {
 
   public static Editor getEditorForInjectedLanguage(final Editor editor, final PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorDelegate) return editor;
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-    PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
-    if (injectionHost == null && offset != 0) {
-      injectionHost = findInjectionHost(file.findElementAt(offset-1));
-    }
-    List<Pair<PsiElement, TextRange>> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
-    if (injectedPsi == null) {
-      return editor;
-    }
-    TextRange hostRange = injectionHost.getTextRange();
-    for (Pair<PsiElement, TextRange> pair : injectedPsi) {
-      TextRange range = pair.getSecond();
-      if (hostRange.cutOut(range).grown(1).contains(offset)) {
-        PsiFile injectedFile = pair.getFirst().getContainingFile();
-        Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
+    PsiFile injectedFile = findInjectedPsiAt(file, offset);
+    if (injectedFile == null) return editor;
+    Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
 
-        return EditorDelegate.create((DocumentRange)document, (EditorImpl)editor, injectedFile);
-      }
-    }
-    return editor;
+    return EditorDelegate.create((DocumentRange)document, (EditorImpl)editor, injectedFile);
   }
 
   public static PsiFile findInjectedPsiAt(PsiFile host, int offset) {
@@ -322,8 +307,7 @@ public class InjectedLanguageUtil {
     for (Pair<PsiElement, TextRange> pair : injectedPsi) {
       TextRange range = pair.getSecond();
       if (hostRange.cutOut(range).grown(1).contains(offset)) {
-        PsiFile injectedFile = pair.getFirst().getContainingFile();
-        return injectedFile;
+        return pair.getFirst().getContainingFile();
       }
     }
     return null;
