@@ -1043,7 +1043,12 @@ patterns:
           throw new ProcessCanceledException();
         }
         if (name != null) {
-          if(matcher.matches(name, compiledPattern)) {
+          if (myModel instanceof GotoActionModel) {
+            if (((GotoActionModel)myModel).matches(name, pattern)) {
+              list.add(name);
+            }
+          }
+          else if (matcher.matches(name, compiledPattern)) {
             list.add(name);
           }
         }
