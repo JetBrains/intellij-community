@@ -128,7 +128,6 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
     addMessageFilter(new ExceptionFilter(myProject));//TEMP!
     addMessageFilter(new YourkitFilter(myProject));//TEMP!
-    addMessageFilter(new RegexpFilter(project, "$FILE_PATH$\\s+\\($LINE$\\:$COLUMN$\\)"));
   }
 
   public void attachToProcess(final ProcessHandler processHandler){

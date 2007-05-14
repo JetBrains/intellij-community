@@ -1,6 +1,9 @@
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
@@ -28,7 +31,6 @@ public final class PlainTextView implements AntOutputView {
     myProject = project;
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     builder.addFilter(new AntMessageFilter());
-    builder.addFilter(new RegexpFilter(project, "$FILE_PATH$\\s+\\($LINE$\\:$COLUMN$\\)"));
     builder.addFilter(new JUnitFilter());
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
