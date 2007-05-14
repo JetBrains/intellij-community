@@ -184,6 +184,10 @@ public class SvnChangeList implements CommittedChangeList {
     return result;
   }
 
+  public String toString() {
+    return myMessage;
+  }
+
   public void writeToStream(final DataOutput stream) throws IOException {
     stream.writeUTF(myRepositoryRoot);
     stream.writeLong(myRevision);
