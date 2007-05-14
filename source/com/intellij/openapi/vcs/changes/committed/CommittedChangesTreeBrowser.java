@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -20,6 +21,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
@@ -59,6 +61,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private List<CommittedChangeList> myFilteredChangeLists;
   private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+  private CopyProvider myCopyProvider;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -122,6 +125,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     ActionManager.getInstance().getAction("CommittedChanges.Details").registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_QUICK_JAVADOC)),
       this);
+
+    myCopyProvider = new TreeCopyProvider(myChangesTree);
   }
 
   private TreeModel buildTreeModel() {
@@ -225,6 +230,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myChangesTree);
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
+    toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
   }
 
@@ -241,6 +247,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       if (list != null) {
         sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
       }
+    }
+    else if (key.equals(DataKeys.COPY_PROVIDER)) {
+      sink.put(DataKeys.COPY_PROVIDER, myCopyProvider);
     }
   }
 

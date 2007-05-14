@@ -18,10 +18,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeUtils;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -40,7 +37,6 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -52,7 +48,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource, CopyProvider {
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesListView");
 
   private ChangesListView.DropTarget myDropTarget;
@@ -61,6 +57,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   private final Project myProject;
   private TreeState myTreeState;
   private boolean myShowFlatten = false;
+  private CopyProvider myCopyProvider;
 
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
@@ -103,6 +100,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
+    myCopyProvider = new TreeCopyProvider(this);
   }
 
   public DefaultTreeModel getModel() {
@@ -195,7 +193,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, this);
     }
     else if (key == DataKeys.COPY_PROVIDER) {
-      sink.put(DataKeys.COPY_PROVIDER, this);
+      sink.put(DataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
@@ -359,21 +357,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  public void performCopy(DataContext dataContext) {
-    try {
-      final Clipboard clipboard = getToolkit().getSystemClipboard();
-      getTransferHandler().exportToClipboard(this, clipboard, TransferHandler.COPY);
-    }
-    catch(Exception ex) {
-      // probably don't have clipboard access or something
-      LOG.info(ex);
-    }
-  }
-
-  public boolean isCopyEnabled(DataContext dataContext) {
-    return getSelectionPath() != null;
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
