@@ -135,9 +135,9 @@ public class AntElementFactory {
     }
     if (result == null) {
       // HACK for the <tstamp> properties
-      result = (!AntFileImpl.FORMAT_TAG.equals(tag.getName()))
-               ? new AntStructuredElementImpl(parent, tag, typeDef)
-               : new AntStructuredElementImpl(parent, tag, typeDef, AntFileImpl.PROPERTY);
+      result = AntFileImpl.FORMAT_TAG.equals(tag.getName())
+               ? new AntTimestampFormatImpl(parent, tag, typeDef)
+               : new AntStructuredElementImpl(parent, tag, typeDef);
     }
     result.setImportedTypeDefinition(importedType);
     return result;

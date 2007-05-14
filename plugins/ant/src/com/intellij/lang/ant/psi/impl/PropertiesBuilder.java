@@ -99,36 +99,15 @@ public class PropertiesBuilder extends AntElementVisitor {
       }
     }
 
-    if (antProperty instanceof AntPropertyImpl && ((AntPropertyImpl)antProperty).isTstamp()) {
-      String prefix = antProperty.getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
-      if (prefix == null) {
-        myPropertyHolder.setProperty(DSTAMP, antProperty);
-        myPropertyHolder.setProperty(TSTAMP, antProperty);
-        myPropertyHolder.setProperty(TODAY, antProperty);
-      }
-      else {
-        prefix += '.';
-        myPropertyHolder.setProperty(prefix + DSTAMP, antProperty);
-        myPropertyHolder.setProperty(prefix + TSTAMP, antProperty);
-        myPropertyHolder.setProperty(prefix + TODAY, antProperty);
-      }
-      final XmlAttributeValue value = ((AntPropertyImpl)antProperty).getTstampPropertyAttributeValue();
-      if (value != null && value.getValue() != null) {
-        myPropertyHolder.setProperty(value.getValue(), antProperty);
-      }
+    final String environment = antProperty.getEnvironment();
+    if (environment != null) {
+      myPropertyHolder.addEnvironmentPropertyPrefix(environment);
     }
-    else {
-      // non-timestamp property
-      final String environment = antProperty.getEnvironment();
-      if (environment != null) {
-        myPropertyHolder.addEnvironmentPropertyPrefix(environment);
-      }
 
-      final String[] names = antProperty.getNames();
-      if (names != null) {
-        for (String name : names) {
-          myPropertyHolder.setProperty(name, antProperty);
-        }
+    final String[] names = antProperty.getNames();
+    if (names != null) {
+      for (String name : names) {
+        myPropertyHolder.setProperty(name, antProperty);
       }
     }
   }

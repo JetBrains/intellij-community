@@ -29,6 +29,7 @@ public class AntReferenceProvidersRegistry {
       nameProvider, attrProvider});
     ourProviders.put(AntStructuredElementImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, refIdProvider, nameProvider,
       attrProvider, macroParamsProvider});
+    ourProviders.put(AntTimestampFormatImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntTaskImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntPropertyImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntMacroDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));

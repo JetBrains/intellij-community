@@ -338,7 +338,13 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
       final XmlAttributeValue value = getTstampPropertyAttributeValue();
       if (value != null && value.getValue() != null) {
-        strings.add(value.getValue());
+        final String additionalProperty = value.getValue();
+        if (prefix == null) {
+          strings.add(additionalProperty);
+        }
+        else {
+          strings.add(prefix + additionalProperty);
+        }
       }
       return strings.toArray(new String[strings.size()]);
     }
