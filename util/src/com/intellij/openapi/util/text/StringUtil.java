@@ -926,6 +926,11 @@ public class StringUtil {
     return text;
   }
 
+  public static boolean isQuotedString(@NotNull String text) {
+    return ( startsWithChar(text, '\"') && endsWithChar(text, '\"') ) ||
+           ( startsWithChar(text, '\'') && endsWithChar(text, '\''));
+  }
+
   /**
    * Formats the specified file size as a string.
    *
