@@ -17,11 +17,11 @@
 
 package com.intellij.util;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +31,10 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public abstract class LogicalRootsManager implements ProjectComponent {
+public abstract class LogicalRootsManager {
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
-    return project.getComponent(LogicalRootsManager.class);
+    return ServiceManager.getService(project, LogicalRootsManager.class);
   }
 
   @Nullable

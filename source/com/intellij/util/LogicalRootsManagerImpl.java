@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +66,16 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
         bus.asyncPublisher(ProjectTopics.LOGICAL_ROOTS).logicalRootsChanged();
       }
     });
+    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
+      @NotNull
+      public List<VirtualFileLogicalRoot> fun(final Module module) {
+        return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
+          public VirtualFileLogicalRoot fun(final VirtualFile s) {
+            return new VirtualFileLogicalRoot(s);
+          }
+        });
+      }
+    });
   }
 
   private void updateCache(final ModuleManager moduleManager) {
@@ -82,34 +91,6 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
       }
       myRoots.put(module, map);
     }
-  }
-
-  public void projectOpened() {
-    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
-      @NotNull
-      public List<VirtualFileLogicalRoot> fun(final Module module) {
-        return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
-          public VirtualFileLogicalRoot fun(final VirtualFile s) {
-            return new VirtualFileLogicalRoot(s);
-          }
-        });
-      }
-    });
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   @Nullable
