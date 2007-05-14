@@ -14,5 +14,6 @@ public class HardcodedFileSeparatorsInspection
         final String date2           = "sdd/MM/yy";
         final String tag1           = "<foo/>";
         final String tag2           = "</foo>";
+        final String url            = "jdbc:hsqldb:hsql://localhost:9013";
     }
 }

@@ -59,7 +59,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * protocol, as they're likely to actually be URLs.
      */
     @NonNls private static final Pattern URL_PATTERN =
-            Pattern.compile("^[a-z][a-z0-9+\\-.]+://.*$");
+            Pattern.compile("^[a-z][a-z0-9+\\-:]+://.*$");
 
     /**
      * All mimetypes, see http://www.iana.org/assignments/media-types/
