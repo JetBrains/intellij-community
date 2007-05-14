@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.revert;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.*;
+import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.IdeaGateway;
@@ -47,7 +48,10 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
     if (shouldProcess(c)) {
-      f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
+      Content content = e.getContent();
+      if (content.isAvailable()) {
+        f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
+      }
     }
   }
 
