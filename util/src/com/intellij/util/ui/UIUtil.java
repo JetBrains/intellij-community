@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -700,6 +701,13 @@ public class UIUtil {
     if (x1 == x2) drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
     else if (y1 == y2) drawHDottedLine(g, x1, x2, y1, bgColor, fgColor);
     else throw new IllegalArgumentException("Only vertical or horizontal lines are supported");
+  }
+
+  public static boolean isFocusAncestor(@NotNull final JComponent component) {
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return false;
+    if (owner == component) return true;
+    return SwingUtilities.isDescendingFrom(owner, component);
   }
 }
 

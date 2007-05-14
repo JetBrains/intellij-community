@@ -4,10 +4,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Activatable;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.Nullable;
 
 public final class ShadowAction {
 
@@ -64,18 +67,29 @@ public final class ShadowAction {
 
   private void _connect() {
     disconnect();
-    getKeymapManager().addKeymapManagerListener(myKeymapManagerListener);
+    final KeymapManager mgr = getKeymapManager();
+    if (mgr == null) return;
+
+
+    mgr.addKeymapManagerListener(myKeymapManagerListener);
     rebound();
   }
 
   private void disconnect() {
-    getKeymapManager().removeKeymapManagerListener(myKeymapManagerListener);
+    final KeymapManager mgr = getKeymapManager();
+    if (mgr == null) return;
+
+
+    mgr.removeKeymapManagerListener(myKeymapManagerListener);
     if (myKeymap != null) {
       myKeymap.removeShortcutChangeListener(myKeymapListener);
     }
   }
 
   private void rebound() {
+    final KeymapManager mgr = getKeymapManager();
+    if (mgr == null) return;
+
     myActionId = ActionManager.getInstance().getId(myCopyFromAction);
     if (myPresentation == null) {
       myAction.copyFrom(myCopyFromAction);
@@ -92,7 +106,7 @@ public final class ShadowAction {
       myKeymap.removeShortcutChangeListener(myKeymapListener);
     }
 
-    myKeymap = getKeymapManager().getActiveKeymap();
+    myKeymap = mgr.getActiveKeymap();
     myKeymap.addShortcutChangeListener(myKeymapListener);
 
     if (myActionId == null) return;
@@ -102,7 +116,9 @@ public final class ShadowAction {
     myAction.registerCustomShortcutSet(myShortcutSet, myComponent);
   }
 
-  private static KeymapManager getKeymapManager() {
+  private static @Nullable
+  KeymapManager getKeymapManager() {
+    if (ApplicationManager.getApplication().isDisposed()) return null;
     return KeymapManager.getInstance();
   }
 

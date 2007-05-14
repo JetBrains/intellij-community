@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,31 +86,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myComponent;
   }
 
-  private class MyComponent extends Wrapper implements DataProvider, FocusListener {
+  private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
     private List<DataProvider> myProviders = new ArrayList<DataProvider>();
 
-    private Runnable myCallback;
 
     public MyComponent() {
       setOpaque(false);
-      setFocusable(true);
-      addFocusListener(this);
-    }
-
-    public void requestFocus(Runnable callback) {
-      myCallback = callback;
-      requestFocusInternal();
-    }
-
-    public void focusGained(final FocusEvent e) {
-      if (myCallback != null) {
-        Runnable callback = myCallback;
-        myCallback = null;
-        callback.run();
-      }
-    }
-
-    public void focusLost(final FocusEvent e) {
     }
 
     public void addProvider(final DataProvider provider) {
@@ -383,13 +365,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private boolean isSelectionHoldsFocus() {
     boolean focused = false;
     final Content[] selection = getSelectedContents();
-    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
-    if (c != null) {
-      for (Content each : selection) {
-        if (SwingUtilities.isDescendingFrom(c, each.getComponent())) {
-          focused = true;
-          break;
-        }
+    for (Content each : selection) {
+      if (UIUtil.isFocusAncestor(each.getComponent())) {
+        focused = true;
+        break;
       }
     }
     return focused;

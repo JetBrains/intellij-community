@@ -17,6 +17,8 @@ package com.intellij.ui.components.panels;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
 
 public class Wrapper extends JPanel {
 
@@ -91,4 +93,61 @@ public class Wrapper extends JPanel {
       return this;
     }
   }
+
+
+  public static class FocusHolder extends Wrapper implements FocusListener {
+
+    private Runnable myFocusGainedCallback;
+
+    public FocusHolder() {
+      init();
+    }
+
+    public FocusHolder(final JComponent wrapped) {
+      super(wrapped);
+      init();
+    }
+
+    public FocusHolder(final LayoutManager layout, final JComponent wrapped) {
+      super(layout, wrapped);
+      init();
+    }
+
+    public FocusHolder(final boolean isDoubleBuffered) {
+      super(isDoubleBuffered);
+      init();
+    }
+
+    public FocusHolder(final LayoutManager layout) {
+      super(layout);
+      init();
+    }
+
+    public FocusHolder(final LayoutManager layout, final boolean isDoubleBuffered) {
+      super(layout, isDoubleBuffered);
+      init();
+    }
+
+    private void init() {
+      setFocusable(true);
+      addFocusListener(this);
+    }
+
+    public void requestFocus(Runnable callback) {
+      myFocusGainedCallback = callback;
+      requestFocusInternal();
+    }
+
+    public void focusGained(final FocusEvent e) {
+      if (myFocusGainedCallback != null) {
+        Runnable callback = myFocusGainedCallback;
+        myFocusGainedCallback = null;
+        callback.run();
+      }
+    }
+
+    public void focusLost(final FocusEvent e) {
+    }
+  }
+
 }
