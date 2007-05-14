@@ -94,7 +94,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       boolean needCreateTopLevelClass = !needsCreateClassFromFileName(statements);
 
       String prefix = "";
-      if (statements[0] instanceof GrPackageDefinition) {
+      if (statements.length > 0 && statements[0] instanceof GrPackageDefinition) {
         prefix = getJavaClassPackage((GrPackageDefinition) statements[0]);
       }
 
@@ -187,7 +187,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     boolean isOnlyInnerTypeDef = needsCreateClassFromFileName(statements);
 
     GrPackageDefinition packageDefinition = null;
-    if (statements[0] instanceof GrPackageDefinition) {
+    if (statements.length > 0 && statements[0] instanceof GrPackageDefinition) {
       packageDefinition = (GrPackageDefinition) statements[0];
     }
 
@@ -327,7 +327,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
         String canonicalText = canonicalTextWrapper.myValue;
 
-        text.append(canonicalText);
+        if (canonicalText == null) text.append("<smotri 4to nasleduesh'!>");
+        else text.append(canonicalText);
         text.append(" ");
       }
 
@@ -352,7 +353,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
           });
 
           String implTypeCanonicalText = implementTypeWrapper.myValue;
+
+          if (implTypeCanonicalText == null)  text.append("<smotri 4to realizuesh'!>");
           text.append(implTypeCanonicalText);
+          text.append(" ");
           i++;
         }
         text.append(" ");
@@ -402,7 +406,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
       GrParameter parameter = parameterList[i];
       paramTypeElement = parameter.getTypeElementGroovy();
-      paramType = getResolvedType(/*classNameToQualifiedName, */paramTypeElement);
+      paramType = getResolvedType(paramTypeElement);
 
       text.append(paramType);
       text.append(" ");
@@ -457,7 +461,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     GrTypeElement typeElement = method.getReturnTypeElementGroovy();
     String qualifiedTypeName = getResolvedType(typeElement);
 
-//    text.append("public ");
     PsiModifierList modifierList = method.getModifierList();
 
     writeModifiers(text, modifierList);
@@ -536,7 +539,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       });
 
       String resolvedType = resolverTypeWrapper.myValue;
-      methodType = resolvedType == null ? "<dimaskin>" : resolvedType;
+      methodType = resolvedType == null ? "<Ha-ha, takogo tipa netu>" : resolvedType;
     }
 
     return methodType;
@@ -557,20 +560,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       myFile = new File(outputDir + File.separator + prefixWithoutSeparator, generatedItemPath);
     else
       myFile = new File(outputDir, generatedItemPath);
-
-//    if (myFile.exists()) {
-//      VirtualFile virtualFile = myGroovyFile.getVirtualFile();
-//      assert virtualFile != null;
-//      String url = virtualFile.getUrl();
-//
-//      context.addMessage(
-//          CompilerMessageCategory.ERROR,
-//          GroovyBundle.message("Class") + " " + myFile.getName() + " " + GroovyBundle.message("already.exist"),
-//          url,
-//          -1,
-//          -1);
-//      return;
-//    }
 
     BufferedWriter writer = null;
     try {
@@ -595,30 +584,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     return "Groovy to java source code generator";
   }
 
-  //TODO
   public boolean validateConfiguration(CompileScope scope) {
 //    scope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
     return true;
   }
 
-  //todo: change it
   public ValidityState createValidityState(DataInputStream is) throws IOException {
     return TimestampValidityState.load(is);
   }
 
-  /*
-    @NotNull
-    public FileProcessingCompiler.ProcessingItem[] getProcessingItems(CompileContext context)
-    {
-      return new FileProcessingCompiler.ProcessingItem[0];  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public FileProcessingCompiler.ProcessingItem[] process(CompileContext context, FileProcessingCompiler.ProcessingItem[] items)
-    {
-      return new FileProcessingCompiler.ProcessingItem[0];  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-  */
   class GenerationItemImpl implements GenerationItem {
     final String myPath;
     ValidityState myState;
