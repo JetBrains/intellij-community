@@ -28,8 +28,13 @@ public class DefaultCharFilter implements CharFilter {
   public DefaultCharFilter(Editor editor,PsiFile file, int offset) {
     myFile = file;
 
-    PsiElement psiElement = file.findElementAt(offset + 1);
-    if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
+    PsiElement psiElement;
+    if (offset > 0) psiElement = file.findElementAt(offset - 1);
+    else {
+      psiElement = file.findElementAt(offset + 1);
+      if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
+    }
+    
     if (psiElement != null) myDelegate = ourCharFilterRegistry.get(psiElement.getLanguage());
 
     if (myFile instanceof XmlFile && myDelegate == null) {
