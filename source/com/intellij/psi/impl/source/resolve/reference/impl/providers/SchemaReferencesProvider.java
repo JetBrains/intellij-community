@@ -122,10 +122,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
 
-  static class NameReference implements PsiReference {
+  public static class NameReference implements PsiReference {
     private PsiElement myElement;
 
-    NameReference(PsiElement element) {
+    public NameReference(PsiElement element) {
       myElement = element;
     }
 
