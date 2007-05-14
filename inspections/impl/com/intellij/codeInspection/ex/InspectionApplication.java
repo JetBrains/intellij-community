@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -37,10 +38,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -100,6 +98,9 @@ public class InspectionApplication {
       }
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
+      if (!ProjectConversionUtil.convertSilently(myProjectPath, createConversionListener())) {
+        System.exit(1);
+      }
       myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath, false);
 
       //fetch profile by name from project file (project profiles can be disabled)
@@ -242,6 +243,32 @@ public class InspectionApplication {
       logError(e.getMessage());
       if (myErrorCodeRequired) System.exit(1);
     }
+  }
+
+  private ProjectConversionUtil.ConversionListener createConversionListener() {
+    return new ProjectConversionUtil.ConversionListener() {
+      public void conversionNeeded() {
+        logMessageLn(1, InspectionsBundle.message("inspection.application.project.has.older.format.and.will.be.converted"));
+      }
+
+      public void succesfullyConverted(final File backupDir) {
+        logMessageLn(1, InspectionsBundle.message(
+          "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
+                                                  backupDir.getAbsolutePath()));
+      }
+
+      public void error(final String message) {
+        logError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
+      }
+
+      public void cannotWriteToFiles(final List<File> readonlyFiles) {
+        StringBuilder files = new StringBuilder();
+        for (File file : readonlyFiles) {
+          files.append(file.getAbsolutePath()).append("; ");
+        }
+        logError(InspectionsBundle.message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));
+      }
+    };
   }
 
   @Nullable

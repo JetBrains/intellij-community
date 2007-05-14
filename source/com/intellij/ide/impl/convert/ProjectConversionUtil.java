@@ -12,12 +12,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -38,12 +40,41 @@ public class ProjectConversionUtil {
     return document.getRootElement();
   }
 
+  public static boolean convertSilently(String projectFilePath, ConversionListener listener) {
+    try {
+      Element versionComponent = getVersionComponent(projectFilePath);
+      if (versionComponent != null && isConverted(versionComponent)) return true;
+
+      final ProjectConverter converter = getConverter(projectFilePath);
+      if (converter == null) return true;
+
+      converter.prepare();
+      if (!converter.isConversionNeeded()) return true;
+
+      listener.conversionNeeded();
+      final List<File> readonlyFiles = getReadonlyFiles(converter);
+      if (!readonlyFiles.isEmpty()) {
+        listener.cannotWriteToFiles(readonlyFiles);
+        return false;
+      }
+
+      final File file = backupAndConvert(converter);
+      listener.succesfullyConverted(file);
+      return true;
+    }
+    catch (QualifiedJDomException e) {
+      listener.error(e.getFilePath() + ": " + e.getCause().getMessage());
+    }
+    catch (IOException e) {
+      listener.error(e.getMessage());
+    }
+    return false;
+  }
+
   @NotNull
   public static ProjectConversionResult convertProject(String projectFilePath) {
     try {
-      final Element root = loadProjectFileRoot(projectFilePath);
-
-      final Element versionComponent = JDomConvertingUtil.findComponent(root, ProjectFileVersionImpl.COMPONENT_NAME);
+      final Element versionComponent = getVersionComponent(projectFilePath);
       if (versionComponent != null && isConverted(versionComponent)) {
         return ProjectConversionResult.OK;
       }
@@ -91,6 +122,11 @@ public class ProjectConversionUtil {
   }
 
   @Nullable
+  private static Element getVersionComponent(final String projectFilePath) throws QualifiedJDomException, IOException {
+    return JDomConvertingUtil.findComponent(loadProjectFileRoot(projectFilePath), ProjectFileVersionImpl.COMPONENT_NAME);
+  }
+
+  @Nullable
   public static ProjectConverter getConverter(final String projectFilePath) {
     for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
       final ProjectConverter converter = converterFactory.createConverter(projectFilePath);
@@ -109,6 +145,25 @@ public class ProjectConversionUtil {
       FileUtil.copy(file, new File(backupDir, file.getName()));
     }
     return backupDir;
+  }
+
+  public static File backupAndConvert(final ProjectConverter converter) throws IOException, QualifiedJDomException {
+    final File[] files = converter.getAffectedFiles();
+    final File parentDir = converter.getBaseDirectory();
+    File backupDir = backupFiles(files, parentDir);
+    converter.convert();
+    return backupDir;
+  }
+
+  public static List<File> getReadonlyFiles(final ProjectConverter converter) {
+    final File[] files = converter.getAffectedFiles();
+    List<File> readonlyFiles = new ArrayList<File>();
+    for (File file : files) {
+      if (!file.canWrite()) {
+        readonlyFiles.add(file);
+      }
+    }
+    return readonlyFiles;
   }
 
   public static class ProjectConversionResult {
@@ -134,5 +189,12 @@ public class ProjectConversionUtil {
     public ProjectConversionHelper getConversionHelper() {
       return myConversionHelper;
     }
+  }
+
+  public interface ConversionListener {
+    void conversionNeeded();
+    void succesfullyConverted(File backupDir);
+    void error(String message);
+    void cannotWriteToFiles(final List<File> readonlyFiles);
   }
 }
