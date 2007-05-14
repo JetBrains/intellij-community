@@ -15,14 +15,16 @@
  */
 package com.intellij.ide.wizard;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CommandButtonGroup;
-import com.intellij.ide.IdeBundle;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,9 +34,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
@@ -159,7 +158,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
-    panel.add(myIconLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myIconLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     panel.add(myContentPanel, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
     return panel;
   }
