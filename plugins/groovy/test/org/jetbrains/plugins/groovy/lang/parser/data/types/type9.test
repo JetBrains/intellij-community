@@ -3,16 +3,28 @@ public static void main (String[] args) {}
 Groovy script
   Method
     Modifiers
-      PsiElement(transient)('transient')
+      PsiElement(public)('public')
+      PsiWhiteSpace(' ')
+      PsiElement(static)('static')
     PsiWhiteSpace(' ')
     Built in type
       PsiElement(void)('void')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    PsiElement(identifier)('main')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Parameter list
-      <empty list>
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Array type
+          Type element
+            Reference element
+              PsiElement(identifier)('String')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('args')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Throw clause
