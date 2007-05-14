@@ -4,32 +4,32 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.Disposable;
+import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.peer.PeerFactory;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -39,9 +39,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * @author yole
@@ -64,7 +64,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     super(new BorderLayout());
 
     myChangeLists = changeLists;
-    myChangesTree = new Tree(buildTreeModel());
+    myChangesTree = new Tree(buildTreeModel()) {
+      @Override
+      public boolean getScrollableTracksViewportWidth() {
+        return true;
+      }
+    };
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
     myCellRenderer = new CommittedChangeListRenderer();
@@ -241,12 +246,18 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-    private static final int MAX_VISIBLE_LENGTH = 75;
+    private static final SimpleTextAttributes MORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       if (node.getUserObject() instanceof CommittedChangeList) {
         CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
+
+        int parentWidth = tree.getParent().getWidth() - 44;
+        String date = ", " + myDateFormat.format(changeList.getCommitDate());
+        final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
+        int size = fontMetrics.stringWidth(date);
+        size += tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD)).stringWidth(changeList.getCommitterName());
 
         boolean truncated = false;
         String description = changeList.getName().trim();
@@ -255,30 +266,47 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           description = description.substring(0, pos).trim();
           truncated = true;
         }
-        if (description.length() > MAX_VISIBLE_LENGTH) {
-          pos = MAX_VISIBLE_LENGTH;
-          while(pos > 0 && description.charAt(pos) != ' ') {
-            pos--;
-          }
-          if (pos == 0) {
-            pos = MAX_VISIBLE_LENGTH;
-          }
-          description = description.substring(0, pos);
-          truncated = true;
+
+        int descWidth = fontMetrics.stringWidth(description);
+        final int descMaxWidth = parentWidth - size - 8;
+        if (descMaxWidth < 0) {
+          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-        append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
-        if (truncated) {
+        else if (descWidth < descMaxWidth && !truncated) {
+          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          appendAlign(parentWidth - size);
+        }
+        else {
+          final String moreMarker = VcsBundle.message("changes.browser.details.marker");
+          int moreWidth = fontMetrics.stringWidth(moreMarker);
+          while(description.length() > 0 && descWidth + moreWidth > descMaxWidth) {
+            description = trimLastWord(description);
+            descWidth = fontMetrics.stringWidth(description + " ");
+          }
+          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          append(VcsBundle.message("changes.browser.details.marker"), new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue));
+          append(moreMarker, MORE_ATTRIBUTES);
+          appendAlign(parentWidth - size);
         }
-        append(" - ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
         append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        append(" at ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        append(myDateFormat.format(changeList.getCommitDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else if (node.getUserObject() != null) {
         append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
+    }
+
+    private static String trimLastWord(final String description) {
+      int pos = description.trim().lastIndexOf(' ');
+      if (pos >= 0) {
+        return description.substring(0, pos).trim();
+      }
+      return description.substring(0, description.length()-1);
+    }
+
+    public Dimension getPreferredSize() {
+      return new Dimension(2000, super.getPreferredSize().height);
     }
   }
 

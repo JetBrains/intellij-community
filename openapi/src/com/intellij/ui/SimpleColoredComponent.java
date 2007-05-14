@@ -71,6 +71,9 @@ public class SimpleColoredComponent extends JComponent {
 
   private int myMainTextLastIndex = -1;
 
+  private int myAlignIndex;
+  private int myAlignWidth;
+
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
@@ -100,6 +103,11 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
+  public synchronized void appendAlign(int alignWidth) {
+    myAlignIndex = myFragments.size()-1;
+    myAlignWidth = alignWidth;
+  }
+
   /**
    * Clear all special attributes of <code>SimpleColoredComponent</code>.
    * The are icon, text fragments and their attributes, "paint focus border".
@@ -111,6 +119,8 @@ public class SimpleColoredComponent extends JComponent {
     myFragments.clear();
     myAttributes.clear();
     myMainTextLastIndex = -1;
+    myAlignIndex = -1;
+    myAlignWidth = -1;
   }
 
   /**
@@ -189,14 +199,14 @@ public class SimpleColoredComponent extends JComponent {
 
   public synchronized final Dimension computePreferredSize(final boolean mainTextOnly) {
     // Calculate width
-    int width = myIpad.left + myIpad.right;
+    int width = myIpad.left;
 
     if (myIcon != null) {
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
     final Insets borderInsets = myBorder.getBorderInsets(this);
-    width += borderInsets.left + borderInsets.right;
+    width += borderInsets.left;
 
     Font font = getFont();
     LOG.assertTrue(font != null);
@@ -208,9 +218,13 @@ public class SimpleColoredComponent extends JComponent {
       }
       final FontMetrics metrics = getFontMetrics(font);
       width += metrics.stringWidth(myFragments.get(i));
+      if (i == myAlignIndex && width < myAlignWidth) {
+        width = myAlignWidth;
+      }
 
       if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
     }
+    width += myIpad.right + borderInsets.right;
 
     // Calculate height
     int height = myIpad.top + myIpad.bottom;
@@ -254,6 +268,9 @@ public class SimpleColoredComponent extends JComponent {
         return i;
       }
       curX += curWidth;
+      if (i == myAlignIndex && curX < myAlignWidth) {
+        curX = myAlignWidth;
+      }
     }
     return -1;
   }
@@ -368,6 +385,9 @@ public class SimpleColoredComponent extends JComponent {
 
 
       xOffset += fragmentWidth;
+      if (i == myAlignIndex && xOffset < myAlignWidth) {
+        xOffset = myAlignWidth;
+      }
     }
   }
 
