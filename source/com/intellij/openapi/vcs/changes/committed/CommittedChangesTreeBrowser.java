@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -13,11 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.peer.PeerFactory;
@@ -29,7 +28,6 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -41,9 +39,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +77,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     };
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
-    myCellRenderer = new CommittedChangeListRenderer(IssueNavigationConfiguration.getInstance(project));
+    myCellRenderer = new CommittedChangeListRenderer(project);
     myChangesTree.setCellRenderer(myCellRenderer);
     TreeUtil.expandAll(myChangesTree);
 
@@ -94,7 +89,18 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         updateBySelectionChange();
       }
     });
-    final LinkMouseListener linkMouseListener = new LinkMouseListener(project);
+
+    final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project)) {
+      @Override
+      protected void handleTagClick(final Object tag) {
+        if (tag == MORE_TAG) {
+          ChangeListDetailsAction.showDetailsPopup(project, (CommittedChangeList) myLastHitNode.getUserObject());
+        }
+        else {
+          super.handleTagClick(tag);
+        }
+      }
+    };
     myChangesTree.addMouseListener(linkMouseListener);
     myChangesTree.addMouseMotionListener(linkMouseListener);
 
@@ -247,19 +253,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
-    private IssueNavigationConfiguration myIssueNavigationConfiguration;
-    private CommittedChangeList myLastChangeList;
+    private IssueLinkRenderer myRenderer;
 
-    public CommittedChangeListRenderer(final IssueNavigationConfiguration issueNavigationConfiguration) {
-      myIssueNavigationConfiguration = issueNavigationConfiguration;
+    public CommittedChangeListRenderer(final Project project) {
+      myRenderer = new IssueLinkRenderer(project, this);
     }
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-      myLastChangeList = null;
       if (node.getUserObject() instanceof CommittedChangeList) {
         CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
-        myLastChangeList = changeList;
 
         int parentWidth = tree.getParent().getWidth() - 44;
         String date = ", " + myDateFormat.format(changeList.getCommitDate());
@@ -278,10 +281,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         int descWidth = fontMetrics.stringWidth(description);
         final int descMaxWidth = parentWidth - size - 8;
         if (descMaxWidth < 0) {
-          appendDescription(description);
+          myRenderer.appendTextWithLinks(description);
         }
         else if (descWidth < descMaxWidth && !truncated) {
-          appendDescription(description);
+          myRenderer.appendTextWithLinks(description);
           appendAlign(parentWidth - size);
         }
         else {
@@ -291,7 +294,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
             description = trimLastWord(description);
             descWidth = fontMetrics.stringWidth(description + " ");
           }
-          appendDescription(description);
+          myRenderer.appendTextWithLinks(description);
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           append(moreMarker, LINK_ATTRIBUTES, MORE_TAG);
           appendAlign(parentWidth - size);
@@ -302,22 +305,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
       else if (node.getUserObject() != null) {
         append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      }
-    }
-
-    private void appendDescription(final String description) {
-      final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(description);
-      int pos = 0;
-      for(IssueNavigationConfiguration.LinkMatch match: list) {
-        final TextRange textRange = match.getRange();
-        if (textRange.getStartOffset() > pos) {
-          append(description.substring(pos, textRange.getStartOffset()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-        append(description.substring(textRange.getStartOffset(), textRange.getEndOffset()), LINK_ATTRIBUTES, match.getTargetUrl());
-        pos = textRange.getEndOffset();
-      }
-      if (pos < description.length()) {
-        append(description.substring(pos), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
 
@@ -332,16 +319,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     public Dimension getPreferredSize() {
       return new Dimension(2000, super.getPreferredSize().height);
     }
-
-    public void prepareHitTest(final Tree changesTree, final DefaultMutableTreeNode treeNode) {
-      if (myLastChangeList != treeNode.getUserObject()) {
-        getTreeCellRendererComponent(changesTree, treeNode, false, false, false, -1, false);
-      }
-    }
-
-    public CommittedChangeList getLastChangeList() {
-      return myLastChangeList;
-    }
   }
 
   private class FilterChangeListener implements ChangeListener {
@@ -350,53 +327,4 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
-  private class LinkMouseListener extends MouseAdapter implements MouseMotionListener {
-    private final Project myProject;
-
-    public LinkMouseListener(final Project project) {
-      myProject = project;
-    }
-
-    public void mouseClicked(final MouseEvent e) {
-      Object tag = getTagAt(e);
-      if (tag == MORE_TAG) {
-        ChangeListDetailsAction.showDetailsPopup(myProject, myCellRenderer.getLastChangeList());
-      }
-      else if (tag != null) {
-        BrowserUtil.launchBrowser(tag.toString());
-      }
-    }
-
-    @Nullable
-    private Object getTagAt(final MouseEvent e) {
-      Object tag = null;
-      if (!e.isPopupTrigger()) {
-        final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          final Rectangle rectangle = myChangesTree.getPathBounds(path);
-          int dx = e.getX() - rectangle.x;
-          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-          myCellRenderer.prepareHitTest(myChangesTree, treeNode);
-          int i = myCellRenderer.findFragmentAt(dx);
-          if (i >= 0) {
-            tag = myCellRenderer.getFragmentTag(i);
-          }
-        }
-      }
-      return tag;
-    }
-
-    public void mouseDragged(MouseEvent e) {
-    }
-
-    public void mouseMoved(MouseEvent e) {
-      Object tag = getTagAt(e);
-      if (tag != null) {
-        myChangesTree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
-      else {
-        myChangesTree.setCursor(Cursor.getDefaultCursor());
-      }
-    }
-  }
 }
