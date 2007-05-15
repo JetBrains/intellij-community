@@ -475,8 +475,7 @@ public class ImportHelper{
     if (classCount >= limitCount) return true;
     if (packageName.length() == 0) return false;
     CodeStyleSettings.PackageTable table = mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
-    if (table == null) return false;
-    return table.contains(packageName);
+    return table != null && table.contains(packageName);
   }
 
   private int findEntryIndex(String packageName){

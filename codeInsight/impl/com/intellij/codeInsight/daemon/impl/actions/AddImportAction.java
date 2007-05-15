@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -8,18 +9,13 @@ import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiImportStaticReferenceElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -31,7 +27,7 @@ public class AddImportAction implements QuestionAction {
   private PsiClass[] myTargetClasses;
   private Editor myEditor;
 
-  public AddImportAction(Project project, PsiJavaCodeReferenceElement ref, Editor editor, PsiClass... targetClasses) {
+  public AddImportAction(@NotNull Project project, @NotNull PsiJavaCodeReferenceElement ref, @NotNull Editor editor, @NotNull PsiClass... targetClasses) {
     myProject = project;
     myReference = ref;
     myTargetClasses = targetClasses;
@@ -114,6 +110,9 @@ public class AddImportAction implements QuestionAction {
         else {
           ref.bindToElement(targetClass);
         }
+        Document document = myEditor.getDocument();
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        new OptimizeImportsProcessor(myProject, psiFile).run();
       }
       catch(IncorrectOperationException e){
         LOG.error(e);
