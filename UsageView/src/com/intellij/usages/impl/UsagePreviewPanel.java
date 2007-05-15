@@ -120,8 +120,8 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
-  private static final Key<String> PREVIEW_EDITOR_FLAG = Key.create("PREVIEW_EDITOR_FLAG");
-  private static Editor createEditor(final PsiFile psiFile, Document document) {
+  private static final Key<UsagePreviewPanel> PREVIEW_EDITOR_FLAG = Key.create("PREVIEW_EDITOR_FLAG");
+  private Editor createEditor(final PsiFile psiFile, Document document) {
     Project project = psiFile.getProject();
 
     Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getFileType(), true);
@@ -133,14 +133,14 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
 
-    editor.putUserData(PREVIEW_EDITOR_FLAG, "");
+    editor.putUserData(PREVIEW_EDITOR_FLAG, this);
     return editor;
   }
 
   public void dispose() {
     releaseEditor();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) != null) {
+      if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:"+editor);
       }
     }
