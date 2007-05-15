@@ -23,6 +23,9 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -31,6 +34,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -39,12 +43,15 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.*;
+import com.intellij.ide.BrowserUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -67,7 +74,7 @@ import java.util.List;
 public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements FileHistoryPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
-  private JTextArea myComments;
+  private JEditorPane myComments;
   private final DefaultActionGroup myPopupActions;
 
   private final Project myProject;
@@ -126,7 +133,28 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   };
 
-  public static final DualViewColumnInfo MESSAGE = new VcsColumnInfo<String>(COMMIT_MESSAGE_TITLE) {
+  private static class MessageRenderer extends ColoredTableCellRenderer {
+    private IssueLinkRenderer myIssueLinkRenderer;
+
+    public MessageRenderer(Project project) {
+      myIssueLinkRenderer = new IssueLinkRenderer(project, this);
+    }
+
+    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      String message = (String) value;
+      myIssueLinkRenderer.appendTextWithLinks(message);
+      setToolTipText(message);
+    }
+  }
+
+  private static class MessageColumnInfo extends VcsColumnInfo<String> {
+    private MessageRenderer myRenderer;
+
+    public MessageColumnInfo(Project project) {
+      super(FileHistoryPanelImpl.COMMIT_MESSAGE_TITLE);
+      myRenderer = new MessageRenderer(project);
+    }
+
     protected String getDataOf(VcsFileRevision object) {
       final String originalMessage = object.getCommitMessage();
       if (originalMessage != null) {
@@ -164,9 +192,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
-      return new LabelWithTooltip();
+      //return new LabelWithTooltip();
+      return myRenderer;
     }
-  };
+  }
 
   private final DualViewColumnInfo[] COLUMNS;
 
@@ -187,11 +216,19 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myHistorySession = session;
     myFilePath = filePath;
 
-    COLUMNS = createColumnList(provider);
+    COLUMNS = createColumnList(project, provider);
 
-    myComments = new JTextArea();
-    myComments.setRows(5);
+    myComments = new JEditorPane(UIUtil.HTML_MIME, "");
+    myComments.setPreferredSize(new Dimension(150, 100));
     myComments.setEditable(false);
+    myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
+    myComments.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          BrowserUtil.launchBrowser(e.getDescription());
+        }
+      }
+    });
 
     myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
 
@@ -207,6 +244,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                 storageKey, project);
       myDualView.switchToTheFlatMode();
     }
+    new TableLinkMouseListener().install(myDualView.getFlatView());
 
     createDualView(null);
 
@@ -251,7 +289,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     chooseView();
   }
 
-  private static DualViewColumnInfo[] createColumnList(VcsHistoryProvider provider) {
+  private static DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider) {
     ColumnInfo[] additionalColunms = provider.getRevisionColumns();
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
     if (provider.isDateOmittable()) {
@@ -262,7 +300,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     columns.addAll(wrapAdditionalColumns(additionalColunms));
-    columns.add(MESSAGE);
+    columns.add(new MessageColumnInfo(project));
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
@@ -388,7 +426,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       myComments.setText("");
     }
     else {
-      myComments.setText(getFirstSelectedRevision().getCommitMessage());
+      final String message = getFirstSelectedRevision().getCommitMessage();
+      myComments.setText("<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>");
       myComments.setCaretPosition(0);
     }
   }
@@ -471,8 +510,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     JPanel commentGroup = new JPanel(new BorderLayout(4, 4));
     commentGroup.add(new JLabel(COMMIT_MESSAGE_TITLE + ":"), BorderLayout.NORTH);
     commentGroup.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
-    myComments.setWrapStyleWord(true);
-    myComments.setLineWrap(true);
 
     splitter.setFirstComponent(myDualView);
     splitter.setSecondComponent(commentGroup);

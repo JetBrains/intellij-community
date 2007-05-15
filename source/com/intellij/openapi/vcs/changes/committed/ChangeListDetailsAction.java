@@ -9,21 +9,18 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
-import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.text.DateFormat;
-import java.util.List;
 
 /**
  * @author yole
@@ -56,22 +53,7 @@ public class ChangeListDetailsAction extends AnAction {
     }
     detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
     detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
-    String comment = XmlStringUtil.escapeString(changeList.getComment());
-
-    StringBuilder commentBuilder = new StringBuilder();
-    IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
-    final List<IssueNavigationConfiguration.LinkMatch> list = config.findIssueLinks(comment);
-    int pos = 0;
-    for(IssueNavigationConfiguration.LinkMatch match: list) {
-      TextRange range = match.getRange();
-      commentBuilder.append(comment.substring(pos, range.getStartOffset())).append("<a href=\"").append(match.getTargetUrl()).append("\">");
-      commentBuilder.append(comment.substring(range.getStartOffset(), range.getEndOffset())).append("</a>");
-      pos = range.getEndOffset();
-    }
-    commentBuilder.append(comment.substring(pos));
-    comment = commentBuilder.toString();
-
-    detailsBuilder.append(comment.replace("\n", "<br>"));
+    detailsBuilder.append(IssueLinkHtmlRenderer.formatTextWithLinks(project, changeList.getComment()));
     detailsBuilder.append("</body></html>");
 
     JEditorPane editorPane = new JEditorPane(UIUtil.HTML_MIME, detailsBuilder.toString());
@@ -96,4 +78,5 @@ public class ChangeListDetailsAction extends AnAction {
         .createPopup();
     hint.showInBestPositionFor(DataManager.getInstance().getDataContext());
   }
+
 }

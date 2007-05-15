@@ -243,30 +243,7 @@ public class DualView extends JPanel {
       return renderer;
     }
     else {
-      return new TableCellRenderer() {
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          Component result = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          Object treeNode = null;
-          if (myCurrentView == myTreeView) {
-            TreePath path = myTreeView.getTree().getPathForRow(row);
-            if (path != null) {
-              treeNode = path.getLastPathComponent();
-            }
-          }
-          else if (myCurrentView == myFlatView) {
-            treeNode = myFlatView.getItems().get(row);
-          }
-
-          myCellWrapper.wrap(result, table, value, isSelected, hasFocus, row, column, treeNode);
-          return result;
-
-        }
-      };
+      return new TableCellRendererWrapper(renderer);
     }
   }
 
@@ -425,5 +402,40 @@ public class DualView extends JPanel {
   public void rebuild() {
     ((AbstractTableModel)myFlatView.getModel()).fireTableDataChanged();
     ((AbstractTableModel)myTreeView.getModel()).fireTableDataChanged();
+  }
+
+  public class TableCellRendererWrapper implements TableCellRenderer {
+    private final TableCellRenderer myRenderer;
+
+    public TableCellRendererWrapper(final TableCellRenderer renderer) {
+      myRenderer = renderer;
+    }
+
+    public TableCellRenderer getRenderer() {
+      return myRenderer;
+    }
+
+    public Component getTableCellRendererComponent(JTable table,
+                                                   Object value,
+                                                   boolean isSelected,
+                                                   boolean hasFocus,
+                                                   int row,
+                                                   int column) {
+      Component result = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      Object treeNode = null;
+      if (myCurrentView == myTreeView) {
+        TreePath path = myTreeView.getTree().getPathForRow(row);
+        if (path != null) {
+          treeNode = path.getLastPathComponent();
+        }
+      }
+      else if (myCurrentView == myFlatView) {
+        treeNode = myFlatView.getItems().get(row);
+      }
+
+      myCellWrapper.wrap(result, table, value, isSelected, hasFocus, row, column, treeNode);
+      return result;
+
+    }
   }
 }
