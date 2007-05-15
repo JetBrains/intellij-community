@@ -94,8 +94,10 @@ public class PropertiesBuilder extends AntElementVisitor {
   public void visitAntProperty(final AntProperty antProperty) {
     final PropertiesFile propertiesFile = antProperty.getPropertiesFile();
     if (propertiesFile != null) {
+      final String prefix = antProperty.getPrefix();
       for (Property property : propertiesFile.getProperties()) {
-        myPropertyHolder.setProperty(property.getName(), antProperty);
+        final String name = prefix != null? prefix + "." + property.getName() : property.getName();
+        myPropertyHolder.setProperty(name, antProperty);
       }
     }
 

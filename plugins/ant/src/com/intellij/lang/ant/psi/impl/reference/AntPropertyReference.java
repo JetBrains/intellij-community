@@ -174,8 +174,9 @@ public class AntPropertyReference extends AntGenericReference {
               }
             }
             else {
+              final String prefix = property.getPrefix();
               for (final Property importedProp : propertiesFile.getProperties()) {
-                final String propName = importedProp.getName();
+                final String propName = prefix != null? prefix + "." + importedProp.getName() : importedProp.getName();
                 if (!definedProperties.contains(propName)) {
                   variants.add(importedProp);
                   definedProperties.add(propName);

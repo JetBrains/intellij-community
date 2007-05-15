@@ -103,10 +103,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       final String tagName = se.getName();
       if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
         String value = getPropertyValue();
-        if (value == null) {
+        if (value == null && propName != null) {
           final PropertiesFile propertiesFile = getPropertiesFile();
           if (propertiesFile != null) {
-            final Property fileProperty = propertiesFile.findPropertyByKey(propName);
+            final Property fileProperty = propertiesFile.findPropertyByKey(cutPrefix(propName));
             if (fileProperty != null) {
               value = fileProperty.getValue();
             }
@@ -122,6 +122,14 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
       return null;
     }
+  }
+
+  private String cutPrefix(@NotNull final String propName) {
+    final String prefix = getPrefix();
+    if (prefix != null && propName.startsWith(prefix) && prefix.length() < propName.length() && propName.charAt(prefix.length()) == '.') {
+      return propName.substring(prefix.length() + 1);
+    }
+    return propName;
   }
 
   @Nullable
@@ -274,19 +282,20 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         }
       }
     }
-    if (propName != null) {
-      if (propName.equals("DSTAMP")) {
+    final String _propName = propName != null? cutPrefix(propName) : null;
+    if (_propName != null) {
+      if (_propName.equals("DSTAMP")) {
         return new SimpleDateFormat("yyyyMMdd").format(d);
       }
-      else if (propName.equals("TSTAMP")) {
+      else if (_propName.equals("TSTAMP")) {
         return new SimpleDateFormat("HHmm").format(d);
       }
-      else if (propName.equals("TODAY")) {
+      else if (_propName.equals("TODAY")) {
         return new SimpleDateFormat("MMMM d yyyy", Locale.US).format(d);
       }
     }
     final XmlAttributeValue value = getTstampPropertyAttributeValue();
-    if (value != null && (propName == null || propName.equals(value.getValue()))) {
+    if (value != null && (_propName == null || _propName.equals(value.getValue()))) {
       if (formatTag != null) {
         final String pattern = formatTag.getAttributeValue("pattern");
         final DateFormat format = (pattern != null) ? new SimpleDateFormat(pattern) : DateFormat.getTimeInstance();
