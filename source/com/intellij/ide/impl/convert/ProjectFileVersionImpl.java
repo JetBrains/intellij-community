@@ -126,7 +126,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     myState = object;
   }
 
-  private void showNotAllowedMessage() {
+  public void showNotAllowedMessage() {
     Messages.showErrorDialog(myProject, IdeBundle.message("message.text.this.feature.is.not.available.for.project.in.older.format"), CommonBundle.getErrorTitle());
   }
 

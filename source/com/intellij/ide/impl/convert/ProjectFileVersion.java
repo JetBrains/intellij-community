@@ -25,4 +25,6 @@ public abstract class ProjectFileVersion {
   public abstract boolean isConverted();
 
   public abstract boolean convert() throws IOException;
+
+  public abstract void showNotAllowedMessage();
 }

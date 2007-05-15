@@ -27,6 +27,7 @@ import java.util.ArrayList;
 public class ProjectConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectConversionUtil");
   @NonNls private static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
+  @NonNls private static final String BACKUP_EXTENSION = "backup";
 
   private ProjectConversionUtil() {
   }
@@ -127,7 +128,7 @@ public class ProjectConversionUtil {
   }
 
   @Nullable
-  public static ProjectConverter getConverter(final String projectFilePath) {
+  private static ProjectConverter getConverter(final String projectFilePath) {
     for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
       final ProjectConverter converter = converterFactory.createConverter(projectFilePath);
       if (converter != null) {
@@ -135,6 +136,24 @@ public class ProjectConversionUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static ModuleConverter getModuleConverter() {
+    for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
+      final ModuleConverter converter = converterFactory.createModuleConverter();
+      if (converter != null) {
+        return converter;
+      }
+    }
+    return null;
+  }
+
+  public static File backupFile(File file) throws IOException {
+    final String fileName = FileUtil.createSequentFileName(file.getParentFile(), file.getName(), BACKUP_EXTENSION);
+    final File backup = new File(file.getParentFile(), fileName);
+    FileUtil.copy(file, backup);
+    return backup; 
   }
 
   public static File backupFiles(final File[] files, final File parentDir) throws IOException {
