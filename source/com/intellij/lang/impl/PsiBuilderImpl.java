@@ -39,8 +39,8 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,7 +74,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
 
-  private final static LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
+  private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     public StartMarker create() {
       return new StartMarker();
     }
@@ -84,7 +84,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private final static LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<DoneMarker>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
+  private final LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<DoneMarker>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
     public DoneMarker create() {
       return new DoneMarker();
     }
