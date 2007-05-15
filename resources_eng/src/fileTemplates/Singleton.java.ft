@@ -1,5 +1,5 @@
 #parse("File Header.java")
-package ${PACKAGE_NAME};
+#if (${PACKAGE_NAME} != "")package ${PACKAGE_NAME};#end
 
 public class ${Name}{
     private static ${Name} ourInstance = new ${Name}();

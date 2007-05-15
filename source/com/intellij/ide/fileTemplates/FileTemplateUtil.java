@@ -368,7 +368,7 @@ public class FileTemplateUtil{
         return;
       }
     }
-    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, "");
   }
 
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
