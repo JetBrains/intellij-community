@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiMethodUtil;
 
 public class ApplicationConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
   private PsiElement myPsiElement = null;
@@ -56,7 +57,7 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
   private static PsiMethod findMain(PsiElement element) {
     PsiMethod method;
     while ((method = getContainingMethod(element)) != null)
-      if (ApplicationConfigurationType.isMainMethod(method)) return method;
+      if (PsiMethodUtil.isMainMethod(method)) return method;
       else element = method.getParent();
     return null;
   }

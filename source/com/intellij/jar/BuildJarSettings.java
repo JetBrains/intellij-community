@@ -1,5 +1,9 @@
 package com.intellij.jar;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.ModuleContainer;
 import com.intellij.openapi.module.Module;
@@ -10,14 +14,10 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.application.ApplicationConfigurationType;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ide.IdeBundle;
+import com.intellij.psi.util.PsiMethodUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
         throw new RuntimeConfigurationError(IdeBundle.message("jar.build.class.not.found", myMainClass));
       }
 
-      if (!ApplicationConfigurationType.hasMainMethod(aClass)) {
+      if (!PsiMethodUtil.hasMainMethod(aClass)) {
         throw new RuntimeConfigurationError(ExecutionBundle.message("main.method.not.found.in.class.error.message", myMainClass));
       }
     }

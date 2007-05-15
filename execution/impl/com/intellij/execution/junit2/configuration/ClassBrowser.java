@@ -1,8 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.application.ApplicationConfigurationType;
+import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserDialog;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiMethodUtil;
 
 public abstract class ClassBrowser extends BrowseModuleValueActionListener {
   private final String myTitle;
@@ -61,7 +61,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
                                                            final ConfigurationModuleSelector moduleSelector) {
     final TreeClassChooser.ClassFilter applicationClass = new TreeClassChooser.ClassFilter() {
       public boolean isAccepted(final PsiClass aClass) {
-        return ConfigurationUtil.MAIN_CLASS.value(aClass) && ApplicationConfigurationType.findMainMethod(aClass) != null;
+        return ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null;
       }
     };
     return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")){

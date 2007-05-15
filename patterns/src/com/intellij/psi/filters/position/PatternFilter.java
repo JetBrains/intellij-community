@@ -3,11 +3,11 @@
  */
 package com.intellij.psi.filters.position;
 
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiElement;
+import com.intellij.patterns.impl.MatchingContext;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.TraverseContext;
-import com.intellij.patterns.impl.MatchingContext;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
 
 /**
  * @author peter

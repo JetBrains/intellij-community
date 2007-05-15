@@ -1,8 +1,8 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,8 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -150,14 +154,7 @@ public class ExecutionUtil {
     }
   }
 
-  public static boolean isRunnableClass(final PsiClass aClass, final boolean mustBePublic) {
-    if (aClass instanceof PsiAnonymousClass) return false;
-    if (aClass.isInterface()) return false;
-    if (mustBePublic && !aClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
-  }
   public static boolean isRunnableClass(final PsiClass aClass) {
-    return isRunnableClass(aClass, true);
+    return PsiClassUtil.isRunnableClass(aClass, true);
   }
 }

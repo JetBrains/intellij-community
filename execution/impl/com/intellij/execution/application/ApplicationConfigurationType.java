@@ -2,13 +2,14 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,44 +66,13 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     while (element != null) {
       if (element instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)element;
-        if (findMainInClass(aClass) != null){
+        if (PsiMethodUtil.findMainInClass(aClass) != null){
           return aClass;
         }
       }
       element = element.getParent();
     }
     return null;
-  }
-
-
-  private static PsiMethod findMainInClass(final PsiClass aClass) {
-    if (!ConfigurationUtil.MAIN_CLASS.value(aClass)) return null;
-    return findMainMethod(aClass);
-  }
-
-  public static PsiMethod findMainMethod(final PsiClass aClass) {
-    final PsiMethod[] mainMethods = aClass.findMethodsByName("main", false);
-    return findMainMethod(mainMethods);
-  }
-
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
-    for (final PsiMethod mainMethod : mainMethods) {
-      if (isMainMethod(mainMethod)) return mainMethod;
-    }
-    return null;
-  }
-
-  public static boolean isMainMethod(final PsiMethod method) {
-    if (method == null) return false;
-    if (PsiType.VOID != method.getReturnType()) return false;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-    final PsiType type = parameters[0].getType();
-    if (!(type instanceof PsiArrayType)) return false;
-    final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText("java.lang.String");
   }
 
 
@@ -115,7 +85,4 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     return ApplicationManager.getApplication().getComponent(ApplicationConfigurationType.class);
   }
 
-  public static boolean hasMainMethod(final PsiClass psiClass) {
-    return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
-  }
 }

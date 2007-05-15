@@ -1,9 +1,8 @@
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
@@ -16,17 +15,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
-import com.intellij.codeInsight.CodeInsightBundle;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,7 +227,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (JUnitUtil.isTestClass(aClass)) {
       return CLASS_KIND_JUNIT_TEST;
     }
-    if (ExecutionUtil.isRunnableClass(aClass, false) && ApplicationConfigurationType.findMainMethod(aClass) != null) {
+    if (PsiClassUtil.isRunnableClass(aClass, false) && PsiMethodUtil.findMainMethod(aClass) != null) {
       return CLASS_KIND_RUNNABLE;
     }
     return CLASS_KIND_CLASS;
