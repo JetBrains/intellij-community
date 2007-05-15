@@ -1,34 +1,34 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.text.DateFormat;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class ChangeListDetailsAction extends AnAction {
-  @NonNls private static Pattern ourHtmlPattern = Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
-
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(DataKeys.CHANGE_LISTS);
@@ -57,13 +57,19 @@ public class ChangeListDetailsAction extends AnAction {
     detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
     detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
     String comment = XmlStringUtil.escapeString(changeList.getComment());
-    comment = ourHtmlPattern.matcher(comment).replaceAll("<a href=\"$0\">$0</a>");
 
+    StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
-    for(IssueNavigationLink link: config.getLinks()) {
-      Pattern pattern = Pattern.compile(link.getIssueRegexp());
-      comment = pattern.matcher(comment).replaceAll("<a href=\"" + link.getLinkRegexp() + "\">$0</a>");
+    final List<IssueNavigationConfiguration.LinkMatch> list = config.findIssueLinks(comment);
+    int pos = 0;
+    for(IssueNavigationConfiguration.LinkMatch match: list) {
+      TextRange range = match.getRange();
+      commentBuilder.append(comment.substring(pos, range.getStartOffset())).append("<a href=\"").append(match.getTargetUrl()).append("\">");
+      commentBuilder.append(comment.substring(range.getStartOffset(), range.getEndOffset())).append("</a>");
+      pos = range.getEndOffset();
     }
+    commentBuilder.append(comment.substring(pos));
+    comment = commentBuilder.toString();
 
     detailsBuilder.append(comment.replace("\n", "<br>"));
     detailsBuilder.append("</body></html>");

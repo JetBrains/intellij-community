@@ -17,12 +17,15 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 /**
  * @author yole
  */
 public class IssueNavigationLink {
   private String myIssueRegexp = "";
   private String myLinkRegexp = "";
+  private Pattern myIssuePattern;
 
   public IssueNavigationLink() {
   }
@@ -39,6 +42,14 @@ public class IssueNavigationLink {
 
   public void setIssueRegexp(final String issueRegexp) {
     myIssueRegexp = issueRegexp;
+    myIssuePattern = null;
+  }
+
+  public Pattern getIssuePattern() {
+    if (myIssuePattern == null) {
+      myIssuePattern = Pattern.compile(myIssueRegexp);
+    }
+    return myIssuePattern;
   }
 
   @NotNull

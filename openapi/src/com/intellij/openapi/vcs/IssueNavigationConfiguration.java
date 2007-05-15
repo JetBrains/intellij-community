@@ -17,10 +17,16 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -36,6 +42,8 @@ import java.util.List;
     }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
+  @NonNls private static Pattern ourHtmlPattern = Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
+
   public static IssueNavigationConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, IssueNavigationConfiguration.class);
   }
@@ -56,5 +64,55 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
 
   public void loadState(IssueNavigationConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  public static class LinkMatch {
+    private TextRange myRange;
+    private String myTargetUrl;
+
+    public LinkMatch(final TextRange range, final String targetUrl) {
+      myRange = range;
+      myTargetUrl = targetUrl;
+    }
+
+    public TextRange getRange() {
+      return myRange;
+    }
+
+    public String getTargetUrl() {
+      return myTargetUrl;
+    }
+  }
+
+  public List<LinkMatch> findIssueLinks(String text) {
+    if (myLinks.size() == 0) {
+      return Collections.emptyList();
+    }
+    final List<LinkMatch> result = new ArrayList<LinkMatch>();
+    for(IssueNavigationLink link: myLinks) {
+      Matcher m = link.getIssuePattern().matcher(text);
+      while(m.find()) {
+        String replacement = link.getIssuePattern().matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
+        addMatch(result, new TextRange(m.start(), m.end()), replacement);
+      }
+    }
+    Matcher m = ourHtmlPattern.matcher(text);
+    while(m.find()) {
+      addMatch(result, new TextRange(m.start(), m.end()), m.group());
+    }
+    return result;
+  }
+
+  private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement) {
+    for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext();) {
+      LinkMatch oldMatch = iterator.next();
+      if (range.contains(oldMatch.getRange())) {
+        iterator.remove();
+      }
+      else if (oldMatch.getRange().contains(range)) {
+        return;
+      }
+    }
+    result.add(new LinkMatch(range, replacement));
   }
 }

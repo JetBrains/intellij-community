@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -49,6 +52,8 @@ import java.util.List;
  * @author yole
  */
 public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable {
+  private static final Object MORE_TAG = new Object();
+
   private final Tree myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
@@ -75,7 +80,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     };
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
-    myCellRenderer = new CommittedChangeListRenderer();
+    myCellRenderer = new CommittedChangeListRenderer(IssueNavigationConfiguration.getInstance(project));
     myChangesTree.setCellRenderer(myCellRenderer);
     TreeUtil.expandAll(myChangesTree);
 
@@ -87,25 +92,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         updateBySelectionChange();
       }
     });
-    myChangesTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.isPopupTrigger()) return;
-        final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          final Rectangle rectangle = myChangesTree.getPathBounds(path);
-          int dx = e.getX() - rectangle.x;
-          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-          myCellRenderer.getTreeCellRendererComponent(myChangesTree, treeNode, false, false, false, -1, false);
-          int i = myCellRenderer.findFragmentAt(dx);
-          if (i >= 0) {
-            String text = myCellRenderer.getFragmentText(i);
-            if (text.equals(VcsBundle.message("changes.browser.details.marker"))) {
-              ChangeListDetailsAction.showDetailsPopup(project, (CommittedChangeList) treeNode.getUserObject());
-            }
-          }
-        }
-      }
-    });
+    myChangesTree.addMouseListener(new LinkMouseListener(project));
 
     myLeftPanel = new JPanel(new BorderLayout());
     myFilterSplitter = new Splitter(false, 0.5f);
@@ -255,7 +242,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-    private static final SimpleTextAttributes MORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
+    private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
+    private IssueNavigationConfiguration myIssueNavigationConfiguration;
+
+    public CommittedChangeListRenderer(final IssueNavigationConfiguration issueNavigationConfiguration) {
+      myIssueNavigationConfiguration = issueNavigationConfiguration;
+    }
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
@@ -279,10 +271,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         int descWidth = fontMetrics.stringWidth(description);
         final int descMaxWidth = parentWidth - size - 8;
         if (descMaxWidth < 0) {
-          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          appendDescription(description);
         }
         else if (descWidth < descMaxWidth && !truncated) {
-          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          appendDescription(description);
           appendAlign(parentWidth - size);
         }
         else {
@@ -292,9 +284,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
             description = trimLastWord(description);
             descWidth = fontMetrics.stringWidth(description + " ");
           }
-          append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          appendDescription(description);
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          append(moreMarker, MORE_ATTRIBUTES);
+          append(moreMarker, LINK_ATTRIBUTES, MORE_TAG);
           appendAlign(parentWidth - size);
         }
 
@@ -303,6 +295,22 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
       else if (node.getUserObject() != null) {
         append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+
+    private void appendDescription(final String description) {
+      final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(description);
+      int pos = 0;
+      for(IssueNavigationConfiguration.LinkMatch match: list) {
+        final TextRange textRange = match.getRange();
+        if (textRange.getStartOffset() > pos) {
+          append(description.substring(pos, textRange.getStartOffset()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+        append(description.substring(textRange.getStartOffset(), textRange.getEndOffset()), LINK_ATTRIBUTES, match.getTargetUrl());
+        pos = textRange.getEndOffset();
+      }
+      if (pos < description.length()) {
+        append(description.substring(pos), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
 
@@ -325,4 +333,34 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
+  private class LinkMouseListener extends MouseAdapter {
+    private final Project myProject;
+
+    public LinkMouseListener(final Project project) {
+      myProject = project;
+    }
+
+    public void mouseClicked(final MouseEvent e) {
+      if (e.isPopupTrigger()) return;
+      final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
+      if (path != null) {
+        final Rectangle rectangle = myChangesTree.getPathBounds(path);
+        int dx = e.getX() - rectangle.x;
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+        myCellRenderer.getTreeCellRendererComponent(myChangesTree, treeNode, false, false, false, -1, false);
+        int i = myCellRenderer.findFragmentAt(dx);
+        if (i >= 0) {
+          Object tag = myCellRenderer.getFragmentTag(i);
+          if (tag != null) {
+            if (tag == MORE_TAG) {
+              ChangeListDetailsAction.showDetailsPopup(myProject, (CommittedChangeList) treeNode.getUserObject());
+            }
+            else {
+              BrowserUtil.launchBrowser(tag.toString());
+            }
+          }
+        }
+      }
+    }
+  }
 }

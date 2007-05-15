@@ -39,6 +39,7 @@ public class SimpleColoredComponent extends JComponent {
 
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
+  private ArrayList myFragmentTags = null;
 
   /**
    * Component's icon. It can be <code>null</code>.
@@ -103,6 +104,17 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
+  public synchronized void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
+    append(fragment, attributes);
+    if (myFragmentTags == null) {
+      myFragmentTags = new ArrayList();
+    }
+    while(myFragmentTags.size() < myFragments.size()-1) {
+      myFragmentTags.add(null);
+    }
+    myFragmentTags.add(tag);
+  }
+
   public synchronized void appendAlign(int alignWidth) {
     myAlignIndex = myFragments.size()-1;
     myAlignWidth = alignWidth;
@@ -118,6 +130,7 @@ public class SimpleColoredComponent extends JComponent {
     setBorder(null);
     myFragments.clear();
     myAttributes.clear();
+    myFragmentTags = null;
     myMainTextLastIndex = -1;
     myAlignIndex = -1;
     myAlignWidth = -1;
@@ -193,8 +206,11 @@ public class SimpleColoredComponent extends JComponent {
 
   }
 
-  public synchronized String getFragmentText(int index) {
-    return myFragments.get(index);    
+  public synchronized Object getFragmentTag(int index) {
+    if (myFragmentTags != null && index < myFragmentTags.size()) {
+      return myFragmentTags.get(index);
+    }
+    return null;
   }
 
   public synchronized final Dimension computePreferredSize(final boolean mainTextOnly) {
