@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,14 +124,19 @@ public class JavacOutputParser extends OutputParser {
 
           if (colNum > 0){
             messages = convertMessages(messages);
-            StringBuilder buf = new StringBuilder();
-            for (final String m : messages) {
-              if (buf.length() > 0) {
-                buf.append("\n");
+            final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+            try {
+              for (final String m : messages) {
+                if (buf.length() > 0) {
+                  buf.append("\n");
+                }
+                buf.append(m);
               }
-              buf.append(m);
+              addMessage(callback, category, buf.toString(), VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum);
             }
-            addMessage(callback, category, buf.toString(), VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum);
+            finally {
+              StringBuilderSpinAllocator.dispose(buf);
+            }
             return true;
           }
         }
