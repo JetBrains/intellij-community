@@ -55,8 +55,9 @@ public class ArgumentList implements GroovyElementTypes {
         builder.advanceLexer();
       }
     }
+
+    ParserUtils.getToken(builder, mNLS);
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
-      ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (argumentParse(builder, closingBrace).equals(WRONGWAY)) {
