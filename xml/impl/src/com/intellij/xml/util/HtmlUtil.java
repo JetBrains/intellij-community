@@ -39,11 +39,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Sep 18, 2004
- * Time: 6:59:31 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
@@ -149,7 +145,8 @@ public class HtmlUtil {
     }
   }
 
-  public static @Nullable XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
+  @Nullable
+  public static XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
     if (doc == null) return null;
     final PsiFile containingFile = doc.getContainingFile();
 
@@ -231,7 +228,8 @@ public class HtmlUtil {
     return descriptors;
   }
 
-  public static @Nullable String getEntitiesString(XmlElement context, int type) {
+  @Nullable
+  public static String getEntitiesString(XmlElement context, int type) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile();
     if (containingFile.getOriginalFile() != null) {
@@ -295,11 +293,11 @@ public class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<String>();
     try {
       new XmlBuilderDriver(content).build(new XmlBuilder() {
-        Bag inTag = new HashBag();
+        @NonNls Bag inTag = new HashBag();
         boolean metHttpEquiv = false;
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
-          String name = localName.toString().toLowerCase();
+          @NonNls String name = localName.toString().toLowerCase();
           inTag.add(name);
           if (!inTag.contains("head") && !"html".equals(name)) terminate();
           return ProcessingOrder.TAGS_AND_ATTRIBUTES;
@@ -310,7 +308,7 @@ public class HtmlUtil {
         }
 
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
-          final String name = localName.toString().toLowerCase();
+          @NonNls final String name = localName.toString().toLowerCase();
           if ("head".equals(name)) {
             terminate();  
           }
@@ -319,9 +317,9 @@ public class HtmlUtil {
         }
 
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
-          final String name = localName.toString().toLowerCase();
+          @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
-            String value = v.toString();
+            @NonNls String value = v.toString();
             if (name.equals("http-equiv")) {
               metHttpEquiv |= value.equals("Content-Type");
             }
@@ -349,7 +347,9 @@ public class HtmlUtil {
     }
     catch (TerminateException e) {
      //ignore
-      int i = 0;
+    }
+    catch (Exception e) {
+      // some weird things can happen, like unbalanaced tree
     }
 
     String name = charsetNameRef.get();
