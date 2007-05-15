@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public class TestIdeaGateway extends IdeaGateway {
   private String myPhysicalContent;
@@ -28,21 +27,6 @@ public class TestIdeaGateway extends IdeaGateway {
 
   public void setFileFilter(FileFilter f) {
     myFileFilter = f;
-  }
-
-  @Override
-  public <T> T performCommandInsideWriteAction(String name, Callable<T> c) {
-    try {
-      return c.call();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public boolean ensureFilesAreWritable(VirtualFile... ff) {
-    return true;
   }
 
   @Override

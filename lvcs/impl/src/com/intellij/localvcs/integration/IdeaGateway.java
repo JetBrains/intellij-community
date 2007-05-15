@@ -51,32 +51,31 @@ public class IdeaGateway {
     Messages.showErrorDialog(myProject, s, "Error");
   }
 
-  public <T> T performCommandInsideWriteAction(final String name, final Callable<T> c) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<T>() {
-      public T compute() {
-        return performCommand(name, c);
+  public void performCommandInsideWriteAction(final String name, final Callable c) {
+    ApplicationManager.getApplication().runWriteAction(new Computable() {
+      public Object compute() {
+        performCommand(name, c);
+        return null;
       }
     });
   }
 
-  private <T> T performCommand(String name, final Callable<T> c) {
-    final List<T> result = new ArrayList<T>();
+  private void performCommand(String name, final Callable c) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          result.add(c.call());
+          c.call();
         }
         catch (Exception e) {
           throw new RuntimeException(e);
         }
       }
     }, name, null);
-    return result.get(0);
   }
 
-  public boolean ensureFilesAreWritable(VirtualFile... ff) {
+  public boolean ensureFilesAreWritable(List<VirtualFile> ff) {
     ReadonlyStatusHandler h = ReadonlyStatusHandler.getInstance(myProject);
-    return !h.ensureFilesWritable(ff).hasReadonlyFiles();
+    return !h.ensureFilesWritable(ff.toArray(new VirtualFile[0])).hasReadonlyFiles();
   }
 
   public VirtualFile findVirtualFile(String path) {

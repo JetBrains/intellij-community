@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration.revert;
 
-import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.FormatUtil;
@@ -8,186 +7,83 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.Callable;
 
-public class Reverter {
-  private IdeaGateway myGateway;
-  private VirtualFile myFile;
-  private Revision myRevision;
-  private Entry myLeftEntry;
-  private Entry myRightEntry;
+public abstract class Reverter {
+  protected IdeaGateway myGateway;
+  protected Revision myLeftRevision;
+  protected Entry myLeftEntry;
+  protected Entry myRightEntry;
 
-  public static boolean revert(IdeaGateway gw, Revision r, Entry left, Entry right) {
-    return new Reverter(gw, r, left, right).revert();
-  }
-
-  private Reverter(IdeaGateway gw, Revision r, Entry left, Entry right) {
+  public Reverter(IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
     myGateway = gw;
-    myRevision = r;
-
-    myLeftEntry = left;
-    myRightEntry = right;
-
-    myFile = getFile();
+    myLeftRevision = leftRevision;
+    myLeftEntry = leftEntry;
+    myRightEntry = rightEntry;
   }
 
-  private VirtualFile getFile() {
-    if (!hasCurrentVersion()) return null;
-    return myGateway.findVirtualFile(myRightEntry.getPath());
-  }
-
-  private boolean revert() {
-    return myGateway.performCommandInsideWriteAction(formatCommandName(), new Callable<Boolean>() {
-      public Boolean call() throws Exception {
-        return doRevert();
-      }
-    });
-  }
-
-  private boolean doRevert() throws IOException {
-    if (!userAgreeWithPreconditions()) return false;
-
-    myGateway.saveAllUnsavedDocuments();
-
-    if (!hasPreviousVersion()) {
-      revertCreation();
+  public List<String> checkCanRevert() throws IOException {
+    List<String> errors = new ArrayList<String>();
+    if (!askForReadOnlyStatusClearing()) {
+      errors.add("some files are read-only");
     }
-    else if (!hasCurrentVersion()) {
-      revertDeletion();
-    }
-    else {
-      revertModification();
+    if (myLeftEntry != null && myLeftEntry.hasUnavailableContent()) {
+      errors.add("some of the files have big content");
     }
 
-    return true;
+    doCheckCanRevert(errors);
+    return removeDuplicatesAndSort(errors);
   }
 
-  private boolean userAgreeWithPreconditions() {
-    if (!userAllowedModificationOfReadOnlyFiles()) return false;
-    if (!userAllowedInterferedFileDeletion()) return false;
-    return true;
-  }
-
-  private boolean userAllowedModificationOfReadOnlyFiles() {
+  protected boolean askForReadOnlyStatusClearing() {
     if (!hasCurrentVersion()) return true;
-    return myGateway.ensureFilesAreWritable(myFile);
+    return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
   }
 
-  private boolean userAllowedInterferedFileDeletion() {
-    if (!hasPreviousVersion()) return true;
+  protected abstract List<VirtualFile> getFilesToClearROStatus();
 
-    if (findInterferedFile() == null) return true;
-    return myGateway.askForProceed("There is file that prevents revertion.\nDo you want to delete that file and proceed?");
+  protected abstract void doCheckCanRevert(List<String> errors) throws IOException;
+
+  private List<String> removeDuplicatesAndSort(List<String> list) {
+    List<String> result = new ArrayList<String>(new HashSet<String>(list));
+    Collections.sort(result);
+    return result;
   }
 
-  private void revertCreation() throws IOException {
-    myFile.delete(null);
-  }
-
-  private void revertDeletion() throws IOException {
-    VirtualFile parent = myGateway.findOrCreateDirectory(getParentOf(myLeftEntry));
-    restoreRecursively(parent, myLeftEntry);
-  }
-
-  private void restoreRecursively(VirtualFile parent, Entry e) throws IOException {
-    if (e.isDirectory()) {
-      VirtualFile dir = parent.createChildDirectory(null, getNameOf(e));
-      for (Entry child : e.getChildren()) {
-        restoreRecursively(dir, child);
+  public void revert() throws IOException {
+    try {
+      myGateway.performCommandInsideWriteAction(formatCommandName(), new Callable() {
+        public Object call() throws Exception {
+          myGateway.saveAllUnsavedDocuments();
+          doRevert();
+          return null;
+        }
+      });
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
       }
-    }
-    else {
-      VirtualFile f = parent.createChildData(null, getNameOf(e));
-      f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
-    }
-  }
-
-  private void revertModification() throws IOException {
-    removeInterferedFile();
-    revertMovement();
-    reventRename();
-
-    if (myFile.isDirectory()) {
-      revertDirectoryModifications(myFile, myLeftEntry);
-    }
-    else {
-      revertContent();
-    }
-  }
-
-  private void removeInterferedFile() throws IOException {
-    VirtualFile f = findInterferedFile();
-    if (f != null) f.delete(null);
-  }
-
-  private VirtualFile findInterferedFile() {
-    VirtualFile f = myGateway.findVirtualFile(myLeftEntry.getPath());
-    if (f == myFile) return null;
-    return f;
-  }
-
-  private void revertMovement() throws IOException {
-    String parentPath = getParentOf(myLeftEntry);
-
-    if (!Paths.equals(parentPath, myFile.getParent().getPath())) {
-      VirtualFile parent = myGateway.findOrCreateDirectory(parentPath);
-      myFile.move(null, parent);
-    }
-  }
-
-  private void reventRename() throws IOException {
-    if (!myFile.getName().equals(getNameOf(myLeftEntry))) {
-      myFile.rename(null, getNameOf(myLeftEntry));
-    }
-  }
-
-  private void revertDirectoryModifications(VirtualFile parentFile, Entry parentEntry) throws IOException {
-    if (!parentFile.isDirectory()) {
-      if (parentFile.getTimeStamp() != parentEntry.getTimestamp()) {
-        parentFile.setBinaryContent(parentEntry.getContent().getBytes(), -1, parentEntry.getTimestamp());
-      }
-      return;
-    }
-    for (VirtualFile f : parentFile.getChildren()) {
-      Entry e = parentEntry.findChild(f.getName());
-      if (e == null) {
-        f.delete(null);
-      }
-      else {
-        revertDirectoryModifications(f, e);
-      }
-    }
-    for (Entry e : parentEntry.getChildren()) {
-      if (parentFile.findChild(e.getName()) == null) restoreRecursively(parentFile, e);
-    }
-  }
-
-  private boolean hasPreviousVersion() {
-    return myLeftEntry != null;
-  }
-
-  private boolean hasCurrentVersion() {
-    return myRightEntry != null;
-  }
-
-
-  private void revertContent() throws IOException {
-    if (myFile.getTimeStamp() != myLeftEntry.getTimestamp()) {
-      myFile.setBinaryContent(myLeftEntry.getContent().getBytes(), -1, myLeftEntry.getTimestamp());
+      throw e;
     }
   }
 
   private String formatCommandName() {
-    return "Reverted to " + FormatUtil.formatTimestamp(myRevision.getTimestamp());
+    return "Reverted to " + FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
   }
 
-  // todo HACK: remove after introducing GhostDirectoryEntry
-  private String getParentOf(Entry e) {
-    return Paths.getParentOf(e.getPath());
+  public abstract void doRevert() throws IOException;
+
+  protected boolean hasPreviousVersion() {
+    return myLeftEntry != null;
   }
 
-  // todo HACK: remove after introducing GhostDirectoryEntry
-  private String getNameOf(Entry e) {
-    return Paths.getNameOf(e.getPath());
+  protected boolean hasCurrentVersion() {
+    return myRightEntry != null;
   }
 }
