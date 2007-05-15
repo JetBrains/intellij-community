@@ -362,11 +362,20 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitArrayAccessExpression(expression);
     }
 
+    public void visitParameter(final PsiParameter parameter) {
+      processVariable(parameter);
+      super.visitParameter(parameter);
+    }
+
     public void visitLocalVariable(final PsiLocalVariable variable) {
+      processVariable(variable);
+      super.visitLocalVariable(variable);
+    }
+
+    private void processVariable(final PsiVariable variable) {
       if (myLineRange.intersects(variable.getTextRange()) && myVisibleLocals.contains(variable.getName())) {
         myVars.add(variable.getName());
       }
-      super.visitLocalVariable(variable);
     }
 
     public void visitClass(final PsiClass aClass) {
