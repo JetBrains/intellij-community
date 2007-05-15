@@ -211,6 +211,10 @@ public class VcsUtil {
     return getVcsFor( project, path ) == host;
   }
 
+  public static boolean isFileForVcs( String path, Project project, AbstractVcs host ) {
+    return getVcsFor( project, getFilePath( path ) ) == host;
+  }
+
   @Nullable
   public static AbstractVcs getVcsFor( Project project, FilePath file )
   {
