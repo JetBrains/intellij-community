@@ -27,7 +27,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     if (userObject instanceof LocalChangeList) {
       final LocalChangeList list = ((LocalChangeList)userObject);
-      renderer.append(list.getName(),
+      renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(renderer);
       for(ChangeListDecorator decorator: myDecorators) {

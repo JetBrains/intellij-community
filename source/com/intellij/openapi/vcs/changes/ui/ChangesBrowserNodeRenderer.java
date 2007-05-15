@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,12 +16,14 @@ import java.awt.*;
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private WolfTheProblemSolver myProblemSolver;
+  private IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {
     myShowFlatten = showFlatten;
     myProblemSolver = WolfTheProblemSolver.getInstance(project);
     myHighlightProblems = highlightProblems;
+    myIssueLinkRenderer = new IssueLinkRenderer(project, this);
   }
 
   public boolean isShowFlatten() {
@@ -47,5 +50,9 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
       style = SimpleTextAttributes.STYLE_WAVED;
     }
     append(fileName, new SimpleTextAttributes(style, color, underlineColor));
+  }
+
+  public void appendTextWithIssueLinks(final String text, final SimpleTextAttributes baseStyle) {
+    myIssueLinkRenderer.appendTextWithLinks(text, baseStyle);
   }
 }

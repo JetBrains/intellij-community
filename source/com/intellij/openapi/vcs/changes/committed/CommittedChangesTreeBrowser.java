@@ -101,8 +101,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         }
       }
     };
-    myChangesTree.addMouseListener(linkMouseListener);
-    myChangesTree.addMouseMotionListener(linkMouseListener);
+    linkMouseListener.install(myChangesTree);
 
     myLeftPanel = new JPanel(new BorderLayout());
     myFilterSplitter = new Splitter(false, 0.5f);

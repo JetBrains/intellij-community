@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,5 +70,10 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
     else {
       tree.setCursor(Cursor.getDefaultCursor());
     }
+  }
+
+  public void install(final JTree tree) {
+    tree.addMouseListener(this);
+    tree.addMouseMotionListener(this);
   }
 }

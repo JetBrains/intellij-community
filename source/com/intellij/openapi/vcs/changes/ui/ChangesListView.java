@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -101,6 +102,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
     myCopyProvider = new TreeCopyProvider(this);
+    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).install(this);
   }
 
   public DefaultTreeModel getModel() {

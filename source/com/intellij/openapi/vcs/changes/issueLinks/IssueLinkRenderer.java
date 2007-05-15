@@ -17,6 +17,7 @@ public class IssueLinkRenderer {
   private IssueNavigationConfiguration myIssueNavigationConfiguration;
 
   private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
+  private static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_BOLD, Color.blue);
 
   public IssueLinkRenderer(final Project project, final SimpleColoredComponent coloredComponent) {
     myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
@@ -24,18 +25,26 @@ public class IssueLinkRenderer {
   }
 
   public void appendTextWithLinks(String text) {
+    appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public void appendTextWithLinks(String text, SimpleTextAttributes baseStyle) {
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       final TextRange textRange = match.getRange();
       if (textRange.getStartOffset() > pos) {
-        myColoredComponent.append(text.substring(pos, textRange.getStartOffset()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        myColoredComponent.append(text.substring(pos, textRange.getStartOffset()), baseStyle);
       }
-      myColoredComponent.append(text.substring(textRange.getStartOffset(), textRange.getEndOffset()), LINK_ATTRIBUTES, match.getTargetUrl());
+      myColoredComponent.append(text.substring(textRange.getStartOffset(), textRange.getEndOffset()), getLinkAttributes(baseStyle), match.getTargetUrl());
       pos = textRange.getEndOffset();
     }
     if (pos < text.length()) {
-      myColoredComponent.append(text.substring(pos), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myColoredComponent.append(text.substring(pos), baseStyle);
     }
+  }
+
+  private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
+    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ? LINK_BOLD_ATTRIBUTES : LINK_ATTRIBUTES;
   }
 }
