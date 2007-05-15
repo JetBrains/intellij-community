@@ -49,6 +49,9 @@ public class IterableComponentTypeMacro implements Macro {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, resolveResult.getSubstitutor());
           if (substitutor != null) {
             PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
+            if (parameterType instanceof PsiCapturedWildcardType) {
+              parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
+            }
             if (parameterType != null) {
               if (parameterType instanceof PsiWildcardType) {
                 if (((PsiWildcardType)parameterType).isExtends()) {
