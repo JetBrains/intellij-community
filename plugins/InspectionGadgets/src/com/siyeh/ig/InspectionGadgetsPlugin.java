@@ -90,7 +90,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 580;
+    private static final int NUM_INSPECTIONS = 583;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList<Class<? extends InspectionProfileEntry>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -483,6 +483,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
         m_inspectionClasses.add(ComparableImplementedButEqualsNotOverriddenInspection.class);
+        m_inspectionClasses.add(ComparatorMethodParameterNotUsedInspection.class);
         m_inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(CovariantCompareToInspection.class);
         m_inspectionClasses.add(CovariantEqualsInspection.class);

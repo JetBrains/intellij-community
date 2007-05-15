@@ -50,7 +50,7 @@ public class ComparatorMethodParameterNotUsedInspection
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!MethodUtils.methodMatches(method, "java.util.Comparator",
-                    PsiType.BOOLEAN, "compare", PsiType.NULL, PsiType.NULL)) {
+                    PsiType.INT, "compare", PsiType.NULL, PsiType.NULL)) {
                 return;
             }
             final PsiCodeBlock body = method.getBody();
@@ -65,7 +65,7 @@ public class ComparatorMethodParameterNotUsedInspection
             final Collection<PsiParameter> unusedParameters =
                     visitor.getUnusedParameters();
             for (PsiParameter unusedParameter : unusedParameters) {
-                registerError(unusedParameter);
+                registerVariableError(unusedParameter);
             }
         }
 
@@ -101,11 +101,5 @@ public class ComparatorMethodParameterNotUsedInspection
                 return Collections.unmodifiableSet(parameters);
             }
         }
-    }
-}
-class X implements Comparator<X> {
-
-    public int compare(X o1, X o2) {
-        return 0;
     }
 }
