@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -201,21 +200,8 @@ public class ExpectedHighlightingData {
     return result;
   }
 
-  @NonNls
-  private String formatFileName(int line, int col) {
-    if (myFile == null) {
-      return "";
-    }
-    else {
-      final VirtualFile virtualFile = myFile.getVirtualFile();
-      if (virtualFile == null) {
-        return myFile.getName() + ": ";
-      }
-      return virtualFile.getPath() + " (" + line + "," + col + "): ";
-    }
-  }
-
   public void checkResult(Collection<HighlightInfo> infos, String text) {
+    String fileName = myFile == null ? "" : myFile.getName() + ": ";
     for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
@@ -223,15 +209,14 @@ public class ExpectedHighlightingData {
         String s = text.substring(startOffset, endOffset);
         String desc = info.description;
 
-        int startLine = StringUtil.offsetToLineNumber(text, startOffset);
-        int endLine = StringUtil.offsetToLineNumber(text, endOffset);
-        int x1 = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
-        int x2 = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
+        int y1 = StringUtil.offsetToLineNumber(text, startOffset);
+        int y2 = StringUtil.offsetToLineNumber(text, endOffset);
+        int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
+        int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-
-        Assert.fail(formatFileName(startLine, startOffset - x1) + "Extra text fragment highlighted " +
-                          "(" + (x1 + 1) + ", " + (startLine + 1) + ")" + "-" +
-                          "(" + (x2 + 1) + ", " + (endLine + 1) + ")" +
+        Assert.fail(fileName + "Extra text fragment highlighted " +
+                          "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                          "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                           " :'" +
                           s +
                           "'" + (desc == null ? "" : " (" + desc + ")")
@@ -248,21 +233,21 @@ public class ExpectedHighlightingData {
           String s = text.substring(startOffset, endOffset);
           String desc = expectedInfo.description;
 
-          int startLine = StringUtil.offsetToLineNumber(text, startOffset);
-          int endLine = StringUtil.offsetToLineNumber(text, endOffset);
-          int x1 = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
-          int x2 = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
+          int y1 = StringUtil.offsetToLineNumber(text, startOffset);
+          int y2 = StringUtil.offsetToLineNumber(text, endOffset);
+          int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
+          int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-          Assert.fail(formatFileName(startLine, startOffset - x1) + "Text fragment was not highlighted " +
-                            "(" + (x1 + 1) + ", " + (startLine + 1) + ")" + "-" +
-                            "(" + (x2 + 1) + ", " + (endLine + 1) + ")" +
+          Assert.assertTrue(fileName + "Text fragment was not highlighted " +
+                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                             " :'" +
                             s +
-                            "'" + (desc == null ? "" : " (" + desc + ")"));
+                            "'" + (desc == null ? "" : " (" + desc + ")"),
+                            false);
         }
       }
     }
-
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
