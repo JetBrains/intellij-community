@@ -15,6 +15,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -239,7 +240,19 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
 
     String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+    if (qName.indexOf(".") == -1) {
+      final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(myOptions);
+      if (StringUtil.isNotEmpty(defaultPackage)) {
+        final JavaResolveResult resolveResult = advancedResolveInner(psiElement, defaultPackage + "." + qName);
+        if (resolveResult != JavaResolveResult.EMPTY) {
+          return resolveResult;
+        }
+      }
+    }
+    return advancedResolveInner(psiElement, qName);
+  }
 
+  private JavaResolveResult advancedResolveInner(final PsiElement psiElement, final String qName) {
     PsiManager manager = psiElement.getManager();
     GlobalSearchScope scope = getScope();
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {

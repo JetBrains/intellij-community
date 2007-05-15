@@ -38,6 +38,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
   public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
   public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
+  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
 
   @Nullable private Map<CustomizationKey, Object> myOptions;
   private boolean mySoft;
@@ -141,14 +142,22 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     if (cachedPackages == null) {
       final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
       final PsiManager manager = position.getManager();
+      final BaseScopeProcessor processor = new BaseScopeProcessor() {
+        public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+          psiPackages.add(element);
+          return true;
+        }
+      };
+      final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
+      if (StringUtil.isNotEmpty(defPackageName)) {
+        final PsiPackage defaultPackage = manager.findPackage(defPackageName);
+        if (defaultPackage != null) {
+          defaultPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
+        }
+      }
       final PsiPackage rootPackage = manager.findPackage("");
       if (rootPackage != null) {
-        rootPackage.processDeclarations(new BaseScopeProcessor() {
-          public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-            psiPackages.add(element);
-            return true;
-          }
-        }, PsiSubstitutor.EMPTY, position, position);
+        rootPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
       }
       if (myPackagesEraser == null) {
         myPackagesEraser = new Runnable() {
