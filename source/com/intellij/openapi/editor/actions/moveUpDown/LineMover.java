@@ -33,7 +33,7 @@ class LineMover extends Mover {
     }
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine <= 1 && !isDown) return false;
+    if (range.startLine == 0 && !isDown) return false;
     if (range.endLine >= maxLine && isDown) return false;
 
     toMove = range;
