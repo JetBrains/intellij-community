@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -65,13 +64,9 @@ public abstract class HistoryDialogModel {
     return myRightRevision == 0;
   }
 
-  public boolean revert() throws IOException {
-    return Reverter.revert(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
-  }
+  public abstract List<String> revert() throws IOException;
 
   public boolean isRevertEnabled() {
-    boolean isSelectionCorrect = isCurrentRevisionSelected() && myLeftRevision > 0;
-    if (!isSelectionCorrect) return false;
-    return !getLeftEntry().hasUnavailableContent();
+    return isCurrentRevisionSelected() && myLeftRevision > 0;
   }
 }

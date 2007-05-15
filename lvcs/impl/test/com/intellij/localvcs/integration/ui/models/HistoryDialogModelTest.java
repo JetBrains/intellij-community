@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 public class HistoryDialogModelTest extends LocalVcsTestCase {
@@ -131,18 +132,12 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertFalse(m.isRevertEnabled());
   }
 
-  @Test
-  public void testRevertIsDisabledIfRevisionHasUnavailableContent() {
-    vcs.changeFileContent("f", bigContentFactory(), -1);
-    vcs.changeFileContent("f", cf("current"), -1);
-
-    m.selectRevisions(1, 1);
-    assertFalse(m.isRevertEnabled());
-  }
-
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new HistoryDialogModel(f, vcs, gw) {
+      public List<String> revert() throws IOException {
+        throw new UnsupportedOperationException();
+      }
     };
   }
 }

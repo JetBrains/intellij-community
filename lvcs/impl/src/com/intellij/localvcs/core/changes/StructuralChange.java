@@ -48,7 +48,7 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public boolean affectsOnly(final Entry e) {
+  public boolean affectsOnlyInside(final Entry e) {
     for (IdPath p : getAffectedIdPaths()) {
       if (!p.startsWith(e.getIdPath())) {
         return false;

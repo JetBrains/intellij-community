@@ -180,13 +180,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void actionPerformed(AnActionEvent e) {
-      try {
-        if (!myModel.revert()) return;
-        close(0);
-      }
-      catch (IOException ex) {
-        myGateway.showError("Error reverting changes: " + ex);
-      }
+      revert(new RevertTask() {
+        public java.util.List<String> doRevert() throws IOException {
+          return myModel.revert();
+        }
+      });
     }
 
     public void update(AnActionEvent e) {
@@ -194,5 +192,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
       p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
       p.setEnabled(myModel.isRevertEnabled());
     }
+  }
+
+  protected void revert(RevertTask t) {
+    try {
+      java.util.List<String> errors = t.doRevert();
+      if (errors.isEmpty()) {
+        close(0);
+        return;
+      }
+      myGateway.showError("Can not revert: " + errors);
+    }
+    catch (IOException ex) {
+      myGateway.showError("Error reverting changes: " + ex);
+    }
+  }
+
+  protected interface RevertTask {
+    java.util.List<String> doRevert() throws IOException;
   }
 }

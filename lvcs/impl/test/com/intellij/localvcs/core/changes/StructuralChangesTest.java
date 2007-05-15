@@ -83,8 +83,8 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     Change c = new RenameChange("dir", "newDir");
     c.applyTo(root);
 
-    assertFalse(c.affectsOnly(root.getEntry("newDir/dir2")));
-    assertTrue(c.affectsOnly(root.getEntry("newDir")));
+    assertFalse(c.affectsOnlyInside(root.getEntry("newDir/dir2")));
+    assertTrue(c.affectsOnlyInside(root.getEntry("newDir")));
   }
 
   @Test
@@ -96,9 +96,9 @@ public class StructuralChangesTest extends LocalVcsTestCase {
 
     Change c = new MoveChange("root/dir1/file", "root/dir2");
     c.applyTo(root);
-    assertTrue(c.affectsOnly(root.getEntry("root")));
-    assertFalse(c.affectsOnly(root.getEntry("root/dir1")));
-    assertFalse(c.affectsOnly(root.getEntry("root/dir2")));
+    assertTrue(c.affectsOnlyInside(root.getEntry("root")));
+    assertFalse(c.affectsOnlyInside(root.getEntry("root/dir1")));
+    assertFalse(c.affectsOnlyInside(root.getEntry("root/dir2")));
   }
 
   @Test
@@ -110,8 +110,8 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     Change c = new MoveChange("root/dir/dir2", "root");
     c.applyTo(root);
 
-    assertFalse(c.affectsOnly(root.getEntry("root/dir2")));
-    assertTrue(c.affectsOnly(root.getEntry("root")));
+    assertFalse(c.affectsOnlyInside(root.getEntry("root/dir2")));
+    assertTrue(c.affectsOnlyInside(root.getEntry("root")));
   }
 
 }

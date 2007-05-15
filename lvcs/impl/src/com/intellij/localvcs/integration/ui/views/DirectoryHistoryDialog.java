@@ -17,6 +17,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.io.IOException;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private CheckinPanelTreeTable myDiffTree;
@@ -91,7 +92,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
       return n.canShowFileDifference();
     }
   }
@@ -102,13 +103,16 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryDifferenceNode n) {
-      if (!myModel.revert(n.getModel())) return;
-      close(0);
+    protected void performOn(final DirectoryDifferenceNode n) {
+      revert(new RevertTask() {
+        public java.util.List<String> doRevert() throws IOException {
+          return myModel.revert(n.getModel());
+        }
+      });
     }
 
     @Override
-    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
       return myModel.isRevertEnabled();
     }
   }
@@ -133,10 +137,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       Presentation p = e.getPresentation();
       p.setIcon(myIcon);
       DirectoryDifferenceNode n = getSelectedNode();
-      p.setEnabled(n != null && canPerformOn(n));
+      p.setEnabled(n != null && isEnabledFor(n));
     }
 
-    protected boolean canPerformOn(DirectoryDifferenceNode n) {
+    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
       return true;
     }
   }

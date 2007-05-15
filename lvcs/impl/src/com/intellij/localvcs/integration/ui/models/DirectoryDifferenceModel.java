@@ -1,10 +1,7 @@
 package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.core.revisions.Difference;
-import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.Icons;
 
@@ -71,10 +68,6 @@ public class DirectoryDifferenceModel {
     if (getEntry(0).hasUnavailableContent()) return false;
     if (getEntry(1).hasUnavailableContent()) return false;
     return true;
-  }
-
-  public boolean revert(IdeaGateway gw, Revision r) {
-    return Reverter.revert(gw, r, getEntry(0), getEntry(1));
   }
 
   private static class MyComparator implements Comparator<DirectoryDifferenceModel> {

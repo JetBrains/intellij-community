@@ -86,6 +86,18 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     assertDifferenceModelContents("old", "new");
   }
 
+  @Test
+  public void testRevertIsDisabledIfRevisionHasUnavailableContent() {
+    vcs.createFile("f", bigContentFactory(), -1);
+    vcs.changeFileContent("f", cf("current"), -1);
+
+    initModelFor("f");
+
+    m.selectRevisions(1, 1);
+    assertFalse(m.isRevertEnabled());
+    fail();
+  }
+
   private void assertDifferenceModelContents(String left, String right) {
     FileDifferenceModel dm = m.getDifferenceModel();
     TestIdeaGateway gw = new TestIdeaGateway();

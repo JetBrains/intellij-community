@@ -56,7 +56,7 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public boolean affectsOnly(Entry e) {
+  public boolean affectsOnlyInside(Entry e) {
     throw new UnsupportedOperationException();
   }
 
