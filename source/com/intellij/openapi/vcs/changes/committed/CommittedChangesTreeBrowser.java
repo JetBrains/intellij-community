@@ -29,6 +29,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -42,6 +43,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +94,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         updateBySelectionChange();
       }
     });
-    myChangesTree.addMouseListener(new LinkMouseListener(project));
+    final LinkMouseListener linkMouseListener = new LinkMouseListener(project);
+    myChangesTree.addMouseListener(linkMouseListener);
+    myChangesTree.addMouseMotionListener(linkMouseListener);
 
     myLeftPanel = new JPanel(new BorderLayout());
     myFilterSplitter = new Splitter(false, 0.5f);
@@ -244,6 +248,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
     private IssueNavigationConfiguration myIssueNavigationConfiguration;
+    private CommittedChangeList myLastChangeList;
 
     public CommittedChangeListRenderer(final IssueNavigationConfiguration issueNavigationConfiguration) {
       myIssueNavigationConfiguration = issueNavigationConfiguration;
@@ -251,8 +256,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+      myLastChangeList = null;
       if (node.getUserObject() instanceof CommittedChangeList) {
         CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
+        myLastChangeList = changeList;
 
         int parentWidth = tree.getParent().getWidth() - 44;
         String date = ", " + myDateFormat.format(changeList.getCommitDate());
@@ -325,6 +332,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     public Dimension getPreferredSize() {
       return new Dimension(2000, super.getPreferredSize().height);
     }
+
+    public void prepareHitTest(final Tree changesTree, final DefaultMutableTreeNode treeNode) {
+      if (myLastChangeList != treeNode.getUserObject()) {
+        getTreeCellRendererComponent(changesTree, treeNode, false, false, false, -1, false);
+      }
+    }
+
+    public CommittedChangeList getLastChangeList() {
+      return myLastChangeList;
+    }
   }
 
   private class FilterChangeListener implements ChangeListener {
@@ -333,7 +350,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
-  private class LinkMouseListener extends MouseAdapter {
+  private class LinkMouseListener extends MouseAdapter implements MouseMotionListener {
     private final Project myProject;
 
     public LinkMouseListener(final Project project) {
@@ -341,25 +358,44 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
 
     public void mouseClicked(final MouseEvent e) {
-      if (e.isPopupTrigger()) return;
-      final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
-      if (path != null) {
-        final Rectangle rectangle = myChangesTree.getPathBounds(path);
-        int dx = e.getX() - rectangle.x;
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-        myCellRenderer.getTreeCellRendererComponent(myChangesTree, treeNode, false, false, false, -1, false);
-        int i = myCellRenderer.findFragmentAt(dx);
-        if (i >= 0) {
-          Object tag = myCellRenderer.getFragmentTag(i);
-          if (tag != null) {
-            if (tag == MORE_TAG) {
-              ChangeListDetailsAction.showDetailsPopup(myProject, (CommittedChangeList) treeNode.getUserObject());
-            }
-            else {
-              BrowserUtil.launchBrowser(tag.toString());
-            }
+      Object tag = getTagAt(e);
+      if (tag == MORE_TAG) {
+        ChangeListDetailsAction.showDetailsPopup(myProject, myCellRenderer.getLastChangeList());
+      }
+      else if (tag != null) {
+        BrowserUtil.launchBrowser(tag.toString());
+      }
+    }
+
+    @Nullable
+    private Object getTagAt(final MouseEvent e) {
+      Object tag = null;
+      if (!e.isPopupTrigger()) {
+        final TreePath path = myChangesTree.getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          final Rectangle rectangle = myChangesTree.getPathBounds(path);
+          int dx = e.getX() - rectangle.x;
+          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+          myCellRenderer.prepareHitTest(myChangesTree, treeNode);
+          int i = myCellRenderer.findFragmentAt(dx);
+          if (i >= 0) {
+            tag = myCellRenderer.getFragmentTag(i);
           }
         }
+      }
+      return tag;
+    }
+
+    public void mouseDragged(MouseEvent e) {
+    }
+
+    public void mouseMoved(MouseEvent e) {
+      Object tag = getTagAt(e);
+      if (tag != null) {
+        myChangesTree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
+      else {
+        myChangesTree.setCursor(Cursor.getDefaultCursor());
       }
     }
   }
