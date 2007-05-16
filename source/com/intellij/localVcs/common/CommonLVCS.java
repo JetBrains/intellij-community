@@ -476,7 +476,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void endAction(LvcsActionImpl action) {
-    checkOldLvcsEnabled();
+    if (!isOldLvcsEnabled()) return;
 
     commitAllUnsavedDocuments();
     if (LOG.isDebugEnabled()) {
