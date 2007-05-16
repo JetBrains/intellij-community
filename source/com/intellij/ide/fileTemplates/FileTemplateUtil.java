@@ -32,6 +32,7 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -45,6 +46,9 @@ public class FileTemplateUtil{
   private static boolean ourVelocityInitialized = false;
   @NonNls public static final String PACKAGE_ATTR = "PACKAGE_NAME";
   @NonNls public static final String NAME_ATTR = "NAME";
+
+  private FileTemplateUtil() {
+  }
 
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     initVelocity();
@@ -77,6 +81,7 @@ public class FileTemplateUtil{
    * \\$qqq -> qqq
    * ${qqq} -> qqq
    */
+  @Nullable
   private static String referenceToAttribute(String attrib, boolean includeDummies) {
     while (attrib.startsWith("\\\\")) {
       attrib = attrib.substring(2);
@@ -202,7 +207,7 @@ public class FileTemplateUtil{
     }
   }
 
-  public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
+  public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final @NotNull PsiDirectory directory) throws Exception{
     final PsiElement[] result = new PsiElement[1];
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
@@ -272,10 +277,10 @@ public class FileTemplateUtil{
                                                 String extension) throws IncorrectOperationException{
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
     final PsiFile psiFile = PsiManager.getInstance(project).getElementFactory().createFileFromText("myclass" + "." + extension, content);
-    final PsiClass[] classes = psiFile instanceof PsiJavaFile? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
-    if(classes.length == 0){
+    if (!(psiFile instanceof PsiJavaFile)){
       throw new IncorrectOperationException("This template did not produce Java class nor interface!");
     }
+    final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
     PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     PsiClass createdClass = classes[0];
     if(reformat){
@@ -295,7 +300,7 @@ public class FileTemplateUtil{
     return psiJavaFile.getClasses()[0];
   }
 
-  private static PsiFile createPsiFile(Project project, PsiDirectory directory, String content, String fileName, String extension) throws IncorrectOperationException{
+  private static PsiFile createPsiFile(Project project, @NotNull PsiDirectory directory, String content, String fileName, String extension) throws IncorrectOperationException{
     final String suggestedFileNameEnd = "." + extension;
     
     if (!fileName.endsWith(suggestedFileNameEnd)) {
