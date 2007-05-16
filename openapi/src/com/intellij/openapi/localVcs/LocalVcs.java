@@ -63,9 +63,9 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
-  public abstract LvcsRevision[] getChanges(String path, LvcsLabel label);
+  public abstract LvcsRevision[] getRevisions(String path, LvcsLabel label);
 
-  public abstract LvcsRevision[] getChanges(LvcsLabel label1, LvcsLabel label2);
+  public abstract LvcsRevision[] getRevisions(LvcsLabel label1, LvcsLabel label2);
 
   public abstract boolean isUnderVcs(VirtualFile file);
 

@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public abstract class LocalVcsAction extends AnAction {
+public abstract class LocalHistoryAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DialogWrapper d = createDialog(getGateway(e), getFile(e));

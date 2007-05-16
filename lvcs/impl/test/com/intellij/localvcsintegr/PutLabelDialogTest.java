@@ -38,9 +38,22 @@ public class PutLabelDialogTest extends IntegrationTestCase {
 
   public void testPutFileLabel() throws IOException {
     d1 = new PutLabelDialog(gateway, f);
+    d1.selectFileLabel();
     d1.doOKAction();
 
-    assertEquals(3, getVcsRevisionsFor(root).size()); // whole project is selected by default
+    assertEquals(2, getVcsRevisionsFor(root).size());
     assertEquals(2, getVcsRevisionsFor(f).size());
+  }
+
+  public void testCanNotPutLabelOnNotAFile() throws IOException {
+    d1 = new PutLabelDialog(gateway, null);
+    assertFalse(d1.canPutLabelOnSelectedFile());
+  }
+
+  public void testCanNotPutLabelOnUnversionedFile() throws IOException {
+    f = root.createChildData(null, "f.xxx");
+
+    d1 = new PutLabelDialog(gateway, f);
+    assertFalse(d1.canPutLabelOnSelectedFile());
   }
 }

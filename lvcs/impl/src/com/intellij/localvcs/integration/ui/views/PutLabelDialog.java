@@ -42,7 +42,7 @@ public class PutLabelDialog extends DialogWrapper {
     panel.add(new JLabel("Label name"), atCell(0, 0));
     panel.add(myNameField, atCell(1, 0));
 
-    if (myFile != null) {
+    if (canPutLabelOnSelectedFile()) {
       initGroupButtons();
       panel.add(new JLabel("Put on"), atCell(0, 1));
       panel.add(myProjectButton, atCell(1, 1));
@@ -95,7 +95,7 @@ public class PutLabelDialog extends DialogWrapper {
   @Override
   public void doOKAction() {
     ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
-    if (myFile != null && myFileButton.isSelected()) {
+    if (canPutLabelOnSelectedFile() && myFileButton.isSelected()) {
       vcs.putLabel(myFile.getPath(), getLabelName());
     }
     else {
@@ -104,7 +104,16 @@ public class PutLabelDialog extends DialogWrapper {
     close(0);
   }
 
-  public String getLabelName() {
+  private String getLabelName() {
     return myNameField.getText();
+  }
+
+  // test-support
+  public void selectFileLabel() {
+    myFileButton.setSelected(true);
+  }
+
+  public boolean canPutLabelOnSelectedFile() {
+    return myFile != null && myGateway.getFileFilter().isAllowedAndUnderContentRoot(myFile);
   }
 }

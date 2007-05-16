@@ -166,12 +166,12 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.getAllLabels();
   }
 
-  public synchronized LvcsRevision[] getChanges(final String path, final LvcsLabel label) {
+  public synchronized LvcsRevision[] getRevisions(final String path, final LvcsLabel label) {
     checkOldLvcsEnabled();
     return myImplementation.getChanges(path, label);
   }
 
-  public synchronized LvcsRevision[] getChanges(final LvcsLabel label1, final LvcsLabel label2) {
+  public synchronized LvcsRevision[] getRevisions(final LvcsLabel label1, final LvcsLabel label2) {
     checkOldLvcsEnabled();
     return myImplementation.getChanges(label1, label2);
   }
