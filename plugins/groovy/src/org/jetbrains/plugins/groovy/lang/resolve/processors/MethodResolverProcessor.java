@@ -58,7 +58,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     for (int i = 0; i < parameters.length; i++) {
       PsiType argType = myArgumentTypes[i];
       PsiType parameterType = parameters[i].getType();
-      if (!parameterType.isConvertibleFrom(argType)) return false;
+      if (!parameterType.isAssignableFrom(argType)) return false;
     }
 
     return true;
@@ -79,7 +79,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       for (GrExpression expression : expressions) {
         PsiType type = expression.getType();
         if (type == null) {
-          result.add(factory.createTypeByFQClassName("java.lang.Object", place.getResolveScope()));
+          result.add(PsiType.NULL);
         } else {
           result.add(type);
         }
@@ -92,7 +92,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       for (int i = 0; i < result.length; i++) {
         PsiType argType = args[i].getType();
         if (argType == null) {
-          result[i] = factory.createTypeByFQClassName("java.lang.Object", place.getResolveScope());
+          result[i] = PsiType.NULL;
         } else {
           result[i] = argType;
         }

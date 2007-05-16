@@ -17,9 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -50,7 +50,8 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     String typeText = getText();
     for (final PsiType primitive : PRIMITIVES) {
       if (primitive.getCanonicalText().equals(typeText)) {
-        return primitive;
+        final String boxedQName = ((PsiPrimitiveType) primitive).getBoxedTypeName();
+        return getManager().getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
       }
     }
 
