@@ -153,9 +153,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesView.dispose();
   }
 
-  public void setItems(List<CommittedChangeList> items) {
+  public void setItems(List<CommittedChangeList> items, final boolean keepFilter) {
     myChangeLists = items;
-    myFilteringStrategy.setFilterBase(items);
+    if (!keepFilter) {
+      myFilteringStrategy.setFilterBase(items);
+    }
     updateModel();
   }
 

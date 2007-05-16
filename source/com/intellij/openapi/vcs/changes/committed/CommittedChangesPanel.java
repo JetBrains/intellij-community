@@ -139,7 +139,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       return;
     }
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setItems(myChangesFromProvider);
+      myBrowser.setItems(myChangesFromProvider, true);
     }
     else {
       final String[] strings = myFilterComponent.getFilter().split(" ");
@@ -152,7 +152,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           filteredChanges.add(changeList);
         }
       }
-      myBrowser.setItems(filteredChanges);
+      myBrowser.setItems(filteredChanges, true);
     }
   }
 
