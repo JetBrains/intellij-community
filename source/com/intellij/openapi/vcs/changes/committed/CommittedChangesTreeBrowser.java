@@ -282,7 +282,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
         int descWidth = fontMetrics.stringWidth(description);
         final int descMaxWidth = parentWidth - size - 8;
-        if (descMaxWidth < 0) {
+        if (description.length() == 0 && !truncated) {
+          append("<no comment>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          appendAlign(parentWidth - size);
+        }
+        else if (descMaxWidth < 0) {
           myRenderer.appendTextWithLinks(description);
         }
         else if (descWidth < descMaxWidth && !truncated) {
