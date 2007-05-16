@@ -59,7 +59,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private ChangeListFilteringStrategy myFilteringStrategy = ChangeListFilteringStrategy.NONE;
   private Splitter myFilterSplitter;
   private JPanel myLeftPanel;
-  private CommittedChangeListRenderer myCellRenderer;
   private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private List<CommittedChangeList> myFilteredChangeLists;
   private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
@@ -77,8 +76,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     };
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
-    myCellRenderer = new CommittedChangeListRenderer(project);
-    myChangesTree.setCellRenderer(myCellRenderer);
+    myChangesTree.setCellRenderer(new CommittedChangeListRenderer(project));
     TreeUtil.expandAll(myChangesTree);
 
     myChangesView = new RepositoryChangesBrowser(project, changeLists);
@@ -283,7 +281,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         int descWidth = fontMetrics.stringWidth(description);
         final int descMaxWidth = parentWidth - size - 8;
         if (description.length() == 0 && !truncated) {
-          append("<no comment>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           appendAlign(parentWidth - size);
         }
         else if (descMaxWidth < 0) {
