@@ -18,9 +18,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     super(ApplicationManager.getApplication().getPicoContainer());
   }
 
-  public void dispose() {
-  }
-
   public boolean isSavePathsRelative() {
     return false;
   }

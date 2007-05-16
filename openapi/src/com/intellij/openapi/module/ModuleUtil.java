@@ -96,12 +96,9 @@ public class ModuleUtil {
 
     Project project = element.getProject();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    if (projectRootManager == null) return null;
-
-    final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+    final ProjectFileIndex fileIndex = projectRootManager == null ? null : projectRootManager.getFileIndex();
     if (element instanceof PsiPackage) {
-      final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
-      for (PsiDirectory directory : directories) {
+      for (PsiDirectory directory : ((PsiPackage)element).getDirectories()) {
         final Module module = fileIndex.getModuleForFile(directory.getVirtualFile());
         if (module != null) {
           return module;

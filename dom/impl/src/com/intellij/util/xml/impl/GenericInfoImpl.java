@@ -188,7 +188,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       if (subTagsList != null && method.getName().startsWith("add")) {
         final XmlName tagName = new XmlName(subTagsList.tagName());
         assert StringUtil.isNotEmpty(tagName.getLocalName());
-        final Set<XmlName> set = getXmlNames(subTagsList);
+        final Set<XmlName> set = getXmlNames(subTagsList, method.getGenericReturnType(), method);
         assert set.contains(tagName);
         myCompositeCollectionAdditionMethods.put(method.getSignature(), Pair.create(tagName, set));
         iterator.remove();
@@ -282,7 +282,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (isDomElement(type)) {
       final SubTagsList subTagsList = method.getAnnotation(SubTagsList.class);
       if (subTagsList != null) {
-        myCompositeChildrenMethods.put(signature, getXmlNames(subTagsList));
+        myCompositeChildrenMethods.put(signature, getXmlNames(subTagsList, type, method));
         return true;
       }
 
@@ -299,10 +299,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     return false;
   }
 
-  private static Set<XmlName> getXmlNames(final SubTagsList subTagsList) {
+  private static Set<XmlName> getXmlNames(final SubTagsList subTagsList, final Type type, final JavaMethod method) {
     return ContainerUtil.map2Set(subTagsList.value(), new Function<String, XmlName>() {
       public XmlName fun(String s) {
-        return new XmlName(s);
+        return XmlName.create(s, type, method);
       }
     });
   }
