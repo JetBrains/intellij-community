@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -35,6 +36,10 @@ public class GrParenthesizedExprImpl extends GroovyPsiElementImpl implements GrP
   }
 
   public PsiType getType() {
-    return null;
+    return getOperand().getType();
+  }
+
+  public GrExpression getOperand() {
+    return findChildByClass(GrExpression.class);
   }
 }
