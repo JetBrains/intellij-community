@@ -6,16 +6,21 @@ import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: lex
@@ -24,11 +29,23 @@ import com.intellij.util.PathUtil;
  */
 public class JavaParametersUtil {
   public static void configureConfiguration(final JavaParameters parameters, final RunJavaConfiguration configuration) {
+    final Project project = configuration.getProject();
     parameters.getProgramParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
-    parameters.getVMParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY));
+    final PathMacroManager macroManager = PathMacroManager.getInstance(project);
+    String vmParameters = macroManager.expandPath(configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY));
+    if (parameters.getEnv() != null) {
+      final Map<String, String> envs = new HashMap<String, String>();
+      for (String env : parameters.getEnv().keySet()) {
+        final String value = macroManager.expandPath(parameters.getEnv().get(env));
+        envs.put(env, value);
+        vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
+      }
+      parameters.setEnv(envs);
+    }
+    parameters.getVMParametersList().addParametersString(vmParameters);
     String workingDirectory = configuration.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY);
     if (workingDirectory == null || workingDirectory.trim().length() == 0) {
-      workingDirectory = PathUtil.getLocalPath(configuration.getProject().getBaseDir());
+      workingDirectory = PathUtil.getLocalPath(project.getBaseDir());
     }
     parameters.setWorkingDirectory(workingDirectory);
   }

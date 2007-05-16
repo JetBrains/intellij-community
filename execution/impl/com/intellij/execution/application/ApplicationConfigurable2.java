@@ -1,16 +1,18 @@
 package com.intellij.execution.application;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.util.JreVersionDetector;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,8 +28,9 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   private final ConfigurationModuleSelector myModuleSelector;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JCheckBox myShowSwingInspectorCheckbox;
+  private EnvironmentVariablesComponent myEnvVariablesComponent;
   private JreVersionDetector myVersionDetector = new JreVersionDetector();
-
+ 
   public ApplicationConfigurable2(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
     myModule.getComponent().addActionListener(new ActionListener() {
@@ -46,6 +49,8 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
     configuration.ENABLE_SWING_INSPECTOR = myVersionDetector.isJre50Configured(configuration) && myShowSwingInspectorCheckbox.isSelected();
 
+    configuration.ENV_VARIABLES = myEnvVariablesComponent.getEnvs().trim().length() > 0 ?  FileUtil.toSystemIndependentName(myEnvVariablesComponent.getEnvs()) : null;
+
     updateShowSwingInspector(configuration);
   }
 
@@ -54,6 +59,8 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myModuleSelector.reset(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+
+    myEnvVariablesComponent.setEnvs(configuration.ENV_VARIABLES != null ? FileUtil.toSystemDependentName(configuration.ENV_VARIABLES) : "");
 
     updateShowSwingInspector(configuration);
   }

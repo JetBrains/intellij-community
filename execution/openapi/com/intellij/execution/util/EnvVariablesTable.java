@@ -1,6 +1,6 @@
-package com.intellij.javaee.run.localRun;
+package com.intellij.execution.util;
 
-import com.intellij.javaee.J2EEBundle;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,7 +18,7 @@ public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
   private final JPanel myPanel = new JPanel(new BorderLayout());
 
-  private ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>(J2EEBundle.message("column.name.environment.variables.name")) {
+  private ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>("Name") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getName();
     }
@@ -40,7 +40,7 @@ public class EnvVariablesTable extends Observable {
     }
   };
 
-  private ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>(J2EEBundle.message("column.name.environment.variables.value")) {
+  private ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>("Value") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getValue();
     }
@@ -121,7 +121,7 @@ public class EnvVariablesTable extends Observable {
 
   private final class DeleteAction extends AnAction {
     public DeleteAction() {
-      super(J2EEBundle.message("action.name.delete"), null, IconLoader.getIcon("/general/remove.png"));
+      super(CommonBundle.message("button.delete"), null, IconLoader.getIcon("/general/remove.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -154,7 +154,7 @@ public class EnvVariablesTable extends Observable {
 
   private final class AddAction extends AnAction {
     public AddAction() {
-      super(J2EEBundle.message("action.name.add"), null, IconLoader.getIcon("/general/add.png"));
+      super(CommonBundle.message("button.add"), null, IconLoader.getIcon("/general/add.png"));
     }
 
     public void update(AnActionEvent e) {
