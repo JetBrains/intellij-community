@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
@@ -115,11 +116,12 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
       );
     }
     if (myDirectory == null) return;
+    if (StringUtil.isEmpty(myCanonicalText)) return;
 
     final PsiManager manager = myDirectory.getManager();
     PsiDirectory directory = myDirectory;
     String lastName;
-    for (StringTokenizer st = new StringTokenizer(myCanonicalText, "."); st.hasMoreTokens();) {
+    for (StringTokenizer st = new StringTokenizer(myCanonicalText, "."); ; ) {
       lastName = st.nextToken();
       if (st.hasMoreTokens()) {
         try {
