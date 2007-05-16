@@ -192,9 +192,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           to = new Color(33, 87, 138);
           g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
         } else {
-          from = new Color(90, 133, 215);
-          to = new Color(33, 87, 138);
-          fill = false;
+          from = new Color(129, 147, 219);
+          to = new Color(84, 130, 171);
+          fill = true;
           g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
         }
       } else {
@@ -220,13 +220,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     final Graphics2D g2d = (Graphics2D)g;
 
-    for (ContentTabLabel each : myTabs) {
-      if (!myManager.isSelected(each.myContent)) {
-        final Shape shape = getShapeFor(each);
-        g.setColor(new Color(250, 250, 250, 55));
-        g2d.fill(shape);
-      }
-    }
+    //for (ContentTabLabel each : myTabs) {
+    //  if (!myManager.isSelected(each.myContent)) {
+    //    final Shape shape = getShapeFor(each);
+    //    g.setColor(new Color(250, 250, 250, 55));
+    //    g2d.fill(shape);
+    //  }
+    //}
 
     final Color edges = myWindow.isActive() ? new Color(38, 63, 106) : new Color(130, 120, 111);
     g2d.setColor(edges);
@@ -275,7 +275,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
 
     if (last) {
-      shape.lineTo((float)bounds.getMaxX(), (float)bounds.getMaxY());
+      shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.getMaxY());
       drawCloseEdge(bounds, shape);
     }
     else {
@@ -293,15 +293,15 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void drawCloseEdge(final Rectangle bounds, final GeneralPath shape) {
-    final double startX = bounds.getMaxX();
+    final double startX = bounds.getMaxX() - 1;
     final double startY = bounds.getMaxY();
     final Point2D current = shape.getCurrentPoint();
     if (current == null || (current.getX() != startX && current.getY() != startY)) {
       shape.moveTo((float)startX, (float)startY);
     }
-    shape.lineTo((float)bounds.getMaxX(), (float)bounds.getMaxY() - getArc());
-    shape.lineTo((float)bounds.getMaxX(), (float)bounds.y + getArc());
-    shape.lineTo((float)bounds.getMaxX() - getArc(), (float)bounds.getY());
+    shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.getMaxY() - getArc());
+    shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.y + getArc());
+    shape.lineTo((float)bounds.getMaxX() - getArc() - 1, (float)bounds.getY());
   }
 
   private void drawOpenEndge(final Rectangle bounds, final GeneralPath shape) {

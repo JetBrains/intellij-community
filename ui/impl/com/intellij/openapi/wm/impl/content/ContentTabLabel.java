@@ -1,14 +1,13 @@
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.WatermarkIcon;
 
-import javax.swing.border.EmptyBorder;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 
 class ContentTabLabel extends BaseLabel {
 
@@ -34,12 +33,16 @@ class ContentTabLabel extends BaseLabel {
 
   public void update() {
     setText(myContent.getDisplayName());
-    setActiveFg(isSelected() ? Color.white : Color.lightGray);
-    setPassiveFg(isSelected() ? Color.white : Color.gray);
+    setActiveFg(isSelected() ? Color.white : new Color(188, 195, 219));
+    setPassiveFg(isSelected() ? Color.white : new Color(213, 210, 202));
 
     final boolean show = Boolean.TRUE.equals(myContent.getUserData(ToolWindow.SHOW_CONTENT_ICON));
     if (show) {
-      setIcon(myContent.getIcon());
+     if (isSelected()) {
+       setIcon(myContent.getIcon());
+     } else {
+       setIcon(myContent.getIcon() != null ? new WatermarkIcon(myContent.getIcon(), .5f) : null);
+     }
     } else {
       setIcon(null);
     }
