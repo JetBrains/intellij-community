@@ -169,7 +169,7 @@ public final class FloatingDecorator extends JDialog{
 
     protected final void processMouseMotionEvent(final MouseEvent e){
       super.processMouseMotionEvent(e);
-      if(MouseEvent.MOUSE_DRAGGED==e.getID()){
+      if(MouseEvent.MOUSE_DRAGGED==e.getID() && myLastPoint != null){
         final Point newPoint=e.getPoint();
         SwingUtilities.convertPointToScreen(newPoint,this);
         final Rectangle screenBounds=WindowManagerEx.getInstanceEx().getScreenBounds();
