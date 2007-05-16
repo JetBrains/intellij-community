@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.dualView.DualView;
+import com.intellij.ui.dualView.TreeTableView;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,6 +34,9 @@ public class TableLinkMouseListener extends MouseAdapter implements MouseMotionL
     TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
     if (cellRenderer instanceof DualView.TableCellRendererWrapper) {
       cellRenderer = ((DualView.TableCellRendererWrapper) cellRenderer).getRenderer();
+    }
+    if (cellRenderer instanceof TreeTableView.CellRendererWrapper) {
+      cellRenderer = ((TreeTableView.CellRendererWrapper) cellRenderer).getBaseRenderer();
     }
     if (cellRenderer instanceof ColoredTableCellRenderer) {
       final ColoredTableCellRenderer renderer = (ColoredTableCellRenderer)cellRenderer;

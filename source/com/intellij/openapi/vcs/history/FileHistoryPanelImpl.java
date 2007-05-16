@@ -141,9 +141,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setOpaque(selected);
       String message = (String) value;
       myIssueLinkRenderer.appendTextWithLinks(message);
       setToolTipText(message);
+    }
+
+    @Override
+    protected void paintComponent(final Graphics g) {
+      // skip border erasing code in SimpleColoredRenderer
+      doPaint(g);
     }
   }
 
@@ -192,7 +199,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
-      //return new LabelWithTooltip();
       return myRenderer;
     }
   }
@@ -244,7 +250,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                 storageKey, project);
       myDualView.switchToTheFlatMode();
     }
-    new TableLinkMouseListener().install(myDualView.getFlatView());
+    final TableLinkMouseListener listener = new TableLinkMouseListener();
+    listener.install(myDualView.getFlatView());
+    listener.install(myDualView.getTreeView());
 
     createDualView(null);
 

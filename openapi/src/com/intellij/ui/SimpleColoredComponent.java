@@ -301,7 +301,7 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
-  private synchronized void doPaint(final Graphics g) {
+  protected synchronized void doPaint(final Graphics g) {
     checkCanPaint();
     int xOffset = 0;
 

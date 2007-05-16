@@ -140,27 +140,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   public TableCellRenderer getCellRenderer(int row, int column) {
     TableCellRenderer renderer = getColumnInfo(column).getRenderer(getRowElement(row));
     final TableCellRenderer baseRenderer = renderer == null ? super.getCellRenderer(row, column) : renderer;
-    return new TableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        final JComponent rendererComponent = (JComponent)baseRenderer.getTableCellRendererComponent(
-          table, value, isSelected, hasFocus, row, column);
-        if (isSelected) {
-          rendererComponent.setBackground(table.getSelectionBackground());
-          rendererComponent.setForeground(table.getSelectionForeground());
-        }
-        else {
-          rendererComponent.setBackground(table.getBackground());
-          rendererComponent.setForeground(table.getForeground());
-        }
-        rendererComponent.setOpaque(isSelected);
-        return rendererComponent;
-      }
-    };
+    return new CellRendererWrapper(baseRenderer);
   }
 
   protected Object getRowElement(final int row) {
@@ -190,4 +170,35 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     addSelectedPath(new TreePath(treeNode.getPath()));
   }
 
+  public static class CellRendererWrapper implements TableCellRenderer {
+    private final TableCellRenderer myBaseRenderer;
+
+    public CellRendererWrapper(final TableCellRenderer baseRenderer) {
+      myBaseRenderer = baseRenderer;
+    }
+
+    public TableCellRenderer getBaseRenderer() {
+      return myBaseRenderer;
+    }
+
+    public Component getTableCellRendererComponent(JTable table,
+                                                   Object value,
+                                                   boolean isSelected,
+                                                   boolean hasFocus,
+                                                   int row,
+                                                   int column) {
+      final JComponent rendererComponent = (JComponent)myBaseRenderer.getTableCellRendererComponent(
+        table, value, isSelected, hasFocus, row, column);
+      if (isSelected) {
+        rendererComponent.setBackground(table.getSelectionBackground());
+        rendererComponent.setForeground(table.getSelectionForeground());
+      }
+      else {
+        rendererComponent.setBackground(table.getBackground());
+        rendererComponent.setForeground(table.getForeground());
+      }
+      rendererComponent.setOpaque(isSelected);
+      return rendererComponent;
+    }
+  }
 }
