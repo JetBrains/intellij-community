@@ -176,7 +176,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
     if (originalFile != null) {
       final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);
-      return Pair.create(provider.getFileDescription(), provider.getCachedValueProvider().dependencies);
+      provider.getFileElement();
+      final Object[] dependencies = provider.getCachedValueProvider().dependencies;
+      assert dependencies != null;
+      return Pair.create(provider.getFileDescription(), dependencies);
     }
 
     myCondition.module = module;
@@ -251,12 +254,13 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     }
   }
 
-  private void computeCachedValue(final Object[] dependencyItems) {
+  private void computeCachedValue(@NotNull final Object[] dependencyItems) {
     assert !myCachedValue.hasUpToDateValue();
     getCachedValueProvider().dependencies = dependencyItems;
     myCachedValue.getValue();
   }
 
+  @NotNull
   private Object[] getAllDependencyItems() {
     final Set<Object> deps = new LinkedHashSet<Object>();
     deps.add(this);
