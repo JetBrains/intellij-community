@@ -1,42 +1,42 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class IssueNavigationConfigurationPanel extends JPanel {
-  private JTextField myIssueIDTextField;
-  private JTextField myIssueLinkTextField;
   private JPanel myPanel;
   private JTable myLinkTable;
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myDeleteButton;
+  private JButton myAddJiraPatternButton;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
 
-  private ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<IssueNavigationLink, String>("Issue") {
+  private ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.issue.column")) {
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getIssueRegexp();
     }
   };
-  private ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<IssueNavigationLink, String>("Link") {
+  private ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.link.column")) {
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getLinkRegexp();
     }
@@ -50,7 +50,7 @@ public class IssueNavigationConfigurationPanel extends JPanel {
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
-        dlg.setTitle("Add Issue Navigation Link");
+        dlg.setTitle(VcsBundle.message("issue.link.add.title"));
         dlg.show();
         if (dlg.isOK()) {
           myLinks.add(dlg.getLink());
@@ -58,11 +58,25 @@ public class IssueNavigationConfigurationPanel extends JPanel {
         }
       }
     });
+    myAddJiraPatternButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
+                                            "Add JIRA Issue Navigation Pattern", Messages.getQuestionIcon());
+        if (s == null) {
+          return;
+        }
+        if (!s.endsWith("/")) {
+          s += "/";
+        }
+        myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
+        myModel.fireTableDataChanged();
+      }
+    });
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
         IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
-        dlg.setTitle("Edit Issue Navigation Link");
+        dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
         dlg.setLink(link);
         dlg.show();
         if (dlg.isOK()) {
@@ -75,8 +89,8 @@ public class IssueNavigationConfigurationPanel extends JPanel {
     });
     myDeleteButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (Messages.showOkCancelDialog(myProject, "Delete selected navigation link?",
-                                        "Delete Issue Navigation Link", Messages.getQuestionIcon()) == 0) {
+        if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
+                                        VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == 0) {
           int selRow = myLinkTable.getSelectedRow();
           myLinks.remove(selRow);
           myModel.fireTableDataChanged();

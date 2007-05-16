@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 
@@ -30,7 +31,7 @@ public class IssueNavigationLink {
   public IssueNavigationLink() {
   }
 
-  public IssueNavigationLink(final String issueRegexp, final String linkRegexp) {
+  public IssueNavigationLink(@NonNls final String issueRegexp, @NonNls final String linkRegexp) {
     myIssueRegexp = issueRegexp;
     myLinkRegexp = linkRegexp;
   }
