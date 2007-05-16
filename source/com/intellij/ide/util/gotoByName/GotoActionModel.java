@@ -240,6 +240,10 @@ public class GotoActionModel implements ChooseByNameModel {
         allowToLower = false;
       }
 
+      if (allowToLower) {
+        buffer.append(".*");
+      }
+
       boolean firstIdentifierLetter = true;
       for (int i = 0; i < pattern.length(); i++) {
         final char c = pattern.charAt(i);
