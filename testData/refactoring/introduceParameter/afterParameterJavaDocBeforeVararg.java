@@ -1,10 +1,10 @@
 class C {
     /**
-     * @param i
+     * @param anObject
      * @param s
      */
-    void method(final int i, String... s) {
-        System.out.println(s[i]);
+    void method(final int anObject, String... s) {
+        System.out.println(s[anObject]);
     }
 
     {

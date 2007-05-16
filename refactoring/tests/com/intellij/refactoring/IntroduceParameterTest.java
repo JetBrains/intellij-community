@@ -10,197 +10,157 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import org.jetbrains.annotations.NonNls;
+import gnu.trove.TIntArrayList;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
+  private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal) throws Exception {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters);
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+  }
   public void testNoUsages() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before01.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after01.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testSimpleUsage() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before02.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after02.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testMethodWithoutParams() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before03.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after03.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testParameterSubstitution() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before04.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after04.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testThisSubstitution() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before05.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after05.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testThisSubstitutionInQualifier() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before06.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after06.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testFieldAccess() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before07.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after07.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testMethodAccess() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before08.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after08.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testStaticFieldAccess() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before09.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after09.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
   public void testFieldWithGetterReplacement() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before10.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after10.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false, false);
   }
 
   public void testFieldWithInaccessibleGetterReplacement() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before11.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after11.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testWeirdQualifier() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before12.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after12.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
-
 
   public void testSuperInExpression() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before13.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after13.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
-
   public void testNull() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before14.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after14.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testWeirdQualifierAndParameter() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before15.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after15.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testImplicitSuperCall() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before16.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after16.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testImplicitDefaultConstructor() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before17.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after17.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testLocalVarDeclaration() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before18.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after18.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testInternalSideEffect() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before19.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after19.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testQualifiedNew() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before20.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after20.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testAnonymousClass() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before21.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after21.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testSuperWithSideEffect() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before22.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, false);
-    checkResultByFile("/refactoring/introduceParameter/after22.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
   public void testConflictingField() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before23.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "i", true, false);
-    checkResultByFile("/refactoring/introduceParameter/after23.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false);
   }
 
   public void testParameterInFor() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before24.java");
-    performForLocal(true, true, true, false);
-    checkResultByFile("/refactoring/introduceParameter/after24.java");
+    configureByFile("/refactoring/introduceParameter/beforeParameterInFor.java");
+    performForLocal(true, true, true, false, false);
+    checkResultByFile("/refactoring/introduceParameter/afterParameterInFor.java");
   }
 
   public void testParameterJavaDoc1() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before25.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, true);
-    checkResultByFile("/refactoring/introduceParameter/after25.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }
 
   public void testParameterJavaDoc2() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before26.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, true);
-    checkResultByFile("/refactoring/introduceParameter/after26.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }
 
   public void testParameterJavaDoc3() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before27.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, true);
-    checkResultByFile("/refactoring/introduceParameter/after27.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+  }
+
+  public void testParameterJavaDocBeforeVararg() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }
 
   public void testIncorrectScope() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before29.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "myField", true, true);
-    checkResultByFile("/refactoring/introduceParameter/after29.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, true);
   }
 
   public void testExpectedType() throws Exception {
-    configureByFile("/refactoring/introduceParameter/before30.java");
-    perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "aString", false, true);
-    checkResultByFile("/refactoring/introduceParameter/after30.java");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }
 
+  public void testRemoveParameter() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+  }
+
+  public void testRemoveParameterInHierarchy() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+  }
+
+  public void testRemoveParameterWithJavadoc() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+  }
 
 
   private boolean perform(boolean replaceAllOccurences,
                           int replaceFieldsWithGetters,
                           @NonNls String parameterName,
-                          boolean searchForSuper, boolean declareFinal) {
+                          boolean searchForSuper, boolean declareFinal, final boolean removeUnusedParameters) {
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -218,16 +178,18 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     else {
       methodToSearchFor = method;
     }
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, expr) : new TIntArrayList();
     new IntroduceParameterProcessor(
       myProject, method, methodToSearchFor, expr, expr, null, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
-      declareFinal, null).run();
+      declareFinal, null, parametersToRemove).run();
 
     myEditor.getSelectionModel().removeSelection();
     return true;
   }
 
-  private boolean performForLocal(boolean searchForSuper, boolean removeLocalVariable, boolean replaceAllOccurences, boolean declareFinal) {
+  private void performForLocal(boolean searchForSuper, boolean removeLocalVariable, boolean replaceAllOccurences, boolean declareFinal,
+                               final boolean removeUnusedParameters) {
     final int offset = myEditor.getCaretModel().getOffset();
     final PsiElement element = myFile.findElementAt(offset).getParent();
     assertTrue(element instanceof PsiLocalVariable);
@@ -244,12 +206,13 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     assertNotNull(methodToSearchFor);
     final PsiLocalVariable localVariable = (PsiLocalVariable)element;
     final PsiExpression parameterInitializer = localVariable.getInitializer();
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, parameterInitializer) : new TIntArrayList();
+
     new IntroduceParameterProcessor(
       myProject, method, methodToSearchFor,
       parameterInitializer, null, localVariable, removeLocalVariable,
       localVariable.getName(), replaceAllOccurences,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
-      declareFinal, null).run();
-    return true;
+      declareFinal, null, parametersToRemove).run();
   }
 }

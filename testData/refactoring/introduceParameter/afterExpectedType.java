@@ -1,8 +1,8 @@
 class Test {
     void f (String s) {}
 
-    void u(final String aString) {
-        f(aString);
+    void u(final String anObject) {
+        f(anObject);
     }
 
     void y () {

@@ -189,7 +189,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   // returns null if cannot find, empty Pair if all elements have been changed
-  private @Nullable PsiElement[] restorePsiElements(SearchData searchData, final boolean showErrorMessage) {
+  @Nullable
+  private PsiElement[] restorePsiElements(SearchData searchData, final boolean showErrorMessage) {
     if (searchData == null) return null;
     SmartPsiElementPointer[] lastSearchElements = searchData.myElements;
     if (lastSearchElements == null) return null;
@@ -511,28 +512,28 @@ public class FindUsagesManager implements JDOMExternalizable {
   private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
     String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
     ArrayList<String> strings = new ArrayList<String>();
-    if (selectedOptions.isUsages && selectedOptions.isUsages
-        || selectedOptions.isClassesUsages && selectedOptions.isClassesUsages ||
-        selectedOptions.isMethodsUsages && selectedOptions.isMethodsUsages ||
-        selectedOptions.isFieldsUsages && selectedOptions.isFieldsUsages) {
+    if (selectedOptions.isUsages
+        || selectedOptions.isClassesUsages ||
+        selectedOptions.isMethodsUsages ||
+        selectedOptions.isFieldsUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
-    if (selectedOptions.isIncludeOverloadUsages && selectedOptions.isIncludeOverloadUsages) {
+    if (selectedOptions.isIncludeOverloadUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));
     }
-    if (selectedOptions.isDerivedClasses && selectedOptions.isDerivedClasses) {
+    if (selectedOptions.isDerivedClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
     }
-    if (selectedOptions.isDerivedInterfaces && selectedOptions.isDerivedInterfaces) {
+    if (selectedOptions.isDerivedInterfaces) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
     }
-    if (selectedOptions.isImplementingClasses && selectedOptions.isImplementingClasses) {
+    if (selectedOptions.isImplementingClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
     }
-    if (selectedOptions.isImplementingMethods && selectedOptions.isImplementingMethods) {
+    if (selectedOptions.isImplementingMethods) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.methods"));
     }
-    if (selectedOptions.isOverridingMethods && selectedOptions.isOverridingMethods) {
+    if (selectedOptions.isOverridingMethods) {
       strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
     }
     if (strings.isEmpty()) {

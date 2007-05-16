@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
@@ -1030,6 +1031,10 @@ public final class PsiUtil {
     }
 
     return type;
+  }
+
+  public static boolean isInsideJavadocComment(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, true) != null;
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {

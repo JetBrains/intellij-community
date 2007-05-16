@@ -5,10 +5,7 @@
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
@@ -28,7 +25,7 @@ public class IntroduceParameterRefactoringImpl extends RefactoringImpl<Introduce
     super(
       new IntroduceParameterProcessor(project, methodToReplaceIn, methodToSearchFor,
                                       parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurences,
-                                      REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, declareFinal, null));
+                                      REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, declareFinal, null, null));
   }
 
   IntroduceParameterRefactoringImpl(Project project,

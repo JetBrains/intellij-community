@@ -23,18 +23,20 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
-import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.LocalVariableOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
+import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,14 +58,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
   private PsiType myForcedType;
+  private final TIntArrayList myParametersToRemove;
   private final PsiManager myManager;
 
   /**
    * if expressionToSearch is null, search for localVariable
    */
-  public IntroduceParameterProcessor(Project project,
+  public IntroduceParameterProcessor(@NotNull Project project,
                                      PsiMethod methodToReplaceIn,
-                                     PsiMethod methodToSearchFor,
+                                     @NotNull PsiMethod methodToSearchFor,
                                      PsiExpression parameterInitializer,
                                      PsiExpression expressionToSearch,
                                      PsiLocalVariable localVariable,
@@ -72,7 +75,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
                                      boolean replaceAllOccurences,
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
-                                     PsiType forcedType) {
+                                     PsiType forcedType,
+                                     @NotNull TIntArrayList parametersToRemove) {
     super(project);
 
     myMethodToReplaceIn = methodToReplaceIn;
@@ -88,6 +92,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     myDeclareFinal = declareFinal;
     myForcedType = forcedType;
     myManager = PsiManager.getInstance(project);
+
+    myParametersToRemove = parametersToRemove;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -335,8 +341,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       // Changing signature of initial method
       // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
       LOG.assertTrue(initializerType.isValid());
-      final FieldConflictsResolver fieldConflictsResolver =
-              new FieldConflictsResolver(myParameterName, myMethodToReplaceIn.getBody());
+      final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(myParameterName, myMethodToReplaceIn.getBody());
       changeMethodSignature(myMethodToReplaceIn, initializerType);
       if (myMethodToSearchFor != myMethodToReplaceIn) {
         changeMethodSignatureAndResolveFieldConflicts(myMethodToSearchFor, initializerType);
@@ -372,7 +377,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       fieldConflictsResolver.fix();
     }
     catch (IncorrectOperationException ex) {
-      LOG.assertTrue(false);
+      LOG.error(ex);
     }
   }
 
@@ -392,11 +397,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     PsiExpressionStatement superCall =
             (PsiExpressionStatement) factory.createStatementFromText("super();", constructor);
     superCall = (PsiExpressionStatement) CodeStyleManager.getInstance(myProject).reformat(superCall);
-    final PsiStatement[] statements = constructor.getBody().getStatements();
-    if(statements.length > 0) {
-      superCall = (PsiExpressionStatement) constructor.getBody().addBefore(superCall, statements[0]);
-    } else {
-      superCall = (PsiExpressionStatement) constructor.getBody().add(superCall);
+    PsiCodeBlock body = constructor.getBody();
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length > 0) {
+      superCall = (PsiExpressionStatement)body.addBefore(superCall, statements[0]);
+    }
+    else {
+      superCall = (PsiExpressionStatement)body.add(superCall);
     }
     PsiCallExpression expression = (PsiCallExpression) superCall.getExpression();
     fixActualArgumentsList(expression);
@@ -430,32 +437,46 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     return initializerType;
   }
 
-  private void processChangedMethodCall(PsiElement element)
-          throws IncorrectOperationException {
-    if(element.getParent() instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element.getParent();
+  private void processChangedMethodCall(PsiElement element) throws IncorrectOperationException {
+    if (element.getParent() instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element.getParent();
 
       PsiElementFactory factory = methodCall.getManager().getElementFactory();
-      PsiElement newArg = factory.createExpressionFromText(myParameterName, null);
-      PsiExpressionList argList = methodCall.getArgumentList();
-      PsiExpression[] exprs = argList.getExpressions();
+      PsiExpression expression = factory.createExpressionFromText(myParameterName, null);
+      final PsiExpressionList argList = methodCall.getArgumentList();
+      final PsiExpression[] exprs = argList.getExpressions();
 
       if (exprs.length > 0) {
-        argList.addAfter(newArg, exprs[exprs.length - 1]);
+        argList.addAfter(expression, exprs[exprs.length - 1]);
       }
       else {
-        argList.add(newArg);
+        argList.add(expression);
       }
+
+      removeParametersFromCall(argList);
     }
     else {
-      LOG.assertTrue(false);
+      LOG.error(element.getParent().toString());
     }
   }
 
+  private void removeParametersFromCall(final PsiExpressionList argList) {
+    final PsiExpression[] exprs = argList.getExpressions();
+    myParametersToRemove.forEachDescending(new TIntProcedure() {
+      public boolean execute(final int paramNum) {
+        try {
+          exprs[paramNum].delete();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        return true;
+      }
+    });
+  }
+
   private void changeExternalUsage(UsageInfo usage) throws IncorrectOperationException {
-    if (!RefactoringUtil.isMethodUsage(usage.getElement())) {
-      return;
-    }
+    if (!RefactoringUtil.isMethodUsage(usage.getElement())) return;
 
     PsiCallExpression callExpression = RefactoringUtil.getCallExpressionByMethodReference((PsiJavaCodeReferenceElement) usage.getElement());
     PsiExpressionList argList = callExpression.getArgumentList();
@@ -481,6 +502,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     // here comes some postprocessing...
     new OldReferencesResolver(callExpression, newArg, myReplaceFieldsWithGetters).resolve();
+    
+    removeParametersFromCall(callExpression.getArgumentList());
   }
 
   private static PsiExpression getLast(PsiExpression[] oldArgs) {
@@ -726,11 +749,29 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     PsiParameter parameter = factory.createParameter(myParameterName, initializerType);
     parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, myDeclareFinal);
     final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
-    PsiParameterList parameterList = methodToReplaceIn.getParameterList();
+    final PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);
     manager.getCodeStyleManager().shortenClassReferences(parameter);
     final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
     javaDocHelper.addParameterAfter(myParameterName, tagForAnchorParameter);
+
+    final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
+    myParametersToRemove.forEachDescending(new TIntProcedure() {
+      public boolean execute(final int paramNum) {
+        try {
+          PsiParameter param = parameters[paramNum];
+          PsiDocTag tag = javaDocHelper.getTagForParameter(param);
+          if (tag != null) {
+            tag.delete();
+          }
+          param.delete();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        return true;
+      }
+    });
   }
 
   private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {

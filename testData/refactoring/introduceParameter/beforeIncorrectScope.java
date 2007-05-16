@@ -1,5 +1,5 @@
 public class InnerOuter {
-  String myField = "";
+  String anObject = "";
 
   interface Inner {
     void exec();
@@ -7,7 +7,7 @@ public class InnerOuter {
 
   Inner instance = new Inner() {
     public void exec() {
-      <selection>myField</selection>.charAt(1);
+      <selection>anObject</selection>.charAt(1);
     }
   };
 

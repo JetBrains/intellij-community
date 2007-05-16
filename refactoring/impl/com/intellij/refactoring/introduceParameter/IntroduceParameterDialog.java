@@ -20,9 +20,15 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.usageView.UsageInfo;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
@@ -32,11 +38,13 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private NameSuggestionsManager myNameSuggestionsManager;
 
   private Project myProject;
-  private List myClassMembersList;
+  private List<UsageInfo> myClassMembersList;
   private int myOccurenceNumber;
   private final boolean myIsInvokedOnDeclaration;
   private final PsiMethod myMethodToSearchFor;
   private final PsiMethod myMethodToReplaceIn;
+  private final PsiParameter[] myParametersToRemove;
+  private final boolean[] myParametersToRemoveChecked;
   private PsiExpression myExpression;
   private PsiLocalVariable myLocalVar;
   private boolean myIsLocalVariable;
@@ -60,15 +68,16 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
 
 
-  IntroduceParameterDialog(Project project,
-                           List classMembersList,
+  IntroduceParameterDialog(@NotNull Project project,
+                           @NotNull List<UsageInfo> classMembersList,
                            int occurenceNumber,
                            PsiLocalVariable onLocalVariable,
                            PsiExpression onExpression,
-                           NameSuggestionsGenerator generator,
-                           TypeSelectorManager typeSelectorManager,
-                           PsiMethod methodToSearchFor,
-                           PsiMethod methodToReplaceIn) {
+                           @NotNull NameSuggestionsGenerator generator,
+                           @NotNull TypeSelectorManager typeSelectorManager,
+                           @NotNull PsiMethod methodToSearchFor,
+                           @NotNull PsiMethod methodToReplaceIn,
+                           @NotNull TIntArrayList parametersToRemove) {
     super(project, true);
     myProject = project;
     myClassMembersList = classMembersList;
@@ -82,53 +91,43 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
+    final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
+    myParametersToRemove = new PsiParameter[parameters.length];
+    myParametersToRemoveChecked = new boolean[parameters.length];
+    parametersToRemove.forEach(new TIntProcedure() {
+      public boolean execute(final int paramNum) {
+        myParametersToRemove[paramNum] = parameters[paramNum];
+        return true;
+      }
+    });
 
     setTitle(REFACTORING_NAME);
     init();
   }
 
-  public boolean isDeclareFinal() {
-    if (myCbDeclareFinal != null) {
-      return myCbDeclareFinal.isSelected();
-    } else {
-      return false;
-    }
+  private boolean isDeclareFinal() {
+    return myCbDeclareFinal != null && myCbDeclareFinal.isSelected();
   }
 
-  public boolean isReplaceAllOccurences() {
-    if(myIsInvokedOnDeclaration)
-      return true;
-    if (myCbReplaceAllOccurences != null) {
-      return myCbReplaceAllOccurences.isSelected();
-    }
-    else
-      return false;
+  private boolean isReplaceAllOccurences() {
+    return myIsInvokedOnDeclaration || myCbReplaceAllOccurences != null && myCbReplaceAllOccurences.isSelected();
   }
 
-  public boolean isDeleteLocalVariable() {
-    if(myIsInvokedOnDeclaration)
-      return true;
-    if(myCbDeleteLocalVariable != null) {
-      return myCbDeleteLocalVariable.isSelected();
-    }
-    else
-      return false;
+  private boolean isDeleteLocalVariable() {
+    return myIsInvokedOnDeclaration || myCbDeleteLocalVariable != null && myCbDeleteLocalVariable.isSelected();
   }
 
-  public boolean isUseInitializer() {
+  private boolean isUseInitializer() {
     if(myIsInvokedOnDeclaration)
       return myHasInitializer;
-    if(myCbUseInitializer != null) {
-      return myCbUseInitializer.isSelected();
-    }
-    return false;
+    return myCbUseInitializer != null && myCbUseInitializer.isSelected();
   }
 
-  public String getParameterName() {
+  private String getParameterName() {
     return  myParameterNameField.getName();
   }
 
-  public int getReplaceFieldsWithGetters() {
+  private int getReplaceFieldsWithGetters() {
     if(myReplaceFieldsWithGettersAllRadio != null && myReplaceFieldsWithGettersAllRadio.isSelected()) {
       return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL;
     }
@@ -147,7 +146,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     return myParameterNameField.getComponent();
   }
 
-  public PsiType getSelectedType() {
+  private PsiType getSelectedType() {
     return myTypeSelector.getSelectedType();
   }
 
@@ -261,6 +260,23 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       }
     }
 
+    for (int i = 0; i < myParametersToRemove.length; i++) {
+      PsiParameter parameter = myParametersToRemove[i];
+      if (parameter == null) continue;
+      final NonFocusableCheckBox cb = new NonFocusableCheckBox(RefactoringBundle.message("remove.parameter.0.no.longer.used",
+                                                                                         parameter.getName()));
+      cb.setSelected(true);
+      gbConstraints.gridy++;
+      panel.add(cb, gbConstraints);
+      final int i1 = i;
+      cb.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          myParametersToRemoveChecked[i1] = cb.isSelected();
+        }
+      });
+      myParametersToRemoveChecked[i] = true;
+    }
+
     updateControls();
     if (myCbReplaceAllOccurences != null) {
       myCbReplaceAllOccurences.addItemListener(
@@ -356,7 +372,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     final RefactoringSettings settings = RefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             getReplaceFieldsWithGetters();
-    if (myCbDeclareFinal != null) settings.INTRODUCE_PARAMETER_CREATE_FINALS = new Boolean(myCbDeclareFinal.isSelected());
+    if (myCbDeclareFinal != null) settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myCbDeclareFinal.isSelected());
 
     if(myCbDeleteLocalVariable != null) {
       settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE =
@@ -380,20 +396,25 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myLocalVar, isDeleteLocalVariable,
       getParameterName(), isReplaceAllOccurences(),
       getReplaceFieldsWithGetters(), isDeclareFinal(),
-      getSelectedType());
+      getSelectedType(), getParametersToRemove());
     invokeRefactoring(processor);
     myParameterNameField.requestFocusInWindow();
+  }
+
+  private TIntArrayList getParametersToRemove() {
+    TIntArrayList parameters = new TIntArrayList();
+    for (int i = 0; i < myParametersToRemoveChecked.length; i++) {
+      if (myParametersToRemoveChecked[i]) {
+        parameters.add(i);
+      }
+    }
+    return parameters;
   }
 
 
   protected boolean areButtonsValid () {
     String name = getParameterName();
-    if (name == null) {
-      return false;
-    }
-    else {
-      return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name.trim());
-    }
+    return name != null && PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name.trim());
   }
 
 

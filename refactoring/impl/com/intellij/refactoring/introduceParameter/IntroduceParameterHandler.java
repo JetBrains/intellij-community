@@ -30,8 +30,10 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.usageView.UsageInfo;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +77,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     PsiMethod method;
     if (expr != null) {
       method = Util.getContainingMethod(expr);
-    } else {
+    }
+    else {
       method = Util.getContainingMethod(localVar);
     }
 
@@ -121,34 +124,30 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
 
     final PsiMethod methodToSearchFor = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-
-    if (methodToSearchFor == null) {
-      return false;
-    }
+    if (methodToSearchFor == null) return false;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
+
+    TIntArrayList parametersToRemove = Util.findParametersToRemove(method, expr);
 
     PsiExpression[] occurences;
     if (expr != null) {
       occurences = CodeInsightUtil.findExpressionOccurrences(method, expr);
-    } else { // local variable
+    }
+    else { // local variable
       occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);
     }
     if (editor != null) {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
-    ArrayList localVars = new ArrayList();
-    ArrayList classMemberRefs = new ArrayList();
-    ArrayList params = new ArrayList();
+    List<UsageInfo> localVars = new ArrayList<UsageInfo>();
+    List<UsageInfo> classMemberRefs = new ArrayList<UsageInfo>();
+    List<UsageInfo> params = new ArrayList<UsageInfo>();
 
 
     if (expr != null) {
       Util.analyzeExpression(expr, localVars, classMemberRefs, params);
     }
-
-    @NonNls String parameterName = "anObject";
-    boolean replaceAllOccurences = true;
-    boolean isDeleteLocalVariable = true;
 
     if (expr instanceof PsiReferenceExpression) {
       PsiElement resolved = ((PsiReferenceExpression) expr).resolve();
@@ -158,39 +157,36 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
 
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      @NonNls String parameterName = "anObject";
+      boolean replaceAllOccurences = true;
+      boolean isDeleteLocalVariable = true;
+      new IntroduceParameterProcessor(myProject, method, methodToSearchFor, expr, expr, localVar, isDeleteLocalVariable, parameterName,
+                                      replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null,
+                                      parametersToRemove).run();
+    }
+    else {
       final String propName = localVar != null ? CodeStyleManager.getInstance(myProject).variableNameToPropertyName(localVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
       final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, expr, localVar);
 
-      TypeSelectorManager typeSelectorManager =
-              (expr != null ?
-               new TypeSelectorManagerImpl(project, initializerType, expr, occurences) :
-               new TypeSelectorManagerImpl(project, initializerType, occurences));
+      TypeSelectorManager typeSelectorManager = expr != null
+                                                ? new TypeSelectorManagerImpl(project, initializerType, expr, occurences)
+                                                : new TypeSelectorManagerImpl(project, initializerType, occurences);
 
-      new IntroduceParameterDialog(
-              myProject, classMemberRefs,
-              occurences.length,
-              localVar, expr,
-              new NameSuggestionsGenerator() {
-                public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                  return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
-                }
+      NameSuggestionsGenerator nameSuggestionsGenerator = new NameSuggestionsGenerator() {
+        public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+          return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
+        }
 
-                public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix,
-                                                                                              PsiType type) {
-                  LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                  LookupItemPreferencePolicy policy = CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
-                  return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
-                }
-              },
-              typeSelectorManager, methodToSearchFor, method).show();
-    } else {
-      new IntroduceParameterProcessor(
-        myProject, method, methodToSearchFor,
-        expr, expr,
-        localVar, isDeleteLocalVariable,
-        parameterName, replaceAllOccurences,
-        IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null).run();
+        public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
+          LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+          LookupItemPreferencePolicy policy =
+            CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
+          return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
+        }
+      };
+      new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
+                                   typeSelectorManager, methodToSearchFor, method, parametersToRemove).show();
     }
     return true;
   }
