@@ -4,22 +4,18 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.peer.PeerFactory;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.awt.*;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +187,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return getSelectedContent().getIcon();
   }
 
-  final String getId() {
+  public final String getId() {
     return myId;
   }
 
