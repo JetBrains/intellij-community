@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -26,7 +27,8 @@ public class AntNameElementImpl extends AntElementImpl {
 
   public String getName() {
     String name = myCachedName;
-    final long modificationCount = getManager().getModificationTracker().getModificationCount();
+    final PsiManager psiManager = getManager();
+    final long modificationCount = psiManager != null? psiManager.getModificationTracker().getModificationCount() : myModCount;
     if (name != null && myModCount == modificationCount) {
       return name;
     }
