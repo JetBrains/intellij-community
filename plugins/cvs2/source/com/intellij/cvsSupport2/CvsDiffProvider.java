@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 
@@ -24,7 +25,9 @@ public class CvsDiffProvider implements DiffProvider{
   }
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
-    return new CvsRevisionNumber(CvsEntriesManager.getInstance().getEntryFor(file).getRevision());
+    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(file);
+    if (entry == null) return null;
+    return new CvsRevisionNumber(entry.getRevision());
   }
 
   public VcsRevisionNumber getLastRevision(VirtualFile virtualFile) {

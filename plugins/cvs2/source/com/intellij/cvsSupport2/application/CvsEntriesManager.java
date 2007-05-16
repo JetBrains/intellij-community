@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -189,8 +190,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return getCvsInfo(parent).getEntryNamed(name);
   }
 
-  public Entry getEntryFor(VirtualFile file) {
-    assert(file != null);
+  public Entry getEntryFor(@NotNull VirtualFile file) {
     final CvsInfo cvsInfo = getCvsInfo(CvsVfsUtil.getParentFor(file));
     assert(cvsInfo != null);
     return cvsInfo.getEntryNamed(file.getName());
