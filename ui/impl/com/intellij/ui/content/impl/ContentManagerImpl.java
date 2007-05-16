@@ -338,6 +338,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public void setSelectedContent(final Content content, final boolean requestFocus) {
     if (!checkSelectionChangeShouldBeProcessed(content)) return;
+    if (!myContents.contains(content)) {
+      throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
+    }
 
     final boolean focused = isSelectionHoldsFocus();
 
