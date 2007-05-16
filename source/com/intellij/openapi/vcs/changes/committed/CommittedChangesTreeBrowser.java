@@ -191,7 +191,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void setTableContextMenu(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myChangesTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    DefaultActionGroup menuGroup = new DefaultActionGroup();
+    menuGroup.add(group);
+    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
   public void setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy) {
