@@ -290,15 +290,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void deleteString(int startOffset, int endOffset) {
-    if (startOffset < 0 || startOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset);
-    }
-    if (endOffset < 0 || endOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset);
-    }
-    if (endOffset < startOffset) {
-      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
-    }
+    assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
     if (!isWritable()) throw new ReadOnlyModificationException(this);
@@ -318,15 +310,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp) {
-    if (startOffset < 0 || startOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset);
-    }
-    if (endOffset < 0 || endOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset);
-    }
-    if (endOffset < startOffset) {
-      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
-    }
+    assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
     assertValidSeparators(s);
@@ -364,6 +348,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp);
+  }
+
+  private void assertBounds(final int startOffset, final int endOffset) {
+    if (startOffset < 0 || startOffset > getTextLength()) {
+      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset);
+    }
+    if (endOffset < 0 || endOffset > getTextLength()) {
+      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset);
+    }
+    if (endOffset < startOffset) {
+      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
+    }
   }
 
   private void assertWriteAccess() {

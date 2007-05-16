@@ -3,6 +3,7 @@ package com.intellij.find;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -45,14 +46,15 @@ import java.util.List;
 public class FindUtil {
   private static Key<Direction> KEY = Key.create("FindUtil.KEY");
   private static enum Direction {
-    UP, DOWN;
+    UP, DOWN
   }
 
   public static void findWordAtCaret(Project project, Editor editor) {
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
-    int start = 0, end = document.getTextLength();
+    int start = 0;
+    int end = document.getTextLength();
     if (!editor.getSelectionModel().hasSelection()) {
       for (int i = caretOffset - 1; i >= 0; i--) {
         char c = text.charAt(i);
@@ -371,12 +373,14 @@ public class FindUtil {
 
     document.startGuardedBlockChecking();
     boolean isReplaced = false;
+    int occurrences = 0;
+
     try {
       FindManager findManager = FindManager.getInstance(project);
       boolean toPrompt = model.isPromptOnReplace();
       model = (FindModel)model.clone();
       while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
-      caretOffset = offset;
+        caretOffset = offset;
         FindResult result = doSearch(project, editor, offset, !isReplaced, model, toPrompt);
         if (result == null) {
           break;
@@ -397,7 +401,8 @@ public class FindUtil {
           }
         }
 
-        int startOffset = result.getStartOffset(), endOffset = result.getEndOffset();
+        int startOffset = result.getStartOffset();
+        int endOffset = result.getEndOffset();
         String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
         String toReplace = findManager.getStringToReplace(foundString, model);
         if (model.isForward()) {
@@ -406,6 +411,7 @@ public class FindUtil {
         else {
           offset = doReplace(document, model, result, toReplace).getStartOffset();
         }
+        occurrences++;
 
         //[SCR 7258]
         if (!isReplaced) {
@@ -425,6 +431,8 @@ public class FindUtil {
     if (isReplaced) {
       editor.getCaretModel().moveToOffset(caretOffset);
     }
+
+    ReplaceInProjectManager.reportNumberReplacedOccurences(project, occurrences);
 
     return isReplaced;
   }
@@ -544,10 +552,9 @@ public class FindUtil {
         result = findManager.findString(document.getCharsSequence(), 0, model);
       }
       else {
-        result =
-        findManager.findString(document.getCharsSequence(), document.getTextLength(), model);
+        result = findManager.findString(document.getCharsSequence(), document.getTextLength(), model);
       }
-      if (result != null && !result.isStringFound()) {
+      if (!result.isStringFound()) {
         result = null;
       }
 
@@ -607,16 +614,16 @@ public class FindUtil {
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          document.deleteString(startOffset, endOffset);
           //[ven] I doubt converting is a good solution to SCR 21224
-          document.insertString(startOffset, StringUtil.convertLineSeparators(stringToReplace));
+          document.replaceString(startOffset, endOffset,StringUtil.convertLineSeparators(stringToReplace));
         }
       }
     );
 
     int newOffset = startOffset + stringToReplace.length();
 
-    int start = startOffset, end = newOffset;
+    int start = startOffset;
+    int end = newOffset;
     if (model.isRegularExpressions()) {
       String toFind = model.getStringToFind();
       if (model.isForward()) {

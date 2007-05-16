@@ -6,7 +6,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -19,25 +19,23 @@ import com.intellij.psi.PsiFile;
 public class GotoFileAction extends GotoActionBase {
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project));
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
-        if (GotoFileAction.class.equals (myInAction))
-          myInAction = null;
+        if (GotoFileAction.class.equals(myInAction)) myInAction = null;
       }
       public void elementChosen(Object element){
         final PsiFile file = (PsiFile)element;
-        if (file != null){
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile());
-              if (descriptor.canNavigate()) {
-                descriptor.navigate(true);
-              }
+        if (file == null) return;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile());
+            if (descriptor.canNavigate()) {
+              descriptor.navigate(true);
             }
-          }, ModalityState.NON_MODAL);
-        }
+          }
+        }, ModalityState.NON_MODAL);
       }
     }, ModalityState.current(), true);
   }

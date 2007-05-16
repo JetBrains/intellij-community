@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Collection;
 
 public class ReplaceInProjectManager {
   private Project myProject;
@@ -152,8 +153,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    final Usage[] usages;
-    _usages.toArray(usages = new Usage[_usages.size()]);
+    final Usage[] usages = _usages.toArray(new Usage[_usages.size()]);
     
     //usageView.expandAll();
     for(int i = 0; i < usages.length; ++i){
@@ -250,9 +250,7 @@ public class ReplaceInProjectManager {
         CommandProcessor.getInstance().executeCommand(
             myProject, new Runnable() {
             public void run() {
-              for (Usage usage1 : usages) {
-                doReplace(replaceContext, usage1);
-              }
+              doReplace(replaceContext, _usages);
               replaceContext.getUsageView().close();
             }
           },
@@ -285,9 +283,16 @@ public class ReplaceInProjectManager {
     );
   }
 
-  private void doReplace(final ReplaceContext replaceContext, Set<Usage> usages) {
+  private void doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
     for (final Usage usage : usages) {
       doReplace(replaceContext, usage);
+    }
+    reportNumberReplacedOccurences(myProject, usages.size());
+  }
+
+  public static void reportNumberReplacedOccurences(Project project, int occurrences) {
+    if (occurrences != 0) {
+      WindowManager.getInstance().getStatusBar(project).setInfo(FindBundle.message("0.occurrences.replaced", occurrences));
     }
   }
 

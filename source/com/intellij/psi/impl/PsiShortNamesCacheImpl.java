@@ -14,6 +14,7 @@ import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -264,7 +265,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   private void cacheFile(final VirtualFile vFile) {
     String fileName = vFile.getName();
     VirtualFile[] files = getFiles(myFileNameToFilesMap, fileName);
-    if (!Arrays.asList(files).contains(vFile)) {
+    if (ArrayUtil.indexOf(files,vFile) == -1) {
       VirtualFile[] newFiles = new VirtualFile[files.length + 1];
       System.arraycopy(files, 0, newFiles, 0, files.length);
       newFiles[files.length] = vFile;
