@@ -14,19 +14,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -37,8 +36,8 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -359,10 +358,7 @@ public class CodeInsightUtil {
   }
 
   public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
-    if (!PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2)) return false;
-    PsiType type1 = expr1.getType();
-    PsiType type2 = expr2.getType();
-    return Comparing.equal(type1, type2);
+    return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2);
   }
 
   public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {

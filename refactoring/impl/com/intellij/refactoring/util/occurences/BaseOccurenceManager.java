@@ -29,10 +29,11 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
         for (PsiExpression occurence : myOccurences) {
           if (myFilter.isOK(occurence)) result.add(occurence);
         }
-        if(result.size() > 0) {
-          myOccurences = result.toArray(new PsiExpression[result.size()]);
-        } else {
+        if (result.isEmpty()) {
           myOccurences = defaultOccurences();
+        }
+        else {
+          myOccurences = result.toArray(new PsiExpression[result.size()]);
         }
       }
 
@@ -62,7 +63,7 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
     return RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurences, scope);
   }
 
-  public static boolean needToDeclareFinal(PsiExpression[] occurrences) {
+  private static boolean needToDeclareFinal(PsiExpression[] occurrences) {
     PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
       if (scopeToDeclare == null) {

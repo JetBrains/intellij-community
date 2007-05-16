@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -99,7 +99,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(expr, false);
     if (anchorStatement == null) {
-        return parentStatementNotFound(project, expr, editor, file);
+        return parentStatementNotFound(project);
     }
     if (anchorStatement instanceof PsiExpressionStatement) {
       PsiExpression enclosingExpr = ((PsiExpressionStatement)anchorStatement).getExpression();
@@ -116,8 +116,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     PsiElement tempContainer = anchorStatement.getParent();
 
-    if (!(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
+    if (!(tempContainer instanceof PsiCodeBlock) && !isLoopOrIf(tempContainer)) {
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
       showErrorMessage(message, project);
       return false;
     }
@@ -180,14 +180,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final PsiElement container = tempContainer;
 
     PsiElement child = anchorStatement;
-    if (!IntroduceVariableBase.isLoopOrIf(container)) {
+    if (!isLoopOrIf(container)) {
       child = locateAnchor(child);
     }
     final PsiElement anchor = child == null ? anchorStatement : child;
 
     boolean tempDeleteSelf = false;
     final boolean replaceSelf = replaceWrite || !RefactoringUtil.isAssignmentLHS(expr);
-    if (!IntroduceVariableBase.isLoopOrIf(container)) {
+    if (!isLoopOrIf(container)) {
       if (expr.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorStatement)) {
         PsiStatement statement = (PsiStatement) expr.getParent();
         PsiElement parent = statement.getParent();
@@ -316,8 +316,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return true;
   }
 
-  protected boolean parentStatementNotFound(final Project project, PsiExpression expr, Editor editor, PsiFile file) {
-    String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
+  private boolean parentStatementNotFound(final Project project) {
+    String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
     showErrorMessage(message, project);
     return false;
   }
@@ -367,7 +367,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       }
       LOG.assertTrue(false);
     }
-    IntroduceVariableBase.LOG.assertTrue(false);
+    LOG.assertTrue(false);
     return null;
   }
 
