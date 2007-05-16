@@ -15,7 +15,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
@@ -725,6 +732,39 @@ public class DependencyCache {
     return myPreviouslyRemoteClasses.contains(qName);
   }
 
+  private TIntHashSet myClassesWithOverrideAnnotatedMethods;
+  
+  public boolean hasOverrideAnnotatedMethods(int qName, final Project project) throws CacheCorruptedException {
+    if (myClassesWithOverrideAnnotatedMethods == null) {
+      final CacheCorruptedException[] ex = new CacheCorruptedException[] {null};
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          myClassesWithOverrideAnnotatedMethods = new TIntHashSet();
+          final PsiClass overrideClass = PsiManager.getInstance(project).findClass(Override.class.getName(), GlobalSearchScope.allScope(project));
+          if (overrideClass != null) {
+            final Query<PsiMember> query = AnnotatedMembersSearch.search(overrideClass);
+            query.forEach(new Processor<PsiMember>() {
+              public boolean process(final PsiMember psiMember) {
+                try {
+                  myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(psiMember.getContainingClass().getQualifiedName()));
+                  return true;
+                }
+                catch (CacheCorruptedException e) {
+                  ex[0] = e;
+                  return false;
+                }
+              }
+            });
+          }
+        }
+      });
+      if (ex[0] != null) {
+        throw ex[0];
+      }
+    }
+    return myClassesWithOverrideAnnotatedMethods.contains(qName);
+  }
+  
   private class DeclaringClassFinder implements ClassInfoProcessor {
     private int myMemberName;
     private int myMemberDescriptor;

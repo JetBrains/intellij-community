@@ -664,7 +664,9 @@ public class DependencyProcessor {
                 return !found;
               }
             });
-
+            if (myDependencyCache.isClassInfoMarked(subclassQName)) {
+              return true;
+            }
           }
         }
 
@@ -673,6 +675,18 @@ public class DependencyProcessor {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the class should be declared abstract because abstract method implementation was removed from its superclass: " +
+                          myDependencyCache.resolve(myQName));
+              }
+            }
+            return true;
+          }
+        }
+        
+        if (hasRemovedMethods) {
+          if (myDependencyCache.hasOverrideAnnotatedMethods(subclassQName, myProject)) {
+            if (myDependencyCache.markClass(subclassQName)) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Mark dependent subclass " + myDependencyCache.resolve(subclassQName) + "; reason: the class has methods annotated with @Override and some methods were changed or removed in a base class" +
                           myDependencyCache.resolve(myQName));
               }
             }
