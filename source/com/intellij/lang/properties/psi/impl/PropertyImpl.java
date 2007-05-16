@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,8 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
-  public @Nullable ASTNode getKeyNode() {
+  @Nullable
+  public ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
   }
   @Nullable
@@ -156,7 +158,8 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return out.toString();
   }
 
-  public @Nullable String getKeyValueSeparator() {
+  @Nullable
+  public String getKeyValueSeparator() {
     final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     if (node == null) {
       return null;
@@ -172,7 +175,13 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     final ASTNode parentNode = getParent().getNode();
     assert parentNode != null;
 
-    parentNode.removeChild(getNode());
+    ASTNode node = getNode();
+    ASTNode prev = node.getTreePrev();
+    ASTNode next = node.getTreeNext();
+    parentNode.removeChild(node);
+    if ((prev == null || prev.getElementType() == TokenType.WHITE_SPACE) && next != null && next.getElementType() == TokenType.WHITE_SPACE) {
+      parentNode.removeChild(next);
+    }
   }
 
   public PropertiesFile getContainingFile() {

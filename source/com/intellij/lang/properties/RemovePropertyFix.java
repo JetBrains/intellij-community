@@ -19,15 +19,17 @@ class RemovePropertyFix implements IntentionAction {
     myProperty = origProperty;
   }
 
+  @NotNull
   public String getText() {
     return PropertiesBundle.message("remove.property.intention.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file.isValid()
            && myProperty != null
            && myProperty.isValid()
@@ -35,7 +37,7 @@ class RemovePropertyFix implements IntentionAction {
       ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     myProperty.delete();
   }

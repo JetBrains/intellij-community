@@ -1,10 +1,11 @@
 package com.intellij.lang.properties;
 
-import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     assertPropertyEquals(added, myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
 
-  private static void assertPropertyEquals(final Property property, String name, String value) {
+  private static void assertPropertyEquals(final Property property, @NonNls String name, @NonNls String value) {
     assertEquals(name, property.getName());
     assertEquals(value, property.getValue());
   }
@@ -56,11 +57,28 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
   }
 
+  public void testDeletePropertyWhitespaceAround() throws Exception {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
+
+    Property property = propertiesFile.findPropertyByKey("xxx2");
+    property.delete();
+
+    assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getText());
+  }
+  public void testDeletePropertyWhitespaceAhead() throws Exception {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
+
+    Property property = propertiesFile.findPropertyByKey("xxx");
+    property.delete();
+
+    assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());
+  }
+
   public void testAddToEnd() throws IncorrectOperationException {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
     assertEquals(1,propertiesFile.getProperties().size());
     propertiesFile.addProperty(myPropertyToAdd);
-    assertEquals("a=b\\nccc"+"\nkkk=vvv", propertiesFile.getText());
+    assertEquals("a=b\\nccc\nkkk=vvv", propertiesFile.getText());
   }
 
   public void testUnescapedValue() {
