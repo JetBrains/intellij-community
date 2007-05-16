@@ -27,7 +27,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -474,7 +477,15 @@ public class JavaDocManager implements ProjectComponent {
   private static String findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
-
+    if (module == null) {
+      final VirtualFileSystem fs = virtualFile.getFileSystem();
+      if (fs instanceof JarFileSystem) {
+        final VirtualFile jar = ((JarFileSystem)fs).getVirtualFileForJar(virtualFile);
+        if (jar != null) {
+          module = fileIndex.getModuleForFile(jar);
+        }
+      }
+    }
     if (module != null) {
       VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getJavadocPaths();
       String httpRoot = getHttpRoot(javadocPaths, relPath);
@@ -612,6 +623,7 @@ public class JavaDocManager implements ProjectComponent {
     }, 10);
   }
 
+  @Nullable
   private String getDocInfo(PsiElement element) throws Exception {
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo(((PsiMethodCallExpression)element));
@@ -649,15 +661,18 @@ public class JavaDocManager implements ProjectComponent {
       String docURL = getExternalJavaDocUrl(element);
 
       if (element instanceof PsiCompiledElement) {
-        String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
-        if (externalDoc != null) {
-          return externalDoc;
+        try {
+          String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
+          if (externalDoc != null) {
+            return externalDoc;
+          }
+        }
+        catch (FileNotFoundException e) {
+          //try to generate some javadoc
         }
       }
 
-      return docFilter.filterInternalDocInfo(
-        javaDocInfoGenerator.generateDocInfo(),
-        docURL);
+      return docFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(), docURL);
     }
   }
 
