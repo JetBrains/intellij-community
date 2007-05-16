@@ -35,6 +35,8 @@ public class DnDAwareTree extends Tree implements DnDAware {
   }
 
   public void processMouseEvent(final MouseEvent e) {
+//todo [kirillk] to delegate this to DnDEnabler
+    if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
     super.processMouseEvent(e);
   }
 
