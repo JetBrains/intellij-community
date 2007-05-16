@@ -69,7 +69,7 @@ public class CollectClassMembersUtil {
     for (PsiMethod method : aClass.getMethods()) {
       String name = method.getName();
       List<PsiMethod> methods = allMethods.get(name);
-      if (methods == null) {  //todo filter
+      if (methods == null) {
         methods = new ArrayList<PsiMethod>();
         allMethods.put(name, methods);
         methods.add(method);
