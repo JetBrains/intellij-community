@@ -25,18 +25,19 @@ import java.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
  */
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint {
-  private String myName;
+  protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
-  private PsiElement myPlace;
+  protected PsiElement myPlace;
 
-  private Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
+  protected Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
 
-  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, PsiElement place) {
+  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
     myPlace = place;
@@ -45,12 +46,16 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
-      boolean isAccessible = !(namedElement instanceof PsiMember) || PsiUtil.isAccessible((PsiMember) namedElement, myPlace, null);
+      boolean isAccessible = isAccessible(namedElement);
       myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible));
       return myName == null || !isAccessible;
     }
 
     return true;
+  }
+
+  protected boolean isAccessible(PsiNamedElement namedElement) {
+    return !(namedElement instanceof PsiMember) || PsiUtil.isAccessible((PsiMember) namedElement, myPlace, null);
   }
 
   public GroovyResolveResult[] getCandidates() {

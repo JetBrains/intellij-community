@@ -22,4 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrApplicationExpression extends GrStatement {
   GrExpression getFunExpression();
+
+  GrExpression[] getArguments();
+
+  GrCommandArgumentList getArgumentList();
 }

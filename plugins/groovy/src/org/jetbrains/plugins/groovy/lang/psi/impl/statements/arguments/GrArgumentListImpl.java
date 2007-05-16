@@ -17,19 +17,29 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArguments;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrArgumentsImpl extends GroovyPsiElementImpl implements GrArguments {
+public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgumentList {
 
-  public GrArgumentsImpl(@NotNull ASTNode node) {
+  public GrArgumentListImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Arguments";
+  }
+
+  public GrNamedArgument[] getNamedArguments() {
+    return findChildrenByClass(GrNamedArgument.class);
+  }
+
+  public GrExpression[] getExpressionArguments() {
+    return findChildrenByClass(GrExpression.class);
   }
 }

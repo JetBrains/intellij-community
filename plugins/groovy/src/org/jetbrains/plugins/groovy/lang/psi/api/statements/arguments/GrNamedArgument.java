@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
@@ -24,5 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ilyas
  */
-public interface GrCommandArguments extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrNamedArgument extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+  public static final GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
 }

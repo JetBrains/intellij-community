@@ -16,9 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 /**
  * @author ilyas
  */
 public interface GrMethodCall extends GrExpression {
+  GrArgumentList getArgumentList();
+
+  GrNamedArgument[] getNamedArguments();
+
+  GrExpression[] getExpressionArguments();
 }

@@ -13,23 +13,23 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArguments;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrCommandArgsImpl extends GroovyPsiElementImpl implements GrCommandArguments {
+public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamedArgument {
 
-  public GrCommandArgsImpl(@NotNull ASTNode node) {
+  public GrNamedArgumentImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Command arguments";
+    return "Named argument";
   }
 }

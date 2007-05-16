@@ -8,7 +8,7 @@ Groovy script
     Generalized list
       PsiElement([)('[')
       Arguments
-        Composite argument
+        Named argument
           Argument label
             Parenthesized expression
               PsiElement(()('(')
@@ -23,7 +23,7 @@ Groovy script
           Literal
             PsiElement(number)('3')
         PsiElement(,)(',')
-        Composite argument
+        Named argument
           Argument label
             PsiElement(string)(''c'')
           PsiElement(:)(':')

@@ -4,7 +4,7 @@ Groovy script
   Generalized list
     PsiElement([)('[')
     Arguments
-      Composite argument
+      Named argument
         Argument label
           Compound Gstring
             PsiElement(Gstring begin)('"$')

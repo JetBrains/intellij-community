@@ -4,7 +4,7 @@ Groovy script
   Generalized list
     PsiElement([)('[')
     Arguments
-      Composite argument
+      Named argument
         Argument label
           PsiElement(identifier)('id1')
         PsiElement(:)(':')
@@ -21,7 +21,7 @@ Groovy script
         PsiElement(number)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Composite argument
+      Named argument
         Argument label
           PsiElement(identifier)('id2')
         PsiElement(:)(':')

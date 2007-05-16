@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,5 +32,9 @@ public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap
 
   public String toString() {
     return "Generalized list";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

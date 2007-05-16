@@ -31,12 +31,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.PROPERTY;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.EnumSet;
 
@@ -120,8 +121,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name) {
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
-    if (kind == TYPE_OR_PROPERTY) {
+    if (kind == Kind.TYPE_OR_PROPERTY) {
       processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.METHOD, ResolveKind.CLASS), refExpr); //todo package?
+    } else if (kind == Kind.METHOD_OR_PROPERTY) {
+      processor = new MethodResolverProcessor(name, refExpr);
     } else {
       processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr);
     }
@@ -129,18 +132,21 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return processor;
   }
 
-  enum Kind {
+  private enum Kind {
     PROPERTY,
-    TYPE_OR_PROPERTY
+    TYPE_OR_PROPERTY,
+    METHOD_OR_PROPERTY
   }
 
   private Kind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
-      return TYPE_OR_PROPERTY;
+    if (parent instanceof GrMethodCall || parent instanceof GrApplicationExpression) {
+      return Kind.METHOD_OR_PROPERTY;
+    } else if (parent instanceof GrStatement || parent instanceof GrCodeBlock) {
+      return Kind.TYPE_OR_PROPERTY;
     }
 
-    return PROPERTY;
+    return Kind.PROPERTY;
   }
 
   public String getCanonicalText() {

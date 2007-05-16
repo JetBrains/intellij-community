@@ -4,14 +4,14 @@ Groovy script
   Generalized list
     PsiElement([)('[')
     Arguments
-      Composite argument
+      Named argument
         Argument label
           PsiElement(identifier)('a')
         PsiElement(:)(':')
         Literal
           PsiElement(number)('1')
       PsiElement(,)(',')
-      Composite argument
+      Named argument
         Argument label
           PsiElement(identifier)('b')
         PsiElement(:)(':')

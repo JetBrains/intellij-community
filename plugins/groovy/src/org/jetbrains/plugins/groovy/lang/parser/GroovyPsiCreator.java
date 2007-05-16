@@ -27,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
@@ -183,7 +183,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //expressions
     if (elem.equals(CALL_EXPRESSION)) return new GrApplicationExpressionImpl(node);
-    if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgsImpl(node);
+    if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgumentListImpl(node);
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExpressionImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
@@ -222,8 +222,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(PATH_INDEX_PROPERTY)) return new GrIndexPropertyImpl(node);
 
     // Arguments
-    if (elem.equals(ARGUMENTS)) return new GrArgumentsImpl(node);
-    if (elem.equals(ARGUMENT)) return new GrArgumentImpl(node);
+    if (elem.equals(ARGUMENTS)) return new GrArgumentListImpl(node);
+    if (elem.equals(ARGUMENT)) return new GrNamedArgumentImpl(node);
     if (elem.equals(ARGUMENT_LABEL)) return new GrArgumentLabelImpl(node);
 
 

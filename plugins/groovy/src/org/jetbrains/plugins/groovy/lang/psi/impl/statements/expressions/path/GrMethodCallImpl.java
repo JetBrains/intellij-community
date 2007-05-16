@@ -19,6 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,5 +39,19 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
 
   public PsiType getType() {
     return null;
+  }
+
+  public GrArgumentList getArgumentList() {
+    return findChildByClass(GrArgumentList.class);
+  }
+
+  public GrNamedArgument[] getNamedArguments() {
+    GrArgumentList argList = getArgumentList();
+    return argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
+  }
+
+  public GrExpression[] getExpressionArguments() {
+    GrArgumentList argList = getArgumentList();
+    return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
   }
 }

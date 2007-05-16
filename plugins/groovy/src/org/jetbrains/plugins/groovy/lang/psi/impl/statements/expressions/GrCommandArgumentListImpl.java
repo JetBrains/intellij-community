@@ -13,23 +13,28 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrArgumentImpl extends GroovyPsiElementImpl implements GrArgument {
+public class GrCommandArgumentListImpl extends GroovyPsiElementImpl implements GrCommandArgumentList {
 
-  public GrArgumentImpl(@NotNull ASTNode node) {
+  public GrCommandArgumentListImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Composite argument";
+    return "Command arguments";
+  }
+
+  public GrExpression[] getArguments() {
+    return findChildrenByClass(GrExpression.class);
   }
 }

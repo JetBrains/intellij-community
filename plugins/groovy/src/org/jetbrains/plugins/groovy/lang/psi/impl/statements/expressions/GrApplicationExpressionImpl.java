@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,5 +37,13 @@ public class GrApplicationExpressionImpl extends GroovyPsiElementImpl implements
 
   public GrExpression getFunExpression() {
     return findChildByClass(GrExpression.class);
+  }
+
+  public GrExpression[] getArguments() {
+    return getArgumentList().getArguments();
+  }
+
+  public GrCommandArgumentList getArgumentList() {
+    return findChildByClass(GrCommandArgumentList.class);
   }
 }

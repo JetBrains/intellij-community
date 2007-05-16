@@ -18,9 +18,8 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArguments;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 
 /**
@@ -45,7 +44,7 @@ public class ElseFilter implements ElementFilter {
       }
     }
     if (context.getParent() != null &&
-        context.getParent().getParent() instanceof GrCommandArguments &&
+        context.getParent().getParent() instanceof GrCommandArgumentList &&
         context.getParent().getParent().getParent().getParent() instanceof GrIfStatement) {
       GrIfStatement statement = (GrIfStatement) context.getParent().getParent().getParent().getParent();
       if (statement.getElseBranch() == null) {

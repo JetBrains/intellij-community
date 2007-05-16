@@ -9,8 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArguments;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrApplicationExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,7 +21,7 @@ public class InstanceOfFilter implements ElementFilter {
     if (context.getParent() != null &&
         context.getParent() instanceof GrReferenceExpression &&
         context.getParent().getParent() != null &&
-        context.getParent().getParent() instanceof GrCommandArguments) {
+        context.getParent().getParent() instanceof GrCommandArgumentList) {
       return true;
     }
     if (context != null &&
