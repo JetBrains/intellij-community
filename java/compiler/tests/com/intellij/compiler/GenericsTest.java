@@ -56,4 +56,6 @@ public class GenericsTest extends Jdk15CompilerTestCase {
   public void testDegenerify() throws Exception {doTest();}
 
   public void testDegenerify1() throws Exception {doTest();}
+  
+  public void testChangeVarargSignature() throws Exception {doTest();}
 }
