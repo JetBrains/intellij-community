@@ -17,7 +17,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.io.IOException;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private CheckinPanelTreeTable myDiffTree;
@@ -104,11 +103,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void performOn(final DirectoryDifferenceNode n) {
-      revert(new RevertTask() {
-        public java.util.List<String> doRevert() throws IOException {
-          return myModel.revert(n.getModel());
-        }
-      });
+      revert(myModel.createReverter(n.getModel()));
     }
 
     @Override

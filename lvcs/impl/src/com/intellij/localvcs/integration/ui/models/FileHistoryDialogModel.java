@@ -3,14 +3,12 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.revert.FileReverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.io.IOException;
-import java.util.List;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
   public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
@@ -43,8 +41,8 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public List<String> revert() throws IOException {
-    return FileReverter.revert(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
+  public Reverter createReverter() {
+    return new FileReverter(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
   }
 
   @Override

@@ -6,11 +6,11 @@ import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 public class HistoryDialogModelTest extends LocalVcsTestCase {
@@ -135,7 +135,8 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new HistoryDialogModel(f, vcs, gw) {
-      public List<String> revert() throws IOException {
+      @Override
+      public Reverter createReverter() {
         throw new UnsupportedOperationException();
       }
     };

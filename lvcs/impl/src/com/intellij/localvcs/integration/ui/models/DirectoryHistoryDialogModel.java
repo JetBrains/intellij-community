@@ -5,11 +5,8 @@ import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.revert.DirectoryReverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   public DirectoryHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
@@ -26,16 +23,15 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public List<String> revert() throws IOException {
-    return doRevert(getRightEntry(), getLeftEntry());
+  public Reverter createReverter() {
+    return createReverter(getLeftEntry(), getRightEntry());
   }
 
-  public List<String> revert(DirectoryDifferenceModel m) throws IOException {
-    return doRevert(m.getEntry(1), m.getEntry(0));
+  public Reverter createReverter(DirectoryDifferenceModel m) {
+    return createReverter(m.getEntry(0), m.getEntry(1));
   }
 
-  private List<String> doRevert(Entry rightEntry, Entry leftEntry) throws IOException {
-    DirectoryReverter.revert(myVcs, myGateway, getLeftRevision(), leftEntry, rightEntry);
-    return Collections.emptyList();
+  private Reverter createReverter(Entry leftEntry, Entry rightEntry) {
+    return new DirectoryReverter(myVcs, myGateway, getLeftRevision(), leftEntry, rightEntry);
   }
 }

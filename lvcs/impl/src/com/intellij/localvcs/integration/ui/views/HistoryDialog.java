@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.ui.views;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
@@ -25,6 +26,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected IdeaGateway myGateway;
@@ -180,11 +182,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void actionPerformed(AnActionEvent e) {
-      revert(new RevertTask() {
-        public java.util.List<String> doRevert() throws IOException {
-          return myModel.revert();
-        }
-      });
+      revert(myModel.createReverter());
     }
 
     public void update(AnActionEvent e) {
@@ -194,21 +192,31 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
   }
 
-  protected void revert(RevertTask t) {
+  protected void revert(Reverter r) {
     try {
-      java.util.List<String> errors = t.doRevert();
-      if (errors.isEmpty()) {
-        close(0);
+      List<String> errors = r.checkCanRevert();
+      if (!errors.isEmpty()) {
+        showRevertErrors(errors);
         return;
       }
-      myGateway.showError("Can not revert: " + errors);
+      r.revert();
+      close(0);
     }
-    catch (IOException ex) {
-      myGateway.showError("Error reverting changes: " + ex);
+    catch (IOException e) {
+      myGateway.showError("Error reverting changes: " + e);
     }
   }
 
-  protected interface RevertTask {
-    java.util.List<String> doRevert() throws IOException;
+  private void showRevertErrors(List<String> errors) {
+    String formatted = "";
+    if (errors.size() == 1) {
+      formatted += errors.get(0);
+    }
+    else {
+      for (String e : errors) {
+        formatted += "\n    -" + e;
+      }
+    }
+    myGateway.showError("Can not revert because " + formatted);
   }
 }
