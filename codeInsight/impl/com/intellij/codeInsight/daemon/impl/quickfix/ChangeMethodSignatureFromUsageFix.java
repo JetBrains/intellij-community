@@ -49,7 +49,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private final boolean myChangeSingleUsageSignature;
   private ParameterInfo[] myNewParametersInfo;
 
-  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, @NotNull PsiExpression[] expressions, @NotNull PsiSubstitutor substitutor,
+  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
+                                    @NotNull PsiExpression[] expressions,
+                                    @NotNull PsiSubstitutor substitutor,
                                     @NotNull PsiElement context,
                                     boolean changeSingleUsageSignature) {
     myTargetMethod = targetMethod;
@@ -89,7 +91,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return QuickFixBundle.message("change.method.signature.from.usage.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myTargetMethod.isValid()) return false;
     for (PsiExpression expression : myExpressions) {
       if (!expression.isValid()) return false;
@@ -99,7 +101,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return myNewParametersInfo != null && formatTypesList(myNewParametersInfo, myContext) != null;
   }
 
-  public void invoke(Project project, Editor editor, final PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));

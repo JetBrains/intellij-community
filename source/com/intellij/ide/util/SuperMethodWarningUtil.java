@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -74,6 +75,8 @@ public class SuperMethodWarningUtil {
 
     PsiMethod superMethod = method.findDeepestSuperMethod();
     if (superMethod == null) return method;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) return superMethod;
 
     PsiClass containingClass = superMethod.getContainingClass();
 

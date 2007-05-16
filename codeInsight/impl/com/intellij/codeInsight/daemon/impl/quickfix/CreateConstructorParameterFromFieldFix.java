@@ -29,7 +29,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiField fieldElement = (PsiField)myField.getElement();
     return myField.getElement() != null
            && fieldElement != null
@@ -38,7 +38,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       ;
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     PsiClass aClass = getField().getContainingClass();

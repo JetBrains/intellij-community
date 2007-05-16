@@ -49,8 +49,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   private static void invoke(final PsiMethod method, final Project project, final @Nullable Editor editor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
-    final String actionString = RefactoringBundle.message("to.refactor");
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, actionString);
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {

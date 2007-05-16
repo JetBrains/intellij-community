@@ -47,7 +47,7 @@ public class PsiTypesUtil {
         }
       }
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append(PsiKeyword.NEW);
       buffer.append(" ");
       buffer.append(componentType.getCanonicalText());

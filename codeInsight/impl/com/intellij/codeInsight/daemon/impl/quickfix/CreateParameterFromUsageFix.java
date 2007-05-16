@@ -1,20 +1,23 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Mike
@@ -28,7 +31,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    if(!!myReferenceExpression.isQualified()) return false;
+    if(myReferenceExpression.isQualified()) return false;
     PsiElement scope = myReferenceExpression;
     do {
       scope = PsiTreeUtil.getParentOfType(scope, PsiMethod.class, PsiClass.class);
@@ -45,14 +48,10 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
-      return;
-    }
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) return;
 
     PsiManager psiManager = myReferenceExpression.getManager();
     Project project = psiManager.getProject();
-    PsiElementFactory factory = psiManager.getElementFactory();
-
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     PsiType type = expectedTypes[0];
@@ -60,35 +59,25 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
-    PsiParameter param;
-    try {
-      param = factory.createParameter(varName, type);
-      final PsiReferenceExpression[] expressionOccurences = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMethod.class);
-      param.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS &&
-                                                                     !CreateFromUsageUtils.isAccessedForWriting(expressionOccurences));
 
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length > 0 && parameters[parameters.length - 1].isVarArgs()) {
-        param = (PsiParameter)method.getParameterList().addBefore(param, parameters[parameters.length - 1]);
-      } else {
-        param = (PsiParameter) method.getParameterList().add(param);
-      }
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return;
+    method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    if (method == null) return;
+
+    List<ParameterInfo> parameterInfos = new ArrayList<ParameterInfo>(Arrays.asList(ParameterInfo.fromMethod(method)));
+    ParameterInfo parameterInfo = new ParameterInfo(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), true);
+    parameterInfos.add(parameterInfo);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ParameterInfo[] array = parameterInfos.toArray(new ParameterInfo[parameterInfos.size()]);
+      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project, method, false, PsiUtil.getAccessModifier(
+        PsiUtil.getAccessLevel(method.getModifierList())), method.getName(), method.getReturnType(), array);
+      processor.run();
     }
-
-    TemplateBuilder builder = new TemplateBuilder (method);
-    builder.replaceElement(param.getTypeElement(), new TypeExpression(project, expectedTypes));
-    builder.setEndVariableAfter(method.getParameterList());
-
-    method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
-    Template template = builder.buildTemplate();
-    TextRange range = method.getTextRange();
-    final PsiFile psiFile = method.getContainingFile();
-    Editor editor = positionCursor(project, psiFile, method);
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    TemplateManager.getInstance(project).startTemplate(editor, template);
+    else {
+      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, myReferenceExpression);
+      dialog.setParameterInfos(parameterInfos);
+      dialog.show();
+    }
   }
 
   protected boolean isAllowOuterTargetClass() {
