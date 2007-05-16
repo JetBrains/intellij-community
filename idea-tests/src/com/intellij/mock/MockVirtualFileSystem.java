@@ -16,7 +16,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
 
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
     if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);

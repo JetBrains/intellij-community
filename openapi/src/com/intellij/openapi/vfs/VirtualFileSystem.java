@@ -58,7 +58,7 @@ public abstract class VirtualFileSystem {
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
    */
   @Nullable
-  public abstract VirtualFile findFileByPath(@NonNls String path);
+  public abstract VirtualFile findFileByPath(@NotNull @NonNls String path);
 
   /**
    * Fetches presentable URL of file with the given path in this file system.

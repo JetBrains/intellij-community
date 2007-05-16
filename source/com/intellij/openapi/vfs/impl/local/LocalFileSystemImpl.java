@@ -248,7 +248,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @Nullable
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     if (File.separatorChar == '\\') {
       if (path.indexOf('\\') >= 0) return null;
     }

@@ -64,7 +64,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem {
   public abstract int getId(final VirtualFile parent, final String childName);
 
   @Nullable
-  public VirtualFile findFileByPath(@NonNls final String path) {
+  public VirtualFile findFileByPath(@NotNull @NonNls final String path) {
     final String basePath = getRoot().getPath();
     VirtualFile file = getRoot();
     for (String pathElement : StringUtil.tokenize(path.substring(basePath.length()), FILE_SEPARATORS)) {

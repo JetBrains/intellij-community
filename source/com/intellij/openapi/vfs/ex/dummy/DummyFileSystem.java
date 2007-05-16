@@ -39,7 +39,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     return PROTOCOL;
   }
 
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
 //    LOG.error("method not implemented");
     return null;
   }

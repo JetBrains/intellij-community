@@ -28,7 +28,7 @@ public class HttpFileSystem extends DeprecatedVirtualFileSystem implements Appli
     return PROTOCOL;
   }
 
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     return new VirtualFileImpl(this, path);
   }
 

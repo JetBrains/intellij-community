@@ -9,9 +9,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,7 +122,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return PROTOCOL;
   }
 
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     int index = path.lastIndexOf(JAR_SEPARATOR);
     if (index < 0) return null;
     String jarPath = path.substring(0, index);

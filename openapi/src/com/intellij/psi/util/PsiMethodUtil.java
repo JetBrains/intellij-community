@@ -1,6 +1,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.execution.configurations.ConfigurationUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,6 +9,14 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 public class PsiMethodUtil {
+  public static Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
+    public boolean value(final PsiClass psiClass) {
+      if (psiClass instanceof PsiAnonymousClass) return false;
+      if (psiClass.isInterface()) return false;
+      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
+    }
+  };
+
   private PsiMethodUtil() {
   }
 

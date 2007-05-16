@@ -81,7 +81,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     }
 
     @Nullable
-    public VirtualFile findFileByPath(String path) {
+    public VirtualFile findFileByPath(@NotNull String path) {
       return null;
     }
 

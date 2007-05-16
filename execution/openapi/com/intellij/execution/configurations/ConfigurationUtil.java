@@ -16,9 +16,9 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiMethodUtil;
 
 /**
  * User: anna
@@ -33,11 +33,5 @@ public class ConfigurationUtil {
       return true;
     }
   };
-  public static Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
-    public boolean value(final PsiClass psiClass) {
-      if (psiClass instanceof PsiAnonymousClass) return false;
-      if (psiClass.isInterface()) return false;
-      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
-    }
-  };
+  public static Condition<PsiClass> MAIN_CLASS = PsiMethodUtil.MAIN_CLASS;
 }

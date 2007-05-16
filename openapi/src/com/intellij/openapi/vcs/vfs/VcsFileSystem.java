@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -42,7 +43,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     return myProtocol;
   }
 
-  public VirtualFile findFileByPath(String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     return null;
   }
 
