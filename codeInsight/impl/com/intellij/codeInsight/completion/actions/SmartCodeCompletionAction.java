@@ -21,10 +21,6 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformedImpl(Project project, Editor editor) {
-    super.actionPerformedImpl(project, editor);
-  }
-
   protected CodeInsightActionHandler getHandler() {
     return createHandler();
   }

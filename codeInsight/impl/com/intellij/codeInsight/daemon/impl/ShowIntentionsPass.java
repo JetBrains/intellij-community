@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -70,16 +71,23 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     myEditor = editor;
     myIntentionActions = intentionActions;
 
-    Rectangle visibleRect = myEditor.getScrollingModel().getVisibleArea();
-
-    LogicalPosition startPosition = myEditor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));
-    myStartOffset = myEditor.logicalPositionToOffset(startPosition);
-
-    LogicalPosition endPosition = myEditor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
-    myEndOffset = myEditor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
+    TextRange range = getVisibleRange(myEditor);
+    myStartOffset = range.getStartOffset();
+    myEndOffset = range.getEndOffset();
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     LOG.assertTrue(myFile != null);
+  }
+
+  private static TextRange getVisibleRange(Editor editor) {
+    Rectangle visibleRect = editor.getScrollingModel().getVisibleArea();
+
+    LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));
+    int myStartOffset = editor.logicalPositionToOffset(startPosition);
+
+    LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
+    int myEndOffset = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
+    return new TextRange(myStartOffset, myEndOffset);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -90,7 +98,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     if (!myEditor.getContentComponent().hasFocus()) return;
 
-    HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset);
+    HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
     PsiElement[] elements = new PsiElement[visibleHighlights.length];
     for (int i = 0; i < visibleHighlights.length; i++) {
@@ -201,15 +209,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset) {
-    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(myEditor.getDocument(), myProject);
+  private static HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
+    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
       if (isWrongRef(info.type)
           && startOffset <= info.startOffset && info.endOffset <= endOffset
-          && !myEditor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
+          && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
         array.add(info);
       }
     }
@@ -225,14 +233,32 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
                                        
     final HighlightInfoType infoType = info.type;
-    return isWrongRef(infoType) && showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
+    return isWrongRef(infoType) && handleWrongRefInfo(myEditor, (PsiJavaCodeReferenceElement)element, true);
   }
 
   private static boolean isWrongRef(final HighlightInfoType infoType) {
     return infoType.getAttributesKey() == HighlightInfoType.WRONG_REF.getAttributesKey();
   }
 
-  private static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
+  public static void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    int lineNumber = document.getLineNumber(caretOffset);
+    int startOffset = document.getLineStartOffset(lineNumber);
+    int endOffset = document.getLineEndOffset(lineNumber);
+
+    List<PsiElement> elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
+    for (PsiElement element : elements) {
+      if (element instanceof PsiJavaCodeReferenceElement) {
+        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
+        if (ref.resolve() == null) {
+          handleWrongRefInfo(editor, ref, false);
+        }
+      }
+    }
+  }
+
+  private static boolean handleWrongRefInfo(Editor editor, PsiJavaCodeReferenceElement ref, final boolean showAddImportHint) {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
 
     PsiManager manager = ref.getManager();
@@ -298,8 +324,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     String hintText = QuickFixBundle.message(messageKey, classes[0].getQualifiedName());
 
-    hintText +=
-      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
 
     int offset1 = ref.getTextOffset();
     int offset2 = ref.getTextRange().getEndOffset();
@@ -317,8 +342,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       });
       return false;
     }
-    HintManager hintManager = HintManager.getInstance();
-    hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
+    if (showAddImportHint) {
+      HintManager hintManager = HintManager.getInstance();
+      hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
+    }
     return true;
   }
 

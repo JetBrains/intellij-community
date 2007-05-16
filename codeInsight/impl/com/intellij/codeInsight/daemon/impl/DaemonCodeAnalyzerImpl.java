@@ -199,6 +199,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     myPassExecutorService.renewVisiblePasses(textEditor, highlightingPasses, myUpdateVisibleProgress);
   }
+  public void updateVisibleHighlightersSynchronously(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
+    if (highlighter == null) return;
+    final HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
+    //setLastIntentionHint(null);
+
+    myPassExecutorService.renewVisiblePasses(textEditor, highlightingPasses, myUpdateVisibleProgress);
+  }
 
   private void renewUpdateVisibleProgress() {
     myUpdateVisibleProgress.cancel();
@@ -530,5 +542,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
   boolean canChangeFileSilently(PsiFile file) {
     return myDaemonListeners.canChangeFileSilently(file);
+  }
+
+  public static void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+    ShowIntentionsPass.autoImportReferenceAtCursor(editor, file);
   }
 }

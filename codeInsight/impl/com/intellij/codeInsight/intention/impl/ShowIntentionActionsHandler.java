@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -30,6 +31,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null && !state.isFinished()) return;
+    DaemonCodeAnalyzerImpl.autoImportReferenceAtCursor(editor, file); //let autoimport complete
 
     final IntentionAction[] intentionActions = IntentionManager.getInstance().getIntentionActions();
 

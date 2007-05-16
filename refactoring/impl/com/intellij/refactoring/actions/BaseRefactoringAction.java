@@ -6,15 +6,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
   protected abstract boolean isAvailableInEditorOnly();
@@ -26,18 +27,20 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = e.getData(DataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
     RefactoringActionHandler handler = getHandler(dataContext);
     if (handler == null) return;
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
+      DaemonCodeAnalyzerImpl.autoImportReferenceAtCursor(editor, file);
       handler.invoke(project, editor, file, dataContext);
-    } else {
+    }
+    else {
       handler.invoke(project, elements, dataContext);
     }
   }
@@ -49,14 +52,14 @@ public abstract class BaseRefactoringAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
-    PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    Editor editor = e.getData(DataKeys.EDITOR);
+    PsiFile file = e.getData(DataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
         presentation.setEnabled(false);
@@ -65,7 +68,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
 
     if (editor != null) {
-      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = e.getData(DataKeys.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
           presentation.setEnabled(false);
@@ -114,10 +117,10 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   @NotNull
-    public static PsiElement[] getPsiElementArray(DataContext dataContext) {
-    PsiElement[] psiElements = (PsiElement[]) dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
+  public static PsiElement[] getPsiElementArray(DataContext dataContext) {
+    PsiElement[] psiElements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element != null) {
         psiElements = new PsiElement[]{element};
       }

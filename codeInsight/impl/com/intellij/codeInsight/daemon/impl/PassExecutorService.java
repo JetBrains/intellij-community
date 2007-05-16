@@ -221,11 +221,7 @@ public abstract class PassExecutorService {
         return; //already scheduled. whenever something changes, it will be rescheduled anyway
       }
     }
-    THashMap<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>() {
-      {
-        put(textEditor, highlightingPasses);
-      }
-    };
+    Map<FileEditor, HighlightingPass[]> passes = Collections.<FileEditor, HighlightingPass[]>singletonMap(textEditor, highlightingPasses);
     // higher priority
     submitPasses(passes, visibleProgress, Job.DEFAULT_PRIORITY-10);
   }
