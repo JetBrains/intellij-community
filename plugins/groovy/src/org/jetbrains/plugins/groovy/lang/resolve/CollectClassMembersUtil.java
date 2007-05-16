@@ -2,10 +2,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -75,8 +72,8 @@ public class CollectClassMembersUtil {
       if (methods == null) {  //todo filter
         methods = new ArrayList<PsiMethod>();
         allMethods.put(name, methods);
-      }
-      methods.add(method);
+        methods.add(method);
+      } else if (!ResolveUtil.isSuperMethodDominated(method, methods)) methods.add(method);
     }
 
     for (PsiClassType superType : aClass.getSuperTypes()) {

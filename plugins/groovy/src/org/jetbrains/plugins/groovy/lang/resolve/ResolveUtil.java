@@ -15,10 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
@@ -29,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+
+import java.util.List;
 
 /**
  * @author ven
@@ -83,5 +83,25 @@ public class ResolveUtil {
     }
 
     return elements;
+  }
+
+  public static boolean isSuperMethodDominated(PsiMethod method, List<PsiMethod> worklist) {
+    PsiParameter[] params = method.getParameterList().getParameters();
+    PsiModifierList modifierList = method.getModifierList();
+
+    NextMethod:
+    for (PsiMethod other : worklist) {
+      PsiParameter[] otherParams = other.getParameterList().getParameters();
+      if (otherParams.length != params.length) continue;
+      if (PsiUtil.getAccessLevel(other.getModifierList()) > PsiUtil.getAccessLevel(modifierList)) continue;
+      for (int i = 0; i < params.length; i++) {
+        PsiType type = params[i].getType();
+        PsiType otherType = otherParams[i].getType();
+        if (!type.isAssignableFrom(otherType)) continue NextMethod;
+      }
+      return true;
+    }
+
+    return false;
   }
 }
