@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +23,8 @@ import java.util.Set;
  * @author max
  */
 public class PropertiesFilesManager implements ApplicationComponent {
-  private final Set<VirtualFile> myPropertiesFiles = new THashSet<VirtualFile>();
-  private VirtualFileListener myVirtualFileListener;
+  private final Set<VirtualFile> myPropertiesFiles = new ConcurrentHashSet<VirtualFile>();
+  private final VirtualFileListener myVirtualFileListener;
   private final VirtualFileManager myVirtualFileManager;
   private final FileTypeManager myFileTypeManager;
   private final List<PropertiesFileListener> myPropertiesFileListeners = new ArrayList<PropertiesFileListener>();
@@ -35,6 +36,30 @@ public class PropertiesFilesManager implements ApplicationComponent {
   public PropertiesFilesManager(VirtualFileManager virtualFileManager,FileTypeManager fileTypeManager) {
     myVirtualFileManager = virtualFileManager;
     myFileTypeManager = fileTypeManager;
+    myVirtualFileListener = new VirtualFileAdapter() {
+      public void fileCreated(VirtualFileEvent event) {
+        addNewFile(event);
+      }
+
+      public void fileDeleted(VirtualFileEvent event) {
+        removeOldFile(event);
+      }
+
+      public void fileMoved(VirtualFileMoveEvent event) {
+        removeOldFile(event);
+        addNewFile(event);
+      }
+
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        VirtualFile file = event.getFile();
+        fileChanged(file, event);
+      }
+
+      public void contentsChanged(VirtualFileEvent event) {
+        VirtualFile file = event.getFile();
+        fileChanged(file, null);
+      }
+    };
   }
 
   private void removeOldFile(final VirtualFileEvent event) {
@@ -72,30 +97,6 @@ public class PropertiesFilesManager implements ApplicationComponent {
   }
 
   public void initComponent() {
-    myVirtualFileListener = new VirtualFileAdapter() {
-      public void fileCreated(VirtualFileEvent event) {
-        addNewFile(event);
-      }
-
-      public void fileDeleted(VirtualFileEvent event) {
-        removeOldFile(event);
-      }
-
-      public void fileMoved(VirtualFileMoveEvent event) {
-        removeOldFile(event);
-        addNewFile(event);
-      }
-
-      public void propertyChanged(VirtualFilePropertyEvent event) {
-        VirtualFile file = event.getFile();
-        fileChanged(file, event);
-      }
-
-      public void contentsChanged(VirtualFileEvent event) {
-        VirtualFile file = event.getFile();
-        fileChanged(file, null);
-      }
-    };
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
   }
 
