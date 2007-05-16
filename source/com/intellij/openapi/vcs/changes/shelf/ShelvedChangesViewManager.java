@@ -10,8 +10,8 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,11 +21,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -44,7 +45,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -92,7 +92,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.setCellRenderer(new ShelfTreeCellRenderer());
+    myTree.setCellRenderer(new ShelfTreeCellRenderer(project));
+    new TreeLinkMouseListener(new ShelfTreeCellRenderer(project)).install(myTree);
 
     ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
@@ -257,12 +258,18 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
+    private IssueLinkRenderer myIssueLinkRenderer;
+
+    public ShelfTreeCellRenderer(Project project) {
+      myIssueLinkRenderer = new IssueLinkRenderer(project, this);
+    }
+
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object nodeValue = node.getUserObject();
       if (nodeValue instanceof ShelvedChangeList) {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
-        append(changeListData.DESCRIPTION, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         final String date = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT).format(changeListData.DATE);
         append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(StdFileTypes.PATCH.getIcon());
