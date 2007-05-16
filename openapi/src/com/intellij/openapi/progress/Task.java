@@ -36,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class Task implements TaskInfo {
 
-  private Project myProject;
-  private String myTitle;
+  protected Project myProject;
+  protected String myTitle;
   private boolean myCanBeCancelled;
 
   private String myCancelText = CommonBundle.getCancelButtonText();
