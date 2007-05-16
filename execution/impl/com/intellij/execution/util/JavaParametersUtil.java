@@ -32,13 +32,18 @@ public class JavaParametersUtil {
     final Project project = configuration.getProject();
     parameters.getProgramParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
     final PathMacroManager macroManager = PathMacroManager.getInstance(project);
-    String vmParameters = macroManager.expandPath(configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY));
+    String vmParameters = configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY);
+    if (vmParameters != null) {
+      vmParameters = macroManager.expandPath(vmParameters);
+    }
     if (parameters.getEnv() != null) {
       final Map<String, String> envs = new HashMap<String, String>();
       for (String env : parameters.getEnv().keySet()) {
         final String value = macroManager.expandPath(parameters.getEnv().get(env));
         envs.put(env, value);
-        vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
+        if (vmParameters != null) {
+          vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
+        }
       }
       parameters.setEnv(envs);
     }
