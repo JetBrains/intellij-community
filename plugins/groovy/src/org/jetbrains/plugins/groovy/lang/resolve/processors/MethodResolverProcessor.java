@@ -34,8 +34,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (method.isConstructor()) return true; //not interested in constructors <now>
 
       boolean isAccessible = isAccessible((PsiNamedElement) element);
-      boolean isApplicable = isApplicable(method);
-      if (isApplicable) {
+      if (myName == null || isApplicable(method)) {
         myCandidates.add(new GroovyResolveResultImpl(method, isAccessible));
       }
       else {
