@@ -746,7 +746,10 @@ public class DependencyCache {
             query.forEach(new Processor<PsiMember>() {
               public boolean process(final PsiMember psiMember) {
                 try {
-                  myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(psiMember.getContainingClass().getQualifiedName()));
+                  final String qualifiedName = psiMember.getContainingClass().getQualifiedName();
+                  if (qualifiedName != null) {
+                    myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
+                  }
                   return true;
                 }
                 catch (CacheCorruptedException e) {
