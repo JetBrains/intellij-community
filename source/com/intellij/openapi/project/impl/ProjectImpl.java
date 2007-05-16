@@ -211,6 +211,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           return PsiBundle.message("psi.search.scope.project.and.libraries");
         }
 
+        @NotNull
+        public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
+          return scope;
+        }
+
+        public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+          return this;
+        }
+
         public String toString() {
           return getDisplayName();
         }

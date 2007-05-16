@@ -55,7 +55,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public abstract boolean isSearchInLibraries();
 
-  @NotNull public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+  private static final String ALL_SCOPE_NAME = PsiBundle.message("psi.search.scope.project.and.libraries");
+  @NotNull
+  public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+    if (ALL_SCOPE_NAME.equals(scope.getDisplayName())) return this;
     return intersection(this, scope);
   }
 
@@ -67,6 +70,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new UnionScope(scope1, scope2, null);
   }
   public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+    if (ALL_SCOPE_NAME.equals(scope.getDisplayName())) return scope;
     return union(this, scope);
   }
 
@@ -525,6 +529,15 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @NotNull
+    public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
+      return this;
+    }
+
+    public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+      return scope;
     }
   }
 
