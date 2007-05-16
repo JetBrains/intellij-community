@@ -1,13 +1,17 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,6 +110,13 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
           if (node.getUserObject() instanceof FilePath) {
             mySelection.add((FilePath) node.getUserObject());
+          }
+          else if (node.getUserObject() instanceof Module) {
+            Module module = (Module) node.getUserObject();
+            final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+            for(VirtualFile file: files) {
+              mySelection.add(new FilePathImpl(file));
+            }
           }
 
           for(ChangeListener listener: myListeners) {
