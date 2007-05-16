@@ -199,9 +199,8 @@ public class VcsUtil {
    * File is considered to be a valid vcs file if it resides under the content
    * root controlled by the given vcs.
    */
-  public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
-    ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
-    return mgr.getVcsFor(file) == host;
+  public static boolean isFileForVcs( VirtualFile file, Project project, AbstractVcs host ){
+    return getVcsFor( project, file ) == host;
   }
 
   //  NB: do not reduce this method to the method above since PLVcsMgr uses
@@ -216,9 +215,23 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static AbstractVcs getVcsFor( Project project, FilePath file )
+  public static AbstractVcs getVcsFor( final Project project, final FilePath file )
   {
-    return ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );
+    final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
+    ApplicationManager.getApplication().runReadAction( new Runnable() {
+      public void run() {  vcss[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );  }
+    });
+    return vcss[ 0 ];
+  }
+
+  @Nullable
+  public static AbstractVcs getVcsFor( final Project project, final VirtualFile file )
+  {
+    final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
+    ApplicationManager.getApplication().runReadAction( new Runnable() {
+      public void run() {  vcss[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );  }
+    });
+    return vcss[ 0 ];
   }
 
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
