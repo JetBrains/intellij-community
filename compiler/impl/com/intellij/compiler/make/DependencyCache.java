@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -733,22 +734,35 @@ public class DependencyCache {
   }
 
   private TIntHashSet myClassesWithOverrideAnnotatedMethods;
+  private TIntHashSet myClassesForAnonymousWithOverrideAnnotatedMethods;
   
-  public boolean hasOverrideAnnotatedMethods(int qName, final Project project) throws CacheCorruptedException {
+  public boolean hasOverrideAnnotatedMethods(final int qName, final Project project) throws CacheCorruptedException {
     if (myClassesWithOverrideAnnotatedMethods == null) {
       final CacheCorruptedException[] ex = new CacheCorruptedException[] {null};
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           myClassesWithOverrideAnnotatedMethods = new TIntHashSet();
+          myClassesForAnonymousWithOverrideAnnotatedMethods = new TIntHashSet();
           final PsiClass overrideClass = PsiManager.getInstance(project).findClass(Override.class.getName(), GlobalSearchScope.allScope(project));
           if (overrideClass != null) {
             final Query<PsiMember> query = AnnotatedMembersSearch.search(overrideClass);
             query.forEach(new Processor<PsiMember>() {
               public boolean process(final PsiMember psiMember) {
                 try {
-                  final String qualifiedName = psiMember.getContainingClass().getQualifiedName();
+                  final PsiClass aClass = psiMember.getContainingClass();
+                  if (aClass == null) {
+                    return true;
+                  }
+                  final PsiClass topLevelClass = getTopLevelClass(aClass);
+                  final String qualifiedName = topLevelClass.getQualifiedName();
                   if (qualifiedName != null) {
-                    myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
+                    if (aClass.equals(topLevelClass)) {
+                      myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
+                    }
+                    else {
+                      // containing class is either anonymous or local or inner
+                      myClassesForAnonymousWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
+                    }
                   }
                   return true;
                 }
@@ -765,9 +779,33 @@ public class DependencyCache {
         throw ex[0];
       }
     }
-    return myClassesWithOverrideAnnotatedMethods.contains(qName);
+    
+    if (myClassesWithOverrideAnnotatedMethods.contains(qName)) {
+      return true;
+    }
+    // in case the class anonymous or nested
+    String qualifiedName = resolve(qName);
+    int dollarIndex = qualifiedName.lastIndexOf('$');
+    while (dollarIndex > 0) {
+      qualifiedName = qualifiedName.substring(0, dollarIndex);
+      final int qNameId = mySymbolTable.getId(qualifiedName);
+      if (myClassesForAnonymousWithOverrideAnnotatedMethods.contains(qNameId)) {
+        return true;
+      }
+      dollarIndex = qualifiedName.lastIndexOf('$');
+    }
+    return false;
   }
-  
+
+  private static PsiClass getTopLevelClass(PsiClass psiClass) {
+    PsiClass enclosing = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
+    while (enclosing != null) {
+      psiClass = enclosing;
+      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true); 
+    }
+    return psiClass;
+  }
+
   private class DeclaringClassFinder implements ClassInfoProcessor {
     private int myMemberName;
     private int myMemberDescriptor;
