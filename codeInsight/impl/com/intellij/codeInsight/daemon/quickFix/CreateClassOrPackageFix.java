@@ -119,7 +119,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     final PsiManager manager = myDirectory.getManager();
     PsiDirectory directory = myDirectory;
     String lastName;
-    for (StringTokenizer st = new StringTokenizer(myCanonicalText, "."); ;) {
+    for (StringTokenizer st = new StringTokenizer(myCanonicalText, "."); st.hasMoreTokens();) {
       lastName = st.nextToken();
       if (st.hasMoreTokens()) {
         try {
