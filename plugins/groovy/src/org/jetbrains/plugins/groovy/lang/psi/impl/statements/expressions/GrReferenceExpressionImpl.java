@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -100,7 +99,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GrExpression qualifier = refExpr.getQualifierExpression();
       String name = refExpr.getReferenceName();
       if (name == null) return null;
-      ResolverProcessor processor = getResolveProcessor(refExpr, name);
+      ResolverProcessor processor = getResolveProcessor(refExpr, name, false);
 
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
@@ -118,15 +117,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name) {
+  private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion) {
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
     if (kind == Kind.TYPE_OR_PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.METHOD, ResolveKind.CLASS), refExpr); //todo package?
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.METHOD, ResolveKind.CLASS), refExpr, forCompletion); //todo package?
     } else if (kind == Kind.METHOD_OR_PROPERTY) {
-      processor = new MethodResolverProcessor(name, refExpr);
+      processor = new MethodResolverProcessor(name, refExpr, forCompletion);
     } else {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr);
+      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
     }
 
     return processor;
@@ -165,7 +164,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public Object[] getVariants() {
-    ResolverProcessor processor = getResolveProcessor(this, null);
+    ResolverProcessor processor = getResolveProcessor(this, null, true);
     GrExpression qualifierExpression = getQualifierExpression();
     if (qualifierExpression == null) {
       ResolveUtil.treeWalkUp(this, processor);

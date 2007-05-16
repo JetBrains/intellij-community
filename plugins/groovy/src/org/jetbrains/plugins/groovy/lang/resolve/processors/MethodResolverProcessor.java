@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -21,10 +22,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
   PsiType[] myArgumentTypes;
 
   private List<GroovyResolveResult> myInapplicableCandidates = new ArrayList<GroovyResolveResult>();
+  private List<PsiMethod> myCandidateMethods = new ArrayList<PsiMethod>();
 
-
-  public MethodResolverProcessor(String name, GroovyPsiElement place) {
-    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place);
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
+    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
     myArgumentTypes = getArgumentTypes(place);
   }
 
@@ -33,14 +34,20 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiMethod method = (PsiMethod) element;
       if (method.isConstructor()) return true; //not interested in constructors <now>
 
-      boolean isAccessible = isAccessible((PsiNamedElement) element);
-      if (myName == null || isApplicable(method)) {
-        myCandidates.add(new GroovyResolveResultImpl(method, isAccessible));
-      }
-      else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, isAccessible));
+      if (!isAccessible((PsiNamedElement) element)) return true;
+
+      if (!myForCompletion) {
+        if (ResolveUtil.isSuperMethodDominated(method, myCandidateMethods)) return true;
       }
 
+      if (myForCompletion || isApplicable(method)) {
+        myCandidates.add(new GroovyResolveResultImpl(method, true));
+      }
+      else {
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true));
+      }
+
+      myCandidateMethods.add(method);
       return true;
     } else {
       return super.execute(element, substitutor);

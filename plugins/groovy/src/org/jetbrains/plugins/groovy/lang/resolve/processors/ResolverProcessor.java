@@ -34,13 +34,15 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
   protected PsiElement myPlace;
+  protected boolean myForCompletion;
 
   protected Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
 
-  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place) {
+  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place, boolean forCompletion) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
     myPlace = place;
+    myForCompletion = forCompletion;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
@@ -48,7 +50,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       PsiNamedElement namedElement = (PsiNamedElement) element;
       boolean isAccessible = isAccessible(namedElement);
       myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible));
-      return myName == null || !isAccessible;
+      return myForCompletion || !isAccessible;
     }
 
     return true;

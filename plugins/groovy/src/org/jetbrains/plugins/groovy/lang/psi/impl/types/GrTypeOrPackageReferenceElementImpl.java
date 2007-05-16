@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.List;
 import java.util.EnumSet;
 
 /**
@@ -140,7 +139,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS), this);
+          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS), this, true);
           ResolveUtil.treeWalkUp(this, processor);
           GroovyResolveResult[] candidates = processor.getCandidates();
           return ResolveUtil.mapToElements(candidates);
@@ -197,7 +196,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
               }
             }
           } else {
-            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), groovyRef);
+            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), groovyRef, false);
             ResolveUtil.treeWalkUp(groovyRef, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;

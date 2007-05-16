@@ -16,15 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -65,6 +63,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public PsiType getType() {
-    return null;
+    return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
   }
 }
