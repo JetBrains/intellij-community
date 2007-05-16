@@ -4,8 +4,14 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -15,7 +21,7 @@ public class InlineUtil {
 
   private InlineUtil() {}
 
-  public static PsiExpression inlineVariable(PsiLocalVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
+  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
     throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
 
@@ -52,25 +58,45 @@ public class InlineUtil {
       }
 
       if (!matchedTypes) {
-        //try cast
-        PsiTypeCastExpression cast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(t)a", null);
-        PsiTypeElement castTypeElement = cast.getCastType();
-        assert castTypeElement != null;
-        castTypeElement.replace(variable.getTypeElement());
-        final PsiExpression operand = cast.getOperand();
-        assert operand != null;
-        operand.replace(expr);
-        PsiExpression exprCopy = (PsiExpression)expr.copy();
-        cast = (PsiTypeCastExpression)expr.replace(cast);
-        if (!RedundantCastUtil.isCastRedundant(cast)) {
-          expr = cast;
-        }
-        else {
-          PsiElement toReplace = cast;
-          while (toReplace.getParent() instanceof PsiParenthesizedExpression) {
-            toReplace = toReplace.getParent();
+        if (varType instanceof PsiEllipsisType && ((PsiEllipsisType)varType).getComponentType().equals(exprType)) { //convert vararg to array
+
+          final PsiExpressionList argumentList = PsiTreeUtil.getParentOfType(expr, PsiExpressionList.class);
+          LOG.assertTrue(argumentList != null);
+          final PsiExpression[] arguments = argumentList.getExpressions();
+
+          @NonNls final StringBuilder builder = new StringBuilder("new ");
+          builder.append(exprType.getCanonicalText());
+          builder.append("[]{");
+          builder.append(StringUtil.join(Arrays.asList(arguments), new Function<PsiExpression, String>() {
+            public String fun(final PsiExpression expr) {
+              return expr.getText();
+            }
+          }, ","));
+          builder.append('}');
+
+          expr.replace(manager.getElementFactory().createExpressionFromText(builder.toString(), argumentList));
+
+        } else {
+          //try cast
+          PsiTypeCastExpression cast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(t)a", null);
+          PsiTypeElement castTypeElement = cast.getCastType();
+          assert castTypeElement != null;
+          castTypeElement.replace(variable.getTypeElement());
+          final PsiExpression operand = cast.getOperand();
+          assert operand != null;
+          operand.replace(expr);
+          PsiExpression exprCopy = (PsiExpression)expr.copy();
+          cast = (PsiTypeCastExpression)expr.replace(cast);
+          if (!RedundantCastUtil.isCastRedundant(cast)) {
+            expr = cast;
           }
-          expr = (PsiExpression)toReplace.replace(exprCopy);
+          else {
+            PsiElement toReplace = cast;
+            while (toReplace.getParent() instanceof PsiParenthesizedExpression) {
+              toReplace = toReplace.getParent();
+            }
+            expr = (PsiExpression)toReplace.replace(exprCopy);
+          }
         }
       }
     }
@@ -108,7 +134,7 @@ public class InlineUtil {
     }
   }
 
-  private static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
+  public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
     PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();

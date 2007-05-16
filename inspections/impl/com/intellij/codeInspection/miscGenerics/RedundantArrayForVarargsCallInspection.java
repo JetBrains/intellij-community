@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,25 +27,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
       if (!CodeInsightUtil.prepareFileForWrite(arrayCreation.getContainingFile())) return;
-
-      PsiExpressionList argumentList = (PsiExpressionList) arrayCreation.getParent();
-      if (argumentList == null) return;
-      PsiExpression[] args = argumentList.getExpressions();
-      PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
-      try {
-        if (arrayInitializer == null) {
-          arrayCreation.delete();
-          return;
-        }
-        
-        PsiExpression[] initializers = arrayInitializer.getInitializers();
-        if (initializers.length > 0) {
-          argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
-        }
-        args[args.length - 1].delete();
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
     }
 
     @NotNull
