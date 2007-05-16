@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.facet.*;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
+import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,10 +36,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(module);
     for (Facet facet : facetModel.getSortedFacets()) {
-      //todo[nik] remove later this condition later. It's used to hide javaee facets
-      if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
-        addFacetNode(facet, moduleNode);
-      }
+      addFacetNode(facet, moduleNode);
     }
   }
 
@@ -61,7 +59,8 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     if (selectedModule == null) {
       return false;
     }
-    return getFacetConfigurator().getTreeModel(selectedModule).hasFacetOfType(facet, typeId);
+    final FacetTreeModel facetTreeModel = getFacetConfigurator().getTreeModel(selectedModule);
+    return facetTreeModel.hasFacetOfType(facet, typeId);
   }
 
   public void createFacet(final FacetInfo parent, FacetType type, final String name) {
@@ -117,7 +116,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   }
 
   @Nullable
-  public Module getSelectedModule() {
+  private Module getSelectedModule() {
     final Object selected = myConfigurable.getSelectedObject();
     if (selected instanceof Module) {
       return (Module)selected;

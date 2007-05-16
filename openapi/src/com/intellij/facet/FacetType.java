@@ -60,6 +60,14 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
 
   public abstract C createDefaultConfiguration();
 
+  /**
+   * Create a facet instance
+   * @param module parent module for facet. Must be passed to {@link Facet} constructor
+   * @param name name of facet. Must be passed to {@link Facet} constructor
+   * @param configuration facet configuration. Must be passed to {@link Facet} constructor
+   * @param underlyingFacet underlying facet. Must be passed to {@link Facet} constructor 
+   * @return a created facet
+   */
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   public boolean isOnlyOneFacetAllowed() {

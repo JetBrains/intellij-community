@@ -74,15 +74,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   public void addFacetInfos(final Module module) {
     final Facet[] facets = getFacetModel(module).getSortedFacets();
     for (Facet facet : facets) {
-      //todo[nik] remove later. This 'if' is used only to hide javaee facets in Project Settings
-      if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
-        addFacetInfo(facet);
-      }
+      addFacetInfo(facet);
     }
   }
 
   private static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, String name, final @Nullable Facet underlyingFacet) {
-    return type.createFacet(module, name, type.createDefaultConfiguration(), underlyingFacet);
+    return FacetManagerImpl.createFacet(type, module, name, type.createDefaultConfiguration(), underlyingFacet);
   }
 
   private boolean isNewFacet(Facet facet) {

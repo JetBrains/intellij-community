@@ -64,7 +64,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     if (facet == null) {
       final FacetInfo underlyingFacetInfo = info.getUnderlyingFacet();
       final Facet underlyingFacet = underlyingFacetInfo != null ? getOrCreateFacet(info2Facet, underlyingFacetInfo) : null;
-      facet = info.getFacetType().createFacet(myModule, info.getName(), info.getConfiguration(), underlyingFacet);
+      facet = createFacet(info.getFacetType(), myModule, info.getName(), info.getConfiguration(), underlyingFacet);
       info2Facet.put(info, facet);
     }
 
@@ -116,6 +116,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   }
 
   private void addFacets(final List<Facet> facets, final Element element, final Facet underlyingFacet) throws InvalidDataException {
+    //noinspection unchecked
     List<Element> children = element.getChildren(FACET_ELEMENT);
     for (Element child : children) {
       final String value = child.getAttributeValue(TYPE_ATTRIBUTE);
@@ -140,13 +141,31 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       //todo[nik] remove later. This code is written only for compatibility with first Selena EAPs
       name = type.getPresentableName();
     }
-    final Facet facet = type.createFacet(myModule, name, configuration, underlyingFacet);
+    final Facet facet = createFacet(type, myModule, name, configuration, underlyingFacet);
+
     if (facet instanceof JDOMExternalizable) {
       //todo[nik] remove 
       ((JDOMExternalizable)facet).readExternal(config);
     }
     facets.add(facet);
     addFacets(facets, element, facet);
+  }
+
+  public static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, final String name,
+                                                                  final C configuration, final Facet underlyingFacet) {
+    final Facet facet = type.createFacet(module, name, configuration, underlyingFacet);
+    assertTure(facet.getModule() == module, facet, "module");
+    assertTure(facet.getConfiguration() == configuration, facet, "configuration");
+    assertTure(Comparing.equal(facet.getName(), name), facet, "module");
+    assertTure(facet.getUnderlyingFacet() == underlyingFacet, facet, "underlyingFacet");
+    return facet;
+  }
+
+  private static void assertTure(final boolean value, final Facet facet, final String parameter) {
+    if (!value) {
+      LOG.error("Facet type " + facet.getType().getClass().getName() + " violates the contract of FacetType.createFacet method about '" +
+                parameter + "' parameter");
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
