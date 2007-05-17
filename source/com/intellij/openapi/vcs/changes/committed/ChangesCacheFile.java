@@ -561,7 +561,7 @@ public class ChangesCacheFile {
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
-          final boolean changeFound = processIncomingChange(change, data, currentRevisions, incomingFiles, deletedFiles, createdFiles);
+          final boolean changeFound = processIncomingChange(change, currentRevisions, incomingFiles, deletedFiles, createdFiles);
           if (changeFound) {
             data.accountedChanges.add(change);
           }
@@ -583,7 +583,6 @@ public class ChangesCacheFile {
   }
 
   private static boolean processIncomingChange(final Change change,
-                                               final IncomingChangeListData data,
                                                final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
                                                @Nullable final Collection<FilePath> incomingFiles,
                                                final Set<FilePath> deletedFiles,
