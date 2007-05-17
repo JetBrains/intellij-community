@@ -11,7 +11,12 @@ import java.util.List;
  * @author yole
  */
 public class IssueLinkHtmlRenderer {
+  private IssueLinkHtmlRenderer() {
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(final Project project, final String c) {
+    if (c == null) return "";
     String comment = XmlStringUtil.escapeString(c);
 
     StringBuilder commentBuilder = new StringBuilder();
@@ -27,7 +32,6 @@ public class IssueLinkHtmlRenderer {
     commentBuilder.append(comment.substring(pos));
     comment = commentBuilder.toString();
 
-    final String str = comment.replace("\n", "<br>");
-    return str;
+    return comment.replace("\n", "<br>");
   }
 }
