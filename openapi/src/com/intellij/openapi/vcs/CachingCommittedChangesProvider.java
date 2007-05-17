@@ -16,10 +16,11 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -68,4 +69,6 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    */
   @Nullable @Nls
   String getChangelistTitle();
+
+  boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision);
 }

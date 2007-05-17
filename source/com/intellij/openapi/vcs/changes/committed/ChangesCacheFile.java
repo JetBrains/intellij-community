@@ -582,11 +582,11 @@ public class ChangesCacheFile {
     return anyChanges;
   }
 
-  private static boolean processIncomingChange(final Change change,
-                                               final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
-                                               @Nullable final Collection<FilePath> incomingFiles,
-                                               final Set<FilePath> deletedFiles,
-                                               final Set<FilePath> createdFiles) {
+  private boolean processIncomingChange(final Change change,
+                                        final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
+                                        @Nullable final Collection<FilePath> incomingFiles,
+                                        final Set<FilePath> deletedFiles,
+                                        final Set<FilePath> createdFiles) {
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision != null) {
       if (afterRevision.getFile().isNonLocal()) {
@@ -609,8 +609,7 @@ public class ChangesCacheFile {
         VcsRevisionNumber revision = currentRevisions.get(file);
         if (revision != null) {
           LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
-          int rc = revision.compareTo(afterRevision.getRevisionNumber());
-          if (rc >= 0) {
+          if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber())) {
             return true;
           }
         }
