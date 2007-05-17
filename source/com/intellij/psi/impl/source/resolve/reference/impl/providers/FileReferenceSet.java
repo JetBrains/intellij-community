@@ -36,6 +36,9 @@ public class FileReferenceSet {
 
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
+  private static final Key<CachedValue<PsiFileSystemItem>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<PsiFileSystemItem>>("default file contexts");
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>> DEFAULT_PATH_EVALUATOR_OPTION =
+    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>>(PsiBundle.message("default.path.evaluator.option"));
 
   private FileReference[] myReferences;
   private PsiElement myElement;
@@ -44,22 +47,11 @@ public class FileReferenceSet {
   private boolean myCaseSensitive;
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
-
-  public static final Key<CachedValue<PsiFileSystemItem>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<PsiFileSystemItem>>("default file contexts");
-
-  public boolean isEndingSlashNotAllowed() {
-    return myEndingSlashNotAllowed;
-  }
-
   private final boolean myEndingSlashNotAllowed;
-
-  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>> DEFAULT_PATH_EVALUATOR_OPTION =
-    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>>(PsiBundle.message("default.path.evaluator.option"));
-
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   @Nullable
-  public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed) {
+  public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed, final boolean urlEncoded) {
 
     String text;
     int offset;
@@ -88,6 +80,10 @@ public class FileReferenceSet {
     }
 
     return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed) {
+      protected boolean isUrlEncoded() {
+        return urlEncoded;
+      }
+
       protected boolean isSoft() {
         return soft;
       }
@@ -149,6 +145,10 @@ public class FileReferenceSet {
     }
   }
 
+  public boolean isEndingSlashNotAllowed() {
+    return myEndingSlashNotAllowed;
+  }
+
   public int getStartInElement() {
     return myStartInElement;
   }
@@ -205,6 +205,10 @@ public class FileReferenceSet {
   }
 
   protected boolean isSoft() {
+    return false;
+  }
+
+  protected boolean isUrlEncoded() {
     return false;
   }
 

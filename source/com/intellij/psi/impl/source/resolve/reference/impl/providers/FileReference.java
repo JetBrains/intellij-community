@@ -4,17 +4,20 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -22,9 +25,12 @@ import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,6 +48,8 @@ public class FileReference
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
+  @NonNls private static final String UTF8 = "UTF8";
+  private static final List<PsiConflictResolver> RESOLVERS = Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver());
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     myFileReferenceSet = fileReferenceSet;
@@ -105,10 +113,11 @@ public class FileReference
         }
       }
       else {
+        final String decoded = decode(text);
         processVariants(context, new BaseScopeProcessor() {
           public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
             final String name = ((PsiFileSystemItem)element).getName();
-            if (myFileReferenceSet.isCaseSensitive() ? text.equals(name) : text.compareToIgnoreCase(name) == 0) {
+            if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
               result.add(new PsiElementResolveResult(element));
               return false;
             }
@@ -117,6 +126,18 @@ public class FileReference
         });
       }
     }
+  }
+
+  private String decode(final String text) {
+    if (myFileReferenceSet.isUrlEncoded()) {
+      try {
+        return new URI(text).getPath();
+      }
+      catch (Exception e) {
+        return text;
+      }
+    }
+    return text;
   }
 
   public Object[] getVariants() {
@@ -131,9 +152,8 @@ public class FileReference
       for (final FileReferenceHelper helper : getHelpers()) {
         allowedClasses.add(helper.getDirectoryClass());
       }
-      final List<PsiConflictResolver> resolvers = Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver());
       final PsiElementProcessor<PsiFileSystemItem> processor = createChildrenProcessor(myFileReferenceSet.createProcessor(ret, allowedClasses,
-                                                                                                                          resolvers));
+                                                                                                                          RESOLVERS));
       for (PsiFileSystemItem context : getContexts()) {
         for (final PsiElement child : context.getChildren()) {
           if (child instanceof PsiFileSystemItem) {
@@ -141,11 +161,36 @@ public class FileReference
           }
         }
       }
-      return ret.toArray();
+      final Object[] variants = ret.toArray();
+      if (myFileReferenceSet.isUrlEncoded()) {
+        for (int i = 0; i < variants.length; i++) {
+          if (variants[i] instanceof CandidateInfo && ((CandidateInfo)variants[i]).getElement() instanceof PsiNamedElement) {
+            final PsiNamedElement psiElement = (PsiNamedElement)((CandidateInfo)variants[i]).getElement();
+            assert psiElement != null;
+            String name = psiElement.getName();
+            final String encoded = encode(name);
+            if (!encoded.equals(name)) {
+              final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
+              final Object lookupValue = LookupValueFactory.createLookupValue(encoded, icon);
+              variants[i] = lookupValue;
+            }
+          }
+        }
+      }
+      return variants;
     }
     catch (ProcessorRegistry.IncompatibleReferenceTypeException e) {
       LOG.error(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+  }
+
+  private static String encode(final String name) {
+    try {
+      return new URI(null, null, name, null).toString();
+    }
+    catch (Exception e) {
+      return name;
     }
   }
 

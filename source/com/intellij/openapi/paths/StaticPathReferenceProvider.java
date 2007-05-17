@@ -26,7 +26,7 @@ public class StaticPathReferenceProvider implements PathReferenceProvider {
   private boolean myRelativePathsAllowed;
 
   public boolean createReferences(@NotNull final PsiElement psiElement, @NotNull final List<PsiReference> references, final boolean soft) {
-    FileReferenceSet set = FileReferenceSet.createSet(psiElement, soft, myEndingSlashNotAllowed);
+    FileReferenceSet set = FileReferenceSet.createSet(psiElement, soft, myEndingSlashNotAllowed, true);
     if (set == null) {
       return false;
     }
