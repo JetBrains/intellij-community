@@ -8,6 +8,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -439,44 +440,50 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return buildFile;
   }
 
-  private synchronized void updateRegisteredActions() {
-    // unregister Ant actions
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(getProject()));
-    for (String oldId : oldIds) {
-      actionManager.unregisterAction(oldId);
-    }
+  private void updateRegisteredActions() {
 
-    final Set<String> registeredIds = StringSetSpinAllocator.alloc();
-    try {
-      for (final AntBuildFile buildFile : getBuildFiles()) {
-        final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
-        String defaultTargetActionId = model.getDefaultTargetActionId();
-        if (defaultTargetActionId != null && !registeredIds.contains(defaultTargetActionId)) {
-          registeredIds.add(defaultTargetActionId);
-          actionManager.registerAction(defaultTargetActionId, new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME,
-                                                                               new String[]{TargetAction.DEFAULT_TARGET_NAME}, null));
-        }
-
-        registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
-        registerTargetActions(getMetaTargets(buildFile), registeredIds, actionManager, buildFile);
+    final List<Pair<String, AnAction>> actionList = new ArrayList<Pair<String, AnAction>>();
+    for (final AntBuildFile buildFile : getBuildFiles()) {
+      final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
+      String defaultTargetActionId = model.getDefaultTargetActionId();
+      if (defaultTargetActionId != null) {
+        final TargetAction action = new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
+        actionList.add(new Pair<String, AnAction>(defaultTargetActionId, action));
       }
+
+      collectTargetActions(model.getFilteredTargets(), actionList, buildFile);
+      collectTargetActions(getMetaTargets(buildFile), actionList, buildFile);
     }
-    finally {
-      StringSetSpinAllocator.dispose(registeredIds);
+    
+    synchronized (this) {
+      // unregister Ant actions
+      ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+      final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(getProject()));
+      for (String oldId : oldIds) {
+        actionManager.unregisterAction(oldId);
+      }
+      final Set<String> registeredIds = StringSetSpinAllocator.alloc();
+      try {
+        for (Pair<String, AnAction> pair : actionList) {
+          if (!registeredIds.contains(pair.first)) {
+            registeredIds.add(pair.first);
+            actionManager.registerAction(pair.first, pair.second);
+          }
+        }
+      }
+      finally {
+        StringSetSpinAllocator.dispose(registeredIds);
+      }
     }
   }
 
-  private static void registerTargetActions(final AntBuildTarget[] targets,
-                                            final Set<String> registeredIds,
-                                            final ActionManagerEx actionManager,
-                                            final AntBuildFile buildFile) {
+  private static void collectTargetActions(final AntBuildTarget[] targets,
+                                            final List<Pair<String, AnAction>> actionList, final AntBuildFile buildFile) {
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
-      if (actionId != null && !registeredIds.contains(actionId)) {
-        registeredIds.add(actionId);
-        actionManager.registerAction(actionId, new TargetAction(buildFile, target.getName(), new String[]{target.getName()},
-                                                                target.getNotEmptyDescription()));
+      if (actionId != null) {
+        final TargetAction action = new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
+        actionList.add(new Pair<String, AnAction>(actionId, action));
       }
     }
   }
