@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,4 +164,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public String getChangelistTitle() {
     return SvnBundle.message("changes.browser.revision.term");
   }
+
+  public boolean isChangeLocallyAvailable(FilePath filePath,VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision) {
+    return localRevision.compareTo(changeRevision) >= 0;
+  }
+
 }
