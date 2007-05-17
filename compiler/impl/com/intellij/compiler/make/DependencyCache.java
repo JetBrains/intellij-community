@@ -20,7 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -753,7 +753,10 @@ public class DependencyCache {
                   if (aClass == null) {
                     return true;
                   }
-                  final PsiClass topLevelClass = getTopLevelClass(aClass);
+                  final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
+                  
+                  LOG.assertTrue(topLevelClass != null);
+                  
                   final String qualifiedName = topLevelClass.getQualifiedName();
                   if (qualifiedName != null) {
                     if (aClass.equals(topLevelClass)) {
@@ -798,12 +801,7 @@ public class DependencyCache {
   }
 
   private static PsiClass getTopLevelClass(PsiClass psiClass) {
-    PsiClass enclosing = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
-    while (enclosing != null) {
-      psiClass = enclosing;
-      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true); 
-    }
-    return psiClass;
+    return PsiUtil.getTopLevelClass(psiClass);
   }
 
   private class DeclaringClassFinder implements ClassInfoProcessor {

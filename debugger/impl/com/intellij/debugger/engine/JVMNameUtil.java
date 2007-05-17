@@ -247,13 +247,8 @@ public class JVMNameUtil {
   public static JVMName getJVMSignature(PsiMethod method) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
-    PsiParameterList paramList = method.getParameterList();
-    if (paramList != null) {
-      PsiParameter[] params = paramList.getParameters();
-      for (int idx = 0; idx < params.length; idx++) {
-        PsiParameter psiParameter = params[idx];
-        appendJVMSignature(signature, psiParameter.getType());
-      }
+    for (PsiParameter psiParameter : method.getParameterList().getParameters()) {
+      appendJVMSignature(signature, psiParameter.getType());
     }
     signature.append(")");
     if (!method.isConstructor()) {
@@ -333,12 +328,12 @@ public class JVMNameUtil {
   }
 
   public static PsiClass getTopLevelParentClass(PsiClass psiClass) {
-    PsiClass result = psiClass;
-    PsiClass parent = psiClass;
-    for(;parent!= null; parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) {
-      result = parent;
+    PsiClass enclosing = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
+    while (enclosing != null) {
+      psiClass = enclosing;
+      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true); 
     }
-    return result;
+    return psiClass;
   }
 
 }
