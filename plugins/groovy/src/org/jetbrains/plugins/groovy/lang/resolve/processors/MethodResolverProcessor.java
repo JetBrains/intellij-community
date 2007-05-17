@@ -61,12 +61,23 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private boolean isApplicable(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != myArgumentTypes.length) return false;
+    if (parameters.length > myArgumentTypes.length) return false;
+    if (parameters.length == 0 && myArgumentTypes.length > 0) return false;
 
-    for (int i = 0; i < parameters.length; i++) {
+    for (int i = 0; i < myArgumentTypes.length; i++) {
       PsiType argType = myArgumentTypes[i];
-      PsiType parameterType = parameters[i].getType();
-      if (!parameterType.isAssignableFrom(argType)) return false;
+      PsiType parameterTypeToCheck;
+      if (i < parameters.length - 1) {
+        parameterTypeToCheck = parameters[i].getType();
+      } else {
+        PsiType lastParameterType = parameters[parameters.length - 1].getType();
+        if (!(lastParameterType instanceof PsiArrayType)) {
+          parameterTypeToCheck = lastParameterType;
+        } else {
+          parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
+        }
+      }
+      if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
 
     return true;
