@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -138,7 +139,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
   @NotNull
