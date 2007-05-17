@@ -98,6 +98,11 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
   };
 
+  public static boolean isCustom(final ChangeListColumn column) {
+    return column != DATE && column != DESCRIPTION &&
+        column != NAME && !(column instanceof ChangeListNumberColumn);
+  }
+
   public static class ChangeListNumberColumn extends ChangeListColumn<CommittedChangeList> {
     private String myTitle;
 

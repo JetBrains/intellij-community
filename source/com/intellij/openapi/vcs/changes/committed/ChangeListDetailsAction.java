@@ -59,8 +59,7 @@ public class ChangeListDetailsAction extends AnAction {
 
     if (provider != null) {
       for(ChangeListColumn column: provider.getColumns()) {
-        if (column != ChangeListColumn.DATE && column != ChangeListColumn.DESCRIPTION &&
-            column != ChangeListColumn.NAME && !(column instanceof ChangeListColumn.ChangeListNumberColumn)) {
+        if (ChangeListColumn.isCustom(column)) {
           String value = column.getValue(changeList).toString();
           detailsBuilder.append(column.getTitle()).append(": ").append(XmlStringUtil.escapeString(value)).append("<br>");
         }

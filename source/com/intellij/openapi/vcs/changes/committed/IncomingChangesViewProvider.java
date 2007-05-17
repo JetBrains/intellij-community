@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -14,8 +13,8 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,9 +31,6 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   }
 
   public JComponent initContent() {
-    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    final CommittedChangesProvider provider = cache.getProviderForProject();
-    assert provider != null;
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group);
