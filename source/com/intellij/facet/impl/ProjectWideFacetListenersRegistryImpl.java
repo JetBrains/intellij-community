@@ -7,13 +7,13 @@ package com.intellij.facet.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.Map;
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl");
   private Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
-  private Map<FacetTypeId, Integer> myFacetCounts = new HashMap<FacetTypeId, Integer>();
+  private Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
   private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
   private FacetManagerAdapter myFacetListener;
 
@@ -70,14 +70,18 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
 
   private void onFacetRemoved(final Facet facet) {
     final FacetTypeId typeId = facet.getTypeId();
-    Integer count = myFacetCounts.get(typeId);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (count == null || count <= 0) count = 1;
+    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    boolean lastFacet;
+    if (facets != null) {
+      facets.remove(facet);
+      lastFacet = facets.isEmpty();
+      if (lastFacet) {
+        myFacetsByType.remove(typeId);
+      }
     }
-    LOG.assertTrue(count != null);
-    count--;
-    boolean lastFacet = count == 0;
-    myFacetCounts.put(typeId, count);
+    else {
+      lastFacet = true;
+    }
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
       //noinspection unchecked
@@ -90,11 +94,13 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
 
   private void onFacetAdded(final Facet facet) {
     final FacetTypeId typeId = facet.getTypeId();
-    Integer count = myFacetCounts.get(typeId);
-    if (count == null) count = 0;
-    boolean firstFacet = count == 0;
-    count++;
-    myFacetCounts.put(typeId, count);
+    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    if (facets == null) {
+      facets = new WeakHashMap<Facet, Boolean>();
+      myFacetsByType.put(typeId, facets);
+    }
+    boolean firstFacet = facets.isEmpty();
+    facets.put(facet, true);
 
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
