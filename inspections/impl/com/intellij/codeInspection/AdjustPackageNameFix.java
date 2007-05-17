@@ -1,20 +1,18 @@
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class AdjustPackageNameFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AdjustPackageNameFix");
+public class AdjustPackageNameFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AdjustPackageNameFix");
   private final PsiJavaFile myFile;
-  private PsiPackageStatement myStatement;
-  private PsiPackage myTargetPackage;
+  private final PsiPackageStatement myStatement;
+  private final PsiPackage myTargetPackage;
 
   public AdjustPackageNameFix(PsiJavaFile file, PsiPackageStatement statement, PsiPackage targetPackage) {
     myFile = file;
@@ -23,9 +21,8 @@ public class AdjustPackageNameFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
-    String text = QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
-    return text;
+  public String getName() {
+    return QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
   }
 
   @NotNull
@@ -33,7 +30,7 @@ public class AdjustPackageNameFix implements IntentionAction {
     return QuickFixBundle.message("adjust.package.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myFile != null
         && myFile.isValid()
         && myFile.getManager().isInProject(myFile)
@@ -43,7 +40,7 @@ public class AdjustPackageNameFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
     try {
@@ -68,10 +65,4 @@ public class AdjustPackageNameFix implements IntentionAction {
       LOG.error(e);
     }
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-
 }

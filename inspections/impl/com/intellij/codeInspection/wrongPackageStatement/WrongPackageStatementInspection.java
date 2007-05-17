@@ -15,24 +15,13 @@
  */
 package com.intellij.codeInspection.wrongPackageStatement;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
-import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,17 +58,19 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
                                                                        new AdjustPackageNameFix(javaFile, null, dirPackage),
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
       }
-
-
       if (packageStatement != null) {
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
-        if (classPackage == null){
+        if (classPackage == null) {
           availableFixes.add(new AdjustPackageNameFix(javaFile, packageStatement, dirPackage));
-        } else if (!Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)){
+        }
+        else if (!Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
           availableFixes.add(new AdjustPackageNameFix(javaFile, packageStatement, dirPackage));
-          availableFixes.add(new MoveToPackageFix(file, classPackage));
+          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(file, classPackage);
+          if (moveToPackageFix.isAvailable()) {
+            availableFixes.add(moveToPackageFix);
+          }
         }
         if (!availableFixes.isEmpty()){
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
@@ -99,6 +90,11 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
   }
 
   @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
+
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("wrong.package.statement");
   }
@@ -111,108 +107,5 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
 
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  private static class AdjustPackageNameFix implements LocalQuickFix {
-    private final PsiJavaFile myFile;
-    private PsiPackageStatement myStatement;
-    private PsiPackage myTargetPackage;
-
-    public AdjustPackageNameFix(PsiJavaFile file, PsiPackageStatement statement, PsiPackage targetPackage) {
-      myFile = file;
-      myStatement = statement;
-      myTargetPackage = targetPackage;
-    }
-
-    @NotNull
-    public String getName() {
-      return QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return QuickFixBundle.message("adjust.package.family");
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
-
-      //hack. Need a way to check applicability of the fix
-      if (myStatement != null && !myStatement.isValid()) return;
-
-      try {
-        PsiElementFactory factory = myFile.getManager().getElementFactory();
-        if (myTargetPackage.getQualifiedName().length() == 0) {
-          if (myStatement != null) {
-            myStatement.delete();
-          }
-        }
-        else {
-          if (myStatement != null) {
-            PsiJavaCodeReferenceElement packageReferenceElement = factory.createPackageReferenceElement(myTargetPackage);
-            myStatement.getPackageReference().replace(packageReferenceElement);
-          }
-          else {
-            PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
-            myFile.addAfter(packageStatement, null);
-          }
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveToPackageFix");
-
-  private static class MoveToPackageFix implements LocalQuickFix {
-    private PsiFile myFile;
-    private PsiPackage myTargetPackage;
-
-    public MoveToPackageFix(PsiFile file, PsiPackage targetPackage) {
-      myFile = file;
-      myTargetPackage = targetPackage;
-    }
-
-    @NotNull
-    public String getName() {
-      return QuickFixBundle.message("move.class.to.package.text",
-                                    myTargetPackage.getQualifiedName());
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return QuickFixBundle.message("move.class.to.package.family");
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
-
-      try {
-        String packageName = myTargetPackage.getQualifiedName();
-        PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, true);
-
-        if (directory == null) {
-          return;
-        }
-        String error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
-        if (error != null) {
-          Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-          return;
-        }
-        new MoveClassesOrPackagesProcessor(
-          project,
-          new PsiElement[]{((PsiJavaFile)myFile).getClasses()[0]},
-          new SingleSourceRootMoveDestination(PackageWrapper.create(directory.getPackage()), directory), false,
-          false,
-          null).run();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-
-
   }
 }

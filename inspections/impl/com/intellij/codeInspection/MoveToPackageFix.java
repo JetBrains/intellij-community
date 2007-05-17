@@ -1,12 +1,10 @@
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -15,9 +13,10 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-public class MoveToPackageFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveToPackageFix");
+public class MoveToPackageFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.MoveToPackageFix");
   private PsiFile myFile;
   private PsiPackage myTargetPackage;
 
@@ -26,16 +25,17 @@ public class MoveToPackageFix implements IntentionAction {
     myTargetPackage = targetPackage;
   }
 
-  public String getText() {
-    return QuickFixBundle.message("move.class.to.package.text",
-                                  myTargetPackage.getQualifiedName());
+  @NotNull
+  public String getName() {
+    return QuickFixBundle.message("move.class.to.package.text", myTargetPackage.getQualifiedName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.to.package.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myFile != null
         && myFile.isValid()
         && myFile.getManager().isInProject(myFile)
@@ -46,7 +46,7 @@ public class MoveToPackageFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
     try {
