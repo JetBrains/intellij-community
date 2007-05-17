@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.BoldLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -71,7 +72,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   private MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
-  private Component myOldFocusOwner;
+
+  private FocusTrackback myFocusTrackback;
 
   public BasePopup(PopupStep aStep) {
     this(null, aStep);
@@ -189,8 +191,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     myPopup = null;
     myContainer = null;
 
-    if (myOldFocusOwner != null && myOldFocusOwner.isShowing()) {
-      myOldFocusOwner.requestFocus();
+    if (myParent == null) {
+      myFocusTrackback.restoreFocus();
     }
   }
 
@@ -236,7 +238,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       throw new IllegalStateException("Wizard dialog was already disposed. Recreate a new instance to show the wizard again");
     }
 
-    myOldFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    myFocusTrackback = new FocusTrackback(this, owner);
 
     myScrollPane.getViewport().setPreferredSize(myContent.getPreferredSize());
     beforeShow();

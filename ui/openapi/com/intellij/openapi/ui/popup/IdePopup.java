@@ -10,4 +10,5 @@ public interface IdePopup {
   Component getComponent();
   boolean dispatch(AWTEvent event);
 
+  void requestFocus();
 }

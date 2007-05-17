@@ -29,9 +29,14 @@ public class FocusTrackback {
 
   private String myRequestorName;
 
+  public FocusTrackback(@NotNull Object requestor, Component parent) {
+    this(requestor, SwingUtilities.getWindowAncestor(parent));  
+  }
+
   public FocusTrackback(@NotNull Object requestor, Window parent) {
     myRequestorName = requestor.toString();
     myParentWindow = parent;
+
 
     if (ApplicationManager.getApplication().isUnitTestMode() || wrongOS()) return;
 
@@ -53,7 +58,8 @@ public class FocusTrackback {
   }
 
   private static boolean wrongOS() {
-    return !SystemInfo.isMac;
+    //return !SystemInfo.isMac;
+    return false;
   }
 
   private void register(final Window parent) {

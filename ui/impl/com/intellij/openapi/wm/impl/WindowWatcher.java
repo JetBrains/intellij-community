@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -89,6 +90,8 @@ public final class WindowWatcher implements PropertyChangeListener{
     if(LOG.isDebugEnabled()){
       LOG.debug("exit: propertyChange()");
     }
+
+    IdeEventQueue.getInstance().getPopupManager().processWindowGainedFocus(myFocusedWindow);
   }
 
   final void dispatchComponentEvent(final ComponentEvent e){

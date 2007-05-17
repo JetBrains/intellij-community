@@ -136,6 +136,14 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
    }
   }
 
+  public void requestFocus() {
+    if (myStack.isEmpty()) return;
+
+    final JBPopupImpl popup = myStack.peek();
+    popup.requestFocus();
+
+  }
+
   public boolean closeActivePopup() {
     if (myStack.isEmpty()) return false;
 

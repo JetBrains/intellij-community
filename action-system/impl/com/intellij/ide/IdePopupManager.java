@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopup;
 import com.intellij.ui.popup.StackingPopupDispatcher;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -43,5 +44,13 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
   public boolean closeActivePopup(){
     return myActivePopup instanceof StackingPopupDispatcher && ((StackingPopupDispatcher)myActivePopup).closeActivePopup();
+  }
+
+  public void processWindowGainedFocus(final Window focusedWindow) {
+    if (!isPopupActive()) return;
+    final Component c = myActivePopup.getComponent();
+    if (SwingUtilities.isDescendingFrom(c, focusedWindow)) {
+      myActivePopup.requestFocus();
+    }
   }
 }

@@ -145,4 +145,10 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
      return false;
    }
   }
+
+  public void requestFocus() {
+    if (ourShowingStep != null) {
+      ourShowingStep.requestFocus();
+    }
+  }
 }
