@@ -258,14 +258,20 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
-    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && fileSize(vFile) > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
+    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 &&
+           fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
   }
 
-  private static long fileSize(final VirtualFile vFile) {
+  private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {
     if (vFile instanceof VirtualFileImpl) {
-      return ((VirtualFileImpl)vFile).getPhysicalFileLength();
+      return ((VirtualFileImpl)vFile).getPhysicalFileLength() > maxInBytes;
+    } else if (vFile instanceof LightVirtualFile) {
+      // This is optimization in order to avoid conversion of [large] file contents to bytes
+      final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
+      if (lengthInChars < (maxInBytes / 2) ) return false;
+      if (lengthInChars > maxInBytes ) return true;
     }
-    return vFile.getLength();
+    return vFile.getLength() > maxInBytes;
   }
 
   @Nullable
