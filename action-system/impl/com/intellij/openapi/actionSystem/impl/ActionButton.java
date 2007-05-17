@@ -4,8 +4,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.EmptyIcon;
@@ -82,8 +82,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
 
   protected void performAction(MouseEvent e) {
     AnActionEvent event = new AnActionEvent(
-      e,
-      DataManager.getInstance().getDataContext(),
+      e, getDataContext(),
       myPlace,
       myPresentation,
       ActionManager.getInstance(),
@@ -101,6 +100,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       actionPerfomed(event);
       manager.queueActionPerformedEvent(myAction, dataContext);
     }
+  }
+
+  protected DataContext getDataContext() {
+    return DataManager.getInstance().getDataContext();
   }
 
   private void actionPerfomed(final AnActionEvent event) {

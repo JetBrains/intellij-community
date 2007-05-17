@@ -164,7 +164,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                                       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
-    final ActionButton actionButton = new ActionButton(action, myPresentationFactory.getPresentation(action), myPlace, myMinimumButtonSize);
+    final ActionButton actionButton = new ActionButton(action, myPresentationFactory.getPresentation(action), myPlace, myMinimumButtonSize) {
+      protected DataContext getDataContext() {
+        return ActionToolbarImpl.this.getDataContext();
+      }
+    };
     actionButton.setLook(myButtonLook);
     return actionButton;
   }
