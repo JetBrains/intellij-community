@@ -221,13 +221,23 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       myTypeFilter = typeFilter;
     }
 
+    private void highlightOtherOccurrences(final ArrayList<PsiElement> otherOccurrences) {
+      HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+
+      PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
+      doHighlightElements(highlightManager, myEditor, elements, attributes);
+    }
+
     public void run() {
       final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
       if (myExceptionClasses.length == 1) {
         ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
-        addExceptionThrownPlaces(refs, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
-        new DoHighlightRunnable(refs, myProject, myTarget,
-                                myEditor, myFile).run();
+        final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
+        addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
+        new DoHighlightRunnable(refs, myProject, myTarget, myEditor, myFile).run();
+        highlightOtherOccurrences(otherOccurrences);
       }
       else if (myExceptionClasses.length > 0) {
         PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
@@ -248,23 +258,22 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
             int idx = myList.getSelectedIndex();
             if (idx < 0) return;
             ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
+            final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
             if (idx > 0) {
-              addExceptionThrownPlaces(refs,
-                                        factory.createType(myExceptionClasses[idx - 1]),
+              addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(myExceptionClasses[idx - 1]),
                                         myHighlightInPlace,
                                         myTypeFilter);
             }
             else {
               for (PsiClass exceptionClass : myExceptionClasses) {
-                addExceptionThrownPlaces(refs,
-                                          factory.createType(exceptionClass),
+                addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(exceptionClass),
                                           myHighlightInPlace,
                                           myTypeFilter);
               }
             }
 
-
             new DoHighlightRunnable(refs, myProject, myTarget, myEditor, myFile).run();
+            highlightOtherOccurrences(otherOccurrences);
           }
         };
 
@@ -280,6 +289,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
   }
+
 
   private Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
@@ -413,7 +423,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   };
 
-  private static void addExceptionThrownPlaces(final List<PsiReference> refs, final PsiType type, final PsiElement block, final TypeFilter typeFilter) {
+  private static void addExceptionThrownPlaces(final List<PsiReference> refs, final List<PsiElement> otherOccurrences, final PsiType type,
+                                               final PsiElement block, final TypeFilter typeFilter) {
     if (type instanceof PsiClassType) {
       block.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -430,9 +441,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                 PsiReferenceExpression referenceExpression = (PsiReferenceExpression)psiExpression;
                 if (!refs.contains(referenceExpression)) refs.add(referenceExpression);
               }
-              else if (!(psiExpression instanceof PsiNewExpression)) {
+              else if (psiExpression instanceof PsiNewExpression) {
                 PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
                 if (ref != null && !refs.contains(ref)) refs.add(ref);
+              }
+              else {
+                otherOccurrences.add(statement.getException());
               }
             }
           }
