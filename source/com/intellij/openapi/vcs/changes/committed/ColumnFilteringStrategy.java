@@ -1,28 +1,30 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.Collection;
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.awt.*;
 
 /**
  * @author yole
  */
-public class UserFilteringStrategy extends JPanel implements ChangeListFilteringStrategy {
+public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteringStrategy {
   private JList myUserList;
   private CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private ChangeListColumn<CommittedChangeList> myColumn;
 
-  public UserFilteringStrategy() {
+  public ColumnFilteringStrategy(final ChangeListColumn<CommittedChangeList> column) {
     setLayout(new BorderLayout());
     myUserList = new JList();
     add(new JScrollPane(myUserList));
@@ -33,10 +35,11 @@ public class UserFilteringStrategy extends JPanel implements ChangeListFiltering
         }
       }
     });
+    myColumn = column;
   }
 
   public String toString() {
-    return "User";
+    return myColumn.getTitle();
   }
 
   @Override
@@ -52,7 +55,7 @@ public class UserFilteringStrategy extends JPanel implements ChangeListFiltering
   public void setFilterBase(List<CommittedChangeList> changeLists) {
     final Collection<String> userNames = new TreeSet<String>();
     for(CommittedChangeList changeList: changeLists) {
-      userNames.add(changeList.getCommitterName());
+      userNames.add(myColumn.getValue(changeList).toString());
     }
     final String[] userNameArray = userNames.toArray(new String[userNames.size()]);
     myUserList.setModel(new AbstractListModel() {
@@ -62,7 +65,7 @@ public class UserFilteringStrategy extends JPanel implements ChangeListFiltering
 
       public Object getElementAt(final int index) {
         if (index == 0) {
-          return "All Users";
+          return "All";
         }
         return userNameArray [index-1];
       }
@@ -85,7 +88,7 @@ public class UserFilteringStrategy extends JPanel implements ChangeListFiltering
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     for(CommittedChangeList changeList: changeLists) {
       for(Object userName: selection) {
-        if (userName.toString().equals(changeList.getCommitterName())) {
+        if (userName.toString().equals(myColumn.getValue(changeList).toString())) {
           result.add(changeList);
           break;
         }

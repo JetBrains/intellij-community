@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ChangeListColumn;
 
 import javax.swing.*;
 
@@ -20,7 +21,7 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   protected ComboBoxModel createModel() {
     return new DefaultComboBoxModel(new Object[] {
       ChangeListFilteringStrategy.NONE,
-      new UserFilteringStrategy(),
+      new ColumnFilteringStrategy(ChangeListColumn.NAME),
       new StructureFilteringStrategy(myProject),
       new IncomingChangesFilteringStrategy(myProject)
     });
