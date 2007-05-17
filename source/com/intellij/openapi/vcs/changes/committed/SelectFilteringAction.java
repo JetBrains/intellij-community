@@ -2,6 +2,9 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 
 import javax.swing.*;
 
@@ -19,12 +22,24 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   }
 
   protected ComboBoxModel createModel() {
-    return new DefaultComboBoxModel(new Object[] {
+    final DefaultComboBoxModel model = new DefaultComboBoxModel(new Object[]{
       ChangeListFilteringStrategy.NONE,
-      new ColumnFilteringStrategy(ChangeListColumn.NAME),
+      new ColumnFilteringStrategy(ChangeListColumn.NAME, null),
       new StructureFilteringStrategy(myProject),
       new IncomingChangesFilteringStrategy(myProject)
     });
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    for(AbstractVcs vcs: vcss) {
+      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+      if (provider != null) {
+        for(ChangeListColumn column: provider.getColumns()) {
+          if (ChangeListColumn.isCustom(column)) {
+            model.addElement(new ColumnFilteringStrategy(column, provider.getClass()));
+          }
+        }
+      }
+    }
+    return model;
   }
 
   protected void selectionChanged(final Object selection) {
