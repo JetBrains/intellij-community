@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelec
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -115,6 +116,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStmtImpl(node);
+    if (elem.equals(CATCH_CLAUSE)) return new GrCatchClauseImpl(node);
+    if (elem.equals(FINALLY_CLAUSE)) return new GrFinallyClauseImpl(node);
     if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchroStmtImpl(node);
     if (elem.equals(USE_STATEMENT)) return new GrUseStatementImpl(node);
     if (elem.equals(SWITCH_STATEMENT)) return new GrSwitchStatementImpl(node);

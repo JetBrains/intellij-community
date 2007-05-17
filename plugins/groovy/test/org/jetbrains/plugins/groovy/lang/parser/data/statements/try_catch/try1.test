@@ -13,51 +13,54 @@ Groovy script
         PsiElement(identifier)('foo')
       PsiElement(})('}')
     PsiElement(new line)('\n')
-    PsiElement(catch)('catch')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
-    PsiWhiteSpace(' ')
-    Parameter
-      Parameter modifiers
-        <empty list>
-      Type element
-        Reference element
-          PsiElement(identifier)('Exception1')
+    Catch clause
+      PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      PsiElement(identifier)('e1')
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      Reference expression
-        PsiElement(identifier)('do1')
-      PsiElement(})('}')
+      PsiElement(()('(')
+      PsiWhiteSpace(' ')
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('Exception1')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('e1')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Open block
+        PsiElement({)('{')
+        Reference expression
+          PsiElement(identifier)('do1')
+        PsiElement(})('}')
     PsiElement(new line)('\n')
-    PsiElement(catch)('catch')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
-    PsiWhiteSpace(' ')
-    Parameter
-      Parameter modifiers
-        <empty list>
-      Type element
-        Reference element
-          PsiElement(identifier)('Exception1')
+    Catch clause
+      PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      PsiElement(identifier)('e2')
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      Reference expression
-        PsiElement(identifier)('do2')
-      PsiElement(})('}')
+      PsiElement(()('(')
+      PsiWhiteSpace(' ')
+      Parameter
+        Parameter modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('Exception1')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('e2')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Open block
+        PsiElement({)('{')
+        Reference expression
+          PsiElement(identifier)('do2')
+        PsiElement(})('}')
     PsiElement(new line)('\n')
-    PsiElement(finally)('finally')
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('doNothing')
-      PsiWhiteSpace(' ')
-      PsiElement(})('}')
+    Finally clause
+      PsiElement(finally)('finally')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('doNothing')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')

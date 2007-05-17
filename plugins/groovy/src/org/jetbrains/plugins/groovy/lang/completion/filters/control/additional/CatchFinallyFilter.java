@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
@@ -32,7 +31,7 @@ public class CatchFinallyFilter implements ElementFilter {
     if (context != null &&
         GroovyCompletionData.nearestLeftSibling(context) instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context);
-      if (tryStatement.getFinallyBlock() == null) {
+      if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
@@ -40,7 +39,7 @@ public class CatchFinallyFilter implements ElementFilter {
         GroovyCompletionData.nearestLeftSibling(context) instanceof PsiErrorElement &&
         GroovyCompletionData.nearestLeftSibling(context).getPrevSibling() instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context).getPrevSibling();
-      if (tryStatement.getFinallyBlock() == null) {
+      if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
@@ -48,7 +47,7 @@ public class CatchFinallyFilter implements ElementFilter {
         context.getParent() instanceof GrReferenceExpression &&
         GroovyCompletionData.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionData.nearestLeftSibling(context.getParent());
-      if (tryStatement.getFinallyBlock() == null) {
+      if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }

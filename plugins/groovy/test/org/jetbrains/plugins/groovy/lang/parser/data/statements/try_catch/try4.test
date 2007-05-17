@@ -11,11 +11,12 @@ Groovy script
         PsiElement(identifier)('foo')
       PsiElement(})('}')
     PsiElement(new line)('\n')
-    PsiElement(finally)('finally')
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('doNothing')
-      PsiWhiteSpace(' ')
-      PsiElement(})('}')
+    Finally clause
+      PsiElement(finally)('finally')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('doNothing')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')

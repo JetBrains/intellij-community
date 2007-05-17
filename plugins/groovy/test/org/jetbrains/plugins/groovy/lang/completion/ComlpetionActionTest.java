@@ -58,7 +58,7 @@ public class ComlpetionActionTest extends ActionTest {
 
 
   private String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result;
+    String result = "";
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = removeMarker(fileText);
@@ -80,10 +80,12 @@ public class ComlpetionActionTest extends ActionTest {
       });
 
       offset = myEditor.getCaretModel().getOffset();
+/*
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
+*/
 
-      if (items.length > 1) {
+      if (items.length > 0) {
         Arrays.sort(items);
         result = "";
         for (LookupItem item : items) {

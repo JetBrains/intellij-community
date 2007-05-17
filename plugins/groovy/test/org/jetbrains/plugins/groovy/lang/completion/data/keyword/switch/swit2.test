@@ -6,10 +6,4 @@ class A {
   }
 }
 -----
-class A {
-  def foo() {
-    switch (x){
-      case <caret>
-    }
-  }
-}
+case

@@ -65,6 +65,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
     }
     if (kFINALLY.equals(builder.getTokenType())) {
+      PsiBuilder.Marker finallyMarker = builder.mark();
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
       ParserUtils.getToken(builder, mNLS);
@@ -73,10 +74,12 @@ public class TryCatchStatement implements GroovyElementTypes {
         result = OpenOrClosableBlock.parseOpenBlock(builder);
       }
       if (result.equals(WRONGWAY)) {
+        finallyMarker.drop();
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
         warn.drop();
+        finallyMarker.done(FINALLY_CLAUSE);
       }
     }
     marker.done(TRY_BLOCK_STATEMENT);
@@ -89,13 +92,16 @@ public class TryCatchStatement implements GroovyElementTypes {
    * @param builder
    */
   private static void parseHandlers(PsiBuilder builder) {
+    PsiBuilder.Marker catchMarker = builder.mark();
     ParserUtils.getToken(builder, kCATCH);
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
+      catchMarker.drop();
       return;
     }
 
     if (ParameterDeclaration.parse(builder, mRPAREN).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("param.expected"));
+      catchMarker.drop();
       return;
     }
 
@@ -103,6 +109,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
     }
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
+      catchMarker.done(CATCH_CLAUSE);
       return;
     }
 
@@ -118,6 +125,8 @@ public class TryCatchStatement implements GroovyElementTypes {
     } else {
       warn.drop();
     }
+
+    catchMarker.done(CATCH_CLAUSE);
 
     if (ParserUtils.lookAhead(builder, mNLS, kCATCH) ||
             ParserUtils.lookAhead(builder, kCATCH)) {

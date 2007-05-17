@@ -4,8 +4,4 @@ while (true) {
   }
 }
 -----
-while (true) {
-  if (true) {
-    break;<caret>
-  }
-}
+break

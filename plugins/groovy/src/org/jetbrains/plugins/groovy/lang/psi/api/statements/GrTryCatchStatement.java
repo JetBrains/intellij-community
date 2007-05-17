@@ -25,9 +25,9 @@ public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
 
   public GrOpenBlock getTryBlock();
 
-  public GrOpenBlock[] getCatchBlocks();
+  public GrCatchClause[] getCatchClauses();
 
-  public GrOpenBlock getFinallyBlock();
+  public GrFinallyClause getFinallyClause();
 
 
 }

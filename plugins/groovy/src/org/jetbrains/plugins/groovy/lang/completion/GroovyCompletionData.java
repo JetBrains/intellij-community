@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilt
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.ControlStructureFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CaseDefaultFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CatchFinallyFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.ElseFilter;
@@ -107,6 +108,7 @@ public class GroovyCompletionData extends CompletionData {
     registerBuiltInTypeCompletion();
     registerInstanceofCompletion();
     registerThrowsCompletion();
+    registerBranchCompletion();
 
   }
 
@@ -124,7 +126,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for",
-        "return", "break", "continue", "throw", "assert", "synchronized",};
+        "return", "throw", "assert", "synchronized",};
 
     registerStandardCompletion(new ControlStructureFilter(), controlKeywords);
     registerStandardCompletion(new CaseDefaultFilter(), "case", "default");
@@ -156,11 +158,15 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new InstanceOfFilter(), "instanceof");
   }
 
+  private void registerBranchCompletion() {
+    registerStandardCompletion(new BranchFilter(), "break", "continue");
+  }
+
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
     ourGenericVariant.addReferenceCompletions(reference, position, set, context);
   }
 
-    /**
+  /**
    * Template to add all standard keywords complettions
    *
    * @param filter   - Semantic filter for given keywords
