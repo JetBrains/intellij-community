@@ -509,7 +509,7 @@ public final class EditorsSplitters extends JPanel {
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
-    protected void focusedComponentChanged(final Component component) {
+    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       if (myInsideChange > 0) {
         return;
       }

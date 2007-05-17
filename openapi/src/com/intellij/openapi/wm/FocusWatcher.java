@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,10 +63,14 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     if(myFocusedComponent!=null&&SwingUtilities.isDescendingFrom(myFocusedComponent,removedChild)){
       myNearestFocusableComponent=e.getContainer();
     }
-    deinstall(removedChild);
+    deinstall(removedChild, e);
   }
 
   public final void deinstall(final Component component){
+    deinstall(component, null);
+  }
+
+  public final void deinstall(final Component component, @Nullable AWTEvent cause){
     if(component instanceof Container){
       Container container=(Container)component;
       int componentCount=container.getComponentCount();
@@ -76,7 +81,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     }
     component.removeFocusListener(this);
     if(myFocusedComponent==component){
-      setFocusedComponentImpl(null);
+      setFocusedComponentImpl(null, cause);
     }
   }
 
@@ -85,7 +90,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     if(e.isTemporary()||!component.isShowing()){
       return;
     }
-    setFocusedComponentImpl(component);
+    setFocusedComponentImpl(component, e);
     myNearestFocusableComponent=component.getParent();
   }
 
@@ -128,8 +133,12 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public void setFocusedComponentImpl(Component component){
+    setFocusedComponentImpl(component, null);
+  }
+
+  public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause){
     myFocusedComponent=component;
-    focusedComponentChanged(component);
+    focusedComponentChanged(component, cause);
   }
 
   /**
@@ -138,9 +147,9 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * event are ignored.
    *
    * @param component currenly focused component. The component can be <code>null</code>
-   * if the following case: focused component was removed from the swing hierarchy.
+   * @param cause
    */
-  protected void focusedComponentChanged(Component component){}
+  protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}
   
   protected void focusLostImpl(final FocusEvent e){}
 }

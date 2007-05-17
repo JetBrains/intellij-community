@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.awt.event.ContainerEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -76,6 +78,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls protected static final String HEIGHT_ATTR = "height";
   @NonNls protected static final String EXTENDED_STATE_ATTR = "extended-state";
 
+  private Alarm myFocusedComponentAlaram;
+
   /**
    * invoked by reflection
    */
@@ -100,6 +104,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myEditorComponentActive = false;
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
+
+    myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);  
   }
 
   public Project getProject() {
@@ -1134,7 +1140,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
-    protected void focusedComponentChanged(final Component component) {
+    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
@@ -1153,24 +1159,32 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+
   /**
    * Notifies window manager about focus traversal in tool window
    */
   private final class ToolWindowFocusWatcher extends FocusWatcher {
     private final String myId;
 
+
     public ToolWindowFocusWatcher(final ToolWindowImpl toolWindow) {
       myId = toolWindow.getId();
       install(toolWindow.getComponent());
     }
 
-    protected void focusedComponentChanged(final Component component) {
+    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
       final WindowInfo info = getInfo(myId);
+      myFocusedComponentAlaram.cancelAllRequests();
+
       if (!info.isActive()) {
-        activateToolWindow(myId);
+        myFocusedComponentAlaram.addRequest(new Runnable() {
+          public void run() {
+            activateToolWindow(myId);
+          }
+        }, 100);
       }
     }
   }
