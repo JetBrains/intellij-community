@@ -11,11 +11,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -45,14 +47,26 @@ public class ChangeListDetailsAction extends AnAction {
     StringBuilder detailsBuilder = new StringBuilder("<html><body>");
     DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
     final AbstractVcs vcs = changeList.getVcs();
+    CachingCommittedChangesProvider provider = null;
     if (vcs != null) {
-      CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
+      provider = vcs.getCachingCommittedChangesProvider();
       if (provider != null && provider.getChangelistTitle() != null) {
         detailsBuilder.append(provider.getChangelistTitle()).append(" #").append(changeList.getNumber()).append("<br>");
       }
     }
     detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
     detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
+
+    if (provider != null) {
+      for(ChangeListColumn column: provider.getColumns()) {
+        if (column != ChangeListColumn.DATE && column != ChangeListColumn.DESCRIPTION &&
+            column != ChangeListColumn.NAME && !(column instanceof ChangeListColumn.ChangeListNumberColumn)) {
+          String value = column.getValue(changeList).toString();
+          detailsBuilder.append(column.getTitle()).append(": ").append(XmlStringUtil.escapeString(value)).append("<br>");
+        }
+      }
+    }
+
     detailsBuilder.append(IssueLinkHtmlRenderer.formatTextWithLinks(project, changeList.getComment()));
     detailsBuilder.append("</body></html>");
 
