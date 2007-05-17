@@ -122,7 +122,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       PsiElement element = getElement();
-      if (element != null) {
+      if (element != null && element.getTextRange() != null) {
         sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
       }
     }
