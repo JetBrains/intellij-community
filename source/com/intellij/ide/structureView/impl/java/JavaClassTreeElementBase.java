@@ -7,9 +7,9 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtil;
 
 public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider {
-  protected final boolean myIsInherited;
+  private final boolean myIsInherited;
 
-  protected JavaClassTreeElementBase(boolean isInherited, PsiElement element) {
+  protected JavaClassTreeElementBase(boolean isInherited, Value element) {
     super(element);
     myIsInherited = isInherited;
   }
@@ -38,9 +38,5 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     if (myIsInherited != that.myIsInherited) return false;
 
     return true;
-  }
-
-  public int hashCode() {
-    return super.hashCode();
   }
 }

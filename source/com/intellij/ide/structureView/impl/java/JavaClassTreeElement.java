@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,9 +16,9 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     super(inherited,aClass);
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    Collection<StructureViewTreeElement> classChildren = getClassChildren();
-    return classChildren;
+    return getClassChildren();
   }
 
   private Collection<StructureViewTreeElement> getClassChildren() {
@@ -31,26 +32,23 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     
     PsiScopesUtil.processScope(aClass, new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
 
-    for (int i = 0; i < inherited.size(); i++) {
-      PsiElement child = inherited.get(i);
+    for (PsiElement child : inherited) {
       if (!child.isValid()) continue;
+      boolean isInherited = !ownChildren.contains(child);
       if (child instanceof PsiClass) {
         array.add(new JavaClassTreeElement((PsiClass)child, !ownChildren.contains(child)));
       }
-      else if (child instanceof PsiMethod || child instanceof PsiField){
-        addMember(child, array, !ownChildren.contains(child));
+      else if (child instanceof PsiField) {
+        array.add(new PsiFieldTreeElement((PsiField)child, isInherited));
+      }
+      else if (child instanceof PsiMethod) {
+        array.add(new PsiMethodTreeElement((PsiMethod)child, isInherited));
+      }
+      else if (child instanceof PsiClassInitializer) {
+        array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
     return array;
-  }
-
-  private void addMember(PsiElement child, ArrayList<StructureViewTreeElement> array, boolean inherited) {
-    if (child instanceof PsiField) {
-      array.add(new PsiFieldTreeElement((PsiField)child, inherited));
-    }
-    else {
-      array.add(new PsiMethodTreeElement((PsiMethod)child, inherited));
-    }
   }
 
   public String getPresentableText() {
@@ -58,10 +56,6 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   }
 
   public boolean isPublic() {
-    if (getElement().getParent() instanceof PsiFile){
-      return true;
-    } else {
-      return super.isPublic();
-    }
+    return getElement().getParent() instanceof PsiFile || super.isPublic();
   }
 }

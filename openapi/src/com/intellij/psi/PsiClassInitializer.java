@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a Java class initializer block.
  */
-public interface PsiClassInitializer extends PsiMember, PsiModifierListOwner {
+public interface PsiClassInitializer extends PsiMember {
   /**
    * The empty array of PSI class initializers which can be reused to avoid unnecessary allocations.
    */

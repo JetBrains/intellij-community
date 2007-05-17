@@ -8,7 +8,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -24,8 +23,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ProjectListBuilder extends AbstractListBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.commander.ProjectListBuilder");
-
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   private final MyFileStatusListener myFileStatusListener;
   private final CopyPasteManager.ContentChangedListener myCopyPasteListener;

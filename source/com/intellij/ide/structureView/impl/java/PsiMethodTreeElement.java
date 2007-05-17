@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +16,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
     super(isInherited,method);
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     getElement().accept(new PsiRecursiveElementVisitor(){

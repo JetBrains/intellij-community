@@ -113,6 +113,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
       return rowIcon;
     }
+    else if (element instanceof PsiClassInitializer) {
+      return createLayeredIcon(Icons.CLASS_INITIALIZER, getFlags((PsiClassInitializer)element, false));
+    }
     else {
       return null;
     }
@@ -190,7 +193,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (value == null) {
       value = aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Integer>() {
         public Result<Integer> compute() {
-          return Result.createSingleDependency(new Integer(getClassKindImpl(aClass)), aClass);
+          return Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass);
         }
       }, false);
       aClass.putUserData(CLASS_KIND_KEY, value);

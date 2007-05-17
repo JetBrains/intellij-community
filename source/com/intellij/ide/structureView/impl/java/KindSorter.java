@@ -34,11 +34,10 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiMethod;
-
-import java.util.Comparator;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
 
 public class KindSorter implements Sorter {
   public static final Sorter INSTANCE = new KindSorter();
@@ -46,35 +45,32 @@ public class KindSorter implements Sorter {
   @NonNls public static final String ID = "KIND";
   private static final Comparator COMPARATOR = new Comparator() {
     public int compare(final Object o1, final Object o2) {
-
-      int weight1 = getWeight(o1);
-      int weight2 = getWeight(o2);
-
-      return weight1 - weight2;
+      return getWeight(o1) - getWeight(o2);
     }
 
     private int getWeight(final Object value) {
       if (value instanceof JavaClassTreeElement) {
         return 10;
       }
-      else if (value instanceof SuperTypeGroup) {
+      if (value instanceof ClassInitializerTreeElement) {
+        return 15;
+      }
+      if (value instanceof SuperTypeGroup) {
         return 20;
       }
-      else if (value instanceof PsiMethodTreeElement) {
-        final PsiMethodTreeElement methodTreeElement = ((PsiMethodTreeElement)value);
+      if (value instanceof PsiMethodTreeElement) {
+        final PsiMethodTreeElement methodTreeElement = (PsiMethodTreeElement)value;
         final PsiMethod method = methodTreeElement.getMethod();
 
         return method.isConstructor() ? 30 : 35;
       }
-      else if (value instanceof PropertyGroup) {
+      if (value instanceof PropertyGroup) {
         return 40;
       }
-      else if (value instanceof PsiFieldTreeElement) {
+      if (value instanceof PsiFieldTreeElement) {
         return 50;
       }
-      else {
-        return 60;
-      }
+      return 60;
     }
   };
 
@@ -84,7 +80,7 @@ public class KindSorter implements Sorter {
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return null;
+    throw new IllegalStateException();
   }
 
   @NotNull

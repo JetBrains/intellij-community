@@ -34,6 +34,7 @@ package com.intellij.ide.structureView.impl.xml;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +45,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
     super(file);
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlDocument document = getElement().getDocument();
     List<XmlTag> rootTags = new ArrayList<XmlTag>();

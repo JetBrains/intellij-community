@@ -51,7 +51,7 @@ public class FileStructureDialog extends DialogWrapper {
   private boolean myShouldNarrowDown = false;
 
   public FileStructureDialog(StructureViewModel structureViewModel, @Nullable Editor editor, Project project, Navigatable navigatable,
-                             final @NotNull Disposable auxDisposable) {
+                             @NotNull final Disposable auxDisposable) {
     super(project, true);
     myProject = project;
     myEditor = editor;
@@ -146,22 +146,14 @@ public class FileStructureDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     myCommanderPanel = new MyCommanderPanel(myProject);
 
-    PsiElement parent = getPsiFile(myProject);
-    if (parent instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)parent).getClasses();
-      if (classes.length == 1) {
-        parent = classes[0];
-      }
-    }
-
     AbstractTreeStructure treeStructure = new MyStructureTreeStructure();
-    myCommanderPanel.setBuilder(new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, false){
+    ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, false) {
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
 
       protected void refreshSelection() {
-        if ( myShouldNarrowDown ) {
+        if (myShouldNarrowDown) {
           myCommanderPanel.updateSpeedSearch();
         }
       }
@@ -173,7 +165,8 @@ public class FileStructureDialog extends DialogWrapper {
         }
         return result;
       }
-                                });
+    };
+    myCommanderPanel.setBuilder(projectListBuilder);
     myCommanderPanel.setTitlePanelVisible(false);
 
     new AnAction() {
@@ -252,8 +245,8 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     private boolean hasPrefixShortened(final PropertyChangeEvent evt) {
-      return evt.getNewValue()!=null && evt.getOldValue()!=null &&
-            (((String)evt.getNewValue()).length()<((String)evt.getOldValue()).length());
+      return evt.getNewValue() != null && evt.getOldValue() != null &&
+             ((String)evt.getNewValue()).length() < ((String)evt.getOldValue()).length();
     }
 
     public boolean navigateSelectedElement() {

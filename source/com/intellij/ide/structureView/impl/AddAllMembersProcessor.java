@@ -1,14 +1,11 @@
 package com.intellij.ide.structureView.impl;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,15 +31,10 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     myFilter = filter;
   }
 
-  public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
-  }
-
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     PsiMember member = (PsiMember)element;
-    if (!isInteresting(element))
-      return true;
-    if (myPsiClass.isInterface() && isObjectMember(element))
-      return true;
+    if (!isInteresting(element)) return true;
+    if (myPsiClass.isInterface() && isObjectMember(element)) return true;
     if (!myAllMembers.contains(member) && myFilter.isVisible(member, myPsiClass)) {
       if (member instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)member;
@@ -50,24 +42,23 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
           mapMethodBySignature(psiMethod);
           myAllMembers.add(psiMethod);
         }
-      } else myAllMembers.add(member);
+      }
+      else {
+        myAllMembers.add(member);
+      }
     }
     return true;
   }
 
   private static boolean isObjectMember(PsiElement element) {
-    if (!(element instanceof PsiMethod))
-      return false;
+    if (!(element instanceof PsiMethod)) return false;
     final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
     if (containingClass == null) {
       return false;
-    } else {
+    }
+    else {
       final String qualifiedName = containingClass.getQualifiedName();
-      if (qualifiedName == null) {
-        return false;
-      } else {
-        return qualifiedName.equals(Object.class.getName());
-      }
+      return qualifiedName != null && qualifiedName.equals(Object.class.getName());
     }
   }
 
@@ -77,9 +68,8 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
 
   private boolean shouldAdd(PsiMethod psiMethod) {
     MethodSignature signature = psiMethod.getSignature(PsiSubstitutor.EMPTY);
-    PsiMethod  previousMethod = myMethodsBySignature.get(signature);
-    if (previousMethod == null)
-      return true;
+    PsiMethod previousMethod = myMethodsBySignature.get(signature);
+    if (previousMethod == null) return true;
     if (isInheritor(psiMethod, previousMethod)) {
       myAllMembers.remove(previousMethod);
       return true;
@@ -88,37 +78,24 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   }
 
   private static boolean isInteresting(PsiElement element) {
-    return element instanceof PsiMethod ||
-            element instanceof PsiField ||
-            element instanceof PsiClass;
+    return element instanceof PsiMethod
+           || element instanceof PsiField
+           || element instanceof PsiClass
+           || element instanceof PsiClassInitializer
+      ;
   }
 
   public static boolean isInheritor(PsiMethod method, PsiMethod baseMethod) {
-    if (isStatic(method) || isStatic(baseMethod))
-      return false;
-    return method.getContainingClass().isInheritor(baseMethod.getContainingClass(), true);
+    return !isStatic(method) && !isStatic(baseMethod) && method.getContainingClass().isInheritor(baseMethod.getContainingClass(), true);
   }
 
-  public static boolean isStatic(PsiMethod method) {
+  private static boolean isStatic(PsiMethod method) {
     return method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  public static abstract class MemberFilter {
+  public abstract static class MemberFilter {
     public boolean isVisible(PsiMember element, PsiClass psiClass) {
-      if (isInheritedConstructor(element, psiClass))
-        return false;
-      if (!PsiUtil.isAccessible(element, psiClass, null))
-        return false;
-
-      return isVisible(element);
-    }
-
-    public Condition<PsiMember> visibleInClass(final PsiClass psiClass) {
-      return new Condition<PsiMember>() {
-        public boolean value(PsiMember psiElement) {
-          return isVisible(psiElement, psiClass);
-        }
-      };
+      return !isInheritedConstructor(element, psiClass) && PsiUtil.isAccessible(element, psiClass, null) && isVisible(element);
     }
 
     private static boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
@@ -126,15 +103,6 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
         return false;
       PsiMethod method = (PsiMethod)member;
       return method.isConstructor() && method.getContainingClass() != psiClass;
-    }
-
-    public ArrayList<PsiElement> copyVisible(List<PsiElement> list) {
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-      for (PsiElement psiElement : list) {
-        if (psiElement instanceof PsiModifierListOwner && !isVisible((PsiModifierListOwner)psiElement)) continue;
-        result.add(psiElement);
-      }
-      return result;
     }
 
     protected abstract boolean isVisible(PsiModifierListOwner member);

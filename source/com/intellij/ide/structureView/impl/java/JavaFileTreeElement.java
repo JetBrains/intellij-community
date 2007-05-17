@@ -10,6 +10,8 @@ import com.intellij.psi.PsiJavaFile;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> implements ItemPresentation {
 
   public JavaFileTreeElement(PsiJavaFile file) {
@@ -20,6 +22,7 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> impleme
     return getElement().getName();
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     PsiClass[] classes = getElement().getClasses();
     ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();

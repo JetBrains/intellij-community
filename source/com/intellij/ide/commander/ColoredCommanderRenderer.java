@@ -1,15 +1,14 @@
 package com.intellij.ide.commander;
 
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private CommanderPanel myCommanderPanel;
@@ -40,8 +39,8 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
       }
     }
     append(value.toString(), new SimpleTextAttributes(Font.PLAIN, color));
-    if (value instanceof PsiDirectoryNode) {
-      String locationString = ((PsiDirectoryNode)value).getPresentation().getLocationString();
+    if (value instanceof AbstractTreeNode) {
+      String locationString = ((AbstractTreeNode)value).getPresentation().getLocationString();
       if (locationString != null && locationString.length() > 0) {
         append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }

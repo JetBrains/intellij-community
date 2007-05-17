@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public class InheritedMembersFilter implements Filter {
   @NonNls public static final String ID = "SHOW_INHERITED";
 
-  public InheritedMembersFilter() {
-  }
   public boolean isVisible(TreeElement treeNode) {
     if (treeNode instanceof JavaClassTreeElementBase) {
       return !((JavaClassTreeElementBase)treeNode).isInherited();

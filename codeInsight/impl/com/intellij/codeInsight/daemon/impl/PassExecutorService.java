@@ -343,7 +343,7 @@ public abstract class PassExecutorService {
                   + " "+pass+" "
                   + s
                   + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 30))
+                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 30, true))
         );
       }
     }

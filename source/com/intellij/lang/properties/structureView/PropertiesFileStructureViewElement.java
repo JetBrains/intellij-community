@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Collection;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -26,6 +28,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     super(propertiesFile);
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     List<Property> properties = getElement().getProperties();
 

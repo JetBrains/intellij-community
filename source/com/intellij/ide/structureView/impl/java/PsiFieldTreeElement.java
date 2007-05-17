@@ -9,11 +9,14 @@ import com.intellij.psi.util.PsiFormatUtil;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
   public PsiFieldTreeElement(PsiField field, boolean isInherited) {
     super(isInherited,field);
  }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return Collections.emptyList();
   }

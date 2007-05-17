@@ -54,9 +54,9 @@ import java.util.List;
 
 public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation,
                                                                                NodeDescriptorProvidingKey {
-  private final PsiElement myValue;
+  private final Value myValue;
 
-  protected PsiTreeElementBase(PsiElement psiElement) {
+  protected PsiTreeElementBase(Value psiElement) {
     myValue = psiElement;
   }
 
@@ -77,7 +77,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
 
   @Nullable
   public final Value getElement() {
-    return (Value)(myValue.isValid() ? myValue : null);
+    return myValue.isValid() ? myValue : null;
   }
 
   public Icon getIcon(boolean open) {
@@ -148,7 +148,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     return canNavigate();
   }
 
-  public abstract Collection<StructureViewTreeElement> getChildrenBase();
+  @NotNull public abstract Collection<StructureViewTreeElement> getChildrenBase();
 
   public boolean equals(final Object o) {
     if (this == o) return true;

@@ -45,6 +45,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.Icons;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -54,6 +55,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     super(file);
   }
 
+  @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return collectElements(getElement().getDocument());
   }
@@ -65,7 +67,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
       public boolean execute(final PsiElement element) {
         if (element instanceof XmlElementDecl ||
             element instanceof XmlEntityDecl) {
-          elements.add(new DtdTreeElement(element));
+          elements.add(new DtdTreeElement((PsiNamedElement)element));
         }
         return true;
       }
@@ -78,17 +80,18 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
   }
 
   private static class DtdTreeElement extends PsiTreeElementBase<PsiNamedElement> {
-    private static final @NonNls String IMPLIED = "implied";
-    private static final @NonNls String REQUIRED = "required";
-    private static final @NonNls String FIXED = "fixed";
+    @NonNls private static final String IMPLIED = "implied";
+    @NonNls private static final String REQUIRED = "required";
+    @NonNls private static final String FIXED = "fixed";
     @NonNls private static final String ID = "id";
     @NonNls private static final String IDREF = "idref";
     @NonNls private static final String ENUM = "enum";
 
-    public DtdTreeElement(final PsiElement element) {
+    public DtdTreeElement(final PsiNamedElement element) {
       super(element);
     }
 
+    @NotNull
     public Collection<StructureViewTreeElement> getChildrenBase() {
       return Collections.emptyList();
     }
@@ -127,7 +130,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     public String getLocationString() {
       final List<XmlAttlistDecl> attLists= ourCachedAttListDefsCache.get(MY_CACHED_ATTLISTS, getElement().getContainingFile(), null).getValue();
 
-      if (attLists.size() > 0) {
+      if (!attLists.isEmpty()) {
         Map<String,XmlAttributeDecl> attrMap = null;
 
         final String name = getElement().getName();

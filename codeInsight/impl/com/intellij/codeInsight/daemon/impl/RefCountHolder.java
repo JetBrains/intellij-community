@@ -32,7 +32,7 @@ public class RefCountHolder {
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
-    LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30));
+    LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
   public synchronized void clear() {

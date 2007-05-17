@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.impl.xml;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
@@ -12,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Collection;
 
 public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends PsiTreeElementBase<T> {
-  protected AbstractXmlTagTreeElement(final PsiElement psiElement) {
+  protected AbstractXmlTagTreeElement(final T psiElement) {
     super(psiElement);
   }
 
