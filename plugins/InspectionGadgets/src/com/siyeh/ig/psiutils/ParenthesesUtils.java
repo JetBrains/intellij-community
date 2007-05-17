@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,6 @@ public class ParenthesesUtils{
     private static final int PARENTHESIZED_PRECEDENCE = 0;
     private static final int LITERAL_PRECEDENCE = 0;
     public static final int METHOD_CALL_PRECEDENCE = 1;
-
     private static final int POSTFIX_PRECEDENCE = 2;
     public static final int PREFIX_PRECEDENCE = 3;
     public static final int TYPE_CAST_PRECEDENCE = 4;
@@ -43,7 +42,6 @@ public class ParenthesesUtils{
     public static final int SHIFT_PRECEDENCE = 7;
     private static final int RELATIONAL_PRECEDENCE = 8;
     private static final int EQUALITY_PRECEDENCE = 9;
-
     private static final int BINARY_AND_PRECEDENCE = 10;
     private static final int BINARY_XOR_PRECEDENCE = 11;
     private static final int BINARY_OR_PRECEDENCE = 12;
@@ -51,7 +49,6 @@ public class ParenthesesUtils{
     public static final int OR_PRECEDENCE = 14;
     public static final int CONDITIONAL_PRECEDENCE = 15;
     private static final int ASSIGNMENT_PRECEDENCE = 16;
-
     private static final int NUM_PRECEDENCES = 17;
 
     private static final Map<String, Integer> s_binaryOperatorPrecedence =
@@ -82,7 +79,12 @@ public class ParenthesesUtils{
     @Nullable
     public static PsiExpression stripParentheses(
             @Nullable PsiExpression expression){
-        return PsiUtil.deparenthesizeExpression(expression);
+        while(expression instanceof PsiParenthesizedExpression){
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expression;
+            expression = parenthesizedExpression.getExpression();
+        }
+        return expression;
     }
 
     public static boolean isCommutativeBinaryOperator(
@@ -224,6 +226,7 @@ public class ParenthesesUtils{
         return expression.getText();
     }
 
+    @NonNls
     private static String removeParensFromReferenceExpression(
             @NotNull PsiReferenceExpression referenceExpression){
         final PsiExpression qualifier =
@@ -232,7 +235,7 @@ public class ParenthesesUtils{
             final PsiType[] typeParameters =
                     referenceExpression.getTypeParameters();
             if (typeParameters.length > 0) {
-                final StringBuilder result = new StringBuilder();
+                @NonNls final StringBuilder result = new StringBuilder();
                 result.append(removeParentheses(qualifier));
                 result.append(".<");
                 result.append(typeParameters[0].getCanonicalText());
@@ -253,6 +256,7 @@ public class ParenthesesUtils{
         }
     }
 
+    @NonNls
     private static String removeParensFromParenthesizedExpression(
             @NotNull PsiParenthesizedExpression parenthesizedExpression){
         PsiExpression body = parenthesizedExpression.getExpression();
@@ -305,6 +309,7 @@ public class ParenthesesUtils{
         }
     }
 
+    @NonNls
     private static String removeParensFromConditionalExpression(
             @NotNull PsiConditionalExpression conditionalExpression){
         final PsiExpression condition = conditionalExpression.getCondition();
@@ -317,6 +322,7 @@ public class ParenthesesUtils{
                removeParentheses(elseBranch);
     }
 
+    @NonNls
     private static String removeParensFromInstanceOfExpression(
             @NotNull PsiInstanceOfExpression instanceofExpression){
         final PsiExpression body = instanceofExpression.getOperand();
@@ -331,6 +337,7 @@ public class ParenthesesUtils{
                typeText;
     }
 
+    @NonNls
     private static String removeParensFromBinaryExpression(
             @NotNull PsiBinaryExpression binaryExpression){
         final PsiExpression lhs = binaryExpression.getLOperand();
@@ -340,6 +347,7 @@ public class ParenthesesUtils{
                + removeParentheses(rhs);
     }
 
+    @NonNls
     private static String removeParensFromPostfixExpression(
             @NotNull PsiPostfixExpression postfixExpression){
         final PsiExpression body = postfixExpression.getOperand();
@@ -348,6 +356,7 @@ public class ParenthesesUtils{
         return removeParentheses(body) + operand;
     }
 
+    @NonNls
     private static String removeParensFromPrefixExpression(
             @NotNull PsiPrefixExpression prefixExpression){
         final PsiExpression body = prefixExpression.getOperand();
@@ -356,6 +365,7 @@ public class ParenthesesUtils{
         return operand + removeParentheses(body);
     }
 
+    @NonNls
     private static String removeParensFromArrayAccessExpression(
             @NotNull PsiArrayAccessExpression arrayAccessExpression){
         final PsiExpression arrayExp =
@@ -366,6 +376,7 @@ public class ParenthesesUtils{
                ']';
     }
 
+    @NonNls
     private static String removeParensFromTypeCastExpression(
             @NotNull PsiTypeCastExpression typeCastExpression){
         final PsiExpression body = typeCastExpression.getOperand();
@@ -385,7 +396,7 @@ public class ParenthesesUtils{
                 arrayInitializerExpression.getInitializers();
         final String text = arrayInitializerExpression.getText();
         final int textLength = text.length();
-        final StringBuilder out = new StringBuilder(textLength);
+        @NonNls final StringBuilder out = new StringBuilder(textLength);
         out.append('{');
         for(int i = 0; i < contents.length; i++){
             final PsiExpression arg = contents[i];
@@ -399,6 +410,7 @@ public class ParenthesesUtils{
         return out.toString();
     }
 
+    @NonNls
     private static String removeParensFromAssignmentExpression(
             @NotNull PsiAssignmentExpression assignment){
         final PsiExpression lhs = assignment.getLExpression();
@@ -442,7 +454,7 @@ public class ParenthesesUtils{
             }
         }
         final int length = expressionText.length();
-        final StringBuilder out = new StringBuilder(length);
+        @NonNls final StringBuilder out = new StringBuilder(length);
         out.append(PsiKeyword.NEW + ' ');
         final PsiJavaCodeReferenceElement classReference =
                 newExpression.getClassReference();
@@ -493,19 +505,19 @@ public class ParenthesesUtils{
                 methodCallExpression.getMethodExpression();
         final PsiExpressionList argumentList =
                 methodCallExpression.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
+        final PsiExpression[] arguments = argumentList.getExpressions();
         final String methodCallText = methodCallExpression.getText();
         final int length = methodCallText.length();
-        final StringBuilder out = new StringBuilder(length);
+        @NonNls final StringBuilder out = new StringBuilder(length);
         final String strippedTarget = removeParentheses(target);
         out.append(strippedTarget);
         out.append('(');
-        for(int i = 0; i < args.length; i++){
-            final PsiExpression arg = args[i];
+        for(int i = 0; i < arguments.length; i++){
+            final PsiExpression argument = arguments[i];
             if(i != 0){
                 out.append(',');
             }
-            final String strippedArg = removeParentheses(arg);
+            final String strippedArg = removeParentheses(argument);
             out.append(strippedArg);
         }
         out.append(')');
