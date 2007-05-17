@@ -119,7 +119,11 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   public List<LogicalRoot> getLogicalRoots(@NotNull final Module module) {
-    return new ArrayList<LogicalRoot>(myRoots.get(module).values());
+    final MultiValuesMap<LogicalRootType, LogicalRoot> valuesMap = myRoots.get(module);
+    if (valuesMap == null) {
+      return Collections.emptyList();
+    }
+    return new ArrayList<LogicalRoot>(valuesMap.values());
   }
 
   public List<LogicalRoot> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType... types) {
