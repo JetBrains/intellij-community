@@ -84,9 +84,9 @@ public class FramesPanel extends UpdatableDebuggerView {
         return;
       }
       final JList list = (JList)e.getSource();
-      final StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)list.getSelectedValue();
-      if (item != null) {
-        DebuggerContextUtil.setStackFrame(getContextManager(), item.getFrameProxy());
+      final Object selected = list.getSelectedValue();
+      if (selected instanceof StackFrameDescriptorImpl) {
+        DebuggerContextUtil.setStackFrame(getContextManager(), ((StackFrameDescriptorImpl)selected).getFrameProxy());
       }
     }
   }
