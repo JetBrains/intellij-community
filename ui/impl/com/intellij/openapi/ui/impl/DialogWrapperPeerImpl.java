@@ -579,7 +579,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {
-              toFocus.requestFocus();
+              final JComponent toRequest = toFocus;
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  toRequest.requestFocus();
+                }
+              });
             }
           }
         });
