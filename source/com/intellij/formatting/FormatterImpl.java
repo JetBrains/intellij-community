@@ -258,11 +258,13 @@ public class FormatterImpl extends FormatterEx
     }
 
     final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent).toString();
-    try {
-      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
-    }
-    finally {
-      model.commitChanges();
+    if (!whiteSpace.equalsToString(newWS)) {
+      try {
+        model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+      }
+      finally {
+        model.commitChanges();
+      }
     }
 
     if (wsContainsCaret) {
