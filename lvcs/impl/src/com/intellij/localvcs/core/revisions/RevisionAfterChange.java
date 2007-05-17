@@ -11,8 +11,8 @@ public class RevisionAfterChange extends RevisionBeforeChange {
   }
 
   @Override
-  public String getCauseAction() {
-    return myChange.getName();
+  public Change getCauseChange() {
+    return myChange;
   }
 
   @Override

@@ -1,10 +1,10 @@
 package com.intellij.localvcs.core.changes;
 
-import com.intellij.localvcs.core.Reversed;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
+import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
 import java.util.ArrayList;

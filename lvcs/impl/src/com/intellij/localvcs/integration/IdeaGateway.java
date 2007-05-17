@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public class IdeaGateway {
   protected Project myProject;
@@ -51,26 +49,16 @@ public class IdeaGateway {
     Messages.showErrorDialog(myProject, s, "Error");
   }
 
-  public void performCommandInsideWriteAction(final String name, final Callable c) {
-    ApplicationManager.getApplication().runWriteAction(new Computable() {
-      public Object compute() {
-        performCommand(name, c);
-        return null;
+  public void performCommandInsideWriteAction(final String name, final Runnable r) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        performCommand(name, r);
       }
     });
   }
 
-  private void performCommand(String name, final Callable c) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        try {
-          c.call();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }, name, null);
+  private void performCommand(String name, Runnable r) {
+    CommandProcessor.getInstance().executeCommand(myProject, r, name, null);
   }
 
   public boolean ensureFilesAreWritable(List<VirtualFile> ff) {

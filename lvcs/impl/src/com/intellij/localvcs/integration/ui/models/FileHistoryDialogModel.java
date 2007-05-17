@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.revert.FileReverter;
-import com.intellij.localvcs.integration.revert.Reverter;
+import com.intellij.localvcs.integration.revert.RevisionReverter;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +41,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public Reverter createReverter() {
+  public RevisionReverter createReverter() {
     return new FileReverter(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
   }
 

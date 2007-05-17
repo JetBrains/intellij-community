@@ -1,4 +1,4 @@
-package com.intellij.localvcs.core;
+package com.intellij.localvcs.utils;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;

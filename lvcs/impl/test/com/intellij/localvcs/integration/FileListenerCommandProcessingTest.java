@@ -20,7 +20,7 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
     fireCreated(new TestVirtualFile("file", null, -1));
     l.commandFinished(null);
 
-    assertEquals("name", vcs.getRevisionsFor("file").get(0).getCauseAction());
+    assertEquals("name", vcs.getRevisionsFor("file").get(0).getCauseChangeName());
   }
 
   @Test

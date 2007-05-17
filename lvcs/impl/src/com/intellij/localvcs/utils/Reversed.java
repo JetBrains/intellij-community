@@ -1,4 +1,4 @@
-package com.intellij.localvcs.core;
+package com.intellij.localvcs.utils;
 
 import java.util.Iterator;
 import java.util.List;

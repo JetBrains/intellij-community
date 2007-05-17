@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 
 public abstract class ChangeRevertionVisitor extends ChangeVisitor {
-  protected RootEntry myRootEntry;
+  private RootEntry myRootEntry;
   private IdeaGateway myGateway;
 
   public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {

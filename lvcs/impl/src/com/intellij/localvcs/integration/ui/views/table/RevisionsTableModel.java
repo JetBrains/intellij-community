@@ -33,7 +33,7 @@ public class RevisionsTableModel extends AbstractTableModel {
     Revision r = myModel.getRevisions().get(row);
     if (column == 0) return FormatUtil.formatTimestamp(r.getTimestamp());
     if (column == 1) return r.getName();
-    if (column == 2) return r.getCauseAction();
+    if (column == 2) return r.getCauseChangeName();
     return null;
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.localvcsintegr;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,7 @@ public class ActionsTest extends IntegrationTestCase {
 
     List<Revision> rr = getVcsRevisionsFor(f);
     assertEquals(4, rr.size());
-    assertEquals("name", rr.get(0).getCauseAction());
+    assertEquals("name", rr.get(0).getCauseChangeName());
   }
 
   public void testActionInsideCommand() throws Exception {
@@ -50,7 +51,7 @@ public class ActionsTest extends IntegrationTestCase {
 
     List<Revision> rr = getVcsRevisionsFor(f);
     assertEquals(4, rr.size());
-    assertEquals("command", rr.get(0).getCauseAction());
+    assertEquals("command", rr.get(0).getCauseChangeName());
 
     assertEquals(2, contentOf(rr.get(0))[0]);
     assertEquals(1, contentOf(rr.get(1))[0]);
@@ -61,22 +62,18 @@ public class ActionsTest extends IntegrationTestCase {
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
     final VirtualFile f = root.createChildData(null, "f.java");
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        try {
-          f.setBinaryContent(new byte[]{0});
-          setDocumentTextFor(f, new byte[]{1});
+    CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
+        f.setBinaryContent(new byte[]{0});
+        setDocumentTextFor(f, new byte[]{1});
 
-          LocalHistoryAction a = LocalHistory.startAction(myProject, "action");
-          setDocumentTextFor(f, new byte[]{2});
-          a.finish();
+        LocalHistoryAction a = LocalHistory.startAction(myProject, "action");
+        setDocumentTextFor(f, new byte[]{2});
+        a.finish();
 
-          saveDocument(f);
-          f.setBinaryContent(new byte[]{3});
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        saveDocument(f);
+        f.setBinaryContent(new byte[]{3});
       }
     }, "command", null);
 
@@ -87,9 +84,9 @@ public class ActionsTest extends IntegrationTestCase {
     assertEquals(1, contentOf(rr.get(1))[0]);
     assertTrue(contentOf(rr.get(2)).length == 0);
 
-    assertEquals("command", rr.get(0).getCauseAction());
-    assertNull(rr.get(1).getCauseAction());
-    assertNull(rr.get(2).getCauseAction());
+    assertEquals("command", rr.get(0).getCauseChangeName());
+    assertNull(rr.get(1).getCauseChangeName());
+    assertNull(rr.get(2).getCauseChangeName());
   }
 
   private void saveDocument(VirtualFile f) {

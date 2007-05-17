@@ -33,8 +33,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(2, rr.size());
 
-    assertNull(rr.get(0).getCauseAction());
-    assertEquals("name", rr.get(1).getCauseAction());
+    assertNull(rr.get(0).getCauseChangeName());
+    assertEquals("name", rr.get(1).getCauseChangeName());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
     Revision r = rr.get(0);
     assertNull(r.getName());
-    assertNull(r.getCauseAction());
+    assertNull(r.getCauseChangeName());
     assertEquals(30, r.getTimestamp());
 
     Entry e = r.getEntry();
@@ -86,7 +86,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
     List<Revision> rr = vcs.getRevisionsFor("file2");
     assertEquals(1, rr.size());
-    assertEquals("2", rr.get(0).getCauseAction());
+    assertEquals("2", rr.get(0).getCauseChangeName());
   }
 
   @Test

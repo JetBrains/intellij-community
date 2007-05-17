@@ -88,7 +88,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     vcs.createDirectory("dir");
     l.finishAction();
 
-    assertEquals("label", vcs.getRevisionsFor("dir").get(0).getCauseAction());
+    assertEquals("label", vcs.getRevisionsFor("dir").get(0).getCauseChangeName());
   }
 
   @Test
@@ -114,8 +114,8 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     assertEquals(c("3"), rr.get(1).getEntry().getContent());
     assertEquals(c("1"), rr.get(2).getEntry().getContent());
 
-    assertEquals("command", rr.get(0).getCauseAction());
-    assertNull(rr.get(1).getCauseAction());
-    assertNull(rr.get(2).getCauseAction());
+    assertEquals("command", rr.get(0).getCauseChangeName());
+    assertNull(rr.get(1).getCauseChangeName());
+    assertNull(rr.get(2).getCauseChangeName());
   }
 }

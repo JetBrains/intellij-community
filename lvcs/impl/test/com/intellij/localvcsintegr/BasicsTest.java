@@ -8,6 +8,7 @@ import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -35,16 +36,12 @@ public class BasicsTest extends IntegrationTestCase {
   public void testProcessingCommands() throws Exception {
     final VirtualFile[] f = new VirtualFile[1];
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        try {
-          f[0] = root.createChildData(null, "f1.java");
-          f[0].setBinaryContent(new byte[]{1});
-          f[0].setBinaryContent(new byte[]{2});
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
+        f[0] = root.createChildData(null, "f1.java");
+        f[0].setBinaryContent(new byte[]{1});
+        f[0].setBinaryContent(new byte[]{2});
       }
     }, "name", null);
 

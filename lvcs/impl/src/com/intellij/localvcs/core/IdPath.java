@@ -46,6 +46,10 @@ public class IdPath {
     return new IdPath(newPath);
   }
 
+  public boolean isChildOrParentOf(IdPath p) {
+    return startsWith(p) || p.startsWith(this);
+  }
+
   public boolean contains(int id) {
     for (int part : myParts) {
       if (part == id) return true;

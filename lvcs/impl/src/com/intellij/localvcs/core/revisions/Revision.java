@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.revisions;
 
+import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.tree.Entry;
 
@@ -10,7 +11,11 @@ public abstract class Revision {
 
   public abstract long getTimestamp();
 
-  public String getCauseAction() {
+  public String getCauseChangeName() {
+    return getCauseChange() == null ? null : getCauseChange().getName();
+  }
+
+  public Change getCauseChange() {
     return null;
   }
 

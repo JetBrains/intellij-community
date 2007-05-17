@@ -28,7 +28,7 @@ public class CheckpointImpl implements Checkpoint {
 
   private void doRevert(boolean revertLastChange) {
     try {
-      List<Change> cc = myVcs.getChangesAfter(myLastChange);
+      List<Change> cc = myVcs.getPlainChangesAfter(myLastChange);
 
       ChangeVisitor v = new GlobalChangesRevertionVisitor(myVcs, myGateway);
       for (Change c : cc) c.accept(v);

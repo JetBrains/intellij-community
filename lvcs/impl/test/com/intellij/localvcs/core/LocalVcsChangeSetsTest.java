@@ -109,7 +109,7 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
     assertEquals(1, rr.size());
-    assertEquals("outer", rr.get(0).getCauseAction());
+    assertEquals("outer", rr.get(0).getCauseChangeName());
   }
 
   @Test

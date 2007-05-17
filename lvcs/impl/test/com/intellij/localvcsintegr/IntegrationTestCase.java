@@ -6,6 +6,7 @@ import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,14 +41,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
     gateway = new IdeaGateway(myProject);
 
-    runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          setUpInWriteAction();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    runWriteAction(new RunnableAdapter() {
+      @Override
+      public void doRun() throws Exception {
+        setUpInWriteAction();
       }
     });
   }

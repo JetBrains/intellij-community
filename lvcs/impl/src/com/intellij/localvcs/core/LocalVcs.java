@@ -8,6 +8,7 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
+import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -189,7 +190,7 @@ public class LocalVcs implements ILocalVcs {
     return myLastChange;
   }
 
-  public List<Change> getChangesAfter(Change target) {
+  public List<Change> getPlainChangesAfter(Change target) {
     List<Change> result = new ArrayList<Change>();
 
     for (Change c : Reversed.list(myPendingChanges)) {
@@ -201,8 +202,12 @@ public class LocalVcs implements ILocalVcs {
     return result;
   }
 
-  private long getCurrentTimestamp() {
-    return Clock.getCurrentTimestamp();
+  public boolean isBefore(Change before, Change after, boolean canBeEqual) {
+    return myChangeList.isBefore(before, after, canBeEqual);
+  }
+
+  public boolean isInTheChain(Change before, Change after) {
+    return myChangeList.isInTheChain(before, after);
   }
 
   public List<Revision> getRevisionsFor(String path) {
@@ -272,6 +277,10 @@ public class LocalVcs implements ILocalVcs {
   private byte[] getByteContentOf(Revision r) {
     Content c = r.getEntry().getContent();
     return c.isAvailable() ? c.getBytes() : null;
+  }
+
+  private long getCurrentTimestamp() {
+    return Clock.getCurrentTimestamp();
   }
 
   public static class Memento {

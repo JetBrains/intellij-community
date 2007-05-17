@@ -6,7 +6,7 @@ import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
-import com.intellij.localvcs.integration.revert.Reverter;
+import com.intellij.localvcs.integration.revert.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +40,9 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     List<Revision> rr = m.getRevisions();
 
     assertEquals(3, rr.size());
-    assertEquals("3", rr.get(0).getCauseAction());
-    assertEquals("2", rr.get(1).getCauseAction());
-    assertEquals("1", rr.get(2).getCauseAction());
+    assertEquals("3", rr.get(0).getCauseChangeName());
+    assertEquals("2", rr.get(1).getCauseChangeName());
+    assertEquals("1", rr.get(2).getCauseChangeName());
   }
 
   @Test
@@ -69,37 +69,37 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testSelectingLastRevisionByDefault() {
-    assertEquals("3", m.getLeftRevision().getCauseAction());
-    assertEquals("3", m.getRightRevision().getCauseAction());
+    assertEquals("3", m.getLeftRevision().getCauseChangeName());
+    assertEquals("3", m.getRightRevision().getCauseChangeName());
   }
 
   @Test
   public void testSelectingOnlyOneRevisionSetsRightToLastOne() {
     m.selectRevisions(0, 0);
-    assertEquals("3", m.getLeftRevision().getCauseAction());
-    assertEquals("3", m.getRightRevision().getCauseAction());
+    assertEquals("3", m.getLeftRevision().getCauseChangeName());
+    assertEquals("3", m.getRightRevision().getCauseChangeName());
 
     m.selectRevisions(1, 1);
-    assertEquals("2", m.getLeftRevision().getCauseAction());
-    assertEquals("3", m.getRightRevision().getCauseAction());
+    assertEquals("2", m.getLeftRevision().getCauseChangeName());
+    assertEquals("3", m.getRightRevision().getCauseChangeName());
   }
 
   @Test
   public void testSelectingTwoRevisions() {
     m.selectRevisions(0, 1);
-    assertEquals("2", m.getLeftRevision().getCauseAction());
-    assertEquals("3", m.getRightRevision().getCauseAction());
+    assertEquals("2", m.getLeftRevision().getCauseChangeName());
+    assertEquals("3", m.getRightRevision().getCauseChangeName());
 
     m.selectRevisions(1, 2);
-    assertEquals("1", m.getLeftRevision().getCauseAction());
-    assertEquals("2", m.getRightRevision().getCauseAction());
+    assertEquals("1", m.getLeftRevision().getCauseChangeName());
+    assertEquals("2", m.getRightRevision().getCauseChangeName());
   }
 
   @Test
   public void testClearingSelectionSetsRevisionsToLastOnes() {
     m.selectRevisions(-1, -1);
-    assertEquals("3", m.getLeftRevision().getCauseAction());
-    assertEquals("3", m.getRightRevision().getCauseAction());
+    assertEquals("3", m.getLeftRevision().getCauseChangeName());
+    assertEquals("3", m.getRightRevision().getCauseChangeName());
   }
 
   @Test
@@ -136,7 +136,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new HistoryDialogModel(f, vcs, gw) {
       @Override
-      public Reverter createReverter() {
+      public RevisionReverter createReverter() {
         throw new UnsupportedOperationException();
       }
     };

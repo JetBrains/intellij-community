@@ -29,6 +29,20 @@ public class IdPathTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testIsChildOrParent() {
+    IdPath p = new IdPath(1, 2, 3, 4);
+    assertTrue(p.isChildOrParentOf(new IdPath(1)));
+    assertTrue(p.isChildOrParentOf(new IdPath(1, 2, 3)));
+    assertTrue(p.isChildOrParentOf(new IdPath(1, 2, 3, 4)));
+    assertTrue(p.isChildOrParentOf(new IdPath(1, 2, 3, 4, 5, 6)));
+
+    assertFalse(p.isChildOrParentOf(new IdPath(2)));
+    assertFalse(p.isChildOrParentOf(new IdPath(1, 22)));
+    assertFalse(p.isChildOrParentOf(new IdPath(1, 2, 33, 4)));
+    assertFalse(p.isChildOrParentOf(new IdPath(1, 2, 3, 5)));
+  }
+
+  @Test
   public void testContains() {
     IdPath p = new IdPath(1, 2);
 

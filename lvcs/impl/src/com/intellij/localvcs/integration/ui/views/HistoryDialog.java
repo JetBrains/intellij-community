@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration.ui.views;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
-import com.intellij.localvcs.integration.revert.Reverter;
+import com.intellij.localvcs.integration.revert.RevisionReverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
@@ -192,7 +192,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
   }
 
-  protected void revert(Reverter r) {
+  protected void revert(RevisionReverter r) {
     try {
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {

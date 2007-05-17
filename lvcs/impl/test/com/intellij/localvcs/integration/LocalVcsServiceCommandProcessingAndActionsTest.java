@@ -26,7 +26,7 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
     assertEquals(2, rr.size());
-    assertEquals("name", rr.get(0).getCauseAction());
+    assertEquals("name", rr.get(0).getCauseChangeName());
   }
 
   @Test
@@ -43,7 +43,7 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());
-    assertEquals("command", rr.get(0).getCauseAction());
+    assertEquals("command", rr.get(0).getCauseChangeName());
   }
 
   @Test

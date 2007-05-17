@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.revert.DirectoryReverter;
-import com.intellij.localvcs.integration.revert.Reverter;
+import com.intellij.localvcs.integration.revert.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
@@ -23,15 +23,15 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public Reverter createReverter() {
+  public RevisionReverter createReverter() {
     return createReverter(getLeftEntry(), getRightEntry());
   }
 
-  public Reverter createReverter(DirectoryDifferenceModel m) {
+  public RevisionReverter createReverter(DirectoryDifferenceModel m) {
     return createReverter(m.getEntry(0), m.getEntry(1));
   }
 
-  private Reverter createReverter(Entry leftEntry, Entry rightEntry) {
+  private RevisionReverter createReverter(Entry leftEntry, Entry rightEntry) {
     return new DirectoryReverter(myVcs, myGateway, getLeftRevision(), leftEntry, rightEntry);
   }
 }
