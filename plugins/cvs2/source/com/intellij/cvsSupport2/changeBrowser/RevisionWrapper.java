@@ -1,22 +1,25 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
-import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.command.log.Revision;
 
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
 import java.util.Date;
 
 class RevisionWrapper implements Comparable<RevisionWrapper> {
   private final String myFile;
   private final Revision myRevision;
+  private final String myBranch;
   private final long myTime;
 
-  public RevisionWrapper(final String file, @NotNull final Revision revision) {
+  public RevisionWrapper(final String file, @NotNull final Revision revision, @Nullable String branch) {
     myFile = file;
     myRevision = revision;
     myTime = revision.getDate().getTime();
+    myBranch = branch;
   }
 
   public int compareTo(final RevisionWrapper o) {
@@ -35,6 +38,9 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     return myTime;
   }
 
+  public String getBranch() {
+    return myBranch;
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -68,6 +74,7 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     stream.writeUTF(myRevision.getMessage());
     final String branches = myRevision.getBranches();
     stream.writeUTF(branches == null ? "" : branches);
+    stream.writeUTF(myBranch == null ? "" : myBranch);
   }
 
 
@@ -88,6 +95,7 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     if (branches.length() > 0) {
       revision.setBranches(branches);
     }
-    return new RevisionWrapper(file, revision);
+    String branch = stream.readUTF();
+    return new RevisionWrapper(file, revision, branch.length() > 0 ? branch : null);
   }
 }

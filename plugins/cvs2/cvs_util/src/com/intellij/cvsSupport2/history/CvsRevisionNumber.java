@@ -161,7 +161,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     return StringUtil.join(versions, ".");
   }
 
-  public CvsRevisionNumber addTailVersions(final int[] versions) {
+  public CvsRevisionNumber addTailVersions(final int... versions) {
     if (mySubRevisions != null) {
       final int[] resultSubVersions = new int[mySubRevisions.length + versions.length];
       System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, mySubRevisions.length);

@@ -84,7 +84,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
         if (subRevisions.length == 4) {
           int lastSubRevision = subRevisions [subRevisions.length-1];
           number = number.removeTailVersions(2);
-          number = number.addTailVersions(new int[] { lastSubRevision });
+          number = number.addTailVersions(lastSubRevision);
         }
         if (includeRevisionNumbers) {
           result.add(symName.getName() + " (" + number.asString() + ")");
@@ -103,13 +103,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     CvsRevisionNumber symRevNumber;
     if (subRevisions != null && subRevisions.length > 1) {   // checking just in case - it should always be true
       int lastSubRevision = subRevisions [subRevisions.length-1];
-      symRevNumber = headRevNumber.addTailVersions(new int[]{0, lastSubRevision});
+      symRevNumber = headRevNumber.addTailVersions(0, lastSubRevision);
     }
     else {
-      symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+      symRevNumber = headRevNumber.addTailVersions(0, 2);
     }
-    //noinspection unchecked
-    return (List<SymbolicName>)myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+    return myLogInformation.getSymNamesForRevision(symRevNumber.asString());
   }
 
   public String getAuthor() {

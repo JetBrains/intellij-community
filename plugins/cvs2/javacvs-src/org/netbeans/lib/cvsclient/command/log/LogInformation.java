@@ -39,8 +39,8 @@ public final class LogInformation {
 	private String selectedRevisions;
 	private String description;
 	private String locks;
-	private final List revisions = new LinkedList();
-	private List symbolicNames;
+	private final List<Revision> revisions = new LinkedList<Revision>();
+	private List<SymbolicName> symbolicNames;
 	private StringBuffer symNamesBuffer;
 
 	// Setup ==================================================================
@@ -232,7 +232,7 @@ public final class LogInformation {
 	}
 
 	private void createSymNames() {
-		symbolicNames = new LinkedList();
+		symbolicNames = new LinkedList<SymbolicName>();
 
 		if (symNamesBuffer == null) {
 			return;
@@ -260,7 +260,7 @@ public final class LogInformation {
 		symNamesBuffer = null;
 	}
 
-	public List getAllSymbolicNames() {
+	public List<SymbolicName> getAllSymbolicNames() {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
@@ -269,13 +269,13 @@ public final class LogInformation {
 
 	/** Search the symbolic names by number of revision. If not found, return null.
 	 */
-	public List getSymNamesForRevision(String revNumber) {
+	public List<SymbolicName> getSymNamesForRevision(String revNumber) {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
 		final Iterator it = symbolicNames.iterator();
 		SymbolicName item;
-		final List list = new LinkedList();
+		final List<SymbolicName> list = new LinkedList<SymbolicName>();
 		while (it.hasNext()) {
 			item = (SymbolicName)it.next();
 			if (item.getRevision().equals(revNumber)) {

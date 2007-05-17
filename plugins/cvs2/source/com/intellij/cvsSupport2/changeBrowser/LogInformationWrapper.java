@@ -1,20 +1,23 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
-import org.netbeans.lib.cvsclient.command.log.Revision;
-import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.command.log.LogInformation;
+import org.netbeans.lib.cvsclient.command.log.Revision;
+import org.netbeans.lib.cvsclient.command.log.SymbolicName;
 
 import java.util.List;
 
 public class LogInformationWrapper {
   private final String myFile;
   private final List<Revision> myRevisions;
-  @NonNls static final String CVS_REPOSITORY_FILE_POSTFIX = ",v";
+  private final List<SymbolicName> mySymbolicNames;
+  @NonNls private static final String CVS_REPOSITORY_FILE_POSTFIX = ",v";
 
-  public LogInformationWrapper(final String file, final List<Revision> revisions) {
+  public LogInformationWrapper(final String file, final List<Revision> revisions, final List<SymbolicName> symbolicNames) {
     myFile = file;
     myRevisions = revisions;
+    mySymbolicNames = symbolicNames;
   }
 
   public String getFile() {
@@ -25,11 +28,14 @@ public class LogInformationWrapper {
     return myRevisions;
   }
 
+  public List<SymbolicName> getSymbolicNames() {
+    return mySymbolicNames;
+  }
+
   @Nullable
   public static LogInformationWrapper wrap(final String repository, final LogInformation log) {
     LogInformationWrapper wrapper = null;
     if (!log.getRevisionList().isEmpty()) {
-
       final String rcsFileName = log.getRcsFileName();
       if (rcsFileName.startsWith(repository)) {
         String relativePath = rcsFileName.substring(repository.length());
@@ -42,7 +48,7 @@ public class LogInformationWrapper {
         }
 
         //noinspection unchecked
-        wrapper = new LogInformationWrapper(relativePath, log.getRevisionList());
+        wrapper = new LogInformationWrapper(relativePath, log.getRevisionList(), log.getAllSymbolicNames());
       }
     }
     return wrapper;

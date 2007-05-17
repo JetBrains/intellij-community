@@ -51,9 +51,9 @@ public class CvsChangeList implements CommittedChangeList {
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
   private List<Change> myChanges;
-  @NonNls static final String EXP_STATE = "Exp";
-  @NonNls public static final String ADDED_STATE = "added";
-  @NonNls public static final String DEAD_STATE = "dead";
+  @NonNls private static final String EXP_STATE = "Exp";
+  @NonNls private static final String ADDED_STATE = "added";
+  @NonNls private static final String DEAD_STATE = "dead";
 
 
   public CvsChangeList(final Project project,
@@ -172,7 +172,7 @@ public class CvsChangeList implements CommittedChangeList {
 
   }
 
-  public static boolean isAdded(final Revision revision) {
+  private static boolean isAdded(final Revision revision) {
     final String revisionState = revision.getState();
     if (EXP_STATE.equals(revisionState) && revision.getLines() == null) {
       return true;

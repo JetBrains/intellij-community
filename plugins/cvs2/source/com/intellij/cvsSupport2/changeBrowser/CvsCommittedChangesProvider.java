@@ -126,7 +126,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public int getFormatVersion() {
-    return 1;
+    return 2;
   }
 
   public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {

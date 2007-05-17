@@ -42,7 +42,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     RlogCommand command = new RlogCommand();
     command.setModuleName(myModule);
     command.setHeadersOnly(false);
-    command.setNoTags(true);
+    command.setNoTags(false);
     command.setDateFrom(DATE_FORMAT.format(myDateFrom));
     if (myDateTo != null) {
       command.setDateTo(DATE_FORMAT.format(myDateTo));
