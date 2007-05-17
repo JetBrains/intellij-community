@@ -126,13 +126,38 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException {
     if (haveToAddNewLine()) {
-      String text = "\n";
-      LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), getTreeElement().getCharTable(), myManager);
-      ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
+      insertLinebreakBefore(null);
     }
     final TreeElement copy = ChangeUtil.copyToElement(property);
     getPropertiesList().addChild(copy);
     return copy.getPsi();
+  }
+
+  @NotNull
+  public PsiElement addPropertyAfter(@NotNull final Property property, @Nullable final Property anchor) throws IncorrectOperationException {
+    final TreeElement copy = ChangeUtil.copyToElement(property);
+    List<Property> properties = getProperties();
+    ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getNode()
+                           : anchor.getNode().getTreeNext();
+    if (anchorBefore != null) {
+      if (anchorBefore.getElementType() == TokenType.WHITE_SPACE) {
+        anchorBefore = anchorBefore.getTreeNext();
+      }
+    }
+    if (anchorBefore == null && haveToAddNewLine()) {
+      insertLinebreakBefore(null);
+    }
+    getPropertiesList().addChild(copy, anchorBefore);
+    if (anchorBefore != null) {
+      insertLinebreakBefore(anchorBefore);
+    }
+    return copy.getPsi();
+  }
+
+  private void insertLinebreakBefore(final ASTNode anchorBefore) {
+    String text = "\n";
+    LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), getTreeElement().getCharTable(), myManager);
+    ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, (TreeElement)anchorBefore);
   }
 
   private boolean haveToAddNewLine() {

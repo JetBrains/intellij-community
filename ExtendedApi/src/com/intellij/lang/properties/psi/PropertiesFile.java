@@ -50,6 +50,17 @@ public interface PropertiesFile extends PsiFile {
   @NotNull PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException;
 
   /**
+   * Adds property to the the file after the specified property.
+   * If anchor is null, property added to the beginning of the file.
+   * @param property to add. Typically you create the property via {@link com.intellij.lang.properties.psi.PropertiesElementFactory}.
+   * @param anchor property after which to add the new property
+   * @return newly added property.
+   * It is this value you use to do actual PSI work, e.g. call {@link com.intellij.psi.PsiElement#delete()} to remove this property from the file.
+   * @throws IncorrectOperationException
+   */
+  @NotNull PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException;
+
+  /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.
    */

@@ -90,4 +90,22 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\\n\t  c");
     assertEquals("bc", propertiesFile.getProperties().get(0).getUnescapedValue());
   }
+
+  public void testAddPropertyAfter() throws IncorrectOperationException {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    Property c = propertiesFile.findPropertyByKey("c");
+    propertiesFile.addPropertyAfter(myPropertyToAdd, c);
+    assertEquals("a=b\nc=d\nkkk=vvv\ne=f", propertiesFile.getText());
+  }
+  public void testAddPropertyAfterLast() throws IncorrectOperationException {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    Property p = propertiesFile.findPropertyByKey("e");
+    propertiesFile.addPropertyAfter(myPropertyToAdd, p);
+    assertEquals("a=b\nc=d\ne=f\nkkk=vvv", propertiesFile.getText());
+  }
+  public void testAddPropertyAfterInBeginning() throws IncorrectOperationException {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    propertiesFile.addPropertyAfter(myPropertyToAdd, null);
+    assertEquals("kkk=vvv\na=b\nc=d\ne=f", propertiesFile.getText());
+  }
 }
