@@ -56,6 +56,10 @@ public class ResolvePropertyTest extends ResolveTestCase {
     doTest("forVariable2/ForVariable.groovy");
   }
 
+  public void testCatchParameter() throws Exception {
+    doTest("CatchParameter/CatchParameter.groovy");
+  }
+
   public void testField3() throws Exception {
     GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy");
     GroovyResolveResult resolveResult = ref.advancedResolve();
