@@ -420,7 +420,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           if (idAttr != null) {
             final XmlAttributeValue valueElement = idAttr.getValueElement();
             if (valueElement != null) {
-              myIdElement = new AntNameElementImpl(this, valueElement);
+              final AntNameElementImpl idElement = new AntNameElementImpl(this, valueElement);
+              idElement.setElementToRename(this);
+              myIdElement = idElement;
               getAntProject().registerRefId(myIdElement.getName(), this);
             }
           }
