@@ -98,4 +98,9 @@ public interface ActionToolbar {
    * Forces update of the all actions in the toolbars. Actions, however, normally updated automatially every 500msec.
    */
   void updateActionsImmediately();
+
+  /**
+   * @param component will be used for datacontext computations
+   */
+  void setTargetComponent(final JComponent component);
 }

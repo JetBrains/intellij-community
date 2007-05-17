@@ -73,6 +73,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private int myFirstOusideIndex = -1;
 
   private JBPopup myPopup;
+  private JComponent myTargetComponent;
 
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
@@ -675,8 +676,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  public void setTargetComponent(final JComponent component) {
+    myTargetComponent = component;
+  }
+
   protected DataContext getDataContext() {
-    return ((DataManagerImpl)myDataManager).getDataContextTest(this);
+    return myTargetComponent != null ? myDataManager.getDataContext(myTargetComponent) : ((DataManagerImpl)myDataManager).getDataContextTest(this);
   }
 
   protected void processMouseEvent(final MouseEvent e) {
