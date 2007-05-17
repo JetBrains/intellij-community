@@ -178,7 +178,7 @@ class MapBinding implements Binding {
         }
         else {
           final Object valueNode = entry.getChildren(getValueAttributeName()).get(0);
-          v = myValueBinding.deserialize(o, JDOMUtil.getContent((Element)valueNode));
+          v = myValueBinding.deserialize(o, XmlSerializerImpl.getNotIgnoredContent((Element)valueNode));
         }
       }
 

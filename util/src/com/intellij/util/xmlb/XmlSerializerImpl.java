@@ -1,18 +1,13 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
-import org.jdom.Attribute;
-import org.jdom.Comment;
-import org.jdom.Element;
-import org.jdom.Text;
+import org.jdom.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author mike
@@ -141,5 +136,17 @@ class XmlSerializerImpl {
     }
 
     return false;
+  }
+
+
+  public static Content[] getNotIgnoredContent(final Element m) {
+    List<Content> result = new ArrayList<Content>();
+    final List content = m.getContent();
+
+    for (Object o : content) {
+      if (!isIgnoredNode(o)) result.add((Content)o);
+    }
+
+    return result.toArray(new Content[result.size()]);
   }
 }
