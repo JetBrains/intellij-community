@@ -80,6 +80,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   private ClassLoader myClassLoader;
   private Hashtable myProjectProperties;
+  private boolean myNeedPropertiesRebuild = false;
   private Map<String, AntProperty> myProperties;
   private volatile AntProperty[] myPropertiesArray;
   private List<String> myEnvPrefixes;
@@ -217,7 +218,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void invalidateProperties() {
     synchronized (PsiLock.LOCK) {
-      buildPropertiesMap();
+      myProperties = null;
+      myPropertiesArray = null;
+      myNeedPropertiesRebuild = true;
     }
   }
 
@@ -319,6 +322,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return null;
     }
     synchronized (PsiLock.LOCK) {
+      if (myNeedPropertiesRebuild) {
+        buildPropertiesMap();
+      }
       if (myProperties == null) {
         return null;
       }
@@ -327,6 +333,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   private void buildPropertiesMap() {
+    myNeedPropertiesRebuild = false;
     myProperties = new HashMap<String, AntProperty>();
     myPropertiesArray = null;
     loadPredefinedProperties(myProjectProperties, myExternalProperties);
@@ -448,6 +455,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void setProperty(final String name, final AntProperty element) {
     synchronized (PsiLock.LOCK) {
+      if (myNeedPropertiesRebuild) {
+        buildPropertiesMap();
+      }
       if (myProperties == null) {
         myProperties = new HashMap<String, AntProperty>();
         myPropertiesArray = null;
@@ -473,6 +483,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public AntProperty[] getProperties() {
     synchronized (PsiLock.LOCK) {
+      if (myNeedPropertiesRebuild) {
+        buildPropertiesMap();
+      }
       if (myProperties == null) {
         return AntProperty.EMPTY_ARRAY;
       }
