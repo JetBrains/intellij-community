@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -49,7 +51,7 @@ import java.util.List;
  * @author Valentin
  * @author Eugene Belyaev
  */
-public class IntentionHintComponent extends JPanel {
+public class IntentionHintComponent extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
@@ -357,12 +359,17 @@ public class IntentionHintComponent extends JPanel {
     else {
       component.showIntentionHintImpl(true);
     }
+    Disposer.register(project, component);
 
     return component;
   }
-  public boolean canBeUpdated() {
-    return myComponentHint.isVisible() && !myPopupShown;
+
+  public void dispose() {
+    closePopup();
+    myComponentHint.hide();
+    super.hide();
   }
+
   //true if success
   public boolean updateActions(List<HighlightInfo.IntentionActionDescriptor> intentions, List<HighlightInfo.IntentionActionDescriptor> errorFixes,
                                final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
@@ -470,11 +477,8 @@ public class IntentionHintComponent extends JPanel {
     myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(intentions, errorFixes, inspectionFixes));
   }
 
-  @Deprecated
   public void hide() {
-    closePopup();
-    myComponentHint.hide();
-    super.hide();
+    Disposer.dispose(this);
   }
 
   private void onMouseExit() {
