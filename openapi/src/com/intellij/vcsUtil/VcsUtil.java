@@ -234,6 +234,16 @@ public class VcsUtil {
     return vcss[ 0 ];
   }
 
+  @Nullable
+  public static VirtualFile getVcsRootFor( final Project project, final FilePath file )
+  {
+    final VirtualFile[] roots = new VirtualFile[ 1 ];
+    ApplicationManager.getApplication().runReadAction( new Runnable() {
+      public void run() {  roots[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsRootFor( file );  }
+    });
+    return roots[ 0 ];
+  }
+
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     refreshFiles(collectFilesToRefresh(roots), runnable);
