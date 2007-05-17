@@ -29,13 +29,20 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AutoBoxingInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreAddedToCollection = false;
 
     /** @noinspection StaticCollection*/
     @NonNls static final Map<String,String> s_boxingClasses =
@@ -61,6 +68,13 @@ public class AutoBoxingInspection extends BaseInspection {
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "auto.boxing.problem.descriptor");
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "auto.boxing.ignore.added.to.collection.option"), this,
+                "ignoreAddedToCollection");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -107,7 +121,7 @@ public class AutoBoxingInspection extends BaseInspection {
         }
     }
 
-    private static class AutoBoxingVisitor extends BaseInspectionVisitor {
+    private class AutoBoxingVisitor extends BaseInspectionVisitor {
 
         public void visitElement(PsiElement element) {
             if (element.getLanguage() != StdLanguages.JAVA) {
@@ -214,7 +228,35 @@ public class AutoBoxingInspection extends BaseInspection {
             if(!expectedType.isAssignableFrom(boxedType)){
                 return;
             }
+            if (ignoreAddedToCollection && isAddedToCollection(expression)) {
+                return;
+            }
             registerError(expression);
+        }
+
+        private boolean isAddedToCollection(PsiExpression expression) {
+            final PsiElement parent = expression.getParent();
+            if (!(parent instanceof PsiExpressionList)) {
+                return false;
+            }
+            final PsiExpressionList expressionList = (PsiExpressionList)parent;
+            final PsiElement grandParent = expressionList.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)grandParent;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!"put".equals(methodName) && !"set".equals(methodName) &&
+                    !"add".equals(methodName)) {
+                return false;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                    "java.util.Collection", "java.util.Map");
         }
     }
 }
