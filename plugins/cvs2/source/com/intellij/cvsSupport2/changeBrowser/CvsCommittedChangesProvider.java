@@ -62,7 +62,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION };
+    return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
@@ -153,4 +153,15 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   public String getChangelistTitle() {
     return null;
   }
+
+  private ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
+    public String getTitle() {
+      return CvsBundle.message("changelist.column.branch");
+    }
+
+    public Object getValue(final CvsChangeList changeList) {
+      final String branch = changeList.getBranch();
+      return branch == null ? "" : branch;
+    }
+  };
 }

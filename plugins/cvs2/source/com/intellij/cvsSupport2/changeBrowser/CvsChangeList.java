@@ -101,6 +101,14 @@ public class CvsChangeList implements CommittedChangeList {
     return CvsVcs2.getInstance(myProject);
   }
 
+  @Nullable
+  public String getBranch() {
+    if (myRevisions.size() > 0) {
+      return myRevisions.get(0).getBranch();
+    }
+    return null;
+  }
+
   public Collection<Change> getChanges() {
     if (myChanges == null) {
       myChanges = new ArrayList<Change>();

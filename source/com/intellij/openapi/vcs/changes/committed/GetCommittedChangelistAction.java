@@ -25,7 +25,10 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   protected void actionPerformed(final VcsContext context) {
     Collection<FilePath> filePaths = getFilePaths(context);
     final List<ChangeList> selectedChangeLists = new ArrayList<ChangeList>();
-    Collections.addAll(selectedChangeLists, context.getSelectedChangeLists());
+    final ChangeList[] selectionFromContext = context.getSelectedChangeLists();
+    if (selectionFromContext != null) {
+      Collections.addAll(selectedChangeLists, selectionFromContext);
+    }
     final List<CommittedChangeList> incomingChanges = CommittedChangesCache.getInstance(context.getProject()).getCachedIncomingChanges();
     final List<CommittedChangeList> intersectingChanges = new ArrayList<CommittedChangeList>();
     if (incomingChanges != null) {

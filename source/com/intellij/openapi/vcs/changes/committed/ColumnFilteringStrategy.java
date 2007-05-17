@@ -4,6 +4,8 @@ import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +41,19 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
         }
       }
     });
+    myValueList.setCellRenderer(new ColoredListCellRenderer() {
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (index == 0) {
+          append(value.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else if (value.toString().length() == 0) {
+          append(VcsBundle.message("committed.changes.filter.none"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        else {
+          append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    });
     myColumn = column;
     myProviderClass = providerClass;
   }
@@ -58,24 +73,24 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
   }
 
   public void setFilterBase(List<CommittedChangeList> changeLists) {
-    final Collection<String> userNames = new TreeSet<String>();
+    final Collection<String> values = new TreeSet<String>();
     for(CommittedChangeList changeList: changeLists) {
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
         //noinspection unchecked
-        userNames.add(myColumn.getValue(changeList).toString());
+        values.add(myColumn.getValue(changeList).toString());
       }
     }
-    final String[] userNameArray = userNames.toArray(new String[userNames.size()]);
+    final String[] valueArray = values.toArray(new String[values.size()]);
     myValueList.setModel(new AbstractListModel() {
       public int getSize() {
-        return userNameArray.length+1;
+        return valueArray.length+1;
       }
 
       public Object getElementAt(final int index) {
         if (index == 0) {
           return VcsBundle.message("committed.changes.filter.all");
         }
-        return userNameArray [index-1];
+        return valueArray [index-1];
       }
     });
   }
