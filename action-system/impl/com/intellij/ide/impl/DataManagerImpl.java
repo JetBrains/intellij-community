@@ -39,6 +39,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   public void disposeComponent() {
   }
 
+  @Nullable
   private Object getData(String dataId, final Component focusedComponent) {
     for (Component c = focusedComponent; c != null; c = c.getParent()) {
       final DataProvider dataProvider = getDataProvider(c);
@@ -56,6 +57,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return null;
   }
 
+  @Nullable
   private Object getDataFromProvider(final DataProvider provider, String dataId, final Set<String> alreadyComputedIds) {
     if (alreadyComputedIds.contains(dataId)) return null;
 
@@ -82,6 +84,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
   }
 
+  @Nullable
   private static DataProvider getDataProvider(Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
@@ -97,6 +100,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return dataProvider;
   }
 
+  @Nullable
   public GetDataRule getDataRule(String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule != null) {
@@ -163,7 +167,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (myWindowManager == null) {
       return dataContext;
     }
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
       dataContext = getDataContext(focusedComponent);
@@ -171,6 +175,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return dataContext;
   }
 
+  @Nullable
   private Component getFocusedComponent() {
     if (myWindowManager == null) {
       return null;
