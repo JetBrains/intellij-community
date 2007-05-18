@@ -36,12 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.EnumSet;
 
@@ -78,16 +78,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiType getType() {
 
     PsiElement resolved = resolve();
+    PsiType result = null;
     if (resolved instanceof PsiClass) {
-      return getManager().getElementFactory().createType((PsiClass) resolved);
+      result = getManager().getElementFactory().createType((PsiClass) resolved);
     } else if (resolved instanceof PsiVariable) {
-      return ((PsiVariable) resolved).getType();
+      result = ((PsiVariable) resolved).getType();
     } else if (resolved instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method)) {
-        return method.getParameterList().getParameters()[0].getType();
+        result = method.getParameterList().getParameters()[0].getType();
+      } else {
+        result = method.getReturnType();
       }
-      return method.getReturnType();
     } else if (resolved instanceof GrReferenceExpression) {
       PsiElement parent = resolved.getParent();
       if (parent instanceof GrAssignmentExpression) {
@@ -96,13 +98,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           GrExpression rValue = assignment.getRValue();
           if (rValue != null) {
             PsiType rType = rValue.getType();
-            if (rType != null) return rType;
+            if (rType != null) result = rType;
           }
         }
       }
     }
 
-    return null;
+    return PsiUtil.boxPrimitiveType(result, getManager(), getResolveScope());
   }
 
   public String getName() {

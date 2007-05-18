@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ContentEntry;
@@ -12,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -65,6 +68,20 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     GroovyResolveResult resolveResult = ref.advancedResolve();
     assertTrue(resolveResult.getElement() instanceof GrField);
     assertFalse(resolveResult.isValidResult());
+  }
+
+  public void testToGetter() throws Exception {
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod) resolved));
+  }
+
+  public void testToSetter() throws Exception {
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
   }
 
   public void testUndefinedVar1() throws Exception {

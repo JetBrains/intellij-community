@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ilyas
@@ -69,9 +70,9 @@ public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements 
       if (lValue instanceof GrReferenceExpressionImpl) {
         GrReferenceExpressionImpl lRefExpr = (GrReferenceExpressionImpl) lValue;
         String name = lRefExpr.getName();
-        NameHint hint = processor.getHint(NameHint.class);
-        if (hint == null ||
-            (hint.getName().equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
+        String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
+        if (refName == null ||
+            (refName.equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
           if (!processor.execute(lRefExpr, PsiSubstitutor.EMPTY)) return false;
         }
       }
