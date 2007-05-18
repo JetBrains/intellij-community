@@ -155,13 +155,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         context.setPrefix(""); // prefix may be of no interest
       }
 
-      EditorModificationUtil.deleteSelectedText(editor);
-
       if (!StringUtil.startsWithIgnoreCase(uniqueText, prefix)) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
       }
 
-      insertLookupString(context, offset1, uniqueText, startOffset);
+      insertLookupString(context, offset2, uniqueText, startOffset);
       context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
       lookupItemSelected(context, startOffset, data, item, false, (char)0);
