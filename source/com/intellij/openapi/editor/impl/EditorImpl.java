@@ -3879,7 +3879,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         final int min = Math.min(oldEndLine, newEndLine);
-        if (min >= lineWidthSize) {
+        final boolean toAddNewLines = min >= lineWidthSize;
+
+        if (toAddNewLines) {
           final int[] delta = new int[min - lineWidthSize + 1];
           myLineWidths.insert(lineWidthSize, delta);
         }
@@ -3890,7 +3892,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           Arrays.fill(delta, -1);
           myLineWidths.insert(oldEndLine + 1, delta);
         }
-        else if (oldEndLine > newEndLine) {
+        else if (oldEndLine > newEndLine && !toAddNewLines) {
           myLineWidths.remove(newEndLine + 1, oldEndLine - newEndLine);
         }
         myIsDirty = true;
