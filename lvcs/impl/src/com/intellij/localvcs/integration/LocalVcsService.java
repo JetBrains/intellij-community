@@ -5,6 +5,7 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -97,7 +98,10 @@ public class LocalVcsService {
   private ProvidedContent getProvidedContentFor(VirtualFile f) {
     if (!getFileFilter().isAllowedAndUnderContentRoot(f)) return null;
 
-    Content c = myVcs.getEntry(f.getPath()).getContent();
+    Entry e = myVcs.findEntry(f.getPath());
+    if (e == null) return null;
+
+    Content c = e.getContent();
     return c.isAvailable() ? new EntryProvidedContent(c) : null;
   }
 
