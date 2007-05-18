@@ -37,6 +37,10 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
+  public <T> void registerService(Class<T> serviceImplementation) {
+    registerService(serviceImplementation, serviceImplementation);
+  }
+
   public <T> void registerService(Class<T> serviceInterface, T serviceImplementation) {
     myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
   }

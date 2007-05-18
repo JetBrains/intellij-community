@@ -15,36 +15,61 @@
  */
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.util.Disposer;
 import org.apache.commons.collections.MultiHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class Extensions {
+public class Extensions {
   private static LogProvider ourLogger = new SimpleLogProvider();
 
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
-  private static Map ourAreaClass2prototypeArea;
-  private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area;
-  private static MultiHashMap ourAreaClass2instances;
-  private static Map<AreaInstance,String> ourAreaInstance2class;
-  private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration;
+  private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
+  private static final MultiHashMap ourAreaClass2instances = new MultiHashMap();
+  private static final Map<AreaInstance,String> ourAreaInstance2class = new HashMap<AreaInstance, String>();
+  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
+
+  static {
+    createRootArea();
+  }
+
+  private static void createRootArea() {
+    ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
+    rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
+    ourAreaInstance2area.put(null, rootArea);
+  }
+
+  private Extensions() {
+  }
 
   public static ExtensionsArea getRootArea() {
     return getArea(null);
   }
 
-  public static ExtensionsArea getArea(AreaInstance areaInstance) {
-    init();
+  @NotNull
+  public static ExtensionsArea getArea(@Nullable AreaInstance areaInstance) {
     if (!ourAreaInstance2area.containsKey(areaInstance)) {
       throw new IllegalArgumentException("No area instantiated for: " + areaInstance);
     }
     return ourAreaInstance2area.get(areaInstance);
+  }
+
+  public static void cleanRootArea(@NotNull Disposable parentDisposable) {
+    final ExtensionsArea oldRootArea = getRootArea();
+    createRootArea();
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        ourAreaInstance2area.put(null, (ExtensionsAreaImpl)oldRootArea);
+      }
+    });
   }
 
   public static Object[] getExtensions(@NonNls String extensionPointName) {
@@ -56,44 +81,20 @@ public abstract class Extensions {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
+
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     return (T[])getExtensions(extensionPointName.getName(), areaInstance);
   }
 
-
-
   public static Object[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
-    assert area != null: "Unable to get area for " + areaInstance;
     ExtensionPoint extensionPoint = area.getExtensionPoint(extensionPointName);
     assert extensionPoint != null: "Unable to get extension point " + extensionPoint + " for " + areaInstance;
     return extensionPoint.getExtensions();
   }
 
-  private static void init() {
-    if (ourAreaInstance2area == null) {
-      ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
-      ourAreaClass2prototypeArea = new HashMap();
-      ourAreaClass2instances = new MultiHashMap();
-      ourAreaInstance2class = new HashMap<AreaInstance, String>();
-      ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
-      ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
-      ourAreaInstance2area.put(null, rootArea);
-      ourAreaClass2prototypeArea.put(null, rootArea);
-      rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
-    }
-  }
-
-  static void reset() {
-    ourAreaInstance2area = null;
-    ourAreaClass2instances = null;
-    ourAreaClass2prototypeArea = null;
-    ourAreaInstance2class = null;
-  }
-
   public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
-    init();
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
@@ -120,7 +121,6 @@ public abstract class Extensions {
   }
 
   public static void registerAreaClass(@NonNls String areaClass, @NonNls String parentAreaClass) {
-    init();
     if (ourAreaClass2Configuration.containsKey(areaClass)) {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
@@ -155,21 +155,12 @@ public abstract class Extensions {
   }
 
   public static AreaInstance[] getAllAreas(String areaClass) {
-    Collection instances = (Collection) ourAreaClass2instances.get(areaClass);
-    if (instances != null) {
-      return (AreaInstance[]) instances.toArray(new AreaInstance[instances.size()]);
-    }
-    return new AreaInstance[0];
+    Collection<AreaInstance> instances = (Collection<AreaInstance>) ourAreaClass2instances.get(areaClass);
+    return instances != null ? instances.toArray(new AreaInstance[instances.size()]) : new AreaInstance[0];
   }
 
   private static boolean equals(Object object1, Object object2) {
-      if (object1 == object2) {
-          return true;
-      }
-      if ((object1 == null) || (object2 == null)) {
-          return false;
-      }
-      return object1.equals(object2);
+    return object1 == object2 || object1 != null && object2 != null && object1.equals(object2);
   }
 
   public static void setLogProvider(LogProvider logProvider) {

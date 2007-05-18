@@ -51,10 +51,11 @@ public final class NavigationUtil {
       }
     };
 
-    return new PopupChooserBuilder(list).
-      setTitle(title).
-      setItemChoosenCallback(runnable).
-      createPopup();
+    PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    if (title != null) {
+      builder.setTitle(title);
+    }
+    return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
   public static void showPsiElementPopup(PsiElement[] elements, String title, MouseEvent event) {

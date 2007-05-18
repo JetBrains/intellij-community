@@ -43,12 +43,14 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     // Assert document committed.
     PsiFile file = element.getContainingFile();
     if (file != null) {
-      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
-      Document doc = documentManager.getCachedDocument(file);
-      if (doc != null) {
-        //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
-        if (!(element instanceof PsiFile)) {
-          LOG.assertTrue(!documentManager.isUncommited(doc) || documentManager.isCommittingDocument(doc));
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      if (psiDocumentManager instanceof PsiDocumentManagerImpl) {
+        Document doc = psiDocumentManager.getCachedDocument(file);
+        if (doc != null) {
+          //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
+          if (!(element instanceof PsiFile)) {
+            LOG.assertTrue(!psiDocumentManager.isUncommited(doc) || ((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc));
+          }
         }
       }
     }
