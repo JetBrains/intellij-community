@@ -12,6 +12,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -156,6 +157,23 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision) {
+    if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
+      final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
+      final CvsRevisionNumber cvsChangeRevision = (CvsRevisionNumber)changeRevision;
+      final int[] localSubRevisions = cvsLocalRevision.getSubRevisions();
+      final int[] changeSubRevisions = cvsChangeRevision.getSubRevisions();
+      if (localSubRevisions != null && changeSubRevisions != null) {
+        if (localSubRevisions.length != changeSubRevisions.length) {
+          // local is trunk, change is branch / vice versa
+          return true;
+        }
+        if (localSubRevisions.length == 4 && changeSubRevisions.length == 4 && localSubRevisions [2] != changeSubRevisions [2]) {
+          // local is one branch, change is a different branch
+          return true;
+        }
+      }
+
+    }
     return localRevision.compareTo(changeRevision) >= 0;
   }
 
