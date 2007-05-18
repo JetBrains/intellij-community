@@ -29,7 +29,7 @@ public class ImportFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
         !(context.getParent() instanceof PsiErrorElement) &&
-        GroovyCompletionUtil.isNewStatement(context.getParent(), false) &&
+        GroovyCompletionUtil.isNewStatement(context, false) &&
         context.getParent().getParent() instanceof GroovyFile) {
       return true;
     }

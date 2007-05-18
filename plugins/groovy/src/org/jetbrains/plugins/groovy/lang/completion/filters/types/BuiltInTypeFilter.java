@@ -35,8 +35,9 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
  */
 public class BuiltInTypeFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (asSimpleVariable(context) || asTypedMethod(context) ||
-        asVariableInBlock(context)) {
+    if (GroovyCompletionUtil.asSimpleVariable(context) ||
+        GroovyCompletionUtil.asTypedMethod(context) ||
+        GroovyCompletionUtil.asVariableInBlock(context)) {
       return true;
     }
     return context.getParent() instanceof GrExpression &&
@@ -47,39 +48,6 @@ public class BuiltInTypeFilter implements ElementFilter {
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
-
-  private static boolean asSimpleVariable(PsiElement context) {
-    return context.getParent() instanceof GrTypeDefinitionBody;
-  }
-
-  private static boolean asVariableInBlock(PsiElement context) {
-    if (context.getParent() instanceof GrReferenceExpression &&
-        (context.getParent().getParent() instanceof GrOpenBlock ||
-        context.getParent().getParent() instanceof GrClosableBlock) &&
-        GroovyCompletionUtil.isNewStatement(context, true)) {
-      return true;
-    }
-
-    if (context.getParent() instanceof  GrReferenceExpression &&
-        context.getParent().getParent() instanceof GrApplicationExpression &&
-        (context.getParent().getParent().getParent() instanceof GrOpenBlock ||
-        context.getParent().getParent().getParent() instanceof GrClosableBlock) &&
-        GroovyCompletionUtil.isNewStatement(context, true)) {
-      return true;
-    }
-
-    return context.getParent() instanceof GrTypeDefinitionBody;
-  }
-
-  private static boolean asTypedMethod(PsiElement context) {
-    return context.getParent() instanceof GrReferenceElement &&
-        context.getParent().getParent() instanceof GrTypeElement &&
-        context.getParent().getParent().getParent() instanceof GrMethod &&
-        context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody &&
-        context.getTextOffset() == context.getParent().getParent().getParent().getParent().getTextOffset();
-
-  }
-
 
   @NonNls
   public String toString() {

@@ -205,7 +205,6 @@
       <batchtest todir="${project.dir}/logs">
         <fileset dir="${test.dir}">
           <include name="**/*Test.java"/>
-          <exclude name="**/ComlpetionActionTest.java"/>
         </fileset>
       </batchtest>
 
