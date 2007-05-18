@@ -192,17 +192,21 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
             list.add(holder.createResolveProblem(element, reference));
           }
         }
+        final boolean isResolvingConverter = element.getConverter() instanceof ResolvingConverter;
         if (!hasBadResolve &&
-            (domReference != null || element.getConverter() instanceof ResolvingConverter &&
+            (domReference != null || isResolvingConverter &&
                                                       hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
           list.add(holder.createResolveProblem(element, domReference));
         }
       }
       if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null) {
-        final String errorMessage = element.getConverter()
+        final Converter converter = element.getConverter();
+        final String errorMessage = converter
           .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
-        list.add(holder.createProblem(element, errorMessage));
+        if (errorMessage != null) {
+          list.add(holder.createProblem(element, errorMessage));
+        }
       }
       return list;
     }

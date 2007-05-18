@@ -2,21 +2,19 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,45 +34,31 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
   public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
-  public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
+  public static final CustomizationKey<Boolean> CONCRETE = new CustomizationKey<Boolean>("CONCRETE");
+  public static final CustomizationKey<Boolean> NOT_INTERFACE = new CustomizationKey<Boolean>("NOT_INTERFACE");
+  public static final CustomizationKey<Boolean> ADVANCED_RESOLVE = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
   public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
 
   @Nullable private Map<CustomizationKey, Object> myOptions;
   private boolean mySoft;
+  private boolean myAllowEmpty;
   @Nullable private final GlobalSearchScope myScope;
 
-  public JavaClassReferenceProvider(@NonNls String extendClassName, boolean instantiatable, GlobalSearchScope scope) {
-    this(new String[]{extendClassName}, instantiatable, false, scope);
-  }
-
-  public JavaClassReferenceProvider(@NonNls String[] extendClassNames, boolean instantiatable) {
-    this(extendClassNames, instantiatable, false, null);
-  }
-
-  public JavaClassReferenceProvider(@NonNls String[] extendClassNames, boolean instantiatable, boolean jvmFormat, GlobalSearchScope scope) {
-    myOptions = new THashMap<CustomizationKey, Object>();
-    EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
-    INSTANTIATABLE.putValue(myOptions, instantiatable);
-    RESOLVE_ONLY_CLASSES.putValue(myOptions, Boolean.TRUE);
-    JVM_FORMAT.putValue(myOptions, jvmFormat);
-    myScope = scope;
-  }
-
-  public JavaClassReferenceProvider(boolean jvmFormat) {
-    this(ArrayUtil.EMPTY_STRING_ARRAY, false, jvmFormat, null);
-  }
-
-  public JavaClassReferenceProvider(@NotNull String extendClassName) {
-    this(extendClassName, true, null);
-  }
-
-  public JavaClassReferenceProvider() {
-    myScope = null;
-  }
 
   public JavaClassReferenceProvider(GlobalSearchScope scope) {
     myScope = scope;
+  }
+
+  public JavaClassReferenceProvider() {
+    this(null);
+  }
+
+  public <T> void setOption(CustomizationKey<T> option, T value) {
+    if (myOptions == null) {
+      myOptions = new THashMap<CustomizationKey, Object>();
+    }
+    option.putValue(myOptions, value);
   }
 
   @Nullable
@@ -119,6 +103,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+    if (myAllowEmpty && StringUtil.isEmpty(str)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     return new JavaClassReferenceSet(str, position, offsetInPosition, type, false, this).getAllReferences();
   }
 
@@ -182,4 +169,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return myOptions;
   }
 
+  public void setAllowEmpty(final boolean allowEmpty) {
+    myAllowEmpty = allowEmpty;
+  }
 }

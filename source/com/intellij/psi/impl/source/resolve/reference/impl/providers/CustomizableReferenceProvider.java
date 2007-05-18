@@ -24,6 +24,14 @@ public interface CustomizableReferenceProvider extends PsiReferenceProvider {
       return options == null ? null : (T)options.get(this);
     }
 
+    public boolean getBooleanValue(@Nullable Map<CustomizationKey,Object> options) {
+      if (options == null) {
+        return false;
+      }
+      final Boolean o = (Boolean)options.get(this);
+      return o != null && o.booleanValue();
+    }
+
     public void putValue(Map<CustomizationKey,Object> options, T value) {
       options.put(this, value);
     }

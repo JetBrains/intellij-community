@@ -29,7 +29,7 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(Boolean.class, ResolvingConverter.BOOLEAN_CONVERTER);
     mySimpleConverters.put(String.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(Object.class, Converter.EMPTY_CONVERTER);
-    mySimpleConverters.put(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
+    mySimpleConverters.put(PsiClass.class, new PsiClassConverter());
     mySimpleConverters.put(PsiType.class, new CanonicalPsiTypeConverterImpl());
     mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
     registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());

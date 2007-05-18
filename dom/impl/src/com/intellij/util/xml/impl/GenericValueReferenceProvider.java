@@ -132,18 +132,6 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (ReflectionCache.isAssignable(PsiType.class, clazz)) {
       return new PsiReference[]{new PsiTypeReference((GenericDomValue<PsiType>)domValue)};
     }
-    if (ReflectionCache.isAssignable(PsiClass.class, clazz)) {
-      ExtendClass extendClass = invocationHandler.getAnnotation(ExtendClass.class);
-      final JavaClassReferenceProvider provider;
-      if (extendClass == null) {
-        provider = new JavaClassReferenceProvider(getScope(domValue));
-      }
-      else {
-        provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable(), getScope(domValue));
-      }
-      provider.setSoft(true);
-      return provider.getReferencesByElement(psiElement);
-    }
     if (ReflectionCache.isAssignable(PsiPackage.class, clazz)) {
       final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(domValue));
       provider.setSoft(true);

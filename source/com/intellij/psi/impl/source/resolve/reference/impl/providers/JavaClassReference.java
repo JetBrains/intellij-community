@@ -43,7 +43,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private final String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
-  private final Map<CustomizableReferenceProvider.CustomizationKey,Object> myOptions;
 
   public JavaClassReference(final JavaClassReferenceSet referenceSet, TextRange range, int index, String text, final boolean staticImport) {
     super(referenceSet.getProvider());
@@ -53,7 +52,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     myRange = range;
     myText = text;
     myJavaClassReferenceSet = referenceSet;
-    myOptions = myJavaClassReferenceSet.getOptions();
   }
 
   @Nullable
@@ -213,9 +211,34 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private static Object[] processPackage(final PsiPackage aPackage) {
+  private Object[] processPackage(final PsiPackage aPackage) {
     final PsiPackage[] subPackages = aPackage.getSubPackages();
     final PsiClass[] classes = aPackage.getClasses();
+    final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
+    if (options != null) {
+      final ArrayList<Object> list = new ArrayList<Object>(Arrays.asList(subPackages));
+      final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
+      final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(options);
+      final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options);
+      for (PsiClass clazz: classes) {
+        if (instantiatable) {
+          if (PsiUtil.isInstantiatable(clazz)) {
+            list.add(clazz);
+          }
+        } else if (concrete) {
+          if (!clazz.hasModifierProperty(PsiModifier.ABSTRACT) && !clazz.isInterface()) {
+            list.add(clazz);
+          }
+        } else if (notInterface) {
+          if (!clazz.isInterface()) {
+            list.add(clazz);
+          }
+        } else {
+          list.add(clazz);
+        }
+      }
+      return list.toArray();
+    }
     return ArrayUtil.mergeArrays(subPackages, classes, Object.class);
   }
 
@@ -241,7 +264,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
     if (qName.indexOf(".") == -1) {
-      final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(myOptions);
+      final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(getOptions());
       if (StringUtil.isNotEmpty(defaultPackage)) {
         final JavaResolveResult resolveResult = advancedResolveInner(psiElement, defaultPackage + "." + qName);
         if (resolveResult != JavaResolveResult.EMPTY) {
@@ -260,8 +283,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       if (aClass != null) {
         return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, psiElement);
       } else {
-        final Boolean value = JavaClassReferenceProvider.RESOLVE_ONLY_CLASSES.getValue(getOptions());
-        if (value != null && value.booleanValue()) {
+        if (!JavaClassReferenceProvider.ADVANCED_RESOLVE.getBooleanValue(getOptions())) {
           return JavaResolveResult.EMPTY;
         }
       }
@@ -317,8 +339,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return scope;
   }
 
+  @Nullable
   private Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
-    return myOptions;
+    return myJavaClassReferenceSet.getOptions();
   }
 
   @NotNull
@@ -369,9 +392,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       packageScope = packageScope.intersectWith(scope);
     }
     final GlobalSearchScope allScope = context.getProject().getAllScope();
-    Boolean inst = JavaClassReferenceProvider.INSTANTIATABLE.getValue(getOptions());
-
-    boolean instantiatable = inst == null || inst.booleanValue();
+    boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
 
     for (String extendClassName : extendClasses) {
       PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);

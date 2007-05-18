@@ -87,9 +87,9 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     // Binding declarations
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
-    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
 
-    PsiReferenceProvider propertiesReferenceProvider = getProviderByType(PROPERTIES_FILE_KEY_PROVIDER);
+    PsiReferenceProvider propertiesReferenceProvider = new PropertiesReferenceProvider(false);
+    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, propertiesReferenceProvider);
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"code"},
