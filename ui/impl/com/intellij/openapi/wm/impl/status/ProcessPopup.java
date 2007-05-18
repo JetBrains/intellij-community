@@ -49,7 +49,7 @@ public class ProcessPopup  {
     myIndicators.add(indicator);
 
     myProcessBox.add(indicator.getComponent());
-    myProcessBox.add(new SeparatorComponent());
+    myProcessBox.add(Box.createVerticalStrut(4));
 
     swithToActive();
 
