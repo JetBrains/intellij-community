@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.GroovyLoader;
 /**
  * @author ven
  */
-public class ResolveClassTest extends ResolveTestCase {
+public class ResolveClassTest extends GroovyResolveTestCase {
   protected String getTestDataPath() {
     return TestUtils.getTestDataPath() + "/resolve/class/";
   }
@@ -51,25 +51,5 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiClass);
-  }
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    GroovyLoader.loadGroovy();
-
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
-    assertNotNull(root);
-    ContentEntry contentEntry = rootModel.addContentEntry(root);
-    //rootModel.setJdk(JavaSdkImpl.getMockJdk15(""));
-    String testName = getTestName(true);
-    VirtualFile sourceRoot = root.findChild(testName);
-    assertNotNull(sourceRoot);
-    contentEntry.addSourceFolder(sourceRoot, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
   }
 }

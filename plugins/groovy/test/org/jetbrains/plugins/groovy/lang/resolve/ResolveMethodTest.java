@@ -18,8 +18,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author ven
  */
-public class ResolveMethodTest extends ResolveTestCase {
-  private static String JDK_HOME = TestUtils.getTestDataPath() + "/mockJDK";
+public class ResolveMethodTest extends GroovyResolveTestCase {
 
   protected String getTestDataPath() {
     return TestUtils.getTestDataPath() + "/resolve/method/";
@@ -73,20 +72,4 @@ public class ResolveMethodTest extends ResolveTestCase {
   }
 
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    GroovyLoader.loadGroovy();
-
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
-    assertNotNull(root);
-    ContentEntry contentEntry = rootModel.addContentEntry(root);
-    rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", JDK_HOME, false));
-    contentEntry.addSourceFolder(root, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
-  }
 }
