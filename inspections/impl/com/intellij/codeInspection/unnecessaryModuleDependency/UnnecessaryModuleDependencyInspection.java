@@ -37,8 +37,10 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
       for (Module dependency : declaredDependencies) {
-        if (modules == null || !modules.contains(dependency)) {
-          descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName())));
+        if (scope.contains(dependency.getModuleFile())) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
+          if (modules == null || !modules.contains(dependency)) {
+            descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName())));
+          }
         }
       }
       return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
