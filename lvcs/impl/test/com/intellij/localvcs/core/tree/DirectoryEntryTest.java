@@ -205,6 +205,33 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRenamingChildToNonExistentNameDoesNotThrowException() {
+    Entry dir = new DirectoryEntry(0, "dir");
+    Entry child = new FileEntry(1, "child", null, -1);
+    dir.addChild(child);
+
+    child.changeName("new name");
+
+    assertEquals("new name", child.getName());
+  }
+
+  @Test
+  public void testRenamingChildToExistingNameThrowsException() {
+    Entry dir = new DirectoryEntry(0, "dir");
+    Entry child1 = new FileEntry(1, "child1", null, -1);
+    Entry child2 = new FileEntry(2, "child2", null, -1);
+    dir.addChild(child1);
+    dir.addChild(child2);
+
+    try {
+      child1.changeName("child2");
+      fail();
+    }
+    catch (RuntimeException e) {
+    }
+  }
+
+  @Test
   public void testHasUnavailableContent() {
     Entry dir = new DirectoryEntry(-1, "dir");
     assertFalse(dir.hasUnavailableContent());

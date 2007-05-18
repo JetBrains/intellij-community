@@ -51,7 +51,7 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
-    checkDoesNotExist(child);
+    checkDoesNotExist(child, child.getName());
     unsafeAddChild(child);
   }
 
@@ -60,11 +60,12 @@ public class DirectoryEntry extends Entry {
     child.setParent(this);
   }
 
-  private void checkDoesNotExist(Entry child) {
-    if (findChild(child.getName()) == null) return;
+  protected void checkDoesNotExist(Entry e, String name) {
+    Entry found = findChild(name);
+    if (found == null || found == e) return;
 
     String m = "entry '%s' already exists in '%s'";
-    throw new RuntimeException(String.format(m, child.getName(), getPath()));
+    throw new RuntimeException(String.format(m, name, getPath()));
   }
 
   @Override

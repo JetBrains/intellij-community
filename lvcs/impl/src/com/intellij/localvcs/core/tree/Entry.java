@@ -182,6 +182,7 @@ public abstract class Entry {
   public abstract Entry copy();
 
   public void changeName(String newName) {
+    if (myParent != null) myParent.checkDoesNotExist(this, newName);
     myName = newName;
   }
 

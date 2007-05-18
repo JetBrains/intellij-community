@@ -101,7 +101,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
       root.rename("dir/file1", "file2");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -140,7 +140,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
       root.rename("dir1/dir2", "file");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 

@@ -189,22 +189,19 @@ public class ChangeReverterTest extends IntegrationTestCase {
     assertEquals(dir1, f.getParent());
   }
 
-  public void testXXX() throws IOException {
-    //VirtualFile f1 = root.createChildData(null, "f1.java");
-    //VirtualFile f2 = root.createChildData(null, "f2.java");
-    //
-    //f1.rename(null, "f11.java");
-    //f2.rename(null, "f1.java");
-    //
-    //revertLastChange(f1);
-    //
-    //assertEquals("f1.java", f1.getName());
-    //assertEquals("f2.java", f2.getName());
+  public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
+    VirtualFile f1 = root.createChildData(null, "f1.java");
+    VirtualFile f2 = root.createChildData(null, "f2.java");
+
+    f1.rename(null, "f11.java");
+    f2.rename(null, "f1.java");
+
+    assertCanNotRevertLastChange(f1);
   }
 
   // todo test ro status clearing
 
-  public void testDoesNotRevertPrecedingChenges() throws IOException {
+  public void testDoesNotRevertPrecedingChanges() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
     f.setBinaryContent(new byte[]{1}, -1, 123);
     f.setBinaryContent(new byte[]{2}, -1, 456);
@@ -219,8 +216,15 @@ public class ChangeReverterTest extends IntegrationTestCase {
   }
 
   private void revertCauseChangeOfRevision(VirtualFile f, int index) throws IOException {
+    createReverter(f, index).revert();
+  }
+
+  private void assertCanNotRevertLastChange(VirtualFile f) throws IOException {
+    assertFalse(createReverter(f, 0).canRevert());
+  }
+
+  private ChangeReverter createReverter(VirtualFile f, int index) {
     List<Revision> rr = getVcsRevisionsFor(f);
-    ChangeReverter r = new ChangeReverter(getVcs(), gateway, rr.get(index).getCauseChange());
-    r.revert();
+    return new ChangeReverter(getVcs(), gateway, rr.get(index).getCauseChange());
   }
 }

@@ -102,7 +102,7 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
       root.rename("file1", "file2");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
