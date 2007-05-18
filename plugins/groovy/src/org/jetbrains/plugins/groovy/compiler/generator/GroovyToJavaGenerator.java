@@ -69,6 +69,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       PsiModifier.TRANSIENT,
       PsiModifier.VOLATILE
   };
+
+  private static final String[] JAVA_TYPE_DEFINITION_MODIFIERS = new String[]{
+      PsiModifier.PUBLIC,
+      PsiModifier.ABSTRACT,
+      PsiModifier.FINAL
+  };
+
   private static final CharSequence PREFIX_SEPARATOR = "/";
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
@@ -304,6 +311,18 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
     boolean isInteraface = typeDefinition instanceof GrInterfaceDefinition;
 
+
+    if (typeDefinition != null) {
+      PsiModifierList modifierList = typeDefinition.getModifierList();
+
+      boolean wasAddedModifiers = writeModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS);
+      if (!wasAddedModifiers) {
+        text.append("public");
+      }
+    }
+
+    text.append(" ");
+
     if (isInteraface) text.append("interface");
     else text.append("class");
 
@@ -354,7 +373,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
           String implTypeCanonicalText = implementTypeWrapper.myValue;
 
-          if (implTypeCanonicalText == null)  text.append("<smotri 4to realizuesh'!>");
+          if (implTypeCanonicalText == null) text.append("<smotri 4to realizuesh'!>");
           text.append(implTypeCanonicalText);
           text.append(" ");
           i++;
@@ -439,7 +458,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     while (i < grVariables.length) {
       variable = grVariables[i];
 
-      writeModifiers(text, modifierList);
+      writeModifiers(text, modifierList, JAVA_MODIFIERS);
 
       //type
       text.append(varQualifiedTypeName);
@@ -463,7 +482,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
     PsiModifierList modifierList = method.getModifierList();
 
-    writeModifiers(text, modifierList);
+    writeModifiers(text, modifierList, JAVA_MODIFIERS);
 
     //append qualified type name
     text.append(qualifiedTypeName);
@@ -515,13 +534,16 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
   }
 
-  private void writeModifiers(StringBuffer text, PsiModifierList modifierList) {
-    for (String modifierType : JAVA_MODIFIERS) {
+  private boolean writeModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+    boolean wasAddedModifiers = false;
+    for (String modifierType : modifiers) {
       if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
+        wasAddedModifiers = true;
       }
     }
+    return wasAddedModifiers;
   }
 
   private String getResolvedType(GrTypeElement typeElement) {
