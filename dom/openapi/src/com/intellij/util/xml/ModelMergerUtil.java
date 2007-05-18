@@ -72,6 +72,7 @@ public class ModelMergerUtil {
 
   @NotNull
   public static <T> List<T> getFilteredImplementations(final T element) {
+    if (element == null) return Collections.emptyList();
     final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
     new ImplementationProcessor<T>(processor, false).process(element);
     return (List<T>)processor.getResults();
