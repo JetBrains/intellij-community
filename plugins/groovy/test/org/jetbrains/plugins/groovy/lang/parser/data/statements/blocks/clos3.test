@@ -9,6 +9,8 @@ Groovy script
     Open block
       PsiElement({)('{')
       PsiWhiteSpace(' ')
+      Parameter list
+        <empty list>
       Assignment expression
         Reference expression
           PsiElement(identifier)('a')

@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -461,7 +462,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiModifierList getModifierList() {
-    return null;
+    return findChildByClass(GrModifierList.class);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

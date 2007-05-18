@@ -147,7 +147,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       VirtualFile itemFile = VirtualFileManager.getInstance().findFileByUrl(groovyFile.getUrl());
       assert itemFile != null;
 
-      List<String> generatedJavaFilesRelPaths = generateItems(context, itemFile, outputRootDirectory);
+      List<String> generatedJavaFilesRelPaths = generateItems(itemFile, outputRootDirectory);
       for (String relPath : generatedJavaFilesRelPaths) {
         GenerationItem generationItem = myPathsToItemsMap.get(relPath);
         if (generationItem != null)
@@ -174,17 +174,16 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   }
 
   //virtualFile -> PsiFile
-  private List<String> generateItems(CompileContext context, final VirtualFile item, final VirtualFile outputRootDirectory) {
+  private List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
     GroovyFile myPsiFile = findPsiFile(item);
 
-    Module module = context.getModuleByFile(item);
-    List<String> generatedJavaFilesRelPaths = generate(context, myPsiFile, module, outputRootDirectory);
+    List<String> generatedJavaFilesRelPaths = generate(myPsiFile, outputRootDirectory);
     assert generatedJavaFilesRelPaths != null;
 
     return generatedJavaFilesRelPaths;
   }
 
-  private List<String> generate(CompileContext context, final GroovyFile myPsiFile, Module module, VirtualFile outputRootDirectory) {
+  private List<String> generate(final GroovyFile myPsiFile, VirtualFile outputRootDirectory) {
     List<String> generatedItemsRelativePaths = new ArrayList<String>();
 
     final StringBuffer text = new StringBuffer();
@@ -203,7 +202,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       assert virtualFile != null;
       String fileDefinitionName = virtualFile.getNameWithoutExtension();
 
-      String topLevelGeneratedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, fileDefinitionName, null, packageDefinition);
+      String topLevelGeneratedItemPath = createJavaSourceFile(outputRootDirectory, myPsiFile, text, fileDefinitionName, null, packageDefinition);
       generatedItemsRelativePaths.add(topLevelGeneratedItemPath);
     }
 
@@ -221,7 +220,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       text.setLength(0);
       PsiElement element = typeDefinition.getNameIdentifierGroovy();
 
-      generatedItemPath = createJavaSourceFile(context, outputRootDirectory, myPsiFile, text, element.getText(), typeDefinition, packageDefinition);
+      generatedItemPath = createJavaSourceFile(outputRootDirectory, myPsiFile, text, element.getText(), typeDefinition, packageDefinition);
       generatedItemsRelativePaths.add(generatedItemPath);
     }
 
@@ -243,7 +242,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     return prefix;
   }
 
-  private String createJavaSourceFile(CompileContext context, VirtualFile outputRootDirectory, GroovyFile myPsiFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFile myPsiFile, StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
     //prefix defines structure of directories tree
     String prefix = "";
     if (packageDefinition != null) {
@@ -256,7 +255,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     assert virtualFile != null;
 //    String generatedFileRelativePath = prefix + typeDefinitionName + "." + "java";
     String fileShortName = typeDefinitionName + "." + "java";
-    createGeneratedFile(context, text, outputRootDirectory.getPath(), prefix, fileShortName, myPsiFile);
+    createGeneratedFile(text, outputRootDirectory.getPath(), prefix, fileShortName, myPsiFile);
     return prefix + typeDefinitionName + "." + "java";
   }
 
@@ -567,7 +566,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     return methodType;
   }
 
-  private void createGeneratedFile(CompileContext context, StringBuffer text, String outputDir, String prefix, String generatedItemPath, GroovyFile myGroovyFile) {
+  private void createGeneratedFile(StringBuffer text, String outputDir, String prefix, String generatedItemPath, GroovyFile myGroovyFile) {
     assert prefix != null;
 
     String prefixWithoutSeparator = prefix;

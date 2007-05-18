@@ -49,10 +49,17 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
   public PsiType getType() {
     String typeText = getText();
     for (final PsiType primitive : PRIMITIVES) {
-      if (primitive.getCanonicalText().equals(typeText)) {
-        final String boxedQName = ((PsiPrimitiveType) primitive).getBoxedTypeName();
-        return getManager().getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
+      if (PsiType.VOID.equals(primitive)) {
+        return primitive;
       }
+      if (primitive.getCanonicalText().equals(typeText)) {
+        return primitive;
+      }
+
+//      if (primitive.getCanonicalText().equals(typeText)) {
+//        final String boxedQName = ((PsiPrimitiveType) primitive).getBoxedTypeName();
+//        return getManager().getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
+//      }
     }
 
     LOG.error("Unknown primitive type");
