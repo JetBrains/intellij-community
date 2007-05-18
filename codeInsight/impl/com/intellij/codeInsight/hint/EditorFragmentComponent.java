@@ -181,7 +181,9 @@ public class EditorFragmentComponent extends JPanel {
 
   // Q: not a good place?
   public static @NotNull TextRange getDeclarationRange(PsiElement container) {
-    return getPossibleDeclarationAtRange(container);
+    final TextRange textRange = getPossibleDeclarationAtRange(container);
+    assert textRange != null :"Declaration range is invalid for "+container.getClass();
+    return textRange;
   }
 
   public static @Nullable TextRange getPossibleDeclarationAtRange(final PsiElement container) {
