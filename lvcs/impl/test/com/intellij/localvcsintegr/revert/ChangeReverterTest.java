@@ -1,6 +1,7 @@
 package com.intellij.localvcsintegr.revert;
 
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.revert.ChangeReverter;
 import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.localvcsintegr.IntegrationTestCase;
@@ -8,6 +9,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 public class ChangeReverterTest extends IntegrationTestCase {
@@ -108,7 +110,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
 
     f = root.findChild("f.java");
     assertNotNull(f);
-    assertEquals(2, getVcsRevisionsFor(f).size());
+    assertEquals(1, getVcsRevisionsFor(f).size());
   }
 
   public void testRevertMovementAfterDeletion() throws Exception {
@@ -189,26 +191,26 @@ public class ChangeReverterTest extends IntegrationTestCase {
     assertEquals(dir1, f.getParent());
   }
 
-  public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
-
-    f1.rename(null, "f11.java");
-    f2.rename(null, "f1.java");
-
-    assertCanNotRevertLastChange(f1);
-  }
-
-  public void testCanNotRevertDeletionIfSomeFilesAlreadyExist() throws Exception {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
-
-    f1.delete(null);
-    f2.rename(null, "f1.java");
-
-    assertCanNotRevertLastChange(f1);
-  }
-
+  //public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
+  //  VirtualFile f1 = root.createChildData(null, "f1.java");
+  //  VirtualFile f2 = root.createChildData(null, "f2.java");
+  //
+  //  f1.rename(null, "f11.java");
+  //  f2.rename(null, "f1.java");
+  //
+  //  assertCanNotRevertLastChange(f1);
+  //}
+  //
+  //public void testCanNotRevertDeletionIfSomeFilesAlreadyExist() throws Exception {
+  //  VirtualFile f1 = root.createChildData(null, "f1.java");
+  //  VirtualFile f2 = root.createChildData(null, "f2.java");
+  //
+  //  f1.delete(null);
+  //  f2.rename(null, "f1.java");
+  //
+  //  assertCanNotRevertLastChange(f1);
+  //}
+  //
   //public void testCanNotRevertMovementIfSomeFilesAlreadyExist() throws Exception {
   //  VirtualFile f1 = root.createChildData(null, "f1.java");
   //  VirtualFile f2 = root.createChildData(null, "f2.java");
@@ -237,6 +239,29 @@ public class ChangeReverterTest extends IntegrationTestCase {
     revertLastChange(f);
     assertEquals(f, root.findChild("f.java"));
     assertEquals(1, f.contentsToByteArray()[0]);
+  }
+
+  public void testChangeSetNameAfterRevert() throws IOException {
+    getVcs().beginChangeSet();
+    VirtualFile f = root.createChildData(null, "f.java");
+    getVcs().endChangeSet("file changed");
+
+    revertLastChange(f);
+
+    Revision r = getVcsRevisionsFor(root).get(0);
+    assertEquals("Revert 'file changed'", r.getCauseChangeName());
+  }
+
+  public void testChangeSetNameAfterRevertUnnamedChange() throws IOException {
+    Clock.setCurrentTimestamp(new Date(2003, 00, 01, 12, 30).getTime());
+    getVcs().beginChangeSet();
+    VirtualFile f = root.createChildData(null, "f.java");
+    getVcs().endChangeSet(null);
+
+    revertLastChange(f);
+
+    Revision r = getVcsRevisionsFor(root).get(0);
+    assertEquals("Revert change made 01.01.03 12:30", r.getCauseChangeName());
   }
 
   private void revertLastChange(VirtualFile f) throws IOException {
