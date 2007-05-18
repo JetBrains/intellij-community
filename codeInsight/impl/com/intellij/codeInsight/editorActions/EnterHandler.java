@@ -383,7 +383,27 @@ public class EnterHandler extends EditorWriteActionHandler {
   }
 
   private static boolean isBetweenXmlTags(Editor editor, int offset) {
-    return isBetweenTags(editor,offset,XmlTokenType.XML_TAG_END,XmlTokenType.XML_END_TAG_START);
+    if (offset == 0) return false;
+    CharSequence chars = editor.getDocument().getCharsSequence();
+    if (chars.charAt(offset - 1) != '>') return false;
+
+    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+    if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
+    int retrieveCount = 1;
+    iterator.retreat();
+
+    while(!iterator.atEnd()) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (tokenType == XmlTokenType.XML_END_TAG_START) return false;
+      if (tokenType == XmlTokenType.XML_START_TAG_START) break;
+      ++retrieveCount;
+      iterator.retreat();
+    }
+
+    for(int i = 0; i < retrieveCount; ++i) iterator.advance();
+    iterator.advance();
+    return !iterator.atEnd() && iterator.getTokenType() == XmlTokenType.XML_END_TAG_START;
   }
 
   private static boolean isBetweenTags(Editor editor, int offset, IElementType first, IElementType second) {
