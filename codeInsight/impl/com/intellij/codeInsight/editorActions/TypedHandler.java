@@ -348,6 +348,7 @@ public class TypedHandler implements TypedActionHandler {
       iterator.advance();
     }
 
+    if (iterator.atEnd()) return false;
     if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
 
     int balance = 0;
