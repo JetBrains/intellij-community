@@ -84,12 +84,6 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       if (!ResolveUtil.processElement(processor, typeDefinition)) return false;
     }
     
-    /*for (final GrTopStatement topStatement : getTopStatements()) {
-      if (topStatement.equals(lastParent)) break;
-      
-      if (!topStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
-    }*/
-
     if (!ResolveUtil.processChildren(this, processor, substitutor, lastParent, place)) return false;
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
