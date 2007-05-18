@@ -22,9 +22,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,9 +84,6 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
   }
 
   public List<LinkMatch> findIssueLinks(String text) {
-    if (myLinks.size() == 0) {
-      return Collections.emptyList();
-    }
     final List<LinkMatch> result = new ArrayList<LinkMatch>();
     for(IssueNavigationLink link: myLinks) {
       Matcher m = link.getIssuePattern().matcher(text);
