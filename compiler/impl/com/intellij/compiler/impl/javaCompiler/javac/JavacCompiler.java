@@ -185,6 +185,28 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
 
+    final List<String> additionalOptions = new ArrayList<String>();
+    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
+    while (tokenizer.hasMoreTokens()) {
+      @NonNls String token = tokenizer.nextToken();
+      if (isVersion1_0) {
+        if ("-deprecation".equals(token)) {
+          continue; // not supported for this version
+        }
+      }
+      if (isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4) {
+        if ("-Xlint".equals(token)) {
+          continue; // not supported in these versions
+        }
+      }
+      if (token.startsWith("-J-")) {
+        commandLine.add(token.substring("-J".length()));
+      }
+      else {
+        additionalOptions.add(token);
+      }
+    }
+    
     CompilerUtil.addLocaleOptions(commandLine, false);
 
     commandLine.add("-classpath");
@@ -236,22 +258,10 @@ public class JavacCompiler extends ExternalCompiler {
     commandLine.add("-d");
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
-    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
-    while (tokenizer.hasMoreTokens()) {
-      @NonNls String token = tokenizer.nextToken();
-      if (isVersion1_0) {
-        if ("-deprecation".equals(token)) {
-          continue; // not supported for this version
-        }
-      }
-      if (isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4) {
-        if ("-Xlint".equals(token)) {
-          continue; // not supported in these versions
-        }
-      }
-      commandLine.add(token);
+    for (String option : additionalOptions) {
+      commandLine.add(option);
     }
-
+    
     final VirtualFile[] files = chunk.getFilesToCompile();
 
     if (isVersion1_0) {
