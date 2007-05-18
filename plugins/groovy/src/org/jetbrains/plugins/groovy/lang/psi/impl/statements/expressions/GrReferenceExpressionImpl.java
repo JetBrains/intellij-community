@@ -19,9 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +40,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.EnumSet;
 
@@ -79,7 +83,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else if (resolved instanceof PsiVariable) {
       return ((PsiVariable) resolved).getType();
     } else if (resolved instanceof PsiMethod) {
-      //todo
+      PsiMethod method = (PsiMethod) resolved;
+      if (PropertyUtil.isSimplePropertySetter(method)) {
+        return method.getParameterList().getParameters()[0].getType();
+      }
+      return method.getReturnType();
     } else if (resolved instanceof GrReferenceExpression) {
       PsiElement parent = resolved.getParent();
       if (parent instanceof GrAssignmentExpression) {
@@ -112,6 +120,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (name == null) return null;
       ResolverProcessor processor = getResolveProcessor(refExpr, name, false);
 
+      resolveImpl(refExpr, qualifier, processor);
+
+      GroovyResolveResult[] propertyCandidates = processor.getCandidates();
+      if (propertyCandidates.length > 0) return propertyCandidates;
+      if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
+        ResolverProcessor classProcessor = new ResolverProcessor(refExpr.getReferenceName(), EnumSet.of(ResolveKind.CLASS), refExpr, false);
+        resolveImpl(refExpr, qualifier, classProcessor);
+        return classProcessor.getCandidates();
+      }
+
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    private void resolveImpl(GrReferenceExpressionImpl refExpr, GrExpression qualifier, ResolverProcessor processor) {
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
       } else {
@@ -123,20 +145,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           }
         }
       }
-
-      return processor.getCandidates();
     }
   }
 
   private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion) {
     Kind kind = refExpr.getKind();
+    return getMethodOrPropertyResolveProcessor(refExpr, name, forCompletion, kind);
+  }
+
+  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion, Kind kind) {
     ResolverProcessor processor;
-    if (kind == Kind.TYPE_OR_PROPERTY) {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.PROPERTY, ResolveKind.METHOD, ResolveKind.CLASS), refExpr, forCompletion); //todo package?
-    } else if (kind == Kind.METHOD_OR_PROPERTY) {
+    if (kind == Kind.METHOD_OR_PROPERTY) {
       processor = new MethodResolverProcessor(name, refExpr, forCompletion);
     } else {
-      processor = new ResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
+      processor = new PropertyResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
     }
 
     return processor;
@@ -175,7 +197,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public Object[] getVariants() {
-    ResolverProcessor processor = getResolveProcessor(this, null, true);
+
+    Object[] propertyVariants = getVariantsImpl(getResolveProcessor(this, null, true));
+    if (getKind() == Kind.TYPE_OR_PROPERTY) {
+      ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ResolveKind.CLASS), this, true);
+      GroovyResolveResult[] classVariants = classVariantsCollector.getCandidates();
+      return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
+    }
+
+    return propertyVariants;
+  }
+
+  private Object[] getVariantsImpl(ResolverProcessor processor) {
     GrExpression qualifierExpression = getQualifierExpression();
     if (qualifierExpression == null) {
       ResolveUtil.treeWalkUp(this, processor);

@@ -16,7 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author ven
@@ -41,5 +45,14 @@ public class PsiUtil {
 
     builder.append(refName);
     return true;
+  }
+
+  public static boolean isLValue(GroovyPsiElement element) {
+    if (element instanceof GrExpression) {
+      PsiElement parent = element.getParent();
+      return parent instanceof GrAssignmentExpression &&
+          element.equals(((GrAssignmentExpression) parent).getLValue());
+    }
+    return false;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
 
 import java.util.*;
 
@@ -30,10 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ven
  */
-public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint {
+public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
-  protected PsiElement myPlace;
+  protected GroovyPsiElement myPlace;
   protected boolean myForCompletion;
 
   protected Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
@@ -71,6 +72,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     else if (ClassHint.class == hintClass) {
       return (T) this;
     }
+    else if (ElementClassHint.class == hintClass) {
+      return (T) this;
+    }
 
     return null;
   }
@@ -84,5 +88,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   public boolean shouldProcess(ResolveKind resolveKind) {
     return myResolveTargetKinds.contains(resolveKind);
+  }
+
+  public boolean shouldProcess(Class elementClass) {
+    if (PsiMethod.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.METHOD);
+    if (PsiVariable.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.PROPERTY);
+    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.CLASS);
+    return true;
   }
 }
