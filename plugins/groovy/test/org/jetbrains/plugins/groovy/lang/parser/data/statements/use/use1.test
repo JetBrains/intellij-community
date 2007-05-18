@@ -22,6 +22,8 @@ Groovy script
     Closable block
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
+      Parameter list
+        <empty list>
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
