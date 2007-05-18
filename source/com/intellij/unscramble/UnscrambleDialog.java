@@ -388,6 +388,9 @@ public class UnscrambleDialog extends DialogWrapper{
       }
     };
     toolbarActions.add(new CloseAction(defaultRunner, descriptor, project));
+    for (AnAction action: consoleView.createUpDownStacktraceActions()) {
+      toolbarActions.add(action);
+    }
     ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultRunner, descriptor);
     return consoleView;
   }

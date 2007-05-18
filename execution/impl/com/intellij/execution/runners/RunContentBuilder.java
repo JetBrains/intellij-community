@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,7 +38,7 @@ import java.util.ArrayList;
  * @author dyoma
  */
 public class RunContentBuilder implements LogConsoleManager {
-  public static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
+  private static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
   private final JavaProgramRunner myRunner;
   private final Project myProject;
   private final ArrayList<Disposable> myDisposeables = new ArrayList<Disposable>();
@@ -82,7 +83,7 @@ public class RunContentBuilder implements LogConsoleManager {
     myRunnerActions.add(action);
   }
 
-  public RunContentDescriptor createDescriptor() {
+  private RunContentDescriptor createDescriptor() {
     if (myExecutionResult == null) {
       throw new IllegalStateException("Missing ExecutionResult");
     }
@@ -174,6 +175,13 @@ public class RunContentBuilder implements LogConsoleManager {
       }
     }
 
+    ExecutionConsole console = myExecutionResult.getExecutionConsole();
+    if (console instanceof ConsoleView) {
+      AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
+      for (AnAction goaction: actions) {
+        actionGroup.add(goaction);
+      }
+    }
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
     actionGroup.add(new CloseAction(myRunner, contentDescriptor, myProject));

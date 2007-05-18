@@ -51,6 +51,10 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     return myTextAttributes;
   }
 
+  public void setTextAttributes(final TextAttributes textAttributes) {
+    myTextAttributes = textAttributes;
+  }
+
   public int getLayer() {
     return myLayer;
   }

@@ -172,6 +172,15 @@
           <option name="FONT_TYPE" value="2"/>
         </value>
       </option>
+      <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="0000ff"/>
+          <option name="BACKGROUND" value="d8d8d8"/>
+          <option name="EFFECT_COLOR" value="0000ff"/>
+          <option name="EFFECT_TYPE" value="1"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
       <option name="INFORMATION_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>

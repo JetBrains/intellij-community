@@ -18,7 +18,7 @@ package com.intellij.ide;
 import com.intellij.pom.Navigatable;
 
 public interface OccurenceNavigator {
-  public class OccurenceInfo {
+  class OccurenceInfo {
     private final Navigatable myNavigateable;
     private final int myOccurenceNumber;
     private final int myOccurencesCount;

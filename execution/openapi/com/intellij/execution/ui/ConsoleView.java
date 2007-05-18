@@ -18,6 +18,8 @@ package com.intellij.execution.ui;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 public interface ConsoleView extends ExecutionConsole{
   void print(String s, ConsoleViewContentType contentType);
@@ -42,4 +44,7 @@ public interface ConsoleView extends ExecutionConsole{
   int getContentSize();
 
   boolean canPause();
+
+  @NotNull
+  AnAction[] createUpDownStacktraceActions();
 }

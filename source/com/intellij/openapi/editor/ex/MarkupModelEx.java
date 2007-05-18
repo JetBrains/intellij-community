@@ -21,4 +21,6 @@ public interface MarkupModelEx extends MarkupModel {
 
   void addMarkupModelListener(MarkupModelListener listener);
   void removeMarkupModelListener(MarkupModelListener listener);
+
+  void setRangeHighlighterAttributes(final RangeHighlighter highlighter, TextAttributes textAttributes);
 }

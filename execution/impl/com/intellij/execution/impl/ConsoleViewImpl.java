@@ -6,8 +6,10 @@ import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataAccessor;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,6 +32,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.HighlighterClient;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -44,11 +47,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,10 +62,10 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
-public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataProvider {
+public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
@@ -74,11 +79,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private static final Color BACKGROUND_COLOR = Color.white;
   private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+  private static final TextAttributes FOLLOWED_HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private ConsoleState myState = ConsoleState.NOT_STARTED;
   private final int CYCLIC_BUFFER_SIZE = GeneralSettings.getInstance().getCyclicBufferSize();
   private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
+  private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
 
   private static class TokenInfo{
     private final ConsoleViewContentType contentType;
@@ -399,67 +406,71 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   private Editor createEditor() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Editor>() {
       public Editor compute() {
-        final EditorFactory editorFactory = EditorFactory.getInstance();
-        final Document editorDocument = editorFactory.createDocument("");
-
-        final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
-        editorDocument.setCyclicBufferSize(bufferSize);
-
-        final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
-        final EditorHighlighter highlighter = new MyHighghlighter();
-        editor.setHighlighter(highlighter);
-        editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, ConsoleViewImpl.this);
-
-        final EditorSettings editorSettings = editor.getSettings();
-        editorSettings.setLineMarkerAreaShown(false);
-        editorSettings.setLineNumbersShown(false);
-        editorSettings.setFoldingOutlineShown(false);
-        editorSettings.setAdditionalPageAtBottom(false);
-        editorSettings.setAdditionalColumnsCount(0);
-        editorSettings.setAdditionalLinesCount(0);
-
-        final EditorColorsScheme scheme = editor.getColorsScheme();
-        editor.setBackgroundColor(BACKGROUND_COLOR);
-        scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-        scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
-        editor.addEditorMouseListener(new EditorPopupHandler(){
-          public void invokePopup(final EditorMouseEvent event) {
-            final MouseEvent mouseEvent = event.getMouseEvent();
-            popupInvoked(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-          }
-        });
-
-        editor.addEditorMouseListener(
-          new EditorMouseAdapter(){
-            public void mouseReleased(final EditorMouseEvent e){
-              final MouseEvent mouseEvent = e.getMouseEvent();
-              if (!mouseEvent.isPopupTrigger()){
-                navigate(e);
-              }
-            }
-          }
-        );
-
-        editor.getContentComponent().addMouseMotionListener(
-          new MouseMotionAdapter(){
-            public void mouseMoved(final MouseEvent e){
-              final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
-              if (info != null){
-                editor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-              }
-              else{
-                editor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-              }
-            }
-          }
-        );
-
-        setEditorUpActions(editor);
-
-        return editor;
+        return doCreateEditor();
       }
     });
+  }
+
+  private Editor doCreateEditor() {
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    final Document editorDocument = editorFactory.createDocument("");
+
+    final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
+    editorDocument.setCyclicBufferSize(bufferSize);
+
+    final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
+    final EditorHighlighter highlighter = new MyHighghlighter();
+    editor.setHighlighter(highlighter);
+    editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
+
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setAdditionalPageAtBottom(false);
+    editorSettings.setAdditionalColumnsCount(0);
+    editorSettings.setAdditionalLinesCount(0);
+
+    final EditorColorsScheme scheme = editor.getColorsScheme();
+    editor.setBackgroundColor(BACKGROUND_COLOR);
+    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
+
+    editor.addEditorMouseListener(new EditorPopupHandler(){
+      public void invokePopup(final EditorMouseEvent event) {
+        final MouseEvent mouseEvent = event.getMouseEvent();
+        popupInvoked(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+      }
+    });
+
+    editor.addEditorMouseListener(
+          new EditorMouseAdapter(){
+        public void mouseReleased(final EditorMouseEvent e){
+          final MouseEvent mouseEvent = e.getMouseEvent();
+          if (!mouseEvent.isPopupTrigger()){
+            navigate(e);
+          }
+        }
+      }
+    );
+
+    editor.getContentComponent().addMouseMotionListener(
+          new MouseMotionAdapter(){
+        public void mouseMoved(final MouseEvent e){
+          final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
+          if (info != null){
+            editor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
+          else{
+            editor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+          }
+        }
+      }
+    );
+
+    setEditorUpActions(editor);
+
+    return editor;
   }
 
   private static void setEditorUpActions(final Editor editor) {
@@ -491,7 +502,27 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     final HyperlinkInfo info = getHyperlinkInfoByPoint(p);
     if (info != null){
       info.navigate(myProject);
+      linkFollowed(info);
     }
+  }
+
+  private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
+  private void linkFollowed(final HyperlinkInfo info) {
+    MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
+    for (Map.Entry<RangeHighlighter,HyperlinkInfo> entry : myHyperlinks.getRanges().entrySet()) {
+      RangeHighlighter range = entry.getKey();
+      if (range.getTextAttributes() == FOLLOWED_HYPERLINK_ATTRIBUTES) {
+        TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);
+        markupModel.setRangeHighlighterAttributes(range, oldAttr);
+      }
+      if (entry.getValue() == info) {
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
+        markupModel.setRangeHighlighterAttributes(range, FOLLOWED_HYPERLINK_ATTRIBUTES);
+      }
+    }
+    //refresh highlighter text attributes
+    RangeHighlighter dummy = markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, HYPERLINK_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
+    markupModel.removeHighlighter(dummy);
   }
 
   private HyperlinkInfo getHyperlinkInfoByPoint(final Point p){
@@ -537,7 +568,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : HYPERLINK_ATTRIBUTES;
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
-                                                                                       HighlighterLayer.SELECTION - 1,
+                                                                                       HYPERLINK_LAYER,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
     myHyperlinks.add(highlighter, hyperlinkInfo);
@@ -680,7 +711,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private static final DataAccessor<ConsoleViewImpl> RUNNINT_CONSOLE =DataAccessor.createConditionalAccessor(CONSOLE, CONSOLE_IS_RUNNING);
 
-  private static abstract class ConsoleAction extends AnAction {
+  private abstract static class ConsoleAction extends AnAction {
     public void actionPerformed(final AnActionEvent e) {
       final DataContext context = e.getDataContext();
       final ConsoleViewImpl console = RUNNINT_CONSOLE.from(context);
@@ -790,9 +821,86 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       myHighlighterToMessageInfoMap.put(highlighter, hyperlinkInfo);
       if (myLastIndex != NO_INDEX && containsOffset(myLastIndex, highlighter)) myLastIndex = NO_INDEX;
     }
+
+    private Map<RangeHighlighter,HyperlinkInfo> getRanges() {
+      return myHighlighterToMessageInfoMap;
+    }
   }
 
   public JComponent getPreferredFocusableComponent() {
     return myEditor.getContentComponent();
   }
+
+
+  // navigate up/down in stack trace
+  public boolean hasNextOccurence() {
+    return goNextOccurence() != null;
+  }
+
+  public boolean hasPreviousOccurence() {
+    return goPreviousOccurence() != null;
+  }
+
+  public OccurenceInfo goNextOccurence() {
+    return next(1);
+  }
+
+  private OccurenceInfo next(final int delta) {
+    List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
+    Collections.sort(ranges, new Comparator<RangeHighlighter>() {
+      public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
+        return o1.getStartOffset() - o2.getStartOffset();
+      }
+    });
+    int i;
+    for (i = 0; i<ranges.size(); i++) {
+      RangeHighlighter range = ranges.get(i);
+      if (range.getTextAttributes() == FOLLOWED_HYPERLINK_ATTRIBUTES) {
+        break;
+      }
+    }
+    RangeHighlighter next = i+delta < ranges.size() && i+delta >= 0 ? ranges.get(i+delta) : null;
+    if (next == null) return null;
+    final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
+    return new OccurenceInfo(new Navigatable() {
+      public void navigate(final boolean requestFocus) {
+        hyperlinkInfo.navigate(myProject);
+        linkFollowed(hyperlinkInfo);
+      }
+
+      public boolean canNavigate() {
+        return true;
+      }
+
+      public boolean canNavigateToSource() {
+        return true;
+      }
+    }, i, ranges.size());
+
+  }
+
+  public OccurenceInfo goPreviousOccurence() {
+    return next(-1);
+  }
+
+  public String getNextOccurenceActionName() {
+    return ExecutionBundle.message("down.the.stack.trace");
+  }
+
+  public String getPreviousOccurenceActionName() {
+    return ExecutionBundle.message("up.the.stack.trace");
+  }
+
+  @NotNull
+  public AnAction[] createUpDownStacktraceActions() {
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
+    prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
+    AnAction nextAction = actionsManager.createNextOccurenceAction(this);
+    nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
+    return new AnAction[]{
+      prevAction, nextAction
+    };
+  }
+
 }

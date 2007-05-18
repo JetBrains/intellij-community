@@ -81,4 +81,8 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   public void removeMarkupModelListener(MarkupModelListener listener) {
   }
+
+  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+
+  }
 }

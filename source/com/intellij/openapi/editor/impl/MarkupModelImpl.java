@@ -150,6 +150,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myCachedListeners = null;
   }
 
+  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+    ((RangeHighlighterImpl)highlighter).setTextAttributes(textAttributes);
+    fireSegmentHighlighterChanged(highlighter);
+  }
+
   private MarkupModelListener[] getCachedListeners() {
     if (myCachedListeners == null) {
       myCachedListeners = myListeners.isEmpty() ? MarkupModelListener.EMPTY_ARRAY : myListeners.toArray(new MarkupModelListener[myListeners.size()]);

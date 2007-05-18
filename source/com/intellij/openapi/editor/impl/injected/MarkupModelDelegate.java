@@ -82,4 +82,8 @@ class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
     myHostModel.removeMarkupModelListener(listener);
   }
 
+  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+    myHostModel.setRangeHighlighterAttributes(highlighter, textAttributes);
+  }
+
 }
