@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
@@ -94,6 +95,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
             return false;
           }
       }
+      parameterTypeToCheck =
+          PsiUtil.boxPrimitiveType(parameterTypeToCheck, method.getManager(), method.getResolveScope());
       if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
 

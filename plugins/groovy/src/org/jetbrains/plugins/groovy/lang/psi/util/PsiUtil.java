@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
 
@@ -60,7 +61,7 @@ public class PsiUtil {
     return false;
   }
 
-  public static PsiType boxPrimitiveType(PsiType result, PsiManagerEx manager, GlobalSearchScope resolveScope) {
+  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
     if (result instanceof PsiPrimitiveType) {
       PsiPrimitiveType primitive = (PsiPrimitiveType) result;
       String boxedTypeName = primitive.getBoxedTypeName();
