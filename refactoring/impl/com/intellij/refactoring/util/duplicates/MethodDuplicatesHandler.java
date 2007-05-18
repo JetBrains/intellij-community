@@ -5,10 +5,9 @@
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
@@ -83,7 +82,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
                                                                 project, scope, module != null ? module.getName() : null, false);
     dlg.show();
     if (dlg.isOK()) {
-      scope = dlg.getScope(((InspectionManagerEx)InspectionManager.getInstance(project)).getUIOptions(), scope, project, module);
+      scope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
 
       invokeOnScope(project, method, scope);
     }

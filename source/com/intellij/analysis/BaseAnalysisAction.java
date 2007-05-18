@@ -1,7 +1,5 @@
 package com.intellij.analysis;
 
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,11 +38,11 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE);
+    final Project project = e.getData(DataKeys.PROJECT);
+    final Module module = e.getData(DataKeys.MODULE);
     if (project != null) {
       AnalysisScope scope;
-      PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+      PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
       if (psiFile != null) {
         scope = new AnalysisScope(psiFile);
       }
@@ -58,7 +56,7 @@ public abstract class BaseAnalysisAction extends AnAction {
         return;
       }
       final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
-      final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
+      final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
       BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
                                                                   AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                   project,
@@ -110,7 +108,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
-    if (dataContext.getData(DataConstants.PROJECT) == null) return null;
+    if (DataKeys.PROJECT.getData(dataContext) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
 
@@ -134,12 +132,12 @@ public abstract class BaseAnalysisAction extends AnAction {
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
-    PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
       return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile) : null;
     }
 
-    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiTarget = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;

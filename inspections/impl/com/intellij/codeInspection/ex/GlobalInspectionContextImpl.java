@@ -7,6 +7,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
@@ -103,12 +104,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new THashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
 
-  private UIOptions myUIOptions;
+  private AnalysisUIOptions myUIOptions;
 
   public GlobalInspectionContextImpl(Project project, ContentManager contentManager) {
     myProject = project;
 
-    myUIOptions = ((InspectionManagerEx)InspectionManager.getInstance(project)).getUIOptions().copy();
+    myUIOptions = AnalysisUIOptions.getInstance(myProject).copy();
     myRefManager = null;
     myCurrentScope = null;
     myContentManager = contentManager;
@@ -672,7 +673,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  public UIOptions getUIOptions() {
+  public AnalysisUIOptions getUIOptions() {
     return myUIOptions;
   }
 
@@ -681,7 +682,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public ToggleAction createToggleAutoscrollAction() {
-    return myUIOptions.myAutoScrollToSourceHandler.createToggleAction();
+    return myUIOptions.getAutoScrollToSourceHandler().createToggleAction();
   }
 
   private static class ProgressWrapper extends ProgressIndicatorBase {
@@ -1013,7 +1014,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     cleanup(managerEx);
-    managerEx.getUIOptions().save(myUIOptions);
+    AnalysisUIOptions.getInstance(myProject).save(myUIOptions);
     final ContentManager contentManager = getContentManager();
     if (contentManager != null) {  //null for tests
       contentManager.removeContent(myContent);

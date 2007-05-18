@@ -6,6 +6,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,12 +14,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +50,12 @@ public class RunInspectionIntention implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
                                                                       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
@@ -68,7 +66,7 @@ public class RunInspectionIntention implements IntentionAction {
     AnalysisScope scope = new AnalysisScope(file);
     dlg.show();
     if (!dlg.isOK()) return;
-    final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
+    final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
     rerunInspection(managerEx, scope);
   }

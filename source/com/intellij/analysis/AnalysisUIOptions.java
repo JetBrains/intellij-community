@@ -2,24 +2,40 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.codeInspection.ex;
+package com.intellij.analysis;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.Icons;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
  * User: anna
  * Date: 28-Feb-2006
  */
-public class UIOptions implements JDOMExternalizable {
+@State(
+  name = "AnalysisUIOptions",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
+  public static AnalysisUIOptions getInstance(Project project) {
+    return ServiceManager.getService(project, AnalysisUIOptions.class);
+  }
+
   public boolean AUTOSCROLL_TO_SOURCE = false;
   public float SPLITTER_PROPORTION = 0.5f;
   public boolean GROUP_BY_SEVERITY = false;
@@ -28,13 +44,13 @@ public class UIOptions implements JDOMExternalizable {
   public boolean SHOW_DIFF_WITH_PREVIOUS_RUN = false;
   public int SCOPE_TYPE = 1;
   public String CUSTOM_SCOPE_NAME = "";
-  public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public boolean SHOW_ONLY_DIFF = false;
   public boolean SHOW_STRUCTURE = true;
 
   public boolean ANALYSIS_IN_BACKGROUND = false;
 
-  public UIOptions() {
+  public AnalysisUIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return AUTOSCROLL_TO_SOURCE;
@@ -47,36 +63,18 @@ public class UIOptions implements JDOMExternalizable {
 
   }
 
-  public UIOptions copy() {
-    final UIOptions result = new UIOptions();
-    @NonNls Element temp = new Element("temp");
-    try {
-      writeExternal(temp);
-      result.readExternal(temp);
-    }
-    catch (Exception e) {
-      //can't be
-    }
+  public AnalysisUIOptions copy() {
+    final AnalysisUIOptions result = new AnalysisUIOptions();
+    XmlSerializerUtil.copyBean(this, result);
     return result;
   }
 
-  public void save(UIOptions options) {
-    @NonNls Element temp = new Element("temp");
-    try {
-      options.writeExternal(temp);
-      readExternal(temp);
-    }
-    catch (Exception e) {
-      //can't be
-    }
+  public void save(AnalysisUIOptions options) {
+    XmlSerializerUtil.copyBean(options, this);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public AutoScrollToSourceHandler getAutoScrollToSourceHandler() {
+    return myAutoScrollToSourceHandler;
   }
 
   public AnAction createGroupBySeverityAction(final InspectionResultsView view) {
@@ -169,5 +167,13 @@ public class UIOptions implements JDOMExternalizable {
         e.getPresentation().setEnabled(SHOW_DIFF_WITH_PREVIOUS_RUN);
       }
     };
+  }
+
+  public AnalysisUIOptions getState() {
+    return this;
+  }
+
+  public void loadState(AnalysisUIOptions state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

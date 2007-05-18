@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 public class InspectionManagerEx extends InspectionManager implements JDOMExternalizable, ProjectComponent {
-  private final UIOptions myUIOptions;
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
   private final Project myProject;
   @NonNls private String myCurrentProfileName;
@@ -45,7 +44,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public InspectionManagerEx(Project project) {
     myProject = project;
-    myUIOptions = new UIOptions();
     myCurrentProfileName = "Default";
   }
 
@@ -79,19 +77,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
 
-  public UIOptions getUIOptions() {
-    return myUIOptions;
-  }
-
-  
-
   public void readExternal(@NonNls Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(myUIOptions, element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(myUIOptions, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 

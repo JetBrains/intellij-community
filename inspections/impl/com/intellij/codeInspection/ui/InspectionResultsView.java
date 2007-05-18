@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -107,8 +108,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     myBrowser = new Browser(this);
 
-    final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    mySplitter = new Splitter(false, manager.getUIOptions().SPLITTER_PROPORTION);
+    mySplitter = new Splitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
     mySplitter.setSecondComponent(myBrowser);

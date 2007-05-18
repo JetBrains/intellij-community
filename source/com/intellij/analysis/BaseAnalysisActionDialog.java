@@ -1,7 +1,5 @@
 package com.intellij.analysis;
 
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.module.Module;
@@ -85,7 +83,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions();
+    final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(myProject);
 
     myTitledSeparator.setText(myAnalysisNoon);
 
@@ -186,7 +184,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions().CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
+    AnalysisUIOptions.getInstance(myProject).CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
     super.doOKAction();
   }
 
@@ -194,7 +192,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myInspectTestSource.isSelected();
   }
 
-  public AnalysisScope getScope(UIOptions uiOptions, AnalysisScope scope, Project project, Module module){
+  public AnalysisScope getScope(AnalysisUIOptions uiOptions, AnalysisScope scope, Project project, Module module){
     if (isProjectScopeSelected()) {
       scope = new AnalysisScope(project);
       uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;

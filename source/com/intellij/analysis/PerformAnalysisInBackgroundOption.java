@@ -8,16 +8,14 @@
  */
 package com.intellij.analysis;
 
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 
 public class PerformAnalysisInBackgroundOption implements PerformInBackgroundOption {
-  private UIOptions myUIOptions;
+  private AnalysisUIOptions myUIOptions;
 
   public PerformAnalysisInBackgroundOption(Project project) {
-    myUIOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
+    myUIOptions = AnalysisUIOptions.getInstance(project);
   }
 
   public boolean shouldStartInBackground() {
