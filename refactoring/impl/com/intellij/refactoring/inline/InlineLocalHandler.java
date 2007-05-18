@@ -3,7 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.defUse.DefUseUtil;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;

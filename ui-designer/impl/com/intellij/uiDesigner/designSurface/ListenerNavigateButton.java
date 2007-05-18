@@ -4,7 +4,7 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.codeInspection.defUse.DefUseUtil;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
