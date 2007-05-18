@@ -16,6 +16,7 @@ public class GrClassReferenceType extends PsiClassType {
 
   public GrClassReferenceType(GrTypeOrPackageReferenceElement referenceElement) {
     myReferenceElement = referenceElement;
+    myLanguageLevel = LanguageLevel.JDK_1_5;
   }
 
   @Nullable
@@ -100,7 +101,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   @NotNull
-    public LanguageLevel getLanguageLevel() {
+  public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
