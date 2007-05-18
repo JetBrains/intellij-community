@@ -4,12 +4,16 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.StableElement;
 import net.sf.cglib.proxy.InvocationHandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,11 +29,14 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
     myProvider = provider;
     myCachedValue = initial;
     myOldValue = initial;
-  }
-
-  public void setClasses(final Set<Class> classes) {
+    final Class superClass = initial.getClass().getSuperclass();
+    final Set<Class> classes = new HashSet<Class>();
+    classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addIfNotNull(superClass, classes);
+    classes.remove(MergedObject.class);
     myClasses = classes;
   }
+
 
   public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
     if (StableElement.class.equals(method.getDeclaringClass())) {

@@ -29,7 +29,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -45,8 +44,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -543,19 +542,14 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     final T initial = provider.create();
     assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
+
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     intf.add(StableElement.class);
-    final Class superClass = initial.getClass().getSuperclass();
     //noinspection unchecked
-    final T proxy = (T)AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
+
+    return (T)AdvancedProxy.createProxy(initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]),
                                                  handler, Collections.<JavaMethodSignature>emptySet());
-    final Set<Class> classes = new HashSet<Class>();
-    classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
-    ContainerUtil.addIfNotNull(superClass, classes);
-    classes.remove(MergedObject.class);
-    handler.setClasses(classes);
-    return proxy;
   }
 
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
