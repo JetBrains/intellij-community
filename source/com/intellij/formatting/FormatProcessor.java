@@ -10,6 +10,7 @@ import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -732,7 +733,16 @@ class FormatProcessor {
     if (parent == null) return new IndentInfo(0, 0, 0);
     int index = getNewChildPosition(parent, offset);
     final Block block = myInfos.get(parent);
-    assert block != null;
+    
+    if (block == null) {
+      final @NonNls StringBuilder message = new StringBuilder(100);
+      for(AbstractBlockWrapper blockWrapper = myCurrentBlock; blockWrapper != null; blockWrapper = blockWrapper.getParent()) {
+        if (message.length() > 0) message.append(',');
+        message.append(myInfos.get(blockWrapper)).append(" (").append(blockWrapper.getStartOffset()).append(',').append(blockWrapper.getEndOffset()).append(')');
+      }
+      message.insert(0, "Invalid formatter block, formatting blocks hierarchy followed:");
+      assert false:message.toString();
+    }
 
     ChildAttributesInfo info = getChildAttributesInfo(block, index, parent);
 
