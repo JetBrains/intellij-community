@@ -1,0 +1,128 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin url="http://www.jetbrains.com/idea">
+  <name>Maven Integration</name>
+  <description>Maven Integration plugin</description>
+  <version>2.0</version>
+  <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
+  <change-notes>
+    <![CDATA[]]>
+  </change-notes>
+  <idea-version since-build="6800"/>
+  <extensions xmlns="com.intellij">
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
+  </extensions>
+  <project-components>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.core.MavenCore</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.core.MavenCoreImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.builder.MavenBuilder</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.builder.MavenBuilderImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.project.MavenImporter</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenImporterComponent</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenImporterPreferencesComponent</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.repo.MavenRepository</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.repo.MavenRepositoryViewer</implementation-class>
+    </component>
+  </project-components>
+  <actions>
+    <action id="Maven.Run"
+            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="Run"
+            description="Run"
+            icon="/actions/execute.png"/>
+
+    <group id="Maven.OutputToolbar" description="Output toolbar">
+      <action id="Maven.Rerun"
+              class="org.jetbrains.idea.maven.builder.action.RerunMavenAction"
+              text="Rerun"
+              description="Reruns the latest Maven build"
+              icon="/actions/refreshUsages.png"/>
+      <action id="Maven.PauseOutput"
+              class="org.jetbrains.idea.maven.builder.action.PauseOutputAction"
+              text="Pause/Resume Output"
+              description="Pauses/resumes the output in the build output window"
+              icon="/actions/pause.png"/>
+      <action id="Maven.Stop"
+              class="org.jetbrains.idea.maven.builder.action.StopMavenAction"
+              text="Stop"
+              description="Stops the currently running Maven build"
+              icon="/actions/suspend.png"/>
+      <action id="Maven.CloseOutput"
+              class="org.jetbrains.idea.maven.builder.action.CloseOutputPanelAction"
+              text="Close Output Panel"
+              description="Closes the output window"
+              icon="/actions/cancel.png"/>
+    </group>
+    <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
+      <action id="Maven.GroupByModules"
+              class="org.jetbrains.idea.maven.navigator.action.GroupByModulesAction" text="Group by modules"
+              description="Group by modules"
+              icon="/nodes/ModuleClosed.png"/>
+      <action id="Maven.GroupByDirectories"
+              class="org.jetbrains.idea.maven.navigator.action.GroupByDirectoriesAction"
+              text="Group by directories"
+              description="Group by directories"
+              icon="/nodes/folder.png"/>
+      <action id="Maven.FilterPhases"
+              class="org.jetbrains.idea.maven.navigator.action.FilterPhasesAction" text="Filter standard goals"
+              description="Filter standard goals"
+              icon="/images/filterPhases.png"/>
+      <separator/>
+      <reference id="Maven.Run"/>
+      <action id="Maven.AttachPlugin"
+              class="org.jetbrains.idea.maven.navigator.action.AttachPluginAction" text="Attach plugin"
+              description="Attach plugin"
+              icon="/images/attachPlugin.png"/>
+      <action id="Maven.DetachPlugin"
+              class="org.jetbrains.idea.maven.navigator.action.DetachPluginAction" text="Detach plugin"
+              description="Detach plugin"
+              icon="/images/detachPlugin.png"/>
+      <separator/>
+    </group>
+
+    <group id="Maven.PomMenu" popup="true">
+      <reference id="Maven.Run"/>
+      <reference id="EditSource"/>
+      <reference id="Maven.AttachPlugin"/>
+    </group>
+
+    <group id="Maven.GoalMenu" popup="true">
+      <reference id="Maven.Run"/>
+    </group>
+
+    <group id="Maven.PluginMenu" popup="true">
+      <reference id="Maven.DetachPlugin"/>
+    </group>
+
+    <action id="Maven.ShowSettings"
+            class="org.jetbrains.idea.maven.core.ShowSettingsAction" text="Edit Maven settings"
+            description="Edit Maven integration settings"
+            icon="/images/mavenSettings.png">
+      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
+    </action>
+    <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
+            text="Synchronize with Maven projects" description="Synchronize project structure with with Maven projects"
+            icon="/actions/sync.png">
+      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
+    </action>
+    <action id="Maven.Import"
+            class="org.jetbrains.idea.maven.project.action.ImportMavenProjectsAction" text="Import Maven Projects"
+            description="Import Maven Projects">
+      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ImportFromEclipse"/>
+    </action>
+
+  </actions>
+</idea-plugin>
