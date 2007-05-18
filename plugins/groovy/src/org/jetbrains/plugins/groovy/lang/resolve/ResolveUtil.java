@@ -44,7 +44,7 @@ public class ResolveUtil {
 
     return true;
   }
-
+                                  
   public static boolean processChildren(PsiElement element, PsiScopeProcessor processor,
                                         PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
