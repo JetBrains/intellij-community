@@ -42,7 +42,6 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("byName/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod) resolved).getParameters().length, 1);
   }
 
   public void testByName1() throws Exception {
@@ -57,6 +56,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertEquals(((GrMethod) resolved).getParameters().length, 1);
+  }
+
+  public void testParametersNumber() throws Exception {
+    PsiReference ref = configureByFile("parametersNumber/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertEquals(((GrMethod) resolved).getParameters().length, 2);
   }
 
   public void testFilterBase() throws Exception {

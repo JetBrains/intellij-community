@@ -71,11 +71,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
         parameterTypeToCheck = parameters[i].getType();
       } else {
         PsiType lastParameterType = parameters[parameters.length - 1].getType();
-        if (!(lastParameterType instanceof PsiArrayType)) {
-          parameterTypeToCheck = lastParameterType;
-        } else {
+        if (lastParameterType instanceof PsiArrayType) {
           parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
-        }
+        } else if (parameters.length == myArgumentTypes.length) {
+            parameterTypeToCheck = lastParameterType;
+          } else {
+            return false;
+          }
       }
       if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
