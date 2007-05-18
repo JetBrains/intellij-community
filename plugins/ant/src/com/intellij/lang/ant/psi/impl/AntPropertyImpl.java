@@ -41,14 +41,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
-    final String oldName = getName();
-    synchronized (PsiLock.LOCK) {
-      final AntProperty element = (AntProperty)super.setName(name);
-      final AntFile antFile = getAntFile();
-      antFile.removeProperty(oldName);
-      antFile.setProperty(name, element);
-      return element;
-    }
+    final AntProperty element = (AntProperty)super.setName(name);
+    final AntFile antFile = getAntFile();
+    antFile.invalidateProperties();
+    return element;
   }
 
   public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {

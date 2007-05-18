@@ -83,8 +83,24 @@ public class AntPropertyReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final AntFile antFile = getElement().getAntFile();
-    final AntProperty resolved = antFile != null? antFile.getProperty(getCanonicalText()) : null;
-    return resolved != null? resolved.getFormatElement() : null;
+    final String text = getCanonicalText();
+    final AntProperty resolved = antFile != null? antFile.getProperty(text) : null;
+    if (resolved != null) {
+      final PropertiesFile propFile = resolved.getPropertiesFile();
+      if (propFile != null) {
+        final String prefix = resolved.getPrefix();
+        final String propertyName;
+        if (prefix != null && text.startsWith(prefix) && prefix.length() < text.length() && text.charAt(prefix.length()) == '.') {
+          propertyName = text.substring(prefix.length() + 1);
+        }
+        else {
+          propertyName = text;
+        }
+        return propFile.findPropertyByKey(propertyName);
+      }
+      return resolved.getFormatElement();
+    }
+    return null;
   }
 
   public String getUnresolvedMessagePattern() {

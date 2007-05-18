@@ -9,15 +9,13 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,13 +23,11 @@ import java.util.Set;
  */
 public class PropertiesBuilder extends AntElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.PropertiesBuilder");
-  @NonNls private static final String DSTAMP = "DSTAMP";
-  @NonNls private static final String TSTAMP = "TSTAMP";
-  @NonNls private static final String TODAY = "TODAY";
 
   @NotNull private final AntFile myPropertyHolder;
   private Set<AntTarget> myVisitedTargets = new HashSet<AntTarget>();
   private Set<AntFile> myVisitedFiles = new HashSet<AntFile>();
+  private List<PsiFile> myDependentFiles = new ArrayList<PsiFile>();
   
   private PropertiesBuilder(@NotNull AntFile propertyHolder) {
     myPropertyHolder = propertyHolder;
@@ -94,6 +90,7 @@ public class PropertiesBuilder extends AntElementVisitor {
   public void visitAntProperty(final AntProperty antProperty) {
     final PropertiesFile propertiesFile = antProperty.getPropertiesFile();
     if (propertiesFile != null) {
+      myDependentFiles.add(propertiesFile);
       final String prefix = antProperty.getPrefix();
       for (Property property : propertiesFile.getProperties()) {
         final String name = prefix != null? prefix + "." + property.getName() : property.getName();
@@ -145,11 +142,12 @@ public class PropertiesBuilder extends AntElementVisitor {
   public void visitAntImport(final AntImport antImport) {
     final AntFile antFile = antImport.getImportedFile();
     if (antFile != null) {
+      myDependentFiles.add(antFile);
       visitAntFile(antFile);
     }
   }
 
-  public static void defineProperties(AntFile file) {
+  public static List<PsiFile> defineProperties(AntFile file) {
     final AntProject project = file.getAntProject();
     LOG.assertTrue(project != null);
     
@@ -162,6 +160,7 @@ public class PropertiesBuilder extends AntElementVisitor {
         definePseudoProperties((AntTargetImpl)target);
       }
     }
+    return builder.myDependentFiles;
   }
 
   private static void definePseudoProperties(final AntTargetImpl target) {

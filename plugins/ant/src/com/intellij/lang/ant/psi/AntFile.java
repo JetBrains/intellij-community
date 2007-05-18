@@ -52,12 +52,6 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
 
   void setProperty(final String name, final AntProperty element);
 
-  /**
-   * @param name
-   * @return true if the property has been really removed, false otherwise
-   */
-  boolean removeProperty(final String name);
-
   @NotNull
   AntProperty[] getProperties();
 

@@ -83,6 +83,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private boolean myNeedPropertiesRebuild = false;
   private Map<String, AntProperty> myProperties;
   private volatile AntProperty[] myPropertiesArray;
+  private volatile PropertiesWatcher myDependentFilesWatcher;
   private List<String> myEnvPrefixes;
 
 
@@ -322,7 +323,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return null;
     }
     synchronized (PsiLock.LOCK) {
-      if (myNeedPropertiesRebuild) {
+      if (myNeedPropertiesRebuild || (myDependentFilesWatcher != null && myDependentFilesWatcher.needRebuildProperties())) {
         buildPropertiesMap();
       }
       if (myProperties == null) {
@@ -334,10 +335,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   private void buildPropertiesMap() {
     myNeedPropertiesRebuild = false;
+    myDependentFilesWatcher = null;
     myProperties = new HashMap<String, AntProperty>();
     myPropertiesArray = null;
     loadPredefinedProperties(myProjectProperties, myExternalProperties);
-    PropertiesBuilder.defineProperties(this);
+    final List<PsiFile> dependentFiles = PropertiesBuilder.defineProperties(this);
+    myDependentFilesWatcher = new PropertiesWatcher(dependentFiles);
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -467,17 +470,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         myPropertiesArray = null;
       }
     }
-  }
-
-  public boolean removeProperty(final String name) {
-    synchronized (PsiLock.LOCK) {
-      if (myProperties != null && myProperties.containsKey(name)) {
-        myProperties.remove(name);
-        myPropertiesArray = null;
-        return true;
-      }
-    }
-    return false;
   }
 
   @NotNull
@@ -854,6 +846,31 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         method.setAccessible(true);
       }
       return method;
+    }
+  }
+  
+  private static class PropertiesWatcher {
+    private final List<PsiFile> myDependentFiles;
+    private final long[] myStamps;
+
+    public PropertiesWatcher(List<PsiFile> dependentFiles) {
+      myDependentFiles = dependentFiles;
+      myStamps = new long[dependentFiles.size()];
+
+      int index = 0;
+      for (PsiFile file : dependentFiles) {
+        myStamps[index++] = file.getModificationStamp();
+      }
+    }
+    
+    public boolean needRebuildProperties() {
+      int idx = 0;
+      for (PsiFile file : myDependentFiles) {
+        if (myStamps[idx++] != file.getModificationStamp()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
