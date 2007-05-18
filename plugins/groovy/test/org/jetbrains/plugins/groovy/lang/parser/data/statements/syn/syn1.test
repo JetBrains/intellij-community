@@ -2,7 +2,7 @@ synchronized (monitor){
   for (i in 1..10) println i
 }
 -----
-Groovy script
+roovy script
   Synchronized statement
     PsiElement(synchronized)('synchronized')
     PsiWhiteSpace(' ')
@@ -18,7 +18,7 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         In clause
-          Variable
+          Parameter
             PsiElement(identifier)('i')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')

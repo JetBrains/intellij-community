@@ -6,7 +6,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     In clause
-      Variable
+      Parameter
         PsiElement(identifier)('i')
       PsiWhiteSpace(' ')
       PsiElement(in)('in')
