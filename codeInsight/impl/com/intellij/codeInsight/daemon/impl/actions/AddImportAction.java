@@ -112,7 +112,7 @@ public class AddImportAction implements QuestionAction {
         }
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        new OptimizeImportsProcessor(myProject, psiFile).run();
+        new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();
       }
       catch(IncorrectOperationException e){
         LOG.error(e);

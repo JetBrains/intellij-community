@@ -362,31 +362,26 @@ public abstract class AbstractLayoutCodeProcessor {
         */
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  CommandProcessor.getInstance().executeCommand(
-                      myProject,
-                      new Runnable() {
-                        public void run() {
-                          CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-                          ApplicationManager.getApplication().runWriteAction(writeAction);
+          public void run() {
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              public void run() {
+                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+                ApplicationManager.getApplication().runWriteAction(writeAction);
 
-                          if (myPostRunnable != null){
-                            ApplicationManager.getApplication().invokeLater(myPostRunnable);
-                          }
-                        }
-                      },
-                      myCommandName,
-                      null
-                  );
+                if (myPostRunnable != null) {
+                  ApplicationManager.getApplication().invokeLater(myPostRunnable);
                 }
-              }, modalityState);
+              }
+            }, myCommandName, null);
+          }
+        }, modalityState);
       }
     };
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
 
-  public void testRun() throws IncorrectOperationException {
+  public void runWithoutProgress() throws IncorrectOperationException {
     final Runnable runnable = preprocessFile(myFile);
     runnable.run();
   }
