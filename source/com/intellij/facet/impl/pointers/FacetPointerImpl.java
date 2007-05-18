@@ -10,19 +10,15 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author nik
@@ -130,30 +126,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
 
   @Nullable
   public FacetType<F, ?> getFacetType() {
-    FacetType type = FacetTypeRegistry.getInstance().findFacetType(myFacetTypeId);
-    if (type == null) {
-      type = findJavaeeFacetType(myFacetTypeId);
-    }
     //noinspection unchecked
-    return type;
+    return FacetTypeRegistry.getInstance().findFacetType(myFacetTypeId);
   }
-
-
-  //todo[nik] remove when FacetType for javaee facets will be registered in FacetTypeRegistry
-  private static List<FacetType<?, ?>> ourAdditionalFacetTypes = new ArrayList<FacetType<?,?>>();
-
-  public static void registerAdditionalFacetType(FacetType<?, ?> facetType) {
-    ourAdditionalFacetTypes.add(facetType);
-  }
-
-  @Nullable
-  private static FacetType<?, ?> findJavaeeFacetType(@NotNull @NonNls String typeId) {
-    for (FacetType<?, ?> facetType : ourAdditionalFacetTypes) {
-      if (facetType.getStringId().equals(typeId)) {
-        return facetType;
-      }
-    }
-    return null;
-  }
-
 }
