@@ -104,7 +104,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
       @Nullable
       public String getLocationString() {
-        return "in " + getContainingFile().getVirtualFile().getName();                  // TODO implement
+        PsiFile file = getContainingFile();
+        if (file instanceof GroovyFile) {
+          GroovyFile groovyFile = (GroovyFile) file;
+          
+          return groovyFile.getPackageName().length() >0 ?
+              "(" + groovyFile.getPackageName() +")" :
+              "";
+        }
+        return "";
       }
 
       @Nullable

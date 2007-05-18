@@ -30,6 +30,8 @@ Groovy script
   Closable block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
+    Parameter list
+      <empty list>
     Reference expression
       PsiElement(identifier)('doNothing')
     PsiWhiteSpace(' ')

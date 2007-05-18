@@ -31,6 +31,8 @@ Groovy script
         PsiWhiteSpace(' ')
         Closable block
           PsiElement({)('{')
+          Parameter list
+            <empty list>
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'catch' without 'try'
@@ -52,6 +54,8 @@ Groovy script
         PsiWhiteSpace(' ')
         Closable block
           PsiElement({)('{')
+          Parameter list
+            <empty list>
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'finally' without 'try'
@@ -59,6 +63,8 @@ Groovy script
       Closable block
         PsiElement({)('{')
         PsiWhiteSpace(' ')
+        Parameter list
+          <empty list>
         Reference expression
           PsiElement(identifier)('doNothing')
         PsiWhiteSpace(' ')

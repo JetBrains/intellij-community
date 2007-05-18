@@ -10,8 +10,10 @@ Groovy script
       PsiElement(identifier)('l')
     PsiElement(:)(':')
     PsiWhiteSpace(' ')
-    Open block
+    Closable block
       PsiElement({)('{')
+      Parameter list
+        <empty list>
       Call expression
         Reference expression
           PsiElement(identifier)('println')

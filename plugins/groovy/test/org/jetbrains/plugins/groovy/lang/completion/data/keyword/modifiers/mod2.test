@@ -1,0 +1,6 @@
+p<caret> class A {}
+-----
+package
+private
+protected
+public

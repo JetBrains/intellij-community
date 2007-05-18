@@ -13,8 +13,10 @@ Groovy script
   PsiElement(new line)('\n')
   Compound Gstring
     PsiElement(Gstring begin)('"My $')
-    Open block
+    Closable block
       PsiElement({)('{')
+      Parameter list
+        <empty list>
       Reference expression
         PsiElement(identifier)('str')
       PsiElement(})('}')

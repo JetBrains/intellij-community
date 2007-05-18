@@ -20,6 +20,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 
 /**
  * @author ilyas
@@ -30,7 +32,14 @@ public class PackageFilter implements ElementFilter {
         !(context.getParent() instanceof PsiErrorElement) &&
         context.getParent().getParent() instanceof GroovyFile &&
         ((GroovyFile) context.getParent().getParent()).getPackageDefinition() == null) {
-      return true;
+      if (context.getParent() instanceof GrReferenceExpression) {
+        return true;
+      }
+      if (context.getParent() instanceof GrApplicationExpression &&
+          ((GrApplicationExpression) context.getParent()).getArguments()[0] instanceof GrReferenceExpression) {
+        return true;
+      }
+      return false;
     }
     return false;
   }

@@ -13,6 +13,8 @@ Groovy script
   PsiElement(new line)('\n')
   Closable block
     PsiElement({)('{')
+    Parameter list
+      <empty list>
     Method call
       Reference expression
         PsiElement(identifier)('doSomenthing')

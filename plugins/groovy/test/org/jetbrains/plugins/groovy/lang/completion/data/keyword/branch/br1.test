@@ -4,4 +4,6 @@ while (true) {
   }
 }
 -----
+boolean
 break
+byte

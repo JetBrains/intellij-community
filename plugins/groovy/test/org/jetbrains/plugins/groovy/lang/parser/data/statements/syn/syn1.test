@@ -2,7 +2,7 @@ synchronized (monitor){
   for (i in 1..10) println i
 }
 -----
-roovy script
+Groovy script
   Synchronized statement
     PsiElement(synchronized)('synchronized')
     PsiWhiteSpace(' ')

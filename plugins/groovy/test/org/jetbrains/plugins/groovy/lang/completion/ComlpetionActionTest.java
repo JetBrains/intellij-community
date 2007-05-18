@@ -7,13 +7,10 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.codeInsight.completion.*;
@@ -22,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ActionRunner;
 
 
 import java.io.IOException;

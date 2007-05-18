@@ -10,8 +10,10 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound regular expression
       PsiElement(regex begin)('/abc $')
-      Open block
+      Closable block
         PsiElement({)('{')
+        Parameter list
+          <empty list>
         Call expression
           Reference expression
             PsiElement(identifier)('do')
@@ -19,8 +21,10 @@ Groovy script
           Command arguments
             Compound Gstring
               PsiElement(Gstring begin)('"def $')
-              Open block
+              Closable block
                 PsiElement({)('{')
+                Parameter list
+                  <empty list>
                 Additive expression
                   Reference expression
                     PsiElement(identifier)('a')
@@ -34,8 +38,10 @@ Groovy script
       Reference expression
         PsiElement(identifier)('st')
       PsiElement(regex content)(' $')
-      Open block
+      Closable block
         PsiElement({)('{')
+        Parameter list
+          <empty list>
         Method call
           Property selection
             Reference expression

@@ -63,7 +63,7 @@ public class RegexConstructorExpression implements GroovyElementTypes {
       PathExpression.parse(builder);
       return PATH_EXPRESSION;
     } else if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parse(builder);
+      OpenOrClosableBlock.parseClosableBlock(builder);
       return CLOSABLE_BLOCK;
     }
     return WRONGWAY;

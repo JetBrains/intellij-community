@@ -7,6 +7,8 @@ Groovy script
   PsiElement(new line)('\n')
   Closable block
     PsiElement({)('{')
+    Parameter list
+      <empty list>
     Additive expression
       Literal
         PsiElement(number)('1')

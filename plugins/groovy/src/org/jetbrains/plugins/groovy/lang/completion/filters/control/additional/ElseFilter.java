@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author ilyas
@@ -28,17 +28,17 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 public class ElseFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
-        GroovyCompletionData.nearestLeftSibling(context.getParent()) instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) GroovyCompletionData.nearestLeftSibling(context.getParent());
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrIfStatement) {
+      GrIfStatement statement = (GrIfStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent());
       if (statement.getElseBranch() == null) { 
         return true;
       }
       return true;
     }
     if (context.getParent() != null &&
-        GroovyCompletionData.nearestLeftSibling(context) != null &&
-        GroovyCompletionData.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) GroovyCompletionData.nearestLeftSibling(context).getPrevSibling();
+        GroovyCompletionUtil.nearestLeftSibling(context) != null &&
+        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {
+      GrIfStatement statement = (GrIfStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
       if (statement.getElseBranch() == null) {
         return true;
       }

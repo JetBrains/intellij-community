@@ -1,0 +1,3 @@
+boolean a = b in<caret> D
+-----
+instanceof

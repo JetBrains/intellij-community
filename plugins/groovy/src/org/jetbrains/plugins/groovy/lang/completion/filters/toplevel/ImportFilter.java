@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author ilyas
@@ -28,7 +29,8 @@ public class ImportFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
         !(context.getParent() instanceof PsiErrorElement) &&
-            context.getParent().getParent() instanceof GroovyFile) {
+        GroovyCompletionUtil.isNewStatement(context.getParent(), false) &&
+        context.getParent().getParent() instanceof GroovyFile) {
       return true;
     }
     return false;
@@ -39,7 +41,7 @@ public class ImportFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
+  public String toString() {
     return "'import' keyword filter";
   }
 }

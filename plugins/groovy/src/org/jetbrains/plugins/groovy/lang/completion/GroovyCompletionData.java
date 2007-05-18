@@ -22,8 +22,6 @@ import com.intellij.codeInsight.completion.WordCompletionData;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
@@ -41,8 +39,9 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilt
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ThrowsFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ModifiersFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.PreviousModifierFilter;
 
 import java.util.Set;
 
@@ -54,18 +53,6 @@ public class GroovyCompletionData extends CompletionData {
   public GroovyCompletionData() {
     registerAllCompletions();
 
-  }
-
-  @Nullable
-  public static PsiElement nearestLeftSibling(PsiElement elem) {
-    elem = elem.getPrevSibling();
-    while (elem != null &&
-        (elem instanceof PsiWhiteSpace ||
-            elem instanceof PsiComment ||
-            GroovyTokenTypes.mNLS.equals(elem.getNode().getElementType()))) {
-      elem = elem.getPrevSibling();
-    }
-    return elem;
   }
 
   private void registerAllCompletions1() {
@@ -83,10 +70,11 @@ public class GroovyCompletionData extends CompletionData {
         "else", // Additional 3
         "true", "false", "null", "super", "new", "this", // Expressions
         "instanceof",
+        "private", "public", "protected", "transient", "native", "threadsafe", "volatile", "static", "def", "void",
+        "throws",
 
         "boolean", "byte", "char", "short", "int", "float", "long", "double", "any", // Built-in Types
-        "private", "public", "protected", "transient", "native", "threadsafe", "volatile", "static", "def", "void",
-        "throws"
+
 
     };
 
@@ -109,7 +97,7 @@ public class GroovyCompletionData extends CompletionData {
     registerInstanceofCompletion();
     registerThrowsCompletion();
     registerBranchCompletion();
-
+    registerModifierCompletion();
   }
 
 
@@ -137,8 +125,10 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerBuiltInTypeCompletion() {
-    String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "any"};
+    String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double"};
     registerStandardCompletion(new BuiltInTypeFilter(), builtInTypes);
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()),
+        new String[]{"boolean", "byte", "char", "short", "int", "float", "long", "double"});
   }
 
   private void registerSimpleExprsCompletion() {
@@ -147,7 +137,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerThrowsCompletion() {
-    registerStandardCompletion(new SimpleExpressionFilter(), "throws");
+    registerStandardCompletion(new ThrowsFilter(), "throws");
   }
 
   private void registerImportCompletion() {
@@ -160,6 +150,14 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerBranchCompletion() {
     registerStandardCompletion(new BranchFilter(), "break", "continue");
+  }
+
+  private void registerModifierCompletion() {
+    String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
+        "native", "threadsafe", "volatile", "strictfp"};
+    registerStandardCompletion(new ModifiersFilter(), modifiers);
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
+        "native", "threadsafe", "volatile", "strictfp", "synchronyzed"});
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {

@@ -36,7 +36,7 @@ public class ParameterDeclarationList implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, IElementType ending) {
 //    if (ParserUtils.lookAhead(builder, mRPAREN)) return NONE;
 
-    if (ParserUtils.lookAhead(builder, mRPAREN)) {
+    if (ParserUtils.lookAhead(builder, mRPAREN) && mRPAREN.equals(ending)) {
       PsiBuilder.Marker pdlMarker = builder.mark();
       pdlMarker.done(PARAMETERS_LIST);
       return NONE;
@@ -47,7 +47,6 @@ public class ParameterDeclarationList implements GroovyElementTypes {
     GroovyElementType result = ParameterDeclaration.parse(builder, ending);
 
     if (!PARAMETER.equals(result)) {
-//      pdlMarker.rollbackTo();
       pdlMarker.done(PARAMETERS_LIST);
       return WRONGWAY;
     }

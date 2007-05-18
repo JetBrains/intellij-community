@@ -10,7 +10,7 @@ import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -25,23 +25,25 @@ public class InstanceOfFilter implements ElementFilter {
       return true;
     }
     if (context != null &&
-        GroovyCompletionData.nearestLeftSibling(context) instanceof PsiErrorElement &&
-        GroovyCompletionData.nearestLeftSibling(context).getPrevSibling() instanceof  GrExpression) {
+        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
       return true;
     }
-    if (context.getParent() instanceof PsiErrorElement){
-      PsiElement leftSibling = GroovyCompletionData.nearestLeftSibling(context.getParent());
+    if (context.getParent() instanceof PsiErrorElement) {
+      PsiElement leftSibling = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
       if (leftSibling != null && leftSibling.getLastChild() instanceof GrExpression) {
         return true;
       }
     }
     if (context.getParent() instanceof GrReferenceExpression &&
-        GroovyCompletionData.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
-        GroovyCompletionData.nearestLeftSibling(context.getParent()).getPrevSibling() instanceof  GrExpression) {
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling())) {
       return true;
     }
-
-
+    if (context.getParent() instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()))) {
+      return true;
+    }
 
     return false;
   }
