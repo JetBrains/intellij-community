@@ -28,11 +28,11 @@ public class MoveChange extends StructuralChange {
   }
 
   @Override
-  protected IdPath doApplyTo(RootEntry root) {
-    IdPath firstIdPath = root.getEntry(myPath).getIdPath();
+  protected IdPath doApplyTo(RootEntry r) {
+    IdPath firstIdPath = r.getEntry(myPath).getIdPath();
 
-    root.move(myPath, myNewParentPath);
-    myTargetIdPath = root.getEntry(getNewPath()).getIdPath();
+    r.move(myPath, myNewParentPath);
+    myTargetIdPath = r.getEntry(getNewPath()).getIdPath();
 
     return firstIdPath;
   }
@@ -42,10 +42,10 @@ public class MoveChange extends StructuralChange {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void revertOn(RootEntry r) {
     IdPath newPath = myTargetIdPath;
     IdPath oldParentPath = myAffectedIdPath.getParent();
-    root.move(newPath, oldParentPath);
+    r.move(newPath, oldParentPath);
   }
 
   @Override

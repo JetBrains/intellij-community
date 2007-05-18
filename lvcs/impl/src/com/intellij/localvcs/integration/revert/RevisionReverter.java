@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public abstract class RevisionReverter {
+public abstract class RevisionReverter extends Reverter {
   protected IdeaGateway myGateway;
   protected Revision myLeftRevision;
   protected Entry myLeftEntry;

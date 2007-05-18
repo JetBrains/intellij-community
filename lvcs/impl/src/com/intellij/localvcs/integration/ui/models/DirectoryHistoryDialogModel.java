@@ -23,7 +23,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public RevisionReverter createReverter() {
+  protected RevisionReverter createRevisionReverter() {
     return createReverter(getLeftEntry(), getRightEntry());
   }
 

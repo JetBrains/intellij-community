@@ -199,7 +199,35 @@ public class ChangeReverterTest extends IntegrationTestCase {
     assertCanNotRevertLastChange(f1);
   }
 
-  // todo test ro status clearing
+  public void testCanNotRevertDeletionIfSomeFilesAlreadyExist() throws Exception {
+    VirtualFile f1 = root.createChildData(null, "f1.java");
+    VirtualFile f2 = root.createChildData(null, "f2.java");
+
+    f1.delete(null);
+    f2.rename(null, "f1.java");
+
+    assertCanNotRevertLastChange(f1);
+  }
+
+  //public void testCanNotRevertMovementIfSomeFilesAlreadyExist() throws Exception {
+  //  VirtualFile f1 = root.createChildData(null, "f1.java");
+  //  VirtualFile f2 = root.createChildData(null, "f2.java");
+  //  VirtualFile dir = root.createChildDirectory(null, "dir");
+  //
+  //  f1.move(null, dir);
+  //  f2.rename(null, "f1.java");
+  //
+  //  assertCanNotRevertLastChange(f1);
+  //}
+  //
+  //// todo test ro status clearing
+  //public void testClearingROStatus() throws Exception {
+  //  fail();
+  //}
+  //
+  //public void testClearingROStatusOnlyFromExistedFiles() throws Exception {
+  //  fail();
+  //}
 
   public void testDoesNotRevertPrecedingChanges() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
@@ -220,7 +248,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
   }
 
   private void assertCanNotRevertLastChange(VirtualFile f) throws IOException {
-    assertFalse(createReverter(f, 0).canRevert());
+    assertFalse(createReverter(f, 0).checkCanRevert().isEmpty());
   }
 
   private ChangeReverter createReverter(VirtualFile f, int index) {

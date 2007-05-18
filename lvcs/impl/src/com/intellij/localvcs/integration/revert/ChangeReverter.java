@@ -8,8 +8,10 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
-public class ChangeReverter {
+public class ChangeReverter extends Reverter {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   private Change myChange;
@@ -21,8 +23,9 @@ public class ChangeReverter {
     myChange = c;
   }
 
-  public boolean canRevert() throws IOException {
-    final boolean result[] = new boolean[]{true};
+  @Override
+  public List<String> checkCanRevert() throws IOException {
+    final boolean[] result = new boolean[]{true};
 
     myVcs.accept(new ChangeRevertionVisitor(myVcs, myGateway) {
       @Override
@@ -47,11 +50,12 @@ public class ChangeReverter {
       }
     });
 
-    return result[0];
+    return Collections.singletonList("some files already exist");
   }
 
   // todo refactor myChangeList.isInTheChain and test it
 
+  @Override
   public void revert() throws IOException {
     myVcs.accept(new ChangeRevertionVisitor(myVcs, myGateway) {
       @Override

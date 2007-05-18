@@ -3,6 +3,9 @@ package com.intellij.localvcs.integration.ui.views.table;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.util.ui.Table;
 
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
@@ -12,7 +15,7 @@ import java.awt.event.MouseEvent;
 public class RevisionsTable extends Table {
   private ShiftedCellRendererWrapper myShiftedCellRenderer = new ShiftedCellRendererWrapper();
 
-  public RevisionsTable(HistoryDialogModel m) {
+  public RevisionsTable(HistoryDialogModel m, SelectionListener l) {
     super(new RevisionsTableModel(m));
     setDefaultRenderer(Object.class, new RevisionsTableCellRenderer());
 
@@ -23,6 +26,15 @@ public class RevisionsTable extends Table {
 
     cm.getColumn(0).setResizable(false);
     cm.getColumn(1).setResizable(false);
+
+    setCellSelectionEnabled(true);
+
+    addSelectionListener(l);
+  }
+
+  private void addSelectionListener(SelectionListener l) {
+    ListSelectionModel sm = getSelectionModel();
+    sm.addListSelectionListener(new MyListSelectionListener(l));
   }
 
   public void setUI(TableUI ui) {
@@ -75,4 +87,52 @@ public class RevisionsTable extends Table {
     return delta;
   }
 
+  public interface SelectionListener {
+    void changesSelected(int first, int last);
+
+    void revisionsSelected(int first, int last);
+  }
+
+  private class MyListSelectionListener implements ListSelectionListener {
+    private int myLastSelectedRow1 = 0;
+    private int myLastSelectedRow2 = 0;
+    private int myLastSelectedColumn1 = 1;
+    private int myLastSelectedColumn2 = 1;
+    private SelectionListener mySelectionListener;
+
+    public MyListSelectionListener(SelectionListener l) {
+      mySelectionListener = l;
+    }
+
+    public void valueChanged(ListSelectionEvent e) {
+      ListSelectionModel sm = getSelectionModel();
+      ListSelectionModel csm = getColumnModel().getSelectionModel();
+
+      if (!isValidSelection()) {
+        sm.setSelectionInterval(myLastSelectedRow1, myLastSelectedRow2);
+        csm.setSelectionInterval(myLastSelectedColumn1, myLastSelectedColumn2);
+      }
+      else {
+        if (e.getValueIsAdjusting()) return;
+
+        myLastSelectedRow1 = sm.getMinSelectionIndex();
+        myLastSelectedRow2 = sm.getMaxSelectionIndex();
+        myLastSelectedColumn1 = csm.getMinSelectionIndex();
+        myLastSelectedColumn2 = csm.getMaxSelectionIndex();
+
+        if (myLastSelectedColumn1 == 2) {
+          mySelectionListener.changesSelected(myLastSelectedRow1, myLastSelectedRow2);
+        }
+        else {
+          mySelectionListener.revisionsSelected(myLastSelectedRow1, myLastSelectedRow2);
+        }
+      }
+    }
+
+    private boolean isValidSelection() {
+      if (getSelectedColumnCount() > 1) return false;
+      if (getSelectedColumn() < 2) return true;
+      return !isRowSelected(getRowCount() - 1);
+    }
+  }
 }

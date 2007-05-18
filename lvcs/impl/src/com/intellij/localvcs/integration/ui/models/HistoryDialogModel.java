@@ -4,6 +4,8 @@ import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.revert.ChangeReverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.localvcs.integration.revert.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -13,9 +15,11 @@ public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
-  private int myRightRevision;
-  private int myLeftRevision;
+  private int myRightRevisionIndex;
+  private int myLeftRevisionIndex;
+  private boolean myIsChangesSelected = false;
   private List<Revision> myRevisionsCache;
+
 
   public HistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
@@ -34,11 +38,11 @@ public abstract class HistoryDialogModel {
   }
 
   protected Revision getLeftRevision() {
-    return getRevisions().get(myLeftRevision);
+    return getRevisions().get(myLeftRevisionIndex);
   }
 
   protected Revision getRightRevision() {
-    return getRevisions().get(myRightRevision);
+    return getRevisions().get(myRightRevisionIndex);
   }
 
   protected Entry getLeftEntry() {
@@ -50,23 +54,45 @@ public abstract class HistoryDialogModel {
   }
 
   public void selectRevisions(int first, int second) {
+    doSelect(first, second);
+    myIsChangesSelected = false;
+  }
+
+  public void selectChanges(int first, int second) {
+    doSelect(first, second + 1);
+    myIsChangesSelected = true;
+  }
+
+  private void doSelect(int first, int second) {
     if (first == second) {
-      myRightRevision = 0;
-      myLeftRevision = first == -1 ? 0 : first;
+      myRightRevisionIndex = 0;
+      myLeftRevisionIndex = first == -1 ? 0 : first;
     }
     else {
-      myRightRevision = first;
-      myLeftRevision = second;
+      myRightRevisionIndex = first;
+      myLeftRevisionIndex = second;
     }
   }
 
   protected boolean isCurrentRevisionSelected() {
-    return myRightRevision == 0;
+    return myRightRevisionIndex == 0;
   }
 
-  public abstract RevisionReverter createReverter();
+  public Reverter createReverter() {
+    if (myIsChangesSelected) return createChangeReverter();
+    return createRevisionReverter();
+  }
+
+  private ChangeReverter createChangeReverter() {
+    return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange());
+  }
+
+  protected abstract RevisionReverter createRevisionReverter();
 
   public boolean isRevertEnabled() {
-    return isCurrentRevisionSelected() && myLeftRevision > 0;
+    if (myIsChangesSelected) {
+      return myLeftRevisionIndex - myRightRevisionIndex == 1;
+    }
+    return isCurrentRevisionSelected() && myLeftRevisionIndex > 0;
   }
 }

@@ -29,28 +29,15 @@ public class ShiftedCellRendererWrapper extends JPanel implements TableCellRende
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myRendererComponent != null) remove(myRendererComponent);
     myRendererComponent = null;
-    if (value != null) {
-      myRendererComponent = (JComponent)myDataRenderer.
-        getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (myRendererComponent == null) return null;
-      myBorder.setColor(table.getGridColor());
-      setForeground(myRendererComponent.getForeground());
-      setFont(myRendererComponent.getFont());
-      setBorder(myBorder);
-    }
-    else {
-      int modelColumn = table.convertColumnIndexToModel(column);
-      if (row > 0 && table.getModel().getValueAt(row - 1, modelColumn) != null) {
-        myRendererComponent = myPrevBottomRenderer;
-        myPrevBottomBorder.setLineColor(table.getGridColor());
-        myPrevBottomRenderer.setBackground(table.getBackground());
-        myPrevBottomRenderer.setForeground(table.getForeground());
-        myPrevBottomRenderer.setFont(table.getFont());
-      }
-      setBorder(myEmptyBorder);
-      setForeground(table.getForeground());
-      setFont(table.getFont());
-    }
+
+    myRendererComponent = (JComponent)myDataRenderer.
+      getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    if (myRendererComponent == null) return null;
+    myBorder.setColor(table.getGridColor());
+    setForeground(myRendererComponent.getForeground());
+    setFont(myRendererComponent.getFont());
+    setBorder(myBorder);
+
     if (myRendererComponent != null) add(myRendererComponent, BorderLayout.CENTER);
     setBackground(table.getBackground());
     return this;

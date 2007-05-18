@@ -69,37 +69,33 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testSelectingLastRevisionByDefault() {
-    assertEquals("3", m.getLeftRevision().getCauseChangeName());
-    assertEquals("3", m.getRightRevision().getCauseChangeName());
+    String leftChangeName = "3";
+    String rightChangeName = "3";
+    assertSelectedRevisins(leftChangeName, rightChangeName);
   }
 
   @Test
   public void testSelectingOnlyOneRevisionSetsRightToLastOne() {
     m.selectRevisions(0, 0);
-    assertEquals("3", m.getLeftRevision().getCauseChangeName());
-    assertEquals("3", m.getRightRevision().getCauseChangeName());
+    assertSelectedRevisins("3", "3");
 
     m.selectRevisions(1, 1);
-    assertEquals("2", m.getLeftRevision().getCauseChangeName());
-    assertEquals("3", m.getRightRevision().getCauseChangeName());
+    assertSelectedRevisins("2", "3");
   }
 
   @Test
   public void testSelectingTwoRevisions() {
     m.selectRevisions(0, 1);
-    assertEquals("2", m.getLeftRevision().getCauseChangeName());
-    assertEquals("3", m.getRightRevision().getCauseChangeName());
+    assertSelectedRevisins("2", "3");
 
     m.selectRevisions(1, 2);
-    assertEquals("1", m.getLeftRevision().getCauseChangeName());
-    assertEquals("2", m.getRightRevision().getCauseChangeName());
+    assertSelectedRevisins("1", "2");
   }
 
   @Test
   public void testClearingSelectionSetsRevisionsToLastOnes() {
     m.selectRevisions(-1, -1);
-    assertEquals("3", m.getLeftRevision().getCauseChangeName());
-    assertEquals("3", m.getRightRevision().getCauseChangeName());
+    assertSelectedRevisins("3", "3");
   }
 
   @Test
@@ -115,7 +111,38 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testIsRevertEnabled() {
+  public void testSelectingSingleChange() {
+    m.selectChanges(0, 0);
+    assertSelectedRevisins("2", "3");
+
+    m.selectChanges(1, 1);
+    assertSelectedRevisins("1", "2");
+  }
+
+  @Test
+  public void testSelectingSeveralChanges() {
+    vcs.beginChangeSet();
+    vcs.changeFileContent("f", cf(""), -1);
+    vcs.endChangeSet("4");
+
+    vcs.beginChangeSet();
+    vcs.changeFileContent("f", cf(""), -1);
+    vcs.endChangeSet("5");
+
+    initModelFor("f");
+
+    m.selectChanges(0, 1);
+    assertSelectedRevisins("3", "5");
+
+    m.selectChanges(1, 2);
+    assertSelectedRevisins("2", "4");
+
+    m.selectChanges(0, 3);
+    assertSelectedRevisins("1", "5");
+  }
+
+  @Test
+  public void testIsRevertEnabledForRevision() {
     m.selectRevisions(1, 1);
     assertTrue(m.isRevertEnabled());
 
@@ -132,13 +159,30 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertFalse(m.isRevertEnabled());
   }
 
+  @Test
+  public void testIsRevertEnabledForChange() {
+    m.selectChanges(0, 0);
+    assertTrue(m.isRevertEnabled());
+
+    m.selectChanges(1, 1);
+    assertTrue(m.isRevertEnabled());
+
+    m.selectChanges(0, 1);
+    assertFalse(m.isRevertEnabled());
+  }
+
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new HistoryDialogModel(f, vcs, gw) {
       @Override
-      public RevisionReverter createReverter() {
+      protected RevisionReverter createRevisionReverter() {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  private void assertSelectedRevisins(String leftChangeName, String rightChangeName) {
+    assertEquals(leftChangeName, m.getLeftRevision().getCauseChangeName());
+    assertEquals(rightChangeName, m.getRightRevision().getCauseChangeName());
   }
 }

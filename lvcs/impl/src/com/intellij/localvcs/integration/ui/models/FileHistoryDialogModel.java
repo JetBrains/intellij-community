@@ -41,12 +41,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  public RevisionReverter createReverter() {
+  protected RevisionReverter createRevisionReverter() {
     return new FileReverter(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
-  }
-
-  @Override
-  public boolean isRevertEnabled() {
-    return super.isRevertEnabled() && !getLeftEntry().hasUnavailableContent();
   }
 }

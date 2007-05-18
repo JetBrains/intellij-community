@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration.ui.views;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
-import com.intellij.localvcs.integration.revert.RevisionReverter;
+import com.intellij.localvcs.integration.revert.Reverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
@@ -22,8 +22,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
@@ -96,25 +94,20 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private JComponent createRevisionsTable(ActionGroup actions) {
-    JTable t = new RevisionsTable(myModel);
+    JTable t = new RevisionsTable(myModel, new RevisionsTable.SelectionListener() {
+      public void changesSelected(int first, int last) {
+        myModel.selectChanges(first, last);
+        updateDiffs();
+      }
 
-    addPopupMenuToComponent(t, actions);
-    addSelectionListener(t);
-
-    return ScrollPaneFactory.createScrollPane(t);
-  }
-
-  private void addSelectionListener(JTable t) {
-    final ListSelectionModel selectionModel = t.getSelectionModel();
-    selectionModel.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) return;
-        int first = selectionModel.getMinSelectionIndex();
-        int last = selectionModel.getMaxSelectionIndex();
+      public void revisionsSelected(int first, int last) {
         myModel.selectRevisions(first, last);
         updateDiffs();
       }
     });
+    addPopupMenuToComponent(t, actions);
+
+    return ScrollPaneFactory.createScrollPane(t);
   }
 
   protected void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
@@ -192,7 +185,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
   }
 
-  protected void revert(RevisionReverter r) {
+  protected void revert(Reverter r) {
     try {
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {
