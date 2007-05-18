@@ -47,7 +47,8 @@ public class ParameterDeclarationList implements GroovyElementTypes {
     GroovyElementType result = ParameterDeclaration.parse(builder, ending);
 
     if (!PARAMETER.equals(result)) {
-      pdlMarker.rollbackTo();
+//      pdlMarker.rollbackTo();
+      pdlMarker.done(PARAMETERS_LIST);
       return WRONGWAY;
     }
 
@@ -75,7 +76,8 @@ public class ParameterDeclarationList implements GroovyElementTypes {
       pdlMarker.done(PARAMETERS_LIST);
       return PARAMETERS_LIST;
     } else {
-      pdlMarker.rollbackTo();
+//      pdlMarker.rollbackTo();
+      pdlMarker.done(PARAMETERS_LIST);
       return WRONGWAY;
     }
 
