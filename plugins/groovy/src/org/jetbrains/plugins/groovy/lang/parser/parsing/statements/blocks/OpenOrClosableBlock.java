@@ -92,7 +92,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
     ParserUtils.getToken(builder, mNLS);
-    closableBlockParamsOpt(builder);
+    GroovyElementType res = closableBlockParamsOpt(builder);
+    if (WRONGWAY.equals(res)){
+      PsiBuilder.Marker listMarker = builder.mark();
+      listMarker.done(PARAMETERS_LIST);
+    }
     parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CLOSABLE_BLOCK);
