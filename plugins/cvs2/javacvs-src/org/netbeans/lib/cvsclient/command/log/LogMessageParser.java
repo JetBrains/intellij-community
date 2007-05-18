@@ -12,8 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.command.log;
 
-import com.intellij.util.text.SyncDateFormat;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
@@ -26,6 +26,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Thomas Singer
@@ -82,6 +83,7 @@ final public class LogMessageParser extends AbstractMessageParser {
   private boolean addingDescription;
   private boolean processingRevision;
   private List<String> logMessageBuffer;
+  private Pattern myRevisionPattern;
 
   // Setup ==================================================================
 
@@ -92,6 +94,8 @@ final public class LogMessageParser extends AbstractMessageParser {
 
     this.cvsFileSystem = cvsFileSystem;
     this.eventSender = eventSender;
+
+    myRevisionPattern = Pattern.compile("revision \\d+(\\.\\d+){1,3}.*");
   }
 
   // Implemented ============================================================
@@ -148,7 +152,7 @@ final public class LogMessageParser extends AbstractMessageParser {
         return;
       }
 
-      if (line.startsWith(REVISION)) {
+      if (myRevisionPattern.matcher(line).matches()) {
         processRevisionStart(line);
         return;
       }
