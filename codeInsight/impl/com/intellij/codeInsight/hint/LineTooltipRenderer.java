@@ -1,23 +1,38 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplittingUtil;
+import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * @author cdr
  */
 public class LineTooltipRenderer implements TooltipRenderer {
   @NonNls private String myText;
+
+  private boolean myActiveLink = false;
 
   public LineTooltipRenderer(String text) {
     myText = text;
@@ -28,58 +43,67 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   public LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group) {
+    if (myText == null) return null;
+
+    myText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
 
     final HintManager hintManager = HintManager.getInstance();
 
     final JComponent editorComponent = editor.getComponent();
-    JLabel label = new JLabel();
+    final JEditorPane pane = initPane(myText);
+    pane.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        myActiveLink = true;
+        if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+          myActiveLink = false;
+          return;
+        } 
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          showDescription(e.getDescription(), editor, pane);
+        }
+      }
+    });
     final JComponent contentComponent = editor.getContentComponent();
     // This listeners makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
-    label.addMouseListener(
-      new MouseAdapter() {
-        public void mousePressed(MouseEvent e) {
+    pane.addMouseListener(new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        if (!myActiveLink) {
           MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
           hintManager.hideAllHints();
           contentComponent.dispatchEvent(newMouseEvent);
         }
       }
-    );
 
-    label.setBorder(
-      BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(Color.black),
-        BorderFactory.createEmptyBorder(0, 5, 0, 5)
-      )
-    );
-    label.setForeground(Color.black);
-    label.setBackground(HintUtil.INFORMATION_COLOR);
-    label.setOpaque(true);
+      public void mouseExited(final MouseEvent e) {
+        hintManager.hideAllHints();
+      }
+    });
 
-    String text = myText;
+    int width = pane.getPreferredSize().width;
 
-    if (text == null) return null;
-    label.setText(text);
-    int width = label.getPreferredSize().width;
-
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
+
+    String text = myText;
+
+
     if (!isRichHtml(text) && width > widthLimit / 3) {
-      label.setUI(new MultiLineLabelUI());
-      text = splitText(label, text, widthLimit);
-      label.setText(text);
+      //pane.setUI(new MultiLineLabelUI());
+      text = splitText(pane, text, widthLimit);
+      pane.setText(text);
     }
 
     if (alignToRight) {
-      p.x -= label.getPreferredSize().width;
+      p.x -= pane.getPreferredSize().width;
     }
 
     // try to make cursor outside tooltip. SCR 15038
     p.x += 3;
     p.y += 3;
-    width = label.getPreferredSize().width;
+    width = pane.getPreferredSize().width;
     if (p.x + width >= widthLimit) {
       p.x = widthLimit - width;
     }
@@ -87,15 +111,62 @@ public class LineTooltipRenderer implements TooltipRenderer {
       p.x = 3;
     }
 
-    int height = label.getPreferredSize().height;
+    final int height = pane.getPreferredSize().height;
     if (p.y + height > heightLimit) {
       p.y = heightLimit - height;
     }
-    LightweightHint hint = new LightweightHint(label);
+    final LightweightHint hint = new LightweightHint(pane);
     hintManager.showEditorHint(hint, editor, p,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
                                HintManager.HIDE_BY_SCROLLING, 0, false);
     return hint;
+  }
+
+  private static JEditorPane initPane(@NonNls String text) {
+    final Font font = UIUtil.getLabelFont();
+    text = text.replace("<html>", "<html><head><style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style></head>");
+    final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
+    pane.setEditable(false);
+    pane.setBorder(
+      BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(Color.black),
+        BorderFactory.createEmptyBorder(0, 5, 0, 5)
+      )
+    );
+    pane.setForeground(Color.black);
+    pane.setBackground(HintUtil.INFORMATION_COLOR);
+    pane.setOpaque(true);
+    return pane;
+  }
+
+  private static void showDescription(final String shortName, final Editor editor, final JEditorPane tooltip) {
+    final InspectionProfileEntry tool =
+      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName);
+    if (tool == null) return;
+    final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
+    String description;
+    try {
+      description = ResourceUtil.loadText(descriptionUrl);
+    }
+    catch (IOException e) {
+      description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
+    }
+    final JEditorPane pane = initPane(description);
+    pane.select(0, 0);
+    pane.setPreferredSize(new Dimension(3 * tooltip.getPreferredSize().width /2, 200));
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+    scrollPane.setBorder(null);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, scrollPane).createPopup();
+    pane.addMouseListener(new MouseAdapter(){
+      public void mousePressed(final MouseEvent e) {
+        final Component contentComponent = editor.getContentComponent();
+        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+        popup.cancel();
+        contentComponent.dispatchEvent(newMouseEvent);
+      }
+    });
+    popup.showUnderneathOf(tooltip);
   }
 
   private static boolean isRichHtml(@NonNls final String text) {
@@ -115,8 +186,8 @@ public class LineTooltipRenderer implements TooltipRenderer {
   /**
    * @return text splitted with '\n'
    */
-  private static String splitText(JLabel label, String text, int widthLimit) {
-    FontMetrics fontMetrics = label.getFontMetrics(label.getFont());
+  private static String splitText(JEditorPane pane, String text, int widthLimit) {
+    FontMetrics fontMetrics = pane.getFontMetrics(pane.getFont());
 
     String[] lines = SplittingUtil.splitText(text, fontMetrics, widthLimit, ' ');
 

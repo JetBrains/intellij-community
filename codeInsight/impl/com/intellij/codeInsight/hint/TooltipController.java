@@ -2,9 +2,10 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -96,5 +97,18 @@ public class TooltipController {
     myCurrentTooltipGroup = group;
     myCurrentTooltip = hint;
     myCurrentTooltipObject = tooltipRenderer;
+  }
+
+  public boolean shouldSurvive(final MouseEvent e) {
+    if (myCurrentTooltip != null) {
+      final Point pointOnComponent = new RelativePoint(e).getPointOn(myCurrentTooltip.getComponent()).getPoint();
+      final Rectangle bounds = myCurrentTooltip.getBounds();
+      if (bounds.x - 10 < pointOnComponent.x && bounds.width + bounds.x + 10 > pointOnComponent.x) {//do not hide hovered tooltip
+        if (bounds.y - 10 < pointOnComponent.y && bounds.y + bounds.height + 10 > pointOnComponent.y) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

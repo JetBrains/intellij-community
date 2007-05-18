@@ -618,26 +618,29 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      cancelMyToolTips();
+      cancelMyToolTips(e);
 
       if (getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
     }
 
-    private void cancelMyToolTips() {
-      HintManager.getInstance().getTooltipController().cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
+    private void cancelMyToolTips(final MouseEvent e) {
+      final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
+      if (!tooltipController.shouldSurvive(e)) {
+        tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
+      }
     }
 
     public void mouseEntered(MouseEvent e) {
     }
 
     public void mouseExited(MouseEvent e) {
-      cancelMyToolTips();
+      cancelMyToolTips(e);
     }
 
     public void mouseDragged(MouseEvent e) {
-      cancelMyToolTips();
+      cancelMyToolTips(e);
     }
 
   }

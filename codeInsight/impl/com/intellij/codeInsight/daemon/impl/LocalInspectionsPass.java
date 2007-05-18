@@ -306,8 +306,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(inspectionProfile.getErrorLevel(key).getSeverity(), level.getAttributesKey());
-    String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
-    @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlStringUtil.escapeString(message) + "</body></html>";
+    final String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
+    @NonNls final String link = "<a href=\"" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") + "</a>";
+    @NonNls String tooltip;
+    if (message.startsWith("<html>")) {
+      tooltip = message.replace("</body>", link + "</body>");
+    }
+    else {
+      tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
+    }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
     registerQuickFixes(tool, psiElement, descriptor, highlightInfo, emptyActionRegistered);
     return highlightInfo;

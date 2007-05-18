@@ -378,7 +378,9 @@ public class DaemonListeners {
   private static class MyEditorMouseListener extends EditorMouseAdapter {
 
     public void mouseExited(EditorMouseEvent e) {
-      DaemonTooltipUtil.cancelTooltips();
+      if (!HintManager.getInstance().getTooltipController().shouldSurvive(e.getMouseEvent())) {
+        DaemonTooltipUtil.cancelTooltips();
+      }
     }
   }
 
@@ -400,7 +402,7 @@ public class DaemonListeners {
         }
       }
       finally {
-        if (!shown) {
+        if (!shown && !HintManager.getInstance().getTooltipController().shouldSurvive(e.getMouseEvent())) {
           DaemonTooltipUtil.cancelTooltips();
         }
       }
