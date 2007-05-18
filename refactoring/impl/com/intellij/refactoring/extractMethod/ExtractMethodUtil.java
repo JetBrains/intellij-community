@@ -2,6 +2,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -10,7 +11,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 
 import java.util.Collection;
 import java.util.Map;

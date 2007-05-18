@@ -1,7 +1,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;

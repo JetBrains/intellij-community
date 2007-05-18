@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;

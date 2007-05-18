@@ -6,7 +6,7 @@
  * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.codeInspection.redundantCast;
+package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -15,9 +15,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
