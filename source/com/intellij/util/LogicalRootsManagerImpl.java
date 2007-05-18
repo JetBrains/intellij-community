@@ -96,7 +96,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   @Nullable
   public LogicalRoot findLogicalRoot(@NotNull final VirtualFile file) {
     final Module module = ModuleUtil.findModuleForFile(file, myProject);
-    assert module != null;
+    if (module == null) return null;
 
     LogicalRoot result = null;
     final List<LogicalRoot> list = getLogicalRoots(module);
