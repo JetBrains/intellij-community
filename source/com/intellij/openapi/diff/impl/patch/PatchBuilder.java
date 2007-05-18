@@ -94,7 +94,7 @@ public class PatchBuilder {
       DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
-      if (fragments.size() > 1) {
+      if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffType.NONE)) {
         FilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
         result.add(patch);
 

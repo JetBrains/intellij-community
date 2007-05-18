@@ -31,7 +31,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     }
   };
 
-  public TextDiffType(String displayName, TextAttributesKey attrubutesKey) {
+  private TextDiffType(String displayName, TextAttributesKey attrubutesKey) {
     myAttributesKey = attrubutesKey;
     myDisplayName = displayName;
   }
