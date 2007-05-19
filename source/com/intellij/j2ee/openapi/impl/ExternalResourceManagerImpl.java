@@ -50,6 +50,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
+    addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
     addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
     addInternalResource("http://www.w3.org/2001/XMLSchema.dtd", "XMLSchema.dtd");
     addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");

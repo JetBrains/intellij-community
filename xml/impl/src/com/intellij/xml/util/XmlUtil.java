@@ -297,7 +297,12 @@ public class XmlUtil {
   }
 
   public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {
-    return XSLT_URI.equals(tag.getNamespace());
+    final String ns = tag.getNamespace();
+    return nsFromTemplateFramework(ns);
+  }
+
+  public static boolean nsFromTemplateFramework(final String ns) {
+    return XSLT_URI.equals(ns) || XINCLUDE_URI.equals(ns);
   }
 
   public static char getCharFromEntityRef(@NonNls String text) {
