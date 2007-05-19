@@ -8,6 +8,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
@@ -16,12 +17,19 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
  */
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context) ||
+    if (GroovyCompletionUtil.asSimpleVariable(context) ||
+        GroovyCompletionUtil.asTypedMethod(context) ||
         GroovyCompletionUtil.asVariableInBlock(context)) {
       return true;
     }
-    return context.getParent() instanceof GrExpression &&
+    if (context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GroovyFile &&
+        GroovyCompletionUtil.isNewStatement(context, false)) {
+      return true;
+    }
+    return context.getParent() instanceof GrExpression &&
+        context.getParent().getParent() instanceof GrApplicationExpression &&
+        context.getParent().getParent().getParent() instanceof GroovyFile &&
         GroovyCompletionUtil.isNewStatement(context, false);
   }
 

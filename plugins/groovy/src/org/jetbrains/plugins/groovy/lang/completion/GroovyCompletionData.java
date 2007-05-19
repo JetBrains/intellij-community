@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilt
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ThrowsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ModifiersFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.PreviousModifierFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.SynchronizedFilter;
 
 import java.util.Set;
 
@@ -55,33 +56,6 @@ public class GroovyCompletionData extends CompletionData {
 
   }
 
-  private void registerAllCompletions1() {
-    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
-    CompletionVariant variant = new CompletionVariant(new NotFilter(afterDotFilter));
-
-    variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-    String[] keywords = new String[]{
-        "class", "interface", "enum",   // Types
-        "extends", "implements",  // Other
-        "try", "while", "with", "switch", "for", "return", "break", "continue", "throw", "assert", "synchronized",  // Control
-        "finally", "catch", // Additional 1
-        "case", "default", // Additional 2
-        "else", // Additional 3
-        "true", "false", "null", "super", "new", "this", // Expressions
-        "instanceof",
-        "private", "public", "protected", "transient", "native", "volatile", "static", "def", "void",
-        "throws",
-
-        "boolean", "byte", "char", "short", "int", "float", "long", "double", "any", // Built-in Types
-
-
-    };
-
-
-    variant.addCompletion(keywords);
-    registerVariant(variant);
-  }
 
   /**
    * Registers completions on top level of Groovy script file
@@ -98,6 +72,7 @@ public class GroovyCompletionData extends CompletionData {
     registerThrowsCompletion();
     registerBranchCompletion();
     registerModifierCompletion();
+    registerSynchronizedCompletion();
   }
 
 
@@ -127,8 +102,6 @@ public class GroovyCompletionData extends CompletionData {
   private void registerBuiltInTypeCompletion() {
     String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
     registerStandardCompletion(new BuiltInTypeFilter(), builtInTypes);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()),
-        new String[]{"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"});
   }
 
   private void registerSimpleExprsCompletion() {
@@ -138,6 +111,10 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerThrowsCompletion() {
     registerStandardCompletion(new ThrowsFilter(), "throws");
+  }
+
+  private void registerSynchronizedCompletion() {
+    registerStandardCompletion(new SynchronizedFilter(), "synchronized");
   }
 
   private void registerImportCompletion() {
@@ -156,8 +133,8 @@ public class GroovyCompletionData extends CompletionData {
     String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
         "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
-        "native", "volatile", "strictfp", "synchronized"});
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "static", "transient", "final", "abstract",
+        "native", "volatile", "strictfp", "synchronized");
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {

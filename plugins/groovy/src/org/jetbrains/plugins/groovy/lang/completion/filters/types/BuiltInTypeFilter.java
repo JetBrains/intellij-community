@@ -25,7 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -38,6 +40,17 @@ public class BuiltInTypeFilter implements ElementFilter {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
         GroovyCompletionUtil.asTypedMethod(context) ||
         GroovyCompletionUtil.asVariableInBlock(context)) {
+      return true;
+    }
+    if ((context.getParent() instanceof GrParameter &&
+        ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
+        context.getParent() instanceof GrReferenceElement) {
+      return true;
+    }
+    if (GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
+      return true;
+    }
+    if (GroovyCompletionUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
       return true;
     }
     return context.getParent() instanceof GrExpression &&
