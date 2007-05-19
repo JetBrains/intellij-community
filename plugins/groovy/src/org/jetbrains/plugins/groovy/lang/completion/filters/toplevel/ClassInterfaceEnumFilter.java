@@ -20,7 +20,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
@@ -37,8 +41,16 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
 
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
-        context.getParent() instanceof GrReferenceExpression &&
-    context.getParent().getParent() instanceof GroovyFile) {
+        (context.getParent() instanceof GrReferenceExpression) &&
+        context.getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset()-1, context) != null) {
+      PsiElement prev = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset()-1, context);
+      prev = GroovyCompletionUtil.realPrevious(prev);
+      if (prev instanceof GrModifierList &&
+          prev.getParent() != null &&
+          prev.getParent().getParent() instanceof GroovyFile)
       return true;
     }
     return false;
