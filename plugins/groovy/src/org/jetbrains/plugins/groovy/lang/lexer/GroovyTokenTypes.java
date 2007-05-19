@@ -182,7 +182,6 @@ public interface GroovyTokenTypes {
   IElementType kVOLATILE = new GroovyElementType("volatile");
   IElementType kDEFAULT = new GroovyElementType("default");
   IElementType kTHROWS = new GroovyElementType("throws");
-  IElementType kTHREADSAFE = new GroovyElementType("threadsafe");
   IElementType kIMPLEMENTS = new GroovyElementType("implements");
   IElementType kTHIS = new GroovyElementType("this");
   IElementType kIF = new GroovyElementType("if");

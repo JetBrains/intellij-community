@@ -70,7 +70,7 @@ public class GroovyCompletionData extends CompletionData {
         "else", // Additional 3
         "true", "false", "null", "super", "new", "this", // Expressions
         "instanceof",
-        "private", "public", "protected", "transient", "native", "threadsafe", "volatile", "static", "def", "void",
+        "private", "public", "protected", "transient", "native", "volatile", "static", "def", "void",
         "throws",
 
         "boolean", "byte", "char", "short", "int", "float", "long", "double", "any", // Built-in Types
@@ -125,10 +125,10 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerBuiltInTypeCompletion() {
-    String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double"};
+    String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
     registerStandardCompletion(new BuiltInTypeFilter(), builtInTypes);
     registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()),
-        new String[]{"boolean", "byte", "char", "short", "int", "float", "long", "double"});
+        new String[]{"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"});
   }
 
   private void registerSimpleExprsCompletion() {
@@ -154,10 +154,10 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerModifierCompletion() {
     String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
-        "native", "threadsafe", "volatile", "strictfp"};
+        "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
     registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
-        "native", "threadsafe", "volatile", "strictfp", "synchronyzed"});
+        "native", "volatile", "strictfp", "synchronized"});
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {

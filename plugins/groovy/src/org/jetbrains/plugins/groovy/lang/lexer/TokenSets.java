@@ -25,90 +25,90 @@ import com.intellij.psi.tree.TokenSet;
 public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
-          mSL_COMMENT,
-          mML_COMMENT
+      mSL_COMMENT,
+      mML_COMMENT
   );
 
   public static TokenSet SEPARATORS = TokenSet.create(
-          mNLS,
-          mSEMI
+      mNLS,
+      mSEMI
   );
 
 
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
-          mWS
+      mWS
   );
 
   public static TokenSet SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET = TokenSet.create(
-          mMINUS,
-          mPLUS,
-          mLBRACK,
-          mLPAREN,
-          mLCURLY
+      mMINUS,
+      mPLUS,
+      mLBRACK,
+      mLPAREN,
+      mLCURLY
   );
 
 
   public static final TokenSet CONSTANTS = TokenSet.create(
-          mNUM_INT,
-          kTRUE,
-          kFALSE,
-          kNULL,
-          mSTRING_LITERAL,
-          mGSTRING_LITERAL,
-          mREGEX_LITERAL
+      mNUM_INT,
+      kTRUE,
+      kFALSE,
+      kNULL,
+      mSTRING_LITERAL,
+      mGSTRING_LITERAL,
+      mREGEX_LITERAL
   );
 
   public static final TokenSet WRONG_CONSTANTS = TokenSet.create(
-          mWRONG_GSTRING_LITERAL,
-          mWRONG_STRING_LITERAL,
-          mWRONG_REGEX_LITERAL
+      mWRONG_GSTRING_LITERAL,
+      mWRONG_STRING_LITERAL,
+      mWRONG_REGEX_LITERAL
   );
 
   public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
-          kVOID,
-          kBOOLEAN,
-          kBYTE,
-          kCHAR,
-          kSHORT,
-          kINT,
-          kFLOAT,
-          kLONG,
-          kDOUBLE
+      kVOID,
+      kBOOLEAN,
+      kBYTE,
+      kCHAR,
+      kSHORT,
+      kINT,
+      kFLOAT,
+      kLONG,
+      kDOUBLE
   );
 
   public static TokenSet KEYWORD_PROPERTY_NAMES = TokenSet.orSet(TokenSet.create(
-          kCLASS,
-          kIN,
-          kAS,
-          kDEF,
-          kIF,
-          kELSE,
-          kFOR,
-          kWHILE,
-          kSWITCH,
-          kTRY,
-          kCATCH,
-          kFINALLY
+      kCLASS,
+      kIN,
+      kAS,
+      kDEF,
+      kIF,
+      kELSE,
+      kFOR,
+      kWHILE,
+      kSWITCH,
+      kTRY,
+      kCATCH,
+      kFINALLY
   ), BUILT_IN_TYPE);
 
   public static TokenSet MODIFIERS = TokenSet.create(
-          kABSTRACT,
-          kPRIVATE,
-          kPUBLIC,
-          kPROTECTED,
-          kSTATIC,
-          kTRANSIENT,
-          kFINAL,
-          kABSTRACT,
-          kNATIVE,
-          kTHREADSAFE,
-          kSYNCHRONIZED,
-          kVOLATILE,
-          kSTRICTFP
+      kABSTRACT,
+      kPRIVATE,
+      kPUBLIC,
+      kPROTECTED,
+      kSTATIC,
+      kTRANSIENT,
+      kFINAL,
+      kABSTRACT,
+      kNATIVE,
+      kSYNCHRONIZED,
+      kSTRICTFP,
+      kVOLATILE,
+      kSTRICTFP
   );
 
   public static TokenSet STRING_LITERALS = TokenSet.create(
-          mSTRING_LITERAL,
-          mGSTRING_LITERAL
+      mSTRING_LITERAL,
+      mGSTRING_LITERAL
   );
 }

@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  *            | final
  *            | abstract
  *            | native
- *            | threadsafe
  *            | synchronized
  *            | volatile
  *            | srtictfp
