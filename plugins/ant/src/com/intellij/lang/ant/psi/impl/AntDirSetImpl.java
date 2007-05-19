@@ -45,6 +45,9 @@ public class AntDirSetImpl extends AntFilesProviderImpl{
   }
   
   private static void collectFiles(List<File> container, File from, String relativePath, final AntPattern pattern) {
+    if (!pattern.couldBeIncluded(relativePath)) {
+      return;
+    }
     final File[] children = from.listFiles();
     if (children != null) {
       for (File child : children) {

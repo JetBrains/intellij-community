@@ -52,7 +52,7 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
         if (pattern.acceptPath(childPath)) {
           container.add(child);
         }
-        if (child.isDirectory()) {
+        if (child.isDirectory() && pattern.couldBeIncluded(childPath)) {
           collectFiles(container, child, childPath, pattern);
         }
       }

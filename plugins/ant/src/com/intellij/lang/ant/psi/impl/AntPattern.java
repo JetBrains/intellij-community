@@ -16,6 +16,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +31,7 @@ public class AntPattern extends AntElementVisitor {
   private static final List<Pattern> ourDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(true));
   private static final List<Pattern> ourCaseInsensitiveDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(false));
   private final boolean myCaseSensitive;
+  private static final String ourSeparatorPattern = Pattern.quote("/");
 
   private static List<Pattern> getDefaultExcludes(final boolean caseSensitive) {
     return Arrays.asList(
@@ -52,8 +54,9 @@ public class AntPattern extends AntElementVisitor {
 
   private List<Pattern> myIncludePatterns = new ArrayList<Pattern>(); 
   private List<Pattern> myExcludePatterns = new ArrayList<Pattern>();
+  private List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<PrefixItem[]>();
   
-  private AntPattern(final boolean caseSensitive) {
+  AntPattern(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
   }
 
@@ -66,7 +69,7 @@ public class AntPattern extends AntElementVisitor {
         if (isEnabled(element)) {
           final String value = element.getSourceElement().getAttributeValue("name");
           if (value != null) {
-            myIncludePatterns.add(convertToRegexPattern(value, myCaseSensitive));
+            addIncludePattern(value);
           }
         }
       }
@@ -74,7 +77,7 @@ public class AntPattern extends AntElementVisitor {
         if (isEnabled(element)) {
           final String value = element.getSourceElement().getAttributeValue("name");
           if (value != null) {
-            myExcludePatterns.add(convertToRegexPattern(value, myCaseSensitive));
+            addExcludePattern(value);
           }
         }
       }
@@ -82,11 +85,11 @@ public class AntPattern extends AntElementVisitor {
         // todo: add support to includesfile and excludesfile
         final String includeAttribs = element.getSourceElement().getAttributeValue("includes");
         if (includeAttribs != null) {
-          addPatterns(myIncludePatterns, includeAttribs);
+          addPatterns(true, includeAttribs);
         }
         final String excludeAttribs = element.getSourceElement().getAttributeValue("excludes");
         if (excludeAttribs != null) {
-          addPatterns(myExcludePatterns, excludeAttribs);
+          addPatterns(false, excludeAttribs);
         }
       }
       final PsiReference[] refs = element.getReferences();
@@ -101,6 +104,23 @@ public class AntPattern extends AntElementVisitor {
     }
 
     super.visitAntStructuredElement(element);
+  }
+
+  public final void addExcludePattern(final String antPattern) {
+    myExcludePatterns.add(convertToRegexPattern(antPattern, myCaseSensitive));
+  }
+
+  public final void addIncludePattern(final String antPattern) {
+    myIncludePatterns.add(convertToRegexPattern(antPattern, myCaseSensitive));
+    final String normalizedPattern = antPattern.endsWith("/") || antPattern.endsWith(File.separator)? antPattern.replace(File.separatorChar, '/') + "**" : antPattern.replace(File.separatorChar, '/');
+    if (!normalizedPattern.startsWith("/")) {
+      final String[] patDirs = normalizedPattern.split(ourSeparatorPattern);
+      final PrefixItem[] items = new PrefixItem[patDirs.length];
+      for (int i = 0; i < patDirs.length; i++) {
+        items[i] = new PrefixItem(patDirs[i]);
+      }
+      myCouldBeIncludedPatterns.add(items);
+    }
   }
 
   public boolean acceptPath(final String relativePath) {
@@ -137,12 +157,17 @@ public class AntPattern extends AntElementVisitor {
     return true;
   }
   
-  private void addPatterns(final List<Pattern> patternContainer, final String patternString) {
+  private void addPatterns(final boolean addToIncludes, final String patternString) {
     final StringTokenizer tokenizer = new StringTokenizer(patternString, ", \t", false);
     while (tokenizer.hasMoreTokens()) {
       final String pattern = tokenizer.nextToken();
       if (pattern.length() > 0) {
-        patternContainer.add(convertToRegexPattern(pattern, myCaseSensitive));
+        if (addToIncludes) {
+          addIncludePattern(pattern);
+        }
+        else {
+          addExcludePattern(pattern);
+        }
       }
     }
   }
@@ -160,4 +185,71 @@ public class AntPattern extends AntElementVisitor {
     return antPattern;
   }
   
+  // from org.apache.tools.ant.DirectoryScanner
+  protected static boolean matchPatternStart(PrefixItem[] patDirs, String str) {
+    final String[] strDirs = str.split(ourSeparatorPattern);
+
+    int patIdxStart = 0;
+    final int patIdxEnd   = patDirs.length-1;
+    int strIdxStart = 0;
+    final int strIdxEnd   = strDirs.length-1;
+
+    // up to first '**'
+    while (patIdxStart <= patIdxEnd && strIdxStart <= strIdxEnd) {
+      final AntPattern.PrefixItem item = patDirs[patIdxStart];
+      if ("**".equals(item.getStrPattern())) {
+        break;
+      }
+      if (!item.getPattern().matcher(strDirs[strIdxStart]).matches()) {
+        return false;
+      }
+      patIdxStart++;
+      strIdxStart++;
+    }
+
+    if (strIdxStart > strIdxEnd) {
+      // String is exhausted
+      return true;
+    } 
+
+    if (patIdxStart > patIdxEnd) {
+      // String not exhausted, but pattern is. Failure.
+      return false;
+    } 
+
+    // pattern now holds ** while string is not exhausted
+    // this will generate false positives but we can live with that.
+    return true;
+  }
+
+  public boolean couldBeIncluded(String relativePath) {
+    if (myIncludePatterns.size() == 0) {
+      return true;
+    }
+    for (PrefixItem[] couldBeIncludedPattern : myCouldBeIncludedPatterns) {
+      if (matchPatternStart(couldBeIncludedPattern, relativePath)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private class PrefixItem {
+    private final String myStrPattern;
+    private Pattern myCompiledPattern;
+    public PrefixItem(String strPattern) {
+      myStrPattern = strPattern;
+    }
+
+    public String getStrPattern() {
+      return myStrPattern;
+    }
+
+    public Pattern getPattern() {
+      if (myCompiledPattern == null) {
+        myCompiledPattern = Pattern.compile(FileUtil.convertAntToRegexp(myStrPattern), myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
+      }
+      return myCompiledPattern;
+    }
+  }
 }
