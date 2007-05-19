@@ -6,7 +6,6 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -91,11 +90,6 @@ public class PropertiesBuilder extends AntElementVisitor {
     final PropertiesFile propertiesFile = antProperty.getPropertiesFile();
     if (propertiesFile != null) {
       myDependentFiles.add(propertiesFile);
-      final String prefix = antProperty.getPrefix();
-      for (Property property : propertiesFile.getProperties()) {
-        final String name = prefix != null? prefix + "." + property.getName() : property.getName();
-        myPropertyHolder.setProperty(name, antProperty);
-      }
     }
 
     final String environment = antProperty.getEnvironment();

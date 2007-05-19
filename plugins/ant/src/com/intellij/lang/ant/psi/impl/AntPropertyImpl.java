@@ -165,6 +165,18 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if (isTstamp()) {
       return getTstampNames();
     }
+    final PropertiesFile propertiesFile = getPropertiesFile();
+    if (propertiesFile != null) {
+      final List<Property> propList = propertiesFile.getProperties();
+      final String prefix = getPrefix();
+      final String[] names = new String[propList.size()];
+      int idx = 0;
+      for (final Property importedProp : propList) {
+        names[idx++] = prefix != null? prefix + "." + importedProp.getName() : importedProp.getName();
+      }
+      return names;
+    }
+    
     final String name = getName();
     if (name != null) {
       if (getAntFile().isEnvironmentProperty(name)) {
