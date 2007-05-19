@@ -32,6 +32,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +53,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private BreakpointManager myBreakpointManager;
   private List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
-  private List<PositionManager> myCustomPositionManagers = new ArrayList<PositionManager>();
+  private List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
   
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -165,8 +166,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
       public void processAttached(final DebugProcess process) {
         process.removeDebugProcessListener(this);
-        for (PositionManager positionManager : myCustomPositionManagers) {
-          process.appendPositionManager(positionManager);
+        for (Function<DebugProcess, PositionManager> factory : myCustomPositionManagerFactories) {
+          final PositionManager positionManager = factory.fun(process);
+          if (positionManager != null) {
+            process.appendPositionManager(positionManager);
+          }
         }
       }
       public void processDetached(final DebugProcess process, final boolean closedByUser) {
@@ -278,12 +282,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   public DebuggerStateManager getContextManager() { return myDebuggerStateManager;}
 
-  public void registerPositionManager(final PositionManager positionManager) {
-    myCustomPositionManagers.add(positionManager);
+  public void registerPositionManagerFactory(final Function<DebugProcess,PositionManager> factory) {
+    myCustomPositionManagerFactories.add(factory);
   }
 
-  public void unregisterPositionManager(final PositionManager positionManager) {
-    myCustomPositionManagers.remove(positionManager);
+  public void unregisterPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
+    myCustomPositionManagerFactories.remove(factory);
   }
 
   static private boolean hasWhitespace(String string) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.Function;
 
 /**
  * Created by IntelliJ IDEA.
@@ -47,7 +48,7 @@ public abstract class DebuggerManager implements ProjectComponent, JDOMExternali
   
   public abstract String getVMClassQualifiedName(PsiClass aClass); 
   
-  public abstract void registerPositionManager(PositionManager positionManager);
-  public abstract void unregisterPositionManager(PositionManager positionManager);
+  public abstract void registerPositionManagerFactory(Function<DebugProcess,PositionManager> factory);
+  public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
   
 }
