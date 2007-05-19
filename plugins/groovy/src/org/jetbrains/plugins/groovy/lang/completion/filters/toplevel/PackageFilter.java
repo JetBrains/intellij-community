@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author ilyas
@@ -41,6 +43,16 @@ public class PackageFilter implements ElementFilter {
       }
       return false;
     }
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null){
+      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      if (parent instanceof GroovyFile) {
+        GroovyFile groovyFile = (GroovyFile) parent;
+        if (groovyFile.getPackageDefinition() == null) {
+          return GroovyCompletionUtil.isNewStatement(context, false);
+        }
+      }
+    }
+
     return false;
   }
 

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,6 +39,12 @@ public class CaseDefaultFilter implements ElementFilter {
     PsiElement elem = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
     if (elem instanceof GrSwitchStatement) {
       return true;
+    }
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
+      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      if (parent instanceof GrCaseBlock) {
+        return true;
+      }
     }
     return false;
   }

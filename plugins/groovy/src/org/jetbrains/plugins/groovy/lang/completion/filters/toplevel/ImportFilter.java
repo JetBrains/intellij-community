@@ -33,6 +33,12 @@ public class ImportFilter implements ElementFilter {
         context.getParent().getParent() instanceof GroovyFile) {
       return true;
     }
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
+      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      if (parent instanceof GroovyFile) {
+        return GroovyCompletionUtil.isNewStatement(context, false);
+      }
+    }
     return false;
   }
 
