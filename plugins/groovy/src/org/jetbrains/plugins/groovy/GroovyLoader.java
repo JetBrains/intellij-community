@@ -16,6 +16,9 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -23,10 +26,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -94,6 +99,12 @@ public class GroovyLoader implements ApplicationComponent
         compilerManager.addCompiler(new GroovyCompilerProcess());
         compilerManager.addCompiler(new GroovyToJavaGenerator());
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
+
+        DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
+          public PositionManager fun(DebugProcess debugProcess) {
+            return new GroovyPositionManager(debugProcess);
+          }
+        });
       }
     });
   }

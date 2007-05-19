@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -59,7 +60,7 @@ public class GroovyPositionManager implements PositionManager {
 
   private final DebugProcess myDebugProcess;
 
-  public GroovyPositionManager(DebugProcessImpl debugProcess) {
+  public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
   }
 
@@ -68,13 +69,15 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   public List<Location> locationsOfLine(ReferenceType type,
-                                        SourcePosition position) {
+                                        SourcePosition position) throws NoDataException {
     try {
       int line = position.getLine() + 1;
-      return getDebugProcess().getVirtualMachineProxy().versionHigher("1.4") ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line);
+      List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4") ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line);
+      if (locations == null || locations.isEmpty()) throw new NoDataException();
+      return locations;
     }
     catch (AbsentInformationException e) {
-      return Collections.emptyList();
+      throw new NoDataException();
     }
   }
 
@@ -96,7 +99,7 @@ public class GroovyPositionManager implements PositionManager {
     return null;
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
+  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
     GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
     String qName = null;
     if (sourceImage instanceof GrTypeDefinition) {
@@ -107,7 +110,7 @@ public class GroovyPositionManager implements PositionManager {
         if (file instanceof GroovyFile) {
           qName = getScriptFQName((GroovyFile) file);
         }
-        if (qName == null) return null;
+        if (qName == null) throw new NoDataException();
       }
     }
 
@@ -117,7 +120,7 @@ public class GroovyPositionManager implements PositionManager {
     if (qName == null) {
       GrTypeDefinition toplevel = getToplevelTypeDefinition(sourceImage);
 
-      if (toplevel == null) return null;
+      if (toplevel == null) throw new NoDataException();
 
       final String toplevelQName = toplevel.getQualifiedName();
       if (toplevelQName == null) return null;
@@ -143,14 +146,14 @@ public class GroovyPositionManager implements PositionManager {
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, waitPrepareFor);
   }
 
-  public SourcePosition getSourcePosition(final Location location) {
-    if (location == null) return null;
+  public SourcePosition getSourcePosition(final Location location) throws NoDataException {
+    if (location == null) throw new NoDataException();
 
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
-    if (psiFile == null) return null;
+    if (psiFile == null) throw new NoDataException();
 
     int lineNumber = calcLineIndex(location);
-    if (lineNumber < 0) return null;
+    if (lineNumber < 0) throw new NoDataException();
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
@@ -212,8 +215,8 @@ public class GroovyPositionManager implements PositionManager {
     return result.get();
   }
 
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
+    List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       public List<ReferenceType> compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(classPosition);
 
@@ -250,6 +253,9 @@ public class GroovyPositionManager implements PositionManager {
         }
       }
     });
+
+    if (result == null) throw new NoDataException();
+    return result;
   }
 
   private String getScriptFQName(GroovyFile groovyFile) {
