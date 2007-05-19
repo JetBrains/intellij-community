@@ -21,4 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ilyas
  */
 public interface GrIndexProperty extends GrExpression {
+  GrExpression getArrayExpression();
 }

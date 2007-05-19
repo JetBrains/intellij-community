@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,5 +37,9 @@ public class GrIndexPropertyImpl extends GroovyPsiElementImpl implements GrIndex
 
   public PsiType getType() {
     return null;
+  }
+
+  public GrExpression getArrayExpression() {
+    return findChildByClass(GrExpression.class);
   }
 }
