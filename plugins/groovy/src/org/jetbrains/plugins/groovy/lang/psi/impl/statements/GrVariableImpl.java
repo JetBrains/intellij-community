@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
@@ -102,7 +103,13 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY");
+    PsiElement nameElement = getNameIdentifierGroovy();
+    ASTNode node = nameElement.getNode();
+    ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(name).getNode();
+    assert newNameNode != null && node != null;
+    node.getTreeParent().replaceChild(node, newNameNode);
+
+    return this;
   }
 
   public PomField getPom() {
