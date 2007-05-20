@@ -54,10 +54,6 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
         getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY");
-  }
-
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     return findChildByClass(GrTypeElement.class);
