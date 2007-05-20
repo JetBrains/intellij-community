@@ -46,7 +46,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   private PsiFile createGroovyFile(String idText) {
-    return PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY", idText);
+    return PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), idText);
   }
 
   public void projectOpened() {
