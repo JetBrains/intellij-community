@@ -64,11 +64,6 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return getNameIdentifierGroovy().getText();
   }
 
-  @NotNull
-  public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
-  }
-
   public int getTextOffset() {
     return getNameIdentifierGroovy().getTextRange().getStartOffset();
   }
