@@ -5,7 +5,7 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.testcases.action.ActionTest;
+import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -29,7 +29,7 @@ import junit.framework.Test;
 /**
  * @author ilyas
  */
-public class ComlpetionActionTest extends ActionTest {
+public class ComlpetionActionTest extends ActionTestCase {
 
   @NonNls
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/completion/data/";
