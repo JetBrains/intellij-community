@@ -178,6 +178,7 @@ public class LocalVcs implements ILocalVcs {
     myPendingChanges = new ArrayList<Change>();
   }
 
+  // test-support
   protected ChangeList getChangeList() {
     return myChangeList;
   }
@@ -235,6 +236,23 @@ public class LocalVcs implements ILocalVcs {
     Change lastChange = cc.get(cc.size() - 1);
     if (!lastChange.isLabel() && !lastChange.isCreationalFor(e)) {
       result.add(new RevisionBeforeChange(e, myRoot, myChangeList, lastChange));
+    }
+
+    return result;
+  }
+
+  public List<RecentChange> getRecentChanges() {
+    List<RecentChange> result = new ArrayList<RecentChange>();
+
+    List<Change> cc = myChangeList.getChanges();
+
+    for (int i = 0; i < Math.min(20, cc.size()); i++) {
+      Change c = cc.get(i);
+      if (c.getName() == null) continue;
+
+      Revision before = new RevisionBeforeChange(myRoot, myRoot, myChangeList, c);
+      Revision after = new RevisionAfterChange(myRoot, myRoot, myChangeList, c);
+      result.add(new RecentChange(before, after));
     }
 
     return result;
