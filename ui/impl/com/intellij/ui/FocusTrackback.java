@@ -130,11 +130,6 @@ public class FocusTrackback {
       root = nextWindow;
     }
 
-    if(((ApplicationEx)ApplicationManager.getApplication()).isInternal() && !(root instanceof IdeFrameImpl)) {
-      LOG.assertTrue(false, "Expected to be child for " + IdeFrameImpl.class.getName() + " but was child of: " + (root == null ? "null" : root.getClass().getName()));
-    }
-
-
     return root;
   }
 
