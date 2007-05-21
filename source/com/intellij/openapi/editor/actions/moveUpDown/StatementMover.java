@@ -52,7 +52,9 @@ class StatementMover extends LineMover {
         }
         else {
           int start = document.getLineNumber(newCodeBlock.getRBrace().getTextRange().getStartOffset());
-          toMove2 = new LineRange(start, toMove.startLine);
+          int end = toMove.startLine;
+          if (start > end) end = start;
+          toMove2 = new LineRange(start, end);
         }
       }
       catch (IncorrectOperationException e) {
