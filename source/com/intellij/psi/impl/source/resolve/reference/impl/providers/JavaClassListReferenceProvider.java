@@ -38,7 +38,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
       final String identifier = matcher.group().trim();
       final int pos = identifier.indexOf('.');
       if(pos >= 0 && knownTopLevelPackages.contains(identifier.substring(0, pos))){
-        results.addAll(Arrays.asList(new JavaClassReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false, this){
+        results.addAll(Arrays.asList(new JavaClassReferenceSet(identifier, position, offsetInPosition + matcher.start(), false, this){
           public boolean isSoft(){
             return true;
           }

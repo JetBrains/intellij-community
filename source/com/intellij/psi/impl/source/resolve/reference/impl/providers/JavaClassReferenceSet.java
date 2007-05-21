@@ -22,24 +22,24 @@ import java.util.Map;
 public class JavaClassReferenceSet {
   private static final char SEPARATOR = '.';
   public static final char SEPARATOR2 = '$';
+  private static final char SEPARATOR3 = '<';
+  private static final char SEPARATOR4 = ',';
+  private static final ReferenceType PACKAGE_OR_CLASS_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
+  private static final ReferenceType CLASS_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   private PsiReference[] myReferences;
   private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
   private JavaClassReferenceSet myContext;
   private PsiElement myElement;
   private final int myStartInElement;
-  private final ReferenceType myType;
   private final JavaClassReferenceProvider myProvider;
-  private static final char SEPARATOR3 = '<';
-  private static final char SEPARATOR4 = ',';
 
-  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider) {
-    this(str, element, startInElement, type, isStatic, provider, null);
+  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, final boolean isStatic, JavaClassReferenceProvider provider) {
+    this(str, element, startInElement, isStatic, provider, null);
   }
 
-  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider,
+  private JavaClassReferenceSet(String str, PsiElement element, int startInElement, final boolean isStatic, JavaClassReferenceProvider provider,
                         JavaClassReferenceSet context) {
-    myType = type;
     myStartInElement = startInElement;
     myProvider = provider;
     reparse(str, element, isStatic, context);
@@ -113,7 +113,7 @@ public class JavaClassReferenceSet {
           }
 
           final Boolean aBoolean = JavaClassReferenceProvider.JVM_FORMAT.getValue(getOptions());
-          if (aBoolean == null || !aBoolean) {
+          if (aBoolean == null || !aBoolean.booleanValue()) {
             if (!recognized) nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
           }
         }
@@ -130,7 +130,6 @@ public class JavaClassReferenceSet {
                 str.substring(nextDotOrDollar + 1, end),
                 myElement,
                 myStartInElement + nextDotOrDollar + 1,
-                myType,
                 isStaticImport,
                 myProvider,
                 this
@@ -147,7 +146,6 @@ public class JavaClassReferenceSet {
               str.substring(nextDotOrDollar + 1),
               myElement,
               myStartInElement + nextDotOrDollar + 1,
-              myType,
               isStaticImport,
               myProvider,
               this
@@ -162,7 +160,8 @@ public class JavaClassReferenceSet {
 
       TextRange textRange =
         new TextRange(myStartInElement + currentDot + 1, myStartInElement + (nextDotOrDollar > 0 ? nextDotOrDollar : str.length()));
-      JavaClassReference currentContextRef = new JavaClassReference(this, textRange, referenceIndex++, subreferenceText, isStaticImport);
+      JavaClassReference currentContextRef = createReference(referenceIndex, subreferenceText, textRange, isStaticImport);
+      referenceIndex++;
       referencesList.add(currentContextRef);
       if ((currentDot = nextDotOrDollar) < 0) {
         break;
@@ -172,22 +171,17 @@ public class JavaClassReferenceSet {
     myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
   }
 
+  protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
+                                               final boolean staticImport) {
+    return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport);
+  }
+
   public boolean isAllowDollarInNames() {
     return myElement.getLanguage() instanceof XMLLanguage;
   }
 
   public void reparse(PsiElement element, final TextRange range) {
     final String text = element.getText().substring(range.getStartOffset(), range.getEndOffset());
-
-    //if (element instanceof XmlAttributeValue) {
-    //  text = StringUtil.stripQuotesAroundValue(element.getText().substring(range.getStartOffset(), range.getEndOffset()));
-    //}
-    //else if (element instanceof XmlTag) {
-    //  text = ((XmlTag)element).getValue().getTrimmedText();
-    //}
-    //else {
-    //  text = element.getText();
-    //}
     reparse(text, element, false, myContext);
   }
 
@@ -207,9 +201,9 @@ public class JavaClassReferenceSet {
 
   public ReferenceType getType(int index) {
     if (index != myReferences.length - 1) {
-      return new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
+      return PACKAGE_OR_CLASS_TYPE;
     }
-    return myType;
+    return CLASS_TYPE;
   }
 
   public boolean isSoft() {

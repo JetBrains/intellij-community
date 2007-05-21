@@ -106,7 +106,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     if (myAllowEmpty && StringUtil.isEmpty(str)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    return new JavaClassReferenceSet(str, position, offsetInPosition, type, false, this).getAllReferences();
+    return new JavaClassReferenceSet(str, position, offsetInPosition, false, this).getAllReferences();
   }
 
   private static final SoftReference<List<PsiElement>> NULL_REFERENCE = new SoftReference<List<PsiElement>>(null);

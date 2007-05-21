@@ -38,7 +38,7 @@ import java.util.*;
 */
 public class JavaClassReference extends GenericReference implements PsiJavaReference, QuickFixProvider, LocalQuickFixProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference");
-  private final int myIndex;
+  protected final int myIndex;
   private TextRange myRange;
   private final String myText;
   private final boolean myInStaticImport;
