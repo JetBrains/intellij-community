@@ -3,21 +3,18 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomMetaData;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.DomMetaData;
 
 /**
  * @author peter
  */
-public class DomApplicationComponent implements ApplicationComponent {
+public class DomApplicationComponent {
 
 
   public DomApplicationComponent() {
@@ -40,17 +37,4 @@ public class DomApplicationComponent implements ApplicationComponent {
 
   }
 
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
 }
