@@ -39,6 +39,9 @@ public class ImportFilter implements ElementFilter {
         return GroovyCompletionUtil.isNewStatement(context, false);
       }
     }
+    if (context.getTextOffset() == 0) {
+      return true;
+    }
     return false;
   }
 

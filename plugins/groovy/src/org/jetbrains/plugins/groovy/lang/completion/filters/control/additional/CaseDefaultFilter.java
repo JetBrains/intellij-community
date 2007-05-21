@@ -30,14 +30,16 @@ import org.jetbrains.annotations.NonNls;
 public class CaseDefaultFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() instanceof GrReferenceExpression &&
-            context.getParent().getParent() instanceof GrCaseBlock) {
+        context.getParent().getParent() instanceof GrCaseBlock) {
       return true;
     }
-    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrSwitchStatement) {
+    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrSwitchStatement &&
+        ((GrSwitchStatement) GroovyCompletionUtil.nearestLeftSibling(context)).getCaseBlock() != null) {
       return true;
     }
     PsiElement elem = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-    if (elem instanceof GrSwitchStatement) {
+    if (elem instanceof GrSwitchStatement &&
+        ((GrSwitchStatement) elem).getCaseBlock() != null) {
       return true;
     }
     if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
@@ -54,7 +56,7 @@ public class CaseDefaultFilter implements ElementFilter {
   }
 
   @NonNls
-  public String toString(){
+  public String toString() {
     return "filter for 'case' and 'default' keywords ";
   }
 }

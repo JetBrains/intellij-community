@@ -27,6 +27,14 @@ public class ModifiersFilter implements ElementFilter {
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
+    if (context.getTextOffset() == 0){
+      return true;
+    }
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null  &&
+        GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent() instanceof GroovyFile &&
+        GroovyCompletionUtil.isNewStatement(context,false)) {
+      return true;
+    }
     return context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GrApplicationExpression &&
         context.getParent().getParent().getParent() instanceof GroovyFile &&

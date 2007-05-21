@@ -39,10 +39,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilt
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ThrowsFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.ModifiersFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.PreviousModifierFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.SynchronizedFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 
 import java.util.Set;
 
@@ -73,6 +70,7 @@ public class GroovyCompletionData extends CompletionData {
     registerBranchCompletion();
     registerModifierCompletion();
     registerSynchronizedCompletion();
+    registerFinalCompletion();
   }
 
 
@@ -113,6 +111,10 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new ThrowsFilter(), "throws");
   }
 
+  private void registerFinalCompletion() {
+    registerStandardCompletion(new FinalFilter(), "final");
+  }
+
   private void registerSynchronizedCompletion() {
     registerStandardCompletion(new SynchronizedFilter(), "synchronized");
   }
@@ -130,10 +132,10 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerModifierCompletion() {
-    String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
+    String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "abstract",
         "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "static", "transient", "final", "abstract",
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "static", "transient", "abstract",
         "native", "volatile", "strictfp", "synchronized");
   }
 
