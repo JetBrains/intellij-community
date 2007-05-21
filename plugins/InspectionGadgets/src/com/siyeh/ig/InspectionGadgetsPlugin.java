@@ -492,6 +492,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
         m_inspectionClasses.add(EqualsUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
+        m_inspectionClasses.add(ThrowableInstanceNeverThrownInspection.class);
         m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
         m_inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(IgnoreResultOfCallInspection.class);
