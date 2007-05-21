@@ -35,6 +35,9 @@ public interface PsiScopeProcessor {
     SET_PARAMETERS
   }
 
+  /**
+   * @return false to stop processing.
+   */
   boolean execute(PsiElement element, PsiSubstitutor substitutor);
   <T> T getHint(Class<T> hintClass);
   void handleEvent(Event event, Object associated);
