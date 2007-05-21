@@ -52,11 +52,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final StringBuffer outputBuffer = new StringBuffer();
 
   public void parseOutput(String text) {
-    InputStream inputStream;
-    ObjectInput objectInput = null;
-    TranslatingCompiler.ExitStatus exitStatus = null;
-
-    //todo: collect errors
     text = text.trim();
     if (text != null && !"".equals(text)) {
       outputBuffer.append(text);
