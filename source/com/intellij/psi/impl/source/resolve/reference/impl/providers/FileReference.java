@@ -25,7 +25,6 @@ import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,6 @@ public class FileReference
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
-  @NonNls private static final String UTF8 = "UTF8";
   private static final List<PsiConflictResolver> RESOLVERS = Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver());
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
@@ -92,7 +90,7 @@ public class FileReference
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }
 
-  private void innerResolveInContext(final String text, final PsiFileSystemItem context, final Collection<ResolveResult> result) {
+  private void innerResolveInContext(@NotNull final String text, @NotNull final PsiFileSystemItem context, final Collection<ResolveResult> result) {
     if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
       result.add(new PsiElementResolveResult(context));
     }
@@ -109,25 +107,33 @@ public class FileReference
         innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts);
         final String restOfText = text.substring(separatorIndex + 1);
         for (ResolveResult contextVariant : resolvedContexts) {
-          innerResolveInContext(restOfText, (PsiFileSystemItem)contextVariant.getElement(), result);
+          final PsiFileSystemItem item = (PsiFileSystemItem)contextVariant.getElement();
+          if (item != null) {
+            innerResolveInContext(restOfText, item, result);
+          }
         }
       }
       else {
         final String decoded = decode(text);
-        processVariants(context, new BaseScopeProcessor() {
-          public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
-            final String name = ((PsiFileSystemItem)element).getName();
-            if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
-              result.add(new PsiElementResolveResult(element));
-              return false;
+        if (decoded != null) {
+          processVariants(context, new BaseScopeProcessor() {
+            public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
+              final String name = ((PsiFileSystemItem)element).getName();
+              if (name != null) {
+                if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
+                  result.add(new PsiElementResolveResult(element));
+                  return false;
+                }
+              }
+              return true;
             }
-            return true;
-          }
-        });
+          });
+        }
       }
     }
   }
 
+  @Nullable
   private String decode(final String text) {
     if (myFileReferenceSet.isUrlEncoded()) {
       try {
