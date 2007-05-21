@@ -89,8 +89,13 @@ public class SwitchStatement implements GroovyElementTypes {
     if (!kCASE.equals(builder.getTokenType()) &&
         !kDEFAULT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("case.expected"));
-      marker.done(CASE_BLOCK);
-      return;
+      while (!builder.eof() &&
+          !(kCASE.equals(builder.getTokenType()) ||
+        kDEFAULT.equals(builder.getTokenType()) ||
+          mRCURLY.equals(builder.getTokenType()))) {
+        builder.error(GroovyBundle.message("case.expected"));
+        builder.advanceLexer();
+      }
     }
 
     while (kCASE.equals(builder.getTokenType()) ||
