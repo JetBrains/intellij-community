@@ -36,8 +36,8 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     try {
-      if (!CodeInsightUtil.prepareFileForWrite(element.getContainingFile())) return;
       if (element instanceof PsiIdentifier) {
+        if (!CodeInsightUtil.prepareFileForWrite(element.getContainingFile())) return;
         final PsiIdentifier identifier = (PsiIdentifier)element;
         final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(identifier, PsiDocCommentOwner.class);
         if (commentOwner != null) {
