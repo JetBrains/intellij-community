@@ -1,0 +1,14 @@
+package a.b.c
+
+import org.*
+
+class A  {
+  def foo()   {
+    switch  (k){
+      <caret>
+    }
+  }
+}
+-----
+case
+default

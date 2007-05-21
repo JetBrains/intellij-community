@@ -1,17 +1,29 @@
-<caret>def foo(){}
+package a.b.c
+
+<caret>import org.*
+
+class A {
+  def foo() {
+    switch (k){
+
+    }
+  }
+}
 -----
 abstract
 boolean
 byte
 char
+class
 double
+enum
 final
 float
 import
 int
+interface
 long
 native
-package
 private
 protected
 public

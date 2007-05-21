@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2007, Your Corporation. All Rights Reserved.
+ */
+
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;

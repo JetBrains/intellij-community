@@ -1,4 +1,14 @@
-<caret>def foo(){}
+<caret>package a.b.c
+
+import org.*
+
+class A {
+  def foo() {
+    switch (k){
+
+    }
+  }
+}
 -----
 abstract
 boolean

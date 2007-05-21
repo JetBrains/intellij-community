@@ -1,0 +1,14 @@
+package a.b.c
+
+import org.*
+
+class A <caret> {
+  def foo() {
+    switch (k){
+
+    }
+  }
+}
+-----
+extends
+implements

@@ -1,4 +1,15 @@
-<caret>def foo(){}
+package a.b.c
+
+import org.*
+
+class A  {
+  def foo()   {
+    switch (k){
+
+    }
+  }
+  <caret>
+}
 -----
 abstract
 boolean
@@ -7,17 +18,16 @@ char
 double
 final
 float
-import
 int
 long
 native
-package
 private
 protected
 public
 short
 static
 strictfp
+synchronized
 transient
 void
 volatile
