@@ -5,6 +5,6 @@ import com.intellij.psi.PsiField;
 /**
  * @author ven
  */
-public interface GrField extends GrVariable, PsiField {
+public interface GrField extends GrVariable, PsiField, GrTopLevelDefintion {
   public static final GrField[] EMPTY_ARRAY = new GrField[0]; 
 }

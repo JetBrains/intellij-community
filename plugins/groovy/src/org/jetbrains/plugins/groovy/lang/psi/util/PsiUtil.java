@@ -65,7 +65,9 @@ public class PsiUtil {
     if (result instanceof PsiPrimitiveType) {
       PsiPrimitiveType primitive = (PsiPrimitiveType) result;
       String boxedTypeName = primitive.getBoxedTypeName();
-      return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+      if (boxedTypeName != null) {
+        return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+      }
     }
 
     return result;

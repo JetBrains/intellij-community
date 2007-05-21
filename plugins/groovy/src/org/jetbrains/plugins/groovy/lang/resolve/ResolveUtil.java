@@ -16,19 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -103,5 +102,27 @@ public class ResolveUtil {
     }
 
     return false;
+  }
+
+  public static boolean processDefaultMethods(PsiClass clazz, PsiScopeProcessor processor) {
+    return processDefaultMethods(clazz, processor, new com.intellij.util.containers.HashSet<PsiClass>());
+  }
+
+  private static boolean processDefaultMethods(PsiClass clazz, PsiScopeProcessor processor, Set<PsiClass> visited) {
+    if (visited.contains(clazz)) return true;
+    visited.add(clazz);
+
+    String qName = clazz.getQualifiedName();
+    if (qName != null) {
+      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName);
+      for (PsiMethod defaultMethod : defaultMethods) {
+        if (!processElement(processor, defaultMethod)) return false;
+      }
+      for (PsiClass aSuper : clazz.getSupers()) {
+        processDefaultMethods(aSuper, processor, new HashSet<PsiClass>());
+      }
+    }
+
+    return true;
   }
 }

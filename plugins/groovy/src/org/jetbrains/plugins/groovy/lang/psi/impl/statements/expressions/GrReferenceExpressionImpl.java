@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
@@ -147,7 +146,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (qualifierClass != null) {
             qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
             if (!(qualifierClass instanceof GrTypeDefinition)) {
-              addDefaultMethods(qualifierClass, processor, new HashSet<PsiClass>());
+              ResolveUtil.processDefaultMethods(qualifierClass, processor);
             }
           }
         }
@@ -226,7 +225,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (qualifierClass != null) {
           qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
           if (!(qualifierClass instanceof GrTypeDefinition)) {
-            addDefaultMethods(qualifierClass, processor, new HashSet<PsiClass>());
+            ResolveUtil.processDefaultMethods(qualifierClass, processor);
           }
         }
       }
@@ -235,22 +234,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     return ResolveUtil.mapToElements(candidates);
-  }
-
-  private static void addDefaultMethods(PsiClass clazz, ResolverProcessor processor, Set<PsiClass> visited) {
-    if (visited.contains(clazz)) return;
-    visited.add(clazz);
-
-    String qName = clazz.getQualifiedName();
-    if (qName != null) {
-      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName);
-      for (PsiMethod defaultMethod : defaultMethods) {
-        if (!ResolveUtil.processElement(processor, defaultMethod)) return;
-      }
-      for (PsiClass aSuper : clazz.getSupers()) {
-        addDefaultMethods(aSuper, processor, new HashSet<PsiClass>());
-      }
-    }
   }
 
   public boolean isSoft() {

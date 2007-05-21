@@ -24,12 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, NavigationItem, PsiClass {
+public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion {
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
