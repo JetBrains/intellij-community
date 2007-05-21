@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SplittingUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -89,13 +88,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     String text = myText;
 
-
-    if (!isRichHtml(text) && width > widthLimit / 3) {
-      //pane.setUI(new MultiLineLabelUI());
-      text = splitText(pane, text, widthLimit);
-      pane.setText(text);
-    }
-
     if (alignToRight) {
       p.x -= pane.getPreferredSize().width;
     }
@@ -124,6 +116,9 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
   private static JEditorPane initPane(@NonNls String text) {
     final Font font = UIUtil.getLabelFont();
+    if (!text.startsWith("<html>")) {
+      text = "<html><body>" + text + "</body></html>";
+    }
     text = text.replace("<html>", "<html><head><style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style></head>");
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
@@ -167,39 +162,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
       }
     });
     popup.showUnderneathOf(tooltip);
-  }
-
-  private static boolean isRichHtml(@NonNls final String text) {
-    if (!text.startsWith("<html>") || !text.endsWith("</html>")) return false;
-    @NonNls int idx = "<html>".length();
-    idx = text.indexOf("<body>", idx);
-    if (idx == -1) return false;
-    idx += "<body>".length();
-
-    int endIdx = text.lastIndexOf("</body>", text.length() - "</html>".length());
-    if (endIdx <= 0) return false;
-
-    int i = text.indexOf('<', idx);
-    return i != -1 && i < endIdx;
-  }
-
-  /**
-   * @return text splitted with '\n'
-   */
-  private static String splitText(JEditorPane pane, String text, int widthLimit) {
-    FontMetrics fontMetrics = pane.getFontMetrics(pane.getFont());
-
-    String[] lines = SplittingUtil.splitText(text, fontMetrics, widthLimit, ' ');
-
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      if (i > 0) {
-        result.append('\n');
-      }
-      result.append(line);
-    }
-    return result.toString();
   }
 
   public void addBelow(String text) {
