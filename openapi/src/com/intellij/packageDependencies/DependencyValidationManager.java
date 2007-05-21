@@ -36,6 +36,8 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
 
   public abstract NamedScope getProjectProductionScope();
 
+  public abstract NamedScope getProblemsScope();
+
   public abstract boolean hasRules();
 
   @Nullable
@@ -51,5 +53,7 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
 
   public abstract void addRule(DependencyRule rule);
 
-  public abstract NamedScope getProblemsScope();
+  public abstract boolean skipImportStatements();
+
+  public abstract void setSkipImportStatements(boolean skip);
 }

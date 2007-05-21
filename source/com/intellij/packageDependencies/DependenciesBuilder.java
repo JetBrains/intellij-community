@@ -130,7 +130,9 @@ public abstract class DependenciesBuilder {
     }
 
     public void visitImportStatement(PsiImportStatement statement) {
-      //empty - to exclude imports from dependency analyzing   
+      if (!DependencyValidationManager.getInstance(statement.getProject()).skipImportStatements()) {
+        visitElement(statement);
+      }
     }
 
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {

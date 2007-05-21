@@ -1,5 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -16,7 +17,6 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -38,6 +38,11 @@ public class DependencyConfigurable extends BaseConfigurable {
   private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_IN = new RightColumn(AnalysisScopeBundle.message("dependency.configurable.deny.table.column2"));
   private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_OF = new LeftColumn(AnalysisScopeBundle.message("dependency.configurable.allow.table.column1"));
   private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_ONLY_IN = new RightColumn(AnalysisScopeBundle.message("dependency.configurable.allow.table.column2"));
+
+  private JPanel myWholePanel;
+  private JPanel myDenyPanel;
+  private JPanel myAllowPanel;
+  private JCheckBox mySkipImports;
 
   public DependencyConfigurable(Project project) {
     myProject = project;
@@ -62,12 +67,11 @@ public class DependencyConfigurable extends BaseConfigurable {
     myAllowRulesModel = new MyTableModel(new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
     myAllowRulesModel.setSortable(false);
 
-    JPanel wholePanel = new JPanel(new GridLayout(2, 1, 10, 10));
     myDenyTable = new TableView(myDenyRulesModel);
-    wholePanel.add(createRulesPanel(myDenyRulesModel, myDenyTable));
+    myDenyPanel.add(createRulesPanel(myDenyRulesModel, myDenyTable), BorderLayout.CENTER);
     myAllowTable = new TableView(myAllowRulesModel);
-    wholePanel.add(createRulesPanel(myAllowRulesModel, myAllowTable));
-    return wholePanel;
+    myAllowPanel.add(createRulesPanel(myAllowRulesModel, myAllowTable), BorderLayout.CENTER);
+    return myWholePanel;
   }
 
   private JPanel createRulesPanel(MyTableModel model, TableView table) {
@@ -96,12 +100,12 @@ public class DependencyConfigurable extends BaseConfigurable {
     List<DependencyRule> modelItems = new ArrayList<DependencyRule>();
     modelItems.addAll(myDenyRulesModel.getItems());
     modelItems.addAll(myAllowRulesModel.getItems());
-    for (int i = 0; i < modelItems.size(); i++) {
-      DependencyRule rule = modelItems.get(i);
+    for (DependencyRule rule : modelItems) {
       if (isRuleValid(rule)) {
         validationManager.addRule(rule);
       }
     }
+    validationManager.setSkipImportStatements(mySkipImports.isSelected());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -120,11 +124,11 @@ public class DependencyConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    DependencyRule[] rules = DependencyValidationManager.getInstance(myProject).getAllRules();
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
+    DependencyRule[] rules = validationManager.getAllRules();
     final ArrayList<DependencyRule> denyList = new ArrayList<DependencyRule>();
     final ArrayList<DependencyRule> allowList = new ArrayList<DependencyRule>();
-    for (int i = 0; i < rules.length; i++) {
-      DependencyRule rule = rules[i];
+    for (DependencyRule rule : rules) {
       if (rule.isDenyRule()) {
         denyList.add(rule.createCopy());
       }
@@ -134,13 +138,16 @@ public class DependencyConfigurable extends BaseConfigurable {
     }
     myDenyRulesModel.setItems(denyList);
     myAllowRulesModel.setItems(allowList);
+    mySkipImports.setSelected(validationManager.skipImportStatements());
   }
 
   public boolean isModified() {
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
+    if (validationManager.skipImportStatements() != mySkipImports.isSelected()) return true;
     final List<DependencyRule> rules = new ArrayList<DependencyRule>();
     rules.addAll(myDenyRulesModel.getItems());
     rules.addAll(myAllowRulesModel.getItems());
-    return !Arrays.asList(DependencyValidationManager.getInstance(myProject).getAllRules()).equals(rules);
+    return !Arrays.asList(validationManager.getAllRules()).equals(rules);
   }
 
   public void disposeUIResources() {
@@ -220,7 +227,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     }
   }
 
-  private class MyTableModel extends ListTableModel<DependencyRule> implements RowEditableTableModel {
+  private static class MyTableModel extends ListTableModel<DependencyRule> implements RowEditableTableModel {
     private boolean myDenyRule;
 
     public MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {

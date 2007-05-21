@@ -32,6 +32,9 @@ import java.util.List;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
+
+  public boolean SKIP_IMPORT_STATEMENTS = false;
+
   private final Project myProject;
   private ContentManager myContentManager;
   @NonNls private static final String DENY_RULE_KEY = "deny_rule";
@@ -176,6 +179,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[result.size()]);
   }
 
+  public boolean skipImportStatements() {
+    return SKIP_IMPORT_STATEMENTS;
+  }
+
+  public void setSkipImportStatements(final boolean skip) {
+    SKIP_IMPORT_STATEMENTS = skip;
+  }
 
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);
