@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
@@ -35,12 +36,18 @@ public class CaseDefaultFilter implements ElementFilter {
     }
     if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrSwitchStatement &&
         ((GrSwitchStatement) GroovyCompletionUtil.nearestLeftSibling(context)).getCaseBlock() != null) {
-      return true;
+      GrCaseBlock block = ((GrSwitchStatement) GroovyCompletionUtil.nearestLeftSibling(context)).getCaseBlock();
+      if (block.getLastChild() instanceof PsiErrorElement) {
+        return true;
+      }
     }
     PsiElement elem = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
     if (elem instanceof GrSwitchStatement &&
         ((GrSwitchStatement) elem).getCaseBlock() != null) {
-      return true;
+      GrCaseBlock block = ((GrSwitchStatement) elem).getCaseBlock();
+      if (block.getLastChild() instanceof PsiErrorElement) {
+        return true;
+      }
     }
     if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
       PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
