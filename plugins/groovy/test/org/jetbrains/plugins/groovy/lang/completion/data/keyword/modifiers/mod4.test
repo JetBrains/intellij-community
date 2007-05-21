@@ -1,2 +1,11 @@
 <caret>def foo(){}
 -----
+boolean
+byte
+char
+double
+float
+int
+long
+short
+void
