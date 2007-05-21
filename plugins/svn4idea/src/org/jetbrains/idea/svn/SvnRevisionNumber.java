@@ -52,6 +52,9 @@ public class SvnRevisionNumber implements VcsRevisionNumber {
     else if (myRevision.getDate() != null && rev.getDate() != null) {
       return myRevision.getDate().compareTo(rev.getDate());
     }
+    if (myRevision.equals(SVNRevision.HEAD)) {
+      return rev.equals(SVNRevision.HEAD) ? 0 : 1;    // HEAD is greater than a specific rev
+    }
     return myRevision.getID() == rev.getID() ? 0 : myRevision.getID() > rev.getID() ? 1 : -1;
   }
 
