@@ -49,7 +49,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
   public void notifyTextAvailable(final String text, final Key outputType) {
     super.notifyTextAvailable(text, outputType);
-    System.out.println("text: " + text);
+//    System.out.println("text: " + text);
 
     parseOutput(text);
   }
