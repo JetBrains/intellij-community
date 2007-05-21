@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,24 +61,8 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            final PsiExpression[] dimensions = expression.getArrayDimensions();
-            final PsiArrayInitializerExpression arrayInitializer =
-                    expression.getArrayInitializer();
-            if (arrayInitializer != null) {
-                final PsiExpression[] initializers =
-                        arrayInitializer.getInitializers();
-                if (initializers.length != 0) {
-                    return;
-                }
-            } else {
-                if (dimensions.length != 1) {
-                    return;
-                }
-                final PsiExpression dimension = dimensions[0];
-                final String dimensionText = dimension.getText();
-                if (!"0".equals(dimensionText)) {
-                    return;
-                }
+            if (ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+                return;
             }
             if (isDeclaredConstant(expression)) {
                 return;

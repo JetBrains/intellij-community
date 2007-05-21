@@ -304,28 +304,7 @@ public class CollectionUtils{
                     arrayInitializerExpression.getInitializers();
             return initializers.length == 0;
         }
-        if(!(initializer instanceof PsiNewExpression)) {
-            return false;
-        }
-        final PsiNewExpression expression = (PsiNewExpression) initializer;
-        final PsiExpression[] dimensions = expression.getArrayDimensions();
-        if(dimensions.length == 0){
-            final PsiArrayInitializerExpression arrayInitializer =
-                    expression.getArrayInitializer();
-            if (arrayInitializer == null) {
-                return false;
-            }
-            final PsiExpression[] initializers =
-                    arrayInitializer.getInitializers();
-            return initializers.length == 0;
-        }
-        for (PsiExpression dimension : dimensions) {
-            final String dimensionText = dimension.getText();
-            if (!"0".equals(dimensionText)) {
-                return false;
-            }
-        }
-        return true;
+        return ExpressionUtils.isZeroLengthArrayConstruction(initializer);
     }
 
     public static boolean isArrayOrCollectionField(@NotNull PsiField field) {

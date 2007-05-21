@@ -32,6 +32,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
     private static final Logger LOG =
@@ -179,5 +180,24 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final ReadonlyStatusHandler.OperationStatus status =
                 handler.ensureFilesWritable(virtualFile);
         return status.hasReadonlyFiles();
+    }
+
+    protected static void appendElementText(
+            @NotNull PsiElement element,
+            @Nullable PsiElement elementToReplace,
+            @Nullable String replacement,
+            @NotNull StringBuilder out) {
+        if (element.equals(elementToReplace)) {
+            out.append(replacement);
+            return;
+        }
+        final PsiElement[] children = element.getChildren();
+        if (children.length == 0) {
+            out.append(element.getText());
+            return;
+        }
+        for (PsiElement child : children) {
+            appendElementText(child, elementToReplace, replacement, out);
+        }
     }
 }
