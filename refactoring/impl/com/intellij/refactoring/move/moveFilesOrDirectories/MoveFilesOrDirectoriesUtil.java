@@ -26,17 +26,18 @@ import java.util.HashSet;
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
 
-  private MoveFilesOrDirectoriesUtil() {}
+  private MoveFilesOrDirectoriesUtil() {
+  }
 
   // Does not process non-code usages!
-  public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException{
+  public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
     PsiManager manager = aDirectory.getManager();
     // do actual move
     manager.moveDirectory(aDirectory, destDirectory);
   }
 
   // Does not process non-code usages!
-  public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException{
+  public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
     ChangeContextUtil.encodeFileReferences(file);
     PsiManager manager = file.getManager();
     // the class is already there, this is true when multiple classes are defined in the same file
@@ -50,7 +51,10 @@ public class MoveFilesOrDirectoriesUtil {
   /**
    * @param elements should contain PsiDirectories or PsiFiles only
    */
-  public static void doMove(final Project project, final PsiElement[] elements, PsiElement initialTargetElement, final MoveCallback moveCallback) {
+  public static void doMove(final Project project,
+                            final PsiElement[] elements,
+                            PsiElement initialTargetElement,
+                            final MoveCallback moveCallback) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
         throw new IllegalArgumentException("unexpected element type: " + element);
@@ -58,8 +62,8 @@ public class MoveFilesOrDirectoriesUtil {
     }
 
     final PsiDirectory targetDirectory = resolveToDirectory(project, initialTargetElement);
-    if ( initialTargetElement != null && targetDirectory == null ) return;
-    
+    if (initialTargetElement != null && targetDirectory == null) return;
+
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
@@ -74,18 +78,11 @@ public class MoveFilesOrDirectoriesUtil {
             manager.checkMove(psiElement, targetDirectory);
           }
 
-          new MoveFilesOrDirectoriesProcessor(
-            project,
-            elements,
-            targetDirectory,
-            false,
-            false,
-            moveCallback,
-            new Runnable() {
-              public void run() {
-                moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }).run();
+          new MoveFilesOrDirectoriesProcessor(project, elements, targetDirectory, false, false, moveCallback, new Runnable() {
+            public void run() {
+              moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+            }
+          }).run();
         }
         catch (IncorrectOperationException e) {
           String helpId = HelpID.getMoveHelpID(elements[0]);
@@ -97,13 +94,7 @@ public class MoveFilesOrDirectoriesUtil {
     final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(
-      elements,
-      initialTargetDirectory,
-      searchInComments,
-      searchForTextOccurences,
-      HelpID.getMoveHelpID(elements[0])
-    );
+    moveDialog.setData(elements, initialTargetDirectory, searchInComments, searchForTextOccurences, HelpID.getMoveHelpID(elements[0]));
     moveDialog.show();
   }
 
@@ -130,27 +121,27 @@ public class MoveFilesOrDirectoriesUtil {
     PsiDirectory commonDirectory = null;
 
     for (PsiElement movedElement : movedElements) {
-      final PsiFile containingFile = movedElement.getContainingFile();
-      if (containingFile != null) {
-        final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-        if (containingDirectory != null) {
-          if (commonDirectory == null) {
-            commonDirectory = containingDirectory;
-          }
-          else {
-            if (commonDirectory != containingDirectory) {
-              return null;
-            }
+      final PsiDirectory containingDirectory;
+      if (movedElement instanceof PsiDirectory) {
+        containingDirectory = ((PsiDirectory)movedElement).getParentDirectory();
+      }
+      else {
+        final PsiFile containingFile = movedElement.getContainingFile();
+        containingDirectory = containingFile == null ? null : containingFile.getContainingDirectory();
+      }
+
+      if (containingDirectory != null) {
+        if (commonDirectory == null) {
+          commonDirectory = containingDirectory;
+        }
+        else {
+          if (commonDirectory != containingDirectory) {
+            return null;
           }
         }
       }
     }
-    if(commonDirectory != null) {
-      return commonDirectory;
-    }
-    else {
-      return null;
-    }
+    return commonDirectory;
   }
 
   @Nullable
@@ -161,7 +152,8 @@ public class MoveFilesOrDirectoriesUtil {
         final PsiDirectory commonDirectory = getCommonDirectory(movedElements);
         if (commonDirectory != null) {
           initialTargetDirectory = commonDirectory;
-        } else {
+        }
+        else {
           initialTargetDirectory = getContainerDirectory(movedElements[0]);
         }
       }
