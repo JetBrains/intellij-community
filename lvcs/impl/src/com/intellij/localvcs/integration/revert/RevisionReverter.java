@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -14,13 +13,12 @@ import java.util.HashSet;
 import java.util.List;
 
 public abstract class RevisionReverter extends Reverter {
-  protected IdeaGateway myGateway;
   protected Revision myLeftRevision;
   protected Entry myLeftEntry;
   protected Entry myRightEntry;
 
   public RevisionReverter(IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
-    myGateway = gw;
+    super(gw);
     myLeftRevision = leftRevision;
     myLeftEntry = leftEntry;
     myRightEntry = rightEntry;
@@ -54,30 +52,10 @@ public abstract class RevisionReverter extends Reverter {
     return result;
   }
 
-  public void revert() throws IOException {
-    try {
-      myGateway.performCommandInsideWriteAction(formatCommandName(), new RunnableAdapter() {
-        @Override
-        public void doRun() throws Exception {
-          myGateway.saveAllUnsavedDocuments();
-          doRevert();
-        }
-      });
-    }
-    catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
-      throw e;
-    }
-  }
-
-  private String formatCommandName() {
+  @Override
+  protected String formatCommandName() {
     return "Reverted to " + FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
   }
-
-  public abstract void doRevert() throws IOException;
 
   protected boolean hasPreviousVersion() {
     return myLeftEntry != null;

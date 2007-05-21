@@ -16,7 +16,7 @@ public class ChangeReverter extends Reverter {
   private Change myChange;
 
   public ChangeReverter(ILocalVcs vcs, IdeaGateway gw, Change c) {
-/*    super(gw);*/
+    super(gw);
     myVcs = vcs;
     myGateway = gw;
     myChange = c;
@@ -55,9 +55,7 @@ public class ChangeReverter extends Reverter {
 
   // todo refactor myChangeList.isInTheChain and test it
 
-  /*
   @Override
-  */
   protected String formatCommandName() {
     String name = myChange.getName();
     if (name != null) return "Revert '" + name + "'";
@@ -66,11 +64,7 @@ public class ChangeReverter extends Reverter {
     return "Revert change made " + date;
   }
 
-  public void revert() throws IOException {
-    doRevert();
-  }
-
-  /*@Override*/
+  @Override
   protected void doRevert() throws IOException {
     myVcs.accept(new ChangeRevertionVisitor(myVcs, myGateway) {
       @Override

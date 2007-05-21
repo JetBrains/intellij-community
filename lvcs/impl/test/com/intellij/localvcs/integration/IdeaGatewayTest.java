@@ -14,20 +14,22 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
 
   @Test
   public void testRegisteringUnsavedDocuments() throws Exception {
-    vcs.createFile("f1", null, -1);
-    vcs.createFile("f2", null, -1);
+    vcs.createDirectory("root");
+    vcs.createFile("root/f1", null, -1);
+    vcs.createFile("root/f2", null, -1);
 
-    gw.addUnsavedDocument("f1", "one");
-    gw.addUnsavedDocument("f2", "two");
+    gw.addUnsavedDocument("root/f1", "one");
+    gw.addUnsavedDocument("root/f2", "two");
 
-    assertEquals(1, vcs.getRevisionsFor("f1").size());
-    assertEquals(1, vcs.getRevisionsFor("f2").size());
+    assertEquals(3, vcs.getRevisionsFor("root").size());
+    assertEquals(1, vcs.getRevisionsFor("root/f1").size());
+    assertEquals(1, vcs.getRevisionsFor("root/f2").size());
 
     Clock.setCurrentTimestamp(123);
     gw.registerUnsavedDocuments(vcs);
 
-    List<Revision> rr1 = vcs.getRevisionsFor("f1");
-    List<Revision> rr2 = vcs.getRevisionsFor("f2");
+    List<Revision> rr1 = vcs.getRevisionsFor("root/f1");
+    List<Revision> rr2 = vcs.getRevisionsFor("root/f2");
 
     assertEquals(2, rr1.size());
     assertEquals(c("one"), rr1.get(0).getEntry().getContent());
@@ -36,6 +38,8 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
     assertEquals(2, rr2.size());
     assertEquals(c("two"), rr2.get(0).getEntry().getContent());
     assertEquals(123, rr2.get(0).getEntry().getTimestamp());
+
+    assertEquals(4, vcs.getRevisionsFor("root").size());
   }
 
   @Test
