@@ -1,8 +1,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -102,8 +101,9 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected void paintComponent(Graphics g) {
-    if (isOpaque()) {
-      g.setColor(getBackground());
+    final Component parent = findNearestOpaque();
+    if (parent != null) {
+      g.setColor(parent.getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
 
@@ -120,6 +120,17 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     int y = (size.height - icon.getIconHeight()) / 2;
 
     icon.paintIcon(this, g, x, y);
+  }
+
+  private @Nullable
+  Component findNearestOpaque() {
+    Component eachParent = this;
+    while(eachParent != null) {
+      if (eachParent.isOpaque()) return eachParent;
+      eachParent = eachParent.getParent();
+    }
+
+    return eachParent;
   }
 
   protected Icon getPassiveIcon() {
