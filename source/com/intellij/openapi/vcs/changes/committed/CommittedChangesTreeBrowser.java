@@ -266,11 +266,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       if (node.getUserObject() instanceof CommittedChangeList) {
         CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
 
-        int parentWidth = tree.getParent().getWidth() - 44;
+        final Container parent = tree.getParent();
+        int parentWidth = parent == null ? 100 : parent.getWidth() - 44;
         String date = ", " + myDateFormat.format(changeList.getCommitDate());
         final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
+        final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
         int size = fontMetrics.stringWidth(date);
-        size += tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD)).stringWidth(changeList.getCommitterName());
+        size += boldMetrics.stringWidth(changeList.getCommitterName());
 
         boolean truncated = false;
         String description = changeList.getName().trim();
@@ -280,8 +282,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           truncated = true;
         }
 
+        int descMaxWidth = parentWidth - size - 8;
+        boolean partial = (changeList instanceof ReceivedChangeList) && ((ReceivedChangeList)changeList).isPartial();
+        if (partial) {
+          final String partialMarker = VcsBundle.message("committed.changes.partial.list") + " ";
+          append(partialMarker, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          descMaxWidth -= boldMetrics.stringWidth(partialMarker);
+        }
         int descWidth = fontMetrics.stringWidth(description);
-        final int descMaxWidth = parentWidth - size - 8;
         if (description.length() == 0 && !truncated) {
           append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           appendAlign(parentWidth - size);

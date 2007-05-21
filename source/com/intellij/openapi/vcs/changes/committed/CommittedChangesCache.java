@@ -54,6 +54,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private State myState = new State();
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChanges;
+  private List<CommittedChangeList> myNewIncomingChanges = new ArrayList<CommittedChangeList>();
 
   public static class State {
     private int myInitialCount = 500;
@@ -435,7 +436,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
               return;
             }
             LOG.info("Processing updated files in " + cache.getLocation());
-            boolean needRefresh = cache.processUpdatedFiles(updatedFiles);
+            boolean needRefresh = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
             if (needRefresh) {
               LOG.info("Found unaccounted files, requesting refresh");
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
@@ -456,7 +457,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private void pendingUpdateProcessed() {
     myPendingUpdateCount--;
     if (myPendingUpdateCount == 0) {
-      notifyIncomingChangesUpdated();
+      notifyIncomingChangesUpdated(myNewIncomingChanges);
+      myNewIncomingChanges.clear();
     }
   }
 
@@ -468,7 +470,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           boolean result = true;
           if (committedChangeLists.size() > 0) {
             // received some new changelists, try to process updated files again
-            result = cache.processUpdatedFiles(updatedFiles);
+            result = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
           }
           LOG.info(result ? "Still have unaccounted files" : "No more unaccounted files");
           // for svn, we won't get exact revision numbers in updatedFiles, so we have to double-check by
@@ -485,8 +487,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
-  private void notifyIncomingChangesUpdated() {
-    myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated();
+  private void notifyIncomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
+    final ArrayList<CommittedChangeList> listCopy = receivedChanges == null ? null : new ArrayList<CommittedChangeList>(receivedChanges);
+    myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
   }
 
   public boolean isRefreshingIncomingChanges() {
@@ -525,7 +528,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void onSuccess() {
         myRefreshingIncomingChanges = false;
         if (myAnyChanges) {
-          notifyIncomingChangesUpdated();
+          notifyIncomingChangesUpdated(null);
         }
       }
     };

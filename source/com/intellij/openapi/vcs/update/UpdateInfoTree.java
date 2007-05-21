@@ -36,7 +36,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
@@ -46,6 +49,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -56,19 +61,30 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
+
   private VirtualFile mySelectedFile;
   protected JTree myTree = new Tree();
   protected final Project myProject;
   protected final UpdatedFiles myUpdatedFiles;
   private UpdateRootNode myRoot;
   private DefaultTreeModel myTreeModel;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.updateinfo.CvsUpdateInfoTree");
   protected FileStatusListener myFileStatusListener;
   protected final FileStatusManager myFileStatusManager;
   private final String myRootName;
   private final ActionInfo myActionInfo;
+  private boolean myCanGroupByChangeList = false;
+  private boolean myGroupByChangeList = false;
+  private JLabel myLoadingChangeListsLabel;
+  private List<CommittedChangeList> myCommittedChangeLists;
+  private JPanel myCenterPanel = new JPanel(new CardLayout());
+  @NonNls private static final String CARD_STATUS = "Status";
+  @NonNls private static final String CARD_CHANGES = "Changes";
+  private CommittedChangesTreeBrowser myTreeBrowser;
 
   public UpdateInfoTree(ContentManager contentManager,
                         String helpId,
@@ -104,12 +120,32 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myFileStatusManager.removeFileStatusListener(myFileStatusListener);
   }
 
+  public boolean isCanGroupByChangeList() {
+    return myCanGroupByChangeList;
+  }
+
+  public void setCanGroupByChangeList(final boolean canGroupByChangeList) {
+    myCanGroupByChangeList = canGroupByChangeList;
+    if (myCanGroupByChangeList) {
+      myLoadingChangeListsLabel = new JLabel(VcsBundle.message("update.info.loading.changelists"));
+      add(myLoadingChangeListsLabel, BorderLayout.SOUTH);
+      if (VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST) {
+        final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
+        cardLayout.show(myCenterPanel, CARD_CHANGES);
+      }
+    }
+  }
+
   protected void addActionsTo(DefaultActionGroup group) {
     group.add(new MyGroupByPackagesAction());
+    group.add(new GroupByChangeListAction());
   }
 
   protected JComponent createCenterPanel() {
-    return ScrollPaneFactory.createScrollPane(myTree);
+    myCenterPanel.add(CARD_STATUS, ScrollPaneFactory.createScrollPane(myTree));
+    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myCenterPanel.add(CARD_CHANGES, myTreeBrowser);
+    return myCenterPanel;
   }
 
   protected void createTree() {
@@ -135,7 +171,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
-        final DefaultActionGroup group = getActionGroup();
+        final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("UpdateActionGroup");
         if (group != null) { //if no UpdateActionGroup was configured
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP,
                                                                                         group);
@@ -159,11 +195,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myRoot.setTree(myTree);
   }
 
-  private DefaultActionGroup getActionGroup() {
-    return (DefaultActionGroup)ActionManager.getInstance().getAction("UpdateActionGroup");
-  }
-
   public Object getData(String dataId) {
+    if (myTreeBrowser.isVisible()) {
+      return null;
+    }
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
@@ -185,28 +220,27 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
-      for (int i = 0; i < selectionPaths.length; i++) {
-        TreePath selectionPath = selectionPaths[i];
+      for (TreePath selectionPath : selectionPaths) {
         AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
         result.addAll(treeNode.getVirtualFiles());
       }
     }
     if (result.isEmpty()) return VirtualFile.EMPTY_ARRAY;
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
-  protected File[] getFileArray() {
+  @Nullable
+  private File[] getFileArray() {
     ArrayList<File> result = new ArrayList<File>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
-      for (int i = 0; i < selectionPaths.length; i++) {
-        TreePath selectionPath = selectionPaths[i];
+      for (TreePath selectionPath : selectionPaths) {
         AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
         result.addAll(treeNode.getFiles());
       }
     }
     if (result.isEmpty()) return null;
-    return (File[])result.toArray(new File[result.size()]);
+    return result.toArray(new File[result.size()]);
   }
 
   public void expandRootChildren() {
@@ -215,6 +249,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     if (root.getChildCount() == 1) {
       myTree.expandPath(new TreePath(new Object[]{root, root.getChildAt(0)}));
     }
+  }
+
+  public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
+    if (myLoadingChangeListsLabel != null) {
+      remove(myLoadingChangeListsLabel);
+      myLoadingChangeListsLabel = null;
+    }
+    myCommittedChangeLists = receivedChanges;
+    myTreeBrowser.setItems(myCommittedChangeLists, false);
   }
 
   private class MyGroupByPackagesAction extends ToggleAction {
@@ -229,6 +272,38 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     public void setSelected(AnActionEvent e, boolean state) {
       VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
       myRoot.rebuild(VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!myGroupByChangeList);
+    }
+  }
+
+  private class GroupByChangeListAction extends ToggleAction {
+    public GroupByChangeListAction() {
+      super(VcsBundle.message("update.info.group.by.changelist"), null, IconLoader.getIcon("/objectBrowser/browser.png"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myGroupByChangeList;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      myGroupByChangeList = state;
+      VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST = myGroupByChangeList;
+      final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
+      if (!myGroupByChangeList) {
+        cardLayout.show(myCenterPanel, CARD_STATUS);
+      }
+      else {
+        cardLayout.show(myCenterPanel, CARD_CHANGES);
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myCanGroupByChangeList);
     }
   }
 }

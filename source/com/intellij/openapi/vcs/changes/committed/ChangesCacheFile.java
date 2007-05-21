@@ -359,14 +359,15 @@ public class ChangesCacheFile {
     return myChangesProvider.readChangeList(myLocation, myStream);
   }
 
-  public boolean processUpdatedFiles(final UpdatedFiles updatedFiles) throws IOException {
+  public boolean processUpdatedFiles(UpdatedFiles updatedFiles, List<CommittedChangeList> receivedChanges) throws IOException {
     boolean haveUnaccountedUpdatedFiles = false;
     openStreams();
     loadHeader();
+    ReceivedChangeListTracker tracker = new ReceivedChangeListTracker();
     try {
       final List<IncomingChangeListData> incomingData = loadIncomingChangeListData();
       for(FileGroup group: updatedFiles.getTopLevelGroups()) {
-        haveUnaccountedUpdatedFiles |= processGroup(group, incomingData);
+        haveUnaccountedUpdatedFiles |= processGroup(group, incomingData, tracker);
       }
       if (!haveUnaccountedUpdatedFiles) {
         for(IncomingChangeListData data: incomingData) {
@@ -378,6 +379,7 @@ public class ChangesCacheFile {
     finally {
       closeStreams();
     }
+    receivedChanges.addAll(tracker.getChangeLists());
     return haveUnaccountedUpdatedFiles;
   }
 
@@ -391,7 +393,8 @@ public class ChangesCacheFile {
     }
   }
 
-  private boolean processGroup(final FileGroup group, final List<IncomingChangeListData> incomingData) {
+  private boolean processGroup(final FileGroup group, final List<IncomingChangeListData> incomingData,
+                               final ReceivedChangeListTracker tracker) {
     boolean haveUnaccountedUpdatedFiles = false;
     final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myProject);
     for(Pair<String, VcsRevisionNumber> pair: list) {
@@ -401,19 +404,22 @@ public class ChangesCacheFile {
         continue;
       }
       if (group.getId().equals(FileGroup.REMOVED_FROM_REPOSITORY_ID)) {
-        haveUnaccountedUpdatedFiles |= processDeletedFile(path, pair.second, incomingData);
+        haveUnaccountedUpdatedFiles |= processDeletedFile(path, incomingData, tracker);
       }
       else {
-        haveUnaccountedUpdatedFiles |= processFile(path, pair.second, incomingData);
+        haveUnaccountedUpdatedFiles |= processFile(path, pair.second, incomingData, tracker);
       }
     }
     for(FileGroup childGroup: group.getChildren()) {
-      haveUnaccountedUpdatedFiles |= processGroup(childGroup, incomingData);
+      haveUnaccountedUpdatedFiles |= processGroup(childGroup, incomingData, tracker);
     }
     return haveUnaccountedUpdatedFiles;
   }
 
-  private static boolean processFile(final FilePath path, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+  private static boolean processFile(final FilePath path,
+                                     final VcsRevisionNumber number,
+                                     final List<IncomingChangeListData> incomingData,
+                                     final ReceivedChangeListTracker tracker) {
     boolean foundRevision = false;
     LOG.info("Processing updated file " + path + ", revision " + number);
     for(IncomingChangeListData data: incomingData) {
@@ -425,6 +431,7 @@ public class ChangesCacheFile {
             foundRevision = true;
           }
           if (rc >= 0) {
+            tracker.addChange(data.changeList, change);
             data.accountedChanges.add(change);
           }
         }
@@ -434,12 +441,15 @@ public class ChangesCacheFile {
     return !foundRevision;
   }
 
-  private static boolean processDeletedFile(final FilePath path, final VcsRevisionNumber number, final List<IncomingChangeListData> incomingData) {
+  private static boolean processDeletedFile(final FilePath path,
+                                            final List<IncomingChangeListData> incomingData,
+                                            final ReceivedChangeListTracker tracker) {
     boolean foundRevision = false;
     for(IncomingChangeListData data: incomingData) {
       for(Change change: data.changeList.getChanges()) {
         ContentRevision beforeRevision = change.getBeforeRevision();
         if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
+          tracker.addChange(data.changeList, change);
           data.accountedChanges.add(change);
           if (change.getAfterRevision() == null) {
             foundRevision = true;
@@ -674,5 +684,22 @@ public class ChangesCacheFile {
   private static final IndexEntry[] NO_ENTRIES = new IndexEntry[0];
 
   private static class VersionMismatchException extends RuntimeException {
+  }
+
+  private static class ReceivedChangeListTracker {
+    private Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<CommittedChangeList, ReceivedChangeList>();
+
+    public void addChange(CommittedChangeList changeList, Change change) {
+      ReceivedChangeList list = myMap.get(changeList);
+      if (list == null) {
+        list = new ReceivedChangeList(changeList);
+        myMap.put(changeList, list);
+      }
+      list.addChange(change);
+    }
+
+    public Collection<? extends CommittedChangeList> getChangeLists() {
+      return myMap.values();
+    }
   }
 }

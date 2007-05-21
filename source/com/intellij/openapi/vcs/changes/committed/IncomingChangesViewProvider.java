@@ -71,7 +71,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       updateModel();
     }
 
-    public void incomingChangesUpdated() {
+    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
       updateModel();
     }
   }

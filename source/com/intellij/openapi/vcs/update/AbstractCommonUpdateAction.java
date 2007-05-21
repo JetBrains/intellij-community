@@ -42,16 +42,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
@@ -166,10 +169,27 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
                   }
                   else if (!updatedFiles.isEmpty()) {
-                    CommittedChangesCache.getInstance(project).processUpdatedFiles(updatedFiles);
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
-                    ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, getTemplatePresentation().getText(), myActionInfo);
+                    final ProjectLevelVcsManagerEx vcsManagerEx = ProjectLevelVcsManagerEx.getInstanceEx(project);
+                    final UpdateInfoTree updateInfoTree = vcsManagerEx.showUpdateProjectInfo(updatedFiles, 
+                                                                                             getTemplatePresentation().getText(),
+                                                                                             myActionInfo);
+                    updateInfoTree.setCanGroupByChangeList(true);
+                    final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
+                    messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
+                      public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
+                      }
+
+                      public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+                        if (receivedChanges != null) {
+                          updateInfoTree.setChangeLists(receivedChanges);
+                          messageBusConnection.disconnect();
+                        }
+                      }
+                    });
+                    final CommittedChangesCache cache = CommittedChangesCache.getInstance(project);
+                    cache.processUpdatedFiles(updatedFiles);
                   }
 
                   ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();

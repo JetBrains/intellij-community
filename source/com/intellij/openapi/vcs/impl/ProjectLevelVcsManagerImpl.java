@@ -604,14 +604,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS);
   }
 
-  public void showUpdateProjectInfo(final UpdatedFiles updatedFiles, final String displayActionName, final ActionInfo actionInfo) {
-    ContentManager contentManager = getInstanceEx(myProject).getContentManager();
+  public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
+    ContentManager contentManager = getContentManager();
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, myProject, updatedFiles, displayActionName, actionInfo);
     Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
       "toolwindow.title.update.action.info", displayActionName), true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
     updateInfoTree.expandRootChildren();
+    return updateInfoTree;
   }
 
   public void addMappingFromModule(final Module module, final String activeVcsName) {

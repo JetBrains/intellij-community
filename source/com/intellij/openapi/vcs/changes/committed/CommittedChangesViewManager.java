@@ -90,7 +90,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
       });
     }
 
-    public void incomingChangesUpdated() {
+    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
     }
   }
 }

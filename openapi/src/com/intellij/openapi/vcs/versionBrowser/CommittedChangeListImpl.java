@@ -23,10 +23,11 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
@@ -36,8 +37,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
   private String myName;
   private String myComment;
   private long myNumber;
-  private Collection<Change> myChanges;
-
+  protected ArrayList<Change> myChanges;
 
   public CommittedChangeListImpl(final String name, final String comment, final String committerName,
                                  final long number, final Date commitDate, final Collection<Change> changes) {
@@ -45,7 +45,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myCommitDate = commitDate;
     myName = name;
     myComment = comment;
-    myChanges = changes;
+    myChanges = new ArrayList<Change>(changes);
     myNumber = number;
   }
 
