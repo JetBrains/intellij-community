@@ -151,8 +151,6 @@ public abstract class BaseRefactoringProcessor {
     final UsageInfo[] usages = refUsages.get();
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
 
-    if (!ensureElementsWritable(usages, descriptor)) return;
-
     if (isPreviewUsages(usages)) {
       final PsiElement[] elements = descriptor.getElements();
       final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
@@ -179,21 +177,20 @@ public abstract class BaseRefactoringProcessor {
       showUsageView(descriptor, factory, usages);
     }
     else {
-      execute(usages);
+      if (ensureElementsWritable(usages, descriptor)) {
+        execute(usages);
+      }
     }
   }
 
   private boolean ensureElementsWritable(final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
-    if (!myIsPreviewUsages) {
-      Set<PsiElement> elements = new THashSet<PsiElement>();
-      for (UsageInfo usage : usages) {
-        PsiElement element = usage.getElement();
-        if (element != null) elements.add(element);
-      }
-      elements.addAll(getElementsToWrite(descriptor));
-      if (!ensureFilesWritable(myProject, elements)) return false;
+    Set<PsiElement> elements = new THashSet<PsiElement>();
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element != null) elements.add(element);
     }
-    return true;
+    elements.addAll(getElementsToWrite(descriptor));
+    return ensureFilesWritable(myProject, elements);
   }
 
   private static boolean ensureFilesWritable(final Project project, Collection<? extends PsiElement> elements) {
