@@ -859,7 +859,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         break;
       }
     }
-    RangeHighlighter next = i+delta < ranges.size() && i+delta >= 0 ? ranges.get(i+delta) : null;
+    int newIndex = (i + delta + ranges.size()) % ranges.size();
+    RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
     if (next == null) return null;
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
     return new OccurenceInfo(new Navigatable() {
