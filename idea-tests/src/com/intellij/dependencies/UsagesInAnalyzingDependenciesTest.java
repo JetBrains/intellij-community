@@ -63,8 +63,8 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();",
-                              "(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
+    checkResult(new String []{"(2, 14) import com.a.A;","(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();",
+                              "(2, 14) import com.a.A;","(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
   }
 
   private String toString(Usage usage) {
