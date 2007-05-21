@@ -205,8 +205,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   @Nullable
   public static String generateInfo(PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file == null) return null;
-    final Language language = file.getLanguage();
+    final Language language = (file != null ? file : element).getLanguage();
     final DocumentationProvider documentationProvider = language.getDocumentationProvider();
     if (documentationProvider != null) {
       String info = documentationProvider.getQuickNavigateInfo(element);
