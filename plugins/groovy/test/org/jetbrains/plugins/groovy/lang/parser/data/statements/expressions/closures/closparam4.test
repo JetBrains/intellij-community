@@ -6,28 +6,28 @@ Groovy script
     PsiElement({)('{')
     PsiWhiteSpace(' ')
     Parameter list
-      Parameter
-        Parameter modifiers
-          PsiElement(def)('def')
-        PsiWhiteSpace(' ')
-        Type element
-          Reference element
-            PsiElement(identifier)('Map')
-            Type arguments
-              PsiElement(<)('<')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('String')
-              PsiElement(>)('>')
-        PsiWhiteSpace(' ')
+      <empty list>
+    Variable definitions
+      Modifiers
+        PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      Type element
+        Reference element
+          PsiElement(identifier)('Map')
+          Type arguments
+            PsiElement(<)('<')
+            Type argument
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+            PsiElement(>)('>')
+      PsiWhiteSpace(' ')
+      Variable
         PsiElement(identifier)('map')
       PsiElement(,)(',')
-      PsiErrorElement:Parameter expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    Reference expression
-      PsiElement(identifier)('c')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('c')
     PsiElement(new line)('\n')
     RETURN statement
       PsiElement(return)('return')
