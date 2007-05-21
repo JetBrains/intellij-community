@@ -45,7 +45,14 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
       if (extendClass.instantiatable()) {
         provider.setOption(JavaClassReferenceProvider.INSTANTIATABLE, Boolean.TRUE);
       }
+      if (!extendClass.allowAbstract()) {
+        provider.setOption(JavaClassReferenceProvider.CONCRETE, Boolean.TRUE);
+      }
+      if (!extendClass.allowInterface()) {
+        provider.setOption(JavaClassReferenceProvider.NOT_INTERFACE, Boolean.TRUE);
+      }
       provider.setAllowEmpty(extendClass.allowEmpty());
+
     }
     provider.setSoft(true);
     return provider.getReferencesByElement(element);

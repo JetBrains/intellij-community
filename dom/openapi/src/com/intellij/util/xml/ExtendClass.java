@@ -48,4 +48,8 @@ public @interface ExtendClass {
   boolean canBeDecorator() default false;
 
   boolean allowEmpty() default false;
+
+  boolean allowAbstract() default true;
+
+  boolean allowInterface() default true;
 }
