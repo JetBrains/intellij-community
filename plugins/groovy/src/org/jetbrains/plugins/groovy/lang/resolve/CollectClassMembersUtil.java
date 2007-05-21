@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+
 /**
  * @author ven
  */
@@ -67,13 +69,15 @@ public class CollectClassMembersUtil {
     }
 
     for (PsiMethod method : aClass.getMethods()) {
-      String name = method.getName();
-      List<PsiMethod> methods = allMethods.get(name);
-      if (methods == null) {
-        methods = new ArrayList<PsiMethod>();
-        allMethods.put(name, methods);
-        methods.add(method);
-      } else if (!ResolveUtil.isSuperMethodDominated(method, methods)) methods.add(method);
+      addMethod(allMethods, method);
+    }
+
+    String qName = aClass.getQualifiedName();
+    if (qName != null) {
+      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(aClass.getProject()).getDefaultMethods(qName);
+      for (PsiMethod defaultMethod : defaultMethods) {
+        addMethod(allMethods, defaultMethod);
+      }
     }
 
     for (PsiClassType superType : aClass.getSuperTypes()) {
@@ -82,5 +86,15 @@ public class CollectClassMembersUtil {
         processClass(superClass, allFields, allMethods, visitedClasses);
       }
     }
+  }
+
+  private static void addMethod(Map<String, List<PsiMethod>> allMethods, PsiMethod method) {
+    String name = method.getName();
+    List<PsiMethod> methods = allMethods.get(name);
+    if (methods == null) {
+      methods = new ArrayList<PsiMethod>();
+      allMethods.put(name, methods);
+      methods.add(method);
+    } else if (!ResolveUtil.isSuperMethodDominated(method, methods)) methods.add(method);
   }
 }

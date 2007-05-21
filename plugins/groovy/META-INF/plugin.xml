@@ -23,6 +23,9 @@
       <implementation-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManagerImpl</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.plugins.groovy.GrailsConsole</implementation-class>
     </component>
     <component>

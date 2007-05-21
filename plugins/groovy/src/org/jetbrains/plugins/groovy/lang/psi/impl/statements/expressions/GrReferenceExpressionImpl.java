@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
@@ -43,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
-import java.util.EnumSet;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -212,12 +214,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private Object[] getVariantsImpl(ResolverProcessor processor) {
     GrExpression qualifierExpression = getQualifierExpression();
+    PsiClass qualifierClass = null;
     if (qualifierExpression == null) {
       ResolveUtil.treeWalkUp(this, processor);
     } else {
       PsiType qualifierType = qualifierExpression.getType();
       if (qualifierType instanceof PsiClassType) {
-        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+        qualifierClass = ((PsiClassType) qualifierType).resolve();
         if (qualifierClass != null) {
           qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
         }
@@ -226,7 +229,30 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
-    return ResolveUtil.mapToElements(candidates);
+    Object[] elements = ResolveUtil.mapToElements(candidates);
+    if (qualifierClass != null && !(qualifierClass instanceof GrTypeDefinition)) {
+      List<PsiMethod> groovyDefaults = new ArrayList<PsiMethod>();
+      addDefaultMethods(qualifierClass, groovyDefaults, new HashSet<PsiClass>());
+
+      if (groovyDefaults.size() > 0) {
+        PsiMethod[] defaultMethods = groovyDefaults.toArray(new PsiMethod[groovyDefaults.size()]);
+        return ArrayUtil.mergeArrays(elements, defaultMethods, Object.class);
+      }
+    }
+    return elements;
+  }
+
+  private void addDefaultMethods(PsiClass clazz, List<PsiMethod> groovyDefaults, Set<PsiClass> visited) {
+    if (visited.contains(clazz)) return;
+    visited.add(clazz);
+
+    String qName = clazz.getQualifiedName();
+    if (qName != null) {
+      groovyDefaults.addAll(GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName));
+      for (PsiClass aSuper : clazz.getSupers()) {
+        addDefaultMethods(aSuper, groovyDefaults, new HashSet<PsiClass>());
+      }
+    }
   }
 
   public boolean isSoft() {
