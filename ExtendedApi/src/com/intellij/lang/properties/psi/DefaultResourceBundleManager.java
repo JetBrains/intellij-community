@@ -6,12 +6,11 @@
  * User: anna
  * Date: 05-Feb-2007
  */
-package com.intellij.codeInspection.i18n;
+package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;

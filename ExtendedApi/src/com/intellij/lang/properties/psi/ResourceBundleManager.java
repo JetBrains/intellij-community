@@ -1,7 +1,6 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.i18n.DefaultResourceBundleManager;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -18,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class ResourceBundleManager {
-  public static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.resourceBundleManager");
+  private static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.resourceBundleManager");
   protected Project myProject;
 
   protected ResourceBundleManager(final Project project) {
