@@ -146,7 +146,7 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
       GroovycOSProcessHandler processHandler;
 
       try {
-        processHandler = new GroovycOSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
 
         processHandler.startNotify();
         processHandler.waitFor();

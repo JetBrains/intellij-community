@@ -17,10 +17,13 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.compiler.TranslatingCompiler;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.io.File;
 import java.io.InputStream;
@@ -37,14 +40,16 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private Set<File> toRecompileFiles = new HashSet<File>();
   private List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private StringBuffer unparsedOutput = new StringBuffer();
+  private CompileContext myContext;
 
-  public GroovycOSProcessHandler(Process process, String s) {
+  public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
     super(process, s);
+    myContext = context;
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
     super.notifyTextAvailable(text, outputType);
-//    System.out.println("text: " + text);
+    System.out.println("text: " + text);
 
     parseOutput(text);
   }
@@ -96,6 +101,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           }
 
           try {
+            myContext.getProgressIndicator().setText(sourceFile);
             compiledFilesNames.add(getOutputItem(outputPath, sourceFile, outputRootDirectory));
           } catch (InvocationTargetException e) {
             e.printStackTrace();
@@ -103,6 +109,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
             e.printStackTrace();
           }
         }
+
       } else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
         unparsedOutput.setLength(0);
         if (!(outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1)) {
@@ -112,6 +119,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1) {
           text = handleOutputBuffer(GroovycRunner.TO_RECOMPILE_START, GroovycRunner.TO_RECOMPILE_END);
 
+          myContext.getProgressIndicator().setText(text);
           toRecompileFiles.add(new File(text));
         }
       }
@@ -177,6 +185,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           colomnnumInt = 0;
         }
 
+        myContext.getProgressIndicator().setText(url);
+
         compilerMessages.add(new CompilerMessage(cathegory, message, url, linenumInt, colomnnumInt));
       } else {
         if (outputBuffer.indexOf("Exception") != -1) unparsedOutput.append(outputBuffer);
@@ -192,8 +202,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         outputBuffer.indexOf(END_MARKER)).toString();
 
     outputBuffer.delete(
-              outputBuffer.indexOf(START_MARKER),
-              outputBuffer.indexOf(END_MARKER) + END_MARKER.length());
+        outputBuffer.indexOf(START_MARKER),
+        outputBuffer.indexOf(END_MARKER) + END_MARKER.length());
 
     return text;
   }

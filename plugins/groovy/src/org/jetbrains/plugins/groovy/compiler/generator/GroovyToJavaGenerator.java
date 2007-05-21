@@ -76,8 +76,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   };
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
+  private CompileContext myContext;
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
+    myContext = context;
+
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -174,6 +177,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
   //virtualFile -> PsiFile
   private List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
+    assert myContext != null;
+    myContext.getProgressIndicator().setText(item.getPath());
+
     GroovyFile myPsiFile = findPsiFile(item);
 
     List<String> generatedJavaFilesRelPaths = generate(myPsiFile, outputRootDirectory);
@@ -595,7 +601,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       } catch (IOException e) {
         e.printStackTrace();
       }
-      System.out.println("");
+//      System.out.println("");
     }
   }
 
