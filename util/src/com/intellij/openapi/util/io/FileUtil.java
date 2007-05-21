@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -498,7 +499,7 @@ public class FileUtil {
     delete(source);
   }
 
-  public static boolean startsWith(String path1, String path2) {
+  public static boolean startsWith(@NonNls String path1, @NonNls String path2) {
     return startsWith(path1, path2, SystemInfo.isFileSystemCaseSensitive);
   }
 
@@ -561,9 +562,9 @@ public class FileUtil {
 
   /**
    * @param antPattern ant-style path pattern
-   * @return java regexp pattern. 
+   * @return java regexp pattern.
    * Note that no matter whether forward or backward slashes were used in the antPattern
-   * the returned regexp pattern will use forward slashes ('/') as file separators. 
+   * the returned regexp pattern will use forward slashes ('/') as file separators.
    * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
    */
@@ -576,17 +577,17 @@ public class FileUtil {
         switch (ch) {
           case '[': case ']': case '^': case '$': case '.': case '{': case '}': case '+': case '|':
             // quote regexp-specific symbols
-            builder.append('\\').append(ch); 
+            builder.append('\\').append(ch);
             break;
-        
-          case '\\' : 
-            builder.append("/"); 
+
+          case '\\' :
+            builder.append("/");
             break;
-          
-          case '?' : 
-            builder.append(".{1}"); 
+
+          case '?' :
+            builder.append(".{1}");
             break;
-          
+
           case '*' :
             int asteriskCount = 1;
             while (++idx < antPattern.length()) {
@@ -610,7 +611,7 @@ public class FileUtil {
               builder.append("[^/]*?");
             }
             break;
-          
+
           default: builder.append(ch);
         }
       }
@@ -668,29 +669,43 @@ public class FileUtil {
     return result.toString();
   }
 
+  //File.setWritable() since java 6.0
+  private static final Method IO_FILE_SET_WRITABLE_METHOD;
+  static {
+    Method method;
+    try {
+      method = File.class.getDeclaredMethod("setWritable", boolean.class);
+    }
+    catch (NoSuchMethodException e) {
+      method = null;
+    }
+    IO_FILE_SET_WRITABLE_METHOD = method;
+  }
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
+    if (IO_FILE_SET_WRITABLE_METHOD != null) {
+      try {
+        IO_FILE_SET_WRITABLE_METHOD.invoke(new File(path), !readOnlyStatus);
+        return;
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+      }
+    }
     Process process;
-    if(SystemInfo.isWindows){
-      process=Runtime.getRuntime().exec(
-        new String[]{
-          "attrib",
-          readOnlyStatus ? "+r" : "-r",
-          path
-        }
-      );
-    }else{ // UNIXes go here
-      process=Runtime.getRuntime().exec(
-        new String[]{
-          "chmod",
-          readOnlyStatus ? "u-w" : "u+w",
-          path
-        }
-      );
+    if (SystemInfo.isWindows) {
+      process = Runtime.getRuntime().exec(new String[]{"attrib", readOnlyStatus ? "+r" : "-r", path});
+    }
+    else { // UNIXes go here
+      process = Runtime.getRuntime().exec(new String[]{"chmod", readOnlyStatus ? "u-w" : "u+w", path});
     }
     try {
       process.waitFor();
-    }catch (InterruptedException e) {
+    }
+    catch (InterruptedException e) {
     }
   }
 }
