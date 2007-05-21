@@ -63,10 +63,12 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
   }
   
   protected AntPattern getPattern() {
-    if (myPattern == null) {
-      myPattern = AntPattern.create(this, shouldHonorDefaultExcludes(), matchPatternsCaseSensitive());
+    synchronized (PsiLock.LOCK) {
+      if (myPattern == null) {
+        myPattern = AntPattern.create(this, shouldHonorDefaultExcludes(), matchPatternsCaseSensitive());
+      }
+      return myPattern;
     }
-    return myPattern;
   }
 
   
