@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public interface GrVariable extends GrNamedElement {
+public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElement {
   public static final GrVariable[] EMPTY_ARRAY = new GrVariable[0];
 
   @NotNull

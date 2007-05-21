@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 /**
  * @author ven
  */
-public interface GroovyFile extends PsiFile {
+public interface GroovyFile extends PsiFile, GroovyPsiElement {
   GrTypeDefinition[] getTypeDefinitions();
 
   @NotNull
