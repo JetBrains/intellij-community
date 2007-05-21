@@ -238,7 +238,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       throw new IllegalStateException("Wizard dialog was already disposed. Recreate a new instance to show the wizard again");
     }
 
-    myFocusTrackback = new FocusTrackback(this, owner);
+    myFocusTrackback = new FocusTrackback(this, owner, true);
 
     myScrollPane.getViewport().setPreferredSize(myContent.getPreferredSize());
     beforeShow();
@@ -265,6 +265,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         requestFocus();
+        myFocusTrackback.onShown(getPreferredFocusableComponent());
         afterShow();
       }
     });
@@ -286,6 +287,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   protected abstract void requestFocus();
+
+  protected abstract JComponent getPreferredFocusableComponent();
 
   public boolean canClose() {
     return true;

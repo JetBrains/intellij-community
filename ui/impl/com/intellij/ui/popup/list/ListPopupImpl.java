@@ -312,6 +312,10 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     myList.requestFocus();
   }
 
+  protected JComponent getPreferredFocusableComponent() {
+    return myList;
+  }
+
   protected void onChildSelectedFor(Object value) {
     if (myList.getSelectedValue() != value) {
       myList.setSelectedValue(value, false);

@@ -64,7 +64,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
-    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
+    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 
     Component parent = parentComponent;
     if (parent == null && project == null) {
@@ -98,9 +98,13 @@ public class ProgressWindow extends BlockingProgressIndicator {
           public void run() {
             if (isRunning()) {
               showDialog();
+              final DialogWrapper popup = myDialog.myPopup;
+              if (popup != null) {
+                myFocusTrackback.onShown(popup.getPreferredFocusedComponent());
+              }
             }
           }
-        }, 300, getModalityState());
+        }, 0, getModalityState());
       }
     });
   }

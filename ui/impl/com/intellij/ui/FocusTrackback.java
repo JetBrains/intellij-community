@@ -28,14 +28,17 @@ public class FocusTrackback {
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
 
   private String myRequestorName;
+  private Component myFocusedComponent;
+  private boolean myMustBeShown;
 
-  public FocusTrackback(@NotNull Object requestor, Component parent) {
-    this(requestor, SwingUtilities.getWindowAncestor(parent));  
+  public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
+    this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
 
-  public FocusTrackback(@NotNull Object requestor, Window parent) {
+  public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
     myRequestorName = requestor.toString();
     myParentWindow = parent;
+    myMustBeShown = mustBeShown;
 
 
     if (ApplicationManager.getApplication().isUnitTestMode() || wrongOS()) return;
@@ -60,6 +63,10 @@ public class FocusTrackback {
   private static boolean wrongOS() {
     //return !SystemInfo.isMac;
     return false;
+  }
+
+  public void onShown(Component focusedComponent) {
+    myFocusedComponent = focusedComponent;
   }
 
   private void register(final Window parent) {
@@ -94,16 +101,24 @@ public class FocusTrackback {
   }
 
   private void _restoreFocus() {
-    final Component focusOwner = getFocusOwner();
-    if (focusOwner != null) {
-      final List<FocusTrackback> stack = getStackForRoot(myRoot);
+    final List<FocusTrackback> stack = getStackForRoot(myRoot);
 
-      final boolean isFirstInStack = stack.contains(this) && stack.indexOf(this) == 0;
-      if (isFirstInStack && stack.size() == 1) {
-        focusOwner.requestFocus();
-      }
-      stack.remove(this);
+    if (!stack.contains(this)) return;
+
+    final int index = stack.indexOf(this);
+    Component toFocus;
+    if (index > 0) {
+      toFocus = stack.get(index - 1).myFocusedComponent;
+    } else {
+      toFocus = getFocusOwner();
     }
+
+
+    if (toFocus != null) {
+      toFocus.requestFocus();
+    }
+
+    stack.remove(this);
     dispose();
   }
 
@@ -151,7 +166,11 @@ public class FocusTrackback {
   }
 
   private boolean isDead() {
-    return myParentWindow == null || !myParentWindow.isShowing();
+    if (myMustBeShown) {
+      return myFocusedComponent != null && !myFocusedComponent.isShowing();
+    } else {
+      return myParentWindow == null || !myParentWindow.isShowing();
+    }
   }
 
   private void setFocusOwner(final Component focusOwner) {

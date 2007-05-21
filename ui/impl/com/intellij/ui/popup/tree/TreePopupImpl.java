@@ -492,6 +492,10 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     myWizardTree.requestFocus();
   }
 
+  protected JComponent getPreferredFocusableComponent() {
+    return myWizardTree;
+  }
+
   protected void onSpeedSearchPatternChanged() {
     myBuilder.refilter();
   }

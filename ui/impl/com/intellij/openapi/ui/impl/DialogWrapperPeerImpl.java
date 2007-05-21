@@ -429,7 +429,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void show() {
-      myFocusTrackback = new FocusTrackback(myDialogWrapper, this);
+      myFocusTrackback = new FocusTrackback(myDialogWrapper, this, true);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
@@ -470,6 +470,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       final Rectangle bounds = getBounds();
       ScreenUtil.fitToScreen(bounds);
       setBounds(bounds);
+
+      addWindowListener(new WindowAdapter() {
+        public void windowActivated(final WindowEvent e) {
+          final DialogWrapper wrapper = getDialogWrapper();
+          if (wrapper != null) {
+            myFocusTrackback.onShown(wrapper.getPreferredFocusedComponent());
+          } 
+        }
+      });
 
       super.show();
     }
