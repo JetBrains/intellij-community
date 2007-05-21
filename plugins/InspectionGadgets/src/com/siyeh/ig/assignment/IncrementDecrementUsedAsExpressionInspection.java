@@ -210,25 +210,6 @@ public class IncrementDecrementUsedAsExpressionInspection
             }
             replaceExpression((PsiExpression)element, operandText);
         }
-
-        protected static void appendElementText(
-                @NotNull PsiElement element,
-                @Nullable PsiElement elementToReplace,
-                @Nullable String replacement,
-                @NotNull StringBuilder out) {
-            if (element.equals(elementToReplace)) {
-                out.append(replacement);
-                return;
-            }
-            final PsiElement[] children = element.getChildren();
-            if (children.length == 0) {
-                out.append(element.getText());
-                return;
-            }
-            for (PsiElement child : children) {
-                appendElementText(child, elementToReplace, replacement, out);
-            }
-        }
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -61,7 +61,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if (ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+            if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
                 return;
             }
             if (isDeclaredConstant(expression)) {

@@ -41,16 +41,18 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final PsiElement element = (PsiElement)infos[0];
         return InspectionGadgetsBundle.message(
                 "to.array.call.with.zero.length.array.argument.problem.descriptor",
-                infos[0]);
+                element.getText());
     }
 
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
+        final PsiElement parent = location.getParent().getParent();
         final String replacementText =
                 ToArrayCallWithZeroLengthArrayArgumentFix.getReplacementText(
-                        location);
+                        parent);
         if (replacementText == null) {
             return null;
         }
@@ -77,12 +79,12 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
             final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiMethodCallExpression)) {
-                System.out.println("not a method call");
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
                 return;
             }
             final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) parent;
+                    (PsiMethodCallExpression) grandParent;
             replaceExpression(methodCallExpression, replacementText);
         }
 
@@ -99,16 +101,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 return null;
             }
             final PsiExpression argument = arguments[0];
-            if (!(argument instanceof PsiNewExpression)) {
-                return null;
-            }
-            final PsiNewExpression newExpression = (PsiNewExpression) argument;
-            final PsiExpression[] dimensions =
-                    newExpression.getArrayDimensions();
-            if (dimensions.length != 1) {
-                return null;
-            }
-            final PsiExpression dimension = dimensions[0];
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpression qualifier =
@@ -116,11 +108,35 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
             if (qualifier == null) {
                 return null;
             }
-            final String text = qualifier.getText();
-            final String replacementText = text + ".size()";
-            final StringBuilder builder = new StringBuilder();
-            appendElementText(expression, dimension, replacementText, builder);
-            return builder.toString();
+            final String qualifierText = qualifier.getText();
+            if (argument instanceof PsiNewExpression) {
+                final PsiNewExpression newExpression =
+                        (PsiNewExpression) argument;
+                final PsiExpression[] dimensions =
+                        newExpression.getArrayDimensions();
+                if (dimensions.length != 1) {
+                    return null;
+                }
+                final PsiExpression dimension = dimensions[0];
+                final String replacementText = qualifierText + ".size()";
+                return appendElementText(expression, dimension, replacementText,
+                        new StringBuilder()).toString();
+            } else if (argument instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)argument;
+                final PsiArrayType type =
+                        (PsiArrayType)referenceExpression.getType();
+                if (type == null) {
+                    return null;
+                }
+                final PsiType componentType = type.getComponentType();
+                final String typeText = componentType.getCanonicalText();
+                final String replacementText =
+                        "new " + typeText + "[" + qualifierText + ".size()]";
+                return appendElementText(expression, referenceExpression,
+                        replacementText, new StringBuilder()).toString();
+            }
+            return null;
         }
     }
 
@@ -150,10 +166,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
             if (!(type instanceof PsiArrayType)) {
                 return;
             }
-            if (!ExpressionUtils.isZeroLengthArrayConstruction(
-                    argument)) {
-                return;
-            } else if (argument instanceof PsiReferenceExpression) {
+            if (argument instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression) argument;
                 final PsiElement element = referenceExpression.resolve();
@@ -164,7 +177,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 if (!CollectionUtils.isConstantEmptyArray(field)) {
                     return;
                 }
-            }
+            } else if (!ExpressionUtils.isZeroLengthArrayConstruction(
+                    argument)) {
+                return;
+            } 
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return;
@@ -175,7 +191,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 return;
             }
             registerMethodCallError(expression, argument);
-//            new java.util.ArrayList().toArray(new Object[0]);
         }
     }
 }

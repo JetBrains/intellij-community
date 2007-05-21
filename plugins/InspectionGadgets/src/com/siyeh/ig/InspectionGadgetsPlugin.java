@@ -947,6 +947,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(StringToStringInspection.class);
         m_inspectionClasses.add(SubstringZeroInspection.class);
         m_inspectionClasses.add(TailRecursionInspection.class);
+        m_inspectionClasses.add(ToArrayCallWithZeroLengthArrayArgumentInspection.class);
         m_inspectionClasses.add(TrivialStringConcatenationInspection.class);
         m_inspectionClasses.add(UnnecessaryTemporaryOnConversionToStringInspection.class);
         m_inspectionClasses.add(UnnecessaryTemporaryOnConversionFromStringInspection.class);

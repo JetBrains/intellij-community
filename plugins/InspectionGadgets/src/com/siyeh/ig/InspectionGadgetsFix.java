@@ -182,22 +182,23 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         return status.hasReadonlyFiles();
     }
 
-    protected static void appendElementText(
+    protected static StringBuilder appendElementText(
             @NotNull PsiElement element,
             @Nullable PsiElement elementToReplace,
             @Nullable String replacement,
             @NotNull StringBuilder out) {
         if (element.equals(elementToReplace)) {
             out.append(replacement);
-            return;
+            return out;
         }
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
             out.append(element.getText());
-            return;
+            return out;
         }
         for (PsiElement child : children) {
             appendElementText(child, elementToReplace, replacement, out);
         }
+        return out;
     }
 }
