@@ -32,10 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -261,6 +258,17 @@ class RunConfigurable extends BaseConfigurable {
                                                 : ExecutionBundle.message("run.configuration.default.type.description");
     browser.setText(ExecutionBundle.message("empty.run.configuration.panel.text.label", font.getFontName(), addUrl, defaultsURL, configurationTypeDescription));
     browser.setPreferredSize(new Dimension(200, 50));
+    browser.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          if (Comparing.strEqual(e.getDescription(), "add")) {
+            new MyToolbarAddAction().actionPerformed(null);
+          } else {
+            editDefaultsConfiguration();
+          }
+        }
+      }
+    });
     myRightPanel.removeAll();
     myRightPanel.add(browser, BorderLayout.CENTER);
     myRightPanel.revalidate();
