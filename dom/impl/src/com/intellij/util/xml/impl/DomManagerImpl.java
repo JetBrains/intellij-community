@@ -476,7 +476,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
-      return getRootInvocationHandler((XmlFile)tag.getContainingFile());
+      final PsiFile psiFile = tag.getContainingFile();
+      return psiFile instanceof XmlFile ? getRootInvocationHandler((XmlFile)psiFile) : null;
     }
 
     DomInvocationHandler parent = _getDomElement(parentTag);
