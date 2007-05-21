@@ -160,8 +160,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   public static ExtractMethodProcessor getProcessor(final Project project,
                                                     final PsiElement[] elements,
                                                     final PsiFile file,
-                                                    final boolean showErrorMessage) {
-    return getProcessor(elements, project, file, openEditor(project, file), showErrorMessage);
+                                                    final boolean openEditor) {
+    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false);
   }
 
   public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
