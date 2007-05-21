@@ -211,7 +211,7 @@ public class IncrementDecrementUsedAsExpressionInspection
             replaceExpression((PsiExpression)element, operandText);
         }
 
-        private static void appendElementText(
+        protected static void appendElementText(
                 @NotNull PsiElement element,
                 @Nullable PsiElement elementToReplace,
                 @Nullable String replacement,
