@@ -17,9 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
@@ -35,6 +38,12 @@ public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
   }
 
   public PsiType getType() {
+    IElementType elemType = getFirstChild().getNode().getElementType();
+    if (elemType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+    }
+
+    //todo
     return null;
   }
 }
