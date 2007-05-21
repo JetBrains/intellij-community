@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2007 JetBrains s.r.o.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
@@ -82,29 +97,13 @@ public class GroovyPsiManager implements ProjectComponent {
           hisMethods = new ArrayList<PsiMethod>();
           myDefaultMethods.put(thisQName, hisMethods);
         }
-        hisMethods.add(convertToNonStatic(method, method.getManager().getElementFactory()));
+        hisMethods.add(convertToNonStatic(method));
       }
     }
   }
 
-  private PsiMethod convertToNonStatic(PsiMethod method, PsiElementFactory elementFactory) {
-    try {
-      PsiMethod copy = elementFactory.createMethod(method.getName(), method.getReturnType());
-      copy.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-      copy.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
-      PsiParameter[] originalParameters = method.getParameterList().getParameters();
-      PsiParameterList newParamList = copy.getParameterList();
-      for (int i = 1; i < originalParameters.length; i++) {
-        PsiParameter originalParameter = originalParameters[i];
-        PsiParameter parameter = elementFactory.createParameter("p" + i, originalParameter.getType());
-        newParamList.add(parameter);
-      }
-      copy.getThrowsList().replace(method.getThrowsList());
-      return copy;
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+  private PsiMethod convertToNonStatic(PsiMethod method) {
+    return new DefaultGroovyMethod(method, null);
   }
 
   public void disposeComponent() {

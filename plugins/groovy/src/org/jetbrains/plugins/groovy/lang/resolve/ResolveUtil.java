@@ -56,7 +56,7 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean processElement(PsiScopeProcessor processor, GrNamedElement namedElement) {
+  public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement) {
     NameHint nameHint = processor.getHint(NameHint.class);
     String name = nameHint == null ? null : nameHint.getName();
     if (name == null || name.equals(namedElement.getName())) {

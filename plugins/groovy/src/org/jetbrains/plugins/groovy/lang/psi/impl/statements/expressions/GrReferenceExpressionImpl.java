@@ -146,6 +146,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
           if (qualifierClass != null) {
             qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+            if (!(qualifierClass instanceof GrTypeDefinition)) {
+              addDefaultMethods(qualifierClass, processor, new HashSet<PsiClass>());
+            }
           }
         }
       }
@@ -214,43 +217,38 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private Object[] getVariantsImpl(ResolverProcessor processor) {
     GrExpression qualifierExpression = getQualifierExpression();
-    PsiClass qualifierClass = null;
     if (qualifierExpression == null) {
       ResolveUtil.treeWalkUp(this, processor);
     } else {
       PsiType qualifierType = qualifierExpression.getType();
       if (qualifierType instanceof PsiClassType) {
-        qualifierClass = ((PsiClassType) qualifierType).resolve();
+        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
         if (qualifierClass != null) {
           qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+          if (!(qualifierClass instanceof GrTypeDefinition)) {
+            addDefaultMethods(qualifierClass, processor, new HashSet<PsiClass>());
+          }
         }
       }
     }
 
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
-    Object[] elements = ResolveUtil.mapToElements(candidates);
-    if (qualifierClass != null && !(qualifierClass instanceof GrTypeDefinition)) {
-      List<PsiMethod> groovyDefaults = new ArrayList<PsiMethod>();
-      addDefaultMethods(qualifierClass, groovyDefaults, new HashSet<PsiClass>());
-
-      if (groovyDefaults.size() > 0) {
-        PsiMethod[] defaultMethods = groovyDefaults.toArray(new PsiMethod[groovyDefaults.size()]);
-        return ArrayUtil.mergeArrays(elements, defaultMethods, Object.class);
-      }
-    }
-    return elements;
+    return ResolveUtil.mapToElements(candidates);
   }
 
-  private void addDefaultMethods(PsiClass clazz, List<PsiMethod> groovyDefaults, Set<PsiClass> visited) {
+  private static void addDefaultMethods(PsiClass clazz, ResolverProcessor processor, Set<PsiClass> visited) {
     if (visited.contains(clazz)) return;
     visited.add(clazz);
 
     String qName = clazz.getQualifiedName();
     if (qName != null) {
-      groovyDefaults.addAll(GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName));
+      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName);
+      for (PsiMethod defaultMethod : defaultMethods) {
+        if (!ResolveUtil.processElement(processor, defaultMethod)) return;
+      }
       for (PsiClass aSuper : clazz.getSupers()) {
-        addDefaultMethods(aSuper, groovyDefaults, new HashSet<PsiClass>());
+        addDefaultMethods(aSuper, processor, new HashSet<PsiClass>());
       }
     }
   }
