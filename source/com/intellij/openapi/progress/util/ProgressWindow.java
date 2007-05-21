@@ -104,7 +104,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
               }
             }
           }
-        }, 0, getModalityState());
+        }, 300, getModalityState());
       }
     });
   }
