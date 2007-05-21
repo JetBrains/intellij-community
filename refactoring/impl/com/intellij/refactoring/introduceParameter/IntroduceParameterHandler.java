@@ -127,7 +127,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     if (methodToSearchFor == null) return false;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
 
-    TIntArrayList parametersToRemove = Util.findParametersToRemove(method, expr);
+    TIntArrayList parametersToRemove = expr == null ? new TIntArrayList() : Util.findParametersToRemove(method, expr);
 
     PsiExpression[] occurences;
     if (expr != null) {

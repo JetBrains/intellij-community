@@ -86,7 +86,7 @@ public class Util {
 
   // returns parameters that are used solely in specified expression
   @NotNull
-  public static TIntArrayList findParametersToRemove(final PsiMethod method, final PsiExpression expr) {
+  public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method, @NotNull final PsiExpression expr) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
