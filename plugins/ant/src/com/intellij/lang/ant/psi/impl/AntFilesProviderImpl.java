@@ -72,6 +72,7 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
   }
 
   
+  @Nullable
   private AntFilesProvider getReferencedProvider() {
     final PsiReference[] references = getReferences();
     for (PsiReference reference : references) {
