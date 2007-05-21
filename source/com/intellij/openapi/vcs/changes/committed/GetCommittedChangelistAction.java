@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.ScopeInfo;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.actionSystem.Presentation;
 
 import java.util.*;
 
@@ -54,6 +55,12 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
 
   protected boolean filterRootsBeforeAction() {
     return false;
+  }
+
+  protected void update(final VcsContext vcsContext, final Presentation presentation) {
+    super.update(vcsContext, presentation);
+    presentation.setEnabled(presentation.isEnabled() &&
+                            CommittedChangesCache.getInstance(vcsContext.getProject()).getCachedIncomingChanges() != null);
   }
 
   private static ScopeInfo CHANGELIST = new ScopeInfo() {

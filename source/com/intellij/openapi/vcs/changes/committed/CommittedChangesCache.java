@@ -7,11 +7,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -53,7 +54,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private int myPendingUpdateCount = 0;
   private State myState = new State();
   private ScheduledFuture myFuture;
-  private List<CommittedChangeList> myCachedIncomingChanges;
+  private Map<CommittedChangeList, List<Change>> myCachedIncomingChangeLists;
   private List<CommittedChangeList> myNewIncomingChanges = new ArrayList<CommittedChangeList>();
 
   public static class State {
@@ -392,35 +393,40 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  private List<CommittedChangeList> getIncomingChanges() {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+  private void loadIncomingChanges() {
+    myCachedIncomingChangeLists = new HashMap<CommittedChangeList, List<Change>>();
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cache: caches) {
       try {
         if (!cache.isEmpty()) {
           LOG.info("Loading incoming changes for " + cache.getLocation());
-          result.addAll(cache.loadIncomingChanges());
+          cache.loadIncomingChanges(myCachedIncomingChangeLists);
         }
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
-    return result;
   }
 
-  public void loadIncomingChangesAsync(final Consumer<List<CommittedChangeList>> consumer) {
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Loading incoming changes") {
+  public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
       public void run(final ProgressIndicator indicator) {
-        myCachedIncomingChanges = getIncomingChanges();
-        consumer.consume(myCachedIncomingChanges);
+        loadIncomingChanges();
+        if (consumer != null) {
+          consumer.consume(getCachedIncomingChanges());
+        }
       }
     };
     myTaskQueue.run(task);
   }
 
+  @Nullable
   public List<CommittedChangeList> getCachedIncomingChanges() {
-    return myCachedIncomingChanges;
+    if (myCachedIncomingChangeLists == null) {
+      return null;
+    }
+    return new ArrayList<CommittedChangeList>(myCachedIncomingChangeLists.keySet());
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
@@ -477,6 +483,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           // checking revisions we have locally
           if (result) {
             cache.refreshIncomingChanges();
+            myCachedIncomingChangeLists = null;
           }
           pendingUpdateProcessed();
         }
@@ -518,7 +525,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void refreshIncomingChangesAsync() {
     LOG.info("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Refreshing incoming changes") {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.refresh.progress")) {
       private boolean myAnyChanges = false;
 
       public void run(final ProgressIndicator indicator) {
@@ -528,6 +535,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void onSuccess() {
         myRefreshingIncomingChanges = false;
         if (myAnyChanges) {
+          myCachedIncomingChangeLists = null;
           notifyIncomingChangesUpdated(null);
         }
       }
@@ -593,6 +601,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return file;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private File getCachePath(final RepositoryLocation location) {
     File file = getCacheBasePath();
     file.mkdirs();
@@ -622,5 +631,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
     }
+  }
+
+  @Nullable
+  public CommittedChangeList getIncomingChangeList(final VirtualFile file) {
+    if (myCachedIncomingChangeLists != null) {
+      File ioFile = new File(file.getPath());
+      for(Map.Entry<CommittedChangeList, List<Change>> changeListEntry: myCachedIncomingChangeLists.entrySet()) {
+        for(Change change: changeListEntry.getValue()) {
+          if (change.affectsFile(ioFile)) {
+            return changeListEntry.getKey();
+          }
+        }
+      }
+    }
+    return null;
   }
 }

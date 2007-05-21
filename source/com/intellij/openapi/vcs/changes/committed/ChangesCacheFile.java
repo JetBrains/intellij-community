@@ -330,8 +330,7 @@ public class ChangesCacheFile {
     }
   }
 
-  public Collection<? extends CommittedChangeList> loadIncomingChanges() throws IOException {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+  public void loadIncomingChanges(Map<CommittedChangeList, List<Change>> changeLists) throws IOException {
     int offset = 0;
     openStreams();
     try {
@@ -341,13 +340,19 @@ public class ChangesCacheFile {
           break;
         }
         if (!entries [0].completelyDownloaded) {
-          result.add(loadChangeListAt(entries[0].offset));
-          if (result.size() == myIncomingCount) break;
+          IncomingChangeListData data = readIncomingChangeListData(offset, entries [0]);
+          List<Change> changes = new ArrayList<Change>();
+          for(Change change: data.changeList.getChanges()) {
+            if (!data.accountedChanges.contains(change)) {
+              changes.add(change);
+            }
+          }
+          changeLists.put(data.changeList, changes);
+          if (changeLists.size() == myIncomingCount) break;
         }
         offset++;
       }
-      LOG.info("Loaded " + result.size() + " incoming changelists");
-      return result;
+      LOG.info("Loaded " + changeLists.size() + " incoming changelists");
     }
     finally {
       closeStreams();
@@ -470,12 +475,7 @@ public class ChangesCacheFile {
       IndexEntry e = new IndexEntry();
       readIndexEntry(e);
       if (!e.completelyDownloaded) {
-        IncomingChangeListData data = new IncomingChangeListData();
-        data.indexOffset = indexOffset;
-        data.indexEntry = e;
-        data.changeList = loadChangeListAt(e.offset);
-        readPartial(data);
-        incomingData.add(data);
+        incomingData.add(readIncomingChangeListData(indexOffset, e));
         if (incomingData.size() == myIncomingCount) {
           break;
         }
@@ -483,6 +483,15 @@ public class ChangesCacheFile {
     }
     LOG.info("Loaded " + incomingData.size() + " incoming changelist pointers");
     return incomingData;
+  }
+
+  private IncomingChangeListData readIncomingChangeListData(final long indexOffset, final IndexEntry e) throws IOException {
+    IncomingChangeListData data = new IncomingChangeListData();
+    data.indexOffset = indexOffset;
+    data.indexEntry = e;
+    data.changeList = loadChangeListAt(e.offset);
+    readPartial(data);
+    return data;
   }
 
   private void writePartial(final IncomingChangeListData data) throws IOException {
