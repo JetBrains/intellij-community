@@ -148,6 +148,12 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (final Method method : ReflectionCache.getMethods(myClass)) {
       methods.add(JavaMethod.getMethod(myClass, method));
     }
+    for (final JavaMethod method : methods) {
+      if (DomImplUtil.isGetter(method) && method.getAnnotation(NameValue.class) != null) {
+        myNameValueGetter = method;
+      }
+    }
+
     {
       final Class implClass = myDomManager.getImplementation(myClass);
       if (implClass != null) {
@@ -165,9 +171,6 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<JavaMethod> iterator = methods.iterator(); iterator.hasNext();) {
       final JavaMethod method = iterator.next();
       if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) || method.getAnnotation(PropertyAccessor.class) != null) {
-        if (method.getAnnotation(NameValue.class) != null) {
-          myNameValueGetter = method;
-        }
         iterator.remove();
       }
     }
@@ -175,9 +178,6 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<JavaMethod> iterator = methods.iterator(); iterator.hasNext();) {
       final JavaMethod method = iterator.next();
       if (DomImplUtil.isGetter(method) && processGetterMethod(method)) {
-        if (method.getAnnotation(NameValue.class) != null) {
-          myNameValueGetter = method;
-        }
         iterator.remove();
       }
     }
