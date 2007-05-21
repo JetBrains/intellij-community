@@ -17,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return "runningInspections";
   }
 
-  protected void analyze(Project project, AnalysisScope scope) {
+  protected void analyze(@NotNull Project project, AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
     final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);

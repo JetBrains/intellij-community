@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || event.getDataContext().getData(DataConstants.PSI_FILE) != null);
+      getInspectionScope(event.getDataContext()) != null || DataKeys.PSI_FILE.getData(event.getDataContext()) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -104,7 +105,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     return "editing.analyzeDependencies.dialog";
   }
 
-  protected abstract void analyze(Project project, AnalysisScope scope);
+  protected abstract void analyze(@NotNull Project project, AnalysisScope scope);
 
   @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
@@ -156,7 +157,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
     final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) { //analyze on selection
-      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      final Project project = DataKeys.PROJECT.getData(dataContext);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
@@ -170,7 +171,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   private static AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
+    return new AnalysisScope(DataKeys.PROJECT.getData(dataContext));
   }
 
   @Nullable
