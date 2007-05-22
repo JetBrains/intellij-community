@@ -168,7 +168,7 @@
 
   </target>
 
-  <target name="run.tests" description="runs all tests" >
+  <target name="run.tests" description="runs all tests" depends="build tests" >
     <mkdir dir="${project.dir}/logs"/>
 
     <echo message="${idea.lib}"/>
