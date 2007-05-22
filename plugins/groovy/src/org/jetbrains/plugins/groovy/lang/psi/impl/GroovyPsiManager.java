@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -70,7 +71,9 @@ public class GroovyPsiManager implements ProjectComponent {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        fillDefaultGroovyMethods();
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          fillDefaultGroovyMethods();
+        }
       }
     };
 
