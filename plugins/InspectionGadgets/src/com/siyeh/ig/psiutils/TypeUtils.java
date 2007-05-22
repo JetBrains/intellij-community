@@ -19,11 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Collection;
+import java.util.*;
 
 public class TypeUtils {
 
@@ -32,27 +32,29 @@ public class TypeUtils {
     }
 
     @Nullable
-    public static PsiClassType calculateWeakestTypeNecessary(
-            PsiVariable variable) {
+    public static Collection<PsiClass> calculateWeakestClassesNecessary(
+            @NotNull PsiVariable variable) {
         final PsiType variableType = variable.getType();
         if (!(variableType instanceof PsiClassType)) {
             return null;
         }
         final PsiClassType variableClassType = (PsiClassType) variableType;
         final PsiClass variableClass = variableClassType.resolve();
-
-        final PsiManager manager = variable.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
-        final GlobalSearchScope scope = variable.getResolveScope();
-        PsiClassType weakestType = PsiType.getJavaLangObject(manager, scope);
-        PsiClass weakestTypeClass = weakestType.resolve();
-        if (weakestTypeClass == null) {
+        if (variableClass == null) {
             return null;
         }
+        final PsiManager manager = variable.getManager();
+        final GlobalSearchScope scope = variable.getResolveScope();
+        final Set<PsiClass> weakestTypeClasses = new HashSet();
+        final PsiClass javaLangObjectClass =
+                manager.findClass("java.lang.Object", scope);
+        if (variableClass.equals(javaLangObjectClass)) {
+            return null;
+        }
+        weakestTypeClasses.add(javaLangObjectClass);
         final Query<PsiReference> query = ReferencesSearch.search(variable);
-        final Collection<PsiReference> references = query.findAll();
-        for (PsiReference reference : references) {
-            if (weakestType.equals(variableClass)) {
+        for (PsiReference reference : query) {
+            if (weakestTypeClasses.contains(variableClass)) {
                 return null;
             }
             final PsiElement referenceElement = reference.getElement();
@@ -92,13 +94,10 @@ public class TypeUtils {
                 }
                 final PsiClassType classType = (PsiClassType) type;
                 final PsiClass aClass = classType.resolve();
-                if (aClass == null || weakestType.equals(aClass)) {
+                if (aClass == null) {
                     return null;
                 }
-                if (aClass.isInheritor(weakestTypeClass, true)) {
-                    weakestTypeClass = aClass;
-                    weakestType = classType;
-                }
+                checkClass(weakestTypeClasses, aClass);
             } else if (referenceGrandParent instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression) referenceGrandParent;
@@ -108,23 +107,13 @@ public class TypeUtils {
                 if (!(methodElement instanceof PsiMethod)) {
                     return null;
                 }
-                PsiMethod method = (PsiMethod) methodElement;
+                final PsiMethod method = (PsiMethod) methodElement;
                 final PsiMethod[] superMethods =
                         method.findDeepestSuperMethods();
-                if (superMethods.length > 0) {
-                    // todo figure out the course of action if the method
-                    // overrides/implements multiple interface method and/or
-                    // a class method and an interface method.
-                    method = superMethods[0];
-                }
-                final PsiClass containingClass =
-                        method.getContainingClass();
-                if (containingClass.equals(weakestType)) {
-                    return null;
-                }
-                if (containingClass.isInheritor(weakestTypeClass, true)) {
-                    weakestType = factory.createType(containingClass);
-                    weakestTypeClass = containingClass;
+                for (PsiMethod superMethod : superMethods) {
+                    final PsiClass containingClass =
+                            superMethod.getContainingClass();
+                    checkClass(weakestTypeClasses, containingClass);
                 }
             } else if (referenceParent instanceof PsiAssignmentExpression) {
                 final PsiAssignmentExpression assignmentExpression =
@@ -140,13 +129,7 @@ public class TypeUtils {
                     }
                     final PsiClassType classType = (PsiClassType) type;
                     final PsiClass aClass = classType.resolve();
-                    if (aClass == null || weakestType.equals(aClass)) {
-                        return null;
-                    }
-                    if (aClass.isInheritor(weakestTypeClass, true)) {
-                        weakestTypeClass = aClass;
-                        weakestType = classType;
-                    }
+                    checkClass(weakestTypeClasses, aClass);
                 } else if (referenceElement.equals(rhs)) {
                     final PsiType type = lhs.getType();
                     if (!(type instanceof PsiClassType)) {
@@ -154,18 +137,34 @@ public class TypeUtils {
                     }
                     final PsiClassType classType = (PsiClassType) type;
                     final PsiClass aClass = classType.resolve();
-                    if (aClass == null || weakestType.equals(aClass)) {
-                        return null;
-                    }
-                    if (aClass.isInheritor(weakestTypeClass, true)) {
-                        weakestTypeClass = aClass;
-                        weakestType = classType;
-                    }
+                    checkClass(weakestTypeClasses, aClass);
                 }
             }
         }
-        return weakestType;
+        return Collections.unmodifiableCollection(weakestTypeClasses);
     }
+
+    private static void checkClass(Set<PsiClass> weakestTypeClasses,
+                                   PsiClass aClass) {
+        boolean shouldAdd = true;
+        for (Iterator<PsiClass> iterator =
+                weakestTypeClasses.iterator(); iterator.hasNext();) {
+            final PsiClass weakestTypeClass = iterator.next();
+            if (!weakestTypeClass.equals(aClass)) {
+                if (aClass.isInheritor(weakestTypeClass, true)) {
+                    iterator.remove();
+                } else if (weakestTypeClass.isInheritor(aClass, true)) {
+                    shouldAdd = false;
+                }
+            } else {
+                shouldAdd = false;
+            }
+        }
+        if (shouldAdd) {
+            weakestTypeClasses.add(aClass);
+        }
+    }
+
 
     public static int getExpressionIndex(
             @NotNull PsiExpression expression,

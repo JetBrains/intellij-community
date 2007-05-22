@@ -26,6 +26,11 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @NotNull
@@ -35,22 +40,51 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final PsiClass aClass = (PsiClass) infos[0];
-        return "Type of variable <code>#ref</code> may be weakened to '" +
-                aClass.getQualifiedName() + "'";
+        final Collection<PsiClass> weakerClasses =
+                (Collection<PsiClass>) infos[0];
+        final StringBuilder builder = new StringBuilder();
+        final Iterator<PsiClass> iterator = weakerClasses.iterator();
+        if (iterator.hasNext()) {
+            builder.append('\'');
+            builder.append(iterator.next().getQualifiedName());
+            builder.append('\'');
+            while (iterator.hasNext()) {
+                builder.append(", '");
+                builder.append(iterator.next().getQualifiedName());
+                builder.append('\'');
+            }
+        }
+        return "Type of variable <code>#ref</code> may be weakened to " +
+                builder.toString();
     }
 
-
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new TypeMayBeWeakenedFix();
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        final PsiLocalVariable variable =
+                (PsiLocalVariable) location.getParent();
+        final Collection<PsiClass> weakestClasses =
+                TypeUtils.calculateWeakestClassesNecessary(variable);
+        if (weakestClasses == null) {
+            return null;
+        }
+        final List<InspectionGadgetsFix> fixes = new ArrayList();
+        for (PsiClass weakestClass : weakestClasses) {
+            fixes.add(new TypeMayBeWeakenedFix(weakestClass.getQualifiedName()));
+        }
+        return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
     }
 
     private static class TypeMayBeWeakenedFix extends InspectionGadgetsFix {
 
+        private final String fqClassName;
+
+        TypeMayBeWeakenedFix(String fqClassName) {
+            this.fqClassName = fqClassName;
+        }
+
         @NotNull
         public String getName() {
-            return "Weaken type";
+            return "Weaken type to '" + fqClassName + '\'';
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -63,13 +97,11 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             if (typeElement == null) {
                 return;
             }
-            final PsiClassType type =
-                    TypeUtils.calculateWeakestTypeNecessary(variable);
-            if (type == null) {
-                return;
-            }
             final PsiManager manager = variable.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
+            final PsiClassType type =
+                    factory.createTypeByFQClassName(fqClassName,
+                            element.getResolveScope());
             final PsiTypeElement newTypeElement =
                     factory.createTypeElement(type);
             typeElement.replace(newTypeElement);
@@ -79,31 +111,18 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     public BaseInspectionVisitor buildVisitor() {
         return new TypeMayBeWeakenedVisitor();
     }
-    
+
     private static class TypeMayBeWeakenedVisitor
             extends BaseInspectionVisitor {
 
         public void visitLocalVariable(PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
-            final PsiClassType weakestType =
-                    TypeUtils.calculateWeakestTypeNecessary(variable);
-            if (weakestType == null) {
+            final Collection<PsiClass> weakestClasses =
+                    TypeUtils.calculateWeakestClassesNecessary(variable);
+            if (weakestClasses == null) {
                 return;
             }
-            final PsiType variableType = variable.getType();
-            final String weakestTypeCanonicalText =
-                    weakestType.getInternalCanonicalText();
-            final String variableTypeCanonicalText =
-                    variableType.getInternalCanonicalText();
-            if (weakestTypeCanonicalText.equals(variableTypeCanonicalText)) {
-                return;
-            }
-            final PsiClass weakestClass = weakestType.resolve();
-            if (weakestClass == null) {
-                return;
-            }
-            registerVariableError(variable, weakestClass);
+            registerVariableError(variable, weakestClasses);
         }
-
     }
 }
