@@ -93,9 +93,9 @@
   </actions>
   <name>JetGroovy</name>
   <description>Plugin for Groovy language support</description>
-  <version>0.01</version>
+  <version>0.1</version>
   <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="6951"/>
+  <idea-version since-build="6967"/>
 
   <application-components>
     <component>
