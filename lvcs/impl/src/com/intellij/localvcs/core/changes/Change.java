@@ -32,6 +32,14 @@ public abstract class Change {
 
   public abstract boolean affectsOnlyInside(Entry e);
 
+  public void collectChangesInTheChain(List<Change> cc) {
+    if (isInTheChain(cc)) cc.add(this);
+  }
+
+  public boolean isInTheChain(List<Change> cc) {
+    return false;
+  }
+
   public abstract boolean isCreationalFor(Entry e);
 
   public abstract List<Content> getContentsToPurge();

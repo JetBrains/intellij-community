@@ -1,6 +1,5 @@
 package com.intellij.localvcs.core.changes;
 
-import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -48,38 +47,11 @@ public class ChangeList {
   }
 
   public boolean isInTheChain(Change before, Change after) {
-    List<IdPath> paths = new ArrayList<IdPath>();
-    for (Change cc : before.getChanges()) {
-      if (cc instanceof StructuralChange) {
-        StructuralChange sc = (StructuralChange)cc;
-        Collections.addAll(paths, sc.getAffectedIdPaths());
-      }
+    List<Change> cc = new ArrayList<Change>(before.getChanges());
+    for (Change c : getPlainChangesAfter(before)) {
+      c.collectChangesInTheChain(cc);
     }
-    for (Change cc : Reversed.list(getPlainChangesAfter(before))) {
-      if (cc instanceof StructuralChange) {
-        StructuralChange sc = (StructuralChange)cc;
-        List<IdPath> newPaths = new ArrayList<IdPath>();
-        for (IdPath path1 : paths) {
-          for (IdPath path2 : sc.getAffectedIdPaths()) {
-            if (path1.contains(path2.getId()) || path2.contains(path1.getId())) {
-              Collections.addAll(newPaths, sc.getAffectedIdPaths());
-            }
-          }
-        }
-        paths.addAll(newPaths);
-      }
-    }
-
-    if (after instanceof StructuralChange) {
-      StructuralChange sc = (StructuralChange)after;
-      for (IdPath path : sc.getAffectedIdPaths()) {
-        for (IdPath path2 : paths) {
-          if (path.isChildOrParentOf(path2)) return true;
-        }
-      }
-    }
-    return false;
-
+    return after.isInTheChain(cc);
   }
 
   public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {

@@ -9,18 +9,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class LocalHistoryAction extends AnAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    DialogWrapper d = createDialog(getGateway(e), getFile(e));
-    d.show();
-  }
-
-  protected abstract DialogWrapper createDialog(IdeaGateway gw, VirtualFile f);
-
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
@@ -35,11 +26,11 @@ public abstract class LocalHistoryAction extends AnAction {
     return true;
   }
 
-  private ILocalVcs getVcs(AnActionEvent e) {
+  protected ILocalVcs getVcs(AnActionEvent e) {
     return LocalHistoryComponent.getLocalVcsFor(getProject(e));
   }
 
-  private IdeaGateway getGateway(AnActionEvent e) {
+  protected IdeaGateway getGateway(AnActionEvent e) {
     return new IdeaGateway(getProject(e));
   }
 

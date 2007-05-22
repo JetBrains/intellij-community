@@ -32,8 +32,17 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   protected T myModel;
 
   protected HistoryDialog(IdeaGateway gw, VirtualFile f) {
+    this(gw);
+    init(f);
+  }
+
+  // no-init constructor (for RecentChangeDialog)
+  protected HistoryDialog(IdeaGateway gw) {
     super(gw.getProject(), true);
     myGateway = gw;
+  }
+
+  protected void init(VirtualFile f) {
     initModel(f);
     init();
   }
@@ -169,20 +178,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return new Action[0];
   }
 
-  private class RevertAction extends AnAction {
-    public RevertAction() {
-      super("Revert");
-    }
+  protected void revert() {
+    revert(myModel.createReverter());
+  }
 
-    public void actionPerformed(AnActionEvent e) {
-      revert(myModel.createReverter());
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
-      p.setEnabled(myModel.isRevertEnabled());
-    }
+  private boolean isRevertEnabled() {
+    return myModel.isRevertEnabled();
   }
 
   protected void revert(Reverter r) {
@@ -211,5 +212,21 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
       }
     }
     myGateway.showError("Can not revert because " + formatted);
+  }
+
+  private class RevertAction extends AnAction {
+    public RevertAction() {
+      super("Revert");
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      revert();
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
+      p.setEnabled(isRevertEnabled());
+    }
   }
 }

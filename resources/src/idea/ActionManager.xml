@@ -347,9 +347,13 @@
 
         <separator/>
 
-        <action id="RecentChanges" class="com.intellij.localVcs.actions.RecentChangesAction">
+        <action id="RecentChangesOld" class="com.intellij.localVcs.actions.RecentChangesAction"/>
+        <!--<keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>-->
+        <!--</action>-->
+        <action id="RecentChanges" class="com.intellij.localvcs.integration.ui.actions.RecentChangesAction">
           <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
         </action>
+
       </group>
 
       <!-- Go to -->
@@ -731,7 +735,7 @@
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/debugger/addToWatch.png"/>
 
       <group id="Debugger.Layout" icon="/debugger/restoreLayout.png" popup="true">
-        <action id="Debugger.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction" />
+        <action id="Debugger.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction"/>
         <action id="Debugger.ToggleToolbarLayout" class="com.intellij.debugger.actions.ToggleToolbarLayout"/>
       </group>
 
@@ -1473,29 +1477,29 @@
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <reference ref="ChangesView.Diff"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
-        icon="/nodes/property.png"/>
+              icon="/nodes/property.png"/>
       <separator/>
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
-        use-shortcut-of="RenameElement"/>
+              use-shortcut-of="RenameElement"/>
       <reference ref="$Delete"/>
     </group>
 
     <group id="CommittedChangesToolbar">
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
-        icon="/vcs/refresh.png"/>
+              icon="/vcs/refresh.png"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
-        icon="/ant/filter.png"/>
+              icon="/ant/filter.png"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
-        icon="/actions/showChangesOnly.png"/>
+              icon="/actions/showChangesOnly.png"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
     </group>
 
     <group id="IncomingChangesToolbar">
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
-        icon="/vcs/refresh.png"/>
+              icon="/vcs/refresh.png"/>
       <reference ref="CommittedChanges.Details"/>
       <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
-        icon="/actions/get.png"/>
+              icon="/actions/get.png"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>

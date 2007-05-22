@@ -23,6 +23,16 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   public DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f) {
     super(gw, f);
+  }
+
+  // no-init constructor (for RecentChangeDialog)
+  protected DirectoryHistoryDialog(IdeaGateway gw) {
+    super(gw);
+  }
+
+  @Override
+  protected void init(VirtualFile f) {
+    super.init(f);
     setTitle(myModel.getTitle());
   }
 
@@ -51,6 +61,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     DirectoryDifferenceNode n = new DirectoryDifferenceNode(m);
 
     myDiffTree = CheckinPanelTreeTable.createOn(myGateway.getProject(), n);
+    myDiffTree.setRootVisible(shouldRootBeVisible());
 
     myDiffTree.getFirstTreeColumn().setName(n.getPresentableText(0));
     myDiffTree.getSecondTreeColumn().setName(n.getPresentableText(1));
@@ -58,6 +69,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     TreeUtil.expandAll(myDiffTree.getTree());
     addPopupMenuToComponent(myDiffTree, createDiffTreeActions());
     new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myDiffTree);
+  }
+
+  protected boolean shouldRootBeVisible() {
+    return true;
   }
 
   private ActionGroup createDiffTreeActions() {
@@ -102,8 +117,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(final DirectoryDifferenceNode n) {
-      revert(myModel.createReverter(n.getModel()));
+    protected void performOn(DirectoryDifferenceNode n) {
+      revert(myModel.createRevisionReverter(n.getModel()));
     }
 
     @Override

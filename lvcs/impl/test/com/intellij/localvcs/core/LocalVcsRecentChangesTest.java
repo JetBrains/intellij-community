@@ -100,11 +100,15 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testIncludeOnlyLast20Changes() {
+  public void testIncludeOnlyLastValuable20Changes() {
     for (int i = 0; i < 40; i++) {
       vcs.beginChangeSet();
       vcs.createFile("f" + String.valueOf(i), null, -1);
       vcs.endChangeSet(String.valueOf(i));
+
+      vcs.beginChangeSet();
+      vcs.createFile("ff" + String.valueOf(i), null, -1);
+      vcs.endChangeSet(null);
     }
 
     List<RecentChange> cc = vcs.getRecentChanges();

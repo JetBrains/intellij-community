@@ -20,7 +20,6 @@ public abstract class HistoryDialogModel {
   private boolean myIsChangesSelected = false;
   private List<Revision> myRevisionsCache;
 
-
   public HistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myFile = f;
@@ -34,7 +33,11 @@ public abstract class HistoryDialogModel {
 
   private void initRevisionsCache() {
     myGateway.registerUnsavedDocuments(myVcs);
-    myRevisionsCache = myVcs.getRevisionsFor(myFile.getPath());
+    myRevisionsCache = getRevisionsCache();
+  }
+
+  protected List<Revision> getRevisionsCache() {
+    return myVcs.getRevisionsFor(myFile.getPath());
   }
 
   protected Revision getLeftRevision() {

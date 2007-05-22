@@ -5,7 +5,7 @@ import com.intellij.localvcs.integration.ui.views.PutLabelDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class PutLabelAction extends LocalHistoryAction {
+public class PutLabelAction extends LocalHistoryActionWithDialog {
   @Override
   protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f) {
     return new PutLabelDialog(gw, f);

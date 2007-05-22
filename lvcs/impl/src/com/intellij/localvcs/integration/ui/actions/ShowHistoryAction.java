@@ -7,7 +7,7 @@ import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class ShowHistoryAction extends LocalHistoryAction {
+public class ShowHistoryAction extends LocalHistoryActionWithDialog {
   @Override
   protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f) {
     return f.isDirectory() ? new DirectoryHistoryDialog(gw, f) : new FileHistoryDialog(f, gw);

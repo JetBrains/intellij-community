@@ -62,6 +62,7 @@ public abstract class RevisionReverter extends Reverter {
   }
 
   protected boolean hasCurrentVersion() {
-    return myRightEntry != null;
+    if (myRightEntry == null) return false;
+    return myGateway.findVirtualFile(myRightEntry.getPath()) != null;
   }
 }

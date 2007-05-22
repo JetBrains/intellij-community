@@ -24,14 +24,14 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
 
   @Override
   protected RevisionReverter createRevisionReverter() {
-    return createReverter(getLeftEntry(), getRightEntry());
+    return createRevisionReverter(getLeftEntry(), getRightEntry());
   }
 
-  public RevisionReverter createReverter(DirectoryDifferenceModel m) {
-    return createReverter(m.getEntry(0), m.getEntry(1));
+  public RevisionReverter createRevisionReverter(DirectoryDifferenceModel m) {
+    return createRevisionReverter(m.getEntry(0), m.getEntry(1));
   }
 
-  private RevisionReverter createReverter(Entry leftEntry, Entry rightEntry) {
+  private RevisionReverter createRevisionReverter(Entry leftEntry, Entry rightEntry) {
     return new DirectoryReverter(myVcs, myGateway, getLeftRevision(), leftEntry, rightEntry);
   }
 }

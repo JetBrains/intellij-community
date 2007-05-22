@@ -39,8 +39,14 @@ public abstract class StructuralChange extends Change {
 
   @Override
   public boolean affects(Entry e) {
-    for (IdPath p : getAffectedIdPaths()) {
-      if (p.isChildOrParentOf(e.getIdPath())) return true;
+    return affects(e.getIdPath());
+  }
+
+  private boolean affects(IdPath... pp) {
+    for (IdPath p1 : getAffectedIdPaths()) {
+      for (IdPath p2 : pp) {
+        if (p1.isChildOrParentOf(p2)) return true;
+      }
     }
     return false;
   }
@@ -53,6 +59,16 @@ public abstract class StructuralChange extends Change {
       }
     }
     return true;
+  }
+
+  @Override
+  public boolean isInTheChain(List<Change> cc) {
+    for (Change c : cc) {
+      if (affects(((StructuralChange)c).getAffectedIdPaths())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
