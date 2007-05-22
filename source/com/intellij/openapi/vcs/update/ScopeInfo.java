@@ -9,12 +9,16 @@ import java.util.ArrayList;
 
 public interface ScopeInfo {
   FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo);
-
   String getScopeName(VcsContext dataContext, final ActionInfo actionInfo);
+  boolean filterExistsInVcs();
 
   ScopeInfo PROJECT = new ScopeInfo() {
     public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
       return VcsBundle.message("update.project.scope.name");
+    }
+
+    public boolean filterExistsInVcs() {
+      return true;
     }
 
     public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
@@ -58,6 +62,10 @@ public interface ScopeInfo {
         }
       }
 
+    }
+
+    public boolean filterExistsInVcs() {
+      return true;
     }
 
     public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {

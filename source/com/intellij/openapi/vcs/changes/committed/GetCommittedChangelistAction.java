@@ -74,6 +74,10 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
     public String getScopeName(final VcsContext dataContext, final ActionInfo actionInfo) {
       return "Changelist";
     }
+
+    public boolean filterExistsInVcs() {
+      return false;
+    }
   };
 
   private static Collection<FilePath> getFilePaths(final VcsContext context) {

@@ -296,7 +296,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(vcsContext.getProject(), file);
       if (vcs != null) {
-        if (vcs.fileExistsInVcs(file)) {
+        if (!myScopeInfo.filterExistsInVcs() || vcs.fileExistsInVcs(file)) {
           UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
           if (updateEnvironment != null) {
             result.add(file);
