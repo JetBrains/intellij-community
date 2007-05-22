@@ -38,7 +38,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel panel;
 
   private LabeledComponent<TextFieldWithBrowseButton> classField;
-  private CommonJavaParameters commonParameters;
   private EnvironmentVariablesComponent envVariablesComponent;
   private LabeledComponent<JComboBox> moduleClasspath;
   private AlternativeJREPanel alternateJDK;
@@ -63,6 +62,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton myAddButton;
   private JButton myRemoveButton;
   private TableView propertiesTableView;
+  private CommonJavaParameters commonJavaParameters;
   private ArrayList<Map.Entry> propertiesList;
 
   public TestNGConfigurationEditor(Project project) {
@@ -166,7 +166,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   @Override
   protected void resetEditorFrom(TestNGConfiguration config) {
     model.reset(config);
-    commonParameters.reset(config);
+    commonJavaParameters.reset(config);
     getModuleSelector().reset(config);
     TestData data = config.getPersistantData();
     TestSearchScope scope = data.getScope();
@@ -207,7 +207,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     else {
       data.setScope(TestSearchScope.SINGLE_MODULE);
     }
-    commonParameters.applyTo(config);
+    commonJavaParameters.applyTo(config);
     config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();
 
