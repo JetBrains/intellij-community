@@ -43,6 +43,10 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 "implicit.array.to.string.problem.descriptor");
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiReferenceExpression expression =

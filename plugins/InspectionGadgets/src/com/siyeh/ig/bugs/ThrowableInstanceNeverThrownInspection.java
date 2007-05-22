@@ -47,6 +47,10 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
         }
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ExceptionInstanceNeverThrownVisitor();
     }

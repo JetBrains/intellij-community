@@ -43,6 +43,10 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
                 "new.string.buffer.with.char.argument.problem.descriptor");
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiNewExpression newExpression =

@@ -40,6 +40,10 @@ public class EqualsWhichDoesntCheckParameterClassInspection
                 "equals.doesnt.check.class.parameter.problem.descriptor");
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor(){
         return new EqualsWhichDoesntCheckParameterClassVisitor();
     }

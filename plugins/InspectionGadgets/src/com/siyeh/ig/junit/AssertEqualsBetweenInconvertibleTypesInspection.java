@@ -43,6 +43,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                 comparisonType.getPresentableText());
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new AssertEqualsBetweenInconvertibleTypesVisitor();
     }

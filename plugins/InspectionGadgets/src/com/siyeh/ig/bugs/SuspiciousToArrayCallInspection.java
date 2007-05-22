@@ -39,6 +39,10 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                 type.getPresentableText());
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousToArrayCallVisitor();
     }

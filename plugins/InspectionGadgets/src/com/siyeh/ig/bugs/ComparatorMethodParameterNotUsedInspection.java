@@ -40,6 +40,10 @@ public class ComparatorMethodParameterNotUsedInspection
                 "comparator.method.parameter.not.used.problem.descriptor");
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new CompareMethodDoesNotUseParameterVisitor();
     }
