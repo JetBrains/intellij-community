@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.profile.Profile;
@@ -101,7 +102,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
                                           PsiManager psiManager) {
     this(project, manager, projectRootManager, psiManager.getCachedValuesManager());
   }
-  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager inspectionProfileManager, ProjectRootManager projectRootManager,
+  public DomElementAnnotationsManagerImpl(Project project, final InspectionProfileManager inspectionProfileManager, ProjectRootManager projectRootManager,
                                           final CachedValuesManager cachedValuesManager) {
     myCachedValuesManager = cachedValuesManager;
     myProjectRootManager = projectRootManager;
@@ -110,7 +111,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         return myModificationCount;
       }
     };
-    inspectionProfileManager.addProfileChangeListener(new ProfileChangeAdapter() {
+    final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
       public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile) {
         dropAnnotationsCache();
       }
@@ -118,7 +119,13 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       public void profileChanged(Profile profile) {
         dropAnnotationsCache();
       }
-    }, project);
+    };
+    inspectionProfileManager.addProfileChangeListener(profileChangeAdapter, project);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        inspectionProfileManager.removeProfileChangeListener(profileChangeAdapter);
+      }
+    });
   }
 
   public void dropAnnotationsCache() {
