@@ -199,8 +199,13 @@ public class OutdatedVersionNotifier implements ProjectComponent {
 
     private void updateLabelText() {
       final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+      String comment = myChangeList.getComment();
+      int pos = comment.indexOf("\n");
+      if (pos >= 0) {
+        comment = comment.substring(0, pos).trim() + "...";
+      }
       myLabel.setText(VcsBundle.message("outdated.version.text", myChangeList.getCommitterName(),
-                                        dateFormat.format(myChangeList.getCommitDate())));
+                                        dateFormat.format(myChangeList.getCommitDate()), comment));
     }
 
     public void setChangeList(final CommittedChangeList changeList) {
