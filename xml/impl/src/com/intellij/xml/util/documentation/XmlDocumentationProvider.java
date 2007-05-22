@@ -100,7 +100,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof XmlAttributeDecl) {
       // Check for comment right after the xml attlist decl
       PsiElement uncleElement = element.getParent().getNextSibling();
-      if (uncleElement instanceof PsiWhiteSpace) uncleElement = uncleElement.getNextSibling();
+      if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
       if (uncleElement instanceof PsiComment) {
         return formatDocFromComment(uncleElement, ((XmlAttributeDecl)element).getNameElement().getText());
       }
