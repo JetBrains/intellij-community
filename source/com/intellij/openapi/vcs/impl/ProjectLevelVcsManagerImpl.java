@@ -679,8 +679,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     myDirectoryMappings.clear();
-    myDirectoryMappings.addAll(items);
-    sortDirectoryMappings();
+    if (items.size() == 0) {
+      doSetDirectoryMapping("", "");
+    }
+    else {
+      myDirectoryMappings.addAll(items);
+      sortDirectoryMappings();
+    }
   }
 
   public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
