@@ -47,4 +47,8 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createWhiteSpace();
 
   public abstract PsiElement createIdentifierFromText(String idText);
+
+  public abstract GroovyPsiElement createTopElementFromText(String text);
+
+  public abstract PsiElement createClosureFromText(String s);
 }

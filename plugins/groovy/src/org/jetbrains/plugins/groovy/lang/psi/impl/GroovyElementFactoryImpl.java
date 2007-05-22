@@ -22,8 +22,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -43,6 +45,18 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   public PsiElement createIdentifierFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
     return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
+  }
+
+  @Nullable
+  public GroovyPsiElement createTopElementFromText(String text) {
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+            text);
+    return (GroovyPsiElement) dummyFile.getFirstChild();
+  }
+
+  public PsiElement createClosureFromText(String s) {
+    PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
+    return psiFile.getFirstChild();
   }
 
   private PsiFile createGroovyFile(String idText) {
