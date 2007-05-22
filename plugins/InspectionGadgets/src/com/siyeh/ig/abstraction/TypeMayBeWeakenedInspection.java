@@ -18,16 +18,19 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +48,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         final Collection<PsiClass> weakerClasses =
                 (Collection<PsiClass>) infos[1];
-        final StringBuilder builder = new StringBuilder();
+        @NonNls final StringBuilder builder = new StringBuilder();
         final Iterator<PsiClass> iterator = weakerClasses.iterator();
         if (iterator.hasNext()) {
             builder.append('\'');
@@ -60,13 +63,16 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         final PsiElement element = (PsiElement) infos[0];
         if (element instanceof PsiField) {
             return InspectionGadgetsBundle.message(
-                    "type.may.be.weakened.field.problem.descriptor", builder.toString());
+                    "type.may.be.weakened.field.problem.descriptor",
+                    builder.toString());
         } else if (element instanceof PsiParameter) {
             return InspectionGadgetsBundle.message(
-                    "type.may.be.weakened.parameter.problem.descriptor", builder.toString());
+                    "type.may.be.weakened.parameter.problem.descriptor",
+                    builder.toString());
         } else if (element instanceof PsiMethod) {
             return InspectionGadgetsBundle.message(
-                    "type.may.be.weakened.method.problem.descriptor", builder.toString());
+                    "type.may.be.weakened.method.problem.descriptor",
+                    builder.toString());
         }
         return InspectionGadgetsBundle.message(
                 "type.may.be.weakened.problem.descriptor", builder.toString());
@@ -74,14 +80,17 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @Nullable
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        final PsiElement parent = location.getParent();
         final Collection<PsiClass> weakestClasses =
-                TypeMayBeWeakenedVisitor.calculateWeakestClassesNecessary(location);
+                TypeMayBeWeakenedVisitor.calculateWeakestClassesNecessary(
+                        parent);
         if (weakestClasses.isEmpty()) {
             return null;
         }
         final List<InspectionGadgetsFix> fixes = new ArrayList();
         for (PsiClass weakestClass : weakestClasses) {
-            fixes.add(new TypeMayBeWeakenedFix(weakestClass.getQualifiedName()));
+            final String qualifiedName = weakestClass.getQualifiedName();
+            fixes.add(new TypeMayBeWeakenedFix(qualifiedName));
         }
         return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
     }
@@ -161,6 +170,11 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 // for error checking in the editor
                 return;
             }
+            final Query<MethodSignatureBackedByPsiMethod> search =
+                    SuperMethodsSearch.search(method, null, true, false);
+            if (search.findFirst() != null) {
+                return;
+            }
             final Collection<PsiClass> weakestClasses =
                     calculateWeakestClassesNecessary(method);
             if (weakestClasses.isEmpty()) {
@@ -181,12 +195,14 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 variableOrMethodType = method.getReturnType();
             } else {
                 throw new IllegalArgumentException(
-                        "PsiMethod or PsiVariable expected: " + variableOrMethod);
+                        "PsiMethod or PsiVariable expected: " +
+                                variableOrMethod);
             }
             if (!(variableOrMethodType instanceof PsiClassType)) {
                 return Collections.EMPTY_LIST;
             }
-            final PsiClassType variableClassType = (PsiClassType) variableOrMethodType;
+            final PsiClassType variableClassType =
+                    (PsiClassType) variableOrMethodType;
             final PsiClass variableClass = variableClassType.resolve();
             if (variableClass == null) {
                 return Collections.EMPTY_LIST;
@@ -203,9 +219,13 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             final Query<PsiReference> query =
                     ReferencesSearch.search(variableOrMethod);
             for (PsiReference reference : query) {
+                if (reference == null) {
+                    continue;
+                }
                 final PsiElement referenceElement = reference.getElement();
                 final PsiElement referenceParent = referenceElement.getParent();
-                final PsiElement referenceGrandParent = referenceParent.getParent();
+                final PsiElement referenceGrandParent =
+                        referenceParent.getParent();
                 if (referenceParent instanceof PsiExpressionList) {
                     if (!(referenceGrandParent instanceof
                             PsiMethodCallExpression)) {
@@ -233,7 +253,13 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                             method.getParameterList();
                     final PsiParameter[] parameters =
                             parameterList.getParameters();
-                    final PsiParameter parameter = parameters[index];
+                    final PsiParameter parameter;
+                    if (index < parameters.length) {
+                        parameter = parameters[index];
+                    } else {
+                        parameter = parameters[parameters.length - 1];
+                    }
+                    // fixme variable arity methods 
                     final PsiType type = parameter.getType();
                     if (!(type instanceof PsiClassType)) {
                         return Collections.EMPTY_LIST;
