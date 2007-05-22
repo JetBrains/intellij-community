@@ -15,9 +15,7 @@ abstract
 assert
 boolean
 byte
-case
 char
-default
 double
 false
 final
