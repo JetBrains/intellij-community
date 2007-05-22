@@ -5,14 +5,15 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -78,7 +79,11 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     private XmlNSDescriptor getNsDescriptor() {
-      final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(myElement, XmlDocument.class, XmlMarkupDecl.class);
+      final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
+        PsiUtil.getOriginalElement(myElement,(Class<XmlElement>)myElement.getClass()),
+        XmlDocument.class,
+        XmlMarkupDecl.class
+      );
 
       if (parentThatProvidesMetaData instanceof XmlDocument) {
         final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
