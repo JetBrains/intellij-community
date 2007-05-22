@@ -15,10 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -28,6 +25,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +33,7 @@ import java.util.Map;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
-  public static final Key<IndentInfo> INDENT_INFO_KEY = new Key<IndentInfo>("IndentInfo");
-  public static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
+  private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENTATION");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT BEFORE THIS ELEMENT");
 
@@ -57,18 +54,16 @@ public class CodeEditUtil {
     LOG.assertTrue(first != null);
     LOG.assertTrue(last != null);
     ASTNode lastChild = last.getTreeNext();
-    {
-      ASTNode current = first;
-      while(current != lastChild){
-        saveWhitespacesInfo(current);
-        checkForOuters(current);
-        current = current.getTreeNext();
-      }
+    ASTNode current = first;
+    while(current != lastChild){
+      saveWhitespacesInfo(current);
+      checkForOuters(current);
+      current = current.getTreeNext();
     }
 
     if (anchorBefore != null && isComment(anchorBefore.getElementType())) {
       final ASTNode anchorPrev = anchorBefore.getTreePrev();
-      if (anchorPrev != null && anchorPrev.getElementType() == ElementType.WHITE_SPACE) {
+      if (anchorPrev != null && anchorPrev.getElementType() == TokenType.WHITE_SPACE) {
         anchorBefore = anchorPrev;
         /*
         final int blCount = getBlankLines(anchorPrev.getText());
@@ -167,7 +162,7 @@ public class CodeEditUtil {
   }
 
   private static int getTrimmedTextLength(ASTNode first, final ASTNode last) {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     while(first != last.getTreeNext()) {
       buffer.append(first.getText());
       first = first.getTreeNext();
@@ -183,13 +178,16 @@ public class CodeEditUtil {
     parent.replaceChild(oldChild, newChild);
     final LeafElement firstLeaf = TreeUtil.findFirstLeaf(newChild);
     final ASTNode prevToken = TreeUtil.prevLeaf(newChild);
-    if(firstLeaf != null){
+    if (firstLeaf != null) {
       final ASTNode nextLeaf = TreeUtil.nextLeaf(newChild);
       makePlaceHolderBetweenTokens(prevToken, firstLeaf, isFormattingRequiered(prevToken, newChild), false);
-      if(nextLeaf != null)
+      if (nextLeaf != null && !CharArrayUtil.containLineBreaks(nextLeaf.getText())) {
         makePlaceHolderBetweenTokens(TreeUtil.prevLeaf(nextLeaf), nextLeaf, false, false);
+      }
     }
-    else makePlaceHolderBetweenTokens(prevToken, TreeUtil.nextLeaf(newChild), isFormattingRequiered(prevToken, newChild), false);
+    else {
+      makePlaceHolderBetweenTokens(prevToken, TreeUtil.nextLeaf(newChild), isFormattingRequiered(prevToken, newChild), false);
+    }
   }
 
   @Nullable
@@ -223,13 +221,13 @@ public class CodeEditUtil {
     if(left == null){
       markToReformatBefore(right, true);
     }
-    else if(left.getElementType() == ElementType.WHITE_SPACE && left.getTreeNext() == null && normalizeTailingWhitespace){
+    else if(left.getElementType() == TokenType.WHITE_SPACE && left.getTreeNext() == null && normalizeTailingWhitespace){
       // handle tailing whitespaces if element on the left has been removed
       left.getTreeParent().removeChild(left);
       markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
       left = right;
     }
-    else if(left.getElementType() == ElementType.WHITE_SPACE && right.getElementType() == ElementType.WHITE_SPACE) {
+    else if(left.getElementType() == TokenType.WHITE_SPACE && right.getElementType() == TokenType.WHITE_SPACE) {
       final String text;
       final int leftBlankLines = getBlankLines(left.getText());
       final int rightBlankLines = getBlankLines(right.getText());
@@ -239,7 +237,7 @@ public class CodeEditUtil {
       else text = left.getText();
       if(leaveRightText || forceReformat){
         final LeafElement merged =
-          Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text, 0, text.length(), null, left.getPsi().getManager());
+          Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), null, left.getPsi().getManager());
         if(!leaveRightText){
           left.getTreeParent().replaceChild(left, merged);
           right.getTreeParent().removeChild(right);
@@ -252,11 +250,11 @@ public class CodeEditUtil {
       }
       else right.getTreeParent().removeChild(right);
     }
-    else if(left.getElementType() != ElementType.WHITE_SPACE || forceReformat){
-      if(right.getElementType() == ElementType.WHITE_SPACE){
+    else if(left.getElementType() != TokenType.WHITE_SPACE || forceReformat){
+      if(right.getElementType() == TokenType.WHITE_SPACE){
         markWhitespaceForReformat(right);
       }
-      else if(left.getElementType() == ElementType.WHITE_SPACE){
+      else if(left.getElementType() == TokenType.WHITE_SPACE){
         markWhitespaceForReformat(left);
       }
       else markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
@@ -266,7 +264,7 @@ public class CodeEditUtil {
 
   private static void markWhitespaceForReformat(final ASTNode right) {
     final String text = right.getText();
-    final LeafElement merged = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text, 0, text.length(), null,
+    final LeafElement merged = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), null,
                                                                right.getPsi().getManager());
     right.getTreeParent().replaceChild(right, merged);
   }
@@ -280,10 +278,10 @@ public class CodeEditUtil {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch(parserDefinition.spaceExistanceTypeBetweenTokens(left, right)){
         case MUST:
-          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, " ", 0, 1, null, manager);
+          generatedWhitespace = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, null, manager);
           break;
         case MUST_LINE_BREAK:
-          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, "\n", 0, 1, null, manager);
+          generatedWhitespace = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager);
           break;
         default:
           generatedWhitespace = null;
@@ -298,8 +296,12 @@ public class CodeEditUtil {
   }
 
   public static void markToReformatBefore(final ASTNode right, boolean value) {
-    if (value) right.putCopyableUserData(REFORMAT_KEY, true);
-    else right.putCopyableUserData(REFORMAT_KEY, null);
+    if (value) {
+      right.putCopyableUserData(REFORMAT_KEY, true);
+    }
+    else {
+      right.putCopyableUserData(REFORMAT_KEY, null);
+    }
   }
 
   private static int getBlankLines(final String text) {
@@ -310,7 +312,7 @@ public class CodeEditUtil {
   }
 
   private static boolean isWS(final ASTNode lastChild) {
-    return lastChild != null && lastChild.getElementType() == ElementType.WHITE_SPACE;
+    return lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE;
   }
 
   public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {

@@ -173,8 +173,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element=" + child + ", text=" + child.getText());
     }
     List<ASTNode> list = myReformatElements.get(viewProvider);
-    if(list == null)
-      myReformatElements.put(viewProvider, list = new ArrayList<ASTNode>());
+    if (list == null) {
+      list = new ArrayList<ASTNode>();
+      myReformatElements.put(viewProvider, list);
+    }
     list.add(child);
   }
 
