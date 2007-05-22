@@ -17,7 +17,8 @@
   <property file="groovy.properties"/>
   <property environment="env"/>
 
-  <property name="production.dest" location="${project.dir}/classes/production/Groovy"/>
+  <property name="production.dest" location="${project.dir}/classes/production"/>
+  <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" location="${idea.dir}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
@@ -56,9 +57,9 @@
 
 
   <target name="clear.all" description="clears all files">
-    <mkdir dir="${production.dest}"/>
+    <mkdir dir="${production.dest.groovy}"/>
     <delete includeemptydirs="true">
-      <fileset dir="${production.dest}"/>
+      <fileset dir="${production.dest.groovy}"/>
     </delete>
   </target>
 
@@ -68,24 +69,20 @@
   </target>
 
   <target name="make.project" description="makes project" depends="build.lexer, unzip last successful IDEA build">
-    <copy todir="${production.dest}/META-INF">
+    <copy todir="${production.dest.groovy}/META-INF">
       <fileset dir="${project.dir}/META-INF"/>
     </copy>
 
-    <copy todir="${output}/config/plugins/Groovy/META-INF">
-      <fileset dir="${project.dir}/META-INF"/>
-    </copy>
-
-    <copy todir="${production.dest}/resources">
+    <copy todir="${production.dest.groovy}/resources">
       <fileset dir="${project.dir}/resources"/>
     </copy>
 
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/GroovyBundle.properties"
-          tofile="${production.dest}/org/jetbrains/plugins/groovy/GroovyBundle.properties"/>
+          tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/GroovyBundle.properties"/>
 
 
     <javac srcdir="."
-           destdir="${production.dest}">
+           destdir="${production.dest.groovy}">
       <classpath refid="base.path"/>
       <classpath refid="groovy.path"/>
     </javac>
@@ -110,7 +107,7 @@
     <!--</copy>-->
 
     <jar destfile="${project.dir}/tempzip/Groovy/lib/Groovy.jar">
-      <fileset dir="${production.dest}" excludes="**/*build.xml, **/groovy.properties">
+      <fileset dir="${production.dest.groovy}" excludes="**/*build.xml, **/groovy.properties">
       </fileset>
 
       <!--<fileset dir="${plugin.libs}">-->
@@ -160,7 +157,7 @@
       <classpath refid="groovy.path"/>
 
       <classpath>
-        <path location="${production.dest}"/>
+        <path location="${production.dest.groovy}"/>
       </classpath>
 
     </javac>
@@ -185,7 +182,7 @@
 
       <classpath>
         <path location="${test.dest}"/>
-        <path location="${production.dest}"/>
+        <path location="${production.dest.groovy}"/>
 
         <path refid="base.path"/>
         <path refid="groovy.path"/>
@@ -203,6 +200,8 @@
 
       <jvmarg value="-Didea.config.path=${output}/config"/>
       <jvmarg value="-Didea.system.path=${output}/system"/>
+      <jvmarg value="-Didea.plugins.path=${production.dest}"/>
+
       <jvmarg value="-Didea.load.plugins=org.intellij.groovy"/>
 
       <formatter type="plain"/>
