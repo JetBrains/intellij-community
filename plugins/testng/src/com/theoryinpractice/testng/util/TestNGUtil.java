@@ -1,9 +1,5 @@
 package com.theoryinpractice.testng.util;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -21,6 +17,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.testng.TestNG;
 import org.testng.annotations.*;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
@@ -108,19 +108,25 @@ public class TestNGUtil
         }
         return false;
     }
-    
+
     public static boolean hasTest(PsiModifierListOwner element) {
+      return hasTest(element, true);
+    }
+    
+    public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
         boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false);
         if (hasAnnotation) {
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
-            PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
-            for (PsiNameValuePair attrib : attribs) {
-                if(attrib.getName().equals("enabled") && attrib.getValue().textMatches("false"))
-                    return false;
+            if (checkDisabled) {
+              PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
+              for (PsiNameValuePair attrib : attribs) {
+                  if(attrib.getName().equals("enabled") && attrib.getValue().textMatches("false"))
+                      return false;
             }
-            return true;
+          }
+          return true;
         }
         if (hasTestJavaDoc(element)) return true;
         //now we check all methods for the test annotation

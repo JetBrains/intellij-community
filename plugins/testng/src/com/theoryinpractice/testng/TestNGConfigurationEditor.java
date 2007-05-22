@@ -6,31 +6,36 @@
  */
 package com.theoryinpractice.testng;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.table.TableView;
-import com.intellij.uiDesigner.core.*;
+import com.intellij.uiDesigner.core.GridConstraints;
 import static com.intellij.uiDesigner.core.GridConstraints.*;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.uiDesigner.core.SupportCode;
 import com.theoryinpractice.testng.model.*;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
 {
@@ -41,6 +46,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     private LabeledComponent<TextFieldWithBrowseButton> classField;
     private CommonJavaParameters commonParameters;
+    private EnvironmentVariablesComponent envVariablesComponent;
     private LabeledComponent<JComboBox> moduleClasspath;
     private AlternativeJREPanel alternateJDK;
     private ConfigurationModuleSelector moduleSelector;
@@ -176,6 +182,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         else
             packagesInProject.setSelected(true);
         alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
+        envVariablesComponent.setEnvs(config.getPersistantData().ENV_VARIABLES != null ? FileUtil.toSystemDependentName(config.getPersistantData().ENV_VARIABLES) : "");
         propertiesList = new ArrayList<Map.Entry>();
         propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
         propertiesTableModel.setParameterList(propertiesList);
@@ -209,6 +216,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
             data.TEST_PROPERTIES.put(entry.getKey(), entry.getValue());
         }
 
+        data.ENV_VARIABLES = envVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(envVariablesComponent.getEnvs()) : null;
     }
 
     public ConfigurationModuleSelector getModuleSelector() {
@@ -348,20 +356,22 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         TabbedPaneWrapper propertyTabs = new TabbedPaneWrapper();
 
         JPanel customJDKPanel = new JPanel();
-        customJDKPanel.setLayout(new GridLayoutManager(5, 1, new Insets(2, 2, 2, 2), -1, -1, false, false));
+        customJDKPanel.setLayout(new GridLayoutManager(6, 1, new Insets(2, 2, 2, 2), -1, -1, false, false));
         commonParameters = new CommonJavaParameters();
         customJDKPanel.add(commonParameters, new GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, SIZEPOLICY_FIXED, null, null, null));
+        envVariablesComponent = new EnvironmentVariablesComponent();
+        customJDKPanel.add(envVariablesComponent, new GridConstraints(1, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, SIZEPOLICY_FIXED, null, null, null));
         moduleClasspath = new LabeledComponent<JComboBox>();
         moduleClasspath.setText("Use classpath and JDK of m&odule:");
         moduleClasspath.setEnabled(true);
         moduleClasspath.setComponent(new JComboBox());
         moduleClasspath.setLabelInsets(new Insets(2, 0, 2, 0));
         JPanel alternateJDKPanelHolder = new JPanel();
-        customJDKPanel.add(alternateJDKPanelHolder, new GridConstraints(1, 0, 1, 1, ANCHOR_NORTH, FILL_BOTH, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_SHRINK, null, null, null));
-        customJDKPanel.add(moduleClasspath, new GridConstraints(2, 0, 1, 1, ANCHOR_NORTH, FILL_HORIZONTAL, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_SHRINK, null, null, null));
+        customJDKPanel.add(alternateJDKPanelHolder, new GridConstraints(2, 0, 1, 1, ANCHOR_NORTH, FILL_BOTH, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_SHRINK, null, null, null));
+        customJDKPanel.add(moduleClasspath, new GridConstraints(3, 0, 1, 1, ANCHOR_NORTH, FILL_HORIZONTAL, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_SHRINK, null, null, null));
         alternateJDK = new AlternativeJREPanel();
-        customJDKPanel.add(alternateJDK, new GridConstraints(3, 0, 1, 1, ANCHOR_NORTH, FILL_HORIZONTAL, FILL_BOTH, SIZEPOLICY_CAN_SHRINK, null, null, null));
-        customJDKPanel.add(new Spacer(), new GridConstraints(4, 0, 1, 1, ANCHOR_NORTH, FILL_VERTICAL, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_GROW, null, null, null));
+        customJDKPanel.add(alternateJDK, new GridConstraints(4, 0, 1, 1, ANCHOR_NORTH, FILL_HORIZONTAL, FILL_BOTH, SIZEPOLICY_CAN_SHRINK, null, null, null));
+        customJDKPanel.add(new Spacer(), new GridConstraints(5, 0, 1, 1, ANCHOR_NORTH, FILL_VERTICAL, SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_GROW, null, null, null));
 
         LabeledComponent<JPanel> propertiesScrollPane = new LabeledComponent<JPanel>();
         propertiesScrollPane.setText("Set test &parameters:");

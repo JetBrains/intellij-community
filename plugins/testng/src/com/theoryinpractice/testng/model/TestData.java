@@ -1,17 +1,23 @@
 package com.theoryinpractice.testng.model;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.ExternalizablePath;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.TestNGConfiguration;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM
@@ -28,6 +34,9 @@ public class TestData implements Cloneable
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
     public String OUTPUT_DIRECTORY;
+
+    public String ENV_VARIABLES;
+   
     public AdditionalClasspath ADDITIONAL_CLASS_PATH;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
     public Map<String, String> TEST_PROPERTIES;

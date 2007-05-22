@@ -6,11 +6,10 @@
  */
 package com.theoryinpractice.testng;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.runners.RunnerInfo;
@@ -22,11 +21,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration
 {

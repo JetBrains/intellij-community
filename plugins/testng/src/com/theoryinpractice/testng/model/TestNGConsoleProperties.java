@@ -5,11 +5,15 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.config.*;
+import com.intellij.util.config.AbstractProperty;
+import com.intellij.util.config.BooleanProperty;
+import com.intellij.util.config.Storage;
 import com.theoryinpractice.testng.TestNGConfiguration;
 import com.theoryinpractice.testng.TestNGConsoleView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 
 public class TestNGConsoleProperties extends StoringPropertyContainer
 {

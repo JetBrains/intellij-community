@@ -85,7 +85,7 @@
         <jar jarfile="${bin.dir}/jars/${ant.project.name}.jar">
             <zipfileset dir="${bin.dir}/classes"/>
             <zipfileset dir="${src.dir}/resources" prefix="resources"/>
-            <zipfileset dir="META-INF" prefix="META-INF">
+            <zipfileset dir="src/META-INF" prefix="META-INF">
                 <include name="plugin.xml"/>
             </zipfileset>
         </jar>
@@ -97,7 +97,7 @@
             <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/testng">
                 <include name="testng-jdk14.jar"/>
             </zipfileset>
-            <zipfileset dir="META-INF" prefix="${ant.project.name}/META-INF">
+            <zipfileset dir="src/META-INF" prefix="${ant.project.name}/META-INF">
                 <include name="plugin.xml"/>
             </zipfileset>
         </zip>

@@ -6,16 +6,13 @@
  */
 package com.theoryinpractice.testng;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -33,13 +30,29 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
-import org.testng.xml.*;
+import org.testng.xml.LaunchSuite;
+import org.testng.xml.Parser;
+import org.testng.xml.SuiteGenerator;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
@@ -115,6 +128,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters javaParameters = new JavaParameters();
+        EnvironmentVariablesComponent.setupEnvs(javaParameters, config.getPersistantData().ENV_VARIABLES);
         javaParameters.getVMParametersList().add("-ea");
         javaParameters.setMainClass("org.testng.remote.RemoteTestNG");
 
@@ -402,25 +416,27 @@ public class TestNGRunnableState extends JavaCommandLineState
         }
     }
 
-    private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(TestData data, boolean includeClasses, PsiClass... classes) {
-        //we build up a list of dependencies
-        Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
-        if (classes.length > 0) {
-            if (includeClasses) {
-                for (PsiClass c : classes) {
-                    results.put(c, new HashSet<PsiMethod>());
-                }
-            }
-            Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
-            PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
-            //we get all classes in the module to figure out which are in the groups we depend on
-            PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
-            Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
-            //we now have a list of dependencies, and a list of classes that match those dependencies
-            results.putAll(filteredClasses);
+  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(TestData data, boolean includeClasses, @Nullable PsiClass... classes) {
+    //we build up a list of dependencies
+    Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
+    if (classes != null && classes.length > 0) {
+      if (includeClasses) {
+        for (PsiClass c : classes) {
+          results.put(c, new HashSet<PsiMethod>());
         }
-        return results;
+      }
+      Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
+      if (!dependencies.isEmpty()) {
+        PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
+        //we get all classes in the module to figure out which are in the groups we depend on
+        PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
+        Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
+        //we now have a list of dependencies, and a list of classes that match those dependencies
+        results.putAll(filteredClasses);
+      }
     }
+    return results;
+  }
 
     private TestClassFilter getFilter(PsiPackage psiPackage) {
         TestSearchScope scope = config.getPersistantData().getScope();
