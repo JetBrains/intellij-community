@@ -135,9 +135,11 @@ public class TextFieldWithHistory extends JPanel {
     myTextField.setBorder(null);
 
     final ActionManager actionManager = ActionManager.getInstance();
-    final AnAction clearTextAction = actionManager.getAction(IdeActions.ACTION_CLEAR_TEXT);
-    if (clearTextAction.getShortcutSet().getShortcuts().length == 0) {
-      clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
+    if (actionManager != null) {
+      final AnAction clearTextAction = actionManager.getAction(IdeActions.ACTION_CLEAR_TEXT);
+      if (clearTextAction.getShortcutSet().getShortcuts().length == 0) {
+        clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
+      }
     }
   }
 
