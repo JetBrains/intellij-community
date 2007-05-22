@@ -27,7 +27,7 @@ public class JreVersionDetector {
     return isJre50Configured(configuration, configuration.ALTERNATIVE_JRE_PATH_ENABLED, configuration.ALTERNATIVE_JRE_PATH);
   }
 
-  private boolean isJre50Configured(final ModuleBasedConfiguration configuration, final boolean altPathEnabled, final String jrePath) {
+  public boolean isJre50Configured(final ModuleBasedConfiguration configuration, final boolean altPathEnabled, final String jrePath) {
     if (altPathEnabled) {
       if (jrePath.equals(myLastAlternativeJrePath)) return myLastIsJre50;
       myLastAlternativeJrePath = jrePath;
