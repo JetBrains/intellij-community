@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,8 +24,10 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
   }
 
   public void mouseClicked(final MouseEvent e) {
-    Object tag = getTagAt(e);
-    handleTagClick(tag);
+    if (!e.isPopupTrigger() && e.getButton() == 1) {
+      Object tag = getTagAt(e);
+      handleTagClick(tag);
+    }
   }
 
   protected void handleTagClick(final Object tag) {
@@ -39,20 +40,18 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
   private Object getTagAt(final MouseEvent e) {
     JTree tree = (JTree) e.getSource();
     Object tag = null;
-    if (!e.isPopupTrigger()) {
-      final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-      if (path != null) {
-        final Rectangle rectangle = tree.getPathBounds(path);
-        int dx = e.getX() - rectangle.x;
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-        if (myLastHitNode != treeNode) {
-          myLastHitNode = treeNode;
-          myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);
-        }
-        int i = myRenderer.findFragmentAt(dx);
-        if (i >= 0) {
-          tag = myRenderer.getFragmentTag(i);
-        }
+    final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+    if (path != null) {
+      final Rectangle rectangle = tree.getPathBounds(path);
+      int dx = e.getX() - rectangle.x;
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+      if (myLastHitNode != treeNode) {
+        myLastHitNode = treeNode;
+        myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);
+      }
+      int i = myRenderer.findFragmentAt(dx);
+      if (i >= 0) {
+        tag = myRenderer.getFragmentTag(i);
       }
     }
     return tag;

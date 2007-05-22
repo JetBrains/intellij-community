@@ -18,9 +18,11 @@ import java.awt.event.MouseMotionListener;
  */
 public class TableLinkMouseListener extends MouseAdapter implements MouseMotionListener {
   public void mouseClicked(final MouseEvent e) {
-    Object tag = getTagAt(e);
-    if (tag != null) {
-      BrowserUtil.launchBrowser(tag.toString());
+    if (e.getButton() == 1 && !e.isPopupTrigger()) {
+      Object tag = getTagAt(e);
+      if (tag != null) {
+        BrowserUtil.launchBrowser(tag.toString());
+      }
     }
   }
 
