@@ -50,6 +50,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import gnu.trove.THashMap;
+
 /**
  * @author Mike
  */
@@ -88,6 +90,7 @@ public class XmlUtil {
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
 
   @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
+  @NonNls public static final String SPRING_FORMS_URI = "http://www.springframework.org/tags/form";
   @NonNls public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
   @NonNls public static final String STRUTS_BEAN_URI2 = "http://jakarta.apache.org/struts/tags-bean";
   @NonNls public static final String APACHE_I18N_URI = "http://jakarta.apache.org/taglibs/i18n-1.0";
@@ -112,6 +115,7 @@ public class XmlUtil {
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+
 
   private XmlUtil() {
   }
