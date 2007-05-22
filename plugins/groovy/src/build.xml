@@ -165,7 +165,7 @@
       <fileset dir="${test.dir}/testdata"/>
      </copy>
 
-    <copy toDir="${test.dest}">
+    <copy toDir="${production.dest}">
       <fileset dir="${project.dir}/META-INF"/>
      </copy>
   </target>
