@@ -1,6 +1,9 @@
 package com.intellij.xml.impl;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -17,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -317,6 +322,13 @@ public class ExternalDocumentValidator {
     }
 
     final Project project = context.getProject();
+
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(containingFile);
+    final LocalInspectionToolWrapper toolWrapper =
+      (LocalInspectionToolWrapper)profile.getInspectionTool(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME);
+
+    if (toolWrapper == null) return;
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME))) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
     ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;

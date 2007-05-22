@@ -97,6 +97,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       CheckDtdReferencesInspection.class,
       CheckEmptyScriptTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
+      CheckXmlFileWithXercesValidatorInspection.class,
       WrongPackageStatementInspection.class,
       SillyAssignmentInspection.class,
       RedundantThrowsDeclaration.class,
