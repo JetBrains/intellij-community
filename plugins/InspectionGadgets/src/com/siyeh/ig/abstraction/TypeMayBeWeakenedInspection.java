@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
-        return "Type may be weakened";
+        return InspectionGadgetsBundle.message(
+                "type.may.be.weakened.display.name");
     }
 
     @NotNull
@@ -54,8 +56,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 builder.append('\'');
             }
         }
-        return "Type of variable <code>#ref</code> may be weakened to " +
-                builder.toString();
+        return InspectionGadgetsBundle.message(
+                "type.may.be.weakened.problem.descriptor", builder.toString());
     }
 
     @Nullable
@@ -84,7 +86,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Weaken type to '" + fqClassName + '\'';
+            return InspectionGadgetsBundle.message(
+                    "type.may.be.weakened.quickfix", fqClassName);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -115,8 +118,13 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     private static class TypeMayBeWeakenedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
-            super.visitLocalVariable(variable);
+        public void visitVariable(PsiVariable variable) {
+            super.visitVariable(variable);
+            if (!(variable instanceof PsiLocalVariable) &&
+                    !(variable instanceof PsiParameter)) {
+                // checking for PsiFields etc is too expensive.
+                return;
+            }
             final Collection<PsiClass> weakestClasses =
                     TypeUtils.calculateWeakestClassesNecessary(variable);
             if (weakestClasses.isEmpty()) {

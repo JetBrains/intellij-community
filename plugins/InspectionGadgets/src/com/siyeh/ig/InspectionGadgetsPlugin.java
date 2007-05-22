@@ -90,9 +90,9 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 583;
+    private static final int NUM_INSPECTIONS = 586;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
-            new ArrayList<Class<? extends InspectionProfileEntry>>(NUM_INSPECTIONS);
+            new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry =
@@ -566,7 +566,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
         m_inspectionClasses.add(StaticMethodOnlyUsedInOneClassInspection.class);
         m_inspectionClasses.add(StaticVariableOfConcreteClassInspection.class);
-        //m_inspectionClasses.add(TypeMayBeWeakenedInspection.class);
+        m_inspectionClasses.add(TypeMayBeWeakenedInspection.class);
     }
 
     private void registerAssignmentInspections() {
