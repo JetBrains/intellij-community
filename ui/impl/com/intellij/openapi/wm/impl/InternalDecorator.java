@@ -22,6 +22,7 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.AwtVisitor;
@@ -372,13 +373,16 @@ public final class InternalDecorator extends JPanel {
     myTitlePanel.addButtons(buttonPanel, myHideSideButton);
 
     final JPanel contentPane = new JPanel(new BorderLayout());
-    contentPane.setBorder(new ActivatableLineBorder());
     contentPane.add(myTitlePanel, BorderLayout.NORTH);
     JPanel innerPanel = new JPanel(new BorderLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     JComponent toolWindowComponent = myToolWindow.getComponent();
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
-    contentPane.add(innerPanel, BorderLayout.CENTER);
+
+    final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
+    inner.setBorder(new InnerPanelBorder());
+
+    contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
 
     // Add listeners
@@ -388,6 +392,24 @@ public final class InternalDecorator extends JPanel {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
+
+  private static class InnerPanelBorder implements Border {
+    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+      g.setColor(ActivatableLineBorder.INACTIVE_COLOR);
+      UIUtil.drawLine(g, x, y, x, y + height - 2);
+      UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 2);
+      UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+    }
+
+    public Insets getBorderInsets(final Component c) {
+      return new Insets(0, 1, 1, 1);
+    }
+
+    public boolean isBorderOpaque() {
+      return true;
+    }
+  }
+
 
   public final ActionGroup createPopupGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
@@ -744,7 +766,7 @@ public final class InternalDecorator extends JPanel {
     public MyTitleButton(AnAction action) {
       myAction = action;
       myButton = new InplaceButton(null, new EmptyIcon(16), this);
-      myButton.setTransform(0, -1);
+      //myButton.setTransform(0, -1);
       setContent(myButton);
       setOpaque(false);
     }

@@ -5,7 +5,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.ui.UIUtil;
@@ -17,7 +16,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -50,7 +48,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myContent.setFocusable(true);
     setOpaque(false);
 
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
+    setBorder(new EmptyBorder(0, 0, 0, 2));
   }
 
   public JComponent getComponent() {
@@ -154,18 +152,25 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       ContentTabLabel eachTab = null;
       if (each instanceof ContentTabLabel) {
         eachTab = (ContentTabLabel)each;
+        if (isToDrawTabs()) {
+          eachY = 0;
+        } else {
+          eachY = TitlePanel.STRUT;
+        }
+      } else {
+        eachY = TitlePanel.STRUT;
       }
 
       final Dimension eachSize = each.getPreferredSize();
       if (eachX + eachSize.width < getWidth()) {
-        each.setBounds(eachX, eachY, eachSize.width, getHeight());
+        each.setBounds(eachX, eachY, eachSize.width, getHeight() - eachY);
         eachX += eachSize.width;
         if (eachTab != null) {
           eachX++;
         }
       }
       else {
-        each.setBounds(eachX, eachY, getWidth() - eachX, getHeight());
+        each.setBounds(eachX, eachY, getWidth() - eachX - getInsets().right, getHeight() - eachY);
         eachX = getWidth();
       }
     }
@@ -173,17 +178,17 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    if (myTabs.size() == 0) return;
-    if (myTabs.size() == 1) {
-      if (myTabs.get(0).getText() == null || myTabs.get(0).getText().trim().length() == 0) return;
-    }
+    if (!isToDrawTabs()) return;
 
     final Graphics2D g2d = (Graphics2D)g;
 
+    final GraphicsConfig c = new GraphicsConfig(g);
+    c.setAntialiasing(true);
+
+   
     for (ContentTabLabel each : myTabs) {
       final Shape shape = getShapeFor(each);
       final Rectangle bounds = each.getBounds();
-      boolean fill = true;
       if (myWindow.isActive()) {
         Color from;
         Color to;
@@ -194,7 +199,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         } else {
           from = new Color(129, 147, 219);
           to = new Color(84, 130, 171);
-          fill = true;
           g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
         }
       } else {
@@ -202,56 +206,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           new GradientPaint(bounds.x, bounds.y, new Color(152, 143, 134), bounds.x, (float)bounds.getMaxY(), new Color(165, 157, 149)));
       }
 
-      if (fill) {
-        g2d.fill(shape);
-      }
+      g2d.fill(shape);
     }
+
+    c.restore();
   }
 
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
-    if (myTabs.size() == 0) return;
-    if (myTabs.size() == 1) {
-      if (myTabs.get(0).getText() == null || myTabs.get(0).getText().trim().length() == 0) return;
-    }
+    if (!isToDrawTabs()) return;
 
     final GraphicsConfig c = new GraphicsConfig(g);
     c.setAntialiasing(true);
 
     final Graphics2D g2d = (Graphics2D)g;
 
-    //for (ContentTabLabel each : myTabs) {
-    //  if (!myManager.isSelected(each.myContent)) {
-    //    final Shape shape = getShapeFor(each);
-    //    g.setColor(new Color(250, 250, 250, 55));
-    //    g2d.fill(shape);
-    //  }
-    //}
-
     final Color edges = myWindow.isActive() ? new Color(38, 63, 106) : new Color(130, 120, 111);
     g2d.setColor(edges);
     for (int i = 0; i < myTabs.size(); i++) {
       ContentTabLabel each = myTabs.get(i);
-      final boolean first = i == 0;
-      final boolean last = i == myTabs.size() - 1;
-
-      if (first) {
-        final GeneralPath open = new GeneralPath();
-        final Rectangle b = each.getBounds();
-        b.x--;
-        drawOpenEndge(b, open);
-        g2d.draw(open);
-      }
-      if (last) {
-        final GeneralPath close = new GeneralPath();
-        final Rectangle b = each.getBounds();
-        drawCloseEdge(b, close);
-        g2d.draw(close);
-      }
-      else if (!last) {
-        final Rectangle b = each.getBounds();
-        g2d.drawLine((int)b.getMaxX(), b.y, (int)b.getMaxX(), (int)b.getMaxY());
-      }
+      final Shape shape = getShapeFor(each);
+      g2d.draw(shape);
     }
 
     c.restore();
@@ -260,57 +235,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private Shape getShapeFor(ContentTabLabel label) {
     final Rectangle bounds = label.getBounds();
 
-    final int index = myTabs.indexOf(label);
-    boolean first = index == 0;
-    boolean last = index == myTabs.size() - 1;
+    if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
 
-    final GeneralPath shape = new GeneralPath();
-
-    if (first) {
-      drawOpenEndge(bounds, shape);
+    if (!label.isSelected()) {
+      bounds.y += 4;
     }
-    else {
-      shape.moveTo(bounds.x, bounds.y);
-      shape.lineTo(bounds.x, (float)bounds.getMaxY());
-    }
+    bounds.width += 1;
 
-    if (last) {
-      shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.getMaxY());
-      drawCloseEdge(bounds, shape);
-    }
-    else {
-      shape.lineTo((float)bounds.getMaxX(), (float)bounds.getMaxY());
-      shape.lineTo((float)bounds.getMaxX(), bounds.y);
-    }
+    int arc = 2;
 
-    shape.closePath();
-
-    return shape;
+    final GeneralPath path = new GeneralPath();
+    path.moveTo(bounds.x, bounds.y + bounds.height);
+    path.lineTo(bounds.x, bounds.y + arc);
+    path.quadTo(bounds.x, bounds.y, bounds.x + arc, bounds.y);
+    path.lineTo(bounds.x + bounds.width - arc, bounds.y);
+    path.quadTo(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + arc);
+    path.lineTo(bounds.x + bounds.width, bounds.y + bounds.height);
+    path.closePath();
+    
+    return path;
   }
 
-  private int getArc() {
-    return 3;
-  }
-
-  private void drawCloseEdge(final Rectangle bounds, final GeneralPath shape) {
-    final double startX = bounds.getMaxX() - 1;
-    final double startY = bounds.getMaxY();
-    final Point2D current = shape.getCurrentPoint();
-    if (current == null || (current.getX() != startX && current.getY() != startY)) {
-      shape.moveTo((float)startX, (float)startY);
-    }
-    shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.getMaxY() - getArc());
-    shape.lineTo((float)bounds.getMaxX() - 1, (float)bounds.y + getArc());
-    shape.lineTo((float)bounds.getMaxX() - getArc() - 1, (float)bounds.getY());
-  }
-
-  private void drawOpenEndge(final Rectangle bounds, final GeneralPath shape) {
-    shape.moveTo((float)bounds.getX() + getArc(), (float)bounds.getY());
-    shape.lineTo((float)bounds.getX(), (float)bounds.getY() + getArc());
-    //shape.lineTo((float)bounds.getX(), (float)(bounds.getMaxY() - getArc()));
-    //shape.lineTo((float)bounds.getX() + getArc(), (float)bounds.getMaxY());
-    shape.lineTo((float)bounds.getX(), (float)bounds.getMaxY());
-  }
 
   public Dimension getMinimumSize() {
     return getPreferredSize();
@@ -331,9 +276,19 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void update() {
-    myIdLabel.setText(myWindow.getId());
     for (ContentTabLabel each : myTabs) {
       each.update();
+    }
+
+    myIdLabel.setText(myWindow.getId());
+    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
+
+    if (myTabs.size() == 1) {
+      final String text = myTabs.get(0).getText();
+      if (text != null && text.trim().length() > 0) {
+        myIdLabel.setText(myIdLabel.getText() + " -");
+        myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+      }
     }
 
     revalidate();
@@ -445,6 +400,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (dataId.equals(DataKeys.TOOL_WINDOW.getName())) return myWindow;
 
     return null;
+  }
+
+  public boolean isToDrawTabs() {
+    return myTabs.size() > 1;
   }
 
 }
