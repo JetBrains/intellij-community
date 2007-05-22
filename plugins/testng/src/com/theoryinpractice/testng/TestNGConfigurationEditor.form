@@ -145,7 +145,7 @@
         <border type="none"/>
         <children>
           <grid id="fab89" layout-manager="FormLayout">
-            <rowspec value="center:d:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:4dlu:noGrow"/>
             <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:4dlu:noGrow"/>
@@ -159,12 +159,6 @@
             <properties/>
             <border type="none"/>
             <children>
-              <nested-form id="e3355" form-file="com/intellij/execution/junit2/configuration/CommonJavaParameters.form" binding="commonParameters">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-                  <forms top="0" left="2" bottom="0" right="0"/>
-                </constraints>
-              </nested-form>
               <component id="cb5e4" class="com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent" binding="envVariablesComponent">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
@@ -186,7 +180,14 @@
                   <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                   <forms top="0" left="2" bottom="0" right="0"/>
                 </constraints>
+                <properties/>
               </component>
+              <nested-form id="3301c" form-file="com/intellij/execution/junit2/configuration/CommonJavaParameters.form" binding="commonJavaParameters">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+              </nested-form>
             </children>
           </grid>
           <grid id="bccab" layout-manager="FormLayout">
