@@ -66,15 +66,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
-      PsiElement curElement = element;
-
-      while(curElement!=null && !(curElement instanceof XmlComment)) {
-        curElement = curElement.getPrevSibling();
-        if (curElement!=null && curElement.getClass() == element.getClass()) {
-          curElement = null; // finding comment fails, we found another similar declaration
-          break;
-        }
-      }
+      PsiElement curElement = findPreviousComment(element);
 
       if (curElement!=null) {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
@@ -98,15 +90,48 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       return generateDoc(processor.result, name, typeName);
     } else if (element instanceof XmlAttributeDecl) {
+      // Check for comment before attlist, it should not be right after previous declaration
+      final PsiElement parent = element.getParent();
+      final PsiElement previousComment = findPreviousComment(parent);
+      final String referenceName = ((XmlAttributeDecl)element).getNameElement().getText();
+
+      if (previousComment instanceof PsiComment) {
+        final PsiElement prevSibling = previousComment.getPrevSibling();
+
+        if (prevSibling == null ||
+            ( prevSibling instanceof PsiWhiteSpace &&
+              prevSibling.getText().indexOf('\n') >= 0
+            )
+           ) {
+          return formatDocFromComment(previousComment, referenceName);
+        }
+      }
+
       // Check for comment right after the xml attlist decl
-      PsiElement uncleElement = element.getParent().getNextSibling();
+      PsiElement uncleElement = parent.getNextSibling();
       if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
       if (uncleElement instanceof PsiComment) {
-        return formatDocFromComment(uncleElement, ((XmlAttributeDecl)element).getNameElement().getText());
+        return formatDocFromComment(uncleElement, referenceName);
       }
     }
 
     return null;
+  }
+
+  private static PsiElement findPreviousComment(final PsiElement element) {
+    PsiElement curElement = element;
+
+    while(curElement!=null && !(curElement instanceof XmlComment)) {
+      curElement = curElement.getPrevSibling();
+      if (!(curElement instanceof PsiWhiteSpace) &&
+          !(curElement instanceof XmlProlog) &&
+          !(curElement instanceof XmlComment)
+         ) {
+        curElement = null; // finding comment fails, we found another similar declaration
+        break;
+      }
+    }
+    return curElement;
   }
 
   private String formatDocFromComment(final PsiElement curElement, final String name) {
