@@ -49,9 +49,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 public class DeadCodeInspection extends FilteringInspectionTool {
@@ -83,8 +81,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     final Object[] deadCodeAddins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL).getExtensions();
-    myExtensions = new DeadCodeExtension[deadCodeAddins.length];
-    System.arraycopy(deadCodeAddins, 0, myExtensions, 0, deadCodeAddins.length);
+    Arrays.sort(deadCodeAddins, new Comparator<Object>() {
+      public int compare(final Object o1, final Object o2) {
+        return ((DeadCodeExtension)o1).getDisplayName().compareToIgnoreCase(((DeadCodeExtension)o2).getDisplayName());
+      }
+    });
+    myExtensions = (DeadCodeExtension[])deadCodeAddins;
   }
 
   public void initialize(final GlobalInspectionContextImpl context) {
