@@ -35,6 +35,6 @@ public class GrStringImpl extends GroovyPsiElementImpl implements GrString {
   }
 
   public PsiType getType() {
-    return null;
+    return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
   }
 }
