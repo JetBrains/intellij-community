@@ -165,9 +165,6 @@
       <fileset dir="${test.dir}/testdata"/>
      </copy>
 
-    <copy toDir="${production.dest}">
-      <fileset dir="${project.dir}/META-INF"/>
-     </copy>
   </target>
 
   <target name="run.tests" description="runs all tests" depends="build tests">
