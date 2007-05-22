@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public class ModuleConfigurable extends NamedConfigurable<Module> {
   public void setDisplayName(String name) {
     name = name.trim();
     final ModifiableModuleModel modifiableModuleModel = myConfigurator.getModuleModel();
+    if (StringUtil.isEmpty(name)) return; //empty string comes on double click on module node
     if (Comparing.strEqual(name, myModuleName)) return; //nothing changed
     try {
       modifiableModuleModel.renameModule(myModule, name);

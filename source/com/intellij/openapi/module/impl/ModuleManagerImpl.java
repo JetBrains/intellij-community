@@ -558,10 +558,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       if (oldModule != null) {
         throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
       }
-      final String oldName = myModuleToNewName.get(module);
-      myModuleToNewName.put(module, newName);
-      myNewNameToModule.remove(oldName);
-      myNewNameToModule.put(newName, module);
+      myNewNameToModule.remove(myModuleToNewName.get(module));
+      if(module.getName().equals(newName)){ // if renaming to itself, forget it altogether
+        myModuleToNewName.remove(module);
+        myNewNameToModule.remove(newName);
+      } else {
+        myModuleToNewName.put(module, newName);
+        myNewNameToModule.put(newName, module);
+      }
     }
 
     public Module getModuleToBeRenamed(@NotNull String newName) {
