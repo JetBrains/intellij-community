@@ -189,7 +189,6 @@
         <path refid="tools.path"/>
       </classpath>
 
-      <jvmarg value="-Didea.load.plugins.id=com.intellij.javaee"/>
       <jvmarg value="-Xbootclasspath/p:${idea.lib}/boot.jar"/>
       <jvmarg value="-Djava.awt.headless=true"/>
       <jvmarg value="-Xmx256M"/>
