@@ -201,7 +201,7 @@
       <jvmarg value="-Didea.system.path=${output}/system"/>
       <jvmarg value="-Didea.plugins.path=${production.dest}"/>
 
-      <jvmarg value="-Didea.load.plugins=org.intellij.groovy"/>
+      <jvmarg value="-Didea.load.plugins.id=org.intellij.groovy"/>
 
       <formatter type="plain"/>
 
