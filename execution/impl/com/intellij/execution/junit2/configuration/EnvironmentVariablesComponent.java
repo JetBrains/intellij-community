@@ -27,7 +27,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   public EnvironmentVariablesComponent() {
     super();
     setComponent(new TextFieldWithBrowseButton());
-    setText(ExecutionBundle.message("environment.variables.dialog.title"));
+    setText(ExecutionBundle.message("environment.variables.component.title"));
     getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         new MyEnvironmentVariablesDialog().show();
