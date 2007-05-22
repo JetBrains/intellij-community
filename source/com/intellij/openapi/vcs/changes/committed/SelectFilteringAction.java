@@ -1,10 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ChangeListColumn;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.*;
 
 import javax.swing.*;
 
@@ -16,7 +13,7 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   private CommittedChangesTreeBrowser myBrowser;
 
   public SelectFilteringAction(final Project project, final CommittedChangesTreeBrowser browser) {
-    super("Filter by");
+    super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
   }
@@ -25,8 +22,7 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
     final DefaultComboBoxModel model = new DefaultComboBoxModel(new Object[]{
       ChangeListFilteringStrategy.NONE,
       new ColumnFilteringStrategy(ChangeListColumn.NAME, null),
-      new StructureFilteringStrategy(myProject),
-      new IncomingChangesFilteringStrategy(myProject)
+      new StructureFilteringStrategy(myProject)
     });
     final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
     for(AbstractVcs vcs: vcss) {
