@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton myAddButton;
   private JButton myRemoveButton;
   private TableView propertiesTableView;
-  private CommonJavaParameters commonJavaParameters;
+  private JPanel commonParametersPanel; //temp compilation problems
+  private CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
   private ArrayList<Map.Entry> propertiesList;
 
   public TestNGConfigurationEditor(Project project) {
@@ -241,7 +243,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   }
 
   private void createView() {
-    panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    commonParametersPanel.add(commonJavaParameters, BorderLayout.CENTER);
+
     packageTest.setSelected(false);
     suiteTest.setSelected(false);
     suiteTest.setEnabled(true);
