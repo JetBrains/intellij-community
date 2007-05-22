@@ -59,8 +59,10 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
 
   protected void update(final VcsContext vcsContext, final Presentation presentation) {
     super.update(vcsContext, presentation);
+    final ChangeList[] changeLists = vcsContext.getSelectedChangeLists();
     presentation.setEnabled(presentation.isEnabled() &&
-                            CommittedChangesCache.getInstance(vcsContext.getProject()).getCachedIncomingChanges() != null);
+                            CommittedChangesCache.getInstance(vcsContext.getProject()).getCachedIncomingChanges() != null &&
+                            changeLists != null &&  changeLists.length > 0);
   }
 
   private static ScopeInfo CHANGELIST = new ScopeInfo() {
