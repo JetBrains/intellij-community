@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +23,7 @@ public abstract class DependenciesBuilder {
   protected int myTotalFileCount;
   protected int myFileCount = 0;
 
-  protected DependenciesBuilder(final Project project, final AnalysisScope scope) {
+  protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myTotalFileCount = scope.getFileCount();

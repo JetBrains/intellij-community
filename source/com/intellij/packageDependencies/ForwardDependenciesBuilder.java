@@ -11,13 +11,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
-  public ForwardDependenciesBuilder(Project project, AnalysisScope scope) {
+  public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
   }
 
