@@ -64,7 +64,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 (PsiLocalVariable) location.getParent();
         final Collection<PsiClass> weakestClasses =
                 TypeUtils.calculateWeakestClassesNecessary(variable);
-        if (weakestClasses == null) {
+        if (weakestClasses.isEmpty()) {
             return null;
         }
         final List<InspectionGadgetsFix> fixes = new ArrayList();
@@ -119,7 +119,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             super.visitLocalVariable(variable);
             final Collection<PsiClass> weakestClasses =
                     TypeUtils.calculateWeakestClassesNecessary(variable);
-            if (weakestClasses == null) {
+            if (weakestClasses.isEmpty()) {
                 return;
             }
             registerVariableError(variable, weakestClasses);
