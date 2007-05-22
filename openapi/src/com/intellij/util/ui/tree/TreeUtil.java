@@ -59,6 +59,7 @@ public final class TreeUtil {
     return result;
   }
 
+  @NotNull
   public static <T> List<T> collectSelectedObjectsOfType(JTree tree, Class<T> clazz) {
     final TreePath[] selections = tree.getSelectionPaths();
     if (selections != null) {

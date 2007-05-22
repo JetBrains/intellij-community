@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
@@ -191,6 +190,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return mySelectedChangeList;
   }
 
+  private List<CommittedChangeList> getSelectedChangeLists() {
+    return TreeUtil.collectSelectedObjectsOfType(myChangesTree, CommittedChangeList.class);
+  }
+
   public void setTableContextMenu(final ActionGroup group) {
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(group);
@@ -243,9 +246,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
     else if (key.equals(DataKeys.CHANGE_LISTS)) {
-      final CommittedChangeList list = getSelectedChangeList();
-      if (list != null) {
-        sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
+      final List<CommittedChangeList> lists = getSelectedChangeLists();
+      if (lists.size() > 0) {
+        sink.put(DataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
     else if (key.equals(DataKeys.COPY_PROVIDER)) {

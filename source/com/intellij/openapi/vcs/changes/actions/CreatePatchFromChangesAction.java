@@ -78,6 +78,8 @@ public class CreatePatchFromChangesAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     Change[] changes = e.getData(DataKeys.CHANGES);
-    e.getPresentation().setEnabled(changes != null && changes.length > 0);
+    ChangeList[] changeLists = e.getData(DataKeys.CHANGE_LISTS);
+    e.getPresentation().setEnabled(changes != null && changes.length > 0 &&
+                                   (changeLists == null || changeLists.length == 1));
   }
 }

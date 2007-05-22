@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -39,7 +40,7 @@ public class ChangeListDetailsAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(DataKeys.CHANGE_LISTS);
-    e.getPresentation().setEnabled(project != null && changeLists != null && changeLists.length > 0 &&
+    e.getPresentation().setEnabled(project != null && changeLists != null && changeLists.length == 1 &&
       changeLists [0] instanceof CommittedChangeList);
   }
 
@@ -54,8 +55,10 @@ public class ChangeListDetailsAction extends AnAction {
         detailsBuilder.append(provider.getChangelistTitle()).append(" #").append(changeList.getNumber()).append("<br>");
       }
     }
-    detailsBuilder.append("Committed by <b>").append(changeList.getCommitterName()).append("</b> at ");
-    detailsBuilder.append(dateFormat.format(changeList.getCommitDate())).append("<br>");
+    @NonNls String committer = "<b>" + changeList.getCommitterName() + "</b>";
+    detailsBuilder.append(VcsBundle.message("changelist.details.committed.format", committer,
+                                            dateFormat.format(changeList.getCommitDate())));
+    detailsBuilder.append("<br>");
 
     if (provider != null) {
       for(ChangeListColumn column: provider.getColumns()) {
