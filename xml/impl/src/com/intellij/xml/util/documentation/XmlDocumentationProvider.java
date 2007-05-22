@@ -5,20 +5,17 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
@@ -80,9 +77,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
 
       if (curElement!=null) {
-        String text = curElement.getText();
-        text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
-        return generateDoc(text,((XmlElementDecl)element).getNameElement().getText(),null);
+        return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
     } else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
@@ -102,9 +97,22 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
 
       return generateDoc(processor.result, name, typeName);
+    } else if (element instanceof XmlAttributeDecl) {
+      // Check for comment right after the xml attlist decl
+      PsiElement uncleElement = element.getParent().getNextSibling();
+      if (uncleElement instanceof PsiWhiteSpace) uncleElement = uncleElement.getNextSibling();
+      if (uncleElement instanceof PsiComment) {
+        return formatDocFromComment(uncleElement, ((XmlAttributeDecl)element).getNameElement().getText());
+      }
     }
 
     return null;
+  }
+
+  private String formatDocFromComment(final PsiElement curElement, final String name) {
+    String text = curElement.getText();
+    text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
+    return generateDoc(text, name,null);
   }
 
   private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
@@ -144,11 +152,34 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+    boolean isAttrCompletion = element instanceof XmlAttribute;
+    if (!isAttrCompletion && element instanceof XmlToken) {
+      final IElementType tokenType = ((XmlToken)element).getTokenType();
+
+      if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END || tokenType == XmlTokenType.XML_TAG_END) {
+        isAttrCompletion = true;
+      } else if (element.getParent() instanceof XmlAttribute) {
+        isAttrCompletion = true;
+      }
+    }
+
     element = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
 
     if (element instanceof XmlTag) {
       XmlTag xmlTag = (XmlTag)element;
       XmlElementDescriptor elementDescriptor;
+
+      if (isAttrCompletion && object instanceof String) {
+        elementDescriptor = xmlTag.getDescriptor();
+
+        if (elementDescriptor != null) {
+          final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor((String)object, xmlTag);
+          if (attributeDescriptor != null) {
+            final PsiElement declaration = attributeDescriptor.getDeclaration();
+            if (declaration != null) return declaration;
+          }
+        }
+      }
 
       try {
         @NonNls StringBuffer tagText = new StringBuffer(object.toString());
