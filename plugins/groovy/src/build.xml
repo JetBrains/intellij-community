@@ -201,8 +201,6 @@
       <jvmarg value="-Didea.system.path=${output}/system"/>
       <jvmarg value="-Didea.plugins.path=${production.dest}"/>
 
-      <jvmarg value="-Didea.load.plugins=org.intellij.groovy"/>
-
       <formatter type="plain"/>
 
       <batchtest todir="${project.dir}/logs">
