@@ -16,7 +16,7 @@ class ContentTabLabel extends BaseLabel {
   private BaseButtonBehavior myBehavior;
 
   public ContentTabLabel(final Content content, ToolWindowContentUi ui) {
-    super(ui);
+    super(ui, true);
     myContent = content;
     update();
 
@@ -34,7 +34,7 @@ class ContentTabLabel extends BaseLabel {
       setBorder(null);
     } else {
       setHorizontalAlignment(JLabel.CENTER);
-      setBorder(new EmptyBorder(0, 4, 0, 4));
+      setBorder(new EmptyBorder(0, 8, 0, 8));
     }
 
     setText(myContent.getDisplayName());

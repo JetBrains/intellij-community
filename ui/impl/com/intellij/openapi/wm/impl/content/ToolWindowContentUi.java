@@ -1,24 +1,25 @@
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.TitlePanel;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.GraphicsConfig;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.GeneralPath;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
 
-  private BaseLabel myIdLabel = new BaseLabel(this);
+  private BaseLabel myIdLabel = new BaseLabel(this, false);
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -143,7 +144,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void doLayout() {
-    int eachX = 0;
+     int eachX = 0;
     int eachY = 0;
 
     for (int i = 0; i < getComponentCount(); i++) {
@@ -281,12 +282,12 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
 
     myIdLabel.setText(myWindow.getId());
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
+    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
 
     if (myTabs.size() == 1) {
       final String text = myTabs.get(0).getText();
       if (text != null && text.trim().length() > 0) {
-        myIdLabel.setText(myIdLabel.getText() + " -");
+        myIdLabel.setText(myIdLabel.getText() + " ");
         myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
       }
     }

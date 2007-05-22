@@ -11,17 +11,26 @@ class BaseLabel extends JLabel {
 
   private Color myActiveFg;
   private Color myPassiveFg;
+  private boolean myBold;
 
-  public BaseLabel(ToolWindowContentUi ui) {
+  public BaseLabel(ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
     setOpaque(false);
     setActiveFg(Color.white);
     setPassiveFg(Color.white);
+    myBold = bold;
+    updateFont();
   }
 
   public void updateUI() {
     super.updateUI();
-    setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    updateFont();
+  }
+
+  private void updateFont() {
+    if (myBold) {
+      setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    }
   }
 
   public void setActiveFg(final Color fg) {
