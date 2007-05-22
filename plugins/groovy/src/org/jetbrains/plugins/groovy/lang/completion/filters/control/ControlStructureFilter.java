@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +47,8 @@ public class ControlStructureFilter implements ElementFilter {
         PsiElement superParent = parent.getParent();
 
         if ((superParent instanceof GrOpenBlock ||
-            superParent instanceof GrClosableBlock)){
+            superParent instanceof GrClosableBlock ||
+            superParent instanceof GrCaseBlock)) {
           return true;
         }
 
@@ -57,7 +59,7 @@ public class ControlStructureFilter implements ElementFilter {
             elem = elem.getPrevSibling();
           }
           if (elem != null) {
-            return  true;
+            return true;
           } else {
             return false;
           }
@@ -66,6 +68,7 @@ public class ControlStructureFilter implements ElementFilter {
 
       return false;
     }
+
     return false;
   }
 

@@ -40,6 +40,7 @@ public class BranchFilter implements ElementFilter {
           treeWalkUp(parent)) {
         PsiElement superParent = parent.getParent();
         if ((superParent instanceof GrOpenBlock ||
+            superParent instanceof GrCaseBlock ||
             superParent instanceof GrClosableBlock)) {
           return true;
         }

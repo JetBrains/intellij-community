@@ -129,10 +129,7 @@ public class SwitchStatement implements GroovyElementTypes {
         return;
       }
     }
-    if (!ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
-      label.done(CASE_LABEL);
-      return;
-    }
+    ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);
     ParserUtils.getToken(builder, mNLS);
     if (ParserUtils.lookAhead(builder, kCASE) ||

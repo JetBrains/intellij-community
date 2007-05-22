@@ -1,0 +1,76 @@
+switch (params.bulkAction) {
+    case "Release":
+
+        break
+    case "Delete":
+
+        break
+    case "Hold":
+
+        break
+    default:
+        flash.message = "Bulk command not recognized"
+}
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('params')
+      PsiElement(.)('.')
+      PsiElement(identifier)('bulkAction')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Case block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Gstring)('"Release"')
+        PsiElement(:)(':')
+      PsiElement(new line)('\n\n        ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n    ')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Gstring)('"Delete"')
+        PsiElement(:)(':')
+      PsiElement(new line)('\n\n        ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n    ')
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Gstring)('"Hold"')
+        PsiElement(:)(':')
+      PsiElement(new line)('\n\n        ')
+      BREAK statement
+        PsiElement(break)('break')
+      PsiElement(new line)('\n    ')
+      Case label
+        PsiElement(default)('default')
+        PsiElement(:)(':')
+      PsiElement(new line)('\n        ')
+      Assignment expression
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('flash')
+          PsiElement(.)('.')
+          PsiElement(identifier)('message')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Gstring)('"Bulk command not recognized"')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
