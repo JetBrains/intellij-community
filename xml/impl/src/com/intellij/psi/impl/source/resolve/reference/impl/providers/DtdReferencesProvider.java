@@ -5,12 +5,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -76,10 +78,23 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     private XmlNSDescriptor getNsDescriptor() {
-      final XmlDocument document = ((XmlFile)getRealFile()).getDocument();
-      XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
-      if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
-      return rootTagNSDescriptor;
+      final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(myElement, XmlDocument.class, XmlMarkupDecl.class);
+
+      if (parentThatProvidesMetaData instanceof XmlDocument) {
+        final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
+        XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
+        if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
+        return rootTagNSDescriptor;
+      } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl) {
+        final XmlMarkupDecl markupDecl = (XmlMarkupDecl)parentThatProvidesMetaData;
+        final PsiMetaData psiMetaData = markupDecl.getMetaData();
+
+        if (psiMetaData instanceof XmlNSDescriptor) {
+          return (XmlNSDescriptor)psiMetaData;
+        }
+      }
+
+      return null;
     }
 
     public String getCanonicalText() {
