@@ -20,7 +20,9 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SwapMethodCallArgumentsIntention extends MutablyNamedIntention {
 
@@ -36,7 +38,7 @@ public class SwapMethodCallArgumentsIntention extends MutablyNamedIntention {
         final PsiExpression secondExpression = expressions[1];
         return IntentionPowerPackBundle.message(
                 "swap.method.call.arguments.intention.name",
-                firstExpression.getText(), secondExpression.getText());
+                StringUtil.first(firstExpression.getText(), 20, true), StringUtil.first(secondExpression.getText(), 20, true));
     }
 
     protected void processIntention(@NotNull PsiElement element)
@@ -49,7 +51,7 @@ public class SwapMethodCallArgumentsIntention extends MutablyNamedIntention {
         final String secondArgumentText = secondArgument.getText();
         final PsiCallExpression callExpression =
                 (PsiCallExpression)argumentList.getParent();
-        final String callText;
+        @NonNls final String callText;
         if (callExpression instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)callExpression;
