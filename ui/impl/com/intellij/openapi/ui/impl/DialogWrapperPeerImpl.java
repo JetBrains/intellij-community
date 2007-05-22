@@ -501,6 +501,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         removeComponentListener(myComponentListener);
         myComponentListener = null;
       }
+      if (myFocusTrackback != null) {
+        myFocusTrackback.dispose();
+        myFocusTrackback = null;
+      }
       super.dispose();
 
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
