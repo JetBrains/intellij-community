@@ -1,9 +1,11 @@
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
@@ -25,7 +27,16 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
   public MockComponentManager(@Nullable PicoContainer parent) {
-    myPicoContainer = new IdeaPicoContainer(parent);                                            
+    myPicoContainer = new IdeaPicoContainer(parent) {
+      @Nullable
+      public Object getComponentInstance(final Object componentKey) {
+        final Object o = super.getComponentInstance(componentKey);
+        if (o instanceof Disposable && o != MockComponentManager.this) {
+          Disposer.register(MockComponentManager.this, (Disposable)o);
+        }
+        return o;
+      }
+    };
     myPicoContainer.registerComponentInstance(this);
   }
 
