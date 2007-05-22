@@ -18,18 +18,6 @@ import com.theoryinpractice.testng.util.TestNGUtil;
  */
 public class ConvertOldAnnotationIntention extends AbstractProjectIntention
 {
-    public ConvertOldAnnotationIntention(Project project) {
-        super(project);
-    }
-
-    public static ConvertOldAnnotationIntention getInstance(Project project) {
-        return project.getComponent(ConvertOldAnnotationIntention.class);
-    }
-
-    public String getComponentName() {
-        return "ConvertOldAnnotation";
-    }
-
     public String getText() {
         return "Convert old @Configuration TestNG annotations";
     }

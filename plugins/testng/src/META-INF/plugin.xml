@@ -1,46 +1,51 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
-    <name>TestNG-J</name>
-    <description>TestNG Integration</description>
-    <version>1.1.1</version>
-    <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
-    <idea-version since-build="6791"/>
-    <application-components>
-        <component>
-            <implementation-class>com.theoryinpractice.testng.TestNGConfigurationType</implementation-class>
-            <option name="workspace" value="true"/>
-        </component>
-    </application-components>
-    <project-components>
-        <component>
-            <implementation-class>com.theoryinpractice.testng.intention.ConvertJUnitIntention</implementation-class>
-        </component>
-        <component>
-            <implementation-class>com.theoryinpractice.testng.intention.ConvertJavadocIntention</implementation-class>
-        </component>
-        <component>
-            <implementation-class>
-                com.theoryinpractice.testng.intention.ConvertAnnotationIntention
-            </implementation-class>
-        </component>
-        <component>
-            <implementation-class>
-                com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention
-            </implementation-class>
-        </component>
-        <component>
-            <implementation-class>com.theoryinpractice.testng.TestNGDefaultConfigurationComponent</implementation-class>
-            <option name="workspace" value="true"/>
-        </component>
+  <name>TestNG-J</name>
+  <description>TestNG Integration</description>
+  <version>1.1.1</version>
+  <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
+  <idea-version since-build="6791"/>
+  <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGDeadCodeExtension"/>
+    <intentionAction>
+      <className>com.theoryinpractice.testng.intention.ConvertJUnitIntention</className>
+      <category>TestNG</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.theoryinpractice.testng.intention.ConvertJavadocIntention</className>
+      <category>TestNG</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.theoryinpractice.testng.intention.ConvertAnnotationIntention</className>
+      <category>TestNG</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention</className>
+      <category>TestNG</category>
+    </intentionAction>
+  </extensions>
 
-    </project-components>
-    <change-notes>
-        <![CDATA[
+  <application-components>
+    <component>
+      <implementation-class>com.theoryinpractice.testng.TestNGConfigurationType</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.theoryinpractice.testng.TestNGDefaultConfigurationComponent</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+
+  </project-components>
+  <change-notes>
+    <![CDATA[
             <li>TESTNG-151 Final passing test result is not properly hidden
             <li>Fix method popup if test has class level @Test annotation
             <li>Added auto-completion for method names in dependsOnMethods
             <li>Added auto-completion for group names in dependsOnGroups
             <li>Fix for NPE on annotations without an annotation name (@ only).
         ]]>
-    </change-notes>
+  </change-notes>
 </idea-plugin>

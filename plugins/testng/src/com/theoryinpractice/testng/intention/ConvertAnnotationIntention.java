@@ -12,18 +12,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
  */
 public class ConvertAnnotationIntention extends AbstractProjectIntention
 {
-    public ConvertAnnotationIntention(Project project) {
-        super(project);
-    }
-
-    public static ConvertAnnotationIntention getInstance(Project project) {
-        return project.getComponent(ConvertAnnotationIntention.class);
-    }
-
-    public String getComponentName() {
-        return "ConvertAnnotation";
-    }
-
+   
     public String getText() {
         return "Convert TestNG annotations to javadocs";
     }
