@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,6 +17,8 @@ public interface ChangeListFilteringStrategy {
   void setFilterBase(List<CommittedChangeList> changeLists);
   void addChangeListener(ChangeListener listener);
   void removeChangeListener(ChangeListener listener);
+
+  @NotNull
   List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists);
 
   ChangeListFilteringStrategy NONE = new ChangeListFilteringStrategy() {
@@ -37,6 +40,7 @@ public interface ChangeListFilteringStrategy {
     public void removeChangeListener(ChangeListener listener) {
     }
 
+    @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       return changeLists;
     }

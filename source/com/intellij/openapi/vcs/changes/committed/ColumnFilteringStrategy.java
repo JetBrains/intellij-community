@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -103,6 +104,7 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
     myListeners.remove(listener);
   }
 
+  @NotNull
   public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
     final Object[] selection = myValueList.getSelectedValues();
     if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {

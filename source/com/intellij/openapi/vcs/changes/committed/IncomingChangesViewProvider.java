@@ -61,7 +61,11 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private void loadChangesToBrowser() {
     CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
       public void consume(final List<CommittedChangeList> committedChangeLists) {
-        myBrowser.setItems(committedChangeLists, false);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myBrowser.setItems(committedChangeLists, false);
+          }
+        });
       }
     });
   }

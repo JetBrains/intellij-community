@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -153,7 +154,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesView.dispose();
   }
 
-  public void setItems(List<CommittedChangeList> items, final boolean keepFilter) {
+  public void setItems(@NotNull List<CommittedChangeList> items, final boolean keepFilter) {
     myChangeLists = items;
     if (!keepFilter) {
       myFilteringStrategy.setFilterBase(items);

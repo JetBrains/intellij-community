@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -70,6 +71,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myListeners.remove(listener);
   }
 
+  @NotNull
   public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
       return changeLists;

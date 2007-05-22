@@ -330,7 +330,7 @@ public class ChangesCacheFile {
     }
   }
 
-  public void loadIncomingChanges(Map<CommittedChangeList, List<Change>> changeLists) throws IOException {
+  public void loadIncomingChanges(Map<CommittedChangeList, Change[]> changeLists) throws IOException {
     int offset = 0;
     openStreams();
     try {
@@ -341,13 +341,18 @@ public class ChangesCacheFile {
         }
         if (!entries [0].completelyDownloaded) {
           IncomingChangeListData data = readIncomingChangeListData(offset, entries [0]);
-          List<Change> changes = new ArrayList<Change>();
-          for(Change change: data.changeList.getChanges()) {
-            if (!data.accountedChanges.contains(change)) {
-              changes.add(change);
-            }
+          if (data.accountedChanges.size() == 0) {
+            changeLists.put(data.changeList, CommittedChangesCache.ALL_CHANGES);
           }
-          changeLists.put(data.changeList, changes);
+          else {
+            List<Change> changes = new ArrayList<Change>();
+            for(Change change: data.changeList.getChanges()) {
+              if (!data.accountedChanges.contains(change)) {
+                changes.add(change);
+              }
+            }
+            changeLists.put(data.changeList, changes.toArray(new Change[changes.size()]));
+          }
           if (changeLists.size() == myIncomingCount) break;
         }
         offset++;
