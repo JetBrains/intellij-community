@@ -273,7 +273,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
         final XmlTag tag = ((XmlTag)element);
-        result = tag.getValue().getText();
+        result = tag.getValue().getText().trim();
         boolean withCData = false;
 
         if (result.startsWith(CDATA_PREFIX)) {
@@ -287,7 +287,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         result = result.trim();
 
         if (withCData) {
-          result = XmlUtil.escape(result);
+          result = XmlUtil.escape(result).replaceAll("&apos;","'");
         }
         url = tag.getAttributeValue("source");
         return false;
