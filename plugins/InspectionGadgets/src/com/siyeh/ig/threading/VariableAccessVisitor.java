@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -153,7 +154,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final Set<PsiMethod> privateMethods = findPrivateMethods();
-        final HashMap<PsiMethod, PsiReference[]> referenceMap =
+        final HashMap<PsiMethod, Collection<PsiReference>> referenceMap =
                 buildReferenceMap(privateMethods);
         determineUsedMethods(privateMethods, referenceMap);
         determineUsageMap(referenceMap);
@@ -161,7 +162,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     }
 
     private void determineUsageMap(HashMap<PsiMethod,
-            PsiReference[]> referenceMap){
+            Collection<PsiReference>> referenceMap){
         final Set<PsiMethod> remainingMethods =
                 new HashSet<PsiMethod>(usedMethods);
         boolean stabilized = false;
@@ -170,7 +171,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
             final Set<PsiMethod> methodsDeterminedThisPass =
                     new HashSet<PsiMethod>();
             for(PsiMethod method : remainingMethods){
-                final PsiReference[] references = referenceMap.get(method);
+                final Collection<PsiReference> references =
+                        referenceMap.get(method);
                 boolean areAllReferencesSynchronized = true;
                 for(PsiReference reference : references){
                     if(isKnownToBeUsed(reference)){
@@ -200,7 +202,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
 
     private void determineUsedMethods(
             Set<PsiMethod> privateMethods,
-            HashMap<PsiMethod, PsiReference[]> referenceMap){
+            HashMap<PsiMethod, Collection<PsiReference>> referenceMap){
         final Set<PsiMethod> remainingMethods =
                 new HashSet<PsiMethod>(privateMethods);
         boolean stabilized = false;
@@ -209,7 +211,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
             final Set<PsiMethod> methodsDeterminedThisPass =
                     new HashSet<PsiMethod>();
             for(PsiMethod method : remainingMethods){
-                final PsiReference[] references = referenceMap.get(method);
+                final Collection<PsiReference> references =
+                        referenceMap.get(method);
                 for(PsiReference reference : references){
                     if(isKnownToBeUsed(reference)){
                         usedMethods.add(method);
@@ -223,16 +226,14 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         unusedMethods.addAll(remainingMethods);
     }
 
-    private static HashMap<PsiMethod, PsiReference[]>
+    private static HashMap<PsiMethod, Collection<PsiReference>>
             buildReferenceMap(Set<PsiMethod> privateMethods){
-        final HashMap<PsiMethod, PsiReference[]> referenceMap =
-                new HashMap<PsiMethod, PsiReference[]>();
+        final HashMap<PsiMethod, Collection<PsiReference>> referenceMap =
+                new HashMap();
         for(PsiMethod method : privateMethods){
-            final PsiManager manager = method.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope scope = method.getUseScope();
-            final PsiReference[] references =
-                    searchHelper.findReferences(method, scope, true);
+            final Collection<PsiReference> references =
+                    ReferencesSearch.search(method, scope).findAll();
             referenceMap.put(method, references);
         }
         return referenceMap;
