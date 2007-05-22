@@ -67,6 +67,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 
+  public RepositoryLocation getRepositoryLocation() {
+    return myLocation;
+  }
+
   public void setRepositoryLocation(final RepositoryLocation location) {
     myLocation = location;
   }
@@ -110,7 +114,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
     else if (completed) {
       myChangesFromProvider = changes.get();
-      updateFilteredModel();
+      updateFilteredModel(false);
     }
   }
 
@@ -124,7 +128,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                  new Consumer<List<CommittedChangeList>>() {
                                    public void consume(final List<CommittedChangeList> committedChangeLists) {
                                      myChangesFromProvider = committedChangeLists;
-                                     updateFilteredModel();
+                                     updateFilteredModel(false);
                                      }
                                    },
                                  new Consumer<List<VcsException>>() {
@@ -134,12 +138,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                  });
   }
 
-  private void updateFilteredModel() {
+  private void updateFilteredModel(final boolean keepFilter) {
     if (myChangesFromProvider == null) {
       return;
     }
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setItems(myChangesFromProvider, true);
+      myBrowser.setItems(myChangesFromProvider, keepFilter);
     }
     else {
       final String[] strings = myFilterComponent.getFilter().split(" ");
@@ -152,7 +156,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           filteredChanges.add(changeList);
         }
       }
-      myBrowser.setItems(filteredChanges, true);
+      myBrowser.setItems(filteredChanges, keepFilter);
     }
   }
 
@@ -204,7 +208,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
 
     public void filter() {
-      updateFilteredModel();
+      updateFilteredModel(true);
     }
   }
 }

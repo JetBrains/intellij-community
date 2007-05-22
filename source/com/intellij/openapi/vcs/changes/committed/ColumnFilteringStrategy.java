@@ -74,6 +74,7 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
   }
 
   public void setFilterBase(List<CommittedChangeList> changeLists) {
+    final Object oldSelection = myValueList.getSelectedValue();
     final Collection<String> values = new TreeSet<String>();
     for(CommittedChangeList changeList: changeLists) {
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
@@ -94,6 +95,9 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
         return valueArray [index-1];
       }
     });
+    if (oldSelection != null) {
+      myValueList.setSelectedValue(oldSelection, false);
+    }
   }
 
   public void addChangeListener(final ChangeListener listener) {

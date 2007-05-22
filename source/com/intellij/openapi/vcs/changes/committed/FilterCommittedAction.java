@@ -23,10 +23,10 @@ public class FilterCommittedAction extends AnAction {
     Project project = e.getData(DataKeys.PROJECT);
     if (project != null) {
       CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-      e.getPresentation().setEnabled(panel != null);
+      e.getPresentation().setVisible(panel != null && panel.getRepositoryLocation() != null);
     }
     else {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
     }
   }
 }
