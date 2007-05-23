@@ -98,9 +98,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
           public void run() {
             if (isRunning()) {
               showDialog();
-              final DialogWrapper popup = myDialog.myPopup;
-              if (popup != null) {
-                myFocusTrackback.onShown(popup.getPreferredFocusedComponent());
+              if (myDialog != null) {
+                final DialogWrapper popup = myDialog.myPopup;
+                if (popup != null) {
+                  myFocusTrackback.onShown(popup.getPreferredFocusedComponent());
+                }
               }
             }
           }
