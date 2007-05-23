@@ -309,6 +309,9 @@ public class UnscrambleDialog extends DialogWrapper{
         if (line.startsWith("\"")) builder.append("\n"); // Additional linebreak for thread names
       }
       first = false;
+      int i = builder.lastIndexOf("\n");
+      CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
+      if (lastLine.toString().matches("\\s*at") && !line.matches("\\s+.*")) builder.append(" "); // separate 'at' from file name
       builder.append(line);
     }
     return builder.toString();
