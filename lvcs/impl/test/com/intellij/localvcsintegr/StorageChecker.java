@@ -1,15 +1,17 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.changes.StructuralChange;
 import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.integration.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 public class StorageChecker {
@@ -26,20 +28,32 @@ public class StorageChecker {
     Entry e = m.myRoot.getEntry(43077);
     //List<Change> cc = m.myChangeList.getChangesFor(m.myRoot.copy(), e.getPath());
     List<Change> cc = m.myChangeList.getChanges();
-    for (Change change : cc) {
-      for (Change c : change.getChanges()) {
-        if (c instanceof StructuralChange) {
-          StructuralChange sc = (StructuralChange)c;
-          IdPath path = new IdPath(38781, 42721, 42722, 42726, 43058, 43070, 43076, 43077, 103769);
-          if (sc.getAffectedIdPaths()[0].startsWith(path)) {
-            System.out.println("");
-          }
-        }
+    List<DateAndChange> result = new ArrayList<DateAndChange>();
+    for (Change c : cc) {
+      Calendar d = new GregorianCalendar();
+      d.setTimeInMillis(c.getTimestamp());
+
+      int h = d.get(Calendar.HOUR_OF_DAY);
+      if (d.get(Calendar.DAY_OF_MONTH) == 22 && h > 13 & h < 20) {
+        result.add(new DateAndChange(c));
       }
     }
 
 
     System.out.println("");
+  }
+
+  static class DateAndChange {
+    Change c;
+
+    public DateAndChange(final Change c) {
+      this.c = c;
+    }
+
+    @Override
+    public String toString() {
+      return FormatUtil.formatTimestamp(c.getTimestamp()) + c.getName() + "(" + c.getClass().getSimpleName() + ")";
+    }
   }
 
   private static class NullContentStorage implements IContentStorage {

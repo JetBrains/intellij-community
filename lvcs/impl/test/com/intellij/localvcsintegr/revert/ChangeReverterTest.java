@@ -1,6 +1,5 @@
 package com.intellij.localvcsintegr.revert;
 
-import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.revert.ChangeReverter;
@@ -10,11 +9,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-@Bombed(month = Calendar.MAY, day = 21)
 public class ChangeReverterTest extends IntegrationTestCase {
   public void testRevertCreation() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
