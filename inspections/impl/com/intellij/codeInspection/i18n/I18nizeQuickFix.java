@@ -181,8 +181,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
       expression.getLOperand().replace(factory.createExpressionFromText("\""+lsubstring+"\"", literalExpression));
       String rsubstring = value.substring(breakIndex);
       expression.getROperand().replace(factory.createExpressionFromText("\""+rsubstring+"\"", literalExpression));
-      PsiBinaryExpression newExpr = (PsiBinaryExpression)literalExpression.replace(expression);
-      return newExpr;
+      return (PsiBinaryExpression)literalExpression.replace(expression);
     }
 
     return null;

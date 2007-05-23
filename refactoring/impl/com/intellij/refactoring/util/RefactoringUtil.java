@@ -236,7 +236,7 @@ public class RefactoringUtil {
   }
 
   public static void addUsagesInStringsAndComments(PsiElement element,
-                                                   String stringToSearch,
+                                                   @NotNull String stringToSearch,
                                                    List<UsageInfo> results,
                                                    UsageInfoFactory factory) {
     PsiManager manager = element.getManager();
@@ -269,7 +269,7 @@ public class RefactoringUtil {
   }
 
   public static void addTextOccurences(PsiElement element,
-                                       String stringToSearch,
+                                       @NotNull String stringToSearch,
                                        GlobalSearchScope searchScope,
                                        final List<UsageInfo> results,
                                        final UsageInfoFactory factory) {
@@ -282,7 +282,7 @@ public class RefactoringUtil {
   }
 
   public static void processTextOccurences(PsiElement element,
-                                           String stringToSearch,
+                                           @NotNull String stringToSearch,
                                            GlobalSearchScope searchScope,
                                            final Processor<UsageInfo> processor,
                                            final UsageInfoFactory factory) {

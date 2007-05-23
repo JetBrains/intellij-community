@@ -106,12 +106,14 @@ public class FindUsagesUtil {
 
     if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
       String stringToSearch = getStringToSearch(element);
-      RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
-        public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-          return new UsageInfo(usage, startOffset, endOffset, true);
-        }
-      };
-      RefactoringUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
+      if (stringToSearch != null) {
+        RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
+          public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+            return new UsageInfo(usage, startOffset, endOffset, true);
+          }
+        };
+        RefactoringUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
+      }
     }
   }
 

@@ -207,11 +207,13 @@ public class VariableInplaceRenamer {
 
     String stringToSearch = RefactoringUtil.getStringToSearch(elementToRename, true);
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    RefactoringUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new RefactoringUtil.UsageInfoFactory() {
-      public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-        return new UsageInfo(usage); //will not need usage
-      }
-    });
+    if (stringToSearch != null) {
+      RefactoringUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new RefactoringUtil.UsageInfoFactory() {
+        public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+          return new UsageInfo(usage); //will not need usage
+        }
+      });
+    }
 
     return usages.isEmpty();
   }

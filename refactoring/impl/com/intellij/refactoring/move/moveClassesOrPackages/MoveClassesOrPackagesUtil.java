@@ -85,6 +85,7 @@ public class MoveClassesOrPackagesUtil {
                                        ArrayList<UsageInfo> results) {
     if (searchInStringsAndComments || searchInNonJavaFiles) {
       final String stringToSearch = getStringToSearch(element);
+      if (stringToSearch == null) return;
       RefactoringUtil.UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 
       if (searchInStringsAndComments) {

@@ -120,14 +120,16 @@ public class RenameUtil {
           final PsiClass aClass = (PsiClass)element;
           if (aClass.getParent() instanceof PsiClass) {
             final String dollaredStringToSearch = RefactoringUtil.getInnerClassNameForClassLoader(aClass);
-            final String dollaredStringToReplace = RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
-            RefactoringUtil.UsageInfoFactory dollaredFactory = new RefactoringUtil.UsageInfoFactory() {
-              public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-                int start = usage.getTextRange().getStartOffset();
-                return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, dollaredStringToReplace);
-              }
-            };
-            RefactoringUtil.addTextOccurences(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
+            final String dollaredStringToReplace = dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
+            if (dollaredStringToReplace != null) {
+              RefactoringUtil.UsageInfoFactory dollaredFactory = new RefactoringUtil.UsageInfoFactory() {
+                public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+                  int start = usage.getTextRange().getStartOffset();
+                  return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, dollaredStringToReplace);
+                }
+              };
+              RefactoringUtil.addTextOccurences(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
+            }
           }
         }
       }
