@@ -77,6 +77,7 @@ public class WelcomeScreen {
   private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
   private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
   private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
+  private static final Icon IMPORT_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
@@ -382,15 +383,7 @@ public class WelcomeScreen {
 
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
-        final AnAction action = new RecentProjectsAction();
-        action.actionPerformed(new AnActionEvent(e, new DataContext() {
-          public Object getData(String dataId) {
-            if (DataConstants.PROJECT.equals(dataId)) {
-              return null;
-            }
-            return button;
-          }
-        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
+        new RecentProjectsAction().showPopup(button, e);
       }
     };
     quickStarts.addButton(openRecentProject, UIBundle.message("welcome.screen.reopen.recent.project.action.name"),
@@ -398,13 +391,22 @@ public class WelcomeScreen {
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
-        final GetFromVcsAction action = new GetFromVcsAction();
-        action.actionPerformed(button, e);
+        new GetFromVcsAction().showPopup(button, e);
       }
     };
 
     quickStarts.addButton(getFromVCS, UIBundle.message("welcome.screen.check.out.from.version.control.action.name"),
                           UIBundle.message("welcome.screen.check.out.from.version.control.action.description"));
+
+    MyActionButton importProjects = new ButtonWithExtension(IMPORT_ICON, null) {
+      protected void onPress(InputEvent e, final MyActionButton button) {
+        new ProjectImportPopupAction().showPopup(button, e);
+      }
+    };
+
+    quickStarts.addButton(importProjects,
+                          UIBundle.message("welcome.screen.import.projects.action.name"),
+                          UIBundle.message("welcome.screen.import.projects.action.description"));
 
     /*
     MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
