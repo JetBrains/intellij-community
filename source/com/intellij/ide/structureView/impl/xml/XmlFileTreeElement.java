@@ -58,7 +58,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
       getStructureViewTreeElements(rootTags.toArray(new XmlTag[rootTags.size()]));
 
     Collection<StructureViewTreeElement> dtdStructureViewTreeElements = null;
-    final XmlProlog prolog = document.getProlog();
+    final XmlProlog prolog = document != null ? document.getProlog():null;
     if (prolog != null) {
       final XmlDoctype doctype = prolog.getDoctype();
 
