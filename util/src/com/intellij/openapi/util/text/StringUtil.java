@@ -1071,4 +1071,21 @@ public class StringUtil {
   public static String first(final String text, final int length, final boolean appendEllipsis) {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
   }
+
+  public static String escapeQuotes( @NotNull String str)
+  {
+    int idx = str.indexOf('"');
+    if (idx < 0) return str;
+    StringBuffer buf = new StringBuffer(str);
+    while (idx < buf.length()) {
+      if (buf.charAt(idx) == '"') {
+        buf.replace(idx, idx + 1, "\\\"");
+        idx += 2;
+      }
+      else {
+        idx += 1;
+      }
+    }
+    return buf.toString();
+  }
 }
