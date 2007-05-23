@@ -128,7 +128,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     };
 
     public String getLocationString() {
-      final List<XmlAttlistDecl> attLists= ourCachedAttListDefsCache.get(MY_CACHED_ATTLISTS, getElement().getContainingFile(), null).getValue();
+      final List<XmlAttlistDecl> attLists= ourCachedAttListDefsCache.get(MY_CACHED_ATTLISTS, XmlUtil.getContainingFile(getElement()), null).getValue();
 
       if (!attLists.isEmpty()) {
         Map<String,XmlAttributeDecl> attrMap = null;

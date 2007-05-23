@@ -6,8 +6,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
@@ -254,5 +256,19 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   public int getTextOffset() {
     final PsiElement name = getNameElement();
     return name != null ? name.getTextOffset() : super.getTextOffset();
+  }
+
+  public boolean canNavigate() {
+    if (isPhysical()) return super.canNavigate();
+    final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this, this);
+    return psiNamedElement != null;
+  }
+
+  public void navigate(final boolean requestFocus) {
+    if (!isPhysical()) {
+      ((Navigatable)XmlUtil.findRealNamedElement(this, this)).navigate(requestFocus);
+      return;
+    }
+    super.navigate(requestFocus);
   }
 }
