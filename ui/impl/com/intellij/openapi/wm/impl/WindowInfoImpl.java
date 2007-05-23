@@ -14,7 +14,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class WindowInfo implements Cloneable,JDOMExternalizable{
+public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
   /**
    * XML tag.
    */
@@ -59,7 +59,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * Creates <code>WindowInfo</code> for tool window with wpecified <code>ID</code>.
    */
-  WindowInfo(final String id){
+  WindowInfoImpl(final String id){
     myActive=false;
     myAnchor=ToolWindowAnchor.LEFT;
     myAutoHide=false;
@@ -75,10 +75,10 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
    * Creates copy of <code>WindowInfo</code> object.
    */
   @SuppressWarnings({"EmptyCatchBlock"})
-  public WindowInfo copy(){
-    WindowInfo info=null;
+  public WindowInfoImpl copy(){
+    WindowInfoImpl info=null;
     try{
-      info=(WindowInfo)clone();
+      info=(WindowInfoImpl)clone();
       if(myFloatingBounds!=null){
         info.myFloatingBounds=(Rectangle)myFloatingBounds.clone();
       }
@@ -89,7 +89,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * Copies all data from the passed <code>WindowInfo</code> into itself.
    */
-  void copyFrom(final WindowInfo info){
+  void copyFrom(final WindowInfoImpl info){
     myActive=info.myActive;
     myAnchor=info.myAnchor;
     myAutoHide=info.myAutoHide;
@@ -220,11 +220,11 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
       myActive=Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
     }catch(NumberFormatException ignored){}
     try{
-      myAnchor=WindowInfo.parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
+      myAnchor= parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
     }catch(IllegalArgumentException ignored){}
       myAutoHide=Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
     try{
-      myInternalType=WindowInfo.parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
+      myInternalType= parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
     }catch(IllegalArgumentException ignored){}
     try{
       myType=parseToolWindowType(element.getAttributeValue(TYPE_ATTR));
@@ -307,10 +307,10 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   }
 
   public boolean equals(final Object obj){
-    if(!(obj instanceof WindowInfo)){
+    if(!(obj instanceof WindowInfoImpl)){
       return false;
     }
-    final WindowInfo info=(WindowInfo)obj;
+    final WindowInfoImpl info=(WindowInfoImpl)obj;
     if(
       myActive!=info.myActive||
       myAnchor!=info.myAnchor||

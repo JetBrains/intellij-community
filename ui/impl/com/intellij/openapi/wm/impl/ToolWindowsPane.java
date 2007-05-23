@@ -31,8 +31,8 @@ final class ToolWindowsPane extends JPanel{
 
   private final HashMap<String,StripeButton> myId2Button;
   private final HashMap<String,InternalDecorator> myId2Decorator;
-  private final HashMap<StripeButton,WindowInfo> myButton2Info;
-  private final HashMap<InternalDecorator,WindowInfo> myDecorator2Info;
+  private final HashMap<StripeButton, WindowInfoImpl> myButton2Info;
+  private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
@@ -63,8 +63,8 @@ final class ToolWindowsPane extends JPanel{
     myFrame=frame;
     myId2Button=new HashMap<String,StripeButton>();
     myId2Decorator=new HashMap<String,InternalDecorator>();
-    myButton2Info=new HashMap<StripeButton,WindowInfo>();
-    myDecorator2Info=new HashMap<InternalDecorator,WindowInfo>();
+    myButton2Info=new HashMap<StripeButton, WindowInfoImpl>();
+    myDecorator2Info=new HashMap<InternalDecorator, WindowInfoImpl>();
     myUISettingsListener=new MyUISettingsListenerImpl();
 
     // Splitters
@@ -126,8 +126,8 @@ final class ToolWindowsPane extends JPanel{
    * @param comparator which is used to sort buttons within the stripe.
    * @param finishCallBack invoked when the command is completed.
    */
-  final FinalizableCommand createAddButtonCmd(final StripeButton button,final WindowInfo info,final Comparator comparator,final Runnable finishCallBack){
-    final WindowInfo copiedInfo=info.copy();
+  final FinalizableCommand createAddButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator comparator,final Runnable finishCallBack){
+    final WindowInfoImpl copiedInfo=info.copy();
     myId2Button.put(copiedInfo.getId(),button);
     myButton2Info.put(button,copiedInfo);
     return new AddToolStripeButtonCmd(button,copiedInfo,comparator,finishCallBack);
@@ -141,11 +141,11 @@ final class ToolWindowsPane extends JPanel{
    */
   final FinalizableCommand createAddDecoratorCmd(
     final InternalDecorator decorator,
-    final WindowInfo info,
+    final WindowInfoImpl info,
     final boolean dirtyMode,
     final Runnable finishCallBack
   ){
-    final WindowInfo copiedInfo=info.copy();
+    final WindowInfoImpl copiedInfo=info.copy();
     final String id=copiedInfo.getId();
     //
     myDecorator2Info.put(decorator,copiedInfo);
@@ -166,7 +166,7 @@ final class ToolWindowsPane extends JPanel{
    */
   final FinalizableCommand createRemoveButtonCmd(final String id,final Runnable finishCallBack){
     final StripeButton button=getButtonById(id);
-    final WindowInfo info=getButtonInfoById(id);
+    final WindowInfoImpl info=getButtonInfoById(id);
     //
     myButton2Info.remove(button);
     myId2Button.remove(id);
@@ -180,7 +180,7 @@ final class ToolWindowsPane extends JPanel{
    */
   final FinalizableCommand createRemoveDecoratorCmd(final String id, final boolean dirtyMode, final Runnable finishCallBack){
     final Component decorator=getDecoratorById(id);
-    final WindowInfo info=getDecoratorInfoById(id);
+    final WindowInfoImpl info=getDecoratorInfoById(id);
     //
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
@@ -218,7 +218,7 @@ final class ToolWindowsPane extends JPanel{
    * @return <code>WindowInfo</code> associated with specified tool stripe button.
    * @param id <code>ID</code> of tool stripe butoon.
    */
-  private WindowInfo getButtonInfoById(final String id){
+  private WindowInfoImpl getButtonInfoById(final String id){
     return myButton2Info.get(myId2Button.get(id));
   }
 
@@ -226,7 +226,7 @@ final class ToolWindowsPane extends JPanel{
    * @return <code>WindowInfo</code> associated with specified window decorator.
    * @param id <code>ID</code> of decorator.
    */
-  private WindowInfo getDecoratorInfoById(final String id){
+  private WindowInfoImpl getDecoratorInfoById(final String id){
     return myDecorator2Info.get(myId2Decorator.get(id));
   }
 
@@ -291,10 +291,10 @@ final class ToolWindowsPane extends JPanel{
 
   private final class AddDockedComponentCmd extends FinalizableCommand{
     private final JComponent myComponent;
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    public AddDockedComponentCmd(final JComponent component, final WindowInfo info, final boolean dirtyMode, final Runnable finishCallBack){
+    public AddDockedComponentCmd(final JComponent component, final WindowInfoImpl info, final boolean dirtyMode, final Runnable finishCallBack){
       super(finishCallBack);
       myComponent=component;
       myInfo=info;
@@ -303,10 +303,10 @@ final class ToolWindowsPane extends JPanel{
 
     public final void run(){
       try{
-        final float weight=myInfo.getWeight()<=.0f?WindowInfo.DEFAULT_WEIGHT:myInfo.getWeight();
+        final float weight=myInfo.getWeight()<=.0f? WindowInfoImpl.DEFAULT_WEIGHT:myInfo.getWeight();
         float newWeight=weight;
         if(newWeight>=1.0f){
-          newWeight=1-WindowInfo.DEFAULT_WEIGHT;
+          newWeight=1- WindowInfoImpl.DEFAULT_WEIGHT;
         }
         final ToolWindowAnchor anchor=myInfo.getAnchor();
         setComponent(myComponent, anchor, newWeight);
@@ -322,10 +322,10 @@ final class ToolWindowsPane extends JPanel{
 
   private final class AddSlidingComponentCmd extends FinalizableCommand{
     private final Component myComponent;
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    public AddSlidingComponentCmd(final Component component, final WindowInfo info, final boolean dirtyMode, final Runnable finishCallBack){
+    public AddSlidingComponentCmd(final Component component, final WindowInfoImpl info, final boolean dirtyMode, final Runnable finishCallBack){
       super(finishCallBack);
       myComponent=component;
       myInfo=info;
@@ -389,10 +389,10 @@ final class ToolWindowsPane extends JPanel{
 
   private final class AddToolStripeButtonCmd extends FinalizableCommand{
     private final StripeButton myButton;
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
     private final Comparator myComparator;
 
-    public AddToolStripeButtonCmd(final StripeButton button,final WindowInfo info,final Comparator comparator,final Runnable finishCallBack){
+    public AddToolStripeButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator comparator,final Runnable finishCallBack){
       super(finishCallBack);
       myButton=button;
       myInfo=info;
@@ -423,9 +423,9 @@ final class ToolWindowsPane extends JPanel{
 
   private final class RemoveToolStripeButtonCmd extends FinalizableCommand{
     private final StripeButton myButton;
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
 
-    public RemoveToolStripeButtonCmd(final StripeButton button,final WindowInfo info,final Runnable finishCallBack){
+    public RemoveToolStripeButtonCmd(final StripeButton button,final WindowInfoImpl info,final Runnable finishCallBack){
       super(finishCallBack);
       myButton=button;
       myInfo=info;
@@ -454,10 +454,10 @@ final class ToolWindowsPane extends JPanel{
   }
 
   private final class RemoveDockedComponentCmd extends FinalizableCommand{
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    public RemoveDockedComponentCmd(final WindowInfo info, final boolean dirtyMode, final Runnable finishCallBack){
+    public RemoveDockedComponentCmd(final WindowInfoImpl info, final boolean dirtyMode, final Runnable finishCallBack){
       super(finishCallBack);
       myInfo=info;
       myDirtyMode=dirtyMode;
@@ -478,12 +478,12 @@ final class ToolWindowsPane extends JPanel{
 
   private final class RemoveSlidingComponentCmd extends FinalizableCommand{
     private final Component myComponent;
-    private final WindowInfo myInfo;
+    private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
     public RemoveSlidingComponentCmd(
       final Component component,
-      final WindowInfo info,
+      final WindowInfoImpl info,
       final boolean dirtyMode,
       final Runnable finishCallBack
     ){
@@ -660,7 +660,7 @@ final class ToolWindowsPane extends JPanel{
           if (!(component instanceof InternalDecorator)) {
             continue;
           }
-          final WindowInfo info=myDecorator2Info.get(component);
+          final WindowInfoImpl info=myDecorator2Info.get(component);
           // In normal situation info is not null. But sometimes Swing sends resize
           // event to removed component. See SCR #19566.
           if(info == null){
@@ -684,7 +684,7 @@ final class ToolWindowsPane extends JPanel{
 
     public final void setBoundsInPaletteLayer(final Component component,final ToolWindowAnchor anchor,float weight){
       if(weight<.0f){
-        weight=WindowInfo.DEFAULT_WEIGHT;
+        weight= WindowInfoImpl.DEFAULT_WEIGHT;
       }else if(weight>1.0f){
         weight=1.0f;
       }

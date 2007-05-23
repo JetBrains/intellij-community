@@ -75,7 +75,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     return myMnemonic;
   }
 
-  WindowInfo getWindowInfo() {
+  WindowInfoImpl getWindowInfo() {
     return myDecorator.getWindowInfo();
   }
 
@@ -197,7 +197,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     myPressedWhenSelected = false;
   }
 
-  public void apply(final WindowInfo info) {
+  public void apply(final WindowInfoImpl info) {
     setSelected(info.isVisible() || info.isActive());
   }
 

@@ -11,12 +11,12 @@ import com.intellij.openapi.wm.impl.*;
  * Command uses freezed copy of passed <code>info</code> object.
  */
 public final class ApplyWindowInfoCmd extends FinalizableCommand{
-  private final WindowInfo myInfo;
+  private final WindowInfoImpl myInfo;
   private final StripeButton myButton;
   private final InternalDecorator myDecorator;
 
   public ApplyWindowInfoCmd(
-    final WindowInfo info,
+    final WindowInfoImpl info,
     final StripeButton button,
     final InternalDecorator decorator,
     final Runnable finishCallBack

@@ -32,7 +32,7 @@ public final class FloatingDecorator extends JDialog{
 
   private final InternalDecorator myInternalDecorator;
   private final MyUISettingsListener myUISettingsListener;
-  private WindowInfo myInfo;
+  private WindowInfoImpl myInfo;
 
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
@@ -41,7 +41,7 @@ public final class FloatingDecorator extends JDialog{
   private float myStartRatio, myEndRatio; // start and end alpha ratio for transparency animation
 
 
-  FloatingDecorator(final IdeFrameImpl owner,final WindowInfo info,final InternalDecorator internalDecorator){
+  FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
     new MnemonicHelper().register(getContentPane());
     myInternalDecorator=internalDecorator;
@@ -110,7 +110,7 @@ public final class FloatingDecorator extends JDialog{
     super.dispose();
   }
 
-  final void apply(final WindowInfo info){
+  final void apply(final WindowInfoImpl info){
     LOG.assertTrue(info.isFloating());
     myInfo=info;
     // Set alpha mode

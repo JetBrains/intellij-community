@@ -241,7 +241,7 @@ final class Stripe extends JPanel{
   public void finishDrop() {
     if (myLastLayoutData == null) return;
 
-    final WindowInfo info = myDragButton.getDecorator().getWindowInfo();
+    final WindowInfoImpl info = myDragButton.getDecorator().getWindowInfo();
     myFinishingDrop = true;
     myManager.setToolWindowAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition);
     myManager.invokeLater(new Runnable() {

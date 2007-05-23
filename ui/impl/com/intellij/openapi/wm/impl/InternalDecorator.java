@@ -19,18 +19,15 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
@@ -80,7 +77,7 @@ public final class InternalDecorator extends JPanel {
   private static final Icon ourHideSideRightInactive = IconLoader.getIcon("/general/hideSideRightInactive.png");
 
   private Project myProject;
-  private WindowInfo myInfo;
+  private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
   private final TitlePanel myTitlePanel;
@@ -114,7 +111,7 @@ public final class InternalDecorator extends JPanel {
   private MyTitleButton myHideSideButton;
   private JComponent myTitleTabs;
 
-  InternalDecorator(final Project project, final WindowInfo info, final ToolWindowImpl toolWindow) {
+  InternalDecorator(final Project project, final WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
     myProject = project;
     myToolWindow = toolWindow;
@@ -159,7 +156,7 @@ public final class InternalDecorator extends JPanel {
   /**
    * Applies specified decoration.
    */
-  public final void apply(final WindowInfo info) {
+  public final void apply(final WindowInfoImpl info) {
     if (Comparing.equal(myInfo, info) || myProject == null || myProject.isDisposed()) {
       return;
     }
@@ -465,7 +462,7 @@ public final class InternalDecorator extends JPanel {
   /**
    * @return last window info applied to the decorator.
    */
-  final WindowInfo getWindowInfo() {
+  final WindowInfoImpl getWindowInfo() {
     return myInfo;
   }
 

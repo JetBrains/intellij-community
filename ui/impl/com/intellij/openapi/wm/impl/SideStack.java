@@ -22,15 +22,15 @@ final class SideStack {
   /**
    * Pushes <code>info</code> into the stack. The method stores cloned copy of original <code>info</code>.
    */
-  void push(final WindowInfo info) {
+  void push(final WindowInfoImpl info) {
     LOG.assertTrue(info.isDocked());
     LOG.assertTrue(!info.isAutoHide());
     myStack.push(info.copy());
   }
 
-  WindowInfo pop(final ToolWindowAnchor anchor) {
+  WindowInfoImpl pop(final ToolWindowAnchor anchor) {
     for (int i = myStack.size() - 1; true; i--) {
-      final WindowInfo info = (WindowInfo)myStack.get(i);
+      final WindowInfoImpl info = (WindowInfoImpl)myStack.get(i);
       if (anchor == info.getAnchor()) {
         myStack.remove(i);
         return info;
@@ -44,7 +44,7 @@ final class SideStack {
    */
   boolean isEmpty(final ToolWindowAnchor anchor) {
     for (int i = myStack.size() - 1; i > -1; i--) {
-      final WindowInfo info = (WindowInfo)myStack.get(i);
+      final WindowInfoImpl info = (WindowInfoImpl)myStack.get(i);
       if (anchor == info.getAnchor()) {
         return false;
       }
@@ -57,7 +57,7 @@ final class SideStack {
    */
   void remove(final String id) {
     for (Iterator i = myStack.iterator(); i.hasNext();) {
-      final WindowInfo info = (WindowInfo)i.next();
+      final WindowInfoImpl info = (WindowInfoImpl)i.next();
       if (id.equals(info.getId())) {
         i.remove();
       }
