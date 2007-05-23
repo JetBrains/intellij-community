@@ -1,0 +1,3 @@
+package samePackage
+
+class A {}
