@@ -81,8 +81,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     private void onDeleted(final VirtualFile file) {
       if (file.isDirectory()) {
-        for (VirtualFile virtualFile : file.getChildren()) {
-          onDeleted(virtualFile);
+        for (VirtualFile problemFile : myProblems.keySet()) {
+          if (VfsUtil.isAncestor(file, problemFile, false)) {
+            myProblems.remove(problemFile);
+            fireProblemListeners.problemsDisappeared(problemFile);
+          }
         }
       }
       else if (myProblems.remove(file) != null) {
