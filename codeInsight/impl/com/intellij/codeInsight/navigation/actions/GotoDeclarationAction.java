@@ -153,8 +153,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       final ArrayList<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
 
       for(ResolveResult r:results) {
-        if (EditSourceUtil.canNavigate(r.getElement())) {
-          navigatableResults.add(r.getElement());
+        PsiElement element = r.getElement();
+        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
+          navigatableResults.add(element);
         }
       }
 
