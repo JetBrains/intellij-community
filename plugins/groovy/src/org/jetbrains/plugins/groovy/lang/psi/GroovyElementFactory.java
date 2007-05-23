@@ -50,5 +50,5 @@ public abstract class GroovyElementFactory {
 
   public abstract GroovyPsiElement createTopElementFromText(String text);
 
-  public abstract PsiElement createClosureFromText(String s);
+  public abstract GroovyPsiElement createClosureFromText(String s);
 }

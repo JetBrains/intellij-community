@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-abstract public class GroovySurrounderByStatement implements Surrounder {
+abstract public class GroovySingleElementSurrounder implements Surrounder {
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!isApplicable(element)) {
@@ -27,17 +27,17 @@ abstract public class GroovySurrounderByStatement implements Surrounder {
   }
 
   @Nullable
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException{
-    if (elements.length == 0) return null;
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
+    if (elements.length != 1) return null;
 
-    GroovyPsiElement expression = null;
-    for (PsiElement element : elements) {
-      expression = GroovyElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(element.getNode()));
+    PsiElement element = elements[0];
 
-      elements[0].getParent().replace(expression);
-    }
+    GroovyPsiElement expression = GroovyElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(element.getNode()));
 
-    assert expression != null;
+    PsiElement psiElement = element.getParent();
+    assert psiElement != null;
+    psiElement.getNode().replaceChild(element.getNode(), expression.getNode());
+
     return getSurroundSelectionRange(expression);
   }
 

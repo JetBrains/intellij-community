@@ -71,8 +71,6 @@ public class GroovySurrounderByParametrizedClosure implements Surrounder {
 
     assert closure != null;
 
-//    elementsParent.getNode().addChild(closure.getNode());
-
     return new TextRange(closure.getTextRange().getEndOffset(), closure.getTextRange().getEndOffset());
   }
 }

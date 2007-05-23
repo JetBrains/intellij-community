@@ -7,8 +7,8 @@ import com.intellij.lang.ASTNode;
  * Date: 22.05.2007
  */
 public class GroovyWithTryFinallySurrounder extends GroovyWithTrySurrounder {
-  protected String getExpressionTemplateAsString(ASTNode node) {
-    return super.getExpressionTemplateAsString(node) + "finally { \n }";
+  protected String getExpressionTemplateAsString(ASTNode[] nodes) {
+    return super.getExpressionTemplateAsString(nodes) + "finally { \n }";
   }
 
   public String getTemplateDescription() {

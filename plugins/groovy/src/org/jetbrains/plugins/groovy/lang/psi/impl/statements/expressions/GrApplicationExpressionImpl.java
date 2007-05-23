@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -45,5 +46,9 @@ public class GrApplicationExpressionImpl extends GroovyPsiElementImpl implements
 
   public GrCommandArgumentList getArgumentList() {
     return findChildByClass(GrCommandArgumentList.class);
+  }
+
+  public PsiType getType() {
+    return null; //todo: implement
   }
 }

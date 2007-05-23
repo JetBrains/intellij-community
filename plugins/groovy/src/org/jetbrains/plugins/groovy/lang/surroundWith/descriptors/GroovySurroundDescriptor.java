@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImp
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryFinallySurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryCatchFinallySurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -38,37 +37,6 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
   @Nullable
   private GrStatement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
 
-//    PsiElement element1 = file.findElementAt(startOffset);
-//    PsiElement element2 = file.findElementAt(endOffset - 1);
-//
-//    int endOffsetLocal = endOffset;
-//    int startOffsetLocal = startOffset;
-//
-//    if (element1 instanceof PsiWhiteSpace) {
-//      startOffsetLocal = element1.getTextRange().getEndOffset();
-//    }
-//
-//    if (element2 instanceof PsiWhiteSpace) {
-//      endOffsetLocal = element2.getTextRange().getStartOffset();
-//    }
-//
-//    assert element2 != null;
-//    if (";".equals(element2.getText())) endOffsetLocal = endOffsetLocal - 1;
-//
-//
-//    List<GrStatement> statements = new ArrayList<GrStatement>();
-//    GrStatement statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
-//
-//    statements.add(statement);
-//    while (statement != null) {
-//      startOffsetLocal = statement.getTextRange().getEndOffset();
-//      statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
-//
-//      if (statement == null) break;
-//      statements.add(statement);
-//    }
-//
-//    if (startOffsetLocal != endOffsetLocal) return null;
     GrStatement statement;
     int endOffsetLocal = endOffset;
     int startOffsetLocal = startOffset;
@@ -112,7 +80,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
       new GroovyWithTryCatchFinallySurrounder(),
 
       new GroovySurrounderByParametrizedClosure(),
-      new GroovySurrounderByClosure()
+//      new GroovySurrounderByOpenBlock()
   };
 
   @NotNull

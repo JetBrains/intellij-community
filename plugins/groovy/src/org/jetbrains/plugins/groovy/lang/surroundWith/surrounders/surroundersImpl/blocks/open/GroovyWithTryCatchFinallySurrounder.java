@@ -12,7 +12,7 @@ public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurro
     return super.getTemplateDescription() + " / finally";
   }
 
-  protected String getExpressionTemplateAsString(ASTNode node) {
-    return super.getExpressionTemplateAsString(node) + "\n finally { \n }";
+  protected String getExpressionTemplateAsString(ASTNode[] nodes) {
+    return super.getExpressionTemplateAsString(nodes) + "\n finally { \n }";
   }
 }

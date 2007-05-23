@@ -54,9 +54,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GroovyPsiElement) dummyFile.getFirstChild();
   }
 
-  public PsiElement createClosureFromText(String s) {
+  public GroovyPsiElement createClosureFromText(String s) {
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
-    return psiFile.getFirstChild();
+    return (GroovyPsiElement) psiFile.getFirstChild();
   }
 
   private PsiFile createGroovyFile(String idText) {

@@ -15,7 +15,7 @@ public class GroovyWithBracketsSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    return new TextRange(element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset());
+    return new TextRange(element.getTextRange().getEndOffset(), element.getTextRange().getEndOffset());
   }
 
   public String getTemplateDescription() {
