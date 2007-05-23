@@ -63,7 +63,7 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
   private static final String GROOVY_LIB = "lib";
   private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
-  private static final String antlrLibName = "antlr-2.7.5.jar";
+  private static final String antlrLibName = "antlr.jar";
 
   @Nullable
   public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {

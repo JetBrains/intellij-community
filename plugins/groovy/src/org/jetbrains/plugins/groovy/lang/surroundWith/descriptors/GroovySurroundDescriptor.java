@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.descriptors;
 
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -15,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImp
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryCatchFinallySurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -35,37 +38,69 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
   @Nullable
   private GrStatement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
 
-    PsiElement element1 = file.findElementAt(startOffset);
-    PsiElement element2 = file.findElementAt(endOffset - 1);
-
+//    PsiElement element1 = file.findElementAt(startOffset);
+//    PsiElement element2 = file.findElementAt(endOffset - 1);
+//
+//    int endOffsetLocal = endOffset;
+//    int startOffsetLocal = startOffset;
+//
+//    if (element1 instanceof PsiWhiteSpace) {
+//      startOffsetLocal = element1.getTextRange().getEndOffset();
+//    }
+//
+//    if (element2 instanceof PsiWhiteSpace) {
+//      endOffsetLocal = element2.getTextRange().getStartOffset();
+//    }
+//
+//    assert element2 != null;
+//    if (";".equals(element2.getText())) endOffsetLocal = endOffsetLocal - 1;
+//
+//
+//    List<GrStatement> statements = new ArrayList<GrStatement>();
+//    GrStatement statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
+//
+//    statements.add(statement);
+//    while (statement != null) {
+//      startOffsetLocal = statement.getTextRange().getEndOffset();
+//      statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
+//
+//      if (statement == null) break;
+//      statements.add(statement);
+//    }
+//
+//    if (startOffsetLocal != endOffsetLocal) return null;
+    GrStatement statement;
     int endOffsetLocal = endOffset;
     int startOffsetLocal = startOffset;
 
-    if (element1 instanceof PsiWhiteSpace) {
-      startOffsetLocal = element1.getTextRange().getEndOffset();
-    }
-
-    if (element2 instanceof PsiWhiteSpace) {
-      endOffsetLocal = element2.getTextRange().getStartOffset();
-    }
-
-    assert element2 != null;
-    if (";".equals(element2.getText())) endOffsetLocal = endOffsetLocal - 1;
-
-
     List<GrStatement> statements = new ArrayList<GrStatement>();
-    GrStatement statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
+    do {
+      PsiElement element1 = file.findElementAt(startOffsetLocal);
+      PsiElement element2 = file.findElementAt(endOffsetLocal - 1);
 
-    statements.add(statement);
-    while (statement != null) {
-      startOffsetLocal = statement.getTextRange().getEndOffset();
+      assert element1 != null;
+      ASTNode node1 = element1.getNode();
+      assert node1 != null;
+      if (element1 instanceof PsiWhiteSpace || TokenSets.WHITE_SPACE_TOKEN_SET.contains(node1.getElementType()) || GroovyTokenTypes.mNLS.equals(node1.getElementType())) {
+        startOffsetLocal = element1.getTextRange().getEndOffset();
+      }
+
+      assert element2 != null;
+      ASTNode node2 = element2.getNode();
+      assert node2 != null;
+      if (element2 instanceof PsiWhiteSpace || TokenSets.WHITE_SPACE_TOKEN_SET.contains(node2.getElementType()) || GroovyTokenTypes.mNLS.equals(node2.getElementType())) {
+        endOffsetLocal = element2.getTextRange().getStartOffset();
+      }
+
+      if (";".equals(element2.getText())) endOffsetLocal = endOffsetLocal - 1;
+
       statement = PsiTreeUtil.findElementOfClassAtRange(file, startOffsetLocal, endOffsetLocal, GrStatement.class);
-      
+
       if (statement == null) break;
       statements.add(statement);
-    }
 
-    if (startOffsetLocal != endOffsetLocal) return null;
+      startOffsetLocal = statement.getTextRange().getEndOffset();
+    } while (true);
 
     return statements.toArray(new GrStatement[0]);
   }

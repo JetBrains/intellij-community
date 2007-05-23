@@ -47,7 +47,7 @@ public class GroovySurrounderByParametrizedClosure implements Surrounder {
     StringBuffer elementsBuffer = new StringBuffer();
 
     elementsBuffer.append("{ \n");
-    elementsBuffer.append("it -> ");
+    elementsBuffer.append("it -> \n");
     for (PsiElement element : elements) {
       elementsBuffer.append(element.getText());
       elementsBuffer.append("\n");
