@@ -54,7 +54,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.rename(null, "ff.java");
     f.setBinaryContent(new byte[]{2}, -1, 456);
 
-    revertCauseChangeOfRevision(f, 1); // rename
+    revertChange(f, 1); // rename
 
     assertEquals("f.java", f.getName());
     assertEquals(1, f.contentsToByteArray()[0]);
@@ -67,7 +67,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.setBinaryContent(new byte[]{1}, -1, 123);
     f.move(null, dir);
 
-    revertCauseChangeOfRevision(f, 1); // content change
+    revertChange(f, 1); // content change
 
     assertEquals(root, f.getParent());
     assertEquals(0, f.contentsToByteArray().length);
@@ -82,7 +82,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.setBinaryContent(new byte[]{1}, -1, 123);
     dir1.move(null, dir2);
 
-    revertCauseChangeOfRevision(f, 1); // content change
+    revertChange(f, 1); // content change
 
     assertEquals(0, f.contentsToByteArray().length);
     assertEquals(root, dir1.getParent());
@@ -98,7 +98,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
     dir1.move(null, dir2);
 
-    revertCauseChangeOfRevision(f, 1); // content change
+    revertChange(f, 1); // content change
 
     assertEquals(0, f.contentsToByteArray().length);
     assertEquals(root, dir1.getParent());
@@ -124,7 +124,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.delete(null);
     dir1.move(null, dir2);
 
-    revertCauseChangeOfRevision(dir1, 1); // deletion
+    revertChange(dir1, 1); // deletion
 
     assertEquals(root, dir1.getParent());
     assertNotNull(dir1.findChild("f.java"));
@@ -155,7 +155,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.move(null, dir1);
     dir2.delete(null);
 
-    revertCauseChangeOfRevision(dir1, 1); // movement
+    revertChange(dir1, 1); // movement
     // should revert dir deletion and file movement
 
     dir2 = root.findChild("dir2");
@@ -172,7 +172,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     dir1.move(null, dir2);
     f.move(null, dir2);
 
-    revertCauseChangeOfRevision(dir1, 1); // movement
+    revertChange(dir1, 1); // movement
 
     assertEquals(root, dir1.getParent());
     assertEquals(dir1, f.getParent());
@@ -188,7 +188,7 @@ public class ChangeReverterTest extends IntegrationTestCase {
     f.move(null, dir2);
     f.move(null, dir3);
 
-    revertCauseChangeOfRevision(dir1, 1); // movement
+    revertChange(dir1, 1); // movement
 
     assertEquals(root, dir1.getParent());
     assertEquals(dir1, f.getParent());
@@ -244,6 +244,17 @@ public class ChangeReverterTest extends IntegrationTestCase {
     assertEquals(1, f.contentsToByteArray()[0]);
   }
 
+  public void testRevertLabelChange() throws IOException {
+    VirtualFile f = root.createChildData(null, "f.java");
+    getVcs().putLabel("abc");
+    f.rename(null, "ff.java");
+
+    revertChange(f, 1);
+
+    assertEquals(f, root.findChild("ff.java"));
+    assertNull(root.findChild("f.java"));
+  }
+
   public void testChangeSetNameAfterRevert() throws IOException {
     getVcs().beginChangeSet();
     VirtualFile f = root.createChildData(null, "f.java");
@@ -268,10 +279,10 @@ public class ChangeReverterTest extends IntegrationTestCase {
   }
 
   private void revertLastChange(VirtualFile f) throws IOException {
-    revertCauseChangeOfRevision(f, 0);
+    revertChange(f, 0);
   }
 
-  private void revertCauseChangeOfRevision(VirtualFile f, int index) throws IOException {
+  private void revertChange(VirtualFile f, int index) throws IOException {
     createReverter(f, index).revert();
   }
 

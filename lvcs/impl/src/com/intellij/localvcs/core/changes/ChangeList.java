@@ -48,7 +48,7 @@ public class ChangeList {
 
   public boolean isInTheChain(Change before, Change after) {
     List<Change> cc = new ArrayList<Change>(before.getChanges());
-    for (Change c : getPlainChangesAfter(before)) {
+    for (Change c : Reversed.list(getPlainChangesAfter(before))) {
       c.collectChangesInTheChain(cc);
     }
     return after.isInTheChain(cc);

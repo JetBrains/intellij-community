@@ -64,6 +64,7 @@ public abstract class StructuralChange extends Change {
   @Override
   public boolean isInTheChain(List<Change> cc) {
     for (Change c : cc) {
+      if (!(c instanceof StructuralChange)) continue;
       if (affects(((StructuralChange)c).getAffectedIdPaths())) {
         return true;
       }

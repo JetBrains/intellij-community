@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.changes.ChangeList;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 
-public class LabeledRevision extends RevisionBeforeChange {
+public class LabeledRevision extends RevisionAfterChange {
   public LabeledRevision(Entry e, RootEntry r, ChangeList cl, Change c) {
     super(e, r, cl, c);
   }
@@ -13,6 +13,11 @@ public class LabeledRevision extends RevisionBeforeChange {
   @Override
   public String getName() {
     return myChange.getName();
+  }
+
+  @Override
+  public String getCauseChangeName() {
+    return null;
   }
 
   @Override
