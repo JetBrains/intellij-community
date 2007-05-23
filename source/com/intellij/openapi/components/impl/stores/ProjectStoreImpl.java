@@ -544,7 +544,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private Module[] getPersistentModules() {
-    return ((ModuleManagerImpl)ModuleManager.getInstance(myProject)).getPersistentModules();
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    if (moduleManager instanceof ModuleManagerImpl) {
+      return ((ModuleManagerImpl)moduleManager).getPersistentModules();
+    }
+    else {
+      return moduleManager.getModules();
+    }
   }
 
   private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
