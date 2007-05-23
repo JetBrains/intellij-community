@@ -12,6 +12,7 @@ import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;

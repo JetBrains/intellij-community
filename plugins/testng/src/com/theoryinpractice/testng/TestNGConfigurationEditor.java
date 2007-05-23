@@ -6,6 +6,7 @@
  */
 package com.theoryinpractice.testng;
 
+import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
@@ -19,7 +20,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.table.TableView;
-import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGConfigurationModel;
+import com.theoryinpractice.testng.model.TestNGParametersTableModel;
+import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

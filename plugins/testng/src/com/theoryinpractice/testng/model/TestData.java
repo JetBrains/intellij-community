@@ -6,6 +6,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
