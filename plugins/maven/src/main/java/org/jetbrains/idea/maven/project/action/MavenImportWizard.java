@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.projectImport.ProjectImportWizard;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
 import org.jetbrains.idea.maven.project.MavenImporterPreferences;
 import org.jetbrains.idea.maven.project.MavenImporterPreferencesComponent;
@@ -15,13 +16,13 @@ import java.util.Collection;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportWizard extends ModuleImportWizard {
+public class MavenImportWizard extends ProjectImportWizard {
 
   private MavenImportProcessor myImportProcessor;
 
   private MavenImporterPreferences preferencesForEditing;
 
-  public String getDescription() {
+  public String getName() {
     return ProjectBundle.message("maven.name");
   }
 
@@ -46,7 +47,7 @@ public class MavenImportWizard extends ModuleImportWizard {
     };
   }
 
-  public void commitImported(final Project project) {
+  public void commitImport(final Project project) {
     myImportProcessor.commitImport(project);
     MavenImporterPreferencesComponent.getInstance(project).loadState(preferencesForEditing);
   }

@@ -10,6 +10,7 @@
   <idea-version since-build="6800"/>
   <extensions xmlns="com.intellij">
     <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
+    <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
   </extensions>
   <project-components>
     <component>
@@ -118,11 +119,5 @@
             icon="/actions/sync.png">
       <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
     </action>
-    <action id="Maven.Import"
-            class="org.jetbrains.idea.maven.project.action.ImportMavenProjectsAction" text="Import Maven Projects"
-            description="Import Maven Projects">
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ImportFromEclipse"/>
-    </action>
-
   </actions>
 </idea-plugin>
