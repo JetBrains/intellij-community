@@ -29,7 +29,7 @@ import junit.framework.Test;
 /**
  * @author ilyas
  */
-public class ComlpetionActionTest extends ActionTestCase {
+public class CompletionActionTest extends ActionTestCase {
 
   @NonNls
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/completion/data/";
@@ -39,7 +39,7 @@ public class ComlpetionActionTest extends ActionTestCase {
   protected String newDocumentText;
   protected PsiFile myFile;
 
-  public ComlpetionActionTest() {
+  public CompletionActionTest() {
     super(System.getProperty("path") != null ?
         System.getProperty("path") :
         DATA_PATH
@@ -159,6 +159,6 @@ public class ComlpetionActionTest extends ActionTestCase {
 
 
   public static Test suite() {
-    return new ComlpetionActionTest();
+    return new CompletionActionTest();
   }
 }
