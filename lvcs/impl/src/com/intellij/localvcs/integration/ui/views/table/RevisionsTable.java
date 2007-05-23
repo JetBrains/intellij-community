@@ -32,9 +32,14 @@ public class RevisionsTable extends Table {
     addSelectionListener(l);
   }
 
-  private void addSelectionListener(SelectionListener l) {
+  private void addSelectionListener(SelectionListener listener) {
     ListSelectionModel sm = getSelectionModel();
-    sm.addListSelectionListener(new MyListSelectionListener(l));
+    ListSelectionModel csm = getColumnModel().getSelectionModel();
+
+    MyListSelectionListener l = new MyListSelectionListener(listener);
+    sm.addListSelectionListener(l);
+    csm.addListSelectionListener(l);
+
   }
 
   public void setUI(TableUI ui) {
@@ -94,10 +99,10 @@ public class RevisionsTable extends Table {
   }
 
   private class MyListSelectionListener implements ListSelectionListener {
-    private int myLastSelectedRow1 = 0;
-    private int myLastSelectedRow2 = 0;
-    private int myLastSelectedColumn1 = 1;
-    private int myLastSelectedColumn2 = 1;
+    private int mySelectedRow1 = 0;
+    private int mySelectedRow2 = 0;
+    private int mySelectedColumn1 = 1;
+    private int mySelectedColumn2 = 1;
     private SelectionListener mySelectionListener;
 
     public MyListSelectionListener(SelectionListener l) {
@@ -109,22 +114,22 @@ public class RevisionsTable extends Table {
       ListSelectionModel csm = getColumnModel().getSelectionModel();
 
       if (!isValidSelection()) {
-        sm.setSelectionInterval(myLastSelectedRow1, myLastSelectedRow2);
-        csm.setSelectionInterval(myLastSelectedColumn1, myLastSelectedColumn2);
+        sm.setSelectionInterval(mySelectedRow1, mySelectedRow2);
+        csm.setSelectionInterval(mySelectedColumn1, mySelectedColumn2);
       }
       else {
         if (e.getValueIsAdjusting()) return;
 
-        myLastSelectedRow1 = sm.getMinSelectionIndex();
-        myLastSelectedRow2 = sm.getMaxSelectionIndex();
-        myLastSelectedColumn1 = csm.getMinSelectionIndex();
-        myLastSelectedColumn2 = csm.getMaxSelectionIndex();
+        mySelectedRow1 = sm.getMinSelectionIndex();
+        mySelectedRow2 = sm.getMaxSelectionIndex();
+        mySelectedColumn1 = csm.getMinSelectionIndex();
+        mySelectedColumn2 = csm.getMaxSelectionIndex();
 
-        if (myLastSelectedColumn1 == 2) {
-          mySelectionListener.changesSelected(myLastSelectedRow1, myLastSelectedRow2);
+        if (mySelectedColumn1 == 2) {
+          mySelectionListener.changesSelected(mySelectedRow1, mySelectedRow2);
         }
         else {
-          mySelectionListener.revisionsSelected(myLastSelectedRow1, myLastSelectedRow2);
+          mySelectionListener.revisionsSelected(mySelectedRow1, mySelectedRow2);
         }
       }
     }

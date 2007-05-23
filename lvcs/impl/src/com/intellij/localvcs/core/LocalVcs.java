@@ -246,7 +246,7 @@ public class LocalVcs implements ILocalVcs {
 
     List<Change> cc = myChangeList.getChanges();
 
-    for (int i = 0; i < cc.size() && result.size() < 20; i++) {
+    for (int i = 0; i < cc.size() && result.size() < 60; i++) {
       Change c = cc.get(i);
       if (c.getName() == null) continue;
 
