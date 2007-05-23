@@ -498,4 +498,17 @@ public class CompletionUtil {
     }
     return isExcluded;
   }
+
+  public static boolean isCompletionOfAnnotationMethod(final PsiElement method, final PsiElement place) {
+    return method instanceof PsiAnnotationMethod &&
+      (place instanceof PsiIdentifier &&
+        (place.getParent() instanceof PsiNameValuePair ||
+         place.getParent().getParent() instanceof PsiNameValuePair ||
+         // @AAA(|A.class)
+         ( place.getParent().getParent().getParent() instanceof PsiClassObjectAccessExpression &&
+           place.getParent().getParent().getParent().getParent() instanceof PsiNameValuePair
+         )
+        )
+     );
+  }
 }
