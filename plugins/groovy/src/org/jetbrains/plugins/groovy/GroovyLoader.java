@@ -74,7 +74,7 @@ public class GroovyLoader implements ApplicationComponent {
     loadGroovy();
   }
 
-  public static void loadGroovy() {
+  private static void loadGroovy() {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run() {

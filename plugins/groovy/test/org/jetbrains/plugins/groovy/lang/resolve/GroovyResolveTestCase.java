@@ -25,7 +25,6 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    GroovyLoader.loadGroovy();
 
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
