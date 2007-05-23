@@ -3,9 +3,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -31,11 +28,6 @@ class ProjectStateStorageManager extends StateStorageManager {
 
   @Override
   public synchronized void save() throws StateStorage.StateStorageException, IOException {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      ((ModuleImpl)module).getStateStore().save();
-    }
-
     final StateStorage defaultStateStorage = getFileStateStorage(ProjectStoreImpl.DEFAULT_STATE_STORAGE);
     final Element element = ((XmlElementStorage)defaultStateStorage).getRootElement();
 

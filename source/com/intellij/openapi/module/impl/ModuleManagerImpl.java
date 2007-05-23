@@ -71,6 +71,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
+  @NonNls public static final String TRANSIENT_OPTION = "transient";
   private long myModificationCount;
   private MessageBusConnection myConnection;
   private final MessageBus myMessageBus;
@@ -351,7 +352,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private Collection<Module> getModulesToWrite() {
     Collection<Module> actual = new ArrayList<Module>();
-    actual.addAll(myModuleModel.myPathToModule.values());
+    actual.addAll(Arrays.asList(getPersistentModules()));
 
     for (String cancelledPath : myModuleModel.myPathToCancelledModule.keySet()) {
       if (!myModuleModel.myPathToModule.containsKey(cancelledPath)) {
@@ -439,6 +440,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
     return myModuleModel.getModules();
+  }
+
+  public Module[] getPersistentModules() {
+    final Collection<Module> persistentModules = new ArrayList<Module>();
+    for (Module module : getModules()) {
+      if(module.getOptionValue(TRANSIENT_OPTION)==null){
+        persistentModules.add(module);
+      }
+    }
+    return persistentModules.toArray(new Module[persistentModules.size()]);
   }
 
   private Module[] myCachedSortedModules = null;

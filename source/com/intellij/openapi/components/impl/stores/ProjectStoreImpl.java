@@ -13,6 +13,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -207,6 +208,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
       catch (StateStorage.StateStorageException e) {
       }
+    }
+
+    for (Module module : getPersistentModules()) {
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).saveStorageManager();
     }
 
     super.saveStorageManager();
@@ -478,9 +483,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final List<VirtualFile> result = super.getAllStorageFiles(includingSubStructures);
 
     if (includingSubStructures) {
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      final Module[] modules = moduleManager.getModules();
-      for (Module module : modules) {
+      for (Module module : getPersistentModules()) {
         result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFiles(includingSubStructures));
       }
     }
@@ -493,9 +496,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final List<VirtualFile> result = super.getAllStorageFilesToSave(includingSubStructures);
 
     if (includingSubStructures) {
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      final Module[] modules = moduleManager.getModules();
-      for (Module module : modules) {
+      for (Module module : getPersistentModules()) {
         result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFilesToSave(includingSubStructures));
       }
     }
@@ -535,13 +536,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   public void commit() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    final Module[] modules = moduleManager.getModules();
-    for (Module module : modules) {
+    for (Module module : getPersistentModules()) {
       ((ModuleImpl)module).getStateStore().commit();
     }
 
     super.commit();
+  }
+
+  private Module[] getPersistentModules() {
+    return ((ModuleManagerImpl)ModuleManager.getInstance(myProject)).getPersistentModules();
   }
 
   private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
