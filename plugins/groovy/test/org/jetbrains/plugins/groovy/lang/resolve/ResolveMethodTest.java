@@ -13,10 +13,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.ResolveTestCase;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -81,5 +84,23 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(2, ref.multiResolve(false).length);
   }
 
+  public void testDefaultMethod1() throws Exception {
+    PsiReference ref = configureByFile("defaultMethod1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+  }
 
+  public void testDefaultMethod2() throws Exception {
+    PsiReference ref = configureByFile("defaultMethod2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+  }
+
+  public void testScriptMethod() throws Exception {
+   PsiReference ref = configureByFile("scriptMethod/A.groovy");
+   PsiElement resolved = ref.resolve();
+   assertTrue(resolved instanceof PsiMethod);
+   assertEquals("groovy.lang.Script", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+ }
 }
