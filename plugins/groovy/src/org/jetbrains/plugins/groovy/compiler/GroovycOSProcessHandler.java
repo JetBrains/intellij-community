@@ -21,13 +21,9 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.ObjectInput;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 

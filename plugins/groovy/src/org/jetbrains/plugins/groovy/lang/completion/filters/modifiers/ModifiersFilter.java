@@ -29,8 +29,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
-        GroovyCompletionUtil.asTypedMethod(context) ||
-        GroovyCompletionUtil.asVariableInBlock(context)) {
+        GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
     }
     if (context.getParent() instanceof GrExpression &&
