@@ -171,7 +171,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
     }
     final T mergedModel = getModelMerger().mergeModels(getClazz(), list);
     final M firstModel = models.get(0);
-    return createCombinedModel(configFiles, mergedModel, firstModel);
+    return createCombinedModel(configFiles, mergedModel, firstModel, module);
   }
 
   /**
@@ -181,9 +181,10 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
    * @param configFiles file set including all files for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
    * @param mergedModel merged model for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
    * @param firstModel the first model returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
+   * @param module
    * @return combined model.
    */
-  protected abstract M createCombinedModel(Set<XmlFile> configFiles, T mergedModel, M firstModel);
+  protected abstract M createCombinedModel(Set<XmlFile> configFiles, T mergedModel, M firstModel, final Module module);
 
   @NotNull
   public Set<XmlFile> getConfigFiles(@Nullable C context) {
