@@ -163,7 +163,7 @@
     </javac>
 
     <copy toDir="${test.dest}/testdata">
-      <fileset dir="${test.dir}/testdata"/>
+      <fileset dir="${project.dir}/testdata"/>
      </copy>
 
   </target>
