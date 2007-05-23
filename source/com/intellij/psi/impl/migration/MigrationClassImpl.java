@@ -231,7 +231,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return myName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

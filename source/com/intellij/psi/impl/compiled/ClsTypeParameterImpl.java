@@ -165,7 +165,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return myName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     myName = name;
     return this;
   }

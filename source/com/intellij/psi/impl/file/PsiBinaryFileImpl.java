@@ -52,7 +52,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return !isCopy() ? getVirtualFile().getName() : myName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
     if (isCopy()){

@@ -4,6 +4,7 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -33,7 +34,7 @@ public class FindUsagesOptions implements Cloneable {
   public boolean isThrowUsages = false;
   public ThrowSearchUtil.Root myThrowRoot = null;
 
-  public FindUsagesOptions(Project project) {
+  public FindUsagesOptions(@NotNull Project project) {
     searchScope = project.getProjectScope();
   }
 

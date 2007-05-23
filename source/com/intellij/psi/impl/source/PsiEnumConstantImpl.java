@@ -183,7 +183,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     myCachedInitializingClass = null;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
@@ -247,7 +247,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
       return getElement();
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       throw new IncorrectOperationException("Invalid operation");
     }
 

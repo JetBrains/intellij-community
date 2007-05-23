@@ -52,7 +52,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
     return getNameElement().getText().substring(1);
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameElement(), name);
     return this;
   }

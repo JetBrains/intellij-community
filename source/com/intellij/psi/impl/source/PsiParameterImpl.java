@@ -58,7 +58,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     return myCachedName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }

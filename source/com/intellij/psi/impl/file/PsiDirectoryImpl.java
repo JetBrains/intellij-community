@@ -93,7 +93,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
     /*

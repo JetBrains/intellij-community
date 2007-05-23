@@ -237,7 +237,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 
-  public PsiElement setName(final String nameText) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = getProject().getModel();
@@ -318,7 +318,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     // TODO[ik]: namespace support
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       if (element instanceof PsiMetaBaseOwner){
         final PsiMetaBaseOwner owner = (PsiMetaBaseOwner)element;
         if (owner.getMetaData() instanceof XmlElementDescriptor){

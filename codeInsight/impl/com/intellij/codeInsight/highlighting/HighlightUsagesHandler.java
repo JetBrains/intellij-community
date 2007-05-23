@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -65,10 +66,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         if (results.length > 0) {
           targets = new PsiElement[results.length];
-          for(int i = 0; i < results.length; ++ i) targets[i] = results[i].getElement();
+          for (int i = 0; i < results.length; ++i) {
+            targets[i] = results[i].getElement();
+          }
         }
       }
-    } else {
+    }
+    else {
       targets = new PsiElement[] {target};
     }
 
@@ -171,7 +175,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     private Editor myEditor;
     private PsiFile myFile;
 
-    public DoHighlightRunnable(Collection<PsiReference> refs, Project project, PsiElement target, Editor editor, PsiFile file) {
+    public DoHighlightRunnable(@NotNull Collection<PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, Editor editor, PsiFile file) {
       myRefs = refs;
       myProject = project;
       myTarget = target;
@@ -481,9 +485,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private static void highlightReferences(Project project,
-                                   PsiElement element,
-                                   Collection<PsiReference> refs,
+  private static void highlightReferences(@NotNull Project project,
+                                   @NotNull PsiElement element,
+                                   @NotNull Collection<PsiReference> refs,
                                    Editor editor,
                                    PsiFile file) {
 
@@ -565,7 +569,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  public static PsiElement getNameIdentifier(PsiElement element) {
+  public static PsiElement getNameIdentifier(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getNameIdentifier();
     }

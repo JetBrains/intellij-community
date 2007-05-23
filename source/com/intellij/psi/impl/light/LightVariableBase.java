@@ -40,7 +40,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return getNameIdentifier().getText();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException{
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }

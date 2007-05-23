@@ -61,7 +61,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return true;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
 
     return null;

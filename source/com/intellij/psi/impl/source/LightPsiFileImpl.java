@@ -100,7 +100,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getViewProvider().getVirtualFile().getName();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     subtreeChanged();
     return PsiFileImplUtil.setName(this, name);

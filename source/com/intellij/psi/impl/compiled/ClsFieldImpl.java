@@ -136,7 +136,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return myName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }

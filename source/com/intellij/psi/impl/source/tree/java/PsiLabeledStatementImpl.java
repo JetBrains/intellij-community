@@ -87,7 +87,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return getLabelIdentifier().getText();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getLabelIdentifier(), name);
     return this;
   }

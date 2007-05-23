@@ -41,7 +41,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
 
   String getName();
   @NotNull
-  PsiElement setName(String name) throws IncorrectOperationException;
+  PsiElement setName(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Returns the package corresponding to the directory.

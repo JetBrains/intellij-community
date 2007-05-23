@@ -46,7 +46,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.isDeprecated();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     return myMethod.setName(name);
   }
 

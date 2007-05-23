@@ -51,7 +51,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return myName;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }

@@ -125,7 +125,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
       visitor.visitElement(this);
     }
   }
-  public PsiElement setName(String name) throws IncorrectOperationException{
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     SharedPsiElementImplUtil.setName(getNameElement(), name);
     return this;
   }

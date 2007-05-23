@@ -94,7 +94,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return "PsiInlineDocTag:" + (nameElement != null ? nameElement.getText() : null);
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameElement(), name);
     return this;
   }

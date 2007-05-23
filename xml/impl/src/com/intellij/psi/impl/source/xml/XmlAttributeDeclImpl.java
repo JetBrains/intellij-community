@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -112,7 +113,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     return true;
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
     return null;
   }
