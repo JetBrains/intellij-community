@@ -74,15 +74,18 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   };
 
   private final VirtualFileListener myVirtualFileListener = new VirtualFileAdapter() {
-    public void beforeFileDeletion(VirtualFileEvent event) {
-      VirtualFile file = event.getFile();
-      onDeleted(file);
+    public void fileDeleted(final VirtualFileEvent event) {
+      onDeleted(event.getFile());
+    }
+
+    public void fileMoved(final VirtualFileMoveEvent event) {
+      onDeleted(event.getFile());
     }
 
     private void onDeleted(final VirtualFile file) {
       if (file.isDirectory()) {
         for (VirtualFile problemFile : myProblems.keySet()) {
-          if (VfsUtil.isAncestor(file, problemFile, false)) {
+          if (!problemFile.isValid()) {
             myProblems.remove(problemFile);
             fireProblemListeners.problemsDisappeared(problemFile);
           }
@@ -91,10 +94,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       else if (myProblems.remove(file) != null) {
         fireProblemListeners.problemsDisappeared(file);
       }
-    }
-
-    public void beforeFileMovement(VirtualFileMoveEvent event) {
-      beforeFileDeletion(event);
     }
   };
 
