@@ -29,7 +29,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       LOG.error("Wrong start: " + start);
     }
     else if (end > document.getTextLength()) {
-      LOG.error("Wrong end: " + end, "; document length="+document.getTextLength());
+      LOG.error("Wrong end: " + end+ "; document length="+document.getTextLength());
     }
     else if (start > end){
       LOG.error("start > end: start=" + start+"; end="+end);
