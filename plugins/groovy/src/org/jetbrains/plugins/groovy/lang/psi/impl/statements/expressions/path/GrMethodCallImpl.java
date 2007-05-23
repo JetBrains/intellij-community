@@ -17,9 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -38,6 +41,14 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
   }
 
   public PsiType getType() {
+    GrExpression invoked = getInvokedExpression();
+    if (invoked instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
+      if (resolved instanceof PsiMethod) {
+        return ((PsiMethod) resolved).getReturnType();
+      }
+    }
+
     return null;
   }
 
@@ -53,5 +64,9 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
   public GrExpression[] getExpressionArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
+  }
+
+  public GrExpression getInvokedExpression() {
+    return findChildByClass(GrExpression.class);
   }
 }

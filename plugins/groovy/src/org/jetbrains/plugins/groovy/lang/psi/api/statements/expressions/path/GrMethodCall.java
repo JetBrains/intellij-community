@@ -28,4 +28,6 @@ public interface GrMethodCall extends GrExpression {
   GrNamedArgument[] getNamedArguments();
 
   GrExpression[] getExpressionArguments();
+
+  GrExpression getInvokedExpression();
 }
