@@ -6,13 +6,17 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
 public abstract class RuntimeConfigurationProducer implements Comparable {
+  public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer"); 
+
   public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
   private final ConfigurationFactory myConfigurationFactory;
@@ -34,6 +38,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     return myConfiguration;
   }
 
+  @Nullable
   protected abstract RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context);
 
   public RuntimeConfigurationProducer clone() {
