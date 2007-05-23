@@ -1035,29 +1035,26 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
       if (node == null) return null;
-      while (true) {
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
-        if (parent == null) break;
-        Object userObject = parent.getUserObject();
-        if (userObject instanceof LibraryGroupNode) {
-          userObject = node.getUserObject();
-          if (userObject instanceof NamedLibraryElementNode) {
-            NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
-            OrderEntry orderEntry = element.getOrderEntry();
-            return orderEntry instanceof LibraryOrderEntry ? (LibraryOrderEntry)orderEntry : null;
-          }
-          PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
-          VirtualFile virtualFile = directory.getVirtualFile();
-          Module module = (Module)((AbstractTreeNode)((DefaultMutableTreeNode)parent.getParent()).getUserObject()).getValue();
-
-          if (module == null) return null;
-          ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-          OrderEntry entry = index.getOrderEntryForFile(virtualFile);
-          if (entry instanceof LibraryOrderEntry) {
-            return (LibraryOrderEntry)entry;
-          }
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+      if (parent == null) return null;
+      Object userObject = parent.getUserObject();
+      if (userObject instanceof LibraryGroupNode) {
+        userObject = node.getUserObject();
+        if (userObject instanceof NamedLibraryElementNode) {
+          NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
+          OrderEntry orderEntry = element.getOrderEntry();
+          return orderEntry instanceof LibraryOrderEntry ? (LibraryOrderEntry)orderEntry : null;
         }
-        node = parent;
+        PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
+        VirtualFile virtualFile = directory.getVirtualFile();
+        Module module = (Module)((AbstractTreeNode)((DefaultMutableTreeNode)parent.getParent()).getUserObject()).getValue();
+
+        if (module == null) return null;
+        ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+        OrderEntry entry = index.getOrderEntryForFile(virtualFile);
+        if (entry instanceof LibraryOrderEntry) {
+          return (LibraryOrderEntry)entry;
+        }
       }
 
       return null;
