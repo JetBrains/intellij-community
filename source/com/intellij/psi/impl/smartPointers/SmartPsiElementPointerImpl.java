@@ -138,6 +138,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
         anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild(astNode));
       }
     }
+    if (anchor != null && !anchor.isPhysical()) return null;
     return anchor;
   }
 
