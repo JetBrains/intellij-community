@@ -106,7 +106,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     throw new IncorrectOperationException();
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     //TODO?
     throw new IncorrectOperationException();
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,7 +55,7 @@ public final class FieldFormReference extends ReferenceInForm {
     return myCustomCreate;
   }
 
-  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiField)) {
       throw new IncorrectOperationException();
     }

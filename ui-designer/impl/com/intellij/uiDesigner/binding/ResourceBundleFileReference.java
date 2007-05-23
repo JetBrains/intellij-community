@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -57,7 +58,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     return handleFileRename(newElementName, ".properties", false);
   }
 
-  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PropertiesFile)) {
       throw new IncorrectOperationException();
     }

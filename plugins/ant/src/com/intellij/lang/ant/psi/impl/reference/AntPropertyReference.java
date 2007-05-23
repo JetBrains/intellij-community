@@ -75,7 +75,7 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   @Nullable
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
 

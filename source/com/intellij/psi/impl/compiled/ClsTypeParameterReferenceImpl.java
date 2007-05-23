@@ -127,7 +127,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 

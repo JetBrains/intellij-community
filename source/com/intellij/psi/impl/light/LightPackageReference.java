@@ -75,7 +75,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     throw new UnsupportedOperationException();
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     //TODO?
     throw new UnsupportedOperationException();
   }

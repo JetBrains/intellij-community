@@ -107,7 +107,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return myElement;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.bindToElement(element);

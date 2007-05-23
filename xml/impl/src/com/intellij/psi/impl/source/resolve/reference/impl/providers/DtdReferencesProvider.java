@@ -117,7 +117,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       return null;
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 
@@ -200,7 +200,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       ).handleContentChange(elementAt, getRangeInElement(), newElementName);
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 

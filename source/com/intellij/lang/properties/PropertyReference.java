@@ -105,7 +105,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
     }
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("not implemented");
   }
 

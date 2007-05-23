@@ -8,6 +8,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -57,7 +59,7 @@ public class PsiLabelReference implements PsiReference{
       return myIdentifier;
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
       if(element instanceof PsiLabeledStatement){
         myIdentifier = (PsiIdentifier) SharedPsiElementImplUtil.setName(myIdentifier, ((PsiLabeledStatement)element).getName());
         return myIdentifier;

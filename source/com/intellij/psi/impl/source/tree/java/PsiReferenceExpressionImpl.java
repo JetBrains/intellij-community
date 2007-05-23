@@ -398,7 +398,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return this;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
 
     if (isReferenceTo(element)) return this;

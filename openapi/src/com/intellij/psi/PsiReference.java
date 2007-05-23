@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -83,7 +84,7 @@ public interface PsiReference {
    * @return the new underlying element of the reference.
    * @throws IncorrectOperationException if the rebind cannot be handled for some reason.
    */
-  PsiElement bindToElement(PsiElement element) throws IncorrectOperationException;
+  PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
    * Checks if the reference targets the specified element.

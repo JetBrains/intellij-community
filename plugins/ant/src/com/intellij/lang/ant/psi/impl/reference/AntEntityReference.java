@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class AntEntityReference implements PsiReference {
 
@@ -38,7 +39,7 @@ public class AntEntityReference implements PsiReference {
     return myXmlRef.handleElementRename(newElementName);
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return myXmlRef.bindToElement(element);
   }
 

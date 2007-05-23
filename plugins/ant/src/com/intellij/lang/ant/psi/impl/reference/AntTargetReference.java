@@ -64,7 +64,7 @@ public class AntTargetReference extends AntGenericReference {
   }
 
   @Nullable
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntTarget) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());

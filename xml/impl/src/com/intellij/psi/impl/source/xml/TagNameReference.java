@@ -32,6 +32,7 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -131,7 +132,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     return element;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiMetaDataBase metaData = null;
 
     if (element instanceof PsiMetaBaseOwner){

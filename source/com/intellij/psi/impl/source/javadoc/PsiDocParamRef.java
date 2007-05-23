@@ -66,7 +66,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return PsiDocParamRef.this;
       }
 
-      public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+      public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         if (isReferenceTo(element)) return PsiDocParamRef.this;
         if(!(element instanceof PsiParameter)) {
           throw new IncorrectOperationException("Unsupported operation");

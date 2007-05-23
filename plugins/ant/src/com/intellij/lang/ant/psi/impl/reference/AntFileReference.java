@@ -77,7 +77,7 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
     return antElement;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
     final VirtualFile dstVFile = PsiUtil.getVirtualFile(element);
     final AntStructuredElement se = getElement();

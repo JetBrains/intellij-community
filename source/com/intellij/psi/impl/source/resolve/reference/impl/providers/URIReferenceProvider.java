@@ -158,7 +158,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       return myElement;
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       assert element instanceof PsiFile;
       
       if (!isUrlText(getCanonicalText())) {

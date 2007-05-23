@@ -148,7 +148,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     throw new IncorrectOperationException("Manipulator for this element is not defined");
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return getElement();
 
     final String newName;

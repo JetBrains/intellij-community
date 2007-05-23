@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public class AntRefIdReference extends AntGenericReference {
     return element;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntStructuredElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());

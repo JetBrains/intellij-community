@@ -155,7 +155,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       );
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 
@@ -421,7 +421,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return element;
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 

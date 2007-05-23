@@ -207,7 +207,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return SourceTreeToPsiMap.treeElementToPsi(newToken);
     }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       if (isReferenceTo(element)) return PsiDocMethodOrFieldRef.this;
       final String name = getNameElement().getText();
       final String newName;

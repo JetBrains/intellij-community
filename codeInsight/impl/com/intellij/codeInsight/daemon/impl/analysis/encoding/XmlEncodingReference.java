@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ class XmlEncodingReference implements PsiReference, EmptyResolveMessageProvider 
     return null;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 

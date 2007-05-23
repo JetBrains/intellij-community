@@ -317,7 +317,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return this;
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiMember) ||
         !(element instanceof PsiNamedElement) ||
         !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) ||

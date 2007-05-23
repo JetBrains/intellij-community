@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -60,7 +61,7 @@ public class AntElementNameReference extends AntGenericReference {
   }
 
   @Nullable
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntStructuredElement) {
       return handleElementRename(((AntStructuredElement)element).getName());
     }

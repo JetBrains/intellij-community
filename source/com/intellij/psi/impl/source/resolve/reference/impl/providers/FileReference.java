@@ -272,7 +272,7 @@ public class FileReference
     throw new IncorrectOperationException("Manipulator for this element is not defined");
   }
 
-  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
 

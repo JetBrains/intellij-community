@@ -169,7 +169,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return PsiNameValuePairImpl.this;
       }
 
-      public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+      public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         throw new IncorrectOperationException("Not implemented");
       }
 

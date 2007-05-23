@@ -122,7 +122,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     throw new IncorrectOperationException();
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

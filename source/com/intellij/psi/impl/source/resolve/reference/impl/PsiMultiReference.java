@@ -103,7 +103,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return chooseReference().handleElementRename(newElementName);
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
     return chooseReference().bindToElement(element);
   }
 

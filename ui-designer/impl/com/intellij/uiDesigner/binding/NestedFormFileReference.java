@@ -17,6 +17,7 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -45,7 +46,7 @@ public class NestedFormFileReference extends ReferenceInForm {
     return PsiManager.getInstance(project).findFile(formFile);
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiPlainTextFile)) {
       throw new IncorrectOperationException();
     }

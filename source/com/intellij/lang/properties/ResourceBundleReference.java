@@ -64,7 +64,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     return super.handleElementRename(newElementName);
   }
 
-  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PropertiesFile)) {
       throw new IncorrectOperationException();
     }

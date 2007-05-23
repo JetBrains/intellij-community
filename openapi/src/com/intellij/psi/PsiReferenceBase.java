@@ -89,7 +89,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
   }                                                              
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("Rebind cannot be performed for " + getClass());
   }
 
