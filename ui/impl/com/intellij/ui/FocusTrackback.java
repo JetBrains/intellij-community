@@ -52,7 +52,10 @@ public class FocusTrackback {
       if (getFocusOwner() == null) {
         final Window window = manager.getActiveWindow();
         if (window instanceof Provider) {
-          setFocusOwner(((Provider)window).getFocusTrackback().getFocusOwner());
+          final FocusTrackback other = ((Provider)window).getFocusTrackback();
+          if (other != null) {
+            setFocusOwner(other.getFocusOwner());
+          }
         }
       }
     } else {
