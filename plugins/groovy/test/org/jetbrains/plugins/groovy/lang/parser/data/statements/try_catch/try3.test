@@ -12,11 +12,14 @@ Groovy script
         PsiElement(identifier)('foo')
       PsiElement(})('}')
     PsiElement(new line)('\n')
-    PsiElement(catch)('catch')
-    PsiWhiteSpace('  ')
-    PsiElement(()('(')
-    PsiErrorElement:Parameter expected
-      <empty list>
+    Catch clause
+      PsiElement(catch)('catch')
+      PsiWhiteSpace('  ')
+      PsiElement(()('(')
+      PsiErrorElement:Parameter expected
+        <empty list>
+      Parameter
+        <empty list>
   PsiErrorElement:';' or new line expected
     PsiElement(identifier)('Exception1')
     PsiWhiteSpace(' ')
