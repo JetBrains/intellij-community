@@ -6,25 +6,23 @@
  */
 package com.theoryinpractice.testng;
 
-import javax.swing.*;
-
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.execution.*;
+import com.intellij.execution.LocatableConfigurationType;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.theoryinpractice.testng.inspection.JUnitConvertTool;
-import com.theoryinpractice.testng.inspection.DependsOnMethodInspection;
 import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
+import com.theoryinpractice.testng.inspection.DependsOnMethodInspection;
+import com.theoryinpractice.testng.inspection.JUnitConvertTool;
 import com.theoryinpractice.testng.model.TestData;
-import com.theoryinpractice.testng.util.TestNGUtil;
+
+import javax.swing.*;
 
 public class TestNGConfigurationType implements LocatableConfigurationType, InspectionToolProvider
 {
@@ -58,26 +56,7 @@ public class TestNGConfigurationType implements LocatableConfigurationType, Insp
     }
 
     public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-        PsiElement element = location.getPsiElement();
-        PsiClass psiClass;
-        if (element instanceof PsiClass) {
-            psiClass = (PsiClass) element;
-        } else {
-            psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        }
-        if (psiClass == null) return null;
-        if (!ExecutionUtil.isRunnableClass(psiClass)) return null;
-        if (!TestNGUtil.hasTest(psiClass)) return null;
-        final Project project = location.getProject();
-        RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration("", getConfigurationFactories()[0]);
-        final TestNGConfiguration configuration = (TestNGConfiguration) settings.getConfiguration();
-        configuration.setClassConfiguration(psiClass);
-        PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (method != null && TestNGUtil.hasTest(method)) {
-            configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
-        }
-        settings.setName(configuration.getName());
-        return settings;
+        return new TestNGConfigurationProducer().createProducer(location, null).getConfiguration();
     }
 
     public boolean isConfigurationByElement(RunConfiguration runConfiguration, Project project, PsiElement element) {
@@ -86,7 +65,7 @@ public class TestNGConfigurationType implements LocatableConfigurationType, Insp
         if (testobject == null)
             return false;
         else
-            return testobject.isConfiguredByElement(config, element);
+            return testobject.isConfiguredByElement(element);
     }
 
     public String getDisplayName() {

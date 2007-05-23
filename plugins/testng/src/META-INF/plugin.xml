@@ -24,6 +24,7 @@
       <className>com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention</className>
       <category>TestNG</category>
     </intentionAction>
+    <configurationProducer implementation="com.theoryinpractice.testng.TestNGConfigurationProducer"/>
   </extensions>
 
 

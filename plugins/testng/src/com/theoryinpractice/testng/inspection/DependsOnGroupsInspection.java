@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.ui.DocumentAdapter;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool {
   private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
-  public static String SHORT_NAME = "groupsTestNG";
+  @NonNls public static String SHORT_NAME = "groupsTestNG";
 
   @NotNull
   @Override

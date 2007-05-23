@@ -10,11 +10,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
-import com.theoryinpractice.testng.TestNGConfiguration;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -214,8 +211,15 @@ public class TestData implements Cloneable
         return ExecutionUtil.findModule(psiclass);
     }
 
-    public boolean isConfiguredByElement(TestNGConfiguration config, PsiElement element) {
-        //TODO need to figure out whether it's a element config or not
-        return false;
+    public boolean isConfiguredByElement(PsiElement element) {
+      element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+      if (element instanceof PsiMethod) {
+        final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+        return Comparing.strEqual(MAIN_CLASS_NAME, ExecutionUtil.getRuntimeQualifiedName(aClass)) &&
+               Comparing.strEqual(METHOD_NAME, ((PsiMethod)element).getName());
+      } else if (element instanceof PsiClass) {
+        return Comparing.strEqual(MAIN_CLASS_NAME, ExecutionUtil.getRuntimeQualifiedName((PsiClass)element));
+      }
+      return false;
     }
 }
