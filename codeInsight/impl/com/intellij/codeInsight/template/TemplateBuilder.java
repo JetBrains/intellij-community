@@ -1,11 +1,14 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.editor.Document;import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;import gnu.trove.THashMap;
+import java.util.*;
 
 /**
  * @author mike
@@ -28,7 +31,7 @@ public class TemplateBuilder {
   private final Document myDocument;
   private PsiFile myFile;
 
-  public TemplateBuilder(PsiElement element) {
+  public TemplateBuilder(@NotNull PsiElement element) {
     myFile = element.getContainingFile();
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);

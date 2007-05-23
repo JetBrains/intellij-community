@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -32,7 +33,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    if(!!myReferenceExpression.isQualified()) return false;
+    if(myReferenceExpression.isQualified()) return false;
     PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiModifierListOwner.class);
     return scope instanceof PsiMethod || scope instanceof PsiClassInitializer ||
            scope instanceof PsiLocalVariable || scope instanceof PsiAnonymousClass;
@@ -54,7 +55,6 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       PsiType type = expectedTypes[0];
 
       String varName = myReferenceExpression.getReferenceName();
-      PsiDeclarationStatement decl;
       PsiExpression initializer = null;
       boolean isInline = false;
       PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
@@ -67,21 +67,23 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         }
       }
 
-      decl = factory.createVariableDeclarationStatement(varName, type, initializer);
+      PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(varName, type, initializer);
 
       TypeExpression expression = new TypeExpression(project, expectedTypes);
 
       if (isInline) {
-        decl = (PsiDeclarationStatement) anchor.replace(decl);
-      } else {
+        decl = (PsiDeclarationStatement)anchor.replace(decl);
+      }
+      else {
         decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);
       }
 
       PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
-      var.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
-                                                                   !CreateFromUsageUtils.isAccessedForWriting(expressions));
+      boolean isFinal = CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
+      var.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);
 
       var = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(var);
+      if (var == null) return;
       TemplateBuilder builder = new TemplateBuilder(var);
       builder.replaceElement(var.getTypeElement(), expression);
       builder.setEndVariableAfter(var.getNameIdentifier());
@@ -121,6 +123,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return statements[statements.length - 1];
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.local.from.usage.family");
   }
