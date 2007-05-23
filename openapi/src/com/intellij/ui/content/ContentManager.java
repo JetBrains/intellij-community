@@ -87,4 +87,6 @@ public interface ContentManager {
   void requestFocus(@Nullable Content content);
 
   void addDataProvider(DataProvider provider);
+  
+  ContentFactory getFactory();
 }

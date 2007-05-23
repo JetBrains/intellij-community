@@ -135,10 +135,18 @@ public class Wrapper extends JPanel {
 
     public void requestFocus(Runnable callback) {
       myFocusGainedCallback = callback;
-      requestFocusInternal();
+      if (isFocusOwner()) {
+        processCallback();    
+      } else {
+        requestFocusInternal();
+      }
     }
 
     public void focusGained(final FocusEvent e) {
+      processCallback();
+    }
+
+    private void processCallback() {
       if (myFocusGainedCallback != null) {
         Runnable callback = myFocusGainedCallback;
         myFocusGainedCallback = null;

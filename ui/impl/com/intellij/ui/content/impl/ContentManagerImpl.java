@@ -15,6 +15,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +119,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myContents.add(content);
       content.addPropertyChangeListener(this);
       fireContentAdded(content, myContents.size() - 1);
-      if (myUI.isToSelectAddedContent()) {
+      if (myUI.isToSelectAddedContent() || mySelection.size() == 0) {
         if (myUI.isSingleSelection()) {
           setSelectedContent(content);
         } else {
@@ -467,5 +468,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myContentWithChangedComponent.add((Content)evt.getSource());
     }
   }
-  
+
+  public ContentFactory getFactory() {
+    return PeerFactory.getInstance().getContentFactory();
+  }
 }

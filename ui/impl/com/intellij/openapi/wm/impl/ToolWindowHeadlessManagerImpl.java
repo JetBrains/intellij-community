@@ -22,6 +22,8 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,6 +140,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void selectPreviousContent() { }
     public void setSelectedContent(final Content content) { }
     public void setSelectedContent(final Content content, final boolean requestFocus) { }
+
+    public ContentFactory getFactory() {
+      return PeerFactory.getInstance().getContentFactory();
+    }
   };
 
   public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor) {
