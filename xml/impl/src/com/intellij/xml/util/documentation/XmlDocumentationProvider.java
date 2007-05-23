@@ -1,26 +1,28 @@
 package com.intellij.xml.util.documentation;
 
+import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.sun.istack.internal.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,14 +109,23 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
       }
 
-      // Check for comment right after the xml attlist decl
-      PsiElement uncleElement = parent.getNextSibling();
-      if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
-      if (uncleElement instanceof PsiComment) {
-        return formatDocFromComment(uncleElement, referenceName);
-      }
+      return findDocRightAfterElement(parent, referenceName);
+    } else if (element instanceof XmlEntityDecl) {
+      final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+
+      return findDocRightAfterElement(element, entityDecl.getName());
     }
 
+    return null;
+  }
+
+  public static String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
+    // Check for comment right after the xml attlist decl
+    PsiElement uncleElement = parent.getNextSibling();
+    if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
+    if (uncleElement instanceof PsiComment) {
+      return formatDocFromComment(uncleElement, referenceName);
+    }
     return null;
   }
 
@@ -134,7 +145,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return curElement;
   }
 
-  private String formatDocFromComment(final PsiElement curElement, final String name) {
+  private static String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     return generateDoc(text, name,null);
@@ -162,7 +173,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private String generateDoc(String str, String name, String typeName) {
+  private static String generateDoc(String str, String name, String typeName) {
     if (str == null) return null;
     StringBuffer buf = new StringBuffer(str.length() + 20);
 
@@ -177,7 +188,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+    final PsiElement originalElement = element;
     boolean isAttrCompletion = element instanceof XmlAttribute;
+
     if (!isAttrCompletion && element instanceof XmlToken) {
       final IElementType tokenType = ((XmlToken)element).getTokenType();
 
@@ -253,6 +266,40 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    if (object instanceof String) {
+      return findEntityDeclWithName((String)object, element);
+    }
+    return null;
+  }
+
+  public static PsiElement findEntityDeclWithName(final String name, final @NotNull PsiElement element) {
+    final XmlFile containingXmlFile = XmlUtil.getContainingFile(element);
+    final XmlTag nearestTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+    final XmlFile xmlFile = nearestTag != null? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
+
+    if (xmlFile != null) {
+      final PsiElement[] result = new PsiElement[1];
+
+      XmlUtil.processXmlElements(
+        xmlFile,
+        new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            if (element instanceof XmlEntityDecl) {
+              final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+              if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
+                result[0] = entityDecl;
+                return false;
+              }
+            }
+            return true;
+          }
+        },
+        true
+      );
+
+      return result[0];
     }
     return null;
   }

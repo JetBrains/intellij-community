@@ -417,17 +417,10 @@ public class XmlCompletionData extends CompletionData {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       final XmlTag parentOfType = PsiTreeUtil.getParentOfType(context, XmlTag.class);
       if (parentOfType != null) {
-        final XmlElementDescriptor descriptor = parentOfType.getDescriptor();
         final List<String> results = new ArrayList<String>();
-
-        final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
         final XmlFile containingFile = (XmlFile)parentOfType.getContainingFile();
-        XmlFile descriptorFile = nsDescriptor != null
-                                 ? nsDescriptor.getDescriptorFile()
-                                 : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
-        if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
-          descriptorFile = containingFile;
-        }
+
+        XmlFile descriptorFile = findDescriptorFile(parentOfType, containingFile);
 
         if (descriptorFile != null) {
           final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
@@ -451,6 +444,18 @@ public class XmlCompletionData extends CompletionData {
       }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
+  }
+
+  public static XmlFile findDescriptorFile(final XmlTag tag, final XmlFile containingFile) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
+    XmlFile descriptorFile = nsDescriptor != null
+                             ? nsDescriptor.getDescriptorFile()
+                             : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
+    if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
+      descriptorFile = containingFile;
+    }
+    return descriptorFile;
   }
 
   protected static class EntityRefInsertHandler extends BasicInsertHandler {

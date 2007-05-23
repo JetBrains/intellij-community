@@ -143,10 +143,15 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     if (descriptor!=null) {
       return generateJavaDoc(descriptor, ommitHtmlSpecifics, originalElement);
     }
+    if (element instanceof XmlEntityDecl) {
+      final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+
+      return XmlDocumentationProvider.findDocRightAfterElement(element, entityDecl.getName());
+    }
     return null;
   }
 
-  private String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
+  private static String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
     StringBuffer buf = new StringBuffer();
     final boolean istag = descriptor instanceof HtmlTagDescriptor;
     
@@ -215,6 +220,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
     if (result== null && ourScriptProvider !=null) {
       result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+    }
+    if (result == null && object instanceof String) {
+      result = XmlDocumentationProvider.findEntityDeclWithName((String)object, element);
     }
     return result;
   }

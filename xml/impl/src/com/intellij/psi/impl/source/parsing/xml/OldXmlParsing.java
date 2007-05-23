@@ -122,6 +122,11 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       //checkRootTag(root);
       rootTagChecked = true;
     }
+
+    ParseUtil.insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(), 
+                                  0,
+                                  lexer.getBufferEnd(),
+                                  -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
   }
 
   public TreeElement parseNotationDecl(Lexer lexer) {
