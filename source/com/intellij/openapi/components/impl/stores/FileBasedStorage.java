@@ -24,6 +24,7 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myFilePath;
   private final IFile myFile;
   protected final String myRootElementName;
+  private Integer myUpToDateTreeHash;
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
@@ -33,19 +34,30 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public void doSave() throws StateStorage.StateStorageException {
-    final byte[] text = StorageUtil.printDocument(getDocument());
+    final Document document = getDocument();
+
+    myUpToDateTreeHash = JDOMUtil.getTreeHash(document.getRootElement());
+    final byte[] text = StorageUtil.printDocument(document);
 
     StorageUtil.save(myFile, text);
   }
 
   public boolean needsSave() throws StateStorage.StateStorageException {
     sort();
+
+    final Document document = getDocument();
+    if (myUpToDateTreeHash != null && JDOMUtil.getTreeHash(document.getRootElement()) == myUpToDateTreeHash.intValue()) return false;
+
+    myUpToDateTreeHash = null;
     try {
       if (!myFile.exists()) return true;
 
-      final byte[] text = StorageUtil.printDocument(getDocument());
+      final byte[] text = StorageUtil.printDocument(document);
 
-      if (Arrays.equals(myFile.loadBytes(), text)) return false;
+      if (Arrays.equals(myFile.loadBytes(), text)) {
+        myUpToDateTreeHash = JDOMUtil.getTreeHash(document.getRootElement());
+        return false;
+      }
 
       return true;
     }
