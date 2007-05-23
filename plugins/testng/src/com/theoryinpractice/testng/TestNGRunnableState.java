@@ -195,15 +195,8 @@ public class TestNGRunnableState extends JavaCommandLineState
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.ANNOTATIONS_COMMAND_OPT, "javadoc");
         }
 
-        TestNGDefaultConfigurationComponent testng = project.getComponent(TestNGDefaultConfigurationComponent.class);
-        String outputDirectory = testng.getDefaultSettings().getOutputDirectory();
-
         if (data.getOutputDirectory() != null && !"".equals(data.getOutputDirectory())) {
-            outputDirectory = data.getOutputDirectory();
-        }
-
-        if (outputDirectory != null && !"".equals(outputDirectory)) {
-            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, outputDirectory);
+            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, data.getOutputDirectory());
         }
 
         // Always include the source paths - just makes things easier :)
@@ -354,10 +347,6 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     private Map<String, String> buildTestParameters(Project project, TestData data) {
         Map<String, String> testParams = new HashMap<String, String>();
-
-        // Get default parameters
-        TestNGDefaultConfigurationComponent config = project.getComponent(TestNGDefaultConfigurationComponent.class);
-        testParams.putAll(config.getDefaultSettings().getDefaultParameters());
 
         // Override with those from the test runner configuration
         testParams.putAll(convertPropertiesFileToMap(data.PROPERTIES_FILE));
