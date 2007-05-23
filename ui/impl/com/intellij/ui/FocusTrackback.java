@@ -116,6 +116,13 @@ public class FocusTrackback {
       toFocus = getFocusOwner();
     }
 
+    for (int i = index + 1; i < stack.size(); i++) {
+      if (!stack.get(i).isDead()) {
+        toFocus = null;
+        break;
+      }
+    }
+
 
     if (toFocus != null) {
       toFocus.requestFocus();
