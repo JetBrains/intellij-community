@@ -17,14 +17,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
  */
 public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap {
+  private static final TokenSet MAP_LITERAL_TOKENS = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
@@ -35,6 +39,13 @@ public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap
   }
 
   public PsiType getType() {
-    return null;
+    if (isMapLiteral()) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.util.Map", getResolveScope());
+    }
+    return getManager().getElementFactory().createTypeByFQClassName("java.util.List", getResolveScope());
+  }
+
+  private boolean isMapLiteral() {
+    return findChildByType(MAP_LITERAL_TOKENS) != null;
   }
 }
