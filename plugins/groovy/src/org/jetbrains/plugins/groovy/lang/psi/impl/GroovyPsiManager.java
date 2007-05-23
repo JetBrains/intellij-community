@@ -71,7 +71,7 @@ public class GroovyPsiManager implements ProjectComponent {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!ApplicationManager.getApplication().isUnitTestMode() && myProject.isInitialized()) {
           fillDefaultGroovyMethods();
         }
       }
