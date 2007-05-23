@@ -60,7 +60,7 @@ public class ExpectedTypesProvider {
     }
   };
   private static PsiType[] PRIMITIVE_TYPES = new PsiType [] {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG,
-                                    PsiType.FLOAT, PsiType.DOUBLE};
+    PsiType.FLOAT, PsiType.DOUBLE};
 
   public ExpectedTypeInfo createInfo(PsiType type, int kind, PsiType defaultType, TailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
@@ -292,7 +292,7 @@ public class ExpectedTypesProvider {
     @Override
     public void visitAssertStatement(PsiAssertStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                          PsiType.BOOLEAN, TailType.SEMICOLON);
+                                                 PsiType.BOOLEAN, TailType.SEMICOLON);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
@@ -508,7 +508,7 @@ public class ExpectedTypesProvider {
           else {
             if (PsiType.DOUBLE.isAssignableFrom(anotherType)) {
               ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                     anotherType, TailType.NONE);
+                                                         anotherType, TailType.NONE);
               myResult = new ExpectedTypeInfo[]{info};
             }
           }
@@ -727,8 +727,8 @@ public class ExpectedTypesProvider {
         for (int i = 0; i < infos.length; i++) {
           infos[i] = createInfoImpl(
             myExpr instanceof PsiTypeCastExpression && myForCompletion ?
-              throwsTypes[i] :
-              throwableType,
+            throwsTypes[i] :
+            throwableType,
             ExpectedTypeInfo.TYPE_OR_SUBTYPE,
             throwsTypes[i],
             TailType.SEMICOLON
@@ -753,9 +753,9 @@ public class ExpectedTypesProvider {
     }
 
     private ExpectedTypeInfo[] getExpectedArgumentTypesForMethodCall(CandidateInfo[] methodCandidates,
-                                                        PsiExpressionList argumentList,
-                                                        PsiExpression argument,
-                                                        boolean forCompletion) {
+                                                                     PsiExpressionList argumentList,
+                                                                     PsiExpression argument,
+                                                                     boolean forCompletion) {
       if (methodCandidates.length == 0) {
         return ExpectedTypeInfo.EMPTY;
       }
@@ -791,7 +791,8 @@ public class ExpectedTypesProvider {
           if (argType != null && !paramType.isAssignableFrom(argType)) continue MethodsLoop;
         }
         PsiParameter parameter = parameters[Math.min(parameters.length - 1, count)];
-        final PsiType parameterType = getParameterType(parameter, substitutor);
+        PsiType parameterType = getParameterType(parameter, substitutor);
+
         TailType tailType;
         if (count >= parameters.length) {
           tailType = TailType.NONE;
@@ -860,7 +861,20 @@ public class ExpectedTypesProvider {
       if (parameter.isVarArgs()) {
         type = ((PsiArrayType)type).getComponentType();
       }
-      return substitutor.substitute(type);
+      PsiType parameterType = substitutor.substitute(type);
+      if (parameterType instanceof PsiCapturedWildcardType) {
+        parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
+      }
+      if (parameterType instanceof PsiWildcardType) {
+        final PsiWildcardType psiWildcardType = (PsiWildcardType)parameterType;
+        if (psiWildcardType.isExtends()) {
+          final PsiType superBound = psiWildcardType.getBound();
+          if (superBound != null) {
+            parameterType = superBound;
+          }
+        }
+      }
+      return parameterType;
     }
 
     @Nullable
