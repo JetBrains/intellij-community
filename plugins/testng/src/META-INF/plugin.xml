@@ -24,7 +24,6 @@
       <className>com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention</className>
       <category>TestNG</category>
     </intentionAction>
-    <projectService serviceInterface="com.theoryinpractice.testng.TestNGReferenceProvider" serviceImplementation="com.theoryinpractice.testng.TestNGReferenceProvider"/>
   </extensions>
 
 
@@ -34,6 +33,11 @@
       <option name="workspace" value="true"/>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.theoryinpractice.testng.TestNGReferenceProvider</implementation-class>
+    </component>
+  </project-components>
   <change-notes>
     <![CDATA[
             <li>TESTNG-151 Final passing test result is not properly hidden

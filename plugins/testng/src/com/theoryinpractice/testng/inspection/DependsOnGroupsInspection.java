@@ -32,6 +32,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool {
   private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
+  public static String SHORT_NAME = "groupsTestNG";
 
   @NotNull
   @Override
@@ -48,7 +49,7 @@ public class DependsOnGroupsInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return "groupsTestNG";
+    return SHORT_NAME;
   }
 
   public boolean isEnabledByDefault() {
