@@ -1,4 +1,7 @@
 package com.intellij.ui.content;
 
-public interface MessageView extends ContentManager {
+public interface MessageView  {
+
+  ContentManager getContentManager();
+
 }

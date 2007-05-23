@@ -11,15 +11,16 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.MessageView;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.ui.content.ContentManager;
 
 /**
  * @author Eugene Belyaev
  */
-public class MessageViewImpl extends ContentManagerImpl implements ProjectComponent, MessageView {
+public class MessageViewImpl implements ProjectComponent, MessageView {
   private Project myProject;
+  private ToolWindow myToolWindow;
 
   public MessageViewImpl(Project project) {
-    super(new TabbedPaneContentUI(), true, project);
     myProject = project;
   }
 
@@ -31,9 +32,13 @@ public class MessageViewImpl extends ContentManagerImpl implements ProjectCompon
 
   public void projectOpened() {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW,getComponent(),ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
-    new ContentManagerWatcher(toolWindow,this);
+    myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, false, ToolWindowAnchor.BOTTOM);
+    myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
+    new ContentManagerWatcher(myToolWindow, getContentManager());
+  }
+
+  public ContentManager getContentManager() {
+    return myToolWindow.getContentManager();
   }
 
   public void projectClosed() {

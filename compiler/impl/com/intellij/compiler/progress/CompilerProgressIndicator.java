@@ -307,10 +307,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         }
         final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
         content.putUserData(CONTENT_ID_KEY, myContentId);
-        messageView.addContent(content);
-        new CloseListener(content, messageView);
+        messageView.getContentManager().addContent(content);
+        new CloseListener(content, messageView.getContentManager());
         removeAllContents(myProject, content);
-        messageView.setSelectedContent(content);
+        messageView.getContentManager().setSelectedContent(content);
         ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (toolWindow != null) {
           if (CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND) {
@@ -329,10 +329,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
         final MessageView messageView = myProject.getComponent(MessageView.class);
-        Content[] contents = messageView.getContents();
+        Content[] contents = messageView.getContentManager().getContents();
         for (Content content : contents) {
           if (content.getUserData(CONTENT_ID_KEY) != null) {
-            messageView.setSelectedContent(content);
+            messageView.getContentManager().setSelectedContent(content);
             return;
           }
         }
@@ -342,12 +342,12 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
   public static void removeAllContents(Project project, Content notRemove) {
     MessageView messageView = project.getComponent(MessageView.class);
-    Content[] contents = messageView.getContents();
+    Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) continue;
       if (content == notRemove) continue;
       if (content.getUserData(CONTENT_ID_KEY) != null) { // the content was added by me
-        messageView.removeContent(content);
+        messageView.getContentManager().removeContent(content);
       }
     }
   }

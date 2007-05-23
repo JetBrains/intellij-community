@@ -211,7 +211,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     // check if there are running instances of the same build file
 
     MessageView ijMessageView = project.getComponent(MessageView.class);
-    Content[] contents = ijMessageView.getContents();
+    Content[] contents = ijMessageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) {
         continue;
@@ -226,7 +226,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
 
       if (buildMessageView.isStopped()) {
-        ijMessageView.removeContent(content);
+        ijMessageView.getContentManager().removeContent(content);
         continue;
       }
 
@@ -236,7 +236,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       switch (result) {
         case 0:  // yes
           buildMessageView.stopProcess();
-          ijMessageView.removeContent(content);
+          ijMessageView.getContentManager().removeContent(content);
           continue;
         case 1: // no
           continue;
@@ -251,10 +251,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
-    ijMessageView.addContent(content);
-    ijMessageView.setSelectedContent(content);
+    ijMessageView.getContentManager().addContent(content);
+    ijMessageView.getContentManager().setSelectedContent(content);
 
-    new CloseListener(content, ijMessageView, project);
+    new CloseListener(content, ijMessageView.getContentManager(), project);
     // Do not inline next two variabled. Seeking for NPE.
     ToolWindow messageToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
     messageToolWindow.activate(null);
@@ -333,10 +333,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private void close() {
     MessageView messageView = myProject.getComponent(MessageView.class);
-    Content[] contents = messageView.getContents();
+    Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.getComponent() == this) {
-        messageView.removeContent(content);
+        messageView.getContentManager().removeContent(content);
         return;
       }
     }

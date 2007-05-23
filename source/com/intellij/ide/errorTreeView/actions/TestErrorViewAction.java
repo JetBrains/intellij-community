@@ -96,8 +96,8 @@ public abstract class TestErrorViewAction extends AnAction{
   protected void openView(Project project, JComponent component) {
     final MessageView messageView = project.getComponent(MessageView.class);
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, getContentName(), true);
-    messageView.addContent(content);
-    messageView.setSelectedContent(content);
+    messageView.getContentManager().addContent(content);
+    messageView.getContentManager().setSelectedContent(content);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
     if (toolWindow != null) {
       toolWindow.activate(null);

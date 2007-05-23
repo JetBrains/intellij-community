@@ -215,11 +215,11 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
               MessageView messageView = myProject.getComponent(MessageView.class);
               Content content = PeerFactory.getInstance().getContentFactory().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
               content.putUserData(KEY, myErrorsView);
-              messageView.addContent(content);
-              messageView.setSelectedContent(content);
-              messageView.addContentManagerListener(new CloseListener(content, messageView));
+              messageView.getContentManager().addContent(content);
+              messageView.getContentManager().setSelectedContent(content);
+              messageView.getContentManager().addContentManagerListener(new CloseListener(content, messageView.getContentManager()));
               removeCompileContents(content);
-              messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
+              messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
             }
           },
           XmlBundle.message("validate.xml.open.message.view.command.name"),
@@ -229,12 +229,12 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     private void removeCompileContents(Content notToRemove) {
       MessageView messageView = myProject.getComponent(MessageView.class);
 
-      for (Content content : messageView.getContents()) {
+      for (Content content : messageView.getContentManager().getContents()) {
         if (content.isPinned()) continue;
         if (CONTENT_NAME.equals(content.getDisplayName()) && content != notToRemove) {
           ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
           if (listErrorView != null) {
-            if (messageView.removeContent(content)) {
+            if (messageView.getContentManager().removeContent(content)) {
               content.release();
             }
           }
@@ -571,7 +571,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (!eventContent.equals(myContent)) {
         return;
       }
-      myMessageView.removeContentManagerListener(this);
+      myMessageView.getContentManager().removeContentManagerListener(this);
       NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
       if (errorTreeView != null) {
         errorTreeView.dispose();

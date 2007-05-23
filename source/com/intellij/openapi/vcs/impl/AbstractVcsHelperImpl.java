@@ -109,10 +109,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             final Content content =
               PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
             content.putUserData(KEY, errorTreeView);
-            messageView.addContent(content);
-            messageView.setSelectedContent(content);
+            messageView.getContentManager().addContent(content);
+            messageView.getContentManager().setSelectedContent(content);
             removeContents(content, tabDisplayName);
-            messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
+            messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
           }
         }, VcsBundle.message("command.name.open.error.message.view"), null);
 
@@ -244,10 +244,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             final Content content =
               PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
             content.putUserData(KEY, errorTreeView);
-            messageView.addContent(content);
-            messageView.setSelectedContent(content);
+            messageView.getContentManager().addContent(content);
+            messageView.getContentManager().setSelectedContent(content);
             removeContents(content, tabDisplayName);
-            messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
+            messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
           }
         }, VcsBundle.message("command.name.open.error.message.view"), null);
 
@@ -273,14 +273,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   protected void removeContents(Content notToRemove, final String tabDisplayName) {
     MessageView messageView = myProject.getComponent(MessageView.class);
-    Content[] contents = messageView.getContents();
+    Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       LOG.assertTrue(content != null);
       if (content.isPinned()) continue;
       if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
         ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
         if (listErrorView != null) {
-          if (messageView.removeContent(content)) {
+          if (messageView.getContentManager().removeContent(content)) {
             content.release();
           }
         }
@@ -697,7 +697,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       if (!eventContent.equals(myContent)) {
         return;
       }
-      myMessageView.removeContentManagerListener(this);
+      myMessageView.getContentManager().removeContentManagerListener(this);
       NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
       if (errorTreeView != null) {
         errorTreeView.dispose();
