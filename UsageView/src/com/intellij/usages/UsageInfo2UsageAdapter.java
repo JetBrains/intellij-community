@@ -142,6 +142,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     return myRangeMarkers.get(0);
   }
 
+  public List<RangeMarker> getRangeMarkers() {
+    return myRangeMarkers;
+  }
+
   public void navigate(boolean focus) {
     if (canNavigate()) {
       openTextEditor(focus);

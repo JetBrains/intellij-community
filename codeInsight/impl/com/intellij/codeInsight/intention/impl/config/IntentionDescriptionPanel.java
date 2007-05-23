@@ -44,8 +44,8 @@ public class IntentionDescriptionPanel {
   private JPanel myPoweredByPanel;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
-  private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
-  private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
+  @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
+  @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
@@ -125,7 +125,7 @@ public class IntentionDescriptionPanel {
   private static void showUsages(final JPanel panel,
                                  final TitledSeparator separator,
                                  final List<IntentionUsagePanel> usagePanels,
-                                 final @Nullable URL[] exampleUsages) throws IOException {
+                                 @Nullable final URL[] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -214,4 +214,4 @@ public class IntentionDescriptionPanel {
     myAfterPanel.setMaximumSize(newd);
     myAfterPanel.setMinimumSize(newd);
   }
-}
+}  

@@ -18,6 +18,13 @@ package com.intellij.usages.impl;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,6 +39,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -298,8 +306,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
       else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (myFirstUsage.get().canNavigate()) {
-              myFirstUsage.get().navigate(true);
+            Usage usage = myFirstUsage.get();
+            if (usage.canNavigate()) {
+              usage.navigate(true);
+              flashUsageScriptaculously(usage);
             }
           }
         });
@@ -312,6 +322,23 @@ public class UsageViewManagerImpl extends UsageViewManager {
       if (myListener != null) {
         myListener.findingUsagesFinished(myUsageViewRef.get());
       }
+    }
+  }
+
+  private static void flashUsageScriptaculously(final Usage usage) {
+    if (!(usage instanceof UsageInfo2UsageAdapter)) {
+      return;
+    }
+    UsageInfo2UsageAdapter usageInfo = (UsageInfo2UsageAdapter)usage;
+
+    FileEditorLocation editorLocation = usage.getLocation();
+    FileEditor fileEditor = editorLocation.getEditor();
+    if (fileEditor instanceof TextEditor) {
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
+      rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
+      rangeBlinker.startBlinking();
     }
   }
 }
