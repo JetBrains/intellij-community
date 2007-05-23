@@ -200,4 +200,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     UIUtil.applyRenderingHints(g);
     super.paint(g);
   }
+
+  public Rectangle suggestChildFrameBounds() {
+//todo [kirillk] a dummy implementation
+    final Rectangle b = getBounds();
+    b.x += 100;
+    b.width -= 200;
+    b.y += 100;
+    b.height -= 200;
+    return b;
+  }
 }

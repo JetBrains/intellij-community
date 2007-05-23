@@ -4,17 +4,20 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.WindowInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
+public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, WindowInfo {
   /**
    * XML tag.
    */
@@ -55,6 +58,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
   @NonNls protected static final String Y_ATTR = "y";
   @NonNls protected static final String WIDTH_ATTR = "width";
   @NonNls protected static final String HEIGHT_ATTR = "height";
+
+  private boolean myWasRead;
 
   /**
    * Creates <code>WindowInfo</code> for tool window with wpecified <code>ID</code>.
@@ -109,14 +114,14 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
   /**
    * @return tool window's anchor in internal mode.
    */
-  ToolWindowAnchor getAnchor(){
+  public ToolWindowAnchor getAnchor(){
     return myAnchor;
   }
 
   /**
    * @return bound of tool window in floating mode.
    */
-  Rectangle getFloatingBounds(){
+  public Rectangle getFloatingBounds(){
     return myFloatingBounds;
   }
 
@@ -142,7 +147,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
    * @see com.intellij.openapi.wm.ToolWindowType#FLOATING
    * @see com.intellij.openapi.wm.ToolWindowType#SLIDING
    */
-  ToolWindowType getType(){
+  public ToolWindowType getType(){
     return myType;
   }
 
@@ -163,23 +168,23 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
     myOrder=order;
   }
 
-  boolean isActive(){
+  public boolean isActive(){
     return myActive;
   }
 
-  boolean isAutoHide(){
+  public boolean isAutoHide(){
     return myAutoHide;
   }
 
-  boolean isDocked(){
+  public boolean isDocked(){
     return ToolWindowType.DOCKED==myType;
   }
 
-  boolean isFloating(){
+  public boolean isFloating(){
     return ToolWindowType.FLOATING==myType;
   }
 
-  boolean isSliding(){
+  public boolean isSliding(){
     return ToolWindowType.SLIDING==myType;
   }
 
@@ -216,6 +221,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
   @SuppressWarnings({"EmptyCatchBlock"})
   public void readExternal(final Element element){
     myId=element.getAttributeValue(ID_ATTR);
+    myWasRead = true;
     try{
       myActive=Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
     }catch(NumberFormatException ignored){}
@@ -349,5 +355,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable{
     buffer.append("myFloatingBounds=").append(myFloatingBounds);
     buffer.append(']');
     return buffer.toString();
+  }
+
+  public boolean wasRead() {
+    return myWasRead;
   }
 }

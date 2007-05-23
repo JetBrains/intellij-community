@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.wm;
 
+import java.awt.*;
+
 public interface IdeFrame {
 
   StatusBar getStatusBar();
 
+  Rectangle suggestChildFrameBounds();
 }

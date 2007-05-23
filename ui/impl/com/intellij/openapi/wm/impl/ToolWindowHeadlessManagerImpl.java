@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.awt.*;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -105,6 +106,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     public ContentManager getContentManager() {
       return MOCK_CONTENT_MANAGER;
+    }
+
+    public void setDefaultState(@Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type, @Nullable final Rectangle floatingBounds) {
     }
   };
 

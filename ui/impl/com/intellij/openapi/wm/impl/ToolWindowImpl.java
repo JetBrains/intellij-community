@@ -16,6 +16,7 @@ import com.intellij.peer.PeerFactory;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.awt.*;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -247,4 +248,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myDecorator != null ? myDecorator.createPopupGroup() : null;
   }
 
+  public void setDefaultState(@Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type, @Nullable final Rectangle floatingBounds) {
+    myToolWindowManager.setDefaultState(this, anchor, type, floatingBounds);
+  }
 }

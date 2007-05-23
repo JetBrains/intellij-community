@@ -298,6 +298,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myProject2Frame.get(project);
   }
 
+  public IdeFrame getIdeFrame(final Project project) {
+    return getFrame(project);
+  }
+
   public final IdeFrameImpl allocateFrame(final Project project) {
     LOG.assertTrue(!myProject2Frame.containsKey(project));
 

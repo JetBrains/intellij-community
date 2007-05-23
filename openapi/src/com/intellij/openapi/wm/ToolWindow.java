@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.ui.content.ContentManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface ToolWindow {
 
@@ -128,5 +129,8 @@ public interface ToolWindow {
 
 
   ContentManager getContentManager();
+
+
+  void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
 }

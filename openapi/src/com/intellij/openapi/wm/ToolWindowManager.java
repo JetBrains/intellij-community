@@ -85,4 +85,5 @@ public abstract class ToolWindowManager {
    * Puts specified runnable to the tail of current command queue.
    */
   public abstract void invokeLater(Runnable runnable);
+
 }

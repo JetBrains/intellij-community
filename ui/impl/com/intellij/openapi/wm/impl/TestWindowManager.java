@@ -32,6 +32,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     return ourStatusBar;
   }
 
+  public IdeFrame getIdeFrame(final Project project) {
+    return null;
+  }
+
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 

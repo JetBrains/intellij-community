@@ -42,6 +42,8 @@ public abstract class WindowManager {
 
   public abstract JFrame getFrame(Project project);
 
+  public abstract IdeFrame getIdeFrame(Project project);
+
   /**
    * Tests whether the specified rectangle is inside of screen bounds. Method uses its own heuristic test.
    * Test passes if intersection of screen bounds and specified rectangle isn't empty and its height and

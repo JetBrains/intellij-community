@@ -1072,6 +1072,26 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myLayout.writeExternal(layoutElement);
   }
 
+  public void setDefaultState(@NotNull final ToolWindowImpl toolWindow, @Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type,
+                              @Nullable final Rectangle floatingBounds) {
+
+    final WindowInfoImpl info = getInfo(toolWindow.getId());
+    if (info.wasRead()) return;
+
+    if (floatingBounds != null) {
+      info.setFloatingBounds(floatingBounds);
+    }
+
+    if (anchor != null) {
+      toolWindow.setAnchor(anchor, null);
+    }
+
+    if (type != null) {
+      toolWindow.setType(type, null);
+    }
+
+  }
+
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.
