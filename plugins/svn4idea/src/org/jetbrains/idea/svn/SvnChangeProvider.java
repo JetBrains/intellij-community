@@ -49,12 +49,12 @@ public class SvnChangeProvider implements ChangeProvider {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder);
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
-        processFile(path, context, null, true);
+        processFile(path, context, null, true, context.getClient());
       }
 
       for (FilePath path : dirtyScope.getDirtyFiles()) {
         FileStatus status = getParentStatus(context, path);
-        processFile(path, context, status, false);
+        processFile(path, context, status, false, context.getClient());
       }
 
       for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
@@ -171,10 +171,11 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private void processFile(FilePath path, final SvnChangeProviderContext context,
-                           final FileStatus parentStatus, final boolean recursively) throws SVNException {
+                           final FileStatus parentStatus, final boolean recursively,
+                           final SVNStatusClient statusClient) throws SVNException {
     try {
       if (path.isDirectory()) {
-        context.getClient().doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
+        statusClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
             processStatusFirstPass(path, status, context, parentStatus);
@@ -185,7 +186,7 @@ public class SvnChangeProvider implements ChangeProvider {
                 VirtualFile[] children = path.getVirtualFile().getChildren();
                 for (VirtualFile aChildren : children) {
                   FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                  processFile(filePath, context, parentStatus, recursively);
+                  processFile(filePath, context, parentStatus, recursively, client);
                 }
               }
             }
@@ -203,7 +204,7 @@ public class SvnChangeProvider implements ChangeProvider {
           VirtualFile[] children = virtualFile.getChildren();
           for (VirtualFile child : children) {
             FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-            processFile(filePath, context, parentStatus, recursively);
+            processFile(filePath, context, parentStatus, recursively, statusClient);
           }
         }
       }
@@ -377,15 +378,19 @@ public class SvnChangeProvider implements ChangeProvider {
     return FileStatus.NOT_CHANGED;
   }
 
-  private static void loadEntriesFile(final FilePath filePath) {
+  private void loadEntriesFile(final FilePath filePath) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myVcs.getProject().isDisposed()) {
+
+        }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            if (filePath.getParentPath() == null) {
+            final FilePath parentPath = filePath.getParentPath();
+            if (parentPath == null) {
               return;
             }
-            File svnSubdirectory = new File(filePath.getParentPath().getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
+            File svnSubdirectory = new File(parentPath.getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
             LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
             VirtualFile file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
             if (file != null) {
@@ -443,7 +448,7 @@ public class SvnChangeProvider implements ChangeProvider {
     private List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
     private Map<FilePath, String> myCopyFromURLs = null;
 
-    public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder) throws SVNException {
+    public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder) {
       myStatusClient = vcs.createStatusClient();
       myChangelistBuilder = changelistBuilder;
     }
