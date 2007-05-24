@@ -6,13 +6,13 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
+import net.sf.cglib.core.CodeGenerationException;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
 import net.sf.cglib.proxy.InvocationHandler;
-import net.sf.cglib.core.CodeGenerationException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -38,7 +38,7 @@ public class AdvancedProxy {
   }
 
 
-  private static final Map<ProxyDescription, Factory> ourFactories = new WeakValueHashMap<ProxyDescription, Factory>();
+  private static final Map<ProxyDescription, Factory> ourFactories = new ConcurrentWeakValueHashMap<ProxyDescription, Factory>();
 
   public static InvocationHandler getInvocationHandler(Object proxy) {
     return (InvocationHandler)((Factory) proxy).getCallback(0);
