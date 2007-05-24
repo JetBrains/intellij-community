@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -626,9 +627,10 @@ public class ChangesCacheFile {
         LOG.info("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
         return true;
       }
-      afterRevision.getFile().refresh();
       LOG.info("Checking file " + afterRevision.getFile().getPath());
-      VirtualFile file = afterRevision.getFile().getVirtualFile();
+      FilePath localPath = ChangesUtil.getLocalPath(myProject, afterRevision.getFile());
+      localPath.refresh();
+      VirtualFile file = localPath.getVirtualFile();
       if (file != null) {
         VcsRevisionNumber revision = currentRevisions.get(file);
         if (revision != null) {

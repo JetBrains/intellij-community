@@ -94,8 +94,23 @@ public class ChangesUtil {
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision != null && afterRevision != null && !beforeRevision.getFile().equals(afterRevision.getFile())) {
+      if (beforeRevision != null && afterRevision != null && !beforeRevision.getFile().equals(afterRevision.getFile()) &&
+          afterRevision.getFile().equals(filePath)) {
         filePath = beforeRevision.getFile();
+      }
+    }
+    return filePath;
+  }
+
+  public static FilePath getLocalPath(final Project project, FilePath filePath) {
+    // check if the file has just been renamed (IDEADEV-15494)
+    Change change = ChangeListManager.getInstance(project).getChange(filePath);
+    if (change != null) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision != null && afterRevision != null && !beforeRevision.getFile().equals(afterRevision.getFile()) &&
+          beforeRevision.getFile().equals(filePath)) {
+        filePath = afterRevision.getFile();
       }
     }
     return filePath;
