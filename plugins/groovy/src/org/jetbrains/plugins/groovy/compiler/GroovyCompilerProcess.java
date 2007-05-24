@@ -233,7 +233,7 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
     required.add("groovy");
     required.add("asm");
     required.add("antlr");
-//    required.add("junit");
+    required.add("junit");
   }
 
   private boolean required(String name)
