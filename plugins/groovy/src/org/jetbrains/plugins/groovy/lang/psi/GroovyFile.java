@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  * @author ven
  */
 public interface GroovyFile extends PsiFile, GroovyPsiElement {
+  String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
+  
   GrTypeDefinition[] getTypeDefinitions();
 
   GrTopLevelDefintion[] getTopLevelDefinitions();

@@ -90,7 +90,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       if (!ResolveUtil.processElement(processor, defintion)) return false;
     }
 
-    PsiClass scriptClass = getManager().findClass("groovy.lang.Script", getResolveScope());
+    PsiClass scriptClass = getManager().findClass(SCRIPT_BASE_CLASS_NAME, getResolveScope());
     if (scriptClass != null) {
       if (!scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
       if (!ResolveUtil.processDefaultMethods(scriptClass, processor)) return false;
