@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -28,17 +29,17 @@ public abstract class Change {
 
   public abstract void revertOn(RootEntry r);
 
-  public abstract boolean affects(Entry e);
-
-  public abstract boolean affectsOnlyInside(Entry e);
-
-  public void collectChangesInTheChain(List<Change> cc) {
-    if (isInTheChain(cc)) cc.add(this);
+  public boolean affects(Entry e) {
+    return affects(e.getIdPath());
   }
 
-  public boolean isInTheChain(List<Change> cc) {
+  protected abstract boolean affects(IdPath... pp);
+
+  public boolean affectsSameAs(List<Change> cc) {
     return false;
   }
+
+  public abstract boolean affectsOnlyInside(Entry e);
 
   public abstract boolean isCreationalFor(Entry e);
 

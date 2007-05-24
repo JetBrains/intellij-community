@@ -3,8 +3,8 @@ package com.intellij.localvcs.integration;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeFileContentChange;
-import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.changes.ChangeVisitor;
+import com.intellij.localvcs.core.changes.StructuralChange;
 import com.intellij.localvcs.integration.revert.ChangeRevertionVisitor;
 
 import java.io.IOException;
@@ -30,22 +30,11 @@ public class CheckpointImpl implements Checkpoint {
 
   private void doRevert(boolean revertLastChange) {
     try {
-      ChangeVisitor v = new GlobalChangesRevertionVisitor(myVcs, myGateway);
+      ChangeVisitor v = new ChangeRevertionVisitor(myVcs, myGateway);
       myVcs.accept(new SelectiveChangeVisitor(v, revertLastChange));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private class GlobalChangesRevertionVisitor extends ChangeRevertionVisitor {
-    public GlobalChangesRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
-      super(vcs, gw);
-    }
-
-    @Override
-    protected boolean shouldProcess(Change c) {
-      return !(c instanceof ChangeFileContentChange);
     }
   }
 
@@ -59,15 +48,16 @@ public class CheckpointImpl implements Checkpoint {
     }
 
     @Override
-    public void visit(ChangeSet c) {
-    }
-
-    @Override
-    public void visit(Change c) throws IOException, StopVisitingException {
+    public void visit(StructuralChange c) throws IOException, StopVisitingException {
       if (c == myLastChange) {
-        if (myRevertLastChange) c.accept(myVisitor);
+        if (myRevertLastChange) doVisit(c);
         stop();
       }
+      doVisit(c);
+    }
+
+    private void doVisit(StructuralChange c) throws IOException, StopVisitingException {
+      if (c instanceof ChangeFileContentChange) return;
       c.accept(myVisitor);
     }
   }

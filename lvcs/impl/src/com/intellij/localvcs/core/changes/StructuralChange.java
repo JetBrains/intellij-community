@@ -38,11 +38,7 @@ public abstract class StructuralChange extends Change {
   public abstract void revertOn(RootEntry r);
 
   @Override
-  public boolean affects(Entry e) {
-    return affects(e.getIdPath());
-  }
-
-  private boolean affects(IdPath... pp) {
+  protected boolean affects(IdPath... pp) {
     for (IdPath p1 : getAffectedIdPaths()) {
       for (IdPath p2 : pp) {
         if (p1.isChildOrParentOf(p2)) return true;
@@ -62,12 +58,9 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public boolean isInTheChain(List<Change> cc) {
+  public boolean affectsSameAs(List<Change> cc) {
     for (Change c : cc) {
-      if (!(c instanceof StructuralChange)) continue;
-      if (affects(((StructuralChange)c).getAffectedIdPaths())) {
-        return true;
-      }
+      if (c.affects(getAffectedIdPaths())) return true;
     }
     return false;
   }

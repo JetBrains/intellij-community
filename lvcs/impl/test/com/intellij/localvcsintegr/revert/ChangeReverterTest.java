@@ -191,6 +191,35 @@ public class ChangeReverterTest extends IntegrationTestCase {
     assertEquals(dir1, f.getParent());
   }
 
+  public void testRevertFullChangeSet() throws IOException {
+    getVcs().beginChangeSet();
+    VirtualFile f1 = root.createChildData(null, "f1.java");
+    root.createChildData(null, "f2.java");
+    getVcs().endChangeSet(null);
+
+    revertLastChange(f1);
+
+    assertNull(root.findChild("f1.java"));
+    assertNull(root.findChild("f2.java"));
+  }
+
+  public void testRevertFullSubsequentChangeSet() throws IOException {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    VirtualFile f1 = root.createChildData(null, "f1.java");
+
+    getVcs().beginChangeSet();
+    f1.move(null, dir);
+    dir.createChildData(null, "f2.java");
+    getVcs().endChangeSet(null);
+
+    revertChange(f1, 1);
+
+    assertNotNull(root.findChild("dir"));
+    assertNull(root.findChild("f1.java"));
+    assertNull(dir.findChild("f1.java"));
+    assertNull(dir.findChild("f2.java"));
+  }
+
   //public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
   //  VirtualFile f1 = root.createChildData(null, "f1.java");
   //  VirtualFile f2 = root.createChildData(null, "f2.java");
@@ -248,8 +277,8 @@ public class ChangeReverterTest extends IntegrationTestCase {
 
     revertChange(f, 1);
 
-    assertEquals(f, root.findChild("ff.java"));
-    assertNull(root.findChild("f.java"));
+    assertEquals(f, root.findChild("f.java"));
+    assertNull(root.findChild("ff.java"));
   }
 
   public void testChangeSetNameAfterRevert() throws IOException {

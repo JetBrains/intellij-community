@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.revert;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeSet;
+import com.intellij.localvcs.core.changes.StructuralChange;
 import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.IdeaGateway;
 
@@ -53,8 +54,6 @@ public class ChangeReverter extends Reverter {
     return Collections.emptyList();
   }
 
-  // todo refactor myChangeList.isInTheChain and test it
-
   @Override
   protected String formatCommandName() {
     String name = myChange.getName();
@@ -73,7 +72,7 @@ public class ChangeReverter extends Reverter {
       }
 
       @Override
-      protected boolean shouldProcess(Change c) {
+      protected boolean shouldProcess(StructuralChange c) {
         return myVcs.isInTheChain(myChange, c);
       }
     });

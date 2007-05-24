@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -71,9 +72,17 @@ public class ChangeSet extends Change {
   }
 
   @Override
-  public boolean affects(Entry e) {
+  protected boolean affects(IdPath... pp) {
     for (Change c : myChanges) {
-      if (c.affects(e)) return true;
+      if (c.affects(pp)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean affectsSameAs(List<Change> cc) {
+    for (Change c : myChanges) {
+      if (c.affectsSameAs(cc)) return true;
     }
     return false;
   }

@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -51,7 +52,8 @@ public class PutLabelChange extends Change {
   public void revertOn(RootEntry r) {
   }
 
-  public boolean affects(Entry e) {
+  @Override
+  public boolean affects(IdPath... pp) {
     return true;
   }
 

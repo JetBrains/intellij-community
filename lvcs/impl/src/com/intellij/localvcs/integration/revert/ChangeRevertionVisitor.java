@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public abstract class ChangeRevertionVisitor extends ChangeVisitor {
+public class ChangeRevertionVisitor extends ChangeVisitor {
   private RootEntry myRootEntry;
   private IdeaGateway myGateway;
 
@@ -103,7 +103,9 @@ public abstract class ChangeRevertionVisitor extends ChangeVisitor {
     }
   }
 
-  protected abstract boolean shouldProcess(Change c);
+  protected boolean shouldProcess(StructuralChange c) {
+    return true;
+  }
 
   protected Entry getAffectedEntry(StructuralChange c) {
     return getAffectedEntry(c, 0);
