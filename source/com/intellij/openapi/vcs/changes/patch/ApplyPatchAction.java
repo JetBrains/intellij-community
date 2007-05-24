@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -128,7 +129,8 @@ public class ApplyPatchAction extends AnAction {
         return false;
       }
       // security check to avoid overwriting system files with a patch
-      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch)) {
+      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch) && 
+          ProjectLevelVcsManager.getInstance(project).getVcsRootFor(fileToPatch) == null) {
         Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
                                  "Apply Patch");
         return false;
