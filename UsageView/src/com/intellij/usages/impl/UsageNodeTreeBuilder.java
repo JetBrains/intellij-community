@@ -19,6 +19,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -28,27 +29,21 @@ public class UsageNodeTreeBuilder {
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
-  public UsageNodeTreeBuilder(UsageGroupingRule[] groupingRules, UsageFilteringRule[] filteringRules, GroupNode root) {
+  public UsageNodeTreeBuilder(@NotNull UsageGroupingRule[] groupingRules, @NotNull UsageFilteringRule[] filteringRules, @NotNull GroupNode root) {
     myGroupingRules = groupingRules;
     myFilteringRules = filteringRules;
     myRoot = root;
   }
 
-  public void appendUsages(Usage[] usages) {
-    for (Usage usage : usages) {
-      appendUsage(usage);
-    }
-  }
-
-  public void setGroupingRules(UsageGroupingRule[] rules) {
+  public void setGroupingRules(@NotNull UsageGroupingRule[] rules) {
     myGroupingRules = rules;
   }
 
-  public void setFilteringRules(UsageFilteringRule[] rules) {
+  public void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
     myFilteringRules = rules;
   }
 
-  public synchronized UsageNode appendUsage(Usage usage) {
+  synchronized UsageNode appendUsage(Usage usage) {
     for (final UsageFilteringRule rule : myFilteringRules) {
       if (!rule.isVisible(usage)) {
         return null;

@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -54,13 +55,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
-  private MyUsagePresentation myUsagePresentation;
+  private final MyUsagePresentation myUsagePresentation;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
+    myUsagePresentation = ApplicationManager.getApplication().runReadAction(new Computable<MyUsagePresentation>() {
+      public MyUsagePresentation compute() {
         PsiElement element = getElement();
         PsiFile psiFile = element.getContainingFile();
         Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
@@ -88,7 +89,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
         myTooltipText = myUsageInfo.getTooltipText();
 
         initChunks();
-        myUsagePresentation = new MyUsagePresentation();
+        return new MyUsagePresentation();
       }
     });
   }
@@ -330,7 +331,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     }
   }
 
-  public ArrayList<UsageInfo> getSelectedInfoList() {
+  private ArrayList<UsageInfo> getSelectedInfoList() {
     ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
     UsageInfo first = getUsageInfo();
     list.add(first);

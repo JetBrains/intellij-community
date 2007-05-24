@@ -17,6 +17,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -31,7 +32,7 @@ abstract class Node extends DefaultMutableTreeNode {
   private boolean myExcluded = false;
   private String myText = null;
 
-  protected Node(DefaultTreeModel model) {
+  protected Node(@NotNull DefaultTreeModel model) {
     myTreeModel = model;
   }
 

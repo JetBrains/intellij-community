@@ -59,7 +59,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     public FileUsageGroup(Project project, VirtualFile file) {
       myProject = project;
       myFile = file;
-      myPresentableName = myFile.getPresentableName();
+      myPresentableName = myFile.getName();
       update();
     }
 
@@ -70,7 +70,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     public void update() {
       if (isValid()) {
         myIcon = getIconImpl();
-        myPresentableName = myFile.getPresentableName();
+        myPresentableName = myFile.getName();
       }
     }
 
