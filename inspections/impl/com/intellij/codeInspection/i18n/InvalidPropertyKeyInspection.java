@@ -132,7 +132,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String key = (String)value;
-
+      if (isComputablePropertyExpression(expression)) return;
       Ref<String> resourceBundleName = new Ref<String>();
       if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
@@ -162,6 +162,11 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
           }
         }
       }
+    }
+
+    private static boolean isComputablePropertyExpression(PsiExpression expression) {
+      while (expression != null && expression.getParent() instanceof PsiParenthesizedExpression) expression = (PsiExpression)expression.getParent();
+      return expression != null && expression.getParent() instanceof PsiExpression;
     }
 
     public List<ProblemDescriptor> getProblems() {
