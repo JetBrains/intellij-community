@@ -223,11 +223,16 @@ public class CompilerTask extends Task.Backgroundable {
   public void start(Runnable compileWork) {
     myCompileWork = compileWork;
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        queue();
-      }
-    }, ModalityState.NON_MODAL);
+    if (isHeadlessMode()) {
+      queue();
+    } else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          queue();
+        }
+      }, ModalityState.NON_MODAL);
+    }
+
   }
 
   public void stop() {

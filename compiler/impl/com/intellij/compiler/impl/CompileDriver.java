@@ -165,7 +165,7 @@ public class CompileDriver {
     });
 
 
-    return ExitStatus.UP_TO_DATE.equals(status);
+    return ExitStatus.UP_TO_DATE.equals(status.get());
   }
   
   public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies) {
