@@ -260,11 +260,8 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       return new PsiReference[] { new ElementReference((XmlElement)element, nameElement) };
     }
 
-    if (element instanceof XmlEntityRef) {
-      element = element.getLastChild();
-    }
-
-    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF) {
+    if (element instanceof XmlEntityRef ||
+        (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF)) {
       return new PsiReference[] { new EntityReference(element) };
     }
 
