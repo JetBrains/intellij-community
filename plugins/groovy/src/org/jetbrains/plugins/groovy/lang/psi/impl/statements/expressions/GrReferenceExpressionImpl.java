@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -124,35 +126,64 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (name == null) return null;
       ResolverProcessor processor = getResolveProcessor(refExpr, name, false);
 
-      resolveImpl(refExpr, qualifier, processor);
+      resolveImpl(refExpr, processor);
 
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0) return propertyCandidates;
       if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
         ResolverProcessor classProcessor = new ResolverProcessor(refExpr.getReferenceName(), EnumSet.of(ResolveKind.CLASS), refExpr, false);
-        resolveImpl(refExpr, qualifier, classProcessor);
+        resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
       }
 
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 
-    private void resolveImpl(GrReferenceExpressionImpl refExpr, GrExpression qualifier, ResolverProcessor processor) {
+    private void resolveImpl(GrReferenceExpressionImpl refExpr, ResolverProcessor processor) {
+      GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
       } else {
-        PsiType qualifierType = qualifier.getType();
-        if (qualifierType instanceof PsiClassType) {
-          PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
-          if (qualifierClass != null) {
-            qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
-            if (!(qualifierClass instanceof GrTypeDefinition)) {
-              ResolveUtil.processDefaultMethods(qualifierClass, processor);
-            }
+        processQualifierType(refExpr, processor, qualifier);
+      }
+    }
+
+    private void processQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
+      PsiType qualifierType = qualifier.getType();
+      if (qualifierType instanceof PsiClassType) {
+        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+        if (qualifierClass != null) {
+          qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+          if (!(qualifierClass instanceof GrTypeDefinition)) {
+            ResolveUtil.processDefaultMethods(qualifierClass, processor);
           }
         }
       }
     }
+  }
+
+  private static GrExpression getRuntimeQualifier(GrReferenceExpressionImpl refExpr) {
+    GrExpression qualifier = refExpr.getQualifierExpression();
+    if (qualifier == null) {
+      GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
+      while (closure != null) {
+        GrExpression funExpr = null;
+        PsiElement parent = closure.getParent();
+        if (parent instanceof GrApplicationExpression) {
+          funExpr = ((GrApplicationExpression) parent).getFunExpression();
+        } else if (parent instanceof GrMethodCall) {
+          funExpr = ((GrMethodCall) parent).getInvokedExpression();
+        }
+        if (funExpr instanceof GrReferenceExpression) {
+          qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
+          if (qualifier != null) break;
+        } else break;
+
+        closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
+      }
+    }
+
+    return qualifier;
   }
 
   private static ResolverProcessor getResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion) {
@@ -244,25 +275,31 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   private Object[] getVariantsImpl(ResolverProcessor processor) {
-    GrExpression qualifierExpression = getQualifierExpression();
-    if (qualifierExpression == null) {
+    GrExpression qualifier = getQualifierExpression();
+    if (qualifier == null) {
       ResolveUtil.treeWalkUp(this, processor);
+      qualifier = getRuntimeQualifier(this);
+      if (qualifier != null) getVariantsFromQualifier(processor, qualifier);
     } else {
-      PsiType qualifierType = qualifierExpression.getType();
-      if (qualifierType instanceof PsiClassType) {
-        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
-        if (qualifierClass != null) {
-          qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
-          if (!(qualifierClass instanceof GrTypeDefinition)) {
-            ResolveUtil.processDefaultMethods(qualifierClass, processor);
-          }
-        }
-      }
+      getVariantsFromQualifier(processor, qualifier);
     }
 
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     return ResolveUtil.mapToElements(candidates);
+  }
+
+  private void getVariantsFromQualifier(ResolverProcessor processor, GrExpression qualifier) {
+    PsiType qualifierType = qualifier.getType();
+    if (qualifierType instanceof PsiClassType) {
+      PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+      if (qualifierClass != null) {
+        qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+        if (!(qualifierClass instanceof GrTypeDefinition)) {
+          ResolveUtil.processDefaultMethods(qualifierClass, processor);
+        }
+      }
+    }
   }
 
   public boolean isSoft() {
