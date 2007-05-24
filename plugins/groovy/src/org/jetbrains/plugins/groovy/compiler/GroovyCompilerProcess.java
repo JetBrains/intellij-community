@@ -17,13 +17,9 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -37,9 +33,9 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -59,7 +55,7 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
   private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
   private static final String JAVA_EXE = "java";
-  private static final String GROOVY_LANG_JAR = "groovy-1.0.jar";
+  private static final String GROOVY_LANG_JAR = "embeddable/groovy-all-1.0.jar";
 
   private static final String GROOVY_LIB = "lib";
   private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
@@ -81,27 +77,40 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
 
       commandLine.addParameter("-cp");
 
-      String asmLibPath = PathManager.getLibPath() + File.separator + "asm.jar";
+//      String asmLibPath = PathManager.getLibPath() + File.separator + "asm.jar";
+//
+//      PluginId groovyPluginId = PluginManager.getPluginByClassName(getClass().getName());
+//      IdeaPluginDescriptor ideaGroovyPluginDescriptor = PluginManager.getPlugin(groovyPluginId);
+//
+//      assert ideaGroovyPluginDescriptor != null;
+//      String groovyPluginPath = ideaGroovyPluginDescriptor.getPath().getPath();
+//      assert groovyPluginPath != null;
 
-      PluginId groovyPluginId = PluginManager.getPluginByClassName(getClass().getName());
-      IdeaPluginDescriptor ideaGroovyPluginDescriptor = PluginManager.getPlugin(groovyPluginId);
-
-      assert ideaGroovyPluginDescriptor != null;
-      String groovyPluginPath = ideaGroovyPluginDescriptor.getPath().getPath();
-      assert groovyPluginPath != null;
-
-      String antlrLib = groovyPluginPath + File.separator + GROOVY_LIB + File.separator + antlrLibName;
-      String groovyLangJarPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "\\" + GROOVY_LANG_JAR;
+//      String antlrLib = groovyPluginPath + File.separator + GROOVY_LIB + File.separator + antlrLibName;
+//      String groovyLangJarPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "\\" + GROOVY_LANG_JAR;
 
       String myJarPath = PathUtil.getJarPathForClass(getClass());
-      final StringBuilder classPathBuilder = new StringBuilder().append(myJarPath).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(groovyLangJarPath).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(antlrLib).
-          append(CLASS_PATH_LIST_SEPARATOR).
-          append(asmLibPath).
-          append(CLASS_PATH_LIST_SEPARATOR);
+      final StringBuilder classPathBuilder = new StringBuilder();
+      classPathBuilder.append(myJarPath);
+      classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
+      
+      String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
+      libPath = libPath.replace(File.separatorChar, '/');
+      VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
+      for (VirtualFile file : lib.getChildren()) {
+        if (required(file.getName())) {
+          classPathBuilder.append(file.getPath());
+          classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
+        }
+      }
+//      classPathBuilder.append(myJarPath).
+//          append(CLASS_PATH_LIST_SEPARATOR).
+//          append(groovyLangJarPath).
+//          append(CLASS_PATH_LIST_SEPARATOR).
+//          append(antlrLib).
+//          append(CLASS_PATH_LIST_SEPARATOR).
+//          append(asmLibPath).
+//          append(CLASS_PATH_LIST_SEPARATOR);
 
 //      final Module key = entry.getKey();
 //
@@ -216,6 +225,30 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
         allCompiling.toArray(new VirtualFile[allCompiling.size()]);
 
     return new GroovyCompileExitStatus(compiledItems, toRecompile);
+  }
+
+
+  static HashSet<String> required = new HashSet<String>();
+  static {
+    required.add("groovy");
+    required.add("asm");
+    required.add("antlr");
+//    required.add("junit");
+  }
+
+  private boolean required(String name)
+  {
+    name = name.toLowerCase();
+    if (!name.endsWith(".jar"))
+      return false;
+
+    name = name.substring(0,name.indexOf('.'));
+    int ind = name.lastIndexOf('-');
+    if (ind!= -1 && name.length() > ind+1 && Character.isDigit(name.charAt(ind+1))) {
+      name = name.substring(0, ind);
+    }
+
+    return required.contains(name);
   }
 
   private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
