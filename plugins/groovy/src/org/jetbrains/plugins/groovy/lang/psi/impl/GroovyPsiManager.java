@@ -43,6 +43,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private Map<String, List<PsiMethod>> myDefaultMethods;
   private MessageBusConnection myRootConnection;
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
+  private static final String SWING_BUILDER_QNAME = "groovy.swing.SwingBuilder";
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -96,13 +97,104 @@ public class GroovyPsiManager implements ProjectComponent {
         String thisQName = resolved.getQualifiedName();
         LOG.assertTrue(thisQName != null);
         List<PsiMethod> hisMethods = myDefaultMethods.get(thisQName);
-        if (hisMethods== null) {
+        if (hisMethods == null) {
           hisMethods = new ArrayList<PsiMethod>();
           myDefaultMethods.put(thisQName, hisMethods);
         }
         hisMethods.add(convertToNonStatic(method));
       }
+
+      try {
+        addSwingBuilderMethods();
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
     }
+  }
+
+  private static final String[] SWING_WIDGETS_METHODS = {
+      "action", "groovy.swing.impl.DefaultAction",
+      "buttonGroup", "javax.swing.ButtonGroup",
+      "widget", "java.awt.Component",
+      "dialog", "javax.swing.JDialog",
+      "frame", "javax.swing.JFrame",
+      "fileChooser", "javax.swing.JFileChooser",
+      "optionPane", "javax.swing.JOptionPane",
+      "button", "javax.swing.JButton",
+      "checkBox", "javax.swing.JCheckBox",
+      "checkBoxMenuItem", "javax.swing.JCheckBoxMenuItem",
+      "colorChooser", "javax.swing.JColorChooser",
+      "comboBox", "javax.swing.JComboBox",
+      "desktopPane", "javax.swing.JDesktopPane",
+      "editorPane", "javax.swing.JEditorPane",
+      "formattedTextField", "javax.swing.JFormattedTextField",
+      "internalFrame", "javax.swing.JInternalFrame",
+      "label", "javax.swing.JLabel",
+      "layeredPane", "javax.swing.JLayeredPane",
+      "list", "javax.swing.JList",
+      "menu", "javax.swing.JMenu",
+      "menuBar", "javax.swing.JMenuBar",
+      "menuItem", "javax.swing.JMenuItem",
+      "panel", "javax.swing.JPanel",
+      "passwordField", "javax.swing.JPasswordField",
+      "popupMenum", "javax.swing.JPopupMenu",
+      "progressBar", "javax.swing.JProgressBar",
+      "radioButton", "javax.swing.JRadioButton",
+      "radioButtonMenuItem", "javax.swing.JRadioButtonMenuItem",
+      "scrollBar", "javax.swing.JScrollBar",
+      "scrollPane", "javax.swing.JScrollPane",
+      "separator", "javax.swing.JSeparator",
+      "slider", "javax.swing.JSlider",
+      "spinner", "javax.swing.JSpinner",
+      "splitPane", "javax.swing.JSplitPane",
+      "tabbededPane", "javax.swing.JTabbedPane",
+      "table", "javax.swing.JTable",
+      "textArea", "javax.swing.JTextArea",
+      "textPane", "javax.swing.JTextPane",
+      "textField", "javax.swing.JTextField",
+      "toggleButton", "javax.swing.JToggleButton",
+      "toolbar", "javax.swing.JToolbar",
+      "tree", "javax.swing.JTree",
+      "viewport", "javax.swing.JViewport",
+      "boundedRangeModel", "javax.swing.DefaultBoundedRangeModel",
+      "spinnerDateModel", "javax.swing.SpinnerDateModel",
+      "spinnerNumberModel", "javax.swing.SpinnerNumberModel",
+      "tableModel", "javax.swing.table.TableModel",
+      "propertyColumn", "javax.swing.table.TableColumn",
+      "closureColumn", "javax.swing.table.TableColumn",
+      "borderLayout", "java.awt.BorderLayout",
+      "cardLayout", "java.awt.CardLayout",
+      "flowLayout", "java.awt.FlowLayout",
+      "gridBagLayout", "java.awt.GridBagLayout",
+      "gridLayout", "java.awt.GridLayout",
+      "overlayLayout", "java.swing.OverlayLayout",
+      "springLayout", "java.swing.SpringLayout",
+      "gridBagConstraints", "java.awt.GridBagConstraints",
+      "gbc", "java.awt.GridBagConstraints",
+      "boxLayout", "javax.swing.BoxLayout",
+      "hbox", "javax.swing.Box",
+      "hglue", "java.awt.Component",
+      "hstrut", "java.awt.Component",
+      "vbox", "javax.swing.Box",
+      "vglue", "java.awt.Component",
+      "vstrut", "java.awt.Component",
+      "glue", "java.awt.Component",
+      "tableLayout", "groovy.swing.impl.TableLayoutRow",
+      "td", "groovy.swing.impl.TableLayoutCell",
+  };
+
+  private void addSwingBuilderMethods() throws IncorrectOperationException {
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    for (int i = 0; i < SWING_WIDGETS_METHODS.length / 2; i++) {
+      String methodName = SWING_WIDGETS_METHODS[2 * i];
+      String returnTypeText = SWING_WIDGETS_METHODS[2 * i + 1];
+      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      PsiClassType returnType = factory.createTypeByFQClassName(returnTypeText, scope);
+      methods.add(factory.createMethod(methodName, returnType));
+    }
+
+    myDefaultMethods.put(SWING_BUILDER_QNAME, methods);
   }
 
   private PsiMethod convertToNonStatic(PsiMethod method) {
