@@ -19,7 +19,11 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyLoader;
 
 /**
  * @author ven
@@ -29,6 +33,11 @@ public class DefaultGroovyMethod extends LightMethod {
 
   private PsiMethod myMethod;
   private PsiMethod myModifiedMethod;
+
+  @NotNull
+  public Language getLanguage() {
+    return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+  }
 
   public boolean isValid() {
     return true;
