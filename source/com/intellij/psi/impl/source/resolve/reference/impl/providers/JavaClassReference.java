@@ -61,9 +61,15 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   public void processVariants(final PsiScopeProcessor processor) {
-    if (processor instanceof CompletionProcessor && JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions()) != null) {
-      ((CompletionProcessor)processor).setCompletionElements(getVariants());
-      return;
+    if (processor instanceof CompletionProcessor) {
+      final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
+      if (options != null &&
+          (JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(options) != null ||
+          JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options) ||
+          JavaClassReferenceProvider.CONCRETE.getBooleanValue(options))) {
+        ((CompletionProcessor)processor).setCompletionElements(getVariants());
+        return;
+      }
     }
 
     PsiScopeProcessor processorToUse = processor;
