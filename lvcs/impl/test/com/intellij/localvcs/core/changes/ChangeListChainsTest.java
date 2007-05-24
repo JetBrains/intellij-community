@@ -29,6 +29,19 @@ public class ChangeListChainsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testChainedChangeSets() {
+    Change c1 = cs(new CreateFileChange(1, "f1", null, -1), new CreateFileChange(2, "f2", null, -1));
+    Change c2 = cs(new ChangeFileContentChange("f1", null, -1));
+    Change c3 = cs(new ChangeFileContentChange("f2", null, -1));
+
+    applyAndAdd(c1, c2, c3);
+
+    assertTrue(l.isInTheChain(c1, c2));
+    assertTrue(l.isInTheChain(c1, c2));
+    assertFalse(l.isInTheChain(c2, c3));
+  }
+
+  @Test
   public void testMovementChain() {
     Change c1 = new CreateDirectoryChange(1, "dir1");
     Change c2 = new CreateDirectoryChange(2, "dir2");

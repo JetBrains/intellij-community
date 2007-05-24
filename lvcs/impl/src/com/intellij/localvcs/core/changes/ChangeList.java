@@ -46,44 +46,16 @@ public class ChangeList {
     return beforeIndex < afterIndex || (canBeEqual && beforeIndex == afterIndex);
   }
 
-  public boolean isInTheChain(final Change before, final Change after) {
-    //final List<Change> cc = new ArrayList<Change>(after.getChanges());
-    //try {
-    //  accept(new ChangeVisitor() {
-    //    @Override
-    //    public void visit(StructuralChange c) throws IOException, StopVisitingException {
-    //      if (c == before) stop();
-    //      if (c == after) return;
-    //      if (c.affectsSameAs(cc)) cc.add(c);
-    //    }
-    //  });
-    //}
-    //catch (IOException e) {
-    //  throw new RuntimeException(e);
-    //}
-    //catch (ChangeVisitor.StopVisitingException e) {
-    //}
-    //return before.affectsSameAs(cc);
+  public boolean isInTheChain(Change before, Change after) {
     List<Change> cc = new ArrayList<Change>();
-    cc.add(before);
-    for (Change c : Reversed.list(getPlainChangesAfter(before))) {
+    for (Change c : myChanges) {
+      if (c == before) {
+        cc.add(c);
+        continue;
+      }
       if (c.affectsSameAs(cc)) cc.add(c);
     }
     return after.affectsSameAs(cc);
-  }
-
-  private List<Change> getPlainChangesAfter(Change target) {
-    List<Change> result = new ArrayList<Change>();
-
-    for (Change changeSet : Reversed.list(myChanges)) {
-      if (changeSet == target) return result;
-      //for (Change c : Reversed.list(changeSet.getChanges())) {
-      //  if (c == target) return result;
-      result.add(changeSet);
-      //}
-    }
-
-    return result;
   }
 
   public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
