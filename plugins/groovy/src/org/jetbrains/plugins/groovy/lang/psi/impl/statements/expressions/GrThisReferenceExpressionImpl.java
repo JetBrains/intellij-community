@@ -33,7 +33,7 @@ public class GrThisReferenceExpressionImpl extends GroovyPsiElementImpl implemen
     if (context instanceof GrTypeDefinition) {
       return getManager().getElementFactory().createType((PsiClass)context);
     } else if (context instanceof GroovyFile) {
-      PsiClass scriptClass = getManager().findClass(GroovyFile.SCRIPT_BASE_CLASS_NAME);
+      PsiClass scriptClass = getManager().findClass(GroovyFile.SCRIPT_BASE_CLASS_NAME, getResolveScope());
       if (scriptClass != null) {
         return getManager().getElementFactory().createType(scriptClass);
       }
