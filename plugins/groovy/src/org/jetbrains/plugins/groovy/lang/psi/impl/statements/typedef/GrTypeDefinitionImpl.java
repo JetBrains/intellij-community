@@ -390,7 +390,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiField findFieldByName(String name, boolean checkBases) {
-    return null;
+    if (!checkBases) {
+      for (GrField field : getFields()) {
+        if (name.equals(field.getName())) return field;
+      }
+
+      return null;
+    }
+
+    Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this);
+    return fieldsMap.get(name);
   }
 
   @Nullable
@@ -405,7 +414,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
-    return PsiMethod.EMPTY_ARRAY;
+    if (!checkBases) {
+      List<PsiMethod> result = new ArrayList<PsiMethod>();
+      for (GrMethod method : getMethods()) {
+        if (name.equals(method.getName())) result.add(method);
+      }
+
+      return result.toArray(new PsiMethod[result.size()]);
+    }
+
+    Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+    List<PsiMethod> list = methodsMap.get(name);
+    return list == null ? PsiMethod.EMPTY_ARRAY : list.toArray(new PsiMethod[list.size()]);
   }
 
   @NotNull
