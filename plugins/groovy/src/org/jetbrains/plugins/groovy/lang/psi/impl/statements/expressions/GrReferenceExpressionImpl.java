@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -205,11 +206,37 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public Object[] getVariants() {
 
     Object[] propertyVariants = getVariantsImpl(getResolveProcessor(this, null, true));
+    PsiElement parent = getParent();
+    if (parent instanceof GrArgumentList) {
+      GrExpression call = (GrExpression) parent.getParent();
+      PsiType type = call.getType();
+      if (type instanceof PsiClassType) {
+        PsiClass clazz = ((PsiClassType) type).resolve();
+        if (clazz != null) {
+          List<String> props = new ArrayList<String>();
+          for (PsiMethod method : clazz.getAllMethods()) {
+            if (PropertyUtil.isSimplePropertySetter(method)) {
+              String prop = PropertyUtil.getPropertyName(method);
+              if (prop != null) {
+                props.add(prop);
+              }
+            }
+          }
+
+          if (props.size() > 0) {
+            propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
+          }
+        }
+      }
+    }
+
+
     if (getKind() == Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ResolveKind.CLASS), this, true);
       GroovyResolveResult[] classVariants = classVariantsCollector.getCandidates();
       return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
     }
+
 
     return propertyVariants;
   }
