@@ -259,6 +259,15 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
     if (isXmlTag(child)) {
       result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent()));
+    } else if (child.getElementType() == XmlElementType.XML_DOCTYPE) {
+      result.add(
+        new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null) {
+          protected Wrap getDefaultWrap(final ASTNode node) {
+            final IElementType type = node.getElementType();
+            return type == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN ? Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false) : null;
+          }
+        }
+      );
     }
     else {
       result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null));

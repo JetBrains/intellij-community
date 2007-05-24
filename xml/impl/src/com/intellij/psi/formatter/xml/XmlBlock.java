@@ -74,18 +74,22 @@ public class XmlBlock extends AbstractXmlBlock {
       ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
-        if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-          child = processChild(result, child, null, null, getChildDefaultIndent());
-        }
-        if (child != null) {
-          LOG.assertTrue(child.getTreeParent() == myNode);
-          child = child.getTreeNext();
-        }
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        child = processChild(result, child, getDefaultWrap(child), null, getChildDefaultIndent());
       }
+      if (child != null) {
+        LOG.assertTrue(child.getTreeParent() == myNode);
+        child = child.getTreeNext();
+      }
+    }
       return result;
     } else {
       return EMPTY;
     }
+  }
+
+  protected @Nullable Wrap getDefaultWrap(ASTNode node) {
+    return null;
   }
 
   @Nullable
