@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -500,7 +501,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     if (element instanceof PsiVariable ||
         element instanceof XmlAttributeValue ||
-        element instanceof XmlTag) {
+        element instanceof XmlTag ||
+        element instanceof XmlElementDecl
+       ) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
 
@@ -511,7 +514,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
             ( refElement instanceof XmlAttributeValue &&
               (!(element instanceof XmlTag) ||
                refElement.getParent().getParent() == element)
-            )
+            ) ||
+            refElement instanceof XmlElementDecl
             )
         {
           writeRefs.add(ref);
@@ -580,7 +584,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return ((PsiVariable)element).getNameIdentifier();
     }
 
-    if (element.isPhysical() && element instanceof PsiNamedElement && element.getContainingFile() != null) {
+    if (element.isPhysical() &&
+        element instanceof PsiNamedElement &&
+        !(element instanceof XmlElementDecl) &&
+        element.getContainingFile() != null) {
       // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
       final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
       if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
