@@ -79,8 +79,6 @@ public class CompilerTask extends Task.Backgroundable {
     return myIsBackgroundMode;
   }
 
-  
-
   public ProgressIndicator getIndicator() {
     return myIndicator;
   }
@@ -439,6 +437,10 @@ public class CompilerTask extends Task.Backgroundable {
         myDialog = null;
       }
     }
+  }
+
+  public boolean isHeadless() {
+    return myHeadlessMode;
   }
 
   private boolean isHeadlessMode() {

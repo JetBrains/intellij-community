@@ -260,6 +260,11 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public void run(@NotNull final Task task) {
+    if (task.isHeadless()) {
+      task.run(new EmptyProgressIndicator());
+      return;
+    }
+
     if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal());
     } else {

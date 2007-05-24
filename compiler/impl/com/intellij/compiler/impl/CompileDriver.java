@@ -35,10 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
@@ -145,8 +142,9 @@ public class CompileDriver {
   public boolean isUpToDate(CompileScope scope) {
     scope = addAdditionalRoots(scope);
 
+    final CompilerTask task = new CompilerTask(myProject, true, "", true);
     final CompileContextImpl compileContext = new CompileContextImpl(
-      myProject, new CompilerTask(myProject, true, "", true), scope, new DependencyCache(myCachesDirectoryPath), this, true
+      myProject, task, scope, new DependencyCache(myCachesDirectoryPath), this, true
     );
 
     checkCachesVersion(compileContext);
@@ -158,7 +156,15 @@ public class CompileDriver {
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
     }
 
-    final ExitStatus status = doCompile(compileContext, false, false, false, getAllOutputDirectories(), true);
+    final Ref<ExitStatus> status = new Ref<ExitStatus>();
+
+    task.start(new Runnable() {
+      public void run() {
+        status.set(doCompile(compileContext, false, false, false, getAllOutputDirectories(), true));
+      }
+    });
+
+
     return ExitStatus.UP_TO_DATE.equals(status);
   }
   

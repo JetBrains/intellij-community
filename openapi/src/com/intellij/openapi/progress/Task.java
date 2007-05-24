@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +80,11 @@ public abstract class Task implements TaskInfo {
   public final Task setCancelText(final String cancelText) {
     myCancelText = cancelText;
     return this;
+  }
+
+
+  public boolean isHeadless() {
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public final Task setCancelTooltipText(final String cancelTooltipText) {
