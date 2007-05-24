@@ -18,18 +18,18 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -215,8 +215,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             if (reference == null) {
                 continue;
             }
-            final PsiElement referenceElement = reference.getElement();
-            final PsiElement referenceParent = referenceElement.getParent();
+            PsiElement referenceElement = reference.getElement();
+            PsiElement referenceParent = referenceElement.getParent();
+            if (referenceParent instanceof PsiMethodCallExpression) {
+                referenceElement = referenceParent;
+                referenceParent = referenceElement.getParent();
+            }
             final PsiElement referenceGrandParent =
                     referenceParent.getParent();
             if (referenceParent instanceof PsiExpressionList) {
@@ -301,6 +305,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     }
                     final PsiClassType classType = (PsiClassType) type;
                     final PsiClass aClass = classType.resolve();
+                    if (aClass == null) {
+                        return Collections.EMPTY_LIST;
+                    }
                     checkClass(weakestTypeClasses, aClass);
                 } else if (referenceElement.equals(rhs)) {
                     final PsiType type = lhs.getType();
@@ -309,8 +316,35 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     }
                     final PsiClassType classType = (PsiClassType) type;
                     final PsiClass aClass = classType.resolve();
+                    if (aClass == null) {
+                        return Collections.EMPTY_LIST;
+                    }
                     checkClass(weakestTypeClasses, aClass);
                 }
+            } else if (referenceParent instanceof PsiVariable) {
+                final PsiVariable variable = (PsiVariable)referenceParent;
+                final PsiType type = variable.getType();
+                if (!(type instanceof PsiClassType)) {
+                    return Collections.EMPTY_LIST;
+                }
+                final PsiClassType classType = (PsiClassType)type;
+                final PsiClass aClass = classType.resolve();
+                if (aClass == null) {
+                    return Collections.EMPTY_LIST;
+                }
+                checkClass(weakestTypeClasses, aClass);
+            } else if (referenceParent instanceof PsiForeachStatement) {
+                final PsiForeachStatement foreachStatement =
+                        (PsiForeachStatement)referenceParent;
+                if (foreachStatement.getIteratedValue() != referenceElement) {
+                    return Collections.EMPTY_LIST;
+                }
+                final PsiClass javaLangIterableClass =
+                        manager.findClass("java.lang.Iterable", scope);
+                if (javaLangIterableClass == null) {
+                    return Collections.EMPTY_LIST;
+                }
+                checkClass(weakestTypeClasses, javaLangIterableClass);
             }
             if (weakestTypeClasses.contains(variableClass)) {
                 return Collections.EMPTY_LIST;
@@ -356,8 +390,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return null;
     }
 
-    private static void checkClass(Set<PsiClass> weakestTypeClasses,
-                                   PsiClass aClass) {
+    private static void checkClass(
+            @NotNull Collection<PsiClass> weakestTypeClasses,
+            @NotNull PsiClass aClass) {
         boolean shouldAdd = true;
         for (Iterator<PsiClass> iterator =
                 weakestTypeClasses.iterator(); iterator.hasNext();) {
@@ -417,6 +452,29 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
         public void visitVariable(PsiVariable variable) {
             super.visitVariable(variable);
+            if (variable instanceof PsiParameter) {
+                final PsiParameter parameter = (PsiParameter)variable;
+                final PsiElement declarationScope =
+                        parameter.getDeclarationScope();
+                if (declarationScope instanceof PsiCatchSection) {
+                    // do not weaken cast block parameters
+                    return;
+                } else if (declarationScope instanceof PsiMethod) {
+                    final PsiMethod method = (PsiMethod)declarationScope;
+                    final Query<MethodSignatureBackedByPsiMethod> superSearch =
+                            SuperMethodsSearch.search(method, null, true, false);
+                    if (superSearch.findFirst() != null) {
+                        // do not try to weaken methods with super methods
+                        return;
+                    }
+                    final Query<PsiMethod> overridingSearch =
+                            OverridingMethodsSearch.search(method);
+                    if (superSearch.findFirst() != null) {
+                        // do not try to weaken methods with overriding methods.
+                        return;
+                    }
+                }
+            }
             if (isOnTheFly() && variable instanceof PsiField) {
                 // checking variables with greater visibiltiy is too expensive
                 // for error checking in the editor
