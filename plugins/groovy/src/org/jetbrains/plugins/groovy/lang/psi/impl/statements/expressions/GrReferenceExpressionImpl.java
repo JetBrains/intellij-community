@@ -226,6 +226,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (props.size() > 0) {
             propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
           }
+
+          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class); 
         }
       }
     }

@@ -58,7 +58,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @Nullable
   public PsiElement resolve() {
-    String setterName = PropertyUtil.suggestSetterName(getText());
+    String propName = getText();
+    String setterName = PropertyUtil.suggestSetterName(propName);
     PsiElement context = getParent().getParent();
     if (context instanceof GrArgumentList) {
       PsiType type = ((GrExpression) context.getParent()).getType();
@@ -67,6 +68,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         if (clazz != null) {
           PsiMethod[] byName = clazz.findMethodsByName(setterName, true);
           if (byName.length > 0) return byName[0];
+          return clazz.findFieldByName(propName, true);
         }
       }
     }
