@@ -14,6 +14,8 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
+import com.intellij.jsp.impl.TldDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +79,12 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       final PsiMetaDataBase metaData = xmlTag.getMetaData();
       key = (metaData!=null)?metaData.getName():null;
       isTag = xmlTag.getLocalName().equals(ELEMENT_ELEMENT_NAME);
+
+      if (metaData instanceof TldAttributeDescriptor ||
+          metaData instanceof TldDescriptor
+         ) {
+        key = null;
+      }
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();
