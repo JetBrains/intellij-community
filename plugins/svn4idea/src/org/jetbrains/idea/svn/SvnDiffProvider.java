@@ -41,6 +41,9 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), false, false);
+      if (svnStatus.getCommittedRevision().equals(SVNRevision.UNDEFINED) && svnStatus.isCopied()) {
+        return new SvnRevisionNumber(svnStatus.getCopyFromRevision());
+      }
       return new SvnRevisionNumber(svnStatus.getCommittedRevision());
     }
     catch (SVNException e) {
