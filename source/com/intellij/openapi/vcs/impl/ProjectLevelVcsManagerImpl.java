@@ -120,6 +120,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ATTRIBUTE_VCS = "vcs";
   @NonNls private static final String ATTRIBUTE_DEFAULT_PROJECT = "defaultProject";
   @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
@@ -410,7 +411,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private boolean fileMatchesMapping(final VirtualFile file, final String path, final VcsDirectoryMapping mapping) {
     if (mapping.getDirectory().length() == 0) {
-      return VfsUtil.getModuleForFile(myProject, file) != null;
+      final VirtualFile baseDir = myProject.getBaseDir();
+      return VfsUtil.getModuleForFile(myProject, file) != null || (baseDir != null && VfsUtil.isAncestor(baseDir, file, false));
     }
     return FileUtil.startsWith(path, mapping.getDirectory());
   }
@@ -513,7 +515,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           .getFileIndex();
         Module module = fileIndex.getModuleForFile(file);
         VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
-        if (module == null) return file.getPresentableUrl();
+        if (module == null || contentRoot == null) return file.getPresentableUrl();
         StringBuffer result = new StringBuffer();
         result.append("[");
         result.append(module.getName());
@@ -955,7 +957,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
       Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
       if (rootSettingsElement != null) {
-        String className = rootSettingsElement.getAttributeValue("class");
+        String className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS);
         AbstractVcs vcsInstance = findVcsByName(mapping.getVcs());
         if (vcsInstance != null && className != null) {
           try {
@@ -988,7 +990,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       final VcsRootSettings rootSettings = mapping.getRootSettings();
       if (rootSettings != null) {
         Element rootSettingsElement = new Element(ELEMENT_ROOT_SETTINGS);
-        rootSettingsElement.setAttribute("class", rootSettings.getClass().getName());
+        rootSettingsElement.setAttribute(ATTRIBUTE_CLASS, rootSettings.getClass().getName());
         try {
           rootSettings.writeExternal(rootSettingsElement);
           child.addContent(rootSettingsElement);
