@@ -7,7 +7,7 @@ package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
-import com.intellij.compiler.progress.CompilerProgressIndicator;
+import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,7 @@ import java.util.Set;
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
-  private final CompilerProgressIndicator myProgressIndicator;
+  private final CompilerTask myTask;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new HashMap<CompilerMessageCategory, Collection<CompilerMessage>>();
   private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
@@ -53,13 +53,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectCompileScope myProjectCompileScope;
 
   public CompileContextImpl(Project project,
-                            CompilerProgressIndicator indicator,
+                            CompilerTask indicator,
                             CompileScope compileScope,
                             DependencyCache dependencyCache,
                             CompileDriver compileDriver,
                             boolean isMake) {
     myProject = project;
-    myProgressIndicator = indicator;
+    myTask = indicator;
     myCompileScope = compileScope;
     myDependencyCache = dependencyCache;
     myCompileDriver = compileDriver;
@@ -123,7 +123,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myMessages.put(msg.getCategory(), messages);
     }
     if (messages.add(msg)) {
-      myProgressIndicator.addMessage(this, msg);
+      myTask.addMessage(this, msg);
     }
   }
 
@@ -166,7 +166,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public ProgressIndicator getProgressIndicator() {
-    return myProgressIndicator;
+    return myTask.getIndicator();
   }
 
   public void assignModule(VirtualFile root, Module module) {

@@ -18,6 +18,8 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -44,7 +46,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-public class CompilerProgressIndicator extends ProgressIndicatorBase {
+public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
@@ -62,22 +64,60 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  public CompilerProgressIndicator(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
+  private ProgressIndicator myIndicator;
+  private Runnable myCompileWork;
+
+  public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
+    super(project, contentName);
     myProject = project;
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
     myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
   }
 
+  public boolean shouldStartInBackground() {
+    return myIsBackgroundMode;
+  }
+
+  
+
+  public ProgressIndicator getIndicator() {
+    return myIndicator;
+  }
+
+  public void run(final ProgressIndicator indicator) {
+    myIndicator = indicator;
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myIsBackgroundMode) {
+          openMessageView();
+        } else {
+          if (myIndicator.isRunning()) {
+            synchronized (myMessageViewLock) {
+              // clear messages from the previous compilation
+              if (myErrorTreeView == null) {
+                // if message view != null, the contents has already been cleared
+                removeAllContents(myProject, null);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    myCompileWork.run();
+  }
+
   public void cancel() {
-    if (!isCanceled()) {
-      super.cancel();
+    if (!myIndicator.isCanceled()) {
+      myIndicator.cancel();
       closeUI();
     }
   }
 
   public void setText(String text) {
-    super.setText(text);
+    myIndicator.setText(text);
     updateProgressText();
   }
 
@@ -87,7 +127,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   public void setFraction(double fraction) {
-    super.setFraction(fraction);
+    myIndicator.setFraction(fraction);
     updateProgressText();
   }
 
@@ -182,36 +222,19 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     return 0;
   }
 
-  public void start() {
-    super.start();
-    if (isHeadlessMode()) {
-      return;
-    }
-    if (myIsBackgroundMode) {
-      openMessageView();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (isRunning()) {
-            synchronized (myMessageViewLock) {
-              // clear messages from the previous compilation
-              if (myErrorTreeView == null) {
-                // if message view != null, the contents has already been cleared
-                removeAllContents(myProject, null);
-              }
-            }
-            final CompilerProgressDialog dialog = openProgressDialog();
-            dialog.show();
-          }
-        }
-      }, ModalityState.NON_MODAL);
-    }
+  public void start(Runnable compileWork) {
+    myCompileWork = compileWork;
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        queue();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   public void stop() {
-    super.stop();
-    if (!isCanceled()) { // when cancelled the UI is already closed
+    myIndicator.stop();
+    if (!myIndicator.isCanceled()) { // when cancelled the UI is already closed
       closeUI();
     }
   }
@@ -231,15 +254,15 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
     private Runnable myRepaintRunnable = new Runnable() {
       public void run() {
-        String s = getText();
-        if (getFraction() > 0) {
-          s += " " + (int)(getFraction() * 100 + 0.5) + "%";
+        String s = myIndicator.getText();
+        if (myIndicator.getFraction() > 0) {
+          s += " " + (int)(myIndicator.getFraction() * 100 + 0.5) + "%";
         }
 
         synchronized (myMessageViewLock) {
           if (myIsBackgroundMode) {
             if (myErrorTreeView != null) {
-              myErrorTreeView.setProgressText(s);
+              //myErrorTreeView.setProgressText(s);
               myErrorTreeView.setProgressStatistics(myStatisticsText);
             }
           }
@@ -260,7 +283,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     activateMessageView();
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) { // when cancelled, openMessageView() may not create the view
-        myErrorTreeView.setProgressText(myDialog.getStatusText());
+        //myErrorTreeView.setProgressText(myDialog.getStatusText());
         myErrorTreeView.setProgressStatistics(myDialog.getStatistics());
       }
     }
@@ -277,7 +300,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     if (isHeadlessMode()) {
       return;
     }
-    if (isCanceled()) {
+    if (myIndicator.isCanceled()) {
       return;
     }
     synchronized (myMessageViewLock) {
@@ -291,7 +314,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         }
 
         public boolean isProcessStopped() {
-          return !isRunning();
+          return !myIndicator.isRunning();
         }
       });
     }
@@ -451,7 +474,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         cancel();
         return false; // cancel compiler and let it finish, after compilation close the project, but currently - veto closing
       }
-      return !isRunning();
+      return !myIndicator.isRunning();
     }
 
     public CloseListener(Content content, ContentManager contentManager) {
@@ -467,7 +490,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
           if (myErrorTreeView != null) {
             myErrorTreeView.dispose();
             myErrorTreeView = null;
-            if (isRunning()) {
+            if (myIndicator.isRunning()) {
               cancel();
             }
           }
@@ -481,7 +504,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
     public void contentRemoveQuery(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
-        if (!isCanceled() && shouldAskUser()) {
+        if (!myIndicator.isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
             myProject,
             CompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
@@ -500,7 +523,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       if (myUserAcceptedCancel) {
         return false; // do not ask second time if user already accepted closing
       }
-      return !myIsApplicationExitingOrProjectClosing && isRunning();
+      return !myIsApplicationExitingOrProjectClosing && myIndicator.isRunning();
     }
 
     public void projectOpened(Project project) {

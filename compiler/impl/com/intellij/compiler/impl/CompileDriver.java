@@ -11,7 +11,7 @@ import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
-import com.intellij.compiler.progress.CompilerProgressIndicator;
+import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -146,7 +146,7 @@ public class CompileDriver {
     scope = addAdditionalRoots(scope);
 
     final CompileContextImpl compileContext = new CompileContextImpl(
-      myProject, new CompilerProgressIndicator(myProject, true, "", true), scope, new DependencyCache(myCachesDirectoryPath), this, true
+      myProject, new CompilerTask(myProject, true, "", true), scope, new DependencyCache(myCachesDirectoryPath), this, true
     );
 
     checkCachesVersion(compileContext);
@@ -260,7 +260,7 @@ public class CompileDriver {
                        CompilerMessage message,
                        final boolean checkCachesVersion,
                        final boolean trackDependencies) {
-    final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
+    final CompilerTask indicator = new CompilerTask(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make"), false);
@@ -283,7 +283,7 @@ public class CompileDriver {
     final Runnable compileThread = new Runnable() {
       public void run() {
         synchronized (CompilerManager.getInstance(myProject)) {
-          ProgressManager.getInstance().runProcess(new Runnable() {
+          indicator.start(new Runnable() {
             public void run() {
               try {
                 if (LOG.isDebugEnabled()) {
@@ -297,7 +297,7 @@ public class CompileDriver {
                 }
               }
             }
-          }, compileContext.getProgressIndicator());
+          });
         }
       }
     };
@@ -1443,7 +1443,7 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
-    final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
+    final CompilerTask indicator = new CompilerTask(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
       contentName, false);
@@ -1493,10 +1493,10 @@ public class CompileDriver {
     }
     finally {
       WindowManager.getInstance().getStatusBar(myProject).setInfo("");
-      if (progressIndicator instanceof CompilerProgressIndicator) {
+      if (progressIndicator instanceof CompilerTask) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            ((CompilerProgressIndicator)progressIndicator).showCompilerContent();
+            ((CompilerTask)progressIndicator).showCompilerContent();
           }
         });
       }

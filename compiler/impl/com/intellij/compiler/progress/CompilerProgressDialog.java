@@ -25,12 +25,12 @@ public class CompilerProgressDialog extends DialogWrapper{
   private JButton myCancelButton = new JButton(CommonBundle.getCancelButtonText());
   private JButton myBackgroundButton = new JButton(CommonBundle.getBackgroundButtonText());
   private JPanel myFunPanel = new JPanel(new BorderLayout());
-  private CompilerProgressIndicator myProgressIndicator;
+  private CompilerTask myTask;
   private Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public CompilerProgressDialog(final CompilerProgressIndicator progressIndicator, Project project){
+  public CompilerProgressDialog(final CompilerTask task, Project project){
     super(project, false);
-    myProgressIndicator = progressIndicator;
+    myTask = task;
     setTitle(CompilerBundle.message("compile.progress.title"));
     init();
     setCrossClosesWindow(false);
@@ -39,12 +39,12 @@ public class CompilerProgressDialog extends DialogWrapper{
     if (cmp != null) {
       Runnable installer = new Runnable() {
         public void run() {
-          if (progressIndicator.isRunning() && !progressIndicator.isCanceled() && isShowing()) {
+          if (task.getIndicator().isRunning() && !task.getIndicator().isCanceled() && isShowing()) {
             setFunComponent(cmp);
           }
         }
       };
-      myInstallFunAlarm.addRequest(installer, 3000, progressIndicator.getModalityState());
+      myInstallFunAlarm.addRequest(installer, 3000, task.getIndicator().getModalityState());
     }
   }
 
@@ -116,7 +116,7 @@ public class CompilerProgressDialog extends DialogWrapper{
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           myCancelButton.setEnabled(false);
-          myProgressIndicator.cancel();
+          myTask.cancel();
         }
       }
     );
@@ -125,7 +125,7 @@ public class CompilerProgressDialog extends DialogWrapper{
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           myBackgroundButton.setEnabled(false);
-          myProgressIndicator.sendToBackground();
+          myTask.sendToBackground();
         }
       }
     );
@@ -139,7 +139,7 @@ public class CompilerProgressDialog extends DialogWrapper{
 
   public void doCancelAction() {
     myCancelButton.setEnabled(false);
-    myProgressIndicator.cancel();
+    myTask.cancel();
   }
 
   protected boolean isProgressDialog() {

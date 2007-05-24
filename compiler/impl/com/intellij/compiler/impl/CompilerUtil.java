@@ -4,7 +4,7 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.progress.CompilerProgressIndicator;
+import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -134,8 +134,8 @@ public class CompilerUtil {
       try {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         ModalityState modalityState;
-        if (progress instanceof CompilerProgressIndicator){
-          Window window = ((CompilerProgressIndicator)progress).getWindow();
+        if (progress instanceof CompilerTask){
+          Window window = ((CompilerTask)progress).getWindow();
           modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
         }
         else{
