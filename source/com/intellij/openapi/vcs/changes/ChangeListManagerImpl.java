@@ -353,6 +353,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                     else {
                       unversionedHolder.addFile(file);
                     }
+                    // if a file was previously marked as switched through recursion, remove it from switched list
+                    switchedHolder.removeFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
                 }

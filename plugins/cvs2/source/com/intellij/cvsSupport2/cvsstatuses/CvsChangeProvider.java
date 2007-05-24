@@ -4,6 +4,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
@@ -147,8 +148,15 @@ public class CvsChangeProvider implements ChangeProvider {
     if (parentDir == null || !fileIndex.isInContent(parentDir)) {
       return;
     }
-    final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
-    final String parentDirTag = CvsEntriesManager.getInstance().getCvsInfoFor(parentDir).getStickyTag();
+    final CvsInfo info = CvsEntriesManager.getInstance().getCvsInfoFor(dir);
+    if (info.getRepository() == null) {
+      // don't report unversioned directories as switched (IDEADEV-17178)
+      builder.processUnversionedFile(dir);
+      return;
+    }
+    final String dirTag = info.getStickyTag();
+    final CvsInfo parentInfo = CvsEntriesManager.getInstance().getCvsInfoFor(parentDir);
+    final String parentDirTag = parentInfo.getStickyTag();
     if (!Comparing.equal(dirTag, parentDirTag)) {
       if (dirTag == null) {
         builder.processSwitchedFile(dir, CvsUtil.HEAD, true);
