@@ -159,10 +159,18 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
   static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
     private PsiElement myElement;
+    private TextRange myRange;
     @NonNls private static final String ENTITY_DECLARATION_NAME = "ENTITY";
 
     EntityReference(PsiElement element) {
       myElement = element;
+      if (element instanceof XmlEntityRef) {
+        final PsiElement child = element.getLastChild();
+        final int startOffsetInParent = child.getStartOffsetInParent();
+        myRange = new TextRange(startOffsetInParent + 1, startOffsetInParent + child.getTextLength() - 1);
+      } else {
+        myRange = new TextRange(1,myElement.getTextLength()-1);
+      }
     }
 
     public PsiElement getElement() {
@@ -170,14 +178,14 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public TextRange getRangeInElement() {
-      return new TextRange(1,myElement.getTextLength()-1);
+      return myRange;
     }
 
     @Nullable
     public PsiElement resolve() {
       XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
         (XmlElement)myElement,
-        myElement.getText(),
+        myElement.getLastChild().getText(),
         myElement.getContainingFile()
       );
 
@@ -189,12 +197,11 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      final String s = myElement.getText();
-      return s.substring(1,s.length() - 1);
+      return myElement.getText().substring(myRange.getStartOffset(),myRange.getEndOffset());
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      final PsiElement elementAt = myElement.findElementAt(1);
+      final PsiElement elementAt = myElement.findElementAt(myRange.getStartOffset());
       return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(
         elementAt
       ).handleContentChange(elementAt, getRangeInElement(), newElementName);
@@ -220,7 +227,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       return new LocalQuickFix[] {
         new CheckDtdReferencesInspection.AddDtdDeclarationFix(
           "xml.dtd.create.entity.intention.name",
-          myElement.getText().charAt(0) == '%' ?
+          myElement.getText().charAt(myRange.getStartOffset() - 1) == '%' ?
           ENTITY_DECLARATION_NAME + " %":
           ENTITY_DECLARATION_NAME,
           this
