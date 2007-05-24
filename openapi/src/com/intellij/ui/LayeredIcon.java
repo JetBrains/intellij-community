@@ -116,4 +116,11 @@ public class LayeredIcon implements Icon {
     myXShift = -minX;
     myYShift = -minY;
   }
+
+  public static Icon create(final Icon backgroundIcon, final Icon foregroundIcon) {
+    final LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(backgroundIcon, 0);
+    layeredIcon.setIcon(foregroundIcon, 1);
+    return layeredIcon;
+  }
 }

@@ -4,7 +4,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -245,7 +245,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
       if (!passStatus.finished) {
         Icon progressIcon = passStatus.inProgressIcon;
         if (progressIcon != null) {
-          inProgressMask = inProgressMask == null ? progressIcon : IconUtilEx.createLayeredIcon(inProgressMask, progressIcon);
+          inProgressMask = inProgressMask == null ? progressIcon : LayeredIcon.create(inProgressMask, progressIcon);
         }
       }
     }
@@ -260,7 +260,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     }
 
     if (inProgressMask != null) {
-      icon = IconUtilEx.createLayeredIcon(icon, inProgressMask);
+      icon = LayeredIcon.create(icon, inProgressMask);
     }
     return icon;
   }

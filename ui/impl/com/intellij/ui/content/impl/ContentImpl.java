@@ -1,7 +1,6 @@
 
 package com.intellij.ui.content.impl;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.Disposer;
@@ -63,7 +62,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = IconUtilEx.createLayeredIcon(myIcon, IconLoader.getIcon("/nodes/tabPin.png"));
+    myLayeredIcon = LayeredIcon.create(myIcon, IconLoader.getIcon("/nodes/tabPin.png"));
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 

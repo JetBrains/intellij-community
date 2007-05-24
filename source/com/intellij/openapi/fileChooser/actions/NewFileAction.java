@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.fileChooser.actions;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -16,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.LayeredIcon;
 
 public class NewFileAction extends FileChooserDialogImpl.FileChooserAction {
   private final FileType myFileType;
@@ -23,7 +23,7 @@ public class NewFileAction extends FileChooserDialogImpl.FileChooserAction {
 
   public NewFileAction(FileSystemTree fileSystemTree, FileType fileType, String initialContent) {
     super(UIBundle.message("file.chooser.new.file.action.name"), UIBundle.message("file.chooser.new.file.action.description"),
-          IconUtilEx.createLayeredIcon(fileType.getIcon(), IconLoader.getIcon("/actions/new.png")), fileSystemTree, null);
+          LayeredIcon.create(fileType.getIcon(), IconLoader.getIcon("/actions/new.png")), fileSystemTree, null);
     myFileType = fileType;
     myInitialContent = initialContent;
     registerCustomShortcutSet(

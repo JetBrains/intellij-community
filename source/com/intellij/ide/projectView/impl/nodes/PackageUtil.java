@@ -33,7 +33,6 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.IconProvider;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -52,6 +51,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
+import com.intellij.ui.LayeredIcon;
 
 import javax.swing.*;
 import java.util.*;
@@ -376,7 +376,7 @@ public class PackageUtil {
       return originalIcon;
     }
     else {
-      return IconUtilEx.createLayeredIcon(originalIcon, Icons.LOCKED_ICON);
+      return LayeredIcon.create(originalIcon, Icons.LOCKED_ICON);
     }
   }
 
