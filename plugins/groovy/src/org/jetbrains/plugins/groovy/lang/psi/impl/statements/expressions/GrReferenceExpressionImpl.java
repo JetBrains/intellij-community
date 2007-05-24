@@ -143,6 +143,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
+        if (!processor.hasCandidates()) {
+          qualifier = getRuntimeQualifier(refExpr);
+          if (qualifier != null) {
+            processQualifierType(refExpr, processor, qualifier);
+          }
+        }
       } else {
         processQualifierType(refExpr, processor, qualifier);
       }

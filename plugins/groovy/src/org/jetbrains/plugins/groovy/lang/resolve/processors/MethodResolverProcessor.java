@@ -75,6 +75,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
         myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
   }
 
+  public boolean hasCandidates() {
+    return super.hasCandidates() || myInapplicableCandidates.size() > 0;
+  }
+
   private boolean isApplicable(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > myArgumentTypes.length) return false;

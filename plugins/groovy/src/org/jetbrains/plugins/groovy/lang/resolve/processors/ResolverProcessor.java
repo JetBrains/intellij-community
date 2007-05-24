@@ -98,4 +98,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.CLASS);
     return true;
   }
+
+  public boolean hasCandidates() {
+    return myCandidates.size() > 0;
+  }
 }
