@@ -9,8 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.projectImport.eclipse.action.EclipseProjectImporter;
+
+import javax.swing.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -57,10 +60,14 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
     }
 
     commitImport(projectToUpdate);
-  }
 
-  protected String getTitle() {
-    return IdeBundle.message("project.import.wizard.title", getName());
+    if ( isOpenProjectSettingsAfter()){
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ModulesConfigurator.showDialog(projectToUpdate, null, null, false);
+        }
+      });
+    }
   }
 
   private static void setProjectParameters(final Project project, final ProjectJdk jdk, final String compilerOutput) {
@@ -77,11 +84,19 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
     rootManager.setCompilerOutputUrl(EclipseProjectImporter.getUrl(compilerOutput));
   }
 
-  protected abstract AddModuleWizard.ExtraStepsCreator getStepsFactory(final Project currentProject, final boolean updateCurrent);
+  protected String getTitle() {
+    return IdeBundle.message("project.import.wizard.title", getName());
+  }
+
+  protected abstract AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent);
 
   protected boolean initImport(final Project currentProject, final Project dstProject) {
     return true;
   }
 
   protected abstract void commitImport(final Project project);
+
+  protected boolean isOpenProjectSettingsAfter() {
+    return false;
+  }
 }
