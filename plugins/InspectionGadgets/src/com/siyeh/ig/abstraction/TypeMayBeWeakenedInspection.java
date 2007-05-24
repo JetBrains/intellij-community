@@ -461,6 +461,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return;
                 } else if (declarationScope instanceof PsiMethod) {
                     final PsiMethod method = (PsiMethod)declarationScope;
+                    if (method.getContainingClass().isInterface()) {
+                        return;
+                    }
                     final Query<MethodSignatureBackedByPsiMethod> superSearch =
                             SuperMethodsSearch.search(method, null, true, false);
                     if (superSearch.findFirst() != null) {
@@ -469,7 +472,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     }
                     final Query<PsiMethod> overridingSearch =
                             OverridingMethodsSearch.search(method);
-                    if (superSearch.findFirst() != null) {
+                    if (overridingSearch.findFirst() != null) {
                         // do not try to weaken methods with overriding methods.
                         return;
                     }
@@ -513,9 +516,16 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 // for error checking in the editor
                 return;
             }
-            final Query<MethodSignatureBackedByPsiMethod> search =
+            final Query<MethodSignatureBackedByPsiMethod> superSearch =
                     SuperMethodsSearch.search(method, null, true, false);
-            if (search.findFirst() != null) {
+            if (superSearch.findFirst() != null) {
+                // do not try to weaken methods with super methods
+                return;
+            }
+            final Query<PsiMethod> overridingSearch =
+                    OverridingMethodsSearch.search(method);
+            if (overridingSearch.findFirst() != null) {
+                // do not try to weaken methods with overriding methods.
                 return;
             }
             final Collection<PsiClass> weakestClasses =
