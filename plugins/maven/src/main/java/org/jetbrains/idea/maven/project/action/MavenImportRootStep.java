@@ -1,11 +1,10 @@
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.idea.maven.project.ImporterPreferencesForm;
 import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
 import org.jetbrains.idea.maven.project.MavenImporterPreferences;
@@ -18,9 +17,7 @@ import java.io.File;
 /**
  * @author Vladislav.Kaznacheev
  */
-class MavenImportRootStep extends ModuleWizardStep {
-
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
+class MavenImportRootStep extends ProjectImportWizardStep {
 
   private final WizardContext myWizardContext;
   private final MavenImportProcessorContext myImportContext;
@@ -33,6 +30,7 @@ class MavenImportRootStep extends ModuleWizardStep {
   public MavenImportRootStep(WizardContext wizardContext,
                              final MavenImportProcessorContext importContext,
                              final MavenImporterPreferences importerPreferences) {
+    super(importContext.getUpdatedProject()!=null);
     myWizardContext = wizardContext;
     myImportContext = importContext;
     myImporterPreferences = importerPreferences;
@@ -97,9 +95,5 @@ class MavenImportRootStep extends ModuleWizardStep {
 
   public JComponent getPreferredFocusedComponent() {
     return myRootPathComponent.getPathComponent();
-  }
-
-  public Icon getIcon() {
-    return myImportContext.getUpdatedProject() != null ? ICON : NEW_PROJECT_ICON;
   }
 }
