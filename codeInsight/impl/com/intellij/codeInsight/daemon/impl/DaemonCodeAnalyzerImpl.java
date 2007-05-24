@@ -544,7 +544,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myDaemonListeners.canChangeFileSilently(file);
   }
 
-  public static void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+  public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.autoImportReferenceAtCursor(editor, file);
   }
 }

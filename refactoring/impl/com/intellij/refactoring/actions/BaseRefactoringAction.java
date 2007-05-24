@@ -1,5 +1,6 @@
 package com.intellij.refactoring.actions;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -9,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
-      DaemonCodeAnalyzerImpl.autoImportReferenceAtCursor(editor, file);
+      DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file);
       handler.invoke(project, editor, file, dataContext);
     }
     else {
