@@ -239,8 +239,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
 
     if (!label.isSelected()) {
-      bounds.y += 4;
+      bounds.y += 3;
     }
+
     bounds.width += 1;
 
     int arc = 2;

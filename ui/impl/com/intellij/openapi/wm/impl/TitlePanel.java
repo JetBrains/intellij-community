@@ -45,7 +45,7 @@ public final class TitlePanel extends JPanel {
 
   public final static Color ACTIVE_SIDE_BUTTON_BG = new Color(179, 197, 231);
   public final static Color INACTIVE_SIDE_BUTTON_BG = new Color(200, 200, 200);
-  public static final int STRUT = 2;
+  public static final int STRUT = 1;
 
   TitlePanel() {
     super(new BorderLayout());
