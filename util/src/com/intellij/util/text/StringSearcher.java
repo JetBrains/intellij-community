@@ -29,6 +29,7 @@ public class StringSearcher {
   private int[] mySearchTable = new int[128];
   private boolean myCaseSensitive = true;
   private boolean myForwardDirection = true;
+  private boolean myJavaIdentifier;
 
   public StringSearcher() {
   }
@@ -50,6 +51,11 @@ public class StringSearcher {
     myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
+    myJavaIdentifier = true;
+    if (pattern.length() > 0) {
+      myJavaIdentifier = Character.isJavaIdentifierPart(pattern.charAt(0)) &&
+                         Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
+    }
   }
   
   public void setCaseSensitive(boolean value){
@@ -60,6 +66,10 @@ public class StringSearcher {
 
   public boolean isCaseSensitive() {
     return myCaseSensitive;
+  }
+
+  public boolean isJavaIdentifier() {
+    return myJavaIdentifier;
   }
 
   public void setForwardDirection(boolean value) {

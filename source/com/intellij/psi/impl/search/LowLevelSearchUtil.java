@@ -138,7 +138,10 @@ public class LowLevelSearchUtil {
       //noinspection AssignmentToForLoopParameter
       index = searcher.scan(text, index, endOffset);
       if (index < 0) return -1;
-
+      if (!searcher.isJavaIdentifier()) {
+        return index;
+      }
+      
       if (index > startOffset) {
         char c = text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
