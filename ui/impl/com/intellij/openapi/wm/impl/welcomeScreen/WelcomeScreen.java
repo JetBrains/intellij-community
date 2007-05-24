@@ -77,7 +77,7 @@ public class WelcomeScreen {
   private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
   private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
   private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
-  private static final Icon IMPORT_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
+  private static final Icon IMPORT_ICON = IconLoader.getIcon("/general/importProjects.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
