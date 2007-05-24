@@ -104,9 +104,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   public boolean isValid() {
-    if (getElement() == null) return false;
+    if (getElement() == null) {
+      return false;
+    }
     for (RangeMarker rangeMarker : myRangeMarkers) {
-      if (!rangeMarker.isValid()) return false;
+      if (!rangeMarker.isValid()) {
+        return false;
+      }
     }
     return true;
   }

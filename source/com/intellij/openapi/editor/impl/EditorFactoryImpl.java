@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -69,12 +70,12 @@ public class EditorFactoryImpl extends EditorFactory {
   public void validateEditorsAreReleased(Project project) {
     for (Editor editor : myEditors) {
       if (editor.getProject() == project) {
-        fireEditorNoReleasedError(editor);
+        fireEditorNotReleasedError(editor);
       }
     }
   }
 
-  public static void fireEditorNoReleasedError(final Editor editor) {
+  private static void fireEditorNotReleasedError(final Editor editor) {
     final String creator = editor.getUserData(EDITOR_CREATOR);
     if (creator == null) {
       LOG.error("Editor for the document with class:" + editor.getClass().getName() +
@@ -130,6 +131,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   private Editor createEditor(@NotNull Document document, boolean isViewer, Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Document hostDocument = document instanceof DocumentRange ? ((DocumentRange)document).getDelegate() : document;
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project);
     myEditors.add(editor);

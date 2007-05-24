@@ -35,6 +35,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   private final UsageViewImpl myUsageView;
   private final Project myProject;
   private String myTitle;
+  private volatile boolean isDisposed = false;
 
   public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView, final Project project) {
     myUsageView = usageView;
@@ -68,6 +69,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
+      if (myEditor == null) return;
       myTitle = title;
       JComponent titleComp = new JLabel(myTitle);
       add(titleComp, BorderLayout.NORTH);
@@ -122,6 +124,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
   private static final Key<UsagePreviewPanel> PREVIEW_EDITOR_FLAG = Key.create("PREVIEW_EDITOR_FLAG");
   private Editor createEditor(final PsiFile psiFile, Document document) {
+    if (isDisposed) return null;
     Project project = psiFile.getProject();
 
     Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getFileType(), true);
@@ -138,6 +141,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   }
 
   public void dispose() {
+    isDisposed = true;
     releaseEditor();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
@@ -145,7 +149,6 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       }
     }
   }
-
 
   private void releaseEditor() {
     if (myEditor != null) {
