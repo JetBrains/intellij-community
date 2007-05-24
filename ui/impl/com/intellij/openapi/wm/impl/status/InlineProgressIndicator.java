@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.popup.IconButton;
@@ -73,9 +74,12 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
       final Font font = myProcessName.getFont();
-      int size = font.getSize() - 4;
-      if (size < 8) {
-        size = 8;
+
+      final boolean aqua = LafManager.getInstance().isUnderAquaLookAndFeel();
+
+      int size = font.getSize() - (aqua ? 4 : 2);
+      if (size < (aqua ? 8 : 10)) {
+        size = (aqua ? 8 : 10);
       }
       myProcessName.setFont(font.deriveFont(Font.PLAIN, size));
       myProcessName.setForeground(UIManager.getColor("Panel.background").brighter().brighter());
