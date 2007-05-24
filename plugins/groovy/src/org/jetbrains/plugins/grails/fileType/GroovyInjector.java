@@ -37,40 +37,7 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector {
   }
 
   public void initComponent() {
-    PsiManager.getInstance(project).registerLanguageInjector(new LanguageInjector() {
-      public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-        if (!(host.getLanguage() instanceof XMLLanguage))
-          return;
-
-        VirtualFile virtualFile = PsiUtil.getVirtualFile(host);
-        if (virtualFile == null || !virtualFile.getName().toLowerCase().endsWith(".gsp"))
-          return;
-
-        String value = null;
-        if (host instanceof XmlAttributeValue) {
-          XmlAttributeValue attr = (XmlAttributeValue) host;
-          value = attr.getValue();
-        }
-//        else
-//        if (host instanceof XmlText)
-//        {
-//          XmlText xmlText = (XmlText) host;
-//          value = xmlText.getText();
-//        }
-
-        if (value != null) {
-          int start = value.indexOf("${");
-          if (start == -1)
-            return;
-
-          int end = value.indexOf("}", start + 2);
-          if (end == -1)
-            return;
-
-          injectionPlacesRegistrar.addPlace(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new TextRange(start + 2, end), "", ";");
-        }
-      }
-    });
+    //PsiManager.getInstance(project).registerLanguageInjector(new MyLanguageInjector());
   }
 
   public void disposeComponent() {
@@ -90,5 +57,40 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector {
   }
 
   public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+  }
+
+  private static class MyLanguageInjector implements LanguageInjector {
+    public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+      if (!(host.getLanguage() instanceof XMLLanguage))
+        return;
+
+      VirtualFile virtualFile = PsiUtil.getVirtualFile(host);
+      if (virtualFile == null || !virtualFile.getName().toLowerCase().endsWith(".gsp"))
+        return;
+
+      String value = null;
+      if (host instanceof XmlAttributeValue) {
+        XmlAttributeValue attr = (XmlAttributeValue) host;
+        value = attr.getValue();
+      }
+//        else
+//        if (host instanceof XmlText)
+//        {
+//          XmlText xmlText = (XmlText) host;
+//          value = xmlText.getText();
+//        }
+
+      if (value != null) {
+        int start = value.indexOf("${");
+        if (start == -1)
+          return;
+
+        int end = value.indexOf("}", start + 2);
+        if (end == -1)
+          return;
+
+        injectionPlacesRegistrar.addPlace(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new TextRange(start + 2, end), "", ";");
+      }
+    }
   }
 }
