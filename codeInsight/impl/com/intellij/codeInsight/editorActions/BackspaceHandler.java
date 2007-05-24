@@ -10,10 +10,12 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.tree.IElementType;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
@@ -52,6 +54,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
                         file instanceof PsiJavaFile &&
                         ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
                         && BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offset, editor);
+
+    HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    boolean wasClosingQuote = quoteHandler.isClosingQuote(hiterator, offset);
+
     myOriginalHandler.execute(editor, dataContext);
 
     if (offset >= editor.getDocument().getTextLength()) return true;
@@ -89,16 +95,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     else if (c == '"' || c == '\''){
       char c1 = chars.charAt(offset);
       if (c1 != c) return true;
+      if (wasClosingQuote) return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       if (!quoteHandler.isOpeningQuote(iterator,offset)) return true;
-
-      if (file instanceof PsiJavaFile) {
-        // TODO: does this mean == quoteHandler.isClosingQuote(....)
-        char lastChar = chars.charAt(iterator.getEnd() - 1);
-        boolean isClosed = iterator.getEnd() - iterator.getStart() > 1 && lastChar == c;
-        if (isClosed) return true;
-      }
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
