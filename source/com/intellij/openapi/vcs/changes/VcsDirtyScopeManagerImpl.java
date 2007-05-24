@@ -75,6 +75,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void markEverythingDirty() {
     if (!myIsInitialized || myIsDisposed || myProject.isDisposed()) return;
 
+    synchronized(myScopes) {
+      // avoid having leftover scopes or invalid roots in scopes after a directory mapping change (IDEADEV-17166)
+      myScopes.clear();
+    }
     final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
     for(AbstractVcs vcs: abstractVcses) {
       VcsDirtyScopeImpl scope = getScope(vcs);
