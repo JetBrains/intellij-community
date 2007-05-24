@@ -54,13 +54,7 @@ public class ChangeList {
     return after.isInTheChain(cc);
   }
 
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
-    for (Change change : Reversed.list(myChanges)) {
-      change.accept(v);
-    }
-  }
-
-  public List<Change> getPlainChangesAfter(Change target) {
+  private List<Change> getPlainChangesAfter(Change target) {
     List<Change> result = new ArrayList<Change>();
 
     for (Change changeSet : Reversed.list(myChanges)) {
@@ -72,6 +66,12 @@ public class ChangeList {
     }
 
     return result;
+  }
+
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+    for (Change change : Reversed.list(myChanges)) {
+      change.accept(v);
+    }
   }
 
   public List<Change> getChangesFor(RootEntry r, String path) {

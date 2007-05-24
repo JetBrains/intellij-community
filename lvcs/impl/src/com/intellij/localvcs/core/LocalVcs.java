@@ -191,18 +191,6 @@ public class LocalVcs implements ILocalVcs {
     return myLastChange;
   }
 
-  public List<Change> getPlainChangesAfter(Change target) {
-    List<Change> result = new ArrayList<Change>();
-
-    for (Change c : Reversed.list(myPendingChanges)) {
-      if (c == target) return result;
-      result.add(c);
-    }
-    result.addAll(myChangeList.getPlainChangesAfter(target));
-
-    return result;
-  }
-
   public boolean isBefore(Change before, Change after, boolean canBeEqual) {
     return myChangeList.isBefore(before, after, canBeEqual);
   }

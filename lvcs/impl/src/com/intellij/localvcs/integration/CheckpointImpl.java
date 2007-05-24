@@ -2,10 +2,12 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.Change;
+import com.intellij.localvcs.core.changes.ChangeFileContentChange;
+import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.changes.ChangeVisitor;
-import com.intellij.localvcs.integration.revert.GlobalChangesRevertionVisitor;
+import com.intellij.localvcs.integration.revert.ChangeRevertionVisitor;
 
-import java.util.List;
+import java.io.IOException;
 
 public class CheckpointImpl implements Checkpoint {
   private Change myLastChange;
@@ -28,16 +30,45 @@ public class CheckpointImpl implements Checkpoint {
 
   private void doRevert(boolean revertLastChange) {
     try {
-      List<Change> cc = myVcs.getPlainChangesAfter(myLastChange);
-
       ChangeVisitor v = new GlobalChangesRevertionVisitor(myVcs, myGateway);
-      for (Change c : cc) c.accept(v);
-
-      if (revertLastChange) myLastChange.accept(v);
-
+      myVcs.accept(new SelectiveChangeVisitor(v, revertLastChange));
     }
-    catch (Exception e) {
+    catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private class GlobalChangesRevertionVisitor extends ChangeRevertionVisitor {
+    public GlobalChangesRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
+      super(vcs, gw);
+    }
+
+    @Override
+    protected boolean shouldProcess(Change c) {
+      return !(c instanceof ChangeFileContentChange);
+    }
+  }
+
+  private class SelectiveChangeVisitor extends ChangeVisitor {
+    private ChangeVisitor myVisitor;
+    private boolean myRevertLastChange;
+
+    public SelectiveChangeVisitor(ChangeVisitor v, boolean revertLastChange) {
+      myVisitor = v;
+      myRevertLastChange = revertLastChange;
+    }
+
+    @Override
+    public void visit(ChangeSet c) {
+    }
+
+    @Override
+    public void visit(Change c) throws IOException, StopVisitingException {
+      if (c == myLastChange) {
+        if (myRevertLastChange) c.accept(myVisitor);
+        stop();
+      }
+      c.accept(myVisitor);
     }
   }
 }

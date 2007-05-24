@@ -1,5 +1,8 @@
 package com.intellij.localvcs.core;
 
+import com.intellij.localvcs.core.changes.CreateFileChange;
+import com.intellij.localvcs.core.changes.DeleteChange;
+import com.intellij.localvcs.core.changes.RenameChange;
 import com.intellij.localvcs.core.storage.UnavailableContent;
 import com.intellij.localvcs.core.tree.Entry;
 import org.junit.Test;
@@ -190,5 +193,23 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createFile("c:/dir/root/file", null, -1);
 
     assertTrue(vcs.hasEntry("c:/dir/root/file"));
+  }
+
+  @Test
+  public void testLastChange() {
+    vcs.createFile("f", null, -1);
+    assertEquals(CreateFileChange.class, vcs.getLastChange().getClass());
+
+    vcs.beginChangeSet();
+    assertEquals(CreateFileChange.class, vcs.getLastChange().getClass());
+
+    vcs.rename("f", "f2");
+    assertEquals(RenameChange.class, vcs.getLastChange().getClass());
+
+    vcs.endChangeSet(null);
+    assertEquals(RenameChange.class, vcs.getLastChange().getClass());
+
+    vcs.delete("f2");
+    assertEquals(DeleteChange.class, vcs.getLastChange().getClass());
   }
 }
