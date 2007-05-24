@@ -1,6 +1,9 @@
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -10,10 +13,12 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.io.File;
 import java.util.Map;
 
 @State(
@@ -24,7 +29,7 @@ import java.util.Map;
       file = "$APP_CONFIG$/ui.lnf.xml"
     )}
 )
-public class UISettings implements PersistentStateComponent<UISettings> {
+public class UISettings implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
   private EventListenerList myListenerList;
 
   @Property(filter = FontFilter.class)
@@ -55,7 +60,7 @@ public class UISettings implements PersistentStateComponent<UISettings> {
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
-  public float ALPHA_MODE_RATIO = .5f;
+  public float ALPHA_MODE_RATIO = 0.5f;
   public int MAX_CLIPBOARD_CONTENTS = 5;
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
 
@@ -141,11 +146,8 @@ public class UISettings implements PersistentStateComponent<UISettings> {
 
   private static boolean hasDefaultFontSetting(final UISettings settings) {
     Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-    if(SystemInfo.isWindows && font!=null && settings.FONT_FACE.equals(font.getName()) && settings.FONT_SIZE==font.getSize()){
-      return true;
-    }
+    return SystemInfo.isWindows && font != null && settings.FONT_FACE.equals(font.getName()) && settings.FONT_SIZE == font.getSize();
 
-    return false;
   }
 
   public UISettings getState() {
@@ -169,7 +171,7 @@ public class UISettings implements PersistentStateComponent<UISettings> {
     if(ALPHA_MODE_DELAY<0){
       ALPHA_MODE_DELAY=1500;
     }
-    if(ALPHA_MODE_RATIO<.0f||ALPHA_MODE_RATIO>1.0f){
+    if(ALPHA_MODE_RATIO< 0.0f ||ALPHA_MODE_RATIO>1.0f){
       ALPHA_MODE_RATIO=0.5f;
     }
 
@@ -212,8 +214,7 @@ public class UISettings implements PersistentStateComponent<UISettings> {
     public boolean accepts(Accessor accessor, Object bean) {
       UISettings settings = (UISettings)bean;
 
-      if (hasDefaultFontSetting(settings)) return false;
-      return true;
+      return !hasDefaultFontSetting(settings);
     }
 
   }
@@ -226,7 +227,7 @@ public class UISettings implements PersistentStateComponent<UISettings> {
     if(uiSettings.ANTIALIASING_IN_EDITOR) {
       Toolkit tk = Toolkit.getDefaultToolkit();
       //noinspection HardCodedStringLiteral
-      Map map = (Map)(tk.getDesktopProperty("awt.font.desktophints"));
+      Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
       if (map != null) {
         g2d.addRenderingHints(map);
       }
@@ -237,5 +238,29 @@ public class UISettings implements PersistentStateComponent<UISettings> {
     else {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
+  }
+
+  @NotNull
+  public File[] getExportFiles() {
+    return new File[]{PathManager.getOptionsFile("ui.lnf")};
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return IdeBundle.message("ui.settings");
+  }
+
+  @NonNls
+  @NotNull
+  public String getComponentName() {
+    return "UISettings";
+  }
+
+  public void initComponent() {
+
+  }
+
+  public void disposeComponent() {
+
   }
 }

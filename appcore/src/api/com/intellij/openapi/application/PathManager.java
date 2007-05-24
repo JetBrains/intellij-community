@@ -251,7 +251,7 @@ public class PathManager {
   }
 
   @NonNls
-  public static File getOptionsFile(String fileName) {
+  public static File getOptionsFile(@NonNls String fileName) {
     return new File(getOptionsPath()+File.separatorChar+fileName+".xml");
   }
 
