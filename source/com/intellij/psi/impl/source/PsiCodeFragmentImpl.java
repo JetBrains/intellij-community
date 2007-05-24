@@ -39,6 +39,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
   private GlobalSearchScope myResolveScope;
+  private IntentionActionsFilter myIntentionActionsFilter;
 
   public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
@@ -258,6 +259,14 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
 
   public ExceptionHandler getExceptionHandler() {
     return myExceptionHandler;
+  }
+
+  public void setIntentionActionsFilter(final IntentionActionsFilter filter) {
+    myIntentionActionsFilter = filter;
+  }
+
+  public IntentionActionsFilter getIntentionActionsFilter() {
+    return myIntentionActionsFilter;
   }
 
   public void forceResolveScope(GlobalSearchScope scope) {

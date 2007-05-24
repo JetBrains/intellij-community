@@ -32,7 +32,9 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
       if (parent.getParent() instanceof PsiReferenceParameterList) return true;
 
       while (parent.getParent() instanceof PsiTypeElement) parent = parent.getParent();
-      if (parent.getParent() instanceof PsiVariable || parent.getParent() instanceof PsiMethod ||
+      if (parent.getParent() instanceof PsiCodeFragment ||
+          parent.getParent() instanceof PsiVariable ||
+          parent.getParent() instanceof PsiMethod ||
           parent.getParent() instanceof PsiClassObjectAccessExpression ||
           parent.getParent() instanceof PsiTypeCastExpression ||
           (parent.getParent() instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent.getParent()).getCheckType() == parent)) {

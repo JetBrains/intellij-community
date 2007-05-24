@@ -17,15 +17,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -38,6 +39,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -217,21 +219,23 @@ public class CreateFromUsageUtils {
     }
   }
 
+  @Nullable
   public static PsiClass createClass(
     final PsiJavaCodeReferenceElement referenceElement,
     final CreateClassKind classKind,
     final String superClassName) {
     final String name = referenceElement.getReferenceName();
 
+    final PsiElement qualifierElement;
     if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement) referenceElement.getQualifier();
-      final PsiElement psiElement = qualifier.resolve();
-      if (psiElement instanceof PsiClass) {
+      qualifierElement = qualifier == null? null : qualifier.resolve();
+      if (qualifierElement instanceof PsiClass) {
         return ApplicationManager.getApplication().runWriteAction(
           new Computable<PsiClass>() {
             public PsiClass compute() {
               try {
-                PsiClass psiClass = (PsiClass) psiElement;
+                PsiClass psiClass = (PsiClass) qualifierElement;
                 if (!CodeInsightUtil.preparePsiElementForWrite(psiClass)) return null;
 
                 PsiManager manager = psiClass.getManager();
@@ -250,28 +254,32 @@ public class CreateFromUsageUtils {
           });
       }
     }
-
-    final PsiFile sourceFile = referenceElement.getContainingFile();
-    PsiDirectory sourceDir = sourceFile.getContainingDirectory();
+    else {
+      qualifierElement = null;
+    }
 
     final PsiManager manager = referenceElement.getManager();
-
-    PsiDirectory targetDirectory = null;
+    final PsiFile sourceFile = referenceElement.getContainingFile();
+    final Module module = ModuleUtil.findModuleForPsiElement(sourceFile);
+    final PsiPackage aPackage = qualifierElement instanceof PsiPackage? ((PsiPackage)qualifierElement) :
+                                sourceFile.getContainingDirectory() != null? sourceFile.getContainingDirectory().getPackage() :
+                                manager.findPackage("");
+    if (aPackage == null) return null;
+    final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = QuickFixBundle.message("create.class.title",
-                                            StringUtil.capitalize(classKind.getDescription()));
-      PsiPackage aPackage = sourceDir.getPackage();
-      CreateClassDialog dialog = new CreateClassDialog(project, title, name,
-                                                       aPackage != null ? aPackage.getQualifiedName() : "",
-                                                       classKind, false, ModuleUtil.findModuleForPsiElement(sourceFile));
+      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescription()));
+
+      CreateClassDialog dialog = new CreateClassDialog(project, title, name, aPackage.getQualifiedName(), classKind, false, module);
       dialog.show();
       if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
       targetDirectory = dialog.getTargetDirectory();
       if (targetDirectory == null) return null;
     }
-
+    else {
+      targetDirectory = null;
+    }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
   }
 

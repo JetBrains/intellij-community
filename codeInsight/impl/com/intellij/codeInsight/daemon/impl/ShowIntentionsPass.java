@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -120,11 +121,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return;
     }
 
-    if (!(myFile instanceof PsiCodeFragment)) {
-      TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-      if (state == null || state.isFinished()) {
-        showIntentionActions();
-      }
+    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+    if (state == null || state.isFinished()) {
+      showIntentionActions();
     }
   }
 
@@ -141,6 +140,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myIntentionActions, myPassIdToShowIntentionsFor);
+    if (myFile instanceof PsiCodeFragment) {
+      final PsiCodeFragment.IntentionActionsFilter actionsFilter = ((PsiCodeFragment)myFile).getIntentionActionsFilter();
+      if (actionsFilter == null) return;
+      if (actionsFilter != PsiCodeFragment.IntentionActionsFilter.EVERYTHING_AVAILABLE) {
+        filterIntentionActions(actionsFilter, intentionsToShow);
+        filterIntentionActions(actionsFilter, errorFixesToShow);
+        filterIntentionActions(actionsFilter, inspectionFixesToShow);
+      }
+    }
 
     if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
       boolean showBulb = false;
@@ -175,6 +183,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
     }
+  }
+
+  private static void filterIntentionActions(final PsiCodeFragment.IntentionActionsFilter actionsFilter, final List<HighlightInfo.IntentionActionDescriptor> intentionActionDescriptors) {
+    for (Iterator<HighlightInfo.IntentionActionDescriptor> it = intentionActionDescriptors.iterator(); it.hasNext();) {
+        HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
+        if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
+      }
   }
 
   public static void getActionsToShow(final Editor editor, final PsiFile psiFile,
