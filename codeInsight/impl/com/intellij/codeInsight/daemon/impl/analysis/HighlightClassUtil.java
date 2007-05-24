@@ -118,7 +118,7 @@ public class HighlightClassUtil {
                                                  HighlightUtil.formatMethod(abstractMethod),
                                                  HighlightUtil.formatClass(abstractMethod.getContainingClass()));
 
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       textRange,
                                                       message);
@@ -171,7 +171,7 @@ public class HighlightClassUtil {
     }
     if (dupFileName == null) return null;
     String message = JavaErrorMessages.message("duplicate.class.in.other.file", dupFileName);
-    TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+    TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
 
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
   }
@@ -213,7 +213,7 @@ public class HighlightClassUtil {
 
     if (duplicateFound) {
       String message = JavaErrorMessages.message("duplicate.class", name);
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
     }
     return null;
@@ -363,7 +363,7 @@ public class HighlightClassUtil {
     }
     TextRange textRange = context == null ? null : context.getTextRange();
     if (textRange == null) {
-      textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     }
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, STATIC_DECLARATION_IN_INNER_CLASS);
     if (context != keyword) {
@@ -470,7 +470,7 @@ public class HighlightClassUtil {
     // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return null;
     // find no-args base class ctr
-    TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+    TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     return checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, PsiClassType.EMPTY_ARRAY);
   }
 
@@ -513,7 +513,7 @@ public class HighlightClassUtil {
   //@top
   static HighlightInfo checkInterfaceCannotBeLocal(PsiClass aClass) {
     if (PsiUtil.isLocalClass(aClass)) {
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                textRange,
                                                JavaErrorMessages.message("interface.cannot.be.local"));
@@ -526,7 +526,7 @@ public class HighlightClassUtil {
     PsiClass circularClass = getCircularClass(aClass, new HashSet<PsiClass>());
     if (circularClass != null) {
       String description = JavaErrorMessages.message("cyclic.inheritance", HighlightUtil.formatClass(circularClass));
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
     }
     return null;

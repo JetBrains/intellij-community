@@ -14,9 +14,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -173,5 +175,47 @@ public class HighlightNamesUtil {
       }
     }
     return result;
+  }
+
+  public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
+    if (method instanceof JspHolderMethod) return new TextRange(0,0);
+    int start = method.getModifierList().getTextRange().getStartOffset();
+    int end = method.getThrowsList().getTextRange().getEndOffset();
+    return new TextRange(start, end);
+  }
+
+
+  public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      return aClass.getLBrace().getTextRange();
+    }
+    final PsiElement psiElement = aClass instanceof PsiAnonymousClass
+                                  ? ((PsiAnonymousClass)aClass).getBaseClassReference()
+                                  : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
+    if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
+    int start = stripAnnotationsFromModifierList(psiElement);
+    TextRange endTextRange = (aClass instanceof PsiAnonymousClass
+                              ? ((PsiAnonymousClass)aClass).getBaseClassReference()
+                              : aClass.getImplementsList()).getTextRange();
+    int end = endTextRange == null ? start : endTextRange.getEndOffset();
+    return new TextRange(start, end);
+  }
+
+  private static int stripAnnotationsFromModifierList(PsiElement element) {
+    TextRange textRange = element.getTextRange();
+    if (textRange == null) return 0;
+    PsiAnnotation lastAnnotation = null;
+    for (PsiElement child : element.getChildren()) {
+      if (child instanceof PsiAnnotation) lastAnnotation = (PsiAnnotation)child;
+    }
+    if (lastAnnotation == null) {
+      return textRange.getStartOffset();
+    }
+    PsiElement next = lastAnnotation.getNextSibling();
+    while (next != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(next.getNode().getElementType())) {
+      next = next.getNextSibling();
+    }
+    if (next != null) return next.getTextOffset();
+    return textRange.getStartOffset();
   }
 }

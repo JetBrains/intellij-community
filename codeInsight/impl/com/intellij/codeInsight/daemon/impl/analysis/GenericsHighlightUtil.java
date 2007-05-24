@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -216,7 +215,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] types = aClass.getSuperTypes();
     if (types.length < 2) return null;
     Map<PsiClass, PsiSubstitutor> inheritedClasses = new HashMap<PsiClass, PsiSubstitutor>();
-    final TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+    final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     return checkInterfaceMultipleInheritance(aClass,
                                              PsiSubstitutor.EMPTY, inheritedClasses,
                                              new HashSet<PsiClass>(), textRange);
@@ -331,7 +330,7 @@ public class GenericsHighlightUtil {
           "generics.methods.have.same.erasure.override",
           HighlightMethodUtil.createClashMethodMessage(method1, superMethod, true)
         );
-        TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+        TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
         highlights.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, descr));
       }
     }
@@ -341,7 +340,7 @@ public class GenericsHighlightUtil {
     @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : "generics.methods.have.same.erasure.override";
     String description = JavaErrorMessages.message(key,
                                                    HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
-    TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }
 
@@ -1085,7 +1084,7 @@ public class GenericsHighlightUtil {
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               ClassUtil.getClassDeclarationTextRange(aClass),
+                                               HighlightNamesUtil.getClassDeclarationTextRange(aClass),
                                                JavaErrorMessages.message("local.enum"));
     }
     return null;

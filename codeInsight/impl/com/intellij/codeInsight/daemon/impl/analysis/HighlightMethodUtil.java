@@ -5,7 +5,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -170,7 +169,7 @@ public class HighlightMethodUtil {
                                                    HighlightUtil.formatMethod(method),
                                                    HighlightUtil.formatMethod(superMethod),
                                                    HighlightUtil.formatClass(superMethod.getContainingClass()));
-        TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+        TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
         HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       textRange,
                                                                       message);
@@ -668,7 +667,7 @@ public class HighlightMethodUtil {
       String message = JavaErrorMessages.message("duplicate.method",
                                                  HighlightUtil.formatMethod(method),
                                                  HighlightUtil.formatClass(aClass));
-      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
     }
     return null;
@@ -691,7 +690,7 @@ public class HighlightMethodUtil {
     }
 
     if (message != null) {
-      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
@@ -756,7 +755,7 @@ public class HighlightMethodUtil {
       .firstChild(PsiMatcherImpl.hasClass(PsiKeyword.class))
       .getElement();
     if (element != null) return null;
-    TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(constructor);
+    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);
     PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);
     if (info != null) {
@@ -804,7 +803,7 @@ public class HighlightMethodUtil {
     boolean isMethodStatic = modifierList.hasModifierProperty(PsiModifier.STATIC);
     boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
     if (isMethodStatic != isSuperMethodStatic) {
-      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       @NonNls final String messageKey = isMethodStatic
                                 ? "static.method.cannot.override.instance.method"
                                 : "instance.method.cannot.override.static.method";
@@ -930,7 +929,7 @@ public class HighlightMethodUtil {
 
     if (errorDescription != null) {
       // show error info at the class level
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                textRange,
                                                errorDescription);
@@ -952,7 +951,7 @@ public class HighlightMethodUtil {
     PsiClassType[] unhandled = ExceptionUtil.collectUnhandledExceptions(method, method.getContainingClass());
     if (unhandled == null || unhandled.length == 0) return null;
     String description = HighlightUtil.getUnhandledExceptionsDescriptor(unhandled);
-    TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                     textRange,
                                                                     description);
@@ -965,7 +964,7 @@ public class HighlightMethodUtil {
 
   public static HighlightInfo checkRecursiveConstructorInvocation(PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
-      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, JavaErrorMessages.message("recursive.constructor.invocation"));
     }
     return null;

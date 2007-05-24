@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 
 import java.util.Collection;
@@ -99,20 +98,4 @@ public class ClassUtil {
     return null;
   }
 
-  public static TextRange getClassDeclarationTextRange(PsiClass aClass) {
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      return aClass.getLBrace().getTextRange();
-    }
-    final PsiElement psiElement = aClass instanceof PsiAnonymousClass
-                                  ? ((PsiAnonymousClass)aClass).getBaseClassReference()
-                                  : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
-    if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
-    TextRange startTextRange = psiElement.getTextRange();
-    int start = startTextRange == null ? 0 : startTextRange.getStartOffset();
-    TextRange endTextRange = (aClass instanceof PsiAnonymousClass
-                              ? ((PsiAnonymousClass)aClass).getBaseClassReference()
-                              : aClass.getImplementsList()).getTextRange();
-    int end = endTextRange == null ? start : endTextRange.getEndOffset();
-    return new TextRange(start, end);
-  }
 }

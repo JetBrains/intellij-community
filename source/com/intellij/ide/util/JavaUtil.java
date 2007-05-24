@@ -59,15 +59,14 @@ public class JavaUtil {
     if (list == null || list.length == 0) {
       return;
     }
-    for(int i = 0; i < list.length; i++) {
-      File child = list[i];
+    for (File child : list) {
       if (child.isFile()) {
         FileType type = typeManager.getFileTypeByFileName(child.getName());
         if (StdFileTypes.JAVA == type) {
           if (progressIndicator != null && progressIndicator.isCanceled()) {
             return;
           }
-          Pair<File,String> root = suggestRootForJavaFile(child);
+          Pair<File, String> root = suggestRootForJavaFile(child);
           if (root != null) {
             String packagePrefix = getPackagePrefix(base, root);
             if (packagePrefix == null) {
@@ -85,13 +84,12 @@ public class JavaUtil {
       }
     }
 
-    for(int i = 0; i < list.length; i++) {
-      File child = list[i];
-      if (child.isDirectory()){
-        try{
+    for (File child : list) {
+      if (child.isDirectory()) {
+        try {
           suggestRootsImpl(base, child, foundDirectories);
         }
-        catch(PathFound found){
+        catch (PathFound found) {
           if (!found.myDirectory.equals(child)) {
             throw found;
           }
@@ -166,7 +164,7 @@ public class JavaUtil {
     if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return "";
     lexer.advance();
     skipWhiteSpaceAndComments(lexer);
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     while(true){
       if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
       buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());

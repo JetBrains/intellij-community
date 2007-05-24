@@ -5,7 +5,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -1438,12 +1437,12 @@ public class HighlightUtil {
     // 'this' can be used as an (implicit) super() qualifier
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
-      TextRange range = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return createMemberReferencedError(aClass.getName()+".this", range);
     }
     for (PsiMethod constructor : constructors) {
       if (!isSuperCalledInConstructor(constructor)) {
-        return createMemberReferencedError(aClass.getName()+".this", getMethodDeclarationTextRange(constructor));
+        return createMemberReferencedError(aClass.getName()+".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor));
       }
     }
     return null;
@@ -1802,13 +1801,6 @@ public class HighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, labelIdentifier, message);
     }
     return null;
-  }
-
-  public static TextRange getMethodDeclarationTextRange(PsiMethod method) {
-    if (method instanceof JspHolderMethod) return new TextRange(0,0);
-    int start = method.getModifierList().getTextRange().getStartOffset();
-    int end = method.getThrowsList().getTextRange().getEndOffset();
-    return new TextRange(start, end);
   }
 
 
