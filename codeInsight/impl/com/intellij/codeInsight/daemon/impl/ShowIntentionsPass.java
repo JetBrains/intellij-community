@@ -188,7 +188,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo infoAtCursor = codeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, true);
+    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
     for (IntentionAction action : allIntentionActions) {
       if (action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
                || action.isAvailable(project, editor, psiFile)) {

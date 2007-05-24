@@ -46,7 +46,7 @@ public class OverriddenMarkersPassFactory extends AbstractProjectComponent imple
 
     int part = Pass.UPDATE_OVERRIDEN_MARKERS;
 
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
+    PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope == null || !dirtyScope.isValid()) return null;
     PsiFile file = dirtyScope.getContainingFile();
     if (file.getTextLength() != document.getTextLength()) {

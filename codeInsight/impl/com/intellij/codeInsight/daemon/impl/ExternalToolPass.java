@@ -66,7 +66,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     // This should be done for any result for removing old highlights
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, Pass.EXTERNAL_TOOLS);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }
 

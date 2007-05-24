@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowErrorDescriptionHandler;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -24,7 +25,8 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction{
 
   protected boolean isEnabledForFile(Project project, Editor editor, PsiFile file) {
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo info = codeAnalyzer.findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
+    HighlightInfo info =
+      ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
     return info != null && info.description != null;
   }
 }

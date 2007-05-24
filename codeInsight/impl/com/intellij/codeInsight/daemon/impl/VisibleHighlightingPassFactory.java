@@ -49,7 +49,7 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
 
     int part = Pass.UPDATE_ALL;
 
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
+    PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope == null || !dirtyScope.isValid()) {
       return null;
     }

@@ -395,7 +395,7 @@ public class DaemonListeners {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
           int offset = editor.logicalPositionToOffset(pos);
           if (editor.offsetToLogicalPosition(offset).column != pos.column) return; // we are in virtual space
-          HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
+          HighlightInfo info = ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.description == null) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);
           shown = true;

@@ -47,7 +47,7 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
   static TextRange calculateRangeToProcessForSyntaxPass(Editor editor) {
     Document document = editor.getDocument();
 
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
     if (dirtyScope == null || !dirtyScope.isValid()) {
       return null;
     }

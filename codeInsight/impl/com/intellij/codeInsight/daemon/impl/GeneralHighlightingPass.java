@@ -109,10 +109,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       if (myUpdateAll) {
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
+        refCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myDocument, myFile);
         setRefCountHolders(refCountHolder, highlightVisitors);
 
-        PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
+        PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
         if (dirtyScope != null) {
           if (dirtyScope instanceof PsiFile) {
             refCountHolder.clear();

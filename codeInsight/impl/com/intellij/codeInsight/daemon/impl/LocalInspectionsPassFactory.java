@@ -47,7 +47,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
 
     int part = Pass.LOCAL_INSPECTIONS;
 
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
+    PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope == null || !dirtyScope.isValid()) {
       return null;
     }

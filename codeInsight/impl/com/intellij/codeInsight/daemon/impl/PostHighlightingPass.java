@@ -110,7 +110,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
+    myRefCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myDocument, myFile);
     myRefCountHolder.assertIsTouched();
     try {
       myRefCountHolder.setLocked(true);
@@ -159,7 +159,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                    myHighlights, Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.POST_UPDATE_ALL);
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, Pass.POST_UPDATE_ALL);
 
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();

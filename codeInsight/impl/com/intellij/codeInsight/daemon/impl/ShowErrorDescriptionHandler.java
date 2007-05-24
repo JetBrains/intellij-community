@@ -11,7 +11,7 @@ public class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo info = codeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
+    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, false);
     if (info != null) {
       DaemonTooltipUtil.showInfoTooltip(info, editor, editor.getCaretModel().getOffset());
     }

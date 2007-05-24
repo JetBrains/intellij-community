@@ -1,17 +1,13 @@
 
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.FileStatusMap;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,9 +35,5 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
    */ 
   public abstract void restart();
 
-  public abstract FileStatusMap getFileStatusMap();
   public abstract List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes();
-
-  @Nullable
-  public abstract HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange);
 }
