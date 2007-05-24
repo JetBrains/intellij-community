@@ -97,6 +97,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return true;
   }
 
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    visitor.visitMethod(this);
+  }
+
   //PsiMethod implementation
   @Nullable
   public PsiType getReturnType() {

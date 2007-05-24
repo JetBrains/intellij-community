@@ -188,6 +188,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return true;
   }
 
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    visitor.visitClass(this);
+  }
+
   @NotNull
   public String getName() {
     return getNameIdentifierGroovy().getText();

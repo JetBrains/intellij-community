@@ -84,6 +84,10 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
     return null;
   }
 
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    visitor.visitField(this);
+  }
+
   public String getName() {
     return getNameIdentifierGroovy().getText();
   }
