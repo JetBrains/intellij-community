@@ -12,20 +12,18 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -202,7 +200,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     if (!isAlphaModeSupported() || !isAlphaModeEnabled(window)) {
       return;
     }
-    setAlphaModeRatioWin32Impl(window, 255 - (int)(255f * ratio));
+    setAlphaModeRatioWin32Impl(window, 255 - (int)(255.0f * ratio));
   }
 
   private static native void setAlphaModeRatioWin32Impl(Window window, int ratio);
@@ -211,12 +209,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
     }
-    if (!isAlphaModeSupported()) {
-      return false;
-    }
-    else {
-      return isAlphaModeEnabledWin32Impl(window);
-    }
+    return isAlphaModeSupported() && isAlphaModeEnabledWin32Impl(window);
   }
 
   private static native boolean isAlphaModeEnabledWin32Impl(Window window);
@@ -281,7 +274,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     } else {
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
-        if (eachParent instanceof IdeFrame) {
+        if (eachParent instanceof IdeFrameImpl) {
           frame = (IdeFrameImpl)eachParent;
           break;
         }
@@ -313,7 +306,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(), KeymapManagerEx.getInstance());
+      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(),
+                               KeymapManager.getInstance());
       if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }
@@ -363,7 +357,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     statusBar.updateEditorHighlightingStatus(true);
 
     myProject2Frame.remove(project);
-    if (myProject2Frame.size() == 0) {
+    if (myProject2Frame.isEmpty()) {
       myProject2Frame.put(null, frame);
     }
     else {
@@ -375,7 +369,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher.getFocusedWindow();
   }
 
-  public final Component getFocusedComponent(final Window window) {
+  public final Component getFocusedComponent(@NotNull final Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
@@ -394,7 +388,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return "window.manager";
   }
 
-  public final void readExternal(final Element element) throws InvalidDataException {
+  public final void readExternal(final Element element) {
     final Element frameElement = element.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
       myFrameBounds = loadFrameBounds(frameElement);
@@ -444,7 +438,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return bounds;
   }
 
-  public final void writeExternal(final Element element) throws WriteExternalException {
+  public final void writeExternal(final Element element) {
     // Save frame bounds
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
@@ -481,6 +475,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myLayout.copyFrom(layout);
   }
 
+  @NotNull
   public final String getComponentName() {
     return "WindowManager";
   }

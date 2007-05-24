@@ -2,6 +2,7 @@ package com.intellij.codeInsight.folding;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CodeFoldingSettings implements ApplicationComponent {
 
@@ -36,6 +37,7 @@ public abstract class CodeFoldingSettings implements ApplicationComponent {
   public abstract boolean isCollapseAnnotations();
   public abstract void setCollapseAnnotations(boolean value);
 
+  @NotNull
   public String getComponentName() {
     return "CodeFoldingSettings";
   }

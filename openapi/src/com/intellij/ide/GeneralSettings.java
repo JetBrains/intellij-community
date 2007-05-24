@@ -16,19 +16,21 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Iterator;
+import java.io.File;
 import java.util.List;
 
-public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComponent {
+public class GeneralSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
   @NonNls private static final String OPTION_INACTIVE_TIMEOUT = "inactiveTimeout";
   @NonNls public static final String PROP_INACTIVE_TIMEOUT = OPTION_INACTIVE_TIMEOUT;
   private static final int DEFAULT_INACTIVE_TIMEOUT = 15;
@@ -195,9 +197,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
     myInactiveTimeout = inactiveTimeout;
     myPropertyChangeSupport.firePropertyChange(
-        PROP_INACTIVE_TIMEOUT,
-        new Integer(oldInactiveTimeout),
-        new Integer(inactiveTimeout)
+        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(inactiveTimeout)
     );
   }
 
@@ -220,8 +220,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   //todo use DefaultExternalizer
   public void readExternal(Element parentNode) {
     List children = parentNode.getChildren(ELEMENT_OPTION);
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      Element element = (Element)iterator.next();
+    for (final Object aChildren : children) {
+      Element element = (Element)aChildren;
 
       String name = element.getAttributeValue(ATTRIBUTE_NAME);
       String value = element.getAttributeValue(ATTRIBUTE_VALUE);
@@ -231,7 +231,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if (OPTION_LAST_TIP.equals(name)) {
         try {
-          myLastTip = new Integer(value).intValue();
+          myLastTip = Integer.parseInt(value);
         }
         catch (NumberFormatException ex) {
           myLastTip = 0;
@@ -277,22 +277,25 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
           mySaveOnFrameDeactivation = true;
         }
       }
-      if(OPTION_AUTO_SAVE_IF_INACTIVE.equals(name) && value!= null){
-        myAutoSaveIfInactive=Boolean.valueOf(value).booleanValue();
+      if (OPTION_AUTO_SAVE_IF_INACTIVE.equals(name) && value != null) {
+        myAutoSaveIfInactive = Boolean.valueOf(value).booleanValue();
       }
-      if(OPTION_INACTIVE_TIMEOUT.equals(name)){
+      if (OPTION_INACTIVE_TIMEOUT.equals(name)) {
         try {
-          int inactiveTimeout=Integer.parseInt(value);
-          if(inactiveTimeout>0){
+          int inactiveTimeout = Integer.parseInt(value);
+          if (inactiveTimeout > 0) {
             myInactiveTimeout = inactiveTimeout;
           }
-        } catch(Exception ignored) { }
+        }
+        catch (Exception ignored) {
+        }
       }
       if (OPTION_CHARSET.equals(name)) {
         try {
           if (!CHARSET_DEFAULT.equals(value)) {
             myCharsetName = value;
-          } else {
+          }
+          else {
             myCharsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
           }
         }
@@ -309,7 +312,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
-      if (OPTION_USE_DEFAULT_BROWSER.equals(name)){
+      if (OPTION_USE_DEFAULT_BROWSER.equals(name)) {
         try {
           myUseDefaultBrowser = Boolean.valueOf(value).booleanValue();
         }
@@ -318,7 +321,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
-      if (OPTION_USE_CYCLIC_BUFFER.equals(name)){
+      if (OPTION_USE_CYCLIC_BUFFER.equals(name)) {
         try {
           myUseCyclicBuffer = Boolean.valueOf(value).booleanValue();
         }
@@ -326,8 +329,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
           myUseCyclicBuffer = false;
         }
       }
-      
-      if (OPTION_CYCLIC_BUFFER_SIZE.equals(name)){
+
+      if (OPTION_CYCLIC_BUFFER_SIZE.equals(name)) {
         try {
           myCyclicBufferSize = Integer.parseInt(value);
         }
@@ -336,7 +339,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
-      if (OPTION_SEARCH_IN_BACKGROUND.equals(name)){
+      if (OPTION_SEARCH_IN_BACKGROUND.equals(name)) {
         try {
           mySearchInBackground = Boolean.valueOf(value).booleanValue();
         }
@@ -345,7 +348,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
-      if (OPTION_CONFIRM_EXIT.equals(name)){
+      if (OPTION_CONFIRM_EXIT.equals(name)) {
         try {
           myConfirmExit = Boolean.valueOf(value).booleanValue();
         }
@@ -353,8 +356,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
           myConfirmExit = false;
         }
       }
-      
-      if (OPTION_LAST_PROJECT_LOCATION.equals(name)){
+
+      if (OPTION_LAST_PROJECT_LOCATION.equals(name)) {
         try {
           myLastProjectLocation = value;
         }
@@ -464,6 +467,17 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     return "ide.general";
   }
 
+  @NotNull
+  public File[] getExportFiles() {
+    return new File[]{PathManager.getOptionsFile(this)};
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return IdeBundle.message("general.settings");
+  }
+
+  @NotNull
   public String getComponentName() {
     return "GeneralSettings";
   }

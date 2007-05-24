@@ -1,13 +1,19 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements NamedJDOMExternalizable {
+import java.io.File;
+
+public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
   public boolean isCollapseImports() {
     return COLLAPSE_IMPORTS;
   }
@@ -81,18 +87,28 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
     COLLAPSE_ANNOTATIONS = value;
   }
 
-  public boolean COLLAPSE_IMPORTS = true;
-  public boolean COLLAPSE_METHODS = false;
-  public boolean COLLAPSE_ACCESSORS = false;
-  public boolean COLLAPSE_INNER_CLASSES = false;
-  public boolean COLLAPSE_JAVADOCS = false;
-  public boolean COLLAPSE_XML_TAGS = false;
-  public boolean COLLAPSE_FILE_HEADER = true;
-  public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
-  public boolean COLLAPSE_ANNOTATIONS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_IMPORTS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_METHODS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_JAVADOCS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_FILE_HEADER = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
 
   public String getExternalFileName() {
     return "editor.codeinsight";
+  }
+
+  @NotNull
+  public File[] getExportFiles() {
+    return new File[]{PathManager.getOptionsFile(this)};
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return IdeBundle.message("code.folding.settings");
   }
 
   public void readExternal(Element element) throws InvalidDataException {

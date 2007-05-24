@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,7 +96,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     throw new UnsupportedOperationException();
   }
 
-  public final Component getFocusedComponent(final Window window) {
+  public final Component getFocusedComponent(@NotNull final Window window) {
     throw new UnsupportedOperationException();
   }
 
