@@ -185,7 +185,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     public PsiElement resolve() {
       XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
         (XmlElement)myElement,
-        myElement.getLastChild().getText(),
+        (myElement instanceof  XmlEntityRef ? myElement.getLastChild():myElement).getText(),
         myElement.getContainingFile()
       );
 
