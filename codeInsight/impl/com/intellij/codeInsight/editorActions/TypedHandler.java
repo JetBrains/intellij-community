@@ -615,6 +615,8 @@ public class TypedHandler implements TypedActionHandler {
         element = parent.getPrevSibling();
       } else if (parent instanceof XmlTag && !(element.getPrevSibling() instanceof XmlTag)) {
         element = parent;
+      } else if (parent instanceof XmlAttributeValue) {
+        element = parent;
       }
     }
     else {
