@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
@@ -44,6 +43,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -124,7 +124,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         }
       }
       else {
-        setIcon(IconUtilEx.getEmptyIcon(false));
+        setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);

@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -123,5 +125,18 @@ public class IconUtil {
       ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
     }
     return ourIconProviders;
+  }
+
+  public static Icon getEmptyIcon(boolean showVisibility) {
+    RowIcon baseIcon = new RowIcon(2);
+    Icon emptyIcon = Icons.CLASS_ICON != null
+                          ? new EmptyIcon(Icons.CLASS_ICON.getIconWidth(), Icons.CLASS_ICON.getIconHeight())
+                          : null;
+    baseIcon.setIcon(emptyIcon, 0);
+    if (showVisibility) {
+      emptyIcon = Icons.PUBLIC_ICON != null ? new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight()) : null;
+      baseIcon.setIcon(emptyIcon, 1);
+    }
+    return baseIcon;
   }
 }

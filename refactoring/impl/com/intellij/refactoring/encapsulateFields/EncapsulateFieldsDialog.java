@@ -1,6 +1,5 @@
 package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -18,6 +17,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 
@@ -612,7 +612,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
         case GETTER_COLUMN:
         case SETTER_COLUMN:
           {
-            Icon methodIcon = IconUtilEx.getEmptyIcon(true);
+            Icon methodIcon = IconUtil.getEmptyIcon(true);
             Icon overrideIcon = EMPTY_OVERRIDE_ICON;
 
             PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes[row] : mySetterPrototypes[row];

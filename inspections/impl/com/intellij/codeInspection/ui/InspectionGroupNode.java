@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.ui;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 
@@ -9,7 +9,7 @@ import javax.swing.*;
  * @author max
  */
 public class InspectionGroupNode extends InspectionTreeNode {
-  private static final Icon EMPTY = new EmptyIcon(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
+  private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   public InspectionGroupNode(String groupTitle) {
     super(groupTitle);

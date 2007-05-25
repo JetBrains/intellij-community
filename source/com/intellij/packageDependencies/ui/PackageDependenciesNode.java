@@ -1,7 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -12,6 +11,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
+  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   private Set<PsiFile> myRegisteredFiles = null;
   private boolean myHasUnmarked = false;

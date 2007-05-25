@@ -1,6 +1,5 @@
 package com.intellij.ide.util;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -14,6 +13,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -72,7 +72,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
       }
       else {
-        setIcon(IconUtilEx.getEmptyIcon(false));
+        setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);

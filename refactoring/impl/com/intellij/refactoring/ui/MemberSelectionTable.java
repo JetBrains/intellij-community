@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.Table;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -313,7 +314,7 @@ public class MemberSelectionTable extends Table {
               IconUtilEx.setVisibilityIcon(modifiers, icon);
             }
             else {
-              icon.setIcon(IconUtilEx.getEmptyIcon(true), 1);
+              icon.setIcon(IconUtil.getEmptyIcon(true), 1);
             }
             icon.setIcon(overrideIcon, 2);
             setIcon(icon);

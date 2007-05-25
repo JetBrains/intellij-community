@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesHighlighter;
@@ -24,6 +23,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 
@@ -74,7 +74,7 @@ class LookupCellRenderer implements ListCellRenderer {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     SHOW_SIGNATURES = settings.SHOW_SIGNATURES_IN_LOOKUPS;
     ICON_FLAGS = SHOW_SIGNATURES ? Iconable.ICON_FLAG_VISIBILITY : 0;
-    EMPTY_ICON = IconUtilEx.getEmptyIcon(SHOW_SIGNATURES);
+    EMPTY_ICON = IconUtil.getEmptyIcon(SHOW_SIGNATURES);
     ICON_WIDTH = EMPTY_ICON.getIconWidth();
 
     myLookup = lookup;
