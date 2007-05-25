@@ -16,7 +16,7 @@ Groovy script
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
-        Shift expression
+        Range expression
           Literal
             PsiElement(number)('16')
           PsiElement(..)('..')

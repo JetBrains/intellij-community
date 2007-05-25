@@ -59,7 +59,7 @@ Groovy script
                   PsiElement(identifier)('who')
                 PsiElement([)('[')
                 Arguments
-                  Shift expression
+                  Range expression
                     Literal
                       PsiElement(number)('1')
                     PsiElement(..)('..')

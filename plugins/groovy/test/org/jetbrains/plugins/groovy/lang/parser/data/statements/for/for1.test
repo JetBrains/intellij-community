@@ -11,7 +11,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(in)('in')
       PsiWhiteSpace(' ')
-      Shift expression
+      Range expression
         Literal
           PsiElement(number)('1')
         PsiElement(..)('..')
