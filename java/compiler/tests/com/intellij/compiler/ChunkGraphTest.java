@@ -8,6 +8,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Chunk;
 import junit.framework.TestCase;
 
 import java.util.*;
