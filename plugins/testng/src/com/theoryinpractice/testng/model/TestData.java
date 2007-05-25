@@ -213,7 +213,7 @@ public class TestData implements Cloneable
     }
 
     public boolean isConfiguredByElement(PsiElement element) {
-      element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+      element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
       if (element instanceof PsiMethod) {
         final PsiClass aClass = ((PsiMethod)element).getContainingClass();
         return Comparing.strEqual(MAIN_CLASS_NAME, ExecutionUtil.getRuntimeQualifiedName(aClass)) &&

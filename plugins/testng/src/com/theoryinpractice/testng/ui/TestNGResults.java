@@ -9,6 +9,7 @@ package com.theoryinpractice.testng.ui;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
@@ -25,8 +26,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.theoryinpractice.testng.ui.Printable;
-import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -322,7 +321,11 @@ public class TestNGResults  implements TestFrameworkRunningModel
         return rootNode;
     }
 
-    public TestTreeStructure getTreeStructure() {
+  public void selectAndNotify(final AbstractTestProxy testProxy) {
+    selectTest((TestProxy)testProxy);
+  }
+
+  public TestTreeStructure getTreeStructure() {
         return (TestTreeStructure) treeBuilder.getTreeStructure();
     }
 

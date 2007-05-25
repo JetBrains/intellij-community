@@ -48,7 +48,7 @@ public class TestNGConfigurationProducer extends RuntimeConfigurationProducer im
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
     configuration.setClassConfiguration(psiClass);
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && TestNGUtil.hasTest(method)) {
       configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
       myPsiElement = method;
