@@ -17,4 +17,5 @@ public interface AbstractTestProxy {
   AbstractTestProxy getParent();
   Location getLocation(final Project project);
   Navigatable getDescriptor(final Location location);
+  String getName();
 }

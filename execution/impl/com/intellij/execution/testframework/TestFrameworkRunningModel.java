@@ -6,8 +6,6 @@ package com.intellij.execution.testframework;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
-
 public interface TestFrameworkRunningModel extends Disposable {
   TestConsoleProperties getProperties();
 
@@ -17,9 +15,11 @@ public interface TestFrameworkRunningModel extends Disposable {
 
   boolean isRunning();
 
-  JTree getTreeView();
+  TestTreeView getTreeView();
 
   boolean hasTestSuites();
+
+  AbstractTestProxy getRoot();
 
   interface ModelListener {
     void onDispose(final TestFrameworkRunningModel model);

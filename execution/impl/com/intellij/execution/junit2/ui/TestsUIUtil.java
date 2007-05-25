@@ -2,8 +2,6 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.info.PsiLocator;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -16,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,21 +26,21 @@ public class TestsUIUtil {
 
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
-  public static Object getData(final TestProxy testProxy, final String dataId, final JUnitRunningModel model) {
-    final Project project = model.getProject();
+  @Nullable
+  public static Object getData(final AbstractTestProxy testProxy, final String dataId, final TestFrameworkRunningModel model) {
+    final Project project = model.getProperties().getProject();
     if (testProxy == null) return null;
     if (TestProxy.DATA_CONSTANT.equals(dataId)) return testProxy;
     if (DataConstants.NAVIGATABLE.equals(dataId)) return getOpenFileDescriptor(testProxy, model);
-    final PsiLocator testInfo = testProxy.getInfo();
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      final Location location = testInfo.getLocation(project);
+      final Location location = testProxy.getLocation(project);
       return location != null ? location.getPsiElement() : null;
     }
-    if (Location.LOCATION.equals(dataId)) return testInfo.getLocation(project);
+    if (Location.LOCATION.equals(dataId)) return testProxy.getLocation(project);
     return null;
   }
 
-  public static Navigatable getOpenFileDescriptor(final TestProxy testProxy, final TestFrameworkRunningModel model) {
+  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy testProxy, final TestFrameworkRunningModel model) {
     return getOpenFileDescriptor(testProxy, model.getProperties().getProject(), TestConsoleProperties.OPEN_FAILURE_LINE.value(model.getProperties()));
   }
   
