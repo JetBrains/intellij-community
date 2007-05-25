@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.completion.WordCompletionData;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.TailType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
@@ -139,8 +140,19 @@ public class GroovyCompletionData extends CompletionData {
         "native", "volatile", "strictfp", "synchronized");
   }
 
+  private static CompletionVariant ourReferenceVariant;
+  static {
+    ourReferenceVariant = new CompletionVariant() {
+      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
+        addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
+      }
+    };
+    
+    ourReferenceVariant.setInsertHandler(new GroovyInsertHandler());
+  }
+
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
-    ourGenericVariant.addReferenceCompletions(reference, position, set, context);
+    ourReferenceVariant.addReferenceCompletions(reference, position, set, context);
   }
 
   /**
@@ -155,6 +167,7 @@ public class GroovyCompletionData extends CompletionData {
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     addCompletions(variant, keywords);
+    variant.setInsertHandler(new GroovyInsertHandler());
     registerVariant(variant);
   }
 
