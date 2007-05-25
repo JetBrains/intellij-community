@@ -21,13 +21,16 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ven
@@ -56,9 +59,19 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
     GroovyResolveResult resolveResult = refExpr.advancedResolve();
-    if (resolveResult.getElement() != null && !resolveResult.isAccessible()) {
-      String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
-      holder.createWarningAnnotation(refExpr, message);
+    if (resolveResult.getElement() != null) {
+      if (!resolveResult.isAccessible()) {
+        String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
+        holder.createWarningAnnotation(refExpr, message);
+      }
+    } else {
+      if (refExpr.getQualifierExpression() == null) {
+        GrMethod method = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class); //todo for static fields as well
+        if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+          Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+      }
     }
   }
 
