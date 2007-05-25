@@ -3,51 +3,43 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.openapi.project.Project;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FailedTestsNavigator implements OccurenceNavigator {
+public class FailedTestsNavigator implements OccurenceNavigator {
   private static final String NEXT_NAME = ExecutionBundle.message("next.faled.test.action.name");
   private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
-
-  private Project myProject;
-
-  public FailedTestsNavigator(final Project project) {
-    myProject = project;
-  }
+  private TestFrameworkRunningModel myModel;
 
   public boolean hasNextOccurence() {
-    return isInitialized() && getNextOccurenceInfo().hasNextOccurence();
+    return myModel != null && getNextOccurenceInfo().hasNextOccurence();
   }
 
   public boolean hasPreviousOccurence() {
-    return isInitialized() && getPreviousOccurenceInfo().hasNextOccurence();
+    return myModel != null && getPreviousOccurenceInfo().hasNextOccurence();
   }
 
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
     final FailedTestInfo result = getNextOccurenceInfo();
-    selectFailedTest(result);
-    return new OccurenceInfo(TestsUIUtil.getOpenFileDescriptor(result.myDefect, myProject, openFailureLine()), result.getDefectNumber(),
+    myModel.selectAndNotify(result.getDefect());
+    return new OccurenceInfo(TestsUIUtil.getOpenFileDescriptor(result.myDefect, myModel), result.getDefectNumber(),
                              result.getDefectsCount());
   }
 
-  protected abstract void selectFailedTest(FailedTestInfo result);
-
-  protected abstract boolean openFailureLine();
-
-  protected abstract List<AbstractTestProxy> getAllTests();
-
-  protected abstract AbstractTestProxy getSelectedTest();
-
-  protected abstract boolean isInitialized();
-
-  public abstract void setModel(final TestFrameworkRunningModel model);
+  public void setModel(final TestFrameworkRunningModel model) {
+    myModel = model;
+    myModel.addListener(new TestFrameworkRunningModel.ModelListener() {
+      public void onDispose(final TestFrameworkRunningModel model) {
+        myModel = null;
+      }
+    });
+  }
 
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
     final FailedTestInfo result = getPreviousOccurenceInfo();
-    selectFailedTest(result);
-    return new OccurenceInfo(TestsUIUtil.getOpenFileDescriptor(result.myDefect, myProject, openFailureLine()), result.getDefectNumber(),
+    myModel.selectAndNotify(result.getDefect());
+    return new OccurenceInfo(TestsUIUtil.getOpenFileDescriptor(result.myDefect, myModel), result.getDefectNumber(),
                              result.getDefectsCount());
   }
 
@@ -59,8 +51,6 @@ public abstract class FailedTestsNavigator implements OccurenceNavigator {
     return PREVIOUS_NAME;
   }
 
-
-
   private FailedTestInfo getNextOccurenceInfo() {
     return new NextFailedTestInfo().execute();
   }
@@ -68,8 +58,6 @@ public abstract class FailedTestsNavigator implements OccurenceNavigator {
   private FailedTestInfo getPreviousOccurenceInfo() {
     return new PreviousFailedTestInfo().execute();
   }
-
-
 
   protected abstract class FailedTestInfo {
     private AbstractTestProxy myDefect = null;
@@ -85,15 +73,16 @@ public abstract class FailedTestsNavigator implements OccurenceNavigator {
     }
 
     public FailedTestInfo execute() {
-      myAllTests = getAllTests();
+      myAllTests = new ArrayList<AbstractTestProxy>(myModel.getRoot().getAllTests());
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
-      final int selectionIndex = myAllTests.indexOf(getSelectedTest());
+      final AbstractTestProxy selectedTest = myModel.getTreeView().getSelectedTest();
+      final int selectionIndex = myAllTests.indexOf(selectedTest);
       if (selectionIndex == -1)
         return this;
       final AbstractTestProxy defect = findNextDefect(selectionIndex);
       if (defect == null)
         return this;
-      if (defect != getSelectedTest()) {
+      if (defect != selectedTest) {
         myDefect = defect;
         return this;
       }

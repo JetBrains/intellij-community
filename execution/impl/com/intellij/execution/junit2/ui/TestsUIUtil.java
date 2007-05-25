@@ -44,7 +44,7 @@ public class TestsUIUtil {
     return getOpenFileDescriptor(testProxy, model.getProperties().getProject(), TestConsoleProperties.OPEN_FAILURE_LINE.value(model.getProperties()));
   }
   
-  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy proxy, final Project project, final boolean openFailureLine) {
+  private static Navigatable getOpenFileDescriptor(final AbstractTestProxy proxy, final Project project, final boolean openFailureLine) {
     if (proxy != null) {
       final Location location = proxy.getLocation(project);
       if (openFailureLine) {

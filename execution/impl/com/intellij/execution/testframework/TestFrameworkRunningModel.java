@@ -21,6 +21,8 @@ public interface TestFrameworkRunningModel extends Disposable {
 
   AbstractTestProxy getRoot();
 
+  void selectAndNotify(final AbstractTestProxy testProxy);
+
   interface ModelListener {
     void onDispose(final TestFrameworkRunningModel model);
   }

@@ -55,7 +55,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
 
     actionGroup.addSeparator();
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    myOccurenceNavigator = getOccurenceNavigator(properties);
+    myOccurenceNavigator = new FailedTestsNavigator();
     actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
     actionGroup.addSeparator();
@@ -79,8 +79,6 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
         getComponent(), BorderLayout.CENTER);
   }
-
-  protected abstract FailedTestsNavigator getOccurenceNavigator(TestConsoleProperties properties);
 
   protected abstract void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
                                          ConfigurationPerRunnerSettings configurationSettings);
