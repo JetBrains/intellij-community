@@ -16,21 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 
 /**
@@ -49,9 +46,15 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   @NotNull
   public PsiType getType() {
     GrTypeElement typeElement = getTypeElementGroovy();
-    return typeElement != null ?
-        typeElement.getType() : 
-        getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+    if (typeElement!= null) return typeElement.getType();
+    PsiElement parent = getParent();
+    if (parent instanceof GrForInClause) {
+      GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
+      if (iteratedExpression instanceof GrRangeExpression) {
+        return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+      }
+    }
+    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
   @Nullable

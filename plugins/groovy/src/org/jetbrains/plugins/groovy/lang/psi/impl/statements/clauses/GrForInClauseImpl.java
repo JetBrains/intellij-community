@@ -17,16 +17,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClause, GrParametersOwner {
+public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause, GrParametersOwner {
 
   public GrForInClauseImpl(@NotNull ASTNode node) {
     super(node);
@@ -43,5 +43,9 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClau
 
   public GrParameter[] getParameters() {
     return getDeclaredVariables();
+  }
+
+  public GrExpression getIteratedExpression() {
+    return findChildByClass(GrExpression.class);
   }
 }
