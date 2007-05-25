@@ -663,8 +663,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
-    final String prefix = getPrefixByNamespace(namespace);
-    if(prefix != null && prefix.length() > 0) name = prefix + ":" + name;
+    if (!Comparing.equal(namespace, getNamespace())) {
+      final String prefix = getPrefixByNamespace(namespace);
+      if(prefix != null && prefix.length() > 0) name = prefix + ":" + name;
+    }
     return setAttribute(name, value);
   }
 
