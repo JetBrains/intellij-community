@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeFileContentChange;
 import com.intellij.localvcs.core.changes.ChangeVisitor;
 import com.intellij.localvcs.core.changes.StructuralChange;
-import com.intellij.localvcs.integration.revert.ChangeRevertionVisitor;
+import com.intellij.localvcs.integration.revertion.ChangeRevertionVisitor;
 
 import java.io.IOException;
 

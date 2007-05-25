@@ -1,17 +1,16 @@
-package com.intellij.localvcs.integration.revert;
+package com.intellij.localvcs.integration.revertion;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.changes.*;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
-  private RootEntry myRootEntry;
+  private Entry myRootEntry;
   private IdeaGateway myGateway;
 
   public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {

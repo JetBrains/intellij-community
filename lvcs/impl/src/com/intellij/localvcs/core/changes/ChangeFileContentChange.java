@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -44,20 +43,20 @@ public class ChangeFileContentChange extends StructuralChange {
   }
 
   @Override
-  protected IdPath doApplyTo(RootEntry root) {
-    Entry affectedEntry = root.getEntry(myPath);
+  protected IdPath doApplyTo(Entry root) {
+    Entry e = root.getEntry(myPath);
 
-    myOldContent = affectedEntry.getContent();
-    myOldTimestamp = affectedEntry.getTimestamp();
+    myOldContent = e.getContent();
+    myOldTimestamp = e.getTimestamp();
 
-    IdPath idPath = affectedEntry.getIdPath();
-    root.changeFileContent(idPath, myNewContent, myNewTimestamp);
-    return idPath;
+    e.changeContent(myNewContent, myNewTimestamp);
+    return e.getIdPath();
   }
 
   @Override
-  public void revertOn(RootEntry root) {
-    root.changeFileContent(myAffectedIdPath, myOldContent, myOldTimestamp);
+  public void revertOn(Entry root) {
+    Entry e = root.getEntry(myAffectedIdPath);
+    e.changeContent(myOldContent, myOldTimestamp);
   }
 
   @Override

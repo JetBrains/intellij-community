@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -27,15 +26,15 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry r) {
+  public void applyTo(Entry r) {
     myAffectedIdPath = doApplyTo(r);
     myPath = null;
   }
 
-  protected abstract IdPath doApplyTo(RootEntry r);
+  protected abstract IdPath doApplyTo(Entry r);
 
   @Override
-  public abstract void revertOn(RootEntry r);
+  public abstract void revertOn(Entry r);
 
   @Override
   protected boolean affects(IdPath... pp) {

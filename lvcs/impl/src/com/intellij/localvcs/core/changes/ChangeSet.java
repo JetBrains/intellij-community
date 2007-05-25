@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
@@ -60,14 +59,14 @@ public class ChangeSet extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry r) {
+  public void applyTo(Entry r) {
     for (Change c : myChanges) {
       c.applyTo(r);
     }
   }
 
   @Override
-  public void revertOn(RootEntry e) {
+  public void revertOn(Entry e) {
     for (Change c : Reversed.list(myChanges)) c.revertOn(e);
   }
 

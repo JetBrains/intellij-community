@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class RootEntryTest extends LocalVcsTestCase {
-  private RootEntry root;
+  private Entry root;
   private Entry child;
 
   @Before
@@ -17,7 +17,7 @@ public class RootEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testIdPathToChildren() {
-    assertEquals(idp(1), child.getIdPath());
+    assertEquals(idp(-1, 1), child.getIdPath());
   }
 
   @Test

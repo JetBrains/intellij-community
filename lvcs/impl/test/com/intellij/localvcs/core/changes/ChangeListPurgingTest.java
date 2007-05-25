@@ -2,6 +2,7 @@ package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +12,7 @@ import java.util.List;
 public class ChangeListPurgingTest extends LocalVcsTestCase {
   int myIntervalBetweenActivities = 0;
 
-  private RootEntry r = new RootEntry();
+  private Entry r = new RootEntry();
   private ChangeList cl = new ChangeList() {
     @Override
     protected long getIntervalBetweenActivities() {
@@ -95,7 +96,7 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testReturningContentsToPurge() {
-    r.createFile(1, "f", c("one"), -1);
+    createFile(r, 1, "f", c("one"), -1);
 
     applyAndAddChange(cs(1, new ChangeFileContentChange("f", c("two"), -1)));
     applyAndAddChange(cs(2, new ChangeFileContentChange("f", c("three"), -1)));

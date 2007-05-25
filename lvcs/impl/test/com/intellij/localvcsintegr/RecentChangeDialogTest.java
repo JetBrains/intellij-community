@@ -1,7 +1,7 @@
 package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.core.revisions.RecentChange;
-import com.intellij.localvcs.integration.revert.Reverter;
+import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.localvcs.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.localvcs.integration.ui.views.RecentChangeDialog;
 import com.intellij.openapi.vfs.VirtualFile;

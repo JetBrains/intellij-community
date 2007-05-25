@@ -2,7 +2,7 @@ package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Stream;
-import com.intellij.localvcs.core.tree.RootEntry;
+import com.intellij.localvcs.core.tree.Entry;
 
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ public class PutEntryLabelChange extends PutLabelChange {
   }
 
   @Override
-  public void applyTo(RootEntry r) {
+  public void applyTo(Entry r) {
     myAffectedIdPath = r.getEntry(myPath).getIdPath();
   }
 

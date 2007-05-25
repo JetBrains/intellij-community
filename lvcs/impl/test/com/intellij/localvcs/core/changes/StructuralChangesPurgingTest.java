@@ -2,17 +2,18 @@ package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
 import java.util.List;
 
 public class StructuralChangesPurgingTest extends LocalVcsTestCase {
-  private RootEntry root = new RootEntry();
+  private Entry root = new RootEntry();
 
   @Test
   public void testChangeFileContentChange() {
-    root.createFile(1, "f", c("old"), -1);
+    createFile(root, 1, "f", c("old"), -1);
 
     Change c = new ChangeFileContentChange("f", c("new"), -1);
     c.applyTo(root);
@@ -25,7 +26,7 @@ public class StructuralChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDeleteFileChange() {
-    root.createFile(1, "f", c("content"), -1);
+    createFile(root, 1, "f", c("content"), -1);
 
     Change c = new DeleteChange("f");
     c.applyTo(root);
@@ -38,11 +39,11 @@ public class StructuralChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDeleteDirectoryWithFilesChange() {
-    root.createDirectory(1, "dir");
-    root.createDirectory(2, "dir/subDir");
-    root.createFile(3, "dir/file", c("one"), -1);
-    root.createFile(4, "dir/subDir/file1", c("two"), -1);
-    root.createFile(5, "dir/subDir/file2", c("three"), -1);
+    createDirectory(root, 1, "dir");
+    createDirectory(root, 2, "dir/subDir");
+    createFile(root, 3, "dir/file", c("one"), -1);
+    createFile(root, 4, "dir/subDir/file1", c("two"), -1);
+    createFile(root, 5, "dir/subDir/file2", c("three"), -1);
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);

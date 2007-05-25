@@ -1,8 +1,8 @@
-package com.intellij.localvcsintegr.revert;
+package com.intellij.localvcsintegr.revertion;
 
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.Clock;
-import com.intellij.localvcs.integration.revert.ChangeReverter;
+import com.intellij.localvcs.integration.revertion.ChangeReverter;
 import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.localvcsintegr.IntegrationTestCase;
 import com.intellij.openapi.command.CommandProcessor;

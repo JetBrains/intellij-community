@@ -11,7 +11,7 @@ import org.junit.Test;
 public class RevisionAfterChangeTest extends LocalVcsTestCase {
   @Test
   public void testForRootEntry() {
-    RootEntry root = new RootEntry();
+    Entry root = new RootEntry();
     ChangeList list = new ChangeList();
     Change c1 = new CreateFileChange(1, "f1", null, -1);
     Change c2 = new CreateFileChange(2, "f2", null, -1);

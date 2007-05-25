@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -25,9 +24,9 @@ public abstract class Change {
     return Collections.singletonList(this);
   }
 
-  public abstract void applyTo(RootEntry r);
+  public abstract void applyTo(Entry r);
 
-  public abstract void revertOn(RootEntry r);
+  public abstract void revertOn(Entry r);
 
   public boolean affects(Entry e) {
     return affects(e.getIdPath());

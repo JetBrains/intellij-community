@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.Paths;
 import org.junit.Test;
 
 public class RootEntryFindingTest extends LocalVcsTestCase {
-  private RootEntry root = new RootEntry();
+  private Entry root = new RootEntry();
 
   @Test
   public void testFindingEntry() {
@@ -144,8 +144,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
     Entry e = new FileEntry(1, null, null, -1);
     root.addChild(e);
 
-    assertSame(e, root.findEntry(idp(1)));
-    assertNull(root.findEntry(idp(2)));
+    assertSame(e, root.findEntry(idp(-1, 1)));
+    assertNull(root.findEntry(idp(-1, 2)));
   }
 
   @Test
@@ -156,8 +156,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
     dir.addChild(file);
     root.addChild(dir);
 
-    assertSame(dir, root.findEntry(idp(1)));
-    assertSame(file, root.findEntry(idp(1, 2)));
+    assertSame(dir, root.findEntry(idp(-1, 1)));
+    assertSame(file, root.findEntry(idp(-1, 1, 2)));
   }
 
   @Test
@@ -181,8 +181,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
     dir1.addChild(dir2);
     dir2.addChild(file);
 
-    assertNull(root.findEntry(idp(1, 3)));
-    assertSame(dir2, root.findEntry(idp(1, 2)));
+    assertNull(root.findEntry(idp(-1, 1, 3)));
+    assertSame(dir2, root.findEntry(idp(-1, 1, 2)));
   }
 
   @Test
@@ -206,11 +206,11 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
     root.addChild(dir2);
     dir2.addChild(file);
 
-    assertSame(file, root.findEntry(idp(2, 3)));
-    assertSame(dir1, root.findEntry(idp(1)));
-    assertSame(dir2, root.findEntry(idp(2)));
+    assertSame(file, root.findEntry(idp(-1, 2, 3)));
+    assertSame(dir1, root.findEntry(idp(-1, 1)));
+    assertSame(dir2, root.findEntry(idp(-1, 2)));
 
-    assertNull(root.findEntry(idp(1, 3)));
+    assertNull(root.findEntry(idp(-1, 1, 3)));
   }
 
   @Test

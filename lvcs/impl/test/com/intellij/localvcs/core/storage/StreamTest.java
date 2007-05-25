@@ -166,7 +166,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testRootEntry() throws IOException {
-    RootEntry r = new RootEntry();
+    Entry r = new RootEntry();
 
     os.writeEntry(r);
     Entry read = is.readEntry();
@@ -179,10 +179,10 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testRootEntryWithRootWithChildren() throws IOException {
-    RootEntry r = new RootEntry();
+    Entry r = new RootEntry();
 
-    r.createDirectory(1, "c:/root");
-    r.createFile(2, "c:/root/file", new UnavailableContent(), -1);
+    createDirectory(r, 1, "c:/root");
+    createFile(r, 2, "c:/root/file", new UnavailableContent(), -1);
 
     os.writeEntry(r);
     Entry read = is.readEntry();
@@ -210,7 +210,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateFileChange.class, read.getClass());
     CreateFileChange result = (CreateFileChange)read;
 
-    assertEquals(list(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 1)), result.getAffectedIdPaths());
   }
 
   @Test
@@ -224,13 +224,13 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(CreateDirectoryChange.class, read.getClass());
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
-    assertEquals(list(idp(2)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 2)), result.getAffectedIdPaths());
   }
 
   @Test
   public void testChangeFileContentChange() throws IOException {
-    RootEntry root = new RootEntry();
-    root.createFile(1, "file", s.storeContent(b("old content")), 1L);
+    Entry root = new RootEntry();
+    createFile(root, 1, "file", s.storeContent(b("old content")), 1L);
 
     Change c = new ChangeFileContentChange("file", s.storeContent(b("new content")), 2L);
     c.applyTo(root);
@@ -241,18 +241,18 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(ChangeFileContentChange.class, read.getClass());
     ChangeFileContentChange result = (ChangeFileContentChange)read;
 
-    assertEquals(list(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 1)), result.getAffectedIdPaths());
     assertEquals(c("old content"), result.getOldContent());
     assertEquals(1L, result.getOldTimestamp());
   }
 
   @Test
   public void testDeleteChange() throws IOException {
-    RootEntry root = new RootEntry();
+    Entry root = new RootEntry();
 
-    root.createDirectory(1, "entry");
-    root.createFile(2, "entry/file", new UnavailableContent(), -1);
-    root.createDirectory(3, "entry/dir");
+    createDirectory(root, 1, "entry");
+    createFile(root, 2, "entry/file", new UnavailableContent(), -1);
+    createDirectory(root, 3, "entry/dir");
 
     Change c = new DeleteChange("entry");
     c.applyTo(root);
@@ -263,7 +263,7 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
 
-    assertEquals(list(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 1)), result.getAffectedIdPaths());
 
     Entry e = result.getAffectedEntry();
 
@@ -277,8 +277,8 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testRenameChange() throws IOException {
-    RootEntry root = new RootEntry();
-    root.createFile(1, "old name", null, -1);
+    Entry root = new RootEntry();
+    createFile(root, 1, "old name", null, -1);
 
     Change c = new RenameChange("old name", "new name");
     c.applyTo(root);
@@ -289,16 +289,16 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
 
-    assertEquals(list(idp(1)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 1)), result.getAffectedIdPaths());
     assertEquals("old name", result.getOldName());
   }
 
   @Test
   public void testMoveChange() throws IOException {
-    RootEntry root = new RootEntry();
-    root.createDirectory(1, "dir1");
-    root.createDirectory(2, "dir2");
-    root.createFile(3, "dir1/file", null, -1);
+    Entry root = new RootEntry();
+    createDirectory(root, 1, "dir1");
+    createDirectory(root, 2, "dir2");
+    createFile(root, 3, "dir1/file", null, -1);
 
     Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
@@ -309,13 +309,13 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(MoveChange.class, read.getClass());
     MoveChange result = ((MoveChange)read);
 
-    assertEquals(list(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
+    assertEquals(list(idp(-1, 1, 3), idp(-1, 2, 3)), result.getAffectedIdPaths());
   }
 
   @Test
   public void testPutLabelChange() throws IOException {
-    RootEntry r = new RootEntry();
-    r.createDirectory(1, "dir");
+    Entry r = new RootEntry();
+    createDirectory(r, 1, "dir");
 
     Change c = new PutLabelChange(123, "name", true);
     c.applyTo(r);
@@ -332,8 +332,8 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testPutEntryLabelChange() throws IOException {
-    RootEntry r = new RootEntry();
-    r.createDirectory(1, "dir");
+    Entry r = new RootEntry();
+    createDirectory(r, 1, "dir");
 
     Change c = new PutEntryLabelChange(123, "dir", "name", false);
     c.applyTo(r);

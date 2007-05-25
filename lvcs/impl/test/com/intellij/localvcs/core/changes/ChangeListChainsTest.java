@@ -1,11 +1,12 @@
 package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
 public class ChangeListChainsTest extends LocalVcsTestCase {
-  RootEntry r = new RootEntry();
+  Entry r = new RootEntry();
   ChangeList l = new ChangeList();
 
   @Test

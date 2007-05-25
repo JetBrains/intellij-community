@@ -38,7 +38,7 @@ public abstract class Entry {
 
   public IdPath getIdPath() {
     if (myParent == null) return new IdPath(myId);
-    return myParent.getIdPathAppendedWith(myId);
+    return myParent.getIdPath().appendedWith(myId);
   }
 
   public String getName() {

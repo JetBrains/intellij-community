@@ -1,19 +1,20 @@
 package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
 
 public class PutLabelChangesTest extends LocalVcsTestCase {
-  RootEntry r;
+  Entry r;
 
   @Before
   public void setUp() {
     r = new RootEntry();
-    r.createDirectory(1, "dir");
-    r.createDirectory(2, "dir/subDir");
-    r.createFile(3, "dir/subDir/file", null, -1);
+    createDirectory(r, 1, "dir");
+    createDirectory(r, 2, "dir/subDir");
+    createFile(r, 3, "dir/subDir/file", null, -1);
   }
 
   @Test

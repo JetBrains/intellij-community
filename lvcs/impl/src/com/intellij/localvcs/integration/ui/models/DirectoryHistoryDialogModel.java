@@ -4,8 +4,8 @@ import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.revert.DirectoryReverter;
-import com.intellij.localvcs.integration.revert.RevisionReverter;
+import com.intellij.localvcs.integration.revertion.DirectoryReverter;
+import com.intellij.localvcs.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {

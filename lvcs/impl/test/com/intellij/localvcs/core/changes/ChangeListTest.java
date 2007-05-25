@@ -1,13 +1,14 @@
 package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
 import java.util.List;
 
 public class ChangeListTest extends LocalVcsTestCase {
-  private RootEntry r = new RootEntry();
+  private Entry r = new RootEntry();
   private ChangeList cl = new ChangeList();
 
   @Test
@@ -15,7 +16,7 @@ public class ChangeListTest extends LocalVcsTestCase {
     applyAndAddChange(cs("1", new CreateFileChange(1, "file1", null, -1)));
     applyAndAddChange(cs("2", new CreateFileChange(2, "file2", null, -1)));
 
-    RootEntry copy = r.copy();
+    Entry copy = r.copy();
     cl.revertUpTo(copy, cl.getChanges().get(0), true);
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
@@ -31,7 +32,7 @@ public class ChangeListTest extends LocalVcsTestCase {
     applyAndAddChange(cs("1", new CreateFileChange(1, "file1", null, -1)));
     applyAndAddChange(cs("2", new CreateFileChange(2, "file2", null, -1)));
 
-    RootEntry copy = r.copy();
+    Entry copy = r.copy();
     cl.revertUpTo(copy, cl.getChanges().get(0), false);
     assertTrue(copy.hasEntry("file1"));
     assertTrue(copy.hasEntry("file2"));

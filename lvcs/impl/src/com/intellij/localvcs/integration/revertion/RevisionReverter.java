@@ -1,4 +1,4 @@
-package com.intellij.localvcs.integration.revert;
+package com.intellij.localvcs.integration.revertion;
 
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;

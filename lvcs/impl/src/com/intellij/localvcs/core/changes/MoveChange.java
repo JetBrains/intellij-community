@@ -1,9 +1,8 @@
 package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.IdPath;
-import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.storage.Stream;
-import com.intellij.localvcs.core.tree.RootEntry;
+import com.intellij.localvcs.core.tree.Entry;
 
 import java.io.IOException;
 
@@ -28,24 +27,26 @@ public class MoveChange extends StructuralChange {
   }
 
   @Override
-  protected IdPath doApplyTo(RootEntry r) {
-    IdPath firstIdPath = r.getEntry(myPath).getIdPath();
+  protected IdPath doApplyTo(Entry r) {
+    Entry e = r.getEntry(myPath);
+    IdPath firstIdPath = e.getIdPath();
 
-    r.move(myPath, myNewParentPath);
-    myTargetIdPath = r.getEntry(getNewPath()).getIdPath();
+    e.getParent().removeChild(e);
+    Entry newParent = r.getEntry(myNewParentPath);
+    newParent.addChild(e);
+
+    myTargetIdPath = e.getIdPath();
 
     return firstIdPath;
   }
 
-  private String getNewPath() {
-    return Paths.appended(myNewParentPath, Paths.getNameOf(myPath));
-  }
-
   @Override
-  public void revertOn(RootEntry r) {
-    IdPath newPath = myTargetIdPath;
-    IdPath oldParentPath = myAffectedIdPath.getParent();
-    r.move(newPath, oldParentPath);
+  public void revertOn(Entry r) {
+    Entry e = r.getEntry(myTargetIdPath);
+    Entry oldParent = r.getEntry(myAffectedIdPath.getParent());
+
+    e.getParent().removeChild(e);
+    oldParent.addChild(e);
   }
 
   @Override

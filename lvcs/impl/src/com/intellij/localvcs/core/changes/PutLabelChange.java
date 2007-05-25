@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -45,11 +44,11 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry r) {
+  public void applyTo(Entry r) {
   }
 
   @Override
-  public void revertOn(RootEntry r) {
+  public void revertOn(Entry r) {
   }
 
   @Override

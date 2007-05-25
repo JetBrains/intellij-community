@@ -1,16 +1,19 @@
-package com.intellij.localvcs.core.tree;
+package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.LocalVcsTestCase;
+import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.core.tree.FileEntry;
+import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
 public class RootEntryFilesTest extends LocalVcsTestCase {
-  private RootEntry root = new RootEntry();
+  private Entry root = new RootEntry();
 
   @Test
   public void testCreatingFiles() {
     assertFalse(root.hasEntry("file"));
 
-    root.createFile(-1, "file", c("content"), 42);
+    createFile(root, -1, "file", c("content"), 42);
     assertTrue(root.hasEntry("file"));
 
     Entry e = root.getEntry("file");
@@ -21,15 +24,9 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testReturningCreatedFileEntry() {
-    Entry e = root.createFile(-1, "f", null, -1);
-    assertSame(e, root.getEntry("f"));
-  }
-
-  @Test
   public void testCreatingTwoFiles() {
-    root.createFile(-1, "file1", null, -1);
-    root.createFile(-1, "file2", null, -1);
+    createFile(root, -1, "file1", null, -1);
+    createFile(root, -1, "file2", null, -1);
 
     assertTrue(root.hasEntry("file1"));
     assertTrue(root.hasEntry("file2"));
@@ -39,8 +36,8 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingFileContent() {
-    root.createFile(1, "file", c("content"), -1);
-    root.changeFileContent("file", c("new content"), 77);
+    createFile(root, 1, "file", c("content"), -1);
+    changeFileContent(root, "file", c("new content"), 77);
 
     Entry e = root.getEntry("file");
 
@@ -50,10 +47,10 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingFileContentAffectsOnlyOneFile() {
-    root.createFile(1, "file1", c("content1"), -1);
-    root.createFile(2, "file2", c("content2"), -1);
+    createFile(root, 1, "file1", c("content1"), -1);
+    createFile(root, 2, "file2", c("content2"), -1);
 
-    root.changeFileContent("file1", c("new content"), -1);
+    changeFileContent(root, "file1", c("new content"), -1);
 
     assertEquals(c("new content"), root.getEntry("file1").getContent());
     assertEquals(c("content2"), root.getEntry("file2").getContent());
@@ -62,7 +59,7 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
   @Test
   public void testChangingContentOfAnNonExistingFileThrowsException() {
     try {
-      root.changeFileContent("unknown file", c("content"), -1);
+      changeFileContent(root, "unknown file", c("content"), -1);
       fail();
     }
     catch (RuntimeException e) {
@@ -71,9 +68,9 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFiles() {
-    root.createFile(1, "file", c("content"), -1);
+    createFile(root, 1, "file", c("content"), -1);
 
-    root.rename("file", "new file");
+    rename(root, "file", "new file");
 
     assertFalse(root.hasEntry("file"));
 
@@ -86,7 +83,7 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
   @Test
   public void testRenamingOfAnNonExistingFileThrowsException() {
     try {
-      root.rename("unknown file", "new file");
+      rename(root, "unknown file", "new file");
       fail();
     }
     catch (RuntimeException e) {
@@ -95,11 +92,11 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFileToAnExistingFileNameThrowsException() {
-    root.createFile(1, "file1", null, -1);
-    root.createFile(2, "file2", null, -1);
+    createFile(root, 1, "file1", null, -1);
+    createFile(root, 2, "file2", null, -1);
 
     try {
-      root.rename("file1", "file2");
+      rename(root, "file1", "file2");
       fail();
     }
     catch (RuntimeException e) {
@@ -108,9 +105,9 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFileToSameNameDoesNothing() {
-    root.createFile(1, "file", c("content"), -1);
+    createFile(root, 1, "file", c("content"), -1);
 
-    root.rename("file", "file");
+    rename(root, "file", "file");
 
     assertTrue(root.hasEntry("file"));
     assertEquals(c("content"), root.getEntry("file").getContent());
@@ -118,28 +115,28 @@ public class RootEntryFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFiles() {
-    root.createFile(1, "file", null, -1);
+    createFile(root, 1, "file", null, -1);
 
-    root.delete("file");
+    delete(root, "file");
 
     assertFalse(root.hasEntry("file"));
   }
 
   @Test
   public void testDeletingOnlyOneFile() {
-    root.createFile(1, "file1", null, -1);
-    root.createFile(2, "file2", null, -1);
+    createFile(root, 1, "file1", null, -1);
+    createFile(root, 2, "file2", null, -1);
 
-    root.delete("file2");
+    delete(root, "file2");
 
     assertTrue(root.hasEntry("file1"));
     assertFalse(root.hasEntry("file2"));
   }
 
   @Test
-  public void testDeletingOfAnUnknownEntryThrowsException() {
+  public void testDeletionOfAnUnknownEntryThrowsException() {
     try {
-      root.delete("unknown file");
+      delete(root, "unknown file");
       fail();
     }
     catch (RuntimeException e) {

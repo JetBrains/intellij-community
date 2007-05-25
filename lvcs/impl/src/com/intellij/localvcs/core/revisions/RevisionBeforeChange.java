@@ -4,15 +4,14 @@ import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.changes.ChangeList;
 import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 public class RevisionBeforeChange extends Revision {
   protected Entry myEntry;
-  protected RootEntry myRoot;
+  protected Entry myRoot;
   protected ChangeList myChangeList;
   protected Change myChange;
 
-  public RevisionBeforeChange(Entry e, RootEntry r, ChangeList cl, Change c) {
+  public RevisionBeforeChange(Entry e, Entry r, ChangeList cl, Change c) {
     myEntry = e;
     myRoot = r;
     myChangeList = cl;
@@ -26,9 +25,9 @@ public class RevisionBeforeChange extends Revision {
 
   @Override
   public Entry getEntry() {
-    RootEntry copy = myRoot.copy();
-    myChangeList.revertUpTo(copy, myChange, includeMyChange());
-    return copy.getEntry(myEntry.getId());
+    Entry rootCopy = myRoot.copy();
+    myChangeList.revertUpTo(rootCopy, myChange, includeMyChange());
+    return rootCopy.getEntry(myEntry.getId());
   }
 
   @Override

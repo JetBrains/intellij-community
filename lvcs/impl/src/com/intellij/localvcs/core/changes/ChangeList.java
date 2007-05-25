@@ -3,7 +3,6 @@ package com.intellij.localvcs.core.changes;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
@@ -64,8 +63,8 @@ public class ChangeList {
     }
   }
 
-  public List<Change> getChangesFor(RootEntry r, String path) {
-    RootEntry rootCopy = r.copy();
+  public List<Change> getChangesFor(Entry r, String path) {
+    Entry rootCopy = r.copy();
     Entry e = rootCopy.getEntry(path);
 
     List<Change> result = new ArrayList<Change>();
@@ -82,7 +81,7 @@ public class ChangeList {
     myChanges.add(c);
   }
 
-  public void revertUpTo(RootEntry r, Change target, boolean revertTargetChange) {
+  public void revertUpTo(Entry r, Change target, boolean revertTargetChange) {
     for (Change c : Reversed.list(myChanges)) {
       if (!revertTargetChange && c == target) return;
       c.revertOn(r);

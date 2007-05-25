@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class ChangeSetTest extends LocalVcsTestCase {
   ArrayList<Integer> log = new ArrayList<Integer>();
 
-  RootEntry r = new RootEntry();
+  Entry r = new RootEntry();
   ChangeSet cs = cs(123L, "name", new LoggingChange(1), new LoggingChange(2), new LoggingChange(3));
 
   @Test
@@ -48,7 +48,8 @@ public class ChangeSetTest extends LocalVcsTestCase {
 
   @Test
   public void testNonCreational() {
-    Entry e = r.createFile(1, "file", null, -1);
+    createFile(r, 1, "file", null, -1);
+    Entry e = r.getEntry("file");
 
     cs = cs(new ChangeFileContentChange("file", null, -1));
     cs.applyTo(r);
@@ -82,13 +83,13 @@ public class ChangeSetTest extends LocalVcsTestCase {
     }
 
     @Override
-    protected IdPath doApplyTo(RootEntry root) {
+    protected IdPath doApplyTo(Entry root) {
       log.add(myId);
       return null;
     }
 
     @Override
-    public void revertOn(RootEntry root) {
+    public void revertOn(Entry root) {
       log.add(myId);
     }
   }

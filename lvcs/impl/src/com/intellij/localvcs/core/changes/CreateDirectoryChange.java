@@ -1,9 +1,10 @@
 package com.intellij.localvcs.core.changes;
 
 import com.intellij.localvcs.core.IdPath;
+import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.storage.Stream;
+import com.intellij.localvcs.core.tree.DirectoryEntry;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 
@@ -20,13 +21,28 @@ public class CreateDirectoryChange extends StructuralChange {
   }
 
   @Override
-  protected IdPath doApplyTo(RootEntry root) {
-    return root.createDirectory(myId, myPath).getIdPath();
+  protected IdPath doApplyTo(Entry r) {
+    // todo messsssss!!!! should introduce createRoot method instead?
+    // todo and simplify addEntry method too?
+    String name = Paths.getNameOf(myPath);
+    String parentPath = Paths.getParentOf(myPath);
+
+    if (parentPath == null || !r.hasEntry(parentPath)) { // is it supposed to be a root?
+      parentPath = null;
+      name = myPath;
+    }
+
+    DirectoryEntry e = new DirectoryEntry(myId, name);
+    Entry parent = parentPath == null ? r : r.findEntry(parentPath);
+    parent.addChild(e);
+
+    return e.getIdPath();
   }
 
   @Override
-  public void revertOn(RootEntry root) {
-    root.delete(myAffectedIdPath);
+  public void revertOn(Entry r) {
+    Entry e = r.getEntry(myAffectedIdPath);
+    e.getParent().removeChild(e);
   }
 
   @Override

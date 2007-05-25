@@ -6,7 +6,7 @@ import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
-import com.intellij.localvcs.integration.revert.RevisionReverter;
+import com.intellij.localvcs.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;

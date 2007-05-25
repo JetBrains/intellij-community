@@ -19,7 +19,7 @@ public class LocalVcs implements ILocalVcs {
   protected Storage myStorage;
 
   private ChangeList myChangeList;
-  private RootEntry myRoot;
+  private Entry myRoot;
   private int myEntryCounter;
 
   private int myInnerChangeSetCounter = 0;
@@ -75,12 +75,12 @@ public class LocalVcs implements ILocalVcs {
     return myRoot.findEntry(path);
   }
 
-  public RootEntry getRootEntry() {
+  public Entry getRootEntry() {
     return myRoot;
   }
 
   public List<Entry> getRoots() {
-    return myRoot.getRoots();
+    return myRoot.getChildren();
   }
 
   public void beginChangeSet() {
@@ -290,7 +290,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public static class Memento {
-    public RootEntry myRoot = new RootEntry();
+    public Entry myRoot = new RootEntry();
     public int myEntryCounter = 0;
     public ChangeList myChangeList = new ChangeList();
   }

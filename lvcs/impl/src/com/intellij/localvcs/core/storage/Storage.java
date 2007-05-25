@@ -1,7 +1,6 @@
 package com.intellij.localvcs.core.storage;
 
 import com.intellij.localvcs.core.LocalVcs;
-import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
@@ -80,7 +79,7 @@ public class Storage {
     return load(STORAGE_FILE, new LocalVcs.Memento(), new Loader<LocalVcs.Memento>() {
       public LocalVcs.Memento load(Stream s) throws IOException {
         LocalVcs.Memento m = new LocalVcs.Memento();
-        m.myRoot = (RootEntry)s.readEntry();
+        m.myRoot = s.readEntry();
         m.myEntryCounter = s.readInteger();
         m.myChangeList = s.readChangeList();
         return m;
