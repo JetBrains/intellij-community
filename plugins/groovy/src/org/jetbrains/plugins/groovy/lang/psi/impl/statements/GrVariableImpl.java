@@ -19,25 +19,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.PomField;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
+public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -85,7 +83,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitField(this);
+    visitor.visitVariable(this);
   }
 
   public String getName() {
@@ -116,25 +114,10 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
     return this;
   }
 
-  public PomField getPom() {
-    return null;
-  }
-
-  public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
-  }
-
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     PsiElement nameId = getNameIdentifierGroovy();
     return new JavaIdentifier(getManager(), getContainingFile(), nameId.getTextRange());
-  }
-
-  public PsiClass getContainingClass() {
-    PsiElement parent = getParent().getParent();
-    if (parent instanceof GrTypeDefinitionBody) {
-      return (PsiClass) parent.getParent();
-    }
-    return null;
   }
 
   @Nullable
@@ -155,9 +138,5 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrField {
   @Nullable
   public PsiDocComment getDocComment() {
     return null;
-  }
-
-  public boolean isDeprecated() {
-    return false;
   }
 }
