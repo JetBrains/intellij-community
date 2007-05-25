@@ -1,8 +1,12 @@
-package com.intellij.execution.junit2;
+package com.intellij.execution.testframework;
 
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
+import com.intellij.psi.PsiMethod;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,23 +15,23 @@ import java.util.List;
 public abstract class Filter {
   /**
    * All instances (and subclasses's instances) should be singletons.
-   * @see TestProxy#selectChildren
+   * @see com.intellij.execution.junit2.TestProxy#selectChildren
    */
   private Filter() {
   }
 
-  public abstract boolean shouldAccept(TestProxy test);
+  public abstract boolean shouldAccept(AbstractTestProxy test);
 
-  public List<TestProxy> select(final List<TestProxy> tests) {
-    final ArrayList<TestProxy> result = new ArrayList<TestProxy>();
-    for (final TestProxy test : tests) {
+  public List<AbstractTestProxy> select(final List<? extends AbstractTestProxy> tests) {
+    final ArrayList<AbstractTestProxy> result = new ArrayList<AbstractTestProxy>();
+    for (final AbstractTestProxy test : tests) {
       if (shouldAccept(test)) result.add(test);
     }
     return result;
   }
 
-  public TestProxy detectIn(final Collection<TestProxy> collection) {
-    for (final TestProxy test : collection) {
+  public AbstractTestProxy detectIn(final Collection<? extends AbstractTestProxy> collection) {
+    for (final AbstractTestProxy test : collection) {
       if (shouldAccept(test)) return test;
     }
     return null;
@@ -42,52 +46,55 @@ public abstract class Filter {
   }
 
   public static final Filter NO_FILTER = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
+    public boolean shouldAccept(final AbstractTestProxy test) {
       return true;
     }
   };
 
   public static final Filter DEFECT = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
-      return test.getState().isDefect();
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isDefect();
     }
   };
 
   public static Filter METHOD(final Project project) {
     return new Filter() {
-      public boolean shouldAccept(final TestProxy test) {
-        return test.getInfo().getLocation(project) instanceof MethodLocation;
+      public boolean shouldAccept(final AbstractTestProxy test) {
+        final Location location = test.getLocation(project);
+        if (location instanceof MethodLocation) return true;
+        if (location instanceof PsiLocation && location.getPsiElement() instanceof PsiMethod) return true;
+        return false;
       }
     };
   }
 
   public static final Filter NOT_PASSED = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
-      return test.getState().getMagnitude() > PoolOfTestStates.PASSED_INDEX;
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.getMagnitude() > PoolOfTestStates.PASSED_INDEX;
     }
   };
 
   public static final Filter TEST_CASE = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
-      return test.getInfo().shouldRun();
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.shouldRun();
     }
   };
 
   public static final Filter IN_PROGRESS = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
-      return test.getState().isInProgress();
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isInProgress();
     }
   };
 
   public static final Filter LEAF = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
+    public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isLeaf();
     }
   };
 
   public static final Filter RUNNING = new Filter() {
-    public boolean shouldAccept(final TestProxy test) {
-      return test.getState().getMagnitude() == PoolOfTestStates.RUNNING_INDEX;
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.getMagnitude() == PoolOfTestStates.RUNNING_INDEX;
     }
   };
 
@@ -105,7 +112,7 @@ public abstract class Filter {
       myFilter2 = filter2;
     }
 
-    public boolean shouldAccept(final TestProxy test) {
+    public boolean shouldAccept(final AbstractTestProxy test) {
       return myFilter1.shouldAccept(test) && myFilter2.shouldAccept(test);
     }
   }
@@ -117,7 +124,7 @@ public abstract class Filter {
       myFilter = filter;
     }
 
-    public boolean shouldAccept(final TestProxy test) {
+    public boolean shouldAccept(final AbstractTestProxy test) {
       return !myFilter.shouldAccept(test);
     }
   }

@@ -4,7 +4,9 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.PsiLocator;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,13 +41,15 @@ public class TestsUIUtil {
     return null;
   }
 
-  public static Navigatable getOpenFileDescriptor(final TestProxy testProxy, final JUnitRunningModel model) {
-    final Project project = model.getProject();
-    final JUnitConsoleProperties properties = model.getProperties();
-    if (testProxy != null) {
-      final Location location = testProxy.getInfo().getLocation(project);
-      if (JUnitConsoleProperties.OPEN_FAILURE_LINE.value(properties)) {
-        return testProxy.getState().getDescriptor(location);
+  public static Navigatable getOpenFileDescriptor(final TestProxy testProxy, final TestFrameworkRunningModel model) {
+    return getOpenFileDescriptor(testProxy, model.getProperties().getProject(), TestConsoleProperties.OPEN_FAILURE_LINE.value(model.getProperties()));
+  }
+  
+  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy proxy, final Project project, final boolean openFailureLine) {
+    if (proxy != null) {
+      final Location location = proxy.getLocation(project);
+      if (openFailureLine) {
+        return proxy.getDescriptor(location);
       }
       final OpenFileDescriptor openFileDescriptor = location == null ? null : location.getOpenFileDescriptor();
       if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {

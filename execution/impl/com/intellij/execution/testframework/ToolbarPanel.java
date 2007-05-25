@@ -1,41 +1,35 @@
-package com.intellij.execution.junit2.ui.actions;
+/*
+ * User: anna
+ * Date: 25-May-2007
+ */
+package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.ui.FailedTestsNavigator;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
-import com.intellij.execution.junit2.ui.model.JUnitAdapter;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.junit2.ui.properties.ScrollToTestSourceAction;
+import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
+import com.intellij.execution.testframework.actions.TestFrameworkActions;
+import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.config.ToggleBooleanProperty;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ToolbarPanel extends JPanel implements OccurenceNavigator {
-  private final TestTreeExpander myTreeExpander = new TestTreeExpander();
-  private final FailedTestsNavigator myOccurenceNavigator = new FailedTestsNavigator();
-  private final ScrollToTestSourceAction myScrollToSource;
-  @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
-  private final RerunFailedTestsAction myRerunFailedTestsAction;
+public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator {
+  protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
+  protected final FailedTestsNavigator myOccurenceNavigator;
+  protected final ScrollToTestSourceAction myScrollToSource;
 
-  public ToolbarPanel(final JUnitConsoleProperties properties,
+  public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings) {
     super (new BorderLayout());
@@ -61,6 +55,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
 
     actionGroup.addSeparator();
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    myOccurenceNavigator = getOccurenceNavigator(properties);
     actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
     actionGroup.addSeparator();
@@ -78,38 +73,23 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
                                               ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, JUnitConsoleProperties.OPEN_FAILURE_LINE));
-    myRerunFailedTestsAction = new RerunFailedTestsAction(properties, runnerSettings, configurationSettings);
-    actionGroup.add(myRerunFailedTestsAction);
+    appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings);
+
     add(ActionManager.getInstance().
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
         getComponent(), BorderLayout.CENTER);
   }
 
-  public void setModel(final JUnitRunningModel model) {
-    JUnitActions.installFilterAction(model);
+  protected abstract FailedTestsNavigator getOccurenceNavigator(TestConsoleProperties properties);
+
+  protected abstract void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
+                                         ConfigurationPerRunnerSettings configurationSettings);
+
+  public void setModel(final TestFrameworkRunningModel model) {
+    TestFrameworkActions.installFilterAction(model);
     myScrollToSource.setModel(model);
-    RunningTestTracker.install(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
-    myRerunFailedTestsAction.setModel(model);
-    JUnitActions.installAutoscrollToFirstDefect(model);
-    model.addListener(new LvcsLabeler(model));
-    model.addListener(new JUnitAdapter() {
-      public void onTestSelected(final TestProxy test) {
-        if (test == null) return;
-        final Project project = model.getProject();
-        if (!ScrollToTestSourceAction.isScrollEnabled(model)) return;
-        final Location location = test.getInfo().getLocation(project);
-        if (location != null) {
-          final PsiClass aClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
-          if (aClass != null && TEST_SUITE_CLASS_NAME.equals(aClass.getQualifiedName())) return;
-        }
-        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(test, model);
-        if (descriptor != null && descriptor.canNavigate()) {
-          descriptor.navigate(false);
-        }
-      }
-    });
   }
 
   public boolean hasNextOccurence() {
@@ -120,11 +100,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
     return myOccurenceNavigator.hasPreviousOccurence();
   }
 
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
 
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
@@ -134,5 +114,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
 
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
+  }
+
+  public void dispose() {
+    myScrollToSource.setModel(null);    
   }
 }
