@@ -6,21 +6,18 @@
  */
 package com.theoryinpractice.testng.ui;
 
-import java.awt.*;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.GuiUtils;
@@ -30,12 +27,30 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.Printable;
 import com.theoryinpractice.testng.TestNGConsoleView;
 import com.theoryinpractice.testng.model.*;
-import com.theoryinpractice.testng.ui.actions.ScrollToTestSourceAction;
+import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
-public class TestNGResults
+import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class TestNGResults  implements TestFrameworkRunningModel
 {
+    @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
+
+    private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+
     private TableView resultsTable;
     private JPanel main;
     private ColorProgressBar progress;
@@ -60,27 +75,44 @@ public class TestNGResults
     private JPanel toolbarPanel;
     private JSplitPane splitPane;
     private static final String NO_PACKAGE = "No Package";
-    private ToolbarPanel toolbar;
+    private TestNGToolbarPanel toolbar;
     private TestNGResults.OpenSourceSelectionListener openSourceListener;
+  private List<ModelListener> myListeners = new ArrayList<ModelListener>();
 
-    public TestNGResults(final Project project, final TestNGConsoleView console) {
+  public TestNGResults(final Project project, final TestNGConsoleView console, final RunnerSettings runnerSettings,
+                         final ConfigurationPerRunnerSettings configurationSettings) {
         this.project = project;
         model = new TestNGResultsTableModel();
-        this.consoleProperties = console.getConsoleProperties();
+        consoleProperties = console.getConsoleProperties();
         resultsTable = new TableView(model);
         rootNode = new TreeRootNode();
         final TestTreeStructure structure = new TestTreeStructure(project, rootNode);
         tree.attachToModel(project, structure.getRootElement(), console.getConsoleProperties());
         treeBuilder = new TestTreeBuilder(tree, structure);
         toolbarPanel.setLayout(new BorderLayout());
-        toolbar = new ToolbarPanel(console.getConsoleProperties(), this);
+        toolbar = new TestNGToolbarPanel(console.getConsoleProperties(), this, runnerSettings, configurationSettings);
         toolbarPanel.add(toolbar);
         animator = new Animator(treeBuilder);
         openSourceListener = new OpenSourceSelectionListener(structure, console);
         tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
         progress.setColor(ColorProgressBar.GREEN);
-        splitPane.setDividerLocation(0.2);
+        splitterProportions.externalizeFromDimensionService(TESTNG_SPLITTER_PROPERTY);
+        final Container container = splitPane.getParent();
         GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
+        final Splitter splitter = (Splitter)container.getComponent(0);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            splitterProportions.restoreSplitterProportions(container);
+            splitter.addPropertyChangeListener(new PropertyChangeListener() {
+              public void propertyChange(final PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
+                  splitterProportions.saveSplitterProportions(container);
+                  splitterProportions.externalizeToDimensionService(TESTNG_SPLITTER_PROPERTY);
+                }
+              }
+            });
+          }
+        });
     }
 
     private void updateLabel(JLabel label) {
@@ -99,7 +131,7 @@ public class TestNGResults
         label.setText(sb.toString());
     }
 
-    public void addTestResult(TestResultMessage result, List<Printable> output) {
+    public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
 
         // TODO This should be an action button which rebuilds the tree when toggled.
         boolean flattenPackages = true;
@@ -131,6 +163,7 @@ public class TestNGResults
                 if (result.equals(proxy.getResultMessage())) {
                     proxy.setResultMessage(result);
                     proxy.setOutput(output);
+                    proxy.setExceptionMark(exceptionMark);
                     treeBuilder.repaintWithParents(proxy);
                 }
             }
@@ -234,16 +267,13 @@ public class TestNGResults
         return tabbedPane;
     }
 
-    public TestTreeView getTree() {
-        return tree;
-    }
 
     public void setTotal(int total) {
         this.total = total;
     }
 
     public void start() {
-        this.start = System.currentTimeMillis();
+      start = System.currentTimeMillis();
         tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
         rootNode.setInProgress(true);
         rootNode.setStarted(true);
@@ -251,7 +281,7 @@ public class TestNGResults
 
     public void finish() {
         if (end > 0) return;
-        this.end = System.currentTimeMillis();
+        end = System.currentTimeMillis();
         animator.stop();
         updateLabel(statusLabel);
         rootNode.setInProgress(false);
@@ -262,11 +292,32 @@ public class TestNGResults
         }
     }
 
-    public TestNGConsoleProperties getConsoleProperties() {
+    public TestNGConsoleProperties getProperties() {
         return consoleProperties;
     }
 
-    public TestProxy getRoot() {
+  public void setFilter(final Filter filter) {
+    getTreeStructure().setFilter(filter);
+    treeBuilder.updateFromRoot();
+  }
+
+  public void addListener(ModelListener l) {
+    myListeners.add(l);
+  }
+
+  public boolean isRunning() {
+    return rootNode.isInProgress();
+  }
+
+  public JTree getTreeView() {
+    return tree;
+  }
+
+  public boolean hasTestSuites() {
+    return rootNode.getResults().size() > 0;
+  }
+
+  public TestProxy getRoot() {
         return rootNode;
     }
 
@@ -280,6 +331,9 @@ public class TestNGResults
     }
 
     public void dispose() {
+      for (ModelListener listener : myListeners) {
+        listener.onDispose(this);
+      }
         treeBuilder.dispose();
         animator.dispose();
         toolbar.dispose();
@@ -310,7 +364,8 @@ public class TestNGResults
             if (proxy == structure.getRootElement()) {
                 console.reset();
             } else {
-                console.setView(proxy.getOutput());
+              console.setView(proxy.getOutput(),
+                              TestNGConsoleProperties.SCROLL_TO_STACK_TRACE.value(getProperties()) ? proxy.getExceptionMark() : 0);
             }
         }
     }

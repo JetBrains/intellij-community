@@ -1,30 +1,32 @@
 package com.theoryinpractice.testng.model;
 
-import java.util.List;
-
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class TestTreeStructure extends AbstractTreeStructure
 {
     private Object root;
-    private TestFilter filter;
+    private Filter filter;
     private Project project;
 
     public TestTreeStructure(Project project, Object root) {
         this.project = project;
         this.root = root;
-        filter = TestFilter.NO_FILTER;
+        filter = Filter.NO_FILTER;
     }
 
-    public void setFilter(TestFilter filter)
+    public void setFilter(Filter filter)
     {
         this.filter = filter;
     }
 
-    public TestFilter getFilter()
+    public Filter getFilter()
     {
         return filter;
     }
@@ -38,8 +40,8 @@ public class TestTreeStructure extends AbstractTreeStructure
     @Override
     public Object[] getChildElements(Object obj)
     {
-        List<TestProxy> results = ((TestProxy)obj).getResults(filter);
-        return results.toArray(new TestProxy[results.size()]);
+        List<AbstractTestProxy> results = ((TestProxy)obj).getResults(filter);
+        return results.toArray(new AbstractTestProxy[results.size()]);
     }
 
     @Override

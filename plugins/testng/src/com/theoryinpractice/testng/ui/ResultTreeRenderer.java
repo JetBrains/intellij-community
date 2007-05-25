@@ -1,15 +1,18 @@
 package com.theoryinpractice.testng.ui;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.junit2.ui.PoolOfTestIcons;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.model.TestNGConsoleProperties;
+import com.theoryinpractice.testng.model.TestNodeDescriptor;
+import com.theoryinpractice.testng.model.TestProxy;
+import com.theoryinpractice.testng.model.TreeRootNode;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * @author Hani Suleiman Date: Jul 21, 2005 Time: 11:32:36 PM
@@ -46,7 +49,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     append(root.isInProgress() ? "Running tests..." : "Test Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }
 
-                DebuggerSession debug = consoleProperties.getDebuggerSession();
+                DebuggerSession debug = consoleProperties.getDebugSession();
                 if (debug != null && debug.isPaused()) {
                     setIcon(Animator.PAUSED_ICON);
                 }

@@ -12,6 +12,8 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -34,9 +36,14 @@ public class TestNGConsoleView implements ConsoleView
     private int mark;
     private TestNGConsoleProperties consoleProperties;
 
-    public TestNGConsoleView(Project project, TestNGConsoleProperties consoleProperties) {
-        this.consoleProperties = consoleProperties;
-        buildView(project);
+    public TestNGConsoleView(Project project, TestNGConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+                             final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
+      this.consoleProperties = consoleProperties;
+      console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+      consoleProperties.setConsole(this);
+      testNGResults = new TestNGResults(project, this, runnerSettings, configurationPerRunnerSettings);
+      testNGResults.getTabbedPane().add("Output", console.getComponent());
+      testNGResults.getTabbedPane().add("Statistics", new JScrollPane(testNGResults.getResultsTable()));
     }
 
     public TestNGResults getResultsView() {
@@ -58,22 +65,24 @@ public class TestNGConsoleView implements ConsoleView
     public void addTestResult(TestResultMessage result) {
         if (testNGResults != null) {
             List<Printable> list = null;
+            int exceptionMark = 0;
             if (result.getResult() == MessageHelper.TEST_STARTED) {
                 mark();
             } else {
                 String stackTrace = result.getStackTrace();
                 if (stackTrace != null && stackTrace.length() > 10) {
                     //trim useless crud from stacktrace
-                    String trimmed = trimStackTrace(stackTrace);
-                    List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
-                    synchronized (allOutput) {
+                  exceptionMark = allOutput.size() - mark;
+                  String trimmed = trimStackTrace(stackTrace);
+                  List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
+                  synchronized (allOutput) {
                         allOutput.addAll(printables);
                     }
                 }
                 list = getPrintablesSinceMark();
             }
 
-            testNGResults.addTestResult(result, list);
+            testNGResults.addTestResult(result, list, exceptionMark);
         }
     }
 
@@ -107,14 +116,7 @@ public class TestNGConsoleView implements ConsoleView
         return builder.toString();
     }
 
-    private void buildView(Project project) {
-        console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-        testNGResults = new TestNGResults(project, this);
-        testNGResults.getTabbedPane().add("Output", console.getComponent());
-        testNGResults.getTabbedPane().add("Statistics", new JScrollPane(testNGResults.getResultsTable()));
-    }
-
-    public void mark() {
+  public void mark() {
         mark = allOutput.size();
     }
 
@@ -168,7 +170,7 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void reset() {
-        setView(allOutput);
+        setView(allOutput, 0);
     }
 
     public void clear() {
@@ -228,19 +230,25 @@ public class TestNGConsoleView implements ConsoleView
     return console.createUpDownStacktraceActions();
   }
 
-  public void setView(final List<Printable> output) {
+  public void setView(final List<Printable> output, final int i) {
         if (!ApplicationManager.getApplication().isDispatchThread()) {
             SwingUtilities.invokeLater(new Runnable()
             {
                 public void run() {
-                    setView(output);
+                    setView(output, i);
                 }
             });
         } else {
             console.clear();
+            int idx = 0;
+            int offset = 0;
             for (Printable chunk : new ArrayList<Printable>(output)) {
-                chunk.print(console);
+              chunk.print(console);
+              if (idx++ < i) {
+                offset = console.getContentSize();
+              }
             }
+            console.scrollTo(offset);
         }
     }
 

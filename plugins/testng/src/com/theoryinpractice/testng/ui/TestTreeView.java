@@ -1,11 +1,5 @@
 package com.theoryinpractice.testng.ui;
 
-import javax.swing.*;
-import javax.swing.plaf.TreeUI;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-
 import com.intellij.execution.junit2.ui.PoolOfTestIcons;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -25,6 +19,12 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestNodeDescriptor;
 import com.theoryinpractice.testng.model.TestProxy;
+
+import javax.swing.*;
+import javax.swing.plaf.TreeUI;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 /**
  * @author Hani Suleiman Date: Aug 1, 2005 Time: 11:33:12 AM
@@ -90,19 +90,14 @@ public class TestTreeView extends Tree implements DataProvider
 
     private void registerListeners() {
         EditSourceOnDoubleClickHandler.install(this);
-        new TreeSpeedSearch(this, new Convertor()
+        new TreeSpeedSearch(this, new Convertor<TreePath, String>()
         {
-
             public String convert(TreePath path) {
                 TestProxy proxy = getObject(path);
                 if (proxy == null)
                     return null;
                 else
                     return proxy.getName();
-            }
-
-            public Object convert(Object obj) {
-                return convert((TreePath) obj);
             }
         });
         TreeToolTipHandler.install(this);
