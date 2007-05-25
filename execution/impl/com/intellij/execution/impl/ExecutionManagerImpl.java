@@ -1,7 +1,5 @@
 package com.intellij.execution.impl;
 
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
@@ -128,15 +126,16 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         }
       };
       CompileScope scope;
+      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY, Boolean.FALSE.toString())).booleanValue()) {
         // user explicitly requested whole-project make
-        scope = new ProjectCompileScope(myProject);
+        scope = compilerManager.createProjectCompileScope(myProject);
       }
       else {
-        scope = new ModuleCompileScope(myProject, modulesToCompile, true);
+        scope = compilerManager.createModulesCompileScope(modulesToCompile, true);
       }
       scope.putUserData(RUN_PROFILE_STATE_KEY, state);
-      CompilerManager.getInstance(myProject).make(scope, callback);
+      compilerManager.make(scope, callback);
     }
     else {
       antAwareRunnable.run();

@@ -233,6 +233,8 @@ public abstract class CompilerManager {
   
   public abstract CompileScope createModuleCompileScope(Module module, final boolean includeDependentModules);
 
+  public abstract CompileScope createModulesCompileScope(Module[] modules, final boolean includeDependentModules);
+
   public abstract CompileScope createModuleGroupCompileScope(Project project, Module[] modules, final boolean includeDependentModules);
 
   public abstract CompileScope createProjectCompileScope(final Project project);

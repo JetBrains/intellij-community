@@ -223,6 +223,10 @@ public class CompilerManagerImpl extends CompilerManager {
     return new ModuleCompileScope(module, includeDependentModules);
   }
 
+  public CompileScope createModulesCompileScope(final Module[] modules, final boolean includeDependentModules) {
+    return new ModuleCompileScope(myProject, modules, includeDependentModules);
+  }
+
   public CompileScope createModuleGroupCompileScope(final Project project, final Module[] modules, final boolean includeDependentModules) {
     return new ModuleCompileScope(project, modules, includeDependentModules);
   }
