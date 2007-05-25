@@ -45,6 +45,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface);
   public abstract IntentionAction createExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd);
   public abstract IntentionAction createRemoveUnusedParameterFix(PsiParameter parameter);
+  public abstract IntentionAction createRemoveUnusedVariableFix(PsiVariable variable);
 
   public abstract IntentionAction createCreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass);
   public abstract IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations);

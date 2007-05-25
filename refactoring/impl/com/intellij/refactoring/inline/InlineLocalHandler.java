@@ -1,9 +1,8 @@
 
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,8 +25,8 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -149,7 +149,7 @@ class InlineLocalHandler {
           }
 
           if (ReferencesSearch.search(local).findFirst() == null) {
-            new RemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
+            QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
           }
 
           if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {

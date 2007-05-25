@@ -85,6 +85,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new RemoveUnusedParameterFix(parameter);
   }
 
+  public IntentionAction createRemoveUnusedVariableFix(PsiVariable variable) {
+    return new RemoveUnusedVariableFix(variable);
+  }
+
   public IntentionAction createCreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
     return new CreateClassOrPackageFix(context, qualifiedName, createClass, superClass);
   }
