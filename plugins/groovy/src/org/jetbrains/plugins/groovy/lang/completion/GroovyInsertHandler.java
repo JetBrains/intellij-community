@@ -21,6 +21,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       PsiParameter[] parameters = ((PsiMethod) obj).getParameterList().getParameters();
       Editor editor = context.editor;
       Document document = editor.getDocument();
+      if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //closure creation
       CaretModel caretModel = editor.getCaretModel();
       int offset = caretModel.getOffset();
       if (parameters.length == 0 || parameters.length > 1) {
