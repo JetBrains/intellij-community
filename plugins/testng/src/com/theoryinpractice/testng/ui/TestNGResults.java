@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -24,8 +25,8 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.theoryinpractice.testng.Printable;
-import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.Printable;
+import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -56,7 +57,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
     private ColorProgressBar progress;
 
     private TestNGResultsTableModel model;
-    private TestTreeView tree;
+    private TestNGTestTreeView tree;
     private JTabbedPane tabbedPane;
 
     private Project project;
@@ -87,7 +88,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
         resultsTable = new TableView(model);
         rootNode = new TreeRootNode();
         final TestTreeStructure structure = new TestTreeStructure(project, rootNode);
-        tree.attachToModel(project, structure.getRootElement(), console.getConsoleProperties());
+        tree.attachToModel(this);
         treeBuilder = new TestTreeBuilder(tree, structure);
         toolbarPanel.setLayout(new BorderLayout());
         toolbar = new TestNGToolbarPanel(console.getConsoleProperties(), this, runnerSettings, configurationSettings);
@@ -309,7 +310,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
     return rootNode.isInProgress();
   }
 
-  public JTree getTreeView() {
+  public TestTreeView getTreeView() {
     return tree;
   }
 
@@ -340,7 +341,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
         openSourceListener.structure = null;
         openSourceListener.console = null;
         tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
-        tree.dispose();
+
     }
 
     private class OpenSourceSelectionListener implements TreeSelectionListener
@@ -356,7 +357,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
         public void valueChanged(TreeSelectionEvent e) {
             TreePath path = e.getPath();
             if (path == null) return;
-            TestProxy proxy = TestTreeView.getObject(path);
+            TestProxy proxy = (TestProxy)tree.getSelectedTest();
             if (proxy == null) return;
             if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
                 OpenSourceUtil.openSourcesFrom(tree, false);

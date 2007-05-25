@@ -4,7 +4,7 @@
  * Date: Jul 2, 2005
  * Time: 12:16:02 AM
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionUtil;
@@ -27,6 +27,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

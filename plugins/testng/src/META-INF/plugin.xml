@@ -24,13 +24,13 @@
       <className>com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention</className>
       <category>TestNG</category>
     </intentionAction>
-    <configurationProducer implementation="com.theoryinpractice.testng.TestNGConfigurationProducer"/>
+    <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationProducer"/>
   </extensions>
 
 
   <application-components>
     <component>
-      <implementation-class>com.theoryinpractice.testng.TestNGConfigurationType</implementation-class>
+      <implementation-class>com.theoryinpractice.testng.configuration.TestNGConfigurationType</implementation-class>
       <option name="workspace" value="true"/>
     </component>
   </application-components>

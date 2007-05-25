@@ -1,13 +1,14 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
 
 /**
  * @author Hani Suleiman

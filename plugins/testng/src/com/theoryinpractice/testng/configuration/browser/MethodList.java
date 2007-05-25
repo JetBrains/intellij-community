@@ -1,4 +1,4 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
 import com.intellij.openapi.ui.DialogBuilder;

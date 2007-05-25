@@ -1,4 +1,4 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -10,6 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.module.Module;
 import com.theoryinpractice.testng.model.TestClassFilter;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
+import com.theoryinpractice.testng.MessageInfoException;
 
 /**
  * @author Hani Suleiman

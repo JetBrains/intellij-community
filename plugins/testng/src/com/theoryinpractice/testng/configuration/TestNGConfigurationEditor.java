@@ -4,7 +4,7 @@
  * Date: Jul 3, 2005
  * Time: 6:15:22 PM
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
@@ -24,6 +24,7 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGConfigurationModel;
 import com.theoryinpractice.testng.model.TestNGParametersTableModel;
 import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.configuration.browser.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -197,7 +198,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   }
 
   @Override
-  protected void applyEditorTo(TestNGConfiguration config) {
+  public void applyEditorTo(TestNGConfiguration config) {
     model.apply(getModuleSelector().getModule(), config);
     getModuleSelector().applyTo(config);
     TestData data = config.getPersistantData();

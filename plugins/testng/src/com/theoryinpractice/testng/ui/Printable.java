@@ -1,4 +1,4 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.ui.ConsoleView;
 

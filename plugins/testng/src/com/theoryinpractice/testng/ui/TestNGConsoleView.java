@@ -4,22 +4,21 @@
  * Date: Jul 9, 2005
  * Time: 4:19:20 PM
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.ui;
 
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.theoryinpractice.testng.ui.Printable;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
-import com.theoryinpractice.testng.ui.DiffHyperLink;
-import com.theoryinpractice.testng.ui.TestNGResults;
 import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;

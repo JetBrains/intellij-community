@@ -7,7 +7,7 @@
 package com.theoryinpractice.testng.model;
 
 import org.testng.remote.strprotocol.*;
-import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.TestNGConsoleView;
 
 public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestListener {
     private TestNGConsoleView console;

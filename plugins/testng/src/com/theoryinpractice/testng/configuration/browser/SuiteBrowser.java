@@ -1,4 +1,4 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileChooser.FileChooser;

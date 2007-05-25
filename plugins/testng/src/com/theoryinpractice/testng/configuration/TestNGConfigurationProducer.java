@@ -2,7 +2,7 @@
  * User: anna
  * Date: 23-May-2007
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.Location;

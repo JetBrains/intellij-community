@@ -4,7 +4,7 @@
  * Date: Jul 2, 2005
  * Time: 12:22:07 AM
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
@@ -39,6 +39,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import edu.emory.mathcs.backport.java.util.Queue;
 import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;

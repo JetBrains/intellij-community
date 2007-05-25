@@ -1,15 +1,17 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SortedListModel;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.Arrays;
-import javax.swing.*;
 
 public class GroupList extends JPanel
 {

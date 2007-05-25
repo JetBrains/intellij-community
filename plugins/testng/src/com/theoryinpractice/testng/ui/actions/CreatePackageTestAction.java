@@ -9,8 +9,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.theoryinpractice.testng.TestNGConfiguration;
-import com.theoryinpractice.testng.TestNGConfigurationType;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 
 /**
  * @author Hani Suleiman Date: Dec 1, 2006 Time: 9:40:24 PM

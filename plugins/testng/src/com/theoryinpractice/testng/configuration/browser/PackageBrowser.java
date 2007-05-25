@@ -1,4 +1,4 @@
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.psi.PsiPackage;
 import com.intellij.openapi.project.Project;

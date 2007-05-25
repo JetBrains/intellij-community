@@ -1,16 +1,16 @@
 package com.theoryinpractice.testng.model;
 
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.PlainDocument;
-
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.theoryinpractice.testng.TestNGConfiguration;
-import com.theoryinpractice.testng.TestNGConfigurationEditor;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
+
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 
 /**
  * @author Hani Suleiman Date: Jul 21, 2005 Time: 1:20:14 PM

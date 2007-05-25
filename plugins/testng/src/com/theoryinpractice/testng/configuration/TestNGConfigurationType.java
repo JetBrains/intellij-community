@@ -4,7 +4,7 @@
  * Date: Jul 2, 2005
  * Time: 12:10:47 AM
  */
-package com.theoryinpractice.testng;
+package com.theoryinpractice.testng.configuration;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.execution.LocatableConfigurationType;

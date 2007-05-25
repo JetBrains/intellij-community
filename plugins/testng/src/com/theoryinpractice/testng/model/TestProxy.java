@@ -14,8 +14,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.theoryinpractice.testng.Printable;
-import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.Printable;
+import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
