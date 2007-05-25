@@ -18,8 +18,8 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
@@ -86,6 +87,32 @@ public class CompilerTask extends Task.Backgroundable {
   public void run(final ProgressIndicator indicator) {
     myIndicator = indicator;
 
+    ((ProgressIndicatorEx)myIndicator).addStateDelegate(new ProgressIndicatorBase() {
+      public void cancel() {
+        super.cancel();
+        closeUI();
+      }
+
+      public void stop() {
+        super.stop();
+        if (!isCanceled()) {
+          closeUI();
+        }
+      }
+
+      public void setText(final String text) {
+        updateProgressText();
+      }
+
+      public void setText2(final String text) {
+        updateProgressText();
+      }
+
+      public void setFraction(final double fraction) {
+        updateProgressText();
+      }
+    });
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myIsBackgroundMode) {
@@ -110,23 +137,7 @@ public class CompilerTask extends Task.Backgroundable {
   public void cancel() {
     if (!myIndicator.isCanceled()) {
       myIndicator.cancel();
-      closeUI();
     }
-  }
-
-  public void setText(String text) {
-    myIndicator.setText(text);
-    updateProgressText();
-  }
-
-  public void setText2(String text) {
-    myStatisticsText = text;
-    updateProgressText();
-  }
-
-  public void setFraction(double fraction) {
-    myIndicator.setFraction(fraction);
-    updateProgressText();
   }
 
   public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
@@ -233,13 +244,6 @@ public class CompilerTask extends Task.Backgroundable {
       }, ModalityState.NON_MODAL);
     }
 
-  }
-
-  public void stop() {
-    myIndicator.stop();
-    if (!myIndicator.isCanceled()) { // when cancelled the UI is already closed
-      closeUI();
-    }
   }
 
   private void updateProgressText() {
