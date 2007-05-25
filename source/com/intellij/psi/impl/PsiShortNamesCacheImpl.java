@@ -202,6 +202,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
       }
     });
     for (long id : ids) {
+      ProgressManager.getInstance().checkCanceled();
       PsiElement element = repositoryElementsManager.findOrCreatePsiElementById(id);
       if (!scope.contains(element.getContainingFile().getVirtualFile())) continue;
       if (!set.add(element)) continue;
