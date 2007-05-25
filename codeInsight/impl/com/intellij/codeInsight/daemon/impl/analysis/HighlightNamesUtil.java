@@ -15,9 +15,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +181,7 @@ public class HighlightNamesUtil {
 
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof JspHolderMethod) return new TextRange(0,0);
-    int start = method.getModifierList().getTextRange().getStartOffset();
+    int start = stripAnnotationsFromModifierList(method.getModifierList());
     int end = method.getThrowsList().getTextRange().getEndOffset();
     return new TextRange(start, end);
   }
@@ -211,11 +213,11 @@ public class HighlightNamesUtil {
     if (lastAnnotation == null) {
       return textRange.getStartOffset();
     }
-    PsiElement next = lastAnnotation.getNextSibling();
-    while (next != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(next.getNode().getElementType())) {
-      next = next.getNextSibling();
-    }
-    if (next != null) return next.getTextOffset();
+    ASTNode node = lastAnnotation.getNode();
+    do {
+      node = TreeUtil.nextLeaf(node);
+    } while (node != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(node.getElementType()));
+    if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
   }
 }
