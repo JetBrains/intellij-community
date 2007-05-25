@@ -1,6 +1,6 @@
 package com.intellij.jar;
 
-import com.intellij.execution.util.RefactoringElementListenerComposite;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;

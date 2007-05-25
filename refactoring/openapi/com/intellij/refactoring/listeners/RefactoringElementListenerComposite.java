@@ -1,7 +1,6 @@
-package com.intellij.execution.util;
+package com.intellij.refactoring.listeners;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 import java.util.ArrayList;
 

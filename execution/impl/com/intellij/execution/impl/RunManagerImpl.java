@@ -4,7 +4,7 @@ import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.util.RefactoringElementListenerComposite;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
