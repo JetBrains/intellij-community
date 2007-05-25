@@ -4,24 +4,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 23.05.2007
+ * Date: 25.05.2007
  */
-public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
+public class GroovyWithWhileSurrounder extends GroovyOpenBlockSurrounder {
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return "if (a) { \n" + getListElementsTemplateAsString(nodes) + "}";
+    return "while (a) { \n" + getListElementsTemplateAsString(nodes) + "}";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrIfStatement;
-    GrCondition condition = ((GrIfStatement) element).getCondition();
+    assert element instanceof GrWhileStatement;
+    GrCondition condition = ((GrWhileStatement) element).getCondition();
 
     int endOffset = element.getTextRange().getEndOffset();
     if (condition != null) {
@@ -33,18 +30,12 @@ public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
     }
     return new TextRange(endOffset, endOffset);
   }
-//
+
 //  protected boolean isApplicable(PsiElement element) {
 //    return element instanceof GrStatement;
 //  }
 
   public String getTemplateDescription() {
-    return "if () {...}";
+    return "while () {...}";
   }
-
-//  public boolean isApplicable(@NotNull PsiElement[] elements) {
-//    if (elements.length == 0) return false;
-//    if (elements.length == 1) return elements[0] instanceof GrStatement && ! (elements[0] instanceof GrExpression);
-//    return isStatements(elements);
-//  }
 }

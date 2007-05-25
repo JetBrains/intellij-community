@@ -14,6 +14,6 @@ public class GroovyWithIfElseSurrounder extends GroovyWithIfSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return super.getTemplateDescription() + " else {...}";
+    return super.getTemplateDescription() + " / else";
   }
 }

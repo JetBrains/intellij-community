@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode;
  */
 public class GroovyWithTryCatchSurrounder extends GroovyWithTrySurrounder {
   public String getTemplateDescription() {
-    return super.getTemplateDescription() + "/ catch";
+    return super.getTemplateDescription() + " / catch";
   }
 
   protected String getElementsTemplateAsString(ASTNode[] nodes) {

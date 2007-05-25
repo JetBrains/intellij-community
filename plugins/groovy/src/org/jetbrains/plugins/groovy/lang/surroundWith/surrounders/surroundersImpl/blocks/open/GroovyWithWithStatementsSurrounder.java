@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWithStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -31,11 +32,13 @@ public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurr
     return new TextRange(endOffset, endOffset);
   }
 
-  protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrStatement && ! (element instanceof GrExpression);
+  public boolean isApplicable(@NotNull PsiElement[] elements) {
+    if (elements.length == 0) return false;
+    if (elements.length == 1) return elements[0] instanceof GrStatement && ! (elements[0] instanceof GrExpression);
+    return isStatements(elements);
   }
 
   public String getTemplateDescription() {
-    return "with ()";
-  }
+    return "with () {...}";
+  }    
 }

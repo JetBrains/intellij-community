@@ -10,9 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithBracketsSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithTypeCastSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithWithExpressionSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -74,15 +72,23 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
   }
 
   static Surrounder[] surrounders = new Surrounder[]{
-      new GroovyWithBracketsSurrounder(),
+      new GroovyWithBracketsExprSurrounder(),
       new GroovyWithTypeCastSurrounder(),
 
-      new GroovyWithWithExpressionSurrounder(),
+      new GroovyWithWithExprSurrounder(),
+      new GroovyWithWithStatementsSurrounder(),
+
+      new GroovyWithIfExprSurrounder(),
+      new GroovyWithIfElseExprSurrounder(),
       new GroovyWithIfSurrounder(),
       new GroovyWithIfElseSurrounder(),
+      
       new GroovyWithTryCatchSurrounder(),
       new GroovyWithTryFinallySurrounder(),
       new GroovyWithTryCatchFinallySurrounder(),
+
+      new GroovyWithWhileSurrounder(),
+      new GroovyWithWhileExprSurrounder(),
 
       new GroovySurrounderByParametrizedClosure(),
 //      new GroovySurrounderByOpenBlock()

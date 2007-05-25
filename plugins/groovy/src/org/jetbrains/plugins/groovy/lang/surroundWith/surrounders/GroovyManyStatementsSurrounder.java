@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -18,13 +20,29 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+//  public boolean isApplicable(@NotNull PsiElement[] elements) {
+////    for (PsiElement element : elements) {
+////      if (!isApplicable(element)) {
+////        return false;
+////      }
+////    }
+////    return true;
+//    return isStatements(elements);
+//  }
+
+ public boolean isStatements(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (!isApplicable(element)) {
+      if (! (element instanceof GrStatement)) {
         return false;
       }
     }
     return true;
+  }
+
+  public boolean isApplicable(@NotNull PsiElement[] elements) {
+    if (elements.length == 0) return false;
+    if (elements.length == 1) return elements[0] instanceof GrStatement && !(elements[0] instanceof GrExpression);
+    return isStatements(elements);
   }
 
   protected String getListElementsTemplateAsString(ASTNode... nodes) {
@@ -72,5 +90,5 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 
-  protected abstract boolean isApplicable(PsiElement element);
+//  protected abstract boolean isApplicable(PsiElement element);
 }

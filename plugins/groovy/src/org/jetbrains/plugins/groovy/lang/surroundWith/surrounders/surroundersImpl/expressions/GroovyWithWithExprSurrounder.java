@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithWithExpressionSurrounder extends GroovyExpressionSurrounder {
+public class GroovyWithWithExprSurrounder extends GroovyExpressionSurrounder {
   protected String getExpressionTemplateAsString(ASTNode node) {
     return "with" + "(" + node.getText() + ") { \n }";
   }
@@ -20,12 +20,12 @@ public class GroovyWithWithExpressionSurrounder extends GroovyExpressionSurround
     assert element instanceof GrWithStatement;
 
     GrWithStatement grWithStatement = (GrWithStatement) element;
-    int endOffset = grWithStatement.getBody().getTextRange().getEndOffset();
+    int endOffset = grWithStatement.getBody().getFirstChild().getTextRange().getEndOffset();
 
     return new TextRange(endOffset, endOffset);
   }
 
   public String getTemplateDescription() {
-    return "with ()";
+    return "with (...)";
   }
 }

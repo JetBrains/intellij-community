@@ -3,7 +3,13 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrParenthesizedExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrTypeCast;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -11,18 +17,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrTypeCast;
  */
 public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
   protected String getExpressionTemplateAsString(ASTNode node) {
-    return "(" + "(" + "Type" + ")" + node.getText() + ")";
+    return isNeedsParentheses(node) ? "(" + "(" + "Type" + ") " + "(" + node.getText() + ")" + ")"
+        : "(" + "(" + "Type" + ") " + node.getText() + ")";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrTypeCast;
+    assert element instanceof GrParenthesizedExpr;
 
-    GrTypeCast typeCast = (GrTypeCast) element;
-    int endOffset = typeCast.getExpression().getTextRange().getEndOffset();
+    GrParenthesizedExpr grParenthesizedExpr = (GrParenthesizedExpr) element;
+    GrTypeCastExpression typeCast = (GrTypeCastExpression) grParenthesizedExpr.getOperand();
+
+    GrTypeElement grTypeElement = typeCast.getCastTypeElement();
+    int endOffset = grTypeElement.getTextRange().getStartOffset();
+
+    typeCast.getNode().removeChild(grTypeElement.getNode());
+
     return new TextRange(endOffset, endOffset);
   }
 
   public String getTemplateDescription() {
-    return " ((Type) expression)";
+    return "((Type) ...)";
   }
 }

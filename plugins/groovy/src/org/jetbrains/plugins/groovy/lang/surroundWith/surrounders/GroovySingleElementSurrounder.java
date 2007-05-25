@@ -18,12 +18,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
  */
 abstract public class GroovySingleElementSurrounder implements Surrounder {
   public boolean isApplicable(@NotNull PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!isApplicable(element)) {
-        return false;
-      }
-    }
-    return true;
+    if (elements.length == 0) return false;
+    if (elements.length == 1) return isApplicable(elements[0]);
+
+    return false;
   }
 
   @Nullable
