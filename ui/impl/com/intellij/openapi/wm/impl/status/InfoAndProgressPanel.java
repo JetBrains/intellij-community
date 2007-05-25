@@ -182,14 +182,14 @@ public class InfoAndProgressPanel extends JPanel {
     label.setOpaque(true);
 
     final Wrapper labelComp = new Wrapper(label);
-    labelComp.setBorder(BorderFactory.createCompoundBorder(myCompoundBorder, new EmptyBorder(0, 3, 0, 0)));
-
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(myEmptyBorder);
-    progressCountPanel.add(myProgressIcon, BorderLayout.EAST);
+    myProgressIcon.setBorder(myCompoundBorder);
+    progressCountPanel.add(myProgressIcon, BorderLayout.WEST);
 
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
+
+    progressCountPanel.setBorder(new EmptyBorder(0, 0, 0, 4));
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();
@@ -203,11 +203,11 @@ public class InfoAndProgressPanel extends JPanel {
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
 
-    inline.getComponent().setBorder(myCompoundBorder);
+    inline.getComponent().setBorder(new EmptyBorder(0, 0, 0, 2));
     inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(inline.getInfo().isCancellable() ? myCompoundBorder : myEmptyBorder);
-    inlinePanel.add(myProgressIcon, BorderLayout.EAST);
+    myProgressIcon.setBorder(myCompoundBorder);
+    inlinePanel.add(myProgressIcon, BorderLayout.WEST);
 
     add(inlinePanel);
 
