@@ -4,7 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.runners.RunStrategyImpl;
+import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -220,7 +220,7 @@ public class Tool {
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
       if (isUseConsole()) {
-        RunStrategyImpl.getInstance().executeDefault(new ToolRunProfile(this, dataContext), dataContext);
+        RunStrategy.getInstance().executeDefault(new ToolRunProfile(this, dataContext), dataContext);
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);
