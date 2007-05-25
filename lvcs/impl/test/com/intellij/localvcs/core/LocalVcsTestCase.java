@@ -1,9 +1,9 @@
 package com.intellij.localvcs.core;
 
-import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.changes.ChangeSet;
+import com.intellij.localvcs.core.changes.*;
 import com.intellij.localvcs.core.storage.ByteContent;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.Clock;
 import org.junit.After;
 import org.junit.Assert;
@@ -15,6 +15,7 @@ import java.util.Locale;
 
 public abstract class LocalVcsTestCase extends Assert {
   private Locale myDefaultLocale;
+  private int myCurrentEntryId = 1;
 
   @Before
   public void setUpLocale() {
@@ -25,6 +26,10 @@ public abstract class LocalVcsTestCase extends Assert {
   @After
   public void restoreLocale() {
     Locale.setDefault(myDefaultLocale);
+  }
+
+  protected int getNextId() {
+    return myCurrentEntryId++;
   }
 
   protected static byte[] b(String s) {
@@ -79,6 +84,39 @@ public abstract class LocalVcsTestCase extends Assert {
 
   protected static ChangeSet cs(long timestamp, String name, Change... changes) {
     return new ChangeSet(timestamp, name, Arrays.asList(changes));
+  }
+
+  protected void createFile(Entry r, int id, String path, Content c, long timestamp) {
+    //return r.createFile(id, path, c, timestamp);
+    new CreateFileChange(id, path, c, timestamp).applyTo(r);
+  }
+
+  protected void createFile(Entry r, String path, Content c, long timestamp) {
+    createFile(r, getNextId(), path, c, timestamp);
+  }
+
+  protected void createDirectory(Entry r, int id, String path) {
+    new CreateDirectoryChange(id, path).applyTo(r);
+  }
+
+  protected void createDirectory(Entry r, String path) {
+    createDirectory(r, getNextId(), path);
+  }
+
+  protected void changeFileContent(Entry r, String path, Content c, long timestamp) {
+    new ChangeFileContentChange(path, c, timestamp).applyTo(r);
+  }
+
+  protected void rename(Entry r, String path, String newName) {
+    new RenameChange(path, newName).applyTo(r);
+  }
+
+  protected void move(Entry r, String path, String newParent) {
+    new MoveChange(path, newParent).applyTo(r);
+  }
+
+  protected void delete(Entry r, String path) {
+    new DeleteChange(path).applyTo(r);
   }
 
   protected void setCurrentTimestamp(long t) {

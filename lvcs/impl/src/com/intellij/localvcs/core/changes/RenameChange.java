@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 
 import java.io.IOException;
 
@@ -33,21 +32,24 @@ public class RenameChange extends StructuralChange {
   }
 
   @Override
-  protected IdPath doApplyTo(RootEntry root) {
-    Entry e = root.getEntry(myPath);
+  protected IdPath doApplyTo(Entry r) {
+    Entry e = r.getEntry(myPath);
 
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
     myOldName = Paths.getNameOf(e.getName());
+    doRename(e, myNewName);
 
-    IdPath idPath = e.getIdPath();
-    root.rename(idPath, myNewName);
-    return idPath;
+    return e.getIdPath();
   }
 
   @Override
-  public void revertOn(RootEntry root) {
-    root.rename(myAffectedIdPath, myOldName);
+  public void revertOn(Entry r) {
+    doRename(r.getEntry(myAffectedIdPath), myOldName);
+  }
+
+  private void doRename(Entry e, String newName) {
+    e.changeName(Paths.renamed(e.getName(), newName));
   }
 
   @Override
