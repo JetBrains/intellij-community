@@ -3,7 +3,6 @@ package com.intellij.diagnostic.logging;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -250,7 +249,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   @Nullable
   private Editor getEditor() {
-    return myConsole != null ? (Editor)((ConsoleViewImpl)myConsole).getData(DataConstants.EDITOR) : null;
+    return myConsole != null ? (Editor)((DataProvider)myConsole).getData(DataConstants.EDITOR) : null;
   }
 
   private void filterConsoleOutput(Condition<String> isApplicable) {

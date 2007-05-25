@@ -5,7 +5,7 @@ package com.intellij.unscramble;
 
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionRegistry;
-import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.IdeBundle;
@@ -380,7 +380,7 @@ public class UnscrambleDialog extends DialogWrapper{
     return true;
   }
   private static ConsoleView addConsole(final Project project){
-    final ConsoleView consoleView = new ConsoleViewImpl(project);
+    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     final JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final RunContentDescriptor descriptor =
