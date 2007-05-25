@@ -83,6 +83,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("Equality expression");
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
+  GroovyElementType RANGE_EXPRESSION = new GroovyElementType("Range expression");
   GroovyElementType COMPOSITE_SHIFT_SIGN = new GroovyElementType("Composite shift sign");
   GroovyElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
   GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");

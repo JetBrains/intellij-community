@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author ilyas
- */
+ */           
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||

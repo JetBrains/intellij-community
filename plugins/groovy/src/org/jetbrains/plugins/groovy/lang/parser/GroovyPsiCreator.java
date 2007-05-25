@@ -199,6 +199,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExprImpl(node);
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExprImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExprImpl(node);
+    if (elem.equals(RANGE_EXPRESSION)) return new GrRangeExprImpl(node);
     if (elem.equals(COMPOSITE_SHIFT_SIGN)) return new GrOperationSignImpl(node);
     if (elem.equals(ADDITIVE_EXPRESSION)) return new GrAdditiveExprImpl(node);
     if (elem.equals(MULTIPLICATIVE_EXPRESSION)) return new GrMultiplicativeExprImpl(node);
