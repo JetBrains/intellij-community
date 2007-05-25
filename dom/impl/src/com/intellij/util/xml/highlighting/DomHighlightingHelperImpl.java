@@ -123,8 +123,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
   @NotNull
   private List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element, final PsiClass value, final String name, final boolean instantiatable,
-                                                            final boolean canBeDecorator,
-                                                            final DomElementAnnotationHolder holder) {
+                                                             final boolean canBeDecorator,
+                                                             final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
     PsiClass extendClass = PsiManager.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
     if (extendClass != null) {
@@ -195,9 +195,14 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         final boolean isResolvingConverter = element.getConverter() instanceof ResolvingConverter;
         if (!hasBadResolve &&
             (domReference != null || isResolvingConverter &&
-                                                      hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
+                                     hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
-          list.add(holder.createResolveProblem(element, domReference));
+          final Converter converter = element.getConverter();
+          final String errorMessage = converter
+            .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
+          if (errorMessage != null && XmlHighlightVisitor.getErrorDescription(domReference) != null) {
+            list.add(holder.createResolveProblem(element, domReference));
+          }
         }
       }
       if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null) {

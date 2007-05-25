@@ -556,6 +556,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public final int getLineEndOffset(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    if (getTextLength() == 0 && line == 0) return 0;
     int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
     assert (result >= 0);
     return result;

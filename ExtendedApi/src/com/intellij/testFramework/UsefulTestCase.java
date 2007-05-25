@@ -3,18 +3,20 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.util.Consumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * @author peter
@@ -78,7 +80,34 @@ public abstract class UsefulTestCase extends TestCase {
   }
   
   public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
-    assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
+    if (!new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(collection))) {
+      assertEquals(toString(expected, "\n"), toString(collection, "\n"));
+      assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
+    }
+
+  }
+
+  public static String toString(Object[] collection, String separator) {
+    return toString(Arrays.asList(collection), separator);
+  }
+
+  public static String toString(Collection collection, String separator) {
+    List<String> list = ContainerUtil.map2List(collection, new Function() {
+      public Object fun(final Object o) {
+        return String.valueOf(o);
+      }
+    });
+    Collections.sort(list);
+    StringBuilder builder = new StringBuilder();
+    boolean flag = false;
+    for (final String o : list) {
+      if (flag) {
+        builder.append(separator);
+      }
+      builder.append(o);
+      flag = true;
+    }
+    return builder.toString();
   }
   
   public static <T> void assertOrderedCollection(Collection<T> collection, Consumer<T>... checkers) {

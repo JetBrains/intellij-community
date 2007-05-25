@@ -53,10 +53,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+
 /**
  * Common <code>Object</code> manipulation routines.
  *
@@ -67,6 +71,7 @@ import java.util.List;
  * @version $Id: ObjectUtils.java,v 1.4 2002/09/22 09:18:33 scolebourne Exp $
  */
 public class ObjectUtils {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ObjectUtils");
 
     /**
      * Singleton used as a null placeholder where null has another meaning.
@@ -144,6 +149,12 @@ public class ObjectUtils {
     List expectedList = Arrays.asList(expected);
     List actualList = Arrays.asList(actual);
     return new HashSet(expectedList).equals(new HashSet(actualList)) && expected.length == actual.length;
+  }
+
+  @NotNull
+  public static <T> T assertNotNull(final T t) {
+    LOG.assertTrue(t != null);
+    return t;
   }
 
   /**

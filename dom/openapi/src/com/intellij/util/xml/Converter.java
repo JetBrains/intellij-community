@@ -29,6 +29,7 @@ public abstract class Converter<T> {
    * @param context context
    * @return error message used to highlight the errors somewhere in the UI, most often - like unresolved references in XML
    */
+  @Nullable
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return CodeInsightBundle.message("error.cannot.convert.default.message", s);
   }

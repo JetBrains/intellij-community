@@ -29,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.testFramework.LiteFixture;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,6 +130,11 @@ public class MockPsiManager extends PsiManagerEx {
     }
     if (declaration instanceof MockPsiElement) {
       ((MockPsiElement)declaration).setParent(superPackage);
+    }
+
+    final PsiFile file = declaration.getContainingFile();
+    if (file != null) {
+      LiteFixture.setContext(file, superPackage);
     }
     return declaration;
   }
@@ -243,7 +249,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiNameHelper getNameHelper() {
-    return null;
+    return new PsiNameHelperImpl(this);
   }
 
   //public PsiConstantEvaluationHelper getConstantEvaluationHelper() {

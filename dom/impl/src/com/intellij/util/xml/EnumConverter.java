@@ -7,7 +7,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +46,10 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
 
   public final String toString(final T t, final ConvertContext context) {
     return t == null? null:getStringValue(t);
+  }
+
+  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
+    return CodeInsightBundle.message("error.unknown.enum.value.message", s);
   }
 
   @NotNull
