@@ -1,14 +1,14 @@
-<project name="testngrunner" default="dist">
+<project name="testng" default="dist">
 
-    <property file="build.properties" />
+    <property file="build.properties"/>
     <property name="src.dir" value="src"/>
     <property name="test.dir" value="tests"/>
     <property name="lib.dir" value="lib"/>
     <property name="bin.dir" value="build"/>
     <property name="dst.dir" value="dist"/>
 
-    <property name="idea.home" value="${user.home}/app/idea"/>
-    <property name="idea.plugins.home" value="${user.home}/.IntelliJIdea70/config/plugins"/>
+    <property name="idea.home" value="/Users/amrk/Applications/Selena.app"/>
+    <property name="idea.plugins.home" value="/Users/amrk/Applications/Selena.app/plugins"/>
 
     <path id="compile.classpath">
         <fileset dir="${idea.home}/lib">
@@ -94,7 +94,7 @@
                 <include name="testng-jdk15.jar"/>
             </zipfileset>
             <zipfileset dir="${bin.dir}/jars" prefix="${ant.project.name}/lib" includes="${ant.project.name}.jar"/>
-            <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/testng">
+            <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/lib-jdk14">
                 <include name="testng-jdk14.jar"/>
             </zipfileset>
             <zipfileset dir="src/META-INF" prefix="${ant.project.name}/META-INF">
