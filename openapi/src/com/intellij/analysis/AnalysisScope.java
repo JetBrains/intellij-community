@@ -198,15 +198,17 @@ public class AnalysisScope {
   }
 
   public boolean contains(PsiElement psiElement) {
-    if (myType == PROJECT) { //optimization
-      return myProject == psiElement.getProject();
-    }
-    if (myFilesSet == null) initFilesSet();
-    return myFilesSet.contains(psiElement.getContainingFile().getVirtualFile());
+    return contains(psiElement.getContainingFile().getVirtualFile());
   }
 
   public boolean contains(VirtualFile file) {
-    if (myFilesSet == null) initFilesSet();
+    if (myFilesSet == null) {
+      if (myType == PROJECT) {  //optimization
+        final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+        return index.isInContent(file) && (myIncludeTestSource || !index.isInTestSourceContent(file));
+      }
+      initFilesSet();
+    }
 
     return myFilesSet.contains(file);
   }
