@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.ConfigureFacetsStep;

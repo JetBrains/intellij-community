@@ -1,6 +1,6 @@
 package com.intellij.compiler.actions;
 
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.HelpID;
 import com.intellij.ide.util.PropertiesComponent;

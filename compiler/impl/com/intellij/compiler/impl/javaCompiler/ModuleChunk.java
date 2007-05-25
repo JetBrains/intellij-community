@@ -4,7 +4,7 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.Chunk;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 

@@ -2,7 +2,7 @@ package com.intellij.compiler.ant;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

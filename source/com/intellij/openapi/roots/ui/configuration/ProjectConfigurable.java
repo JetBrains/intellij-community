@@ -4,7 +4,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -42,7 +42,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;

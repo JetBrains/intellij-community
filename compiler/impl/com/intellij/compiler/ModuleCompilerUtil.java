@@ -11,6 +11,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.Chunk;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 

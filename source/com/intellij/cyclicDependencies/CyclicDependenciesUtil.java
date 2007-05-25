@@ -1,6 +1,6 @@
 package com.intellij.cyclicDependencies;
 
-import com.intellij.compiler.Chunk;
+import com.intellij.util.Chunk;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import gnu.trove.TIntArrayList;

@@ -50,6 +50,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.Chunk;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
