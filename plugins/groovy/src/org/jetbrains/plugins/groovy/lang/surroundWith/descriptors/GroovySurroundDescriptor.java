@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithBracketsSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryCatchSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryFinallySurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.GroovyWithTryCatchFinallySurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithTypeCastSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithWithExpressionSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -75,6 +75,11 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
 
   static Surrounder[] surrounders = new Surrounder[]{
       new GroovyWithBracketsSurrounder(),
+      new GroovyWithTypeCastSurrounder(),
+
+      new GroovyWithWithExpressionSurrounder(),
+      new GroovyWithIfSurrounder(),
+      new GroovyWithIfElseSurrounder(),
       new GroovyWithTryCatchSurrounder(),
       new GroovyWithTryFinallySurrounder(),
       new GroovyWithTryCatchFinallySurrounder(),

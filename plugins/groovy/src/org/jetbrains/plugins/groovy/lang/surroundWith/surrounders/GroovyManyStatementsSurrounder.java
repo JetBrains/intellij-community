@@ -9,19 +9,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public abstract class GroovyManyElementsSurrounder implements Surrounder {
-//  public String getTemplateDescription() {
-//    return "{ }";
-//  }
+public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
@@ -32,10 +27,14 @@ public abstract class GroovyManyElementsSurrounder implements Surrounder {
     return true;
   }
 
-//  protected boolean isApplicable(PsiElement element) {
-//    return element.getParent() instanceof GroovyFile
-//        || element.getParent() instanceof GrMethod;
-//  }
+  protected String getListElementsTemplateAsString(ASTNode... nodes) {
+    StringBuffer result = new StringBuffer();
+    for (ASTNode node : nodes) {
+      result.append(node.getText());
+      result.append("\n");
+    }
+    return result.toString();
+  }
 
   @Nullable
   public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
@@ -47,23 +46,29 @@ public abstract class GroovyManyElementsSurrounder implements Surrounder {
     for (int i = 0; i < elements.length; i++) {
       nodes[i] = elements[i].getNode();
     }
-//    elementsBuffer.append("{");
-//    for (PsiElement element : elements) {
-//      elementsBuffer.append(element.getText());
-//      elementsBuffer.append("\n");
-//    }
-//    elementsBuffer.append("}");
 
-    GroovyPsiElement newStmt = GroovyElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(nodes));
+    GroovyPsiElement newStmt = GroovyElementFactory.getInstance(project).createTopElementFromText(getElementsTemplateAsString(nodes));
     assert newStmt != null;
 
-    PsiElement element = elements[0];
-    element.getParent().getNode().replaceChild(element.getNode(), newStmt.getNode());
+    PsiElement element1 = elements[0];
+    ASTNode parentNode = element1.getParent().getNode();
+
+
+    for (int i = 0; i < elements.length; i++) {
+      PsiElement element = elements[i];
+
+      if (i == 0) {
+        parentNode.replaceChild(element1.getNode(), newStmt.getNode());
+      } else {
+        assert element1.getParent() == element.getParent();
+        parentNode.removeChild(element.getNode());
+      }
+    }
 
     return getSurroundSelectionRange(newStmt);
   }
 
-  protected abstract String getExpressionTemplateAsString(ASTNode... node);
+  protected abstract String getElementsTemplateAsString(ASTNode... node);
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 

@@ -11,7 +11,7 @@ public class GroovyWithTryCatchSurrounder extends GroovyWithTrySurrounder {
     return super.getTemplateDescription() + "/ catch";
   }
 
-  protected String getExpressionTemplateAsString(ASTNode[] nodes) {
-    return super.getExpressionTemplateAsString(nodes) + " \n catch () { \n }";
+  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+    return super.getElementsTemplateAsString(nodes) + " catch () { \n }";
   }
 }

@@ -2,28 +2,18 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyElementsSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public abstract class GroovyWithTrySurrounder extends GroovyManyElementsSurrounder {
-  protected String getExpressionTemplateAsString(ASTNode[] nodes) {
-    StringBuffer result = new StringBuffer();
-    result.append("try { \n");
-    for (ASTNode node : nodes) {
-      result.append(node.getText());
-      result.append("\n");
-    }
-    result.append("}");
-    return result.toString();
+public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder {
+  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+    return "try { \n" + getListElementsTemplateAsString(nodes) + "}";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
@@ -42,10 +32,6 @@ public abstract class GroovyWithTrySurrounder extends GroovyManyElementsSurround
     }
 
     return new TextRange(endOffset, endOffset);
-  }
-
-  protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrStatement;
   }
 
   public String getTemplateDescription() {

@@ -4,14 +4,16 @@ import com.intellij.lang.ASTNode;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
+ * Date: 25.05.2007
  */
-public class GroovyWithTryFinallySurrounder extends GroovyWithTrySurrounder {
+public class GroovyWithIfElseSurrounder extends GroovyWithIfSurrounder {
+  @Override
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return super.getElementsTemplateAsString(nodes) + "finally { \n }";
+    return super.getElementsTemplateAsString(nodes) + " else { \n }";
   }
 
+  @Override
   public String getTemplateDescription() {
-    return super.getTemplateDescription() + " / finally";
+    return super.getTemplateDescription() + " else {...}";
   }
 }
