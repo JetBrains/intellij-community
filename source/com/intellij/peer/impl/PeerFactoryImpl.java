@@ -1,7 +1,6 @@
 package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.execution.runners.ProcessProxyFactoryImpl;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.structureView.StructureView;
@@ -34,11 +33,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -71,7 +70,6 @@ import java.io.File;
 import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory {
-  private ProcessProxyFactory myProxyFactory = null;
   private PackageSetFactory myPackageSetFactory;
   private final UIHelper myUIHelper = new MyUIHelper();
   private final ErrorViewFactory myErrorViewFactory = new ErrorViewFactoryImpl();
@@ -93,10 +91,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public ProcessProxyFactory getProcessProxyFactory() {
-    if (myProxyFactory == null) {
-      myProxyFactory = new ProcessProxyFactoryImpl();
-    }
-    return myProxyFactory;
+    return ProcessProxyFactory.getInstance();
   }
 
   public PackageSetFactory getPackageSetFactory() {

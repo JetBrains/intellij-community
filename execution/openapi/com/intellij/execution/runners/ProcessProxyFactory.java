@@ -18,11 +18,11 @@ package com.intellij.execution.runners;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.components.ServiceManager;
 
 public abstract class ProcessProxyFactory {
   public static ProcessProxyFactory getInstance() {
-    return PeerFactory.getInstance().getProcessProxyFactory();
+    return ServiceManager.getService(ProcessProxyFactory.class);
   }
 
 
