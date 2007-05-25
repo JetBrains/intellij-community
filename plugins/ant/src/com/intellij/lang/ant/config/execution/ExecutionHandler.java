@@ -3,12 +3,12 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
@@ -73,7 +73,7 @@ public final class ExecutionHandler {
         return;
       }
       catch (CantRunException e) {
-        ExecutionUtil.showExecutionErrorMessage(e, AntBundle.message("cant.run.ant.erorr.dialog.title"), project);
+        ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.erorr.dialog.title"), project);
         antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
         return;
       }
@@ -131,7 +131,7 @@ public final class ExecutionHandler {
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          ExecutionUtil.showExecutionErrorMessage(e, AntBundle.message("could.not.start.process.erorr.dialog.title"), project);
+          ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.erorr.dialog.title"), project);
         }
       });
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);

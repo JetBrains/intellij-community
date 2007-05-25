@@ -4,12 +4,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -18,12 +16,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 public class ExecutionUtil {
@@ -98,38 +94,7 @@ public class ExecutionUtil {
   }
 
   public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
-    if (e instanceof RunCanceledByUserException) {
-      return;
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(e.getLocalizedMessage());
-    }
-    final String message = e.getMessage();
-    if (message.length() < 100) {
-      Messages.showErrorDialog(project, message, title);
-      return;
-    }
-    final DialogBuilder builder = new DialogBuilder(project);
-    builder.setTitle(title);
-    final JTextArea textArea = new JTextArea();
-    textArea.setEditable(false);
-    textArea.setForeground(UIUtil.getLabelForeground());
-    textArea.setBackground(UIUtil.getLabelBackground());
-    textArea.setFont(UIUtil.getLabelFont());
-    textArea.setText(message);
-    textArea.setWrapStyleWord(false);
-    textArea.setLineWrap(true);
-    final JScrollPane scrollPane = new JScrollPane(textArea);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.setPreferredSize(new Dimension(500, 200));
-    panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(new JLabel(Messages.getErrorIcon()), BorderLayout.WEST);
-    builder.setCenterPanel(panel);
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.addOkAction();
-    builder.show();
+    ExecutionErrorDialog.show(e, title, project);
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunConfiguration configuration, final boolean invalid) {

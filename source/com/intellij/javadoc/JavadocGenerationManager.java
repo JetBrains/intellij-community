@@ -2,8 +2,8 @@ package com.intellij.javadoc;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -95,7 +95,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
       RunStrategy.getInstance().executeDefault(myConfiguration, dataContext);
     }
     catch (ExecutionException e) {
-      ExecutionUtil.showExecutionErrorMessage(e, CommonBundle.getErrorTitle(), myProject);
+      ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);
     }
   }
 

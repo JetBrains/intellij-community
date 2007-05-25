@@ -1,11 +1,11 @@
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.RunStrategyImpl;
+import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -257,7 +257,7 @@ public class Tool {
       }
     }
     catch (ExecutionException ex) {
-      ExecutionUtil.showExecutionErrorMessage(ex, ToolsBundle.message("tools.process.start.error"), project);
+      ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
     }
   }
 
