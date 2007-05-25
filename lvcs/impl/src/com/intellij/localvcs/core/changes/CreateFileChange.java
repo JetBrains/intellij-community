@@ -9,14 +9,12 @@ import com.intellij.localvcs.core.tree.FileEntry;
 
 import java.io.IOException;
 
-public class CreateFileChange extends StructuralChange {
-  private int myId; // transient
+public class CreateFileChange extends CreateEntryChange {
   private Content myContent; // transient
   private long myTimestamp; // transient
 
   public CreateFileChange(int id, String path, Content content, long timestamp) {
-    super(path);
-    myId = id;
+    super(id, path);
     myContent = content;
     myTimestamp = timestamp;
   }
@@ -31,21 +29,8 @@ public class CreateFileChange extends StructuralChange {
     String parentPath = Paths.getParentOf(myPath);
 
     Entry e = new FileEntry(myId, name, myContent, myTimestamp);
-    Entry parent = parentPath == null ? r : r.findEntry(parentPath);
-    parent.addChild(e);
 
-    return e.getIdPath();
-  }
-
-  @Override
-  public void revertOn(Entry root) {
-    Entry e = root.getEntry(myAffectedIdPath);
-    e.getParent().removeChild(e);
-  }
-
-  @Override
-  public boolean isCreationalFor(Entry e) {
-    return e.getId() == myAffectedIdPath.getId();
+    return addEntry(r, parentPath, e);
   }
 
   @Override

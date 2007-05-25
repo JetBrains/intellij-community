@@ -36,15 +36,24 @@ public class DeleteChange extends StructuralChange {
     myAffectedEntry = r.getEntry(myPath);
     IdPath idPath = myAffectedEntry.getIdPath();
 
-    myAffectedEntry.getParent().removeChild(myAffectedEntry);
+    removeEntry(myAffectedEntry);
 
     return idPath;
   }
 
   @Override
   public void revertOn(Entry r) {
-    Entry parent = r.getEntry(myAffectedIdPath.getParent());
+    Entry parent = getParent(r);
     parent.addChild(myAffectedEntry.copy());
+  }
+
+  @Override
+  public boolean canRevertOn(Entry r) {
+    return hasNoSuchEntry(getParent(r), myAffectedEntry.getName());
+  }
+
+  private Entry getParent(Entry r) {
+    return r.getEntry(myAffectedIdPath.getParent());
   }
 
   @Override

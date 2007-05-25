@@ -11,8 +11,8 @@ import java.util.List;
 
 public class ChangeFileContentChange extends StructuralChange {
   private Content myNewContent; // transient
-  private Content myOldContent;
   private long myNewTimestamp; // transient
+  private Content myOldContent;
   private long myOldTimestamp;
 
   public ChangeFileContentChange(String path, Content newContent, long timestamp) {

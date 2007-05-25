@@ -9,7 +9,7 @@ import java.util.Calendar;
 public class MemoryTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testMemoryAfterFirstBuild() {
-    assertMemoryUsage(53, new Task() {
+    assertMemoryUsage(52, new Task() {
       public void execute() throws Exception {
         buildVcsTree();
       }
@@ -24,7 +24,7 @@ public class MemoryTest extends LocalVcsPerformanceTestCase {
     closeStorage();
     vcs = null;
 
-    assertMemoryUsage(42, new Task() {
+    assertMemoryUsage(41, new Task() {
       public void execute() throws Exception {
         initVcs();
       }

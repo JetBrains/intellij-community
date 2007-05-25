@@ -28,6 +28,10 @@ public abstract class Change {
 
   public abstract void revertOn(Entry r);
 
+  public boolean canRevertOn(Entry r) {
+    return true;
+  }
+
   public boolean affects(Entry e) {
     return affects(e.getIdPath());
   }

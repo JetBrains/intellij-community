@@ -109,7 +109,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(500, new Task() {
       public void execute() {
         vcs.purgeObsolete(0);
       }
@@ -121,7 +121,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(800, new Task() {
       public void execute() {
         vcs.getRevisionsFor("root");
       }

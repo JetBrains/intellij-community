@@ -36,6 +36,14 @@ public abstract class StructuralChange extends Change {
   @Override
   public abstract void revertOn(Entry r);
 
+  protected boolean hasNoSuchEntry(Entry parent, String name) {
+    return parent.findChild(name) == null;
+  }
+
+  protected void removeEntry(Entry e) {
+    e.getParent().removeChild(e);
+  }
+
   @Override
   protected boolean affects(IdPath... pp) {
     for (IdPath p1 : getAffectedIdPaths()) {

@@ -31,7 +31,8 @@ public class MoveChange extends StructuralChange {
     Entry e = r.getEntry(myPath);
     IdPath firstIdPath = e.getIdPath();
 
-    e.getParent().removeChild(e);
+    removeEntry(e);
+
     Entry newParent = r.getEntry(myNewParentPath);
     newParent.addChild(e);
 
@@ -42,11 +43,24 @@ public class MoveChange extends StructuralChange {
 
   @Override
   public void revertOn(Entry r) {
-    Entry e = r.getEntry(myTargetIdPath);
-    Entry oldParent = r.getEntry(myAffectedIdPath.getParent());
+    Entry e = getEntry(r);
+    removeEntry(e);
 
-    e.getParent().removeChild(e);
+    Entry oldParent = getOldParent(r);
     oldParent.addChild(e);
+  }
+
+  @Override
+  public boolean canRevertOn(Entry r) {
+    return hasNoSuchEntry(getOldParent(r), getEntry(r).getName());
+  }
+
+  private Entry getEntry(Entry r) {
+    return r.getEntry(myTargetIdPath);
+  }
+
+  private Entry getOldParent(Entry r) {
+    return r.getEntry(myAffectedIdPath.getParent());
   }
 
   @Override

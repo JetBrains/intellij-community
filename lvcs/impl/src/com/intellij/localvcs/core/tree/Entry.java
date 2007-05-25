@@ -74,7 +74,7 @@ public abstract class Entry {
     return false;
   }
 
-  public DirectoryEntry getParent() {
+  public Entry getParent() {
     return myParent;
   }
 

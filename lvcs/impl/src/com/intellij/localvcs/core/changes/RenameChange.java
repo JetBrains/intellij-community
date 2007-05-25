@@ -38,17 +38,26 @@ public class RenameChange extends StructuralChange {
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
     myOldName = Paths.getNameOf(e.getName());
-    doRename(e, myNewName);
+    rename(e, myNewName);
 
     return e.getIdPath();
   }
 
   @Override
   public void revertOn(Entry r) {
-    doRename(r.getEntry(myAffectedIdPath), myOldName);
+    rename(getEntry(r), myOldName);
   }
 
-  private void doRename(Entry e, String newName) {
+  @Override
+  public boolean canRevertOn(Entry r) {
+    return hasNoSuchEntry(getEntry(r).getParent(), myOldName);
+  }
+
+  private Entry getEntry(Entry r) {
+    return r.getEntry(myAffectedIdPath);
+  }
+
+  private void rename(Entry e, String newName) {
     e.changeName(Paths.renamed(e.getName(), newName));
   }
 

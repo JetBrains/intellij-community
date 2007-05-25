@@ -1,6 +1,5 @@
 package com.intellij.localvcs.core.tree;
 
-import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.revisions.Difference;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.*;
@@ -34,10 +33,6 @@ public class DirectoryEntry extends Entry {
     for (Entry child : myChildren) {
       s.writeEntry(child);
     }
-  }
-
-  protected IdPath getIdPathAppendedWith(int id) {
-    return getIdPath().appendedWith(id);
   }
 
   protected String getPathAppendedWith(String name) {

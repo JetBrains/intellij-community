@@ -8,11 +8,11 @@ import com.intellij.localvcs.core.tree.Entry;
 
 import java.io.IOException;
 
-public class CreateDirectoryChange extends StructuralChange {
+public class CreateDirectoryChange extends CreateEntryChange {
   private int myId; // transient
 
   public CreateDirectoryChange(int id, String path) {
-    super(path);
+    super(id, path);
     myId = id;
   }
 
@@ -33,21 +33,7 @@ public class CreateDirectoryChange extends StructuralChange {
     }
 
     DirectoryEntry e = new DirectoryEntry(myId, name);
-    Entry parent = parentPath == null ? r : r.findEntry(parentPath);
-    parent.addChild(e);
-
-    return e.getIdPath();
-  }
-
-  @Override
-  public void revertOn(Entry r) {
-    Entry e = r.getEntry(myAffectedIdPath);
-    e.getParent().removeChild(e);
-  }
-
-  @Override
-  public boolean isCreationalFor(Entry e) {
-    return e.getId() == myAffectedIdPath.getId();
+    return addEntry(r, parentPath, e);
   }
 
   @Override
