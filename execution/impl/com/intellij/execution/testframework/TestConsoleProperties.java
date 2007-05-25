@@ -4,14 +4,16 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.util.StoringPropertyContainer;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.util.config.Storage;
+import com.intellij.execution.util.StoringPropertyContainer;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
-import com.intellij.openapi.project.Project;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.util.config.Storage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +57,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer {
     myListeners.get(property).remove(listener);
   }
 
+  @Nullable
   public DebuggerSession getDebugSession() {
     final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(getProject());
     if (debuggerManager == null) return null;
@@ -83,4 +86,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer {
   public void dispose() {
     myListeners.clear();
   }
+
+  public abstract CoverageEnabledConfiguration getConfiguration();
 }
