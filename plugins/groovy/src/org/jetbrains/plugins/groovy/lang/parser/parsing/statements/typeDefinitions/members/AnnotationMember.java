@@ -53,7 +53,7 @@ public class AnnotationMember implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    GroovyElementType varDef = VariableDefinitions.parse(builder);
+    GroovyElementType varDef = VariableDefinitions.parse(builder, true);
     if (!WRONGWAY.equals(varDef)) {
       varDefMarker.done(varDef);
       return varDef;

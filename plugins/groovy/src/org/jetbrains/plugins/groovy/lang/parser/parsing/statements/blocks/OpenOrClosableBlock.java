@@ -114,11 +114,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       Separators.parse(builder);
     }
 
-    GroovyElementType result = Statement.parse(builder);
+    GroovyElementType result = Statement.parse(builder, true);
     while (!result.equals(WRONGWAY) &&
             (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
-      result = Statement.parse(builder);
+      result = Statement.parse(builder, true);
       cleanAfterError(builder);
     }
     Separators.parse(builder);

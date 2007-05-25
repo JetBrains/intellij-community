@@ -38,6 +38,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class Declaration implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
+    return parse(builder, false);
+  }
+
+  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
     PsiBuilder.Marker declmMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
@@ -49,7 +53,7 @@ public class Declaration implements GroovyElementTypes {
       if (WRONGWAY.equals(TypeSpec.parse(builder, false))) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
 
-        GroovyElementType varDecl = VariableDefinitions.parse(builder);
+        GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
         if (IDENTIFIER.equals(varDecl)) varDecl = VARIABLE_DEFINITION;
 
 //        if (METHOD_DEFINITION.equals(varDecl)) {
@@ -67,13 +71,13 @@ public class Declaration implements GroovyElementTypes {
         }
 
       } else {  //type was recognezed
-        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder);
+        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass);
         if (IDENTIFIER.equals(varDeclarationTop)) varDeclarationTop = VARIABLE_DEFINITION;
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
 
-          GroovyElementType varDecl = VariableDefinitions.parse(builder);
+          GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
           if (IDENTIFIER.equals(varDeclarationTop)) varDecl = VARIABLE_DEFINITION;
 
           if (WRONGWAY.equals(varDecl)) {
@@ -118,7 +122,7 @@ public class Declaration implements GroovyElementTypes {
       }
 
       PsiBuilder.Marker varDefMarker = builder.mark();
-      GroovyElementType varDef = VariableDefinitions.parse(builder);
+      GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass);
       varDefMarker.rollbackTo();
 
 
@@ -127,14 +131,14 @@ public class Declaration implements GroovyElementTypes {
       exprStmtMarker.rollbackTo();
 
       if (IDENTIFIER.equals(varDef) && REFERENCE_EXPRESSION.equals(exprType)) {
-        VariableDefinitions.parse(builder);
+        VariableDefinitions.parse(builder, isInClass);
         declmMarker.done(VARIABLE_DEFINITION);
         return VARIABLE_DEFINITION;
       }
 
       //handle "A a = "
       if (IDENTIFIER.equals(varDef) && ASSIGNMENT_EXPRESSION.equals(exprType)) {
-        VariableDefinitions.parse(builder);
+        VariableDefinitions.parse(builder, isInClass);
         declmMarker.done(VARIABLE_DEFINITION);
         return VARIABLE_DEFINITION;
       }
@@ -146,7 +150,7 @@ public class Declaration implements GroovyElementTypes {
 //      }
 
       if (!IDENTIFIER.equals(varDef) && !WRONGWAY.equals(varDef)) {
-        varDef = VariableDefinitions.parse(builder);
+        varDef = VariableDefinitions.parse(builder, isInClass);
         declmMarker.done(varDef);
         return varDef;
       }
@@ -187,17 +191,17 @@ public class Declaration implements GroovyElementTypes {
 //    }
   }
 
-  private static GroovyElementType wrapVariableIfNeeds(PsiBuilder builder) {
-    PsiBuilder.Marker identMarker = builder.mark();
-    GroovyElementType varDecl = VariableDefinitions.parse(builder);
-
-    if (IDENTIFIER.equals(varDecl)) {
-      varDecl = VARIABLE_DEFINITION;
-      identMarker.done(VARIABLE);
-    } else {
-      identMarker.drop();
-    }
-    return varDecl;
-  }
+//  private static GroovyElementType wrapVariableIfNeeds(PsiBuilder builder) {
+//    PsiBuilder.Marker identMarker = builder.mark();
+//    GroovyElementType varDecl = VariableDefinitions.parse(builder);
+//
+//    if (IDENTIFIER.equals(varDecl)) {
+//      varDecl = VARIABLE_DEFINITION;
+//      identMarker.done(VARIABLE);
+//    } else {
+//      identMarker.drop();
+//    }
+//    return varDecl;
+//  }
 }
 

@@ -44,11 +44,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class VariableDefinitions implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    return parseDefinitions(builder, false, false);
+  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
+    return parseDefinitions(builder, isInClass, false, false);
   }
 
-  public static GroovyElementType parseDefinitions(PsiBuilder builder, boolean isEnumConstantMember, boolean isAnnotationMember) {
+  public static GroovyElementType parseDefinitions(PsiBuilder builder, boolean isInClass, boolean isEnumConstantMember, boolean isAnnotationMember) {
     if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL))) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
@@ -120,21 +120,31 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (ParserUtils.getToken(builder, mIDENT)) {
 
         if (parseAssignment(builder)) { // a = b, c = d
-          varAssMarker.done(VARIABLE);
+          if (isInClass) {
+            varAssMarker.done(FIELD);
+          } else {
+            varAssMarker.done(VARIABLE);
+          }
+
           while (ParserUtils.getToken(builder, mCOMMA)) {
             ParserUtils.getToken(builder, mNLS);
 
-            if (WRONGWAY.equals(parseVariableDeclarator(builder))) return VARIABLE_DEFINITION_ERROR; //parse b = d
+            if (WRONGWAY.equals(parseVariableDeclarator(builder, isInClass)))
+              return VARIABLE_DEFINITION_ERROR; //parse b = d
           }
           return VARIABLE_DEFINITION;
         } else {
-          varAssMarker.done(VARIABLE);
+          if (isInClass) {
+            varAssMarker.done(FIELD);
+          } else {
+            varAssMarker.done(VARIABLE);
+          }
 //          varAssMarker.drop();
           boolean isManyDef = false;
           while (ParserUtils.getToken(builder, mCOMMA)) {// a, b = d, c = d
             ParserUtils.getToken(builder, mNLS);
 
-            if (WRONGWAY.equals(parseVariableDeclarator(builder))) return VARIABLE_DEFINITION_ERROR;
+            if (WRONGWAY.equals(parseVariableDeclarator(builder, isInClass))) return VARIABLE_DEFINITION_ERROR;
             isManyDef = true;
           }
 
@@ -152,12 +162,17 @@ public class VariableDefinitions implements GroovyElementTypes {
   }
 
   //a, a = b
-  private static GroovyElementType parseVariableDeclarator(PsiBuilder builder) {
+  private static GroovyElementType parseVariableDeclarator(PsiBuilder builder, boolean isInClass) {
     PsiBuilder.Marker varAssMarker = builder.mark();
     if (ParserUtils.getToken(builder, mIDENT)) {
       parseAssignment(builder);
-      varAssMarker.done(VARIABLE);
-      return VARIABLE;
+      if (isInClass) {
+        varAssMarker.done(VARIABLE);
+        return VARIABLE;
+      } else {
+        varAssMarker.done(FIELD);
+        return FIELD;
+      }
     } else {
       varAssMarker.drop();
       return WRONGWAY;
@@ -178,11 +193,11 @@ public class VariableDefinitions implements GroovyElementTypes {
     return false;
   }
 
-  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
-    return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
-  }
+//  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
+//    return !WRONGWAY.equals(Annotation.parse(builder)) || !WRONGWAY.equals(ConditionalExpression.parse(builder));
+//  }
 
-  public static GroovyElementType parseAnnotationMember(PsiBuilder builder) {
-    return parseDefinitions(builder, false, true);
-  }
+//  public static GroovyElementType parseAnnotationMember(PsiBuilder builder) {
+//    return parseDefinitions(builder, false, false, true);
+//  }
 }

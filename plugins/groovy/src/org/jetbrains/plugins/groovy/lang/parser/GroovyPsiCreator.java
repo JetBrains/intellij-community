@@ -127,7 +127,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
       return new GrVariableDeclarationsImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
-//    if (elem.equals(VARIABLE_DEFINITION_OR_METHOD_CALL)) return new GrVariableDefinitionsOrCallExpressionImpl(node);
+
+    if (elem.equals(FIELD)) return new GrFieldImpl(node);
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
