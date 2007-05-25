@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for breaking a file into a sequence of tokens.
+ * @see LexerBase for certain methods' implementation
  */
-
 public interface Lexer {
   /**
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset 0 and
@@ -67,6 +67,7 @@ public interface Lexer {
    * @param startOffset  offset to start lexing from
    * @param endOffset    offset to stop lexing at
    * @param initialState the initial state of the lexer.
+   * @since IDEA 7
    */
   void start(CharSequence buffer, int startOffset, int endOffset, int initialState);
 
@@ -132,8 +133,8 @@ public interface Lexer {
    * Returns the buffer sequence over which the lexer is running. This method should return the
    * same buffer instance which was passed to the <code>start()</code> method.
    * @return the lexer buffer.
+   * @since IDEA 7
    */
-
   CharSequence getBufferSequence();
 
   /**
