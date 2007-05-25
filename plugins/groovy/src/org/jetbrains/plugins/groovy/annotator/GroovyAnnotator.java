@@ -68,12 +68,12 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       } else if (element instanceof PsiMethod) {
-        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
+        /*PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
         if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod)element)) {
           //todo more specific error message
           String message = GroovyBundle.message("cannot.apply.method", refExpr.getReferenceName());
           holder.createWarningAnnotation(refExpr, message);
-        }
+        }*/
       }
     } else {
       if (refExpr.getQualifierExpression() == null) {
