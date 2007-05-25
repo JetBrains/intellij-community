@@ -1,12 +1,10 @@
-package com.intellij.ide.actions;
+package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable;
 import com.intellij.openapi.util.SystemInfo;
 
 public class CheckForUpdateAction extends AnAction {

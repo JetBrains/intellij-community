@@ -1,7 +1,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.CheckForUpdateAction;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
