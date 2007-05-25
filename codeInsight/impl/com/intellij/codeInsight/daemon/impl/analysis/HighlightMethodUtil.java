@@ -41,7 +41,6 @@ public class HighlightMethodUtil {
                                      HighlightUtil.formatClass(method2.getContainingClass()));
   }
 
-  //@top
   public static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
                                                           List<HierarchicalMethodSignature> superMethodSignatures,
                                                           boolean includeRealPositionInfo) {
@@ -52,33 +51,38 @@ public class HighlightMethodUtil {
     String accessModifier = PsiUtil.getAccessModifier(accessLevel);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
-      if (accessLevel < superAccessLevel) {
-        String message = MessageFormat.format(JavaErrorMessages.message("weaker.privileges"),
-                                              createClashMethodMessage(method, superMethod, true),
-                                              accessModifier,
-                                              PsiUtil.getAccessModifier(superAccessLevel));
+      HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo);
+      if (info != null) return info;
+    }
+    return null;
+  }
 
-        TextRange textRange;
-        if (includeRealPositionInfo) {
-          if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-            textRange = method.getNameIdentifier().getTextRange();
-          }
-          else {
-            PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
-            textRange = keyword.getTextRange();
-          }
+  private static HighlightInfo isWeaker(final PsiMethod method, final PsiModifierList modifierList, final String accessModifier, final int accessLevel,
+                                        final PsiMethod superMethod,
+                                        final boolean includeRealPositionInfo) {
+    int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
+    if (accessLevel < superAccessLevel) {
+      String message = MessageFormat.format(JavaErrorMessages.message("weaker.privileges"),
+                                            createClashMethodMessage(method, superMethod, true),
+                                            accessModifier,
+                                            PsiUtil.getAccessModifier(superAccessLevel));
+      TextRange textRange;
+      if (includeRealPositionInfo) {
+        if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+          textRange = method.getNameIdentifier().getTextRange();
         }
         else {
-          textRange = new TextRange(0, 0);
+          PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
+          textRange = keyword.getTextRange();
         }
-
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-        IntentionAction fix =
-          QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiUtil.getAccessModifier(superAccessLevel), true, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-        return highlightInfo;
       }
+      else {
+        textRange = new TextRange(0, 0);
+      }
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiUtil.getAccessModifier(superAccessLevel), true, false);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      return highlightInfo;
     }
     return null;
   }
@@ -471,7 +475,7 @@ public class HighlightMethodUtil {
 
   private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo[] methodCandidates) {
     return JavaErrorMessages.message("ambiguous.method.html.tooltip",
-                                     new Integer(methodCandidates[0].getElement().getParameterList().getParametersCount() + 2),
+                                     Integer.valueOf(methodCandidates[0].getElement().getParameterList().getParametersCount() + 2),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
                                      getContainingClassName(methodCandidates[0]),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[1]),
@@ -523,7 +527,7 @@ public class HighlightMethodUtil {
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
-      new Integer(cols - parameters.length + 1), parensizedName,
+      Integer.valueOf(cols - parameters.length + 1), parensizedName,
       HighlightUtil.formatClass(aClass, false),
       createMismatchedArgsHtmlTooltipParamsRow(parameters, substitutor, expressions),
       createMismatchedArgsHtmlTooltipExpressionsRow(expressions, parameters, substitutor, cols)
@@ -814,22 +818,25 @@ public class HighlightMethodUtil {
                                                  HighlightUtil.formatMethod(superMethod),
                                                  HighlightUtil.formatClass(superClass));
 
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      textRange,
-                                                                      message);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       if (!isSuperMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
-        IntentionAction fix =
-          QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, isSuperMethodStatic, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, isSuperMethodStatic, false);
+        QuickFixAction.registerQuickFixAction(info, fix);
       }
       if (manager.isInProject(superMethod) &&
           (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod.getModifierList(), PsiModifier.STATIC, isMethodStatic, true);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+        QuickFixAction.registerQuickFixAction(info, fix);
       }
-      return highlightInfo;
+      return info;
     }
 
+    if (isMethodStatic && isSuperMethodStatic) {
+      int accessLevel = PsiUtil.getAccessLevel(modifierList);
+      String accessModifier = PsiUtil.getAccessModifier(accessLevel);
+      HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true);
+      if (info != null) return info;
+    }
     return null;
   }
 
@@ -878,10 +885,10 @@ public class HighlightMethodUtil {
       List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
 
       boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
-      HighlightInfo highlightInfo = null;
       final PsiClass containingClass = method.getContainingClass();
       if (aClass.equals(containingClass)) continue;
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
+      HighlightInfo highlightInfo = null;
       if (!allAbstracts) {
         if (!aClass.equals(containingClass)) {
           highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
@@ -949,7 +956,7 @@ public class HighlightMethodUtil {
     // if we have unhandled exception inside method body, we could not have been called here,
     // so the only problem it can catch here is with super ctr only
     PsiClassType[] unhandled = ExceptionUtil.collectUnhandledExceptions(method, method.getContainingClass());
-    if (unhandled == null || unhandled.length == 0) return null;
+    if (unhandled.length == 0) return null;
     String description = HighlightUtil.getUnhandledExceptionsDescriptor(unhandled);
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,

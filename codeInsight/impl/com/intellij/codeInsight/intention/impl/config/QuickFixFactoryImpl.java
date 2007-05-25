@@ -47,7 +47,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new AddMethodFix(methodText, toClass, exceptions);
   }
 
-  public IntentionAction createImplementMethodsFix(PsiClass aClass) {
+  public IntentionAction createImplementMethodsFix(@NotNull PsiClass aClass) {
     return new ImplementMethodsFix(aClass);
   }
 

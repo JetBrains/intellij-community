@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java epxression.
  */
-public interface PsiExpression extends PsiElement, PsiAnnotationMemberValue {
+public interface PsiExpression extends PsiAnnotationMemberValue {
   /**
    * The empty array of PSI expressions which can be reused to avoid unnecessary allocations.
    */

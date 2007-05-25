@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.Language;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -437,11 +438,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private static boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
 
-    if (nextSibling != null &&
-        ( nextSibling instanceof PsiErrorElement ||
-          (nextSibling.getNode() != null  && nextSibling.getNode().getElementType() == TokenType.BAD_CHARACTER)
-        )) {
-      nextSibling = nextSibling.getNextSibling();
+    if (nextSibling != null) {
+      ASTNode node = nextSibling.getNode();
+      if (nextSibling instanceof PsiErrorElement ||
+          node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
+        nextSibling = nextSibling.getNextSibling();
+      }
     }
 
     final PsiFile containingFile = element.getContainingFile();
@@ -495,7 +497,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (languageElement != null) return true;
     }
 
-    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null || (nextIsOuterLanguageElement && prevLeaf == null);
+    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null ||
+           nextIsOuterLanguageElement && prevLeaf == null;
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
@@ -758,7 +761,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!superMethodSignatures.isEmpty()) {
           if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
           if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, method.getContainingClass()));
-//        if (!myHolder.hasErrorResults()) myHolder.add(DeprecationInspection.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
           if (!method.hasModifierProperty(PsiModifier.STATIC)) {
             if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true));
             if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
