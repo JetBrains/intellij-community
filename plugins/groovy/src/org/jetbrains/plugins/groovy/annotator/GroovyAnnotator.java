@@ -21,7 +21,9 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
@@ -31,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -59,10 +62,18 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
     GroovyResolveResult resolveResult = refExpr.advancedResolve();
-    if (resolveResult.getElement() != null) {
+    PsiElement element = resolveResult.getElement();
+    if (element != null) {
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
+      } else if (element instanceof PsiMethod) {
+        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
+        if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod)element)) {
+          //todo more specific error message
+          String message = GroovyBundle.message("cannot.apply.method", refExpr.getReferenceName());
+          holder.createWarningAnnotation(refExpr, message);
+        }
       }
     } else {
       if (refExpr.getQualifierExpression() == null) {

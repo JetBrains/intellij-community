@@ -18,14 +18,17 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -71,5 +74,75 @@ public class PsiUtil {
     }
 
     return result;
+  }
+
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method) {
+    if (argumentTypes == null) return true;
+
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length > argumentTypes.length) return false;
+    if (parameters.length == 0 && argumentTypes.length > 0) return false;
+
+    for (int i = 0; i < argumentTypes.length; i++) {
+      PsiType argType = argumentTypes[i];
+      PsiType parameterTypeToCheck;
+      if (i < parameters.length - 1) {
+        parameterTypeToCheck = parameters[i].getType();
+      } else {
+        PsiType lastParameterType = parameters[parameters.length - 1].getType();
+        if (lastParameterType instanceof PsiArrayType) {
+          parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
+        } else if (parameters.length == argumentTypes.length) {
+            parameterTypeToCheck = lastParameterType;
+          } else {
+            return false;
+          }
+      }
+      parameterTypeToCheck =
+          boxPrimitiveType(parameterTypeToCheck, method.getManager(), method.getResolveScope());
+      if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
+    }
+
+    return true;
+  }
+
+  @Nullable
+  public static PsiType[] getArgumentTypes(GroovyPsiElement place) {
+    PsiElementFactory factory = place.getManager().getElementFactory();
+    PsiElement parent = place.getParent();
+    if (parent instanceof GrMethodCall) {
+      List<PsiType> result = new ArrayList<PsiType>();
+      GrMethodCall methodCall = (GrMethodCall) parent;
+      GrNamedArgument[] namedArgs = methodCall.getNamedArguments();
+      if (namedArgs.length > 0) {
+        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+      }
+      GrExpression[] expressions = methodCall.getExpressionArguments();
+      for (GrExpression expression : expressions) {
+        PsiType type = expression.getType();
+        if (type == null) {
+          result.add(PsiType.NULL);
+        } else {
+          result.add(type);
+        }
+      }
+      return result.toArray(new PsiType[result.size()]);
+
+    } else if (parent instanceof GrApplicationExpression) {
+      GrExpression[] args = ((GrApplicationExpression) parent).getArguments();
+      PsiType[] result = new PsiType[args.length];
+      for (int i = 0; i < result.length; i++) {
+        PsiType argType = args[i].getType();
+        if (argType == null) {
+          result[i] = PsiType.NULL;
+        } else {
+          result[i] = argType;
+        }
+      }
+
+      return result;
+    }
+
+    return null;
   }
 }
