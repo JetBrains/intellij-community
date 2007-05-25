@@ -87,6 +87,35 @@ public class CompilerTask extends Task.Backgroundable {
   public void run(final ProgressIndicator indicator) {
     myIndicator = indicator;
 
+    if (!isHeadless()) {
+      addIndicatorDelegate();
+      prepareMessageView();
+    }
+
+    myCompileWork.run();
+  }
+
+  private void prepareMessageView() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myIsBackgroundMode) {
+          openMessageView();
+        } else {
+          if (myIndicator.isRunning()) {
+            synchronized (myMessageViewLock) {
+              // clear messages from the previous compilation
+              if (myErrorTreeView == null) {
+                // if message view != null, the contents has already been cleared
+                removeAllContents(myProject, null);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  private void addIndicatorDelegate() {
     ((ProgressIndicatorEx)myIndicator).addStateDelegate(new ProgressIndicatorBase() {
       public void cancel() {
         super.cancel();
@@ -112,26 +141,6 @@ public class CompilerTask extends Task.Backgroundable {
         updateProgressText();
       }
     });
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myIsBackgroundMode) {
-          openMessageView();
-        } else {
-          if (myIndicator.isRunning()) {
-            synchronized (myMessageViewLock) {
-              // clear messages from the previous compilation
-              if (myErrorTreeView == null) {
-                // if message view != null, the contents has already been cleared
-                removeAllContents(myProject, null);
-              }
-            }
-          }
-        }
-      }
-    });
-
-    myCompileWork.run();
   }
 
   public void cancel() {
