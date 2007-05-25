@@ -366,23 +366,25 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return stub;
   }
 
-  private static void setIcon(final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
+  private static void setIcon(@Nullable final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
                               final PluginId pluginId) {
-    if (iconPath != null) {
-      try {
-        final Class actionClass = Class.forName(className, true, loader);
-        setIconFromClass(actionClass, iconPath, className, presentation, pluginId);
-      }
-      catch (ClassNotFoundException ignored) {
-        setIconFromClass(null, iconPath, className, presentation, pluginId);
-      }
-      catch (NoClassDefFoundError ignored) {
-        setIconFromClass(null, iconPath, className, presentation, pluginId);
-      }
+    if (iconPath == null) return;
+
+    try {
+      final Class actionClass = Class.forName(className, true, loader);
+      setIconFromClass(actionClass, iconPath, className, presentation, pluginId);
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+      reportActionError(pluginId, "class with name \"" + className + "\" not found");
+    }
+    catch (NoClassDefFoundError e) {
+      LOG.error(e);
+      reportActionError(pluginId, "class with name \"" + className + "\" not found");
     }
   }
 
-  private static void setIconFromClass(final Class actionClass, final String iconPath, final String className,
+  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull final String iconPath, final String className,
                                        final Presentation presentation, final PluginId pluginId) {
     //try to find icon in idea class path
     final Icon icon = IconLoader.findIcon(iconPath, actionClass);

@@ -111,7 +111,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findIcon(final String path, @NotNull final Class aClass) {
+  public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
     URL url = aClass.getResource(path);
     return findIcon(url);
   }
