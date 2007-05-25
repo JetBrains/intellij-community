@@ -268,8 +268,7 @@ public abstract class BaseRefactoringProcessor {
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
-    usageView
-      .addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
+    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
   }
 
   private static Set<Usage> getExcludedUsages(final UsageView usageView) {

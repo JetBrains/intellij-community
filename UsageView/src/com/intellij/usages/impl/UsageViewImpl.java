@@ -800,8 +800,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
     if (!readOnlyUsages.isEmpty()) {
-        ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()]));      
-      }
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()]));
+    }
   }
 
   private Set<Usage> getReadOnlyUsages() {
@@ -830,6 +830,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         UsageInFiles usageInFiles = (UsageInFiles)usage;
         result.addAll(Arrays.asList(usageInFiles.getFiles()));
       }
+    }
+    for (UsageTarget target : myTargets) {
+      VirtualFile[] files = target.getFiles();
+      if (files == null) continue;
+      result.addAll(Arrays.asList(files));
     }
     return result;
   }
