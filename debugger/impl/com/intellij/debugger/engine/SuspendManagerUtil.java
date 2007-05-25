@@ -1,6 +1,5 @@
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -42,10 +41,6 @@ public class SuspendManagerUtil {
     if(LOG.isDebugEnabled()) {
       LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
     }
-  }
-
-  public static void postponeCommand(SuspendContextImpl context, SuspendContextCommandImpl command) {
-    context.myPostponedCommands.add(command);
   }
 
   public static Set<SuspendContextImpl> getSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {

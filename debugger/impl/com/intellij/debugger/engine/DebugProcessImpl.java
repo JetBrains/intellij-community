@@ -1516,7 +1516,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       final SuspendContextImpl suspendContext = getSuspendContext();
       if (!suspendContext.suspends(thread)) {
-        SuspendManagerUtil.postponeCommand(suspendContext, this);
+        suspendContext.postponeCommand(this);
         return;
       }
 

@@ -50,7 +50,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
       // there are no suspend context currently registered
       SuspendContextImpl suspendContextForThread = SuspendManagerUtil.findContextByThread(suspendManager, debuggerContextThread);
       if(suspendContextForThread != null) {
-        SuspendManagerUtil.postponeCommand(suspendContextForThread, this);
+        suspendContextForThread.postponeCommand(this);
       }
       else {
         notifyCancelled();

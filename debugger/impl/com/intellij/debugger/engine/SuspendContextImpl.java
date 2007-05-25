@@ -5,12 +5,12 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
 import com.sun.jdi.ObjectReference;
@@ -18,10 +18,8 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,10 +41,10 @@ public abstract class SuspendContextImpl implements SuspendContext {
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
   private EventSet myEventSet;
-  private boolean  myIsResumed;
+  private volatile boolean  myIsResumed;
 
-  public List<SuspendContextCommandImpl> myPostponedCommands = new ArrayList<SuspendContextCommandImpl>();
-  public boolean                         myInProgress;
+  public ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
+  public volatile boolean  myInProgress;
   private HashSet<ObjectReference>       myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl          myEvaluationContext = null;
 
@@ -81,7 +79,13 @@ public abstract class SuspendContextImpl implements SuspendContext {
       }
       myKeptReferences.clear();
     }
+
+    for(SuspendContextCommandImpl cmd = myPostponedCommands.poll(); cmd != null; cmd = myPostponedCommands.poll()) {
+      cmd.notifyCancelled();
+    }
+
     resumeImpl();
+
     myIsResumed = true;
   }
 
@@ -130,7 +134,9 @@ public abstract class SuspendContextImpl implements SuspendContext {
 
   public boolean suspends(ThreadReferenceProxyImpl thread) {
     assertNotResumed();
-    if(isEvaluating()) return false;
+    if(isEvaluating()) {
+      return false;
+    }
     switch(getSuspendPolicy()) {
       case EventRequest.SUSPEND_ALL:
         return !isExplicitlyResumed(thread);
@@ -161,9 +167,8 @@ public abstract class SuspendContextImpl implements SuspendContext {
   public String toString() {
     if (myEventSet != null) {
       return myEventSet.toString();
-    } else {
-      return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
-    }
+    } 
+    return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
   }
 
   public void keep(ObjectReference reference) {
@@ -178,5 +183,18 @@ public abstract class SuspendContextImpl implements SuspendContext {
         }
       }
     }
+  }
+
+  public void postponeCommand(final SuspendContextCommandImpl command) {
+    if (!isResumed()) {
+      myPostponedCommands.add(command);
+    }
+    else {
+      command.notifyCancelled();
+    }
+  }
+
+  public SuspendContextCommandImpl pollPostponedCommand() {
+    return myPostponedCommands.poll();
   }
 }

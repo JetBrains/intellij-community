@@ -1,7 +1,6 @@
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
@@ -37,7 +36,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     }
 
     if(suspendContext.myInProgress) {
-      SuspendManagerUtil.postponeCommand(suspendContext, this);
+      suspendContext.postponeCommand(this);
     }
     else {
       try {
@@ -46,16 +45,14 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
           contextAction();
         }
         else {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Context is invalid for SuspendContextCommand" + this);
-          }
           notifyCancelled();
         }
       }
       finally{
         suspendContext.myInProgress = false;
-        if(!suspendContext.isResumed() && suspendContext.myPostponedCommands.size() > 0) {
-          suspendContext.getDebugProcess().getManagerThread().invokeLater(suspendContext.myPostponedCommands.remove(0));
+        final SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
+        if(postponed != null) {
+          suspendContext.getDebugProcess().getManagerThread().invokeLater(postponed);
         }
       }
     }
