@@ -20,11 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author ilyas
  */
-public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClause {
+public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClause, GrParametersOwner {
 
   public GrForInClauseImpl(@NotNull ASTNode node) {
     super(node);
@@ -34,8 +36,12 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForClau
     return "In clause";
   }
 
-  public GrVariable[] getDeclaredVariables() {
-    GrVariable var = findChildByClass(GrVariable.class);
-    return var != null ? new GrVariable[]{var} : GrVariable.EMPTY_ARRAY;
+  public GrParameter[] getDeclaredVariables() {
+    GrParameter param = findChildByClass(GrParameter.class);
+    return param != null ? new GrParameter[]{param} : GrParameter.EMPTY_ARRAY;
+  }
+
+  public GrParameter[] getParameters() {
+    return getDeclaredVariables();
   }
 }
