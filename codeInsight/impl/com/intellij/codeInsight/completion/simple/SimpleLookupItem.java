@@ -104,6 +104,21 @@ public class SimpleLookupItem extends LookupItem {
       myHandler = handler;
     }
 
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final MyInsertHandler that = (MyInsertHandler)o;
+
+      if (!myHandler.equals(that.myHandler)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return myHandler.hashCode();
+    }
+
     public void handleInsert(final CompletionContext context,
                              final int startOffset, final LookupData data, final LookupItem item,
                              final boolean signatureSelected, final char completionChar) {
