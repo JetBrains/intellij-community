@@ -2,7 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -21,6 +20,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -140,7 +140,7 @@ public class ShowRecentFilesAction extends AnAction {
       if (value instanceof VirtualFile) {
         VirtualFile virtualFile = (VirtualFile)value;
         String name = virtualFile.getName();
-        setIcon(IconUtilEx.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
+        setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE,
                                                        Font.PLAIN);
