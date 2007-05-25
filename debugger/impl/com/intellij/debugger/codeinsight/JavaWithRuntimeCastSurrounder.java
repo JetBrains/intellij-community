@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -39,9 +40,6 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.runtime.type.template");
-  }
-
-  public JavaWithRuntimeCastSurrounder() {
   }
 
   public boolean isApplicable(PsiExpression expr) {
@@ -123,7 +121,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     protected String evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException {
       final Project project = evaluationContext.getProject();
 
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
           return EvaluatorBuilderImpl.getInstance().build(myElement);
         }
