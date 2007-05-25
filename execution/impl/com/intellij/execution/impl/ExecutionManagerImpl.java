@@ -9,13 +9,12 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,7 +151,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
   public void execute(JavaParameters cmdLine, String contentName, DataContext dataContext, Filter[] filters) throws ExecutionException {
     JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
-    RunStrategy.getInstance().execute(new DefaultRunProfile(cmdLine, contentName, filters), dataContext, defaultRunner, null, null);
+    RunStrategyImpl.getInstance().execute(new DefaultRunProfile(cmdLine, contentName, filters), dataContext, defaultRunner, null, null);
   }
 
   private final class DefaultRunProfile implements RunProfile {

@@ -52,9 +52,9 @@ public class RestartAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     try {
-      RunStrategy.getInstance().execute(myProfile, new DataContext() {
+      RunStrategyImpl.getInstance().execute(myProfile, new DataContext() {
         public Object getData(final String dataId) {
-          if (RunStrategy.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
+          if (RunStrategyImpl.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
           return dataContext.getData(dataId);
         }
       }, myRunner, myRunnerSettings, myConfigurationSettings);
@@ -73,7 +73,7 @@ public class RestartAction extends AnAction {
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated
     }
-    presentation.setEnabled(!isRunning && RunStrategy.canExecute(myProfile, myRunner));
+    presentation.setEnabled(!isRunning && RunStrategyImpl.canExecute(myProfile, myRunner));
   }
 
   public void registerShortcut(final JComponent component) {

@@ -9,7 +9,7 @@ import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
@@ -270,7 +270,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
   public RunContentDescriptor getReuseContent(final JavaProgramRunner requestor, DataContext dataContext) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return null;
-    RunContentDescriptor runContentDescriptor = (RunContentDescriptor)dataContext.getData(RunStrategy.CONTENT_TO_REUSE);
+    RunContentDescriptor runContentDescriptor = (RunContentDescriptor)dataContext.getData(RunStrategyImpl.CONTENT_TO_REUSE);
 
     if(runContentDescriptor != null) return runContentDescriptor;
 

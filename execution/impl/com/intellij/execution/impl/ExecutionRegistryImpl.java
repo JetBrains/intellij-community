@@ -9,6 +9,7 @@ import com.intellij.execution.actions.RunnerAction;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -188,7 +189,7 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
     }
 
     public RunnerInfo getInfo() {
-      return RunStrategy.getInstance().getInfo();
+      return ((RunStrategyImpl) RunStrategy.getInstance()).getInfo();
     }
   }
 }

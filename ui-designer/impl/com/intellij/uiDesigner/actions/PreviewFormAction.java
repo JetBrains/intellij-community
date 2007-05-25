@@ -9,7 +9,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -276,7 +276,7 @@ public final class PreviewFormAction extends AnAction{
 
     try {
       JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
-      RunStrategy.getInstance().execute(
+      RunStrategyImpl.getInstance().execute(
         new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl())),
         new DataContext() {   // IDEADEV-3596
           public Object getData(String dataId) {

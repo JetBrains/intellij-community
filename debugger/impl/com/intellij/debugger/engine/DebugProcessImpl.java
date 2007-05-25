@@ -36,7 +36,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1667,7 +1667,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   // this problem to the user
                   SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                      RunStrategy.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
+                      RunStrategyImpl.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
                     }
                   });
                 }

@@ -5,7 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.Messages;
 
@@ -27,7 +27,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     runManager.setActiveConfiguration(configuration);
     try {
-      RunStrategy.getInstance().execute(configuration.getConfiguration(), context.getDataContext(), myRunner,
+      RunStrategyImpl.getInstance().execute(configuration.getConfiguration(), context.getDataContext(), myRunner,
                                         configuration.getRunnerSettings(myRunner), configuration.getConfigurationSettings(myRunner));
     }
     catch (ExecutionException e) {

@@ -2,9 +2,10 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.*;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.DefaultJavaProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -12,10 +13,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class Tool {
   @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
@@ -220,7 +220,7 @@ public class Tool {
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
       if (isUseConsole()) {
-        RunStrategy.getInstance().executeDefault(new ToolRunProfile(this, dataContext), dataContext);
+        RunStrategyImpl.getInstance().executeDefault(new ToolRunProfile(this, dataContext), dataContext);
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);

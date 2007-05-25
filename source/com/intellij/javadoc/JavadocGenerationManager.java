@@ -1,13 +1,13 @@
 package com.intellij.javadoc;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
