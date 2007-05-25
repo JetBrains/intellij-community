@@ -9,10 +9,7 @@ package com.theoryinpractice.testng.ui;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -273,7 +270,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
     }
 
     public void start() {
-      start = System.currentTimeMillis();
+        start = System.currentTimeMillis();
         tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
         rootNode.setInProgress(true);
         rootNode.setStarted(true);
@@ -290,6 +287,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
         } else {
             tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
         }
+        LvcsHelper.addLabel(this);
     }
 
     public TestNGConsoleProperties getProperties() {
