@@ -8,6 +8,8 @@ import com.intellij.codeInspection.i18n.CreatePropertyFix;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -117,11 +119,12 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
     Set<Object> variants = new THashSet<Object>();
     if (myBundleName == null) {
       PsiManager psiManager = myElement.getManager();
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
       for (VirtualFile file : PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
         if (!file.isValid()) continue;
+        if (!fileIndex.isInContent(file)) continue; //multiple opened projects
         PsiFile psiFile = psiManager.findFile(file);
         if (!(psiFile instanceof PropertiesFile)) continue;
-        if (psiFile.getProject() != psiManager.getProject()) continue; //multiple opened projects
         PropertiesFile propertiesFile = (PropertiesFile)psiFile;
         addVariantsFromFile(propertiesFile, variants);
       }
