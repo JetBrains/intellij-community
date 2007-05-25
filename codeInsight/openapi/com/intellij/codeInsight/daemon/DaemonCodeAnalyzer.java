@@ -4,13 +4,8 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public static DaemonCodeAnalyzer getInstance(Project project) {
@@ -35,8 +30,6 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
    * Force restart
    */ 
   public abstract void restart();
-
-  public abstract List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes();
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 }

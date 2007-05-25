@@ -1,6 +1,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diff.impl.settings.DiffColorsForm;
 import com.intellij.openapi.editor.EditorFactory;
@@ -249,7 +250,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     });
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
       List<Pair<NamedScope,NamedScopesHolder>> cachedScopes = codeAnalyzer.getScopeBasedHighlightingCachedScopes();
       namedScopes.addAll(cachedScopes);
     }

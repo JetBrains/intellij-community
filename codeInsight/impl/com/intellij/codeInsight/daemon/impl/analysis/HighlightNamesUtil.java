@@ -5,8 +5,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -19,7 +21,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +163,8 @@ public class HighlightNamesUtil {
     if (file == null) return null;
     TextAttributes result = null;
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    List<Pair<NamedScope,NamedScopesHolder>> scopes = DaemonCodeAnalyzer.getInstance(element.getProject()).getScopeBasedHighlightingCachedScopes();
+    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(element.getProject());
+    List<Pair<NamedScope,NamedScopesHolder>> scopes = daemonCodeAnalyzer.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();
       NamedScopesHolder scopesHolder = scope.getSecond();
