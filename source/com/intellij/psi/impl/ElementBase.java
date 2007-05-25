@@ -3,7 +3,6 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -125,7 +124,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
-      IconUtilEx.setVisibilityIcon(modifierList, baseIcon);
+      IconUtil.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
   }

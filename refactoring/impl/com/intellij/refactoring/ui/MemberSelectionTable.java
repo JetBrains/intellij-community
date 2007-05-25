@@ -8,7 +8,6 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
@@ -311,7 +310,7 @@ public class MemberSelectionTable extends Table {
             icon.setIcon(memberIcon, 0);
             PsiModifierList modifiers = member instanceof PsiModifierListOwner ? ((PsiModifierListOwner)member).getModifierList() : null;
             if (modifiers != null) {
-              IconUtilEx.setVisibilityIcon(modifiers, icon);
+              IconUtil.setVisibilityIcon(modifiers, icon);
             }
             else {
               icon.setIcon(IconUtil.getEmptyIcon(true), 1);
