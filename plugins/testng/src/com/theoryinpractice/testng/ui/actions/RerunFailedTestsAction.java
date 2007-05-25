@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) 2007, Your Corporation. All Rights Reserved.
+ */
+
 package com.theoryinpractice.testng.ui.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -16,8 +20,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.theoryinpractice.testng.TestNGConfiguration;
 import com.theoryinpractice.testng.TestNGRunnableState;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
@@ -25,10 +29,10 @@ import com.theoryinpractice.testng.model.TestProxy;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 public class RerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
