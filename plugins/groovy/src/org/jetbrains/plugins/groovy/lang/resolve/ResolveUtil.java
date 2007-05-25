@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -94,8 +95,8 @@ public class ResolveUtil {
       if (otherParams.length != params.length) continue;
       if (PsiUtil.getAccessLevel(other.getModifierList()) > PsiUtil.getAccessLevel(modifierList)) continue;
       for (int i = 0; i < params.length; i++) {
-        PsiType type = params[i].getType();
-        PsiType otherType = otherParams[i].getType();
+        PsiType type = TypeConversionUtil.erasure(params[i].getType());
+        PsiType otherType = TypeConversionUtil.erasure(otherParams[i].getType());
         if (!type.isAssignableFrom(otherType)) continue NextMethod;
       }
       return true;
