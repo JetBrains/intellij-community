@@ -247,7 +247,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   static String getDefaultSandbox() {
     @NonNls String defaultSandbox = "";
     try {
-      defaultSandbox = new File(PathManager.getConfigPath()).getParentFile().getCanonicalPath() + File.separator + "sandbox";
+      defaultSandbox = new File(PathManager.getSystemPath()).getCanonicalPath() + File.separator + "plugins-sandbox";
     }
     catch (IOException e) {
       //can't be on running instance
