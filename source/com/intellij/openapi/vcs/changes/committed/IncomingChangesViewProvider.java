@@ -63,6 +63,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       public void consume(final List<CommittedChangeList> committedChangeLists) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             myBrowser.setItems(committedChangeLists, false);
           }
         });
