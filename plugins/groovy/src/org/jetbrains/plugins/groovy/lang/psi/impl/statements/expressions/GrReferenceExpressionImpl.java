@@ -46,6 +46,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.*;
 
@@ -88,6 +89,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else if (resolved instanceof PsiMethod) {
+      PsiElement nameElement = getReferenceNameElement();
+      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(nameElement, PsiWhiteSpace.class);
+      if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mMEMBER_POINTER) {
+        return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+      }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method)) {
         result = method.getParameterList().getParameters()[0].getType();
