@@ -10,7 +10,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.reporter.ScrData;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -19,12 +18,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
+import java.math.BigInteger;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeErrorsDialog");
   private JTextPane myDetailsPane;
   private List<AbstractMessage> myFatalErrors;
   private List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
@@ -299,7 +304,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static Map<String, ArrayList<AbstractMessage>> buildHashcode2MessageListMap(List<AbstractMessage> aErrors) {
     Map<String, ArrayList<AbstractMessage>> hash2Messages = new LinkedHashMap<String, ArrayList<AbstractMessage>>();
     for (final AbstractMessage each : aErrors) {
-      final String hashcode = ScrData.getThrowableHashCode(each.getThrowable());
+      final String hashcode = getThrowableHashCode(each.getThrowable());
       ArrayList<AbstractMessage> list;
       if (hash2Messages.containsKey(hashcode)) {
         list = hash2Messages.get(hashcode);
@@ -517,4 +522,22 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return "IdeErrosDialog";
   }
 
+  private static String getThrowableHashCode(Throwable exception) {
+    try {
+      return md5(StringUtil.getThrowableText(exception), "stack-trace");
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error(e);
+      return "";
+    }
+  }
+
+  private static String md5 (String buffer, @NonNls String key) throws NoSuchAlgorithmException {
+    //noinspection HardCodedStringLiteral
+    MessageDigest md5 = MessageDigest.getInstance("MD5");
+    md5.update(buffer.getBytes());
+    byte [] code = md5.digest(key.getBytes());
+    BigInteger bi = new BigInteger(code).abs();
+    return bi.abs().toString(16);
+  }
 }
