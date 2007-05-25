@@ -37,11 +37,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Declaration implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    return parse(builder, false);
-  }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
+  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean parseExpressionStatement) {
     PsiBuilder.Marker declmMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
@@ -104,7 +101,11 @@ public class Declaration implements GroovyElementTypes {
           && Character.isLowerCase(builder.getTokenText().charAt(0))) {
         GroovyElementType exprType = ExpressionStatement.parse(builder);
         if (CALL_EXPRESSION.equals(exprType)) {
-          declmMarker.drop();
+          if (!parseExpressionStatement) {
+            declmMarker.drop();
+          } else {
+            declmMarker.done(exprType);
+          }
           return exprType;
         } else {
           declmMarker.drop();

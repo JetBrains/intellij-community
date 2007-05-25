@@ -50,7 +50,7 @@ public class InterfaceMember implements GroovyElementTypes {
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    GroovyElementType declType = Declaration.parse(builder, true);
+    GroovyElementType declType = Declaration.parse(builder, true, false);
     if (WRONGWAY.equals(declType)) {
       declMarker.rollbackTo();
     } else {

@@ -95,7 +95,7 @@ public class ForStatement implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     if (ParserUtils.getToken(builder, mSEMI) ||
-            (!Declaration.parse(builder).equals(WRONGWAY) &&
+            (!Declaration.parse(builder, false, false).equals(WRONGWAY) &&
                     ParserUtils.getToken(builder, mSEMI))) {
       StrictContextExpression.parse(builder);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
