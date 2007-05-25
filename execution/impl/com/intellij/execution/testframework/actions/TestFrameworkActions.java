@@ -5,10 +5,9 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.util.config.AbstractProperty;
 
 public class TestFrameworkActions {
@@ -16,11 +15,11 @@ public class TestFrameworkActions {
     final TestConsoleProperties properties = model.getProperties();
     final TestFrameworkPropertyListener<Boolean> hidePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
         public void onChanged(final Boolean value) {
-          final boolean shouldFilter = JUnitConsoleProperties.HIDE_PASSED_TESTS.value(properties);
+          final boolean shouldFilter = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
           model.setFilter(shouldFilter ? Filter.NOT_PASSED : Filter.NO_FILTER);
         }
       };
-    addPropertyListener(JUnitConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
+    addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
   }
 
   public static void addPropertyListener(final AbstractProperty<Boolean> property,
