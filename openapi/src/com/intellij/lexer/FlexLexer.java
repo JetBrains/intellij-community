@@ -16,10 +16,9 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -31,4 +30,10 @@ import org.jetbrains.annotations.NonNls;
   int getTokenEnd();
   IElementType advance() throws IOException;
   void reset(CharSequence buf, int start, int end, int initialState);
+
+  /**
+   * Method left for Demetra compatibility
+   */
+  @Deprecated
+  void reset(CharSequence buf, int initialState);
 }

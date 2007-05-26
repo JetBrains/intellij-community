@@ -36,7 +36,7 @@ public abstract class AbstractSyntheticBlock implements Block{
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block firstBlock = subBlocks.get(0);
     if (firstBlock instanceof AbstractBlock) {
-      return ((AbstractBlock)firstBlock).getTreeNode();
+      return ((AbstractBlock)firstBlock).getNode();
     } else {
       return getFirstNode(firstBlock.getSubBlocks());
     }
@@ -46,7 +46,7 @@ public abstract class AbstractSyntheticBlock implements Block{
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof AbstractBlock) {
-      return ((AbstractBlock)lastBlock).getTreeNode();
+      return ((AbstractBlock)lastBlock).getNode();
     } else {
       return getLastNode(lastBlock.getSubBlocks());
     }

@@ -349,6 +349,10 @@ class _ScopesLexer implements FlexLexer {
     yybegin(initialState);
   }
 
+  public void reset(CharSequence buffer, int initialState){
+    reset(buffer, 0, buffer.length(), initialState);
+  }
+  
   /**
    * Refills the input buffer.
    *

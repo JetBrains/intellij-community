@@ -48,7 +48,12 @@ public class FlexAdapter extends LexerBase {
   public void start(final CharSequence buffer, int startOffset, int endOffset, final int initialState) {
     myText = buffer;
     myEnd = endOffset;
-    myFlex.reset(myText, startOffset, endOffset, initialState);
+    try {
+      myFlex.reset(myText, startOffset, endOffset, initialState);
+    } catch(AbstractMethodError ame) {
+      // Demetra compatibility
+      myFlex.reset(myText.subSequence(startOffset, endOffset), initialState);
+    }
     myTokenType = null;
   }
 

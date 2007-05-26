@@ -395,10 +395,6 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return JspTextBlock.findPsiRootAt(child, myXmlFormattingPolicy.processJavaTree()) != null;
   }
 
-  public ASTNode getTreeNode() {
-    return myNode;
-  }
-
   public abstract boolean insertLineBreakBeforeTag();
 
   public abstract boolean removeLineBreakBeforeTag();

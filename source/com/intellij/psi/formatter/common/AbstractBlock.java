@@ -17,8 +17,8 @@ public abstract class AbstractBlock implements Block {
   protected static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
   protected final ASTNode myNode;
   private List<Block> mySubBlocks;
-  protected Wrap myWrap;
-  protected Alignment myAlignment;
+  protected final Wrap myWrap;
+  protected final Alignment myAlignment;
 
   protected AbstractBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
     myNode = node;
@@ -45,7 +45,7 @@ public abstract class AbstractBlock implements Block {
 
   protected abstract List<Block> buildChildren();
 
-  public Wrap getWrap() {
+  public final Wrap getWrap() {
     return myWrap;
   }
 
@@ -53,15 +53,11 @@ public abstract class AbstractBlock implements Block {
     return null;
   }
 
-  public Alignment getAlignment() {
+  public final Alignment getAlignment() {
     return myAlignment;
   }
 
-  public ASTNode getNode() {
-    return myNode;
-  }
-
-  public ASTNode getTreeNode() {
+  public final ASTNode getNode() {
     return myNode;
   }
 
@@ -87,7 +83,7 @@ public abstract class AbstractBlock implements Block {
   }
 
   public boolean isIncomplete() {
-    return FormatterUtil.isIncompleted(getTreeNode());
+    return FormatterUtil.isIncompleted(getNode());
   }
 
   public boolean isLeaf() {

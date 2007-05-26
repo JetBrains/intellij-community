@@ -1,16 +1,15 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
-
-import java.util.List;
-import java.util.ArrayList;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SyntheticCodeBlock implements Block, JavaBlock{
   private final List<Block> mySubBlocks;
@@ -70,7 +69,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   public String toString() {
-    final ASTNode treeNode = ((AbstractBlock)mySubBlocks.get(0)).getTreeNode();
+    final ASTNode treeNode = ((AbstractBlock)mySubBlocks.get(0)).getNode();
     final TextRange textRange = getTextRange();
     return treeNode.getPsi().getContainingFile().getText().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
   }
