@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
   private boolean myCanModifyAllWhiteSpaces = false;
-
-  private boolean myUseAllTrees = true;
   
   public PsiBasedFormattingModel(final PsiFile file,
                                  final Block rootBlock,
@@ -77,60 +74,27 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private boolean replaceWithPSI(final TextRange textRange, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
-      if (leafElement != null) {
-        if (!myCanModifyAllWhiteSpaces) {
-          if (leafElement.getElementType() == ElementType.WHITE_SPACE) return false;
-          if (isNonEmptyWhiteSpace(leafElement)) return false;
-          LOG.assertTrue(leafElement.getPsi().isValid());
-          ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
-          if (prevNode != null && prevNode.getElementType() == XmlElementType.XML_CDATA_END) return false;
-          if (isNonEmptyWhiteSpace(prevNode)) {
-            return false;
-          }
-        }
-        changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
-        return true;
-      } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
-        changeLastWhiteSpace(whiteSpace, textRange);
-        return true;
-      } else {
-        return false;
+    if (leafElement != null) {
+      if (!myCanModifyAllWhiteSpaces) {
+        if (leafElement.getElementType() == ElementType.WHITE_SPACE) return false;
+        LOG.assertTrue(leafElement.getPsi().isValid());
+        ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
+        if (prevNode != null && prevNode.getElementType() == XmlElementType.XML_CDATA_END) return false;
       }
+      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
+      return true;
+    } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
+      FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
+      return true;
+    } else {
+      return false;
     }
-
-  private boolean isNonEmptyWhiteSpace(ASTNode prevNode) {
-    return prevNode != null && prevNode.getElementType() == ElementType.WHITE_SPACE && prevNode.getText().trim().length()  >0;
   }
-
-  protected void changeLastWhiteSpace(final String whiteSpace, final TextRange textRange) {
-    FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
-  }
-
-  protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement, final TextRange textRange) {
-    FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
-  }
-
-
 
   private ASTNode findElementAt(final int offset) {
-    if (myUseAllTrees) {
-      final PsiElement psiElement = myASTNode.getPsi().findElementAt(offset);
-      if (psiElement == null) return null;
-      /*
-      if (psiElement.getTextRange().getStartOffset() != offset) {
-        return null;
-      }
-      */
-      return psiElement.getNode();
-    }
-    else {
-      final ASTNode result = myASTNode.findLeafElementAt(offset);
-      if (result == null) return null;
-      if (result.getTextRange().getStartOffset() != offset && result.getElementType() == JspElementType.HOLDER_TEMPLATE_DATA) {
-        return null;
-      }      
-      return result;
-    }
+    final PsiElement psiElement = myASTNode.getPsi().findElementAt(offset);
+    if (psiElement == null) return null;
+    return psiElement.getNode();
   }
 
   @NotNull
@@ -145,9 +109,5 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   public void canModifyAllWhiteSpaces() {
     myCanModifyAllWhiteSpaces = true;
-  }
-  
-  public void doNotUseallTrees(){
-    myUseAllTrees = false;
   }
 }

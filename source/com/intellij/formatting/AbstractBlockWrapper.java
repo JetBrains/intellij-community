@@ -42,8 +42,8 @@ public class AbstractBlockWrapper {
     return myWhiteSpace;
   }
 
-  public WrapImpl[] getWraps() {
-    final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>();
+  public ArrayList<WrapImpl> getWraps() {
+    final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>(3);
     AbstractBlockWrapper current = this;
     while(current != null && current.getStartOffset() == getStartOffset()) {
       final WrapImpl wrap = current.getOwnWrap();
@@ -51,7 +51,7 @@ public class AbstractBlockWrapper {
       if (wrap != null && wrap.getIgnoreParentWraps()) break;
       current = current.myParent;
     }
-    return result.toArray(new WrapImpl[result.size()]);
+    return result;
   }
 
   public int getStartOffset() {
@@ -84,9 +84,9 @@ public class AbstractBlockWrapper {
   }
 
   public WrapImpl getWrap() {
-    final WrapImpl[] wraps = getWraps();
-    if (wraps.length == 0) return null;
-    return wraps[0];
+    final ArrayList<WrapImpl> wraps = getWraps();
+    if (wraps.size() == 0) return null;
+    return wraps.get(0);
   }
 
   public WrapImpl getOwnWrap() {

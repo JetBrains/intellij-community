@@ -22,6 +22,7 @@ class WrapImpl extends Wrap {
   private static final int TYPE_SHIFT = 3;
   private static final int ID_SHIFT = 5;
   private static final int ID_MAX = 1 << 26;
+  private static final Type[] myTypes = Type.values();
 
   public boolean isChildOf(final WrapImpl wrap) {
     if ((myFlags & IGNORE_PARENT_WRAPS_MASK) != 0) return false;
@@ -97,7 +98,7 @@ class WrapImpl extends Wrap {
   }
 
   final Type getType() {
-    return Type.values()[(myFlags & TYPE_MASK) >>> TYPE_SHIFT];
+    return myTypes[(myFlags & TYPE_MASK) >>> TYPE_SHIFT];
   }
 
   final boolean isWrapFirstElement() {

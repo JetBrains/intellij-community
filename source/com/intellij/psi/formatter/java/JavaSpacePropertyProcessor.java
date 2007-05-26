@@ -18,28 +18,32 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-
 public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   private PsiElement myParent;
   private int myRole1;
   private int myRole2;
-  private final CodeStyleSettings mySettings;
+  private CodeStyleSettings mySettings;
 
   private Spacing myResult;
   private ASTNode myChild1;
   private ASTNode myChild2;
-  private final ImportHelper myImportHelper;
+  private ImportHelper myImportHelper;
 
   public JavaSpacePropertyProcessor(ASTNode child, final CodeStyleSettings settings) {
+    doInit(child, settings);
+  }
+
+  void doInit(final ASTNode child, final CodeStyleSettings settings) {
+    clear();
+
     init(child);
     mySettings = settings;
-    myImportHelper = new ImportHelper(mySettings);
 
     if (myChild1.getPsi().getLanguage() != StdLanguages.JAVA ||
       myChild2.getPsi().getLanguage() != StdLanguages.JAVA) {
       return;
     }
-    
+
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
       myResult = Spacing
         .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
@@ -67,7 +71,13 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
         }
       }
     }
+  }
 
+  private void clear() {
+    myResult = null;
+    myChild2 = myChild1 = null;
+    myParent = null;
+    myImportHelper = null;
   }
 
   private static boolean shouldKeepSpace(final PsiElement parent) {
@@ -100,7 +110,9 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   }
 
   public Spacing getResult() {
-    return myResult;
+    final Spacing result = myResult;
+    clear();
+    return result;
   }
 
   public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
@@ -320,6 +332,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
+      if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings);
       int emptyLines = myImportHelper.getEmptyLinesBetween(
         (PsiImportStatementBase)SourceTreeToPsiMap.treeElementToPsi(myChild1),
         (PsiImportStatementBase)SourceTreeToPsiMap.treeElementToPsi(myChild2)

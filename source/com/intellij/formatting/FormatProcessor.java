@@ -49,7 +49,7 @@ class FormatProcessor {
       }
     });
 
-  private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
+  private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private WhiteSpace myLastWhiteSpace;
   private boolean myDisposed;
 
@@ -356,7 +356,7 @@ class FormatProcessor {
     if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
       myAlignAgain.add(whiteSpace);
     }
-    else {
+    else if (!myAlignAgain.isEmpty()) {
       myAlignAgain.remove(whiteSpace);
     }
 
@@ -409,7 +409,6 @@ class FormatProcessor {
 
   private boolean processWrap(Spacing spacing) {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-    final WrapImpl[] wraps = myCurrentBlock.getWraps();
 
     boolean wrapWasPresent = whiteSpace.containsLineFeeds();
 
@@ -423,11 +422,14 @@ class FormatProcessor {
 
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
-    for (WrapImpl wrap : wraps) {
-      wrap.processNextEntry(myCurrentBlock.getStartOffset());
+    final ArrayList<WrapImpl> wraps = myCurrentBlock.getWraps();
+    final int wrapsCount = wraps.size();
+
+    for (int i = 0; i < wrapsCount; ++i) {
+      wraps.get(i).processNextEntry(myCurrentBlock.getStartOffset());
     }
 
-    WrapImpl wrap = getWrapToBeUsed(wraps);
+    final WrapImpl wrap = getWrapToBeUsed(wraps);
 
     if (wrap != null || wrapIsPresent) {
       if (!wrapIsPresent && !canReplaceWrapCandidate(wrap)) {
@@ -464,7 +466,8 @@ class FormatProcessor {
       myWrapCandidate = null;
     }
     else {
-      for (WrapImpl wrap1 : wraps) {
+      for (int i = 0; i < wrapsCount; ++i) {
+        final WrapImpl wrap1 = wraps.get(i);
         if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)) {
           myWrapCandidate = myCurrentBlock;
         }
@@ -566,12 +569,16 @@ class FormatProcessor {
   }
 
   @Nullable
-  private WrapImpl getWrapToBeUsed(final WrapImpl[] wraps) {
-    if (wraps.length == 0) return null;
-    if (myWrapCandidate == myCurrentBlock) return wraps[0];
-    for (WrapImpl wrap : wraps) {
+  private WrapImpl getWrapToBeUsed(final ArrayList<WrapImpl> wraps) {
+    final int wrapsCount = wraps.size();
+    if (wrapsCount == 0) return null;
+    if (myWrapCandidate == myCurrentBlock) return wraps.get(0);
+
+    for (int i = 0; i < wrapsCount; ++i) {
+      final WrapImpl wrap = wraps.get(i);
       if (!isSuitableInTheCurrentPosition(wrap)) continue;
       if (wrap.isIsActive()) return wrap;
+
       final WrapImpl.Type type = wrap.getType();
       if (type == WrapImpl.Type.WRAP_ALWAYS) return wrap;
       if (type == WrapImpl.Type.WRAP_AS_NEEDED || type == WrapImpl.Type.CHOP_IF_NEEDED) {

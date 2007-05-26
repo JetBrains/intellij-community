@@ -55,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
 public class FormatterUtil {
   public static String getWhiteSpaceBefore(ASTNode element) {
     ASTNode wsCandidate = getWsCandidate(element);
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     while (wsCandidate != null && isSpaceTextElement(wsCandidate)) {
       result.append(wsCandidate.getText());
       final ASTNode newValue = getWsCandidate(wsCandidate);
@@ -98,7 +98,8 @@ public class FormatterUtil {
     }
     else {
       ASTNode compositeElement = element;
-      ChameleonTransforming.transformChildren(compositeElement);
+      final ASTNode node = compositeElement.getLastChildNode();
+      if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement)node);
       final ASTNode lastChild = compositeElement.getLastChildNode();
       if (lastChild == null) {
         return compositeElement;
@@ -114,9 +115,7 @@ public class FormatterUtil {
   }
 
   private static boolean isSpaceTextElement(ASTNode treePrev) {
-    if (isWhiteSpaceElement(treePrev)) return true;
-    final String text = treePrev.getText();
-    return text.length() > 0 && text.trim().length() == 0;
+    return isWhiteSpaceElement(treePrev);
   }
 
   public static String replaceWhiteSpace(final String whiteSpace,
@@ -127,7 +126,7 @@ public class FormatterUtil {
 
     if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
         textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
-      StringBuffer newText = createNewLeafChars(leafElement, textRange, whiteSpace);
+      StringBuilder newText = createNewLeafChars(leafElement, textRange, whiteSpace);
       LeafElement newElement = Factory.createSingleLeafElement(leafElement.getElementType(),
                                                                newText,
                                                                0, newText.length(), charTable, leafElement.getPsi().getManager());
@@ -186,11 +185,11 @@ public class FormatterUtil {
     return getWhiteSpaceBefore(leafElement);
   }
 
-  private static StringBuffer createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
+  private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
     final TextRange elementRange = leafElement.getTextRange();
     final String elementText = leafElement.getText();
 
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
 
     if (elementRange.getStartOffset() < textRange.getStartOffset()) {
       result.append(elementText.substring(0, textRange.getStartOffset() - elementRange.getStartOffset()));
@@ -420,7 +419,7 @@ public class FormatterUtil {
   }
 
   public static boolean containsWhiteSpacesOnly(final ASTNode node) {
-    if (node.getElementType() == ElementType.WHITE_SPACE && containsWhiteSpacesOnly(node.getText())) return true;
+    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
     if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
       return true;
       //EnterActionTest && JavaDocParamTest

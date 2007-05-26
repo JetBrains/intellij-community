@@ -32,6 +32,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected boolean myUseChildAttributes = false;
   private boolean myIsAfterClassKeyword = false;
   private Wrap myAnnotationWrap = null;
+  private static JavaSpacePropertyProcessor mySharedProcessor;
 
   public AbstractJavaBlock(final ASTNode node,
                            final Wrap wrap,
@@ -129,15 +130,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   private static Indent getDefaultSubtreeIndent(final ASTNode child) {
     final ASTNode parent = child.getTreeParent();
-    if (child.getElementType() == ElementType.ANNOTATION) return Indent.getNoneIndent();
+    final IElementType childNodeType = child.getElementType();
+    if (childNodeType == ElementType.ANNOTATION) return Indent.getNoneIndent();
 
     final ASTNode prevElement = getPrevElement(child);
     if (prevElement != null && prevElement.getElementType() == ElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
 
-    if (child.getElementType() == ElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == ElementType.DOC_TAG) return Indent.getNoneIndent();
+    if (childNodeType == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent);
@@ -149,25 +151,26 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   private static Indent getChildIndent(final ASTNode parent) {
-    if (parent.getElementType() == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
-    if (parent.getElementType() == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
-    if (parent.getElementType() == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
-    if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.CLASS) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.IF_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.TRY_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.CATCH_SECTION) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.FOR_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.FOREACH_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.BLOCK_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.DO_WHILE_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.WHILE_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.SWITCH_STATEMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.METHOD) return Indent.getNoneIndent();
-    if (parent.getElementType() == JavaDocElementType.DOC_COMMENT) return Indent.getNoneIndent();
-    if (parent.getElementType() == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (parent.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.IMPORT_LIST) return Indent.getNoneIndent();
+    final IElementType parentType = parent.getElementType();
+    if (parentType == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
+    if (parentType == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
+    if (parentType == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
+    if (parentType == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
+    if (parentType == ElementType.CLASS) return Indent.getNoneIndent();
+    if (parentType == ElementType.IF_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.TRY_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.CATCH_SECTION) return Indent.getNoneIndent();
+    if (parentType == ElementType.FOR_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.FOREACH_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.BLOCK_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.DO_WHILE_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.WHILE_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.SWITCH_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == ElementType.METHOD) return Indent.getNoneIndent();
+    if (parentType == JavaDocElementType.DOC_COMMENT) return Indent.getNoneIndent();
+    if (parentType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
+    if (parentType == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
+    if (parentType == ElementType.IMPORT_LIST) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
@@ -177,7 +180,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
-    return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
+    if (mySharedProcessor == null) mySharedProcessor = new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings);
+    else mySharedProcessor.doInit(AbstractJavaBlock.getTreeNode(child2), mySettings);
+    return mySharedProcessor.getResult();
+    //return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
   }
 
   public ASTNode getFirstTreeNode() {
@@ -190,13 +196,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   protected static boolean isStatement(final ASTNode child, final ASTNode parentNode) {
     if (parentNode != null) {
-      if (parentNode.getElementType() == ElementType.CODE_BLOCK) return false;
+      final IElementType parentType = parentNode.getElementType();
+      if (parentType == ElementType.CODE_BLOCK) return false;
       final int role = ((CompositeElement)parentNode).getChildRole(child);
-      if (parentNode.getElementType() == ElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
-      if (parentNode.getElementType() == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentNode.getElementType() == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentNode.getElementType() == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == ElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
+      if (parentType == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
     }
     return false;
   }
@@ -205,10 +212,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap createChildWrap() {
-    if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
       return Wrap.createWrap(getWrapType(mySettings.EXTENDS_LIST_WRAP), false);
     }
-    else if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
+    else if (nodeType == ElementType.BINARY_EXPRESSION) {
       Wrap actualWrap = myWrap != null ? myWrap : getReservedWrap();
       if (actualWrap == null) {
         return Wrap.createWrap(getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
@@ -222,19 +230,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
       }
     }
-    else if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION) {
+    else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
       return Wrap.createWrap(getWrapType(mySettings.TERNARY_OPERATION_WRAP), false);
     }
-    else if (myNode.getElementType() == ElementType.ASSERT_STATEMENT) {
+    else if (nodeType == ElementType.ASSERT_STATEMENT) {
       return Wrap.createWrap(getWrapType(mySettings.ASSERT_STATEMENT_WRAP), false);
     }
-    else if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
+    else if (nodeType == ElementType.FOR_STATEMENT) {
       return Wrap.createWrap(getWrapType(mySettings.FOR_STATEMENT_WRAP), false);
     }
-    else if (myNode.getElementType() == ElementType.THROWS_LIST) {
+    else if (nodeType == ElementType.THROWS_LIST) {
       return Wrap.createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
-    else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
+    else if (nodeType == ElementType.CODE_BLOCK) {
       return Wrap.createWrap(Wrap.NORMAL, false);
     }
     else if (isAssignment()) {
@@ -246,13 +254,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private boolean isAssignment() {
-    return myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION || myNode.getElementType() == ElementType.LOCAL_VARIABLE
-           || myNode.getElementType() == ElementType.FIELD;
+    final IElementType nodeType = myNode.getElementType();
+    return nodeType == ElementType.ASSIGNMENT_EXPRESSION || nodeType == ElementType.LOCAL_VARIABLE
+           || nodeType == ElementType.FIELD;
   }
 
   @Nullable
   protected Alignment createChildAlignment() {
-    if (myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == ElementType.ASSIGNMENT_EXPRESSION) {
       if (myNode.getTreeParent() != null
           && myNode.getTreeParent().getElementType() == ElementType.ASSIGNMENT_EXPRESSION
           && myAlignment != null) {
@@ -262,38 +272,38 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return createAlignment(mySettings.ALIGN_MULTILINE_ASSIGNMENT, null);
       }
     }
-    else if (myNode.getElementType() == ElementType.PARENTH_EXPRESSION) {
+    else if (nodeType == ElementType.PARENTH_EXPRESSION) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null);
     }
-    else if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION) {
+    else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
       return createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
     }
-    else if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
+    else if (nodeType == ElementType.FOR_STATEMENT) {
       return createAlignment(mySettings.ALIGN_MULTILINE_FOR, null);
     }
-    else if (myNode.getElementType() == ElementType.EXTENDS_LIST) {
+    else if (nodeType == ElementType.EXTENDS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
-    else if (myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    else if (nodeType == ElementType.IMPLEMENTS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
-    else if (myNode.getElementType() == ElementType.THROWS_LIST) {
+    else if (nodeType == ElementType.THROWS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_THROWS_LIST, null);
     }
-    else if (myNode.getElementType() == ElementType.PARAMETER_LIST) {
+    else if (nodeType == ElementType.PARAMETER_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null);
     }
-    else if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
+    else if (nodeType == ElementType.BINARY_EXPRESSION) {
       Alignment defaultAlignment = null;
       if (shouldInheritAlignment()) {
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
     }
-    else if (myNode.getElementType() == ElementType.CLASS) {
+    else if (nodeType == ElementType.CLASS) {
       return Alignment.createAlignment();
     }
-    else if (myNode.getElementType() == ElementType.METHOD) {
+    else if (nodeType == ElementType.METHOD) {
       return Alignment.createAlignment();
     }
 
@@ -326,90 +336,95 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  final Wrap defaultWrap,
                                  final Indent childIndent,
                                  int childOffset) {
-    if (child.getElementType() == ElementType.CLASS_KEYWORD || child.getElementType() == ElementType.INTERFACE_KEYWORD) {
+    final IElementType childType = child.getElementType();
+    if (childType == ElementType.CLASS_KEYWORD || childType == ElementType.INTERFACE_KEYWORD) {
       myIsAfterClassKeyword = true;
     }
-    if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
+    if (childType == ElementType.METHOD_CALL_EXPRESSION) {
       result.add(createMethodCallExpressiobBlock(child,
                                                  arrangeChildWrap(child, defaultWrap),
                                                  arrangeChildAlignment(child, defaultAlignment)));
     }
-    else if (child.getElementType() == ElementType.LBRACE && myNode.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
-      final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
-      child = processParenBlock(ElementType.LBRACE,
-                                ElementType.RBRACE,
-                                result,
-                                child,
-                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
-    }
-    else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST) {
-      final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
-      if (mySettings.PREFER_PARAMETERS_WRAP) {
-        wrap.ignoreParentWraps();
-      }
-      child = processParenBlock(result,
-                                child,
-                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
-    }
-
-    else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARAMETER_LIST) {
-      final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
-      child = processParenBlock(result, child,
-                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                mySettings.ALIGN_MULTILINE_PARAMETERS);
-    }
-    else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.ANNOTATION_PARAMETER_LIST) {
-      final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
-      child = processParenBlock(result, child,
-                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
-    }
-    else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION) {
-      child = processParenBlock(result, child,
-                                WrappingStrategy.DO_NOT_WRAP,
-                                mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
-    }
-    else if (child.getElementType() == ElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
-      child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
-    }
-    else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
-      child = processTernaryOperationRange(result, child, defaultAlignment, defaultWrap, childIndent);
-    }
-    else if (child.getElementType() == ElementType.FIELD) {
-      child = processField(result, child, defaultAlignment, defaultWrap, childIndent);
-    }
     else {
-      final Block block =
-        createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap),
-                        arrangeChildAlignment(child, defaultAlignment), childOffset);
+      final IElementType nodeType = myNode.getElementType();
 
-      if (child.getElementType() == ElementType.MODIFIER_LIST && containsAnnotations(child)) {
-        myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType()), true);
+      if (childType == ElementType.LBRACE && nodeType == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
+        child = processParenBlock(ElementType.LBRACE,
+                                  ElementType.RBRACE,
+                                  result,
+                                  child,
+                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                  mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+      }
+      else if (childType == ElementType.LPARENTH && nodeType == ElementType.EXPRESSION_LIST) {
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
+        if (mySettings.PREFER_PARAMETERS_WRAP) {
+          wrap.ignoreParentWraps();
+        }
+        child = processParenBlock(result,
+                                  child,
+                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
 
-      if (block instanceof AbstractJavaBlock) {
-        final AbstractJavaBlock javaBlock = ((AbstractJavaBlock)block);
-        if (myNode.getElementType() == ElementType.METHOD_CALL_EXPRESSION && child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
-          javaBlock.setReservedWrap(getReservedWrap());
+      else if (childType == ElementType.LPARENTH && nodeType == ElementType.PARAMETER_LIST) {
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+        child = processParenBlock(result, child,
+                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                  mySettings.ALIGN_MULTILINE_PARAMETERS);
+      }
+      else if (childType == ElementType.LPARENTH && nodeType == ElementType.ANNOTATION_PARAMETER_LIST) {
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
+        child = processParenBlock(result, child,
+                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+      }
+      else if (childType == ElementType.LPARENTH && nodeType == ElementType.PARENTH_EXPRESSION) {
+        child = processParenBlock(result, child,
+                                  WrappingStrategy.DO_NOT_WRAP,
+                                  mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
+      }
+      else if (childType == ElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
+        child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
+      }
+      else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
+        child = processTernaryOperationRange(result, child, defaultAlignment, defaultWrap, childIndent);
+      }
+      else if (childType == ElementType.FIELD) {
+        child = processField(result, child, defaultAlignment, defaultWrap, childIndent);
+      }
+      else {
+        final Block block =
+          createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap),
+                          arrangeChildAlignment(child, defaultAlignment), childOffset);
+
+        if (childType == ElementType.MODIFIER_LIST && containsAnnotations(child)) {
+          myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType()), true);
         }
-        else if (myNode.getElementType() == ElementType.REFERENCE_EXPRESSION &&
-                 child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
-          javaBlock.setReservedWrap(getReservedWrap());
-        }
-        else if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
-          javaBlock.setReservedWrap(defaultWrap);
-        }
-        else if (child.getElementType() == ElementType.MODIFIER_LIST) {
-          javaBlock.setReservedWrap(myAnnotationWrap);
-          if (!lastChildIsAnnotation(child)) {
-            myAnnotationWrap = null;
+
+        if (block instanceof AbstractJavaBlock) {
+          final AbstractJavaBlock javaBlock = ((AbstractJavaBlock)block);
+          if (nodeType == ElementType.METHOD_CALL_EXPRESSION && childType == ElementType.REFERENCE_EXPRESSION) {
+            javaBlock.setReservedWrap(getReservedWrap());
+          }
+          else if (nodeType == ElementType.REFERENCE_EXPRESSION &&
+                   childType == ElementType.METHOD_CALL_EXPRESSION) {
+            javaBlock.setReservedWrap(getReservedWrap());
+          }
+          else if (nodeType == ElementType.BINARY_EXPRESSION) {
+            javaBlock.setReservedWrap(defaultWrap);
+          }
+          else if (childType == ElementType.MODIFIER_LIST) {
+            javaBlock.setReservedWrap(myAnnotationWrap);
+            if (!lastChildIsAnnotation(child)) {
+              myAnnotationWrap = null;
+            }
           }
         }
-      }
 
-      result.add(block);
+        result.add(block);
+      }
     }
 
 
@@ -599,19 +614,20 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private int getAnnotationWrapType() {
-    if (myNode.getElementType() == ElementType.METHOD) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == ElementType.METHOD) {
       return mySettings.METHOD_ANNOTATION_WRAP;
     }
-    if (myNode.getElementType() == ElementType.CLASS) {
+    if (nodeType == ElementType.CLASS) {
       return mySettings.CLASS_ANNOTATION_WRAP;
     }
-    if (myNode.getElementType() == ElementType.FIELD) {
+    if (nodeType == ElementType.FIELD) {
       return mySettings.FIELD_ANNOTATION_WRAP;
     }
-    if (myNode.getElementType() == ElementType.PARAMETER) {
+    if (nodeType == ElementType.PARAMETER) {
       return mySettings.PARAMETER_ANNOTATION_WRAP;
     }
-    if (myNode.getElementType() == ElementType.LOCAL_VARIABLE) {
+    if (nodeType == ElementType.LOCAL_VARIABLE) {
       return mySettings.VARIABLE_ANNOTATION_WRAP;
     }
     return CodeStyleSettings.DO_NOT_WRAP;
@@ -620,7 +636,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Alignment arrangeChildAlignment(final ASTNode child, final Alignment defaultAlignment) {
     int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
-    if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
+    final IElementType nodeType = myNode.getElementType();
+
+    if (nodeType == ElementType.FOR_STATEMENT) {
       if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
         return defaultAlignment;
       }
@@ -628,7 +646,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    else if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST || role == ChildRole.IMPLEMENTS_KEYWORD) {
         return defaultAlignment;
       }
@@ -636,7 +654,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (myNode.getElementType() == ElementType.THROWS_LIST) {
+    else if (nodeType == ElementType.THROWS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST) {
         return defaultAlignment;
       }
@@ -644,7 +662,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (myNode.getElementType() == ElementType.CLASS) {
+    else if (nodeType == ElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
       if (myIsAfterClassKeyword) return null;
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
@@ -652,14 +670,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return null;
     }
 
-    else if (myNode.getElementType() == ElementType.METHOD) {
+    else if (nodeType == ElementType.METHOD) {
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.TYPE) return defaultAlignment;
       if (role == ChildRole.NAME) return defaultAlignment;
       return null;
     }
 
-    else if (myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
+    else if (nodeType == ElementType.ASSIGNMENT_EXPRESSION) {
       if (role == ChildRole.LOPERAND) return defaultAlignment;
       if (role == ChildRole.ROPERAND && child.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
         return defaultAlignment;
@@ -705,141 +723,145 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     final ASTNode parent = child.getTreeParent();
     int role = ((CompositeElement)parent).getChildRole(child);
-    if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == ElementType.BINARY_EXPRESSION) {
       if (role == ChildRole.OPERATION_SIGN && !mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.ROPERAND && mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
       return defaultWrap;
     }
 
-    else if (child.getElementType() == ElementType.EXTENDS_LIST || child.getElementType() == ElementType.IMPLEMENTS_LIST) {
-      return Wrap.createWrap(getWrapType(mySettings.EXTENDS_KEYWORD_WRAP), true);
-    }
-    else if (child.getElementType() == ElementType.THROWS_LIST) {
-      return Wrap.createWrap(getWrapType(mySettings.THROWS_KEYWORD_WRAP), true);
-    }
-    else if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return defaultWrap;
+    else {
+      final IElementType childType = child.getElementType();
+      if (childType == ElementType.EXTENDS_LIST || childType == ElementType.IMPLEMENTS_LIST) {
+        return Wrap.createWrap(getWrapType(mySettings.EXTENDS_KEYWORD_WRAP), true);
       }
-      else {
-        return null;
+      else if (childType == ElementType.THROWS_LIST) {
+        return Wrap.createWrap(getWrapType(mySettings.THROWS_KEYWORD_WRAP), true);
       }
-    }
-    else if (myNode.getElementType() == ElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return defaultWrap;
-      }
-      else {
-        return null;
-      }
-    }
-    else if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION) {
-      if (role == ChildRole.COLON && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-      if (role == ChildRole.QUEST && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-      if (role == ChildRole.THEN_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-      if (role == ChildRole.ELSE_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-      return defaultWrap;
-
-    }
-
-    else if (isAssignment()) {
-      if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-      if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-      if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-      if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-      return null;
-    }
-
-    else if (myNode.getElementType() == ElementType.REFERENCE_EXPRESSION) {
-      if (role == ChildRole.DOT) {
-        return getReservedWrap();
-      }
-      else {
-        return defaultWrap;
-      }
-    }
-    else if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
-      if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
-        return defaultWrap;
-      }
-      if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      }
-      else {
-        return null;
-      }
-
-    }
-
-    else if (myNode.getElementType() == ElementType.METHOD) {
-      if (role == ChildRole.THROWS_LIST) {
-        return defaultWrap;
-      }
-      else {
-        return null;
-      }
-    }
-
-    else if (myNode.getElementType() == ElementType.MODIFIER_LIST) {
-      if (child.getElementType() == ElementType.ANNOTATION) {
-        return getReservedWrap();
-      }
-      ASTNode prevElement = getPrevElement(child);
-      if (prevElement != null && prevElement.getElementType() == ElementType.ANNOTATION) {
-        return getReservedWrap();
-      }
-      else {
-        return null;
-      }
-    }
-    else if (myNode.getElementType() == ElementType.ASSERT_STATEMENT) {
-      if (role == ChildRole.CONDITION) {
-        return defaultWrap;
-      }
-      if (role == ChildRole.ASSERT_DESCRIPTION && !mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
-        return defaultWrap;
-      }
-      if (role == ChildRole.COLON && mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
-        return defaultWrap;
-      }
-      return null;
-    }
-    else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
-      if (role == ChildRole.STATEMENT_IN_BLOCK) {
-        return defaultWrap;
-      }
-      else {
-        return null;
-      }
-    }
-
-    else if (myNode.getElementType() == ElementType.IF_STATEMENT) {
-      if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
-        if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
-          return null;
+      else if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
+        if (role == ChildRole.REFERENCE_IN_LIST) {
+          return defaultWrap;
         }
         else {
-          return Wrap.createWrap(WrapType.NORMAL, true);
-        }
-      }
-    }
-
-    else if (myNode.getElementType() == ElementType.FOREACH_STATEMENT || myNode.getElementType() == ElementType.WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY) {
-        if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
           return null;
         }
+      }
+      else if (nodeType == ElementType.THROWS_LIST) {
+        if (role == ChildRole.REFERENCE_IN_LIST) {
+          return defaultWrap;
+        }
         else {
-          return Wrap.createWrap(WrapType.NORMAL, true);
+          return null;
         }
       }
-    }
+      else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
+        if (role == ChildRole.COLON && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+        if (role == ChildRole.QUEST && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+        if (role == ChildRole.THEN_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+        if (role == ChildRole.ELSE_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+        return defaultWrap;
 
-    else if (myNode.getElementType() == ElementType.DO_WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      } else if (role == ChildRole.WHILE_KEYWORD) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
+
+      else if (isAssignment()) {
+        if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+        if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+        if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+        if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+        return null;
+      }
+
+      else if (nodeType == ElementType.REFERENCE_EXPRESSION) {
+        if (role == ChildRole.DOT) {
+          return getReservedWrap();
+        }
+        else {
+          return defaultWrap;
+        }
+      }
+      else if (nodeType == ElementType.FOR_STATEMENT) {
+        if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
+          return defaultWrap;
+        }
+        if (role == ChildRole.LOOP_BODY) {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        }
+        else {
+          return null;
+        }
+
+      }
+
+      else if (nodeType == ElementType.METHOD) {
+        if (role == ChildRole.THROWS_LIST) {
+          return defaultWrap;
+        }
+        else {
+          return null;
+        }
+      }
+
+      else if (nodeType == ElementType.MODIFIER_LIST) {
+        if (childType == ElementType.ANNOTATION) {
+          return getReservedWrap();
+        }
+        ASTNode prevElement = getPrevElement(child);
+        if (prevElement != null && prevElement.getElementType() == ElementType.ANNOTATION) {
+          return getReservedWrap();
+        }
+        else {
+          return null;
+        }
+      }
+      else if (nodeType == ElementType.ASSERT_STATEMENT) {
+        if (role == ChildRole.CONDITION) {
+          return defaultWrap;
+        }
+        if (role == ChildRole.ASSERT_DESCRIPTION && !mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+          return defaultWrap;
+        }
+        if (role == ChildRole.COLON && mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+          return defaultWrap;
+        }
+        return null;
+      }
+      else if (nodeType == ElementType.CODE_BLOCK) {
+        if (role == ChildRole.STATEMENT_IN_BLOCK) {
+          return defaultWrap;
+        }
+        else {
+          return null;
+        }
+      }
+
+      else if (nodeType == ElementType.IF_STATEMENT) {
+        if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
+          if (childType == ElementType.BLOCK_STATEMENT) {
+            return null;
+          }
+          else {
+            return Wrap.createWrap(WrapType.NORMAL, true);
+          }
+        }
+      }
+
+      else if (nodeType == ElementType.FOREACH_STATEMENT || nodeType == ElementType.WHILE_STATEMENT) {
+        if (role == ChildRole.LOOP_BODY) {
+          if (childType == ElementType.BLOCK_STATEMENT) {
+            return null;
+          }
+          else {
+            return Wrap.createWrap(WrapType.NORMAL, true);
+          }
+        }
+      }
+
+      else if (nodeType == ElementType.DO_WHILE_STATEMENT) {
+        if (role == ChildRole.LOOP_BODY) {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        } else if (role == ChildRole.WHILE_KEYWORD) {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        }
       }
     }
 

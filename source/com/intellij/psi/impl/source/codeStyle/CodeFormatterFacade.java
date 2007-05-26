@@ -1,17 +1,17 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.formatting.Block;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.Block;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -20,7 +20,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.util.IncorrectOperationException;
 
 public class CodeFormatterFacade implements Constants {
@@ -40,14 +42,18 @@ public class CodeFormatterFacade implements Constants {
     if (!mySettings.ENABLE_JAVADOC_FORMATTING || element.getPsi().getContainingFile().getLanguage() != StdLanguages.JAVA) {
       return range;
     }
+
     return formatCommentsInner(element, range);
   }
 
   private TextRange formatCommentsInner(ASTNode element, final TextRange range) {
     TextRange result = range;
 
-    final PsiElement psi = element.getPsi();
-    if (psi instanceof PsiDocCommentOwner) {
+    PsiElement psi;
+
+    // check for RepositoryTreeElement is optimization
+    if (element instanceof RepositoryTreeElement &&
+        (psi = element.getPsi()) instanceof PsiDocCommentOwner) {
       final TextRange elementRange = element.getTextRange();
 
       if (range.contains(elementRange)) {
@@ -55,12 +61,29 @@ public class CodeFormatterFacade implements Constants {
         final TextRange newRange = element.getTextRange();
         result = new TextRange(range.getStartOffset(), range.getEndOffset() + newRange.getLength() - elementRange.getLength());
       }
+
+      // optimization, does not seek PsiDocComment inside fields / methods or out of range
+      if (psi instanceof PsiField ||
+          psi instanceof PsiMethod ||
+          range.getEndOffset() < elementRange.getStartOffset()
+         ) {
+        return result;
+      }
     }
 
     if (element instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(element);
-      for (ASTNode elem = element.getFirstChildNode(); elem != null; elem = elem.getTreeNext()) {
-        result = formatCommentsInner(elem, result);
+      ASTNode current = element.getFirstChildNode();
+
+      while (current != null) {
+        // we expand the chameleons here for effectiveness
+        if (current instanceof ChameleonElement) {
+          ASTNode next = current.getTreeNext();
+          final ASTNode astNode = ChameleonTransforming.transform((ChameleonElement)element);
+          if (astNode == null) current = next;
+          else current = astNode;
+        }
+        result = formatCommentsInner(current, result);
+        current = current.getTreeNext();
       }
     }
     return result;

@@ -87,10 +87,10 @@ class SpacingImpl extends Spacing {
     if (!(o instanceof SpacingImpl)) return false;
     final SpacingImpl spacing = (SpacingImpl)o;
     return myFlags == spacing.myFlags &&
-           myMinSpaces == spacing.getMinSpaces() &&
-           myMaxSpaces == spacing.getMaxSpaces() &&
-           myMinLineFeeds == spacing.getMinLineFeeds() &&
-           myKeepBlankLines == spacing.getKeepBlankLines();
+           myMinSpaces == spacing.myMinSpaces &&
+           myMaxSpaces == spacing.myMaxSpaces &&
+           myMinLineFeeds == spacing.myMinLineFeeds &&
+           myKeepBlankLines == spacing.myKeepBlankLines;
   }
 
   public int hashCode() {
