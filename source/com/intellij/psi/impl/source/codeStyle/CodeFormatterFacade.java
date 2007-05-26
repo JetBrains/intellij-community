@@ -78,7 +78,7 @@ public class CodeFormatterFacade implements Constants {
         // we expand the chameleons here for effectiveness
         if (current instanceof ChameleonElement) {
           ASTNode next = current.getTreeNext();
-          final ASTNode astNode = ChameleonTransforming.transform((ChameleonElement)element);
+          final ASTNode astNode = ChameleonTransforming.transform((ChameleonElement)current);
           if (astNode == null) current = next;
           else current = astNode;
         }
