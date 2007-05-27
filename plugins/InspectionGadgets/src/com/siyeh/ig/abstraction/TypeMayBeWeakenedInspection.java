@@ -24,6 +24,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -211,10 +212,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         weakestTypeClasses.add(javaLangObjectClass);
         final Query<PsiReference> query =
                 ReferencesSearch.search(variableOrMethod);
+        boolean hasUsages = false;
         for (PsiReference reference : query) {
             if (reference == null) {
                 continue;
             }
+            hasUsages = true;
             PsiElement referenceElement = reference.getElement();
             PsiElement referenceParent = referenceElement.getParent();
             if (referenceParent instanceof PsiMethodCallExpression) {
@@ -345,10 +348,32 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return Collections.EMPTY_LIST;
                 }
                 checkClass(weakestTypeClasses, javaLangIterableClass);
+            } else if (referenceParent instanceof PsiReturnStatement) {
+                final PsiReturnStatement returnStatement =
+                        (PsiReturnStatement)referenceParent;
+                final PsiMethod containingMethod =
+                        PsiTreeUtil.getParentOfType(returnStatement,
+                                PsiMethod.class);
+                if (containingMethod == null) {
+                    return Collections.EMPTY_LIST;
+                }
+                final PsiType type = containingMethod.getReturnType();
+                if (!(type instanceof PsiClassType)) {
+                    return Collections.EMPTY_LIST;
+                }
+                final PsiClassType classType = (PsiClassType)type;
+                final PsiClass aClass = classType.resolve();
+                if (aClass == null) {
+                    return Collections.EMPTY_LIST;
+                }
+                checkClass(weakestTypeClasses, aClass);
             }
             if (weakestTypeClasses.contains(variableClass)) {
                 return Collections.EMPTY_LIST;
             }
+        }
+        if (!hasUsages) {
+            return Collections.EMPTY_LIST;
         }
         weakestTypeClasses =
                 filterVisibleClasses(weakestTypeClasses, variableOrMethod);
