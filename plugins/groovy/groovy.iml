@@ -10,7 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="groovyj" level="project" />
+    <orderEntry type="library" name="groovyj" level="application" />
     <orderEntryProperties />
   </component>
 </module>
