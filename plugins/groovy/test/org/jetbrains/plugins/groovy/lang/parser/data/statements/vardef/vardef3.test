@@ -12,7 +12,7 @@ Groovy script
       PsiElement(identifier)('b')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    Field
+    Variable
       PsiElement(identifier)('d')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')

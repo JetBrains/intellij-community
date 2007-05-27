@@ -167,11 +167,11 @@ public class VariableDefinitions implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mIDENT)) {
       parseAssignment(builder);
       if (isInClass) {
-        varAssMarker.done(VARIABLE);
-        return VARIABLE;
-      } else {
         varAssMarker.done(FIELD);
         return FIELD;
+      } else {
+        varAssMarker.done(VARIABLE);
+        return VARIABLE;
       }
     } else {
       varAssMarker.drop();
