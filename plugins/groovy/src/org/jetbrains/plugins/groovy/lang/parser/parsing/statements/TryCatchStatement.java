@@ -101,8 +101,6 @@ public class TryCatchStatement implements GroovyElementTypes {
 
     if (ParameterDeclaration.parse(builder, mRPAREN).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("param.expected"));
-      PsiBuilder.Marker pdMarker = builder.mark();
-      pdMarker.done(PARAMETER);
 //      catchMarker.drop();
 //      return;
     }
