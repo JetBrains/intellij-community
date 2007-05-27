@@ -92,9 +92,9 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     PsiBuilder.Marker marker = builder.mark();
 
-    while (ParserUtils.lookAhead(builder, kFINAL) ||
-            ParserUtils.lookAhead(builder, kDEF) ||
-            ParserUtils.lookAhead(builder, mAT)) {
+    while (builder.getTokenType() == kFINAL ||
+            builder.getTokenType() == kDEF ||
+            builder.getTokenType() == mAT) {
 
       if (kFINAL.equals(builder.getTokenType())) {
         if (modSet.contains(kFINAL)) {

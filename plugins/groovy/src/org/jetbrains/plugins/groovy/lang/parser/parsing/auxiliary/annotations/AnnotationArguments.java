@@ -56,7 +56,7 @@ public class AnnotationArguments implements GroovyElementTypes {
   */
 
   private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
-    if (ParserUtils.lookAhead(builder, mAT)) {
+    if (builder.getTokenType() == mAT) {
       return !WRONGWAY.equals(Annotation.parse(builder));
     }
 
