@@ -59,7 +59,7 @@ public class EnumBlock implements GroovyElementTypes {
       sep = Separators.parse(builder);
     }
 
-    if (!ParserUtils.lookAhead(builder, mRCURLY)) {
+    if (builder.getTokenType() != mRCURLY) {
       builder.error(GroovyBundle.message("rcurly.expected"));
     }
 

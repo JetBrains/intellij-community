@@ -18,8 +18,6 @@ Groovy script
       PsiElement(()('(')
       PsiErrorElement:Parameter expected
         <empty list>
-      Parameter
-        <empty list>
   PsiErrorElement:';' or new line expected
     PsiElement(identifier)('Exception1')
     PsiWhiteSpace(' ')

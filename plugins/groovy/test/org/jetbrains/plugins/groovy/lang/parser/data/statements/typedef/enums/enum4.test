@@ -53,7 +53,7 @@ Groovy script
               Modifiers
                 PsiElement(def)('def')
               PsiWhiteSpace(' ')
-              Variable
+              Field
                 PsiElement(identifier)('b')
                 PsiWhiteSpace(' ')
                 PsiElement(=)('=')

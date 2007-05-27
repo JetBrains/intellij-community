@@ -1,10 +1,9 @@
 if expr1 expr2 else expr3
 -----
 Groovy script
-  IF statement
-    PsiElement(if)('if')
-    PsiErrorElement:'(' expected
-      <empty list>
+  PsiElement(if)('if')
+  PsiErrorElement:'(' expected
+    <empty list>
   PsiWhiteSpace(' ')
   PsiErrorElement:';' or new line expected
     PsiElement(identifier)('expr1')

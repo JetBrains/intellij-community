@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.ClassDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.EnumDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.InterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -40,10 +39,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class TypeDefinitionInternal implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
 
-    if (ParserUtils.lookAhead(builder, kCLASS)) return ClassDefinition.parse(builder);
-    if (ParserUtils.lookAhead(builder, kINTERFACE)) return InterfaceDefinition.parse(builder);
-    if (ParserUtils.lookAhead(builder, kENUM)) return EnumDefinition.parse(builder);
-    if (ParserUtils.lookAhead(builder, mAT)) return AnnotationDefinition.parse(builder);
+    if (builder.getTokenType() == kCLASS) return ClassDefinition.parse(builder);
+    if (builder.getTokenType() == kINTERFACE) return InterfaceDefinition.parse(builder);
+    if (builder.getTokenType() == kENUM) return EnumDefinition.parse(builder);
+    if (builder.getTokenType() == mAT) return AnnotationDefinition.parse(builder);
 
     builder.error(GroovyBundle.message("class.or.interface.or.enum.or.annotation.expected"));
     return WRONGWAY;

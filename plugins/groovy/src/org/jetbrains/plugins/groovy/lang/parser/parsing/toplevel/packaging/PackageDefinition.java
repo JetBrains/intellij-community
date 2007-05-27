@@ -39,7 +39,7 @@ public class PackageDefinition implements GroovyElementTypes {
       pMarker.drop();
       return WRONGWAY;
     }
-    if (ParserUtils.lookAhead(builder, mIDENT)) {
+    if (builder.getTokenType() == mIDENT) {
       ReferenceElement.parseForPackage(builder);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));

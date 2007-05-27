@@ -35,7 +35,7 @@ public class TypeSpec implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, boolean isUpper) {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
-    } else if (ParserUtils.lookAhead(builder, mIDENT)) {
+    } else if (builder.getTokenType() == mIDENT) {
       return parseClassOrInterfaceType(builder, isUpper);
     }
     return WRONGWAY;
@@ -118,7 +118,7 @@ public class TypeSpec implements GroovyElementTypes {
   public static GroovyElementType parseStrict(PsiBuilder builder) {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       return parseBuiltInTypeStrict(builder);
-    } else if (ParserUtils.lookAhead(builder, mIDENT)) {
+    } else if (builder.getTokenType() == mIDENT) {
       return parseClassOrInterfaceTypeStrict(builder);
     }
     return WRONGWAY;

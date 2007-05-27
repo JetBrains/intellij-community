@@ -51,7 +51,7 @@ public class EnumConstant implements GroovyElementTypes {
       }
     }
 
-    if (ParserUtils.lookAhead(builder, mLCURLY)) {
+    if (builder.getTokenType() == mLCURLY) {
       ClassBlock.parse(builder);
     }
 

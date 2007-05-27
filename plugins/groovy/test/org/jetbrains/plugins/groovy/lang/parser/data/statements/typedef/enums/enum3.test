@@ -97,7 +97,7 @@ Groovy script
                 Reference element
                   PsiElement(identifier)('String')
               PsiWhiteSpace(' ')
-              Variable
+              Field
                 PsiElement(identifier)('a')
                 PsiWhiteSpace(' ')
                 PsiElement(=)('=')

@@ -37,31 +37,22 @@ public class ImportReference implements GroovyElementTypes {
 
     ReferenceElement.parseForImport(builder);
 
-    if (ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
-        ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) {
-      ParserUtils.getToken(builder, mDOT);
+    if (ParserUtils.getToken(builder, mDOT)) {
       ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mSTAR);
-      return IMPORT_REFERENCE;
-    }
-
-    if (ParserUtils.lookAhead(builder, kAS)) {
-      ParserUtils.getToken(builder, kAS);
-      if (ParserUtils.lookAhead(builder, mNLS, mIDENT) ||
-          ParserUtils.lookAhead(builder, mIDENT)) {
-        ParserUtils.getToken(builder, mNLS);
-        ParserUtils.getToken(builder, mIDENT);
-      } else {
+      if (!ParserUtils.getToken(builder, mSTAR)) {
         builder.error(GroovyBundle.message("identifier.expected"));
       }
-      return IMPORT_REFERENCE;
     }
 
-    if (ParserUtils.lookAhead(builder, mDOT)) {
-      builder.error(GroovyBundle.message("identifier.expected"));
+    if (ParserUtils.getToken(builder, kAS)) {
+      ParserUtils.getToken(builder, mNLS);
+      if (!ParserUtils.getToken(builder, mIDENT)) {
+        builder.error(GroovyBundle.message("identifier.expected"));
+      }
+
+      return IMPORT_REFERENCE;
     }
 
     return IMPORT_REFERENCE;
-
   }
 }

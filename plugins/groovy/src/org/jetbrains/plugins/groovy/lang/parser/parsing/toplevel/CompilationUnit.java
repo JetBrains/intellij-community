@@ -36,7 +36,7 @@ public class CompilationUnit implements GroovyElementTypes {
     ParserUtils.getToken(builder, mSH_COMMENT);
     ParserUtils.getToken(builder, mNLS);
 
-    if (ParserUtils.lookAhead(builder, kPACKAGE)) {
+    if (builder.getTokenType() == kPACKAGE) {
       PackageDefinition.parse(builder);
     } else {
       Statement.parseWithImports(builder);
