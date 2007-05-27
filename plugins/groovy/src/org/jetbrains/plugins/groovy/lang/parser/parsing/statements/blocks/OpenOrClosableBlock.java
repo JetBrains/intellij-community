@@ -30,31 +30,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class OpenOrClosableBlock implements GroovyElementTypes {
 
   /**
-   * Parses blocks of both types
-   *
-   * @param builder
-   * @return
-   */
-  public static GroovyElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLCURLY)) {
-      marker.drop();
-      return WRONGWAY;
-    }
-    ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = closableBlockParamsOpt(builder);
-    parseBlockBody(builder);
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
-    if (!result.equals(WRONGWAY)) {
-      marker.done(CLOSABLE_BLOCK);
-      return CLOSABLE_BLOCK;
-    } else {
-      marker.done(OPEN_BLOCK);
-      return OPEN_BLOCK;
-    }
-  }
-
-  /**
    * Parses only OPEN blocks
    *
    * @param builder
