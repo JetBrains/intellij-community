@@ -34,9 +34,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class Annotation implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
 
-    if (!ParserUtils.getToken(builder, mAT)) return WRONGWAY;
-
     PsiBuilder.Marker annMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mAT)) {
+      annMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
 
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       annMarker.rollbackTo();
