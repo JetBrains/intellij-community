@@ -29,9 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +69,19 @@ public abstract class NewActionBase extends CreateElementActionBase
     if (!presentation.isEnabled() || !isUnderSourceRoots(e))
       return;
 
-    if (GroovyGroup.isGroovyFacetPresented(e)) return;
+    if (!isGroovyConigured(e)) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+    }
+  }
 
-    presentation.setEnabled(false);
-    presentation.setVisible(false);
+  private boolean isGroovyConigured(AnActionEvent e) {
+    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    if (project != null) {
+      PsiPackage groovyPackage = PsiManager.getInstance(project).findPackage("groovy.lang");
+      if (groovyPackage != null) return true;
+    }
+    return false;
   }
 
   public static boolean isUnderSourceRoots(final AnActionEvent e)
