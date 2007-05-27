@@ -8,17 +8,13 @@ Groovy script
     PsiElement(()('(')
     Literal
       PsiElement(true)('true')
+    PsiElement(new line)('\n')
     PsiErrorElement:')' expected
       <empty list>
-  PsiElement(new line)('\n')
-  Closable block
     PsiElement({)('{')
-    Parameter list
-      <empty list>
-    Method call
-      Reference expression
-        PsiElement(identifier)('doSomenthing')
-      PsiElement(()('(')
-      PsiElement())(')')
-    PsiElement(;)(';')
+    PsiElement(identifier)('doSomenthing')
+    PsiElement(()('(')
+    PsiElement())(')')
+  PsiElement(;)(';')
+  PsiErrorElement:';' or new line expected
     PsiElement(})('}')
