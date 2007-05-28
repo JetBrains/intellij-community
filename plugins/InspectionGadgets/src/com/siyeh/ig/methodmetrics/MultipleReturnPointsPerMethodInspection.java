@@ -73,10 +73,11 @@ public class MultipleReturnPointsPerMethodInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new MultipleReturnPointsVisitor();
+        return new MultipleReturnPointsPerMethodVisitor();
     }
 
-    private class MultipleReturnPointsVisitor extends BaseInspectionVisitor {
+    private class MultipleReturnPointsPerMethodVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
