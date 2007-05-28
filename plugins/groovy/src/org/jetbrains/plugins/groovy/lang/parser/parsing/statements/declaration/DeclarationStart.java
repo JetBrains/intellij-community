@@ -47,7 +47,7 @@ public class DeclarationStart implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker declStartMarker = builder.mark();
 
-    if (!WRONGWAY.equals(Declaration.parse(builder, false, false))) {
+    if (!WRONGWAY.equals(Declaration.parse(builder, false))) {
       declStartMarker.rollbackTo();
       return true;
     } else {

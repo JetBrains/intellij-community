@@ -45,10 +45,11 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {
-      ThrowClause.parse(builder);
+      /*ThrowClause.parse(builder);
       ParserUtils.waitNextRCurly(builder);
 
-      builder.error(GroovyBundle.message("rparen.expected"));
+      builder.error(GroovyBundle.message("rparen.expected"));*/
+      return WRONGWAY;
     }
 
     ThrowClause.parse(builder);

@@ -74,24 +74,14 @@ public class VariableDefinitions implements GroovyElementTypes {
         builder.error(GroovyBundle.message("empty.parameter.list.expected"));
       }
 
-      boolean isEmptyParamDeclList = NONE.equals(paramDeclList);
-
       ParserUtils.getToken(builder, mNLS);
       if (!ParserUtils.getToken(builder, mRPAREN)) {
-        ThrowClause.parse(builder);
+        /*ThrowClause.parse(builder);
         ParserUtils.waitNextRCurly(builder);
-        builder.error(GroovyBundle.message("rparen.expected"));
+        builder.error(GroovyBundle.message("rparen.expected"));*/
+        varMarker.rollbackTo();
+        return WRONGWAY;
       }
-
-      //use for annotation definition
-//      if (!isStringName && isEmptyParamDeclList && ParserUtils.getToken(builder, kDEFAULT)) {
-//        ParserUtils.getToken(builder, mNLS);
-//
-//        if (parseAnnotationMemberValueInitializer(builder)) {
-//          varMarker.done(DEFAULT_ANNOTATION_MEMBER);
-//          return DEFAULT_ANNOTATION_MEMBER;
-//        }
-//      }
 
       ThrowClause.parse(builder);
 
@@ -102,8 +92,6 @@ public class VariableDefinitions implements GroovyElementTypes {
       } else {
         nlsMarker.drop();
       }
-
-//      ParserUtils.getToken(builder, mNLS);
 
       OpenOrClosableBlock.parseOpenBlock(builder);
 

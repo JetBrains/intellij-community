@@ -94,7 +94,11 @@ public class PrimaryExpression implements GroovyElementTypes {
   public static GroovyElementType parenthesizedExprParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
-    StrictContextExpression.parse(builder);
+    GroovyElementType innerExprType = StrictContextExpression.parse(builder);
+    if (innerExprType == WRONGWAY) {
+      marker.rollbackTo();
+      return WRONGWAY;
+    }
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       builder.error(GroovyBundle.message("rparen.expected"));
@@ -105,8 +109,8 @@ public class PrimaryExpression implements GroovyElementTypes {
       }
       ParserUtils.getToken(builder, mRPAREN);
     }
-    marker.done(PARENTHSIZED_EXPRESSION);
-    return PARENTHSIZED_EXPRESSION;
+    marker.done(PARENTHESIZED_EXPRESSION);
+    return PARENTHESIZED_EXPRESSION;
   }
 
   /**

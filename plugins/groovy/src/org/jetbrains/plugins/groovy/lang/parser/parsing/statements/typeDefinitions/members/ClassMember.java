@@ -49,7 +49,7 @@ public class ClassMember implements GroovyElementTypes {
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    GroovyElementType declType = Declaration.parse(builder, true, false);
+    GroovyElementType declType = Declaration.parse(builder, true);
     if (WRONGWAY.equals(declType)) {
       declMarker.rollbackTo();
     } else {

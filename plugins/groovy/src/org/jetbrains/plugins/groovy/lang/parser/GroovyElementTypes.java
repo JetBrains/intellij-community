@@ -33,7 +33,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Auxiliary elements
   GroovyElementType SEP = new GroovyElementType("Statement separator");
-  GroovyElementType IDENTIFIER = new GroovyElementType("Identifier");
   GroovyElementType LITERAL = new GroovyElementType("Literal");
 
   // Top-level elements
@@ -98,7 +97,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PATH_METHOD_CALL = new GroovyElementType("Method call");
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
   GroovyElementType PATH_CLASS_ACCESS = new GroovyElementType("Class access expression");
-  GroovyElementType PARENTHSIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
+  GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
 
   // Plain label
   GroovyElementType LABEL = new GroovyElementType("Label");
