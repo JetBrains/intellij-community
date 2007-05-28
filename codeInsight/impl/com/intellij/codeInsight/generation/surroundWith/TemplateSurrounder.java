@@ -31,13 +31,13 @@ public class TemplateSurrounder implements Surrounder {
 
   public boolean isApplicableForFileType(FileType fileType) {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
-    if (templateContext.XML) {
-      return fileType == StdFileTypes.XML;
-    }
 
     if (templateContext.HTML && (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML)) return true;
     if (templateContext.JSP && (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX)) return true;
 
+    if (templateContext.XML) {
+      return fileType == StdFileTypes.XML;
+    }
     return false;
   }
 
