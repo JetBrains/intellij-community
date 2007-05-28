@@ -153,6 +153,10 @@ public class TestNGResults  implements TestFrameworkRunningModel
             }
         } else {
             model.addTestResult(result);
+            final TestProxy testCase = animator.getCurrentTestCase();
+            if (testCase != null) {
+              testCase.setResultMessage(result);
+            }
             animator.setCurrentTestCase(null);
             Object[] children = treeBuilder.getTreeStructure().getChildElements(classNode);
             for (Object child : children) {

@@ -28,6 +28,10 @@ public class Animator implements Runnable
         alarm = new Alarm();
     }
 
+    public TestProxy getCurrentTestCase() {
+      return proxy;
+    }
+
     public void setCurrentTestCase(TestProxy testproxy) {
         proxy = testproxy;
         scheduleRepaint();

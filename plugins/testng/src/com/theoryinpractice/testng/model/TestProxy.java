@@ -109,7 +109,8 @@ public class TestProxy implements AbstractTestProxy {
   }
 
   public boolean isInProgress() {
-    return inProgress;
+    final TestProxy parentProxy = getParent();
+    return (parentProxy == null || parentProxy.isInProgress()) && inProgress;
   }
 
   public boolean isDefect() {
