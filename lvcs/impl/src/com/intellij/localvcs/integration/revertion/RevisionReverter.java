@@ -37,7 +37,7 @@ public abstract class RevisionReverter extends Reverter {
     return removeDuplicatesAndSort(errors);
   }
 
-  protected boolean askForReadOnlyStatusClearing() {
+  private boolean askForReadOnlyStatusClearing() {
     if (!hasCurrentVersion()) return true;
     return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
   }

@@ -1,15 +1,18 @@
 package com.intellij.localvcs.integration.revertion;
 
 import com.intellij.localvcs.core.ILocalVcs;
-import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.changes.ChangeSet;
-import com.intellij.localvcs.core.changes.StructuralChange;
+import com.intellij.localvcs.core.IdPath;
+import com.intellij.localvcs.core.changes.*;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.FormatUtil;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ChangeReverter extends Reverter {
   private ILocalVcs myVcs;
@@ -25,33 +28,47 @@ public class ChangeReverter extends Reverter {
 
   @Override
   public List<String> checkCanRevert() throws IOException {
-    //  final boolean[] result = new boolean[]{true};
-    //
-    //  myVcs.accept(new ChangeRevertionVisitor(myVcs, myGateway) {
-    //    @Override
-    //    public void visit(ChangeSet c) throws StopVisitingException {
-    //      if (!myVcs.isBefore(myChange, c, true)) stop();
-    //    }
-    //
-    //    @Override
-    //    public void visit(RenameChange c) throws IOException, StopVisitingException {
-    //      if (shouldProcess(c)) {
-    //        Entry e = getAffectedEntry(c);
-    //        if (e.getParent().findChild(c.getOldName()) != null) {
-    //          result[0] = false;
-    //          stop();
-    //        }
-    //      }
-    //      super.visit(c);
-    //    }
-    //
-    //    protected boolean shouldProcess(Change c) {
-    //      return myVcs.isInTheChain(myChange, c);
-    //    }
-    //  });
-    //
-    //  return Collections.singletonList("some files already exist");
-    return Collections.emptyList();
+    List<String> errors = new ArrayList<String>();
+    if (!askForReadOnlyStatusClearing()) {
+      errors.add("some files are read-only");
+    }
+    doCheckCanRevert(errors);
+    return errors;
+  }
+
+  private boolean askForReadOnlyStatusClearing() throws IOException {
+    return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
+  }
+
+  private ArrayList<VirtualFile> getFilesToClearROStatus() throws IOException {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+
+    myVcs.accept(selective(new ChangeVisitor() {
+      @Override
+      public void visit(StructuralChange c) {
+        for (IdPath p : c.getAffectedIdPaths()) {
+          Entry e = myVcs.getRootEntry().findEntry(p);
+          if (e == null) continue;
+          files.addAll(myGateway.getAllFilesFrom(e.getPath()));
+        }
+      }
+    }));
+
+    return new ArrayList<VirtualFile>(files);
+  }
+
+  private void doCheckCanRevert(final List<String> errors) throws IOException {
+    final Entry r = myVcs.getRootEntry().copy();
+    myVcs.accept(selective(new ChangeVisitor() {
+      @Override
+      public void visit(StructuralChange c) {
+        if (!c.canRevertOn(r)) {
+          errors.add("some files already exist");
+          return;
+        }
+        c.revertOn(r);
+      }
+    }));
   }
 
   @Override
@@ -65,16 +82,20 @@ public class ChangeReverter extends Reverter {
 
   @Override
   protected void doRevert() throws IOException {
-    myVcs.accept(new ChangeRevertionVisitor(myVcs, myGateway) {
+    myVcs.accept(selective(new ChangeRevertionVisitor(myVcs, myGateway)));
+  }
+
+  private ChangeVisitor selective(ChangeVisitor v) {
+    return new SelectiveChangeVisitor(v) {
       @Override
-      public void visit(ChangeSet c) throws StopVisitingException {
-        if (!myVcs.isBefore(myChange, c, true)) stop();
+      protected boolean isFinished(ChangeSet c) {
+        return !myVcs.isBefore(myChange, c, true);
       }
 
       @Override
       protected boolean shouldProcess(StructuralChange c) {
         return myVcs.isInTheChain(myChange, c);
       }
-    });
+    };
   }
 }

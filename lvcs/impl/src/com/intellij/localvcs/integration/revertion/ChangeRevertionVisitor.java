@@ -29,65 +29,55 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   private void revertCreation(StructuralChange c) throws IOException {
-    if (shouldProcess(c)) {
-      Entry e = getAffectedEntry(c);
-      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    Entry e = getAffectedEntry(c);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-      f.delete(null);
+    f.delete(null);
 
-      c.revertOn(myRootEntry);
-    }
+    c.revertOn(myRootEntry);
   }
 
   @Override
   public void visit(ChangeFileContentChange c) throws IOException {
-    if (shouldProcess(c)) {
-      c.revertOn(myRootEntry);
+    c.revertOn(myRootEntry);
 
-      Entry e = getAffectedEntry(c);
-      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    Entry e = getAffectedEntry(c);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-      Content content = e.getContent();
-      if (content.isAvailable()) {
-        f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
-      }
+    Content content = e.getContent();
+    if (content.isAvailable()) {
+      f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
     }
   }
 
   @Override
   public void visit(RenameChange c) throws IOException, StopVisitingException {
-    if (shouldProcess(c)) {
-      Entry e = getAffectedEntry(c);
-      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    Entry e = getAffectedEntry(c);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-      c.revertOn(myRootEntry);
+    c.revertOn(myRootEntry);
 
-      f.rename(null, e.getName());
-    }
+    f.rename(null, e.getName());
   }
 
   @Override
   public void visit(MoveChange c) throws IOException {
-    if (shouldProcess(c)) {
-      Entry e = getAffectedEntry(c, 1);
-      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    Entry e = getAffectedEntry(c, 1);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-      c.revertOn(myRootEntry);
-      Entry parentEntry = getAffectedEntry(c).getParent();
-      VirtualFile parent = myGateway.findVirtualFile(parentEntry.getPath());
+    c.revertOn(myRootEntry);
+    Entry parentEntry = getAffectedEntry(c).getParent();
+    VirtualFile parent = myGateway.findVirtualFile(parentEntry.getPath());
 
-      f.move(null, parent);
-    }
+    f.move(null, parent);
   }
 
   @Override
   public void visit(DeleteChange c) throws IOException {
-    if (shouldProcess(c)) {
-      c.revertOn(myRootEntry);
-      Entry e = getAffectedEntry(c);
+    c.revertOn(myRootEntry);
+    Entry e = getAffectedEntry(c);
 
-      revertDeletion(e);
-    }
+    revertDeletion(e);
   }
 
   private void revertDeletion(Entry e) throws IOException {
@@ -100,10 +90,6 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
       VirtualFile f = parent.createChildData(null, e.getName());
       f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
     }
-  }
-
-  protected boolean shouldProcess(StructuralChange c) {
-    return true;
   }
 
   protected Entry getAffectedEntry(StructuralChange c) {
