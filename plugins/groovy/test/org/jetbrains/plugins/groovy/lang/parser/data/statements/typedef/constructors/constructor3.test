@@ -38,7 +38,5 @@ Groovy script
           PsiElement())(')')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
-      PsiErrorElement:interface must have no constructor
-        <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

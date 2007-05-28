@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class ClassBlock implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder, String className) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
@@ -40,12 +40,12 @@ public class ClassBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    ClassMember.parse(builder);
+    ClassMember.parse(builder, className);
 
     IElementType sep = Separators.parse(builder);
 
     while (!WRONGWAY.equals(sep)) {
-      ClassMember.parse(builder);
+      ClassMember.parse(builder, className);
 
       sep = Separators.parse(builder);
     }
@@ -55,7 +55,7 @@ public class ClassBlock implements GroovyElementTypes {
     }
 
     while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      ClassMember.parse(builder);
+      ClassMember.parse(builder, className);
 
       builder.advanceLexer();
     }

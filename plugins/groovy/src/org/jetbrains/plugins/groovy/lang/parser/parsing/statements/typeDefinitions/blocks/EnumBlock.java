@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class EnumBlock implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder, String enumName) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ebMarker = builder.mark();
 
@@ -48,13 +48,13 @@ public class EnumBlock implements GroovyElementTypes {
     if (parseEnumConstantStart(builder)) {
       EnumConstants.parse(builder);
     } else {
-      ClassMember.parse(builder);
+      ClassMember.parse(builder, enumName);
     }
 
     IElementType sep = Separators.parse(builder);
 
     while (!WRONGWAY.equals(sep)) {
-      ClassMember.parse(builder);
+      ClassMember.parse(builder, enumName);
 
       sep = Separators.parse(builder);
     }
@@ -64,7 +64,7 @@ public class EnumBlock implements GroovyElementTypes {
     }
 
     while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      ClassMember.parse(builder);
+      ClassMember.parse(builder, enumName);
       builder.advanceLexer();
     }
 

@@ -34,8 +34,13 @@ public class InterfaceDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+    String name;
+    if (!mIDENT.equals(builder.getTokenType())) {
+      builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
+    } else {
+      name = builder.getTokenText();
+      builder.advanceLexer();
     }
 
     ParserUtils.getToken(builder, mNLS);
@@ -44,7 +49,7 @@ public class InterfaceDefinition implements GroovyElementTypes {
 
     InterfaceExtends.parse(builder);
 
-    if (WRONGWAY.equals(InterfaceBlock.parse(builder))) {
+    if (WRONGWAY.equals(InterfaceBlock.parse(builder, name))) {
       builder.error(GroovyBundle.message("interface.body.expected"));
       return INTERFACE_DEFINITION_ERROR;
     }

@@ -52,7 +52,7 @@ public class EnumConstant implements GroovyElementTypes {
     }
 
     if (builder.getTokenType() == mLCURLY) {
-      ClassBlock.parse(builder);
+      ClassBlock.parse(builder, null);
     }
 
     ecMarker.done(ENUM_CONSTANT);

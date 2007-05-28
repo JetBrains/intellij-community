@@ -14,7 +14,7 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Method
+      Constructor
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
@@ -43,11 +43,11 @@ Groovy script
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
-        Open block
+        Constructor body
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n  ')
-      Constructor
+      Method
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
@@ -60,13 +60,13 @@ Groovy script
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
-        Constructor body
+        Open block
           PsiElement({)('{')
-          PsiElement(this)('this')
-          PsiElement(()('(')
-          Arguments
-            <empty list>
-          PsiElement())(')')
+          Method call
+            'this' reference expression
+              PsiElement(this)('this')
+            PsiElement(()('(')
+            PsiElement())(')')
           PsiElement(;)(';')
           PsiElement(})('}')
       PsiElement(new line)('\n')

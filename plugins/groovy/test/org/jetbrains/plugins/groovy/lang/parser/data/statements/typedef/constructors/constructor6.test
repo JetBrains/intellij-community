@@ -1,5 +1,5 @@
 class s {
-  def a () {
+  def s () {
     this();
     def a = 3.7
   }
@@ -20,7 +20,7 @@ Groovy script
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('a')
+        PsiElement(identifier)('s')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
         Parameter list

@@ -20,7 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
@@ -32,13 +31,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class ClassMember implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static IElementType parse(PsiBuilder builder, String className) {
 
     //constructor
     PsiBuilder.Marker constructorMarker = builder.mark();
-    ModifiersOptional.parse(builder);
 
-    GroovyElementType constructorDef = ConstructorDefinition.parse(builder);
+    GroovyElementType constructorDef = ConstructorDefinition.parse(builder, className);
 
     if (WRONGWAY.equals(constructorDef)) {
       constructorMarker.rollbackTo();

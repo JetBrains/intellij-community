@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class InterfaceBlock implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static IElementType parse(PsiBuilder builder, String interfaceName) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ibMarker = builder.mark();
 
@@ -38,11 +38,11 @@ public class InterfaceBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    InterfaceMember.parse(builder);
+    InterfaceMember.parse(builder, interfaceName);
     GroovyElementType sep = Separators.parse(builder);
 
     while (!WRONGWAY.equals(sep)) {
-      InterfaceMember.parse(builder);
+      InterfaceMember.parse(builder, interfaceName);
 
       sep = Separators.parse(builder);
     }
@@ -52,7 +52,7 @@ public class InterfaceBlock implements GroovyElementTypes {
     }
 
     while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      InterfaceMember.parse(builder);
+      InterfaceMember.parse(builder, interfaceName);
       builder.advanceLexer();
     }
 

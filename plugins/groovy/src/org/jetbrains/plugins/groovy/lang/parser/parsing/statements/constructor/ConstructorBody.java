@@ -41,10 +41,7 @@ public class ConstructorBody implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!parseExplicitConstructor(builder)) {
-      cbMarker.rollbackTo();
-      return WRONGWAY;
-    }
+    parseExplicitConstructor(builder);
 
     //explicit constructor invocation
     Separators.parse(builder);

@@ -1,0 +1,34 @@
+class map {
+    map()   {
+
+    }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('map')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Constructor
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('map')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace('   ')
+        Throw clause
+          <empty list>
+        Constructor body
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n    ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

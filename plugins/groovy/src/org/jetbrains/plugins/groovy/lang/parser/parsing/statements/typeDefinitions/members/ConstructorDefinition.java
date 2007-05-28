@@ -16,11 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -31,10 +34,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ConstructorDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+  public static GroovyElementType parse(PsiBuilder builder, String className) {
+    if (className == null) return WRONGWAY;
+    if (parseModifiers(builder) == WRONGWAY) return WRONGWAY;
+
+    if (builder.getTokenType() != mIDENT || !className.equals(builder.getTokenText())) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
+    } else {
+      builder.advanceLexer();
     }
 
     if (!ParserUtils.getToken(builder, mLPAREN)) {
@@ -64,4 +72,27 @@ public class ConstructorDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
   }
+
+  private static IElementType parseModifiers(PsiBuilder builder) {
+    PsiBuilder.Marker modifiersMarker = builder.mark();
+
+    boolean parsedAnnotation;
+    boolean parsedModifier;
+    boolean parsedDef;
+    do {
+      if (kSTATIC.equals(builder.getTokenType())) {
+        modifiersMarker.rollbackTo();
+        return WRONGWAY;
+      }
+
+      parsedAnnotation = Annotation.parse(builder) != WRONGWAY;
+      parsedModifier = Modifier.parse(builder) != WRONGWAY;
+      parsedDef = ParserUtils.getToken(builder, kDEF);
+      ParserUtils.getToken(builder, mNLS);
+    } while(parsedAnnotation || parsedModifier | parsedDef);
+
+    modifiersMarker.done(MODIFIERS);
+    return MODIFIERS;
+  }
+
 }

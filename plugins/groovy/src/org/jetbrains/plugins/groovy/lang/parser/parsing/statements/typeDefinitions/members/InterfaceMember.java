@@ -32,22 +32,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class InterfaceMember implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
-
+  public static IElementType parse(PsiBuilder builder, String interfaceName) {
     //constructor
     PsiBuilder.Marker constructorMarker = builder.mark();
-    ModifiersOptional.parse(builder);
 
-    GroovyElementType constructorDef = ConstructorDefinition.parse(builder);
+    GroovyElementType constructorDef = ConstructorDefinition.parse(builder, interfaceName);
 
     if (WRONGWAY.equals(constructorDef)) {
       constructorMarker.rollbackTo();
     } else {
       constructorMarker.done(constructorDef);
-      builder.error(GroovyBundle.message("interface.must.has.no.constructor"));
       return constructorDef;
     }
-
+    
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
     GroovyElementType declType = Declaration.parse(builder, true);

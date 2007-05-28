@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.EnumBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -32,15 +33,20 @@ public class EnumDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+    String name;
+    if (!mIDENT.equals(builder.getTokenType())) {
+      builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
+    } else {
+      name = builder.getTokenText();
+      builder.advanceLexer();
     }
 
     if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
       return ENUM_DEFINITION_ERROR;
     }
 
-    if (WRONGWAY.equals(EnumBlock.parse(builder))) {
+    if (WRONGWAY.equals(EnumBlock.parse(builder, name))) {
       return ENUM_DEFINITION_ERROR;
     }
 

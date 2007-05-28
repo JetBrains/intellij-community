@@ -13,7 +13,7 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Method
+      Constructor
         Modifiers
           <empty list>
         PsiElement(identifier)('Greet')
@@ -27,7 +27,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
-        Open block
+        Constructor body
           PsiElement({)('{')
           PsiWhiteSpace(' ')
           Assignment expression

@@ -40,9 +40,14 @@ public class ClassDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+
+    String name;
+    if (!mIDENT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
+    } else {
+      name = builder.getTokenText();
+      builder.advanceLexer();
     }
 
     ParserUtils.getToken(builder, mNLS);
@@ -58,7 +63,7 @@ public class ClassDefinition implements GroovyElementTypes {
     }
 
     if (mLCURLY.equals(builder.getTokenType())) {
-      if (WRONGWAY.equals(ClassBlock.parse(builder))) {
+      if (WRONGWAY.equals(ClassBlock.parse(builder, name))) {
         return CLASS_DEFINITION_ERROR;
       }
     } else {
