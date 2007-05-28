@@ -82,9 +82,11 @@ class IntroduceConstantDialog extends DialogWrapper {
   public IntroduceConstantDialog(Project project,
                                  PsiClass parentClass,
                                  PsiExpression initializerExpression,
-                                 PsiLocalVariable localVariable, boolean isInvokedOnDeclaration,
-                                 PsiExpression[] occurrences, PsiClass targetClass, TypeSelectorManager typeSelectorManager) {
-
+                                 PsiLocalVariable localVariable,
+                                 boolean isInvokedOnDeclaration,
+                                 PsiExpression[] occurrences,
+                                 PsiClass targetClass,
+                                 TypeSelectorManager typeSelectorManager) {
     super(project, true);
     myProject = project;
     myParentClass = parentClass;
@@ -147,8 +149,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   public boolean isReplaceAllOccurrences() {
-    if (myOccurrencesCount <= 1) return false;
-    return myCbReplaceAll.isSelected();
+    return myOccurrencesCount > 1 && myCbReplaceAll.isSelected();
   }
 
   public PsiType getSelectedType() {
@@ -164,7 +165,6 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
-    final NameSuggestionsManager nameSuggestionsManager;
     myTypeSelector = myTypeSelectorManager.getTypeSelector();
     myTypePanel.setLayout(new BorderLayout());
     myTypePanel.add(myTypeSelector.getComponent(), BorderLayout.CENTER);
@@ -220,33 +220,30 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       propertyName = null;
     }
-    nameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, new NameSuggestionsGenerator() {
-      public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-        return myCodeStyleManager.suggestVariableName(
-          VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type
-        );
-      }
+    final NameSuggestionsManager nameSuggestionsManager =
+      new NameSuggestionsManager(myTypeSelector, myNameField, new NameSuggestionsGenerator() {
+        public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+          return myCodeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type);
+        }
 
-      public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-        LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-        LookupItemPreferencePolicy policy =
-          CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
-        return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
-      }
-    },
-                                                        myProject);
+        public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
+          LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+          LookupItemPreferencePolicy policy =
+            CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
+          return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
+        }
+      }, myProject);
 
     nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
     if (myOccurrencesCount > 1) {
-      ItemListener itemListener = new ItemListener() {
+      myCbReplaceAll.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           updateTypeSelector();
 
           myNameField.requestFocusInWindow();
         }
-      };
-      myCbReplaceAll.addItemListener(itemListener);
+      });
       myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
     }
     else {
@@ -309,20 +306,18 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   public boolean isDeleteVariable() {
-    if (myInvokedOnDeclaration) return true;
-    if (myCbDeleteVariable == null) return false;
-    return myCbDeleteVariable.isSelected();
+    return myInvokedOnDeclaration || myCbDeleteVariable != null && myCbDeleteVariable.isSelected();
   }
 
   public boolean isAnnotateAsNonNls() {
-    if (myCbNonNls == null) return false;
-    return myCbNonNls.isSelected();
+    return myCbNonNls != null && myCbNonNls.isSelected();
   }
 
   private void updateCbDeleteVariable() {
     if (!myCbReplaceAll.isSelected()) {
       myCbDeleteVariable.makeUnselectable(false);
-    } else {
+    }
+    else {
       myCbDeleteVariable.makeSelectable();
     }
   }
@@ -330,9 +325,15 @@ class IntroduceConstantDialog extends DialogWrapper {
   private void updateTypeSelector() {
     if (myCbReplaceAll != null) {
       myTypeSelectorManager.setAllOccurences(myCbReplaceAll.isSelected());
-    } else {
+    }
+    else {
       myTypeSelectorManager.setAllOccurences(false);
     }
+    Window dialog = (Window)SwingUtilities.getAncestorOfClass(Window.class, myPanel);
+    if (dialog != null) {
+      dialog.pack();
+    }
+    myPanel.revalidate();
   }
 
   private void updateVisibilityPanel() {
@@ -361,7 +362,7 @@ class IntroduceConstantDialog extends DialogWrapper {
           String modifier = iterator.next();
 
           try {
-            final String modifierText = modifier == PsiModifier.PACKAGE_LOCAL ? "" : modifier;
+            final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier;
             final PsiField field = psiManager.getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
             if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
