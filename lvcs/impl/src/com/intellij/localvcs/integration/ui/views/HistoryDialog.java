@@ -188,6 +188,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected void revert(Reverter r) {
     try {
+      String question = r.askUserForProceed();
+      if (question != null) {
+        if (!myGateway.askForProceed(question + "\nDo you want to proceed?")) {
+          return;
+        }
+      }
+
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {
         showRevertErrors(errors);

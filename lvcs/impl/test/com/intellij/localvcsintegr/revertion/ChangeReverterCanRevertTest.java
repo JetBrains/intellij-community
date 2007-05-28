@@ -1,14 +1,27 @@
 package com.intellij.localvcsintegr.revertion;
 
+import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.List;
 
 public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
-  //public void testAskingForRevertSubsequentalChanges() throws IOException {
-  //  fail();
-  //}
+  public void testDoesNotAskIfThereIsNoSubsequentalChanges() throws IOException {
+    root.createChildData(null, "f.java");
+
+    Reverter r = createReverter(root, 0);
+    assertNull(r.askUserForProceed());
+  }
+
+  public void testAskingForRevertSubsequentalChanges() throws IOException {
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent(new byte[0]);
+
+    Reverter r = createReverter(f, 1);
+    String question = r.askUserForProceed();
+    assertEquals("There are some changes that have been done after this one.\nThese changes should be reverted too.", question);
+  }
 
   public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");

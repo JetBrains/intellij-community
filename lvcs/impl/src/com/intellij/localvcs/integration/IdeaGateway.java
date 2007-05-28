@@ -45,6 +45,10 @@ public class IdeaGateway {
     return myFileFilter;
   }
 
+  public boolean askForProceed(String s) {
+    return Messages.showYesNoDialog(myProject, s, "Question", Messages.getWarningIcon()) == 0;
+  }
+
   public void showError(String s) {
     Messages.showErrorDialog(myProject, s, "Error");
   }

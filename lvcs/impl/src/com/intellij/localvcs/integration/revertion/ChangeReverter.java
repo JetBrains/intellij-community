@@ -27,6 +27,24 @@ public class ChangeReverter extends Reverter {
   }
 
   @Override
+  public String askUserForProceed() throws IOException {
+    final String[] result = new String[1];
+
+    myVcs.accept(new ChangeVisitor() {
+      @Override
+      public void visit(ChangeSet c) throws StopVisitingException {
+        if (isBeforeMyChange(c, false)) stop();
+        if (!isInTheChain(c)) return;
+
+        result[0] = "There are some changes that have been done after this one.\n" + "These changes should be reverted too.";
+        stop();
+      }
+    });
+
+    return result[0];
+  }
+
+  @Override
   public List<String> checkCanRevert() throws IOException {
     List<String> errors = new ArrayList<String>();
     if (!askForReadOnlyStatusClearing()) {
@@ -89,13 +107,21 @@ public class ChangeReverter extends Reverter {
     return new SelectiveChangeVisitor(v) {
       @Override
       protected boolean isFinished(ChangeSet c) {
-        return !myVcs.isBefore(myChange, c, true);
+        return isBeforeMyChange(c, true);
       }
 
       @Override
       protected boolean shouldProcess(StructuralChange c) {
-        return myVcs.isInTheChain(myChange, c);
+        return isInTheChain(c);
       }
     };
+  }
+
+  private boolean isBeforeMyChange(ChangeSet c, boolean canBeEqual) {
+    return !myVcs.isBefore(myChange, c, canBeEqual);
+  }
+
+  private boolean isInTheChain(Change c) {
+    return myVcs.isInTheChain(myChange, c);
   }
 }

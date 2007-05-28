@@ -13,6 +13,10 @@ public abstract class Reverter {
     myGateway = gw;
   }
 
+  public String askUserForProceed() throws IOException {
+    return null;
+  }
+
   public abstract List<String> checkCanRevert() throws IOException;
 
   public void revert() throws IOException {
