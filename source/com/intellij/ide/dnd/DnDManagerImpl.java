@@ -211,7 +211,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
         }
       }
       else {
-        if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
+        if (myLastProcessedPoint == null || myCurrentEvent == null || !myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
           hideCurrentHighlighter();
           restartTimer();
           queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
