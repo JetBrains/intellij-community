@@ -86,7 +86,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     project.getModel().addModelListener(new PomModelListener() {
       public void modelChanged(final PomModelEvent event) {
         final PomChangeSet set = event.getChangeSet(event.getSource().getModelAspect(XmlAspect.class));
-        if (set instanceof XmlChangeSet) {
+        if (set instanceof XmlChangeSet && myQueue != null) {
           myQueue.cancelAllUpdates();
           myQueue.queue(new MyUpdate(BreadcrumbsComponent.this, editor));
         }
