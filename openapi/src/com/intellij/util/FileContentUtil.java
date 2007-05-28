@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.openapi.deployment;
+package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,9 +18,12 @@ import java.io.IOException;
 /**
  * @author peter
  */
-public class DeploymentItemUtil {
-  public static void setFileText(final Project project, final VirtualFile childData, final String text) throws IOException {
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(childData);
+public class FileContentUtil {
+  private FileContentUtil() {
+  }
+
+  public static void setFileText(final Project project, final VirtualFile virtualFile, final String text) throws IOException {
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document document = psiFile == null? null : psiDocumentManager.getDocument(psiFile);
     if (document != null) {
@@ -29,8 +32,8 @@ public class DeploymentItemUtil {
       FileDocumentManager.getInstance().saveDocument(document);
     }
     else {
-      VfsUtil.saveText(childData, text != null ? text : "");
-      childData.refresh(false, false);
+      VfsUtil.saveText(virtualFile, text != null ? text : "");
+      virtualFile.refresh(false, false);
     }
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.deployment.DeploymentItemUtil;
+import com.intellij.util.FileContentUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -83,7 +83,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
       else {
         childData = existingFile;
       }
-      DeploymentItemUtil.setFileText(project, childData, text);
+      FileContentUtil.setFileText(project, childData, text);
       return childData;
     }
     catch (final IOException e) {

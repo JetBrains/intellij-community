@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.deployment.DeploymentItemUtil;
+import com.intellij.util.FileContentUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.util.containers.ConvertingIterator;
@@ -277,7 +277,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
                 try {
                   final String newFileNameWithExtension = newFileName.endsWith('.'+fileType.getDefaultExtension())? newFileName : newFileName+'.'+fileType.getDefaultExtension();
                   VirtualFile file = parentDirectory.createChildData(this, newFileNameWithExtension);
-                  DeploymentItemUtil.setFileText(myProject, file, initialContent);
+                  FileContentUtil.setFileText(myProject, file, initialContent);
                   updateTree();
                   FileElement fileDesc = new FileElement(file, file.getName());
                   myTreeBuilder.buildNodeForElement(fileDesc);
