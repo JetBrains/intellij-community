@@ -22,10 +22,23 @@ import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.ui.ToggleAction;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JPanel;
 
 public class MultipleReturnPointsPerMethodInspection
         extends MethodMetricInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreGuardClauses = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreEqualsMethod = false;
 
     @NotNull
     public String getID() {
@@ -54,6 +67,11 @@ public class MultipleReturnPointsPerMethodInspection
                 returnPointCount);
     }
 
+    public JComponent createOptionsPanel() {
+        final Form form = new Form();
+        return form.getContentPanel();
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new MultipleReturnPointsVisitor();
     }
@@ -65,6 +83,11 @@ public class MultipleReturnPointsPerMethodInspection
             if (method.getNameIdentifier() == null) {
                 return;
             }
+            if (ignoreEqualsMethod) {
+                if (MethodUtils.isEquals(method)) {
+                    return;
+                }
+            }
             final int returnPointCount = calculateReturnPointCount(method);
             if (returnPointCount <= getLimit()) {
                 return;
@@ -74,7 +97,7 @@ public class MultipleReturnPointsPerMethodInspection
 
         private int calculateReturnPointCount(PsiMethod method) {
             final ReturnPointCountVisitor visitor =
-                    new ReturnPointCountVisitor();
+                    new ReturnPointCountVisitor(ignoreGuardClauses);
             method.accept(visitor);
             final int count = visitor.getCount();
             if (!mayFallThroughBottom(method)) {
@@ -102,6 +125,33 @@ public class MultipleReturnPointsPerMethodInspection
             }
             final PsiType returnType = method.getReturnType();
             return PsiType.VOID.equals(returnType);
+        }
+    }
+
+    private class Form {
+
+        private JPanel contentPanel;
+        private JFormattedTextField valueField;
+        private JCheckBox ignoreGuardClausesCheckBox;
+        private JCheckBox ignoreForEqualsMethodsCheckBox;
+
+        private void createUIComponents() {
+            valueField = prepareNumberEditor("m_limit");
+            ignoreGuardClausesCheckBox = new JCheckBox(
+                    new ToggleAction(InspectionGadgetsBundle.message(
+                            "ignore.guard.clauses"),
+                            MultipleReturnPointsPerMethodInspection.this,
+                            "ignoreGuardClauses"));
+            ignoreGuardClausesCheckBox.setSelected(ignoreGuardClauses);
+            ignoreForEqualsMethodsCheckBox = new JCheckBox(
+                    new ToggleAction(InspectionGadgetsBundle.message(
+                            "ignore.for.equals.methods"),
+                            MultipleReturnPointsPerMethodInspection.this,
+                            "ignoreEqualsMethod"));
+        }
+
+        public JComponent getContentPanel(){
+            return contentPanel;
         }
     }
 }

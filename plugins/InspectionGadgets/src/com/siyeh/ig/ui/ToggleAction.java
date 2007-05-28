@@ -16,6 +16,7 @@
 package com.siyeh.ig.ui;
 
 import com.siyeh.ig.BaseInspection;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -29,10 +30,11 @@ public class ToggleAction extends AbstractAction {
     private final String propertyName;
 
     public ToggleAction(String labelText, BaseInspection owner,
-                        String propertyName) {
+                        @NonNls String propertyName) {
         this.owner = owner;
         this.propertyName = propertyName;
         putValue(Action.NAME, labelText);
+        putValue(Action.SELECTED_KEY, getPropertyValue());
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -47,6 +49,18 @@ public class ToggleAction extends AbstractAction {
             throw new RuntimeException(e);
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private Boolean getPropertyValue() {
+        try {
+            final Class<? extends BaseInspection> aClass = owner.getClass();
+            final Field field = aClass.getField(propertyName);
+            final Object object = field.get(owner);
+            assert object instanceof Boolean;
+            return (Boolean)object;
+        } catch (Exception e) {
+            return Boolean.FALSE;
         }
     }
 }
