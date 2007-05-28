@@ -31,6 +31,8 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myComponent == null) return;
+
           if (myComponent.isShowing()) {
             showNotify();
           }
