@@ -11,6 +11,7 @@
   <extensions xmlns="com.intellij">
     <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <project-components>
     <component>
