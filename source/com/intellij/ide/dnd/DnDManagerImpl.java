@@ -199,7 +199,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       hideCurrentHighlighter();
     }
 
-    boolean sameTarget = getLastProcessedTarget().equals(target);
+    boolean sameTarget = getLastProcessedTarget() != null && getLastProcessedTarget().equals(target);
     if (sameTarget) {
       if (myCurrentEvent.isDropPossible()) {
         if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
