@@ -90,7 +90,8 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       if (!ResolveUtil.processElement(processor, defintion)) return false;
     }
 
-    PsiClass scriptClass = getManager().findClass(SCRIPT_BASE_CLASS_NAME, getResolveScope());
+    PsiManager manager = getManager();
+    PsiClass scriptClass = manager.findClass(SCRIPT_BASE_CLASS_NAME, getResolveScope());
     if (scriptClass != null) {
       if (!scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
       if (!ResolveUtil.processDefaultMethods(scriptClass, processor)) return false;
@@ -99,23 +100,33 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     if (!ResolveUtil.processChildren(this, processor, substitutor, lastParent, place)) return false;
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
-      PsiPackage aPackage = getManager().findPackage(implicitlyImported);
+      PsiPackage aPackage = manager.findPackage(implicitlyImported);
       if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
 
+    for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
+      PsiClass clazz = manager.findClass(implicitlyImportedClass, getResolveScope());
+      if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
+    }
+
     String currentPackageName = getPackageName();
-    PsiPackage currentPackage = getManager().findPackage(currentPackageName);
+    PsiPackage currentPackage = manager.findPackage(currentPackageName);
     return currentPackage == null || currentPackage.processDeclarations(processor, substitutor, lastParent, place);
 
   }
 
-  private static final String[] IMPLICITLY_IMPORTED_PACKAGES = new String[] {
+  private static final String[] IMPLICITLY_IMPORTED_PACKAGES = {
       "java.lang",
       "java.util",
       "java.io",
       "java.net",
       "groovy.lang",
       "groovy.util",
+  };
+
+  private static final String[] IMPLICITLY_IMPORTED_CLASSES = {
+      "java.math.BigInteger",
+      "java.math.BigDecimal",
   };
 
   @Nullable
