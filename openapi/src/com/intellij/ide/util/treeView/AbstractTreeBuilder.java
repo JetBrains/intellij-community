@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,6 +17,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Activatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +66,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private boolean myDisposed = false;
   // used for searching only
   private final AbstractTreeNode TREE_NODE_WRAPPER = createSearchingTreeNodeWrapper();
+
+  private boolean myRootNodeWasInitialized = false;
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper(null);
@@ -231,6 +236,18 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   protected final void initRootNode() {
+    new UiNotifyConnector.Once(myTree, new Activatable() {
+      public void showNotify() {
+        if (!myRootNodeWasInitialized) {
+          initRootNodeNow();
+        }
+      }
+      public void hideNotify() {
+      }
+    });
+  }
+
+  private void initRootNodeNow() {
     Object rootElement = myTreeStructure.getRootElement();
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
     myRootNode.setUserObject(nodeDescriptor);
@@ -250,6 +267,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myRootNode.getChildCount() == 0) {
       myTreeModel.nodeChanged(myRootNode);
     }
+    myRootNodeWasInitialized = true;
   }
 
   public void updateFromRoot() {
@@ -601,7 +619,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
             public void run() {
               ApplicationManager.getApplication().runReadAction(runnable);
               if (postRunnable != null) {
-                ApplicationManager.getApplication().invokeLater(postRunnable);
+                ApplicationManager.getApplication().invokeLater(postRunnable, ModalityState.stateForComponent(myTree));
               }
             }
           };
@@ -706,6 +724,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
     if (isLoadingNode(node)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
+    if (descriptor == null) return;
     final Object element = descriptor.getElement();
     removeMapping(element, node);
     node.setUserObject(null);
@@ -718,6 +737,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
   public void addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
     myUpdater.runAfterUpdate(runAfterUpdate);
     myUpdater.addSubtreeToUpdate(root);
+  }
+
+  public boolean wasRootNodeInitialized() {
+    return myRootNodeWasInitialized;
   }
 
   private class MyExpansionListener implements TreeExpansionListener {

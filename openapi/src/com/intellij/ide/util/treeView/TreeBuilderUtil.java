@@ -13,6 +13,8 @@ import java.util.List;
 
 public class TreeBuilderUtil {
   public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
+    if (!treeBuilder.wasRootNodeInitialized()) return;
+
     JTree tree = treeBuilder.getTree();
     TreePath path = new TreePath(root.getPath());
     if (tree.isPathSelected(path)){

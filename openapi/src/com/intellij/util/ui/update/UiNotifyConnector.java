@@ -13,14 +13,16 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 
 public class UiNotifyConnector implements Disposable, HierarchyListener{
-  private final Component myComponent;
-  private final Activatable myTarget;
+  private Component myComponent;
+  private Activatable myTarget;
 
   public UiNotifyConnector(final Component component, final Activatable target) {
     myComponent = component;
     myTarget = target;
-    if (!component.isShowing()) {
-      target.hideNotify();
+    if (component.isShowing()) {
+      showNotify();
+    } else {
+      hideNotify();
     }
     component.addHierarchyListener(this);
   }
@@ -30,19 +32,60 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (myComponent.isShowing()) {
-            myTarget.showNotify();
+            showNotify();
           }
           else {
-            myTarget.hideNotify();
+            hideNotify();
           }
         }
       }, ModalityState.stateForComponent(myComponent));
     }
   }
 
+  protected void hideNotify() {
+    myTarget.hideNotify();
+  }
+
+  protected void showNotify() {
+    myTarget.showNotify();
+  }
+
   public void dispose() {
+    if (myTarget == null) return;
+
     myTarget.hideNotify();
     myComponent.removeHierarchyListener(this);
+
+    myTarget = null;
+    myComponent = null;
+  }
+
+  public static class Once extends UiNotifyConnector {
+
+    private boolean myShown;
+    private boolean myHidden;
+
+    public Once(final Component component, final Activatable target) {
+      super(component, target);
+    }
+
+    protected final void hideNotify() {
+      super.hideNotify();
+      myHidden = true;
+      disposeIfNeeded();
+    }
+
+    protected final void showNotify() {
+      super.showNotify();
+      myShown = true;
+      disposeIfNeeded();
+    }
+
+    private void disposeIfNeeded() {
+      if (myShown && myHidden) {
+        dispose();
+      }
+    }
   }
 
 }
