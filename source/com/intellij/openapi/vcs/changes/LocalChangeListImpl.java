@@ -46,9 +46,6 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   public synchronized Collection<Change> getChanges() {
     createReadChangesCache();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("getChanges() for changelist " + getName() + ": " + myReadChangesCache.size() + " changes");
-    }
     return myReadChangesCache;
   }
 
