@@ -287,6 +287,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
         } else {
             tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
         }
+        tree.repaint();
         LvcsHelper.addLabel(this);
     }
 

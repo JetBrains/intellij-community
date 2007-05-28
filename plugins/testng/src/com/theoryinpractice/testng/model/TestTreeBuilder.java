@@ -1,10 +1,13 @@
 package com.theoryinpractice.testng.model;
 
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.IndexComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-
-import com.intellij.ide.util.treeView.*;
 
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:49:36 PM
@@ -65,6 +68,7 @@ public class TestTreeBuilder extends AbstractTreeBuilder
         for (TestProxy item : path) {
             buildNodeForElement(item);
             node = getNodeForElement(item);
+            if (node == null) return null;
             expandNodeChildren(node);
         }
 
