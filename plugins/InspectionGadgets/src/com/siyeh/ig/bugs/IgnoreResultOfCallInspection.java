@@ -195,6 +195,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
                             "result.of.method.call.ignored.non.library.option"),
                     IgnoreResultOfCallInspection.this,
                     "m_reportAllNonLibraryCalls"));
+            nonLibraryCheckbox.setSelected(m_reportAllNonLibraryCalls);
         }
 
         private void createUIComponents() {

@@ -34,7 +34,7 @@ public class ToggleAction extends AbstractAction {
         this.owner = owner;
         this.propertyName = propertyName;
         putValue(Action.NAME, labelText);
-        putValue(Action.SELECTED_KEY, getPropertyValue());
+        //putValue(Action.SELECTED_KEY, getPropertyValue());
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -52,15 +52,15 @@ public class ToggleAction extends AbstractAction {
         }
     }
 
-    private Boolean getPropertyValue() {
-        try {
-            final Class<? extends BaseInspection> aClass = owner.getClass();
-            final Field field = aClass.getField(propertyName);
-            final Object object = field.get(owner);
-            assert object instanceof Boolean;
-            return (Boolean)object;
-        } catch (Exception e) {
-            return Boolean.FALSE;
-        }
-    }
+    //private Boolean getPropertyValue() {
+    //    try {
+    //        final Class<? extends BaseInspection> aClass = owner.getClass();
+    //        final Field field = aClass.getField(propertyName);
+    //        final Object object = field.get(owner);
+    //        assert object instanceof Boolean;
+    //        return (Boolean)object;
+    //    } catch (Exception e) {
+    //        return Boolean.FALSE;
+    //    }
+    //}
 }

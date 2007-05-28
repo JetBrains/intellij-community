@@ -149,6 +149,7 @@ public class MultipleReturnPointsPerMethodInspection
                             "ignore.for.equals.methods"),
                             MultipleReturnPointsPerMethodInspection.this,
                             "ignoreEqualsMethod"));
+            ignoreForEqualsMethodsCheckBox.setSelected(ignoreEqualsMethod);
         }
 
         public JComponent getContentPanel(){

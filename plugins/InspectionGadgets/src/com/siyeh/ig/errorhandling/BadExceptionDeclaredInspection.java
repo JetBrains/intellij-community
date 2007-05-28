@@ -139,6 +139,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
                     InspectionGadgetsBundle.message(
                             "bad.exception.declared.ignore.exceptions.declared.in.junit.test.cases.option"),
                     BadExceptionDeclaredInspection.this, "ignoreTestCases"));
+            ignoreTestCasesCheckBox.setSelected(ignoreTestCases);
         }
 
         private void createUIComponents() {
