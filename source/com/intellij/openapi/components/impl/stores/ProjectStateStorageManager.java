@@ -1,71 +1,47 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 
-class ProjectStateStorageManager extends StateStorageManager {
-  private TrackingPathMacroSubstitutor myMacroSubstitutor;
+class ProjectStateStorageManager extends StateStorageManagerImpl {
   private Project myProject;
-  @NonNls private static final String NAME_ATTR = "name";
-  @NonNls public static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
-  @NonNls public static final String ELEMENT_MACRO = "macro";
 
   public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {
     super(macroSubstitutor, "project");
-    myMacroSubstitutor = macroSubstitutor;
     myProject = project;
   }
 
-  @Override
-  public synchronized void save() throws StateStorage.StateStorageException, IOException {
-    final StateStorage defaultStateStorage = getFileStateStorage(ProjectStoreImpl.DEFAULT_STATE_STORAGE);
-    final Element element = ((XmlElementStorage)defaultStateStorage).getRootElement();
+  protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) throws
+                                                                                                                              StateStorage.StateStorageException {
+    final ComponentConfig config = myProject.getConfig(component.getClass());
+    assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 
-    if (element != null) {
-      final Collection<String> usedMacros = new ArrayList<String>(myMacroSubstitutor.getUsedMacros());
+    String macro = ProjectStoreImpl.PROJECT_FILE_MACRO;
 
-      final PathMacros pathMacros = PathMacros.getInstance();
+    final boolean workspace = isWorkspace(config.options);
 
-      for (Iterator<String> i = usedMacros.iterator(); i.hasNext();) {
-        String macro = i.next();
-
-        final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
-        for (String systemMacroName : systemMacroNames) {
-          if (macro.equals(systemMacroName) || macro.indexOf("$" + systemMacroName + "$") >= 0) {
-            i.remove();
-          }
-        }
-      }
-
-      element.removeChildren(USED_MACROS_ELEMENT_NAME);
-
-      if (!usedMacros.isEmpty()) {
-
-        Element usedMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
-
-        for (String usedMacro : usedMacros) {
-          Element macroElement = new Element(ELEMENT_MACRO);
-
-          macroElement.setAttribute(NAME_ATTR, usedMacro);
-
-          usedMacrosElement.addContent(macroElement);
-        }
-
-        element.addContent(usedMacrosElement);
-      }
+    if (workspace) {
+      macro = ProjectStoreImpl.WS_FILE_MACRO;
     }
 
-    super.save();
-    myMacroSubstitutor.reset();
+    String name = "$" + macro + "$";
+
+    StateStorage storage = getFileStateStorage(name);
+
+    if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class)) {
+      name = "$" + ProjectStoreImpl.PROJECT_FILE_MACRO + "$";
+    }
+
+    return name;
+  }
+
+  private static boolean isWorkspace(final Map options) {
+    return options != null && Boolean.parseBoolean((String)options.get(ProjectStoreImpl.OPTION_WORKSPACE));
   }
 }

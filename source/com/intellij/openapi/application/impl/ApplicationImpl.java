@@ -67,7 +67,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private String myComponentsDescriptor;
 
   private boolean myIsInternal = false;
-  private static boolean ourSaveSettingsInProgress = false;
   @NonNls private static final String APPLICATION_LAYER = "application-components";
   private String myName;
 
@@ -121,8 +120,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
+  @Override
   @NotNull
-  public IApplicationStore getStateStore() {
+  public synchronized IApplicationStore getStateStore() {
     return (IApplicationStore)super.getStateStore();
   }
 
@@ -818,7 +818,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (myDoNotSave) return;
 
     try {
-      getStateStore().save();
+      doSave();
     }
     catch (final Throwable ex) {
       LOG.info("Saving application settings failed", ex);
@@ -828,9 +828,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                      CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         }
       });
-    }
-    finally {
-      ourSaveSettingsInProgress = false;
     }
   }
 

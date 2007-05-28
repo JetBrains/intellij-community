@@ -1,9 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -24,15 +24,17 @@ import java.util.*;
 public class DirectoryBasedStorage implements StateStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryBasedStorage");
 
-  private PathMacroSubstitutor myPathMacroManager;
+  private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private IFile myDir;
   private StateSplitter mySplitter;
 
   private Map<String, Map<IFile, Element>> myStates = null;
+  private Set<String> myUsedMacros;
+  private Object mySession;
 
-  public DirectoryBasedStorage(final PathMacroSubstitutor pathMacroManager, final String dir, final StateSplitter splitter) {
+  public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String dir, final StateSplitter splitter) {
     assert dir.indexOf("$") < 0;
-    myPathMacroManager = pathMacroManager;
+    myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = FILE_SYSTEM.createFile(dir);
     mySplitter = splitter;
   }
@@ -59,8 +61,8 @@ public class DirectoryBasedStorage implements StateStorage {
     mySplitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
     myStates.remove(componentName);
 
-    if (myPathMacroManager != null) {
-      myPathMacroManager.expandPaths(state);
+    if (myPathMacroSubstitutor != null) {
+      myPathMacroSubstitutor.expandPaths(state);
     }
 
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
@@ -103,8 +105,8 @@ public class DirectoryBasedStorage implements StateStorage {
     try {
       final Element element = DefaultStateSerializer.serializeState(state);
 
-      if (myPathMacroManager != null) {
-        myPathMacroManager.collapsePaths(element);
+      if (myPathMacroSubstitutor != null) {
+        myPathMacroSubstitutor.collapsePaths(element);
       }
 
       final List<Pair<Element, String>> states = mySplitter.splitState(element);
@@ -231,4 +233,48 @@ public class DirectoryBasedStorage implements StateStorage {
 
     myStates.clear();
   }
+
+  public Set<String> getUsedMacros() {
+    throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
+  }
+
+  public ExternalizationSession startExternalization() {
+    assert mySession == null;
+    final ExternalizationSession session = new ExternalizationSession() {
+      public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
+        assert mySession == this;
+        DirectoryBasedStorage.this.setState(component, componentName, state);
+      }
+    };
+
+    mySession = session;
+    return session;
+  }
+
+  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+    assert mySession == externalizationSession;
+
+    return new SaveSession() {
+      public boolean needsSave() throws StateStorageException {
+        assert mySession == this;
+        return DirectoryBasedStorage.this.needsSave();
+      }
+
+      public void save() throws StateStorageException {
+        assert mySession == this;
+        DirectoryBasedStorage.this.save();
+      }
+
+      public Set<String> getUsedMacros() {
+        assert mySession == this;
+        return DirectoryBasedStorage.this.getUsedMacros();
+      }
+    };
+  }
+
+  public void finishSave(final SaveSession saveSession) {
+    assert mySession == saveSession;
+    mySession = null;
+  }
+
 }

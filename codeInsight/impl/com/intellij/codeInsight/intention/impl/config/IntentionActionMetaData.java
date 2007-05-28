@@ -3,11 +3,11 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +135,7 @@ public final class IntentionActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
     }
-    LOG.assertTrue(myDirURL != null, "Faulty intention: " + myFamily);
+    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily);
     return myDirURL;
   }
 

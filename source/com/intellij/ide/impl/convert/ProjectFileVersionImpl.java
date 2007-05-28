@@ -11,6 +11,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -88,7 +89,20 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     ProjectConversionHelper conversionHelper = (ProjectConversionHelper)picoContainer.getComponentInstance(ProjectConversionHelper.class);
     picoContainer.unregisterComponent(ProjectConversionHelper.class);
     try {
-      final boolean saved = ((ProjectEx)myProject).getStateStore().save();
+      boolean saved = true;
+      try {
+        final IComponentStore.SaveSession saveSession = ((ProjectEx)myProject).getStateStore().startSave();
+        try {
+          saveSession.save();
+        }
+        finally {
+          saveSession.finishSave();
+        }
+      }
+      catch (IComponentStore.SaveCancelledException e) {
+        saved = false;
+      }
+
       if (!saved) {
         picoContainer.registerComponentInstance(ProjectConversionHelper.class, conversionHelper);
         return false;

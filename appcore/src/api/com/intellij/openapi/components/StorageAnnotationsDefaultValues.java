@@ -6,6 +6,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 public interface StorageAnnotationsDefaultValues {
   class NullStateStorage implements StateStorage {
@@ -13,10 +14,6 @@ public interface StorageAnnotationsDefaultValues {
     public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
       throw new UnsupportedOperationException("Method getState is not supported in " + getClass());
-    }
-
-    public void setState(Object component, final String componentName, Object state) throws StateStorageException {
-      throw new UnsupportedOperationException("Method setState is not supported in " + getClass());
     }
 
     public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
@@ -33,6 +30,22 @@ public interface StorageAnnotationsDefaultValues {
 
     public void save() throws StateStorageException {
       throw new UnsupportedOperationException("Method save is not supported in " + getClass());
+    }
+
+    public Set<String> getUsedMacros() {
+      throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
+    }
+
+    public ExternalizationSession startExternalization() {
+      throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
+    }
+
+    public SaveSession startSave(ExternalizationSession externalizationSession) {
+      throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
+    }
+
+    public void finishSave(SaveSession saveSession) {
+      throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
     }
   }
 

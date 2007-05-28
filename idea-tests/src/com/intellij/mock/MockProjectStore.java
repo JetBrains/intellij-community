@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -107,8 +108,16 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
   }
 
+  public Collection<String> getUsedMacros() {
+    throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
+  }
+
   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
     throw new UnsupportedOperationException("Method getAllStorageFiles is not yet implemented in " + getClass().getName());
+  }
+
+  public SaveSession startSave() throws IOException {
+    throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
 
   public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {

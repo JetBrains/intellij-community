@@ -1,11 +1,15 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import org.jetbrains.annotations.Nullable;
 
-class ModuleStateStorageManager extends StateStorageManager {
-  public ModuleStateStorageManager(@Nullable final PathMacroSubstitutor pathMacroManager, final ModuleImpl module) {
+class ModuleStateStorageManager extends StateStorageManagerImpl {
+  public ModuleStateStorageManager(@Nullable final TrackingPathMacroSubstitutor pathMacroManager) {
     super(pathMacroManager, "module");
+  }
+
+  protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) {
+    return ModuleStoreImpl.DEFAULT_STATE_STORAGE;
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class BasePathMacroManager extends PathMacroManager {
@@ -46,8 +47,8 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
-  public TrackingPathMacroSubstitutor createTrackingSubstitutor(final Set<String> macroSet) {
-    return new MyTrackingPathMacroSubstitutor(macroSet);
+  public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
+    return new MyTrackingPathMacroSubstitutor(new HashSet<String>());
   }
 
   public String expandPath(final String path) {

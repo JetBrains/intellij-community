@@ -1,9 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
@@ -13,7 +13,6 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -34,7 +33,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   private ModuleImpl myModule;
 
-  private static final String DEFAULT_STATE_STORAGE = "$" + MODULE_FILE_MACRO + "$";
+  public static final String DEFAULT_STATE_STORAGE = "$" + MODULE_FILE_MACRO + "$";
 
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -61,30 +60,40 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     return storage;
   }
 
-  protected void saveStorageManager() throws IOException {
-    final ProjectConversionHelper conversionHelper = getConversionHelper();
-    if (conversionHelper != null) {
-      try {
-        final Element root = getMainStorage().getRootElement();
-        if (root != null) {
-          conversionHelper.convertModuleRootToOldFormat(root);
-        }
-      }
-      catch (StateStorage.StateStorageException e) {
-      }
+  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
+    return new ModuleSaveSession();
+  }
+
+  private class ModuleSaveSession extends BaseSaveSession {
+    public ModuleSaveSession() throws StateStorage.StateStorageException {
     }
 
-    super.saveStorageManager();
-
-    if (conversionHelper != null) {
-      try {
-        final Element root = getMainStorage().getRootElement();
-        if (root != null) {
-          conversionHelper.convertModuleRootToNewFormat(root, myModule.getName());
+    public SaveSession save() throws IOException {
+      final ProjectConversionHelper conversionHelper = getConversionHelper();
+      if (conversionHelper != null) {
+        try {
+          final Element root = getMainStorage().getRootElement();
+          if (root != null) {
+            conversionHelper.convertModuleRootToOldFormat(root);
+          }
+        }
+        catch (StateStorage.StateStorageException e) {
         }
       }
-      catch (StateStorage.StateStorageException e) {
+
+      super.save();
+
+      if (conversionHelper != null) {
+        try {
+          final Element root = getMainStorage().getRootElement();
+          if (root != null) {
+            conversionHelper.convertModuleRootToNewFormat(root, myModule.getName());
+          }
+        }
+        catch (StateStorage.StateStorageException e) {
+        }
       }
+      return this;
     }
   }
 
@@ -181,15 +190,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
 
-  @Override
-  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) {
-    return getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-  }
-
   protected StateStorageManager createStateStorageManager() {
-    Set<String> s = ((ProjectImpl)myModule.getProject()).getStateStore().getMacroTrackingSet();
-
-    return new ModuleStateStorageManager(
-      PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(s), myModule);
+    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor());
   }
 }

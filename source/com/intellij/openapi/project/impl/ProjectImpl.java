@@ -369,7 +369,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
     try {
-      getStateStore().save();
+      doSave();
     }
     catch (IOException e) {
       LOG.info(e);

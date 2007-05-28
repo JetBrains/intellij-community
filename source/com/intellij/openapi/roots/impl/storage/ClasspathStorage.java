@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,6 +44,7 @@ abstract public class ClasspathStorage implements StateStorage {
   @NonNls private static final String COMPONENT_TAG = "component";
 
   private Module myModule;
+  private Object mySession;
 
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
@@ -92,6 +91,44 @@ abstract public class ClasspathStorage implements StateStorage {
     }
   }
 
+  public ExternalizationSession startExternalization() {
+    assert mySession == null;
+    final ExternalizationSession session = new ExternalizationSession() {
+      public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
+        assert mySession == this;
+        ClasspathStorage.this.setState(component, componentName, state);
+      }
+    };
+
+    mySession = session;
+    return session;
+  }
+
+  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+    assert mySession == externalizationSession;
+
+    return new SaveSession() {
+      public boolean needsSave() throws StateStorageException {
+        assert mySession == this;
+        return ClasspathStorage.this.needsSave();
+      }
+
+      public void save() throws StateStorageException {
+        assert mySession == this;
+        ClasspathStorage.this.save();
+      }
+
+      public Set<String> getUsedMacros() {
+        assert mySession == this;
+        return Collections.EMPTY_SET;
+      }
+    };
+  }
+
+  public void finishSave(final SaveSession saveSession) {
+    assert mySession == saveSession;
+    mySession = null;
+  }
   public List<VirtualFile> getAllStorageFiles() {
     final List<VirtualFile> list = new ArrayList<VirtualFile>();
     getFileSet(myModule).listFiles(list);

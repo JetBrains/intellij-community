@@ -1,8 +1,8 @@
 package com.intellij.openapi.components.impl.stores;
 
 
-import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,44 +26,53 @@ public class FileBasedStorage extends XmlElementStorage {
   protected final String myRootElementName;
   private Integer myUpToDateTreeHash;
 
-  public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
+  public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
     myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = FILE_SYSTEM.createFile(myFilePath);
   }
 
-  public void doSave() throws StateStorage.StateStorageException {
-    final Document document = getDocument();
-
-    myUpToDateTreeHash = JDOMUtil.getTreeHash(document.getRootElement());
-    final byte[] text = StorageUtil.printDocument(document);
-
-    StorageUtil.save(myFile, text);
+  protected SaveSession createSaveSession(final XmlElementStorage.MyExternalizationSession externalizationSession) {
+    return new FileSaveSession(externalizationSession);
   }
 
-  public boolean needsSave() throws StateStorage.StateStorageException {
-    sort();
-
-    final Document document = getDocument();
-    if (myUpToDateTreeHash != null && JDOMUtil.getTreeHash(document.getRootElement()) == myUpToDateTreeHash.intValue()) return false;
-
-    myUpToDateTreeHash = null;
-    try {
-      if (!myFile.exists()) return true;
-
-      final byte[] text = StorageUtil.printDocument(document);
-
-      if (Arrays.equals(myFile.loadBytes(), text)) {
-        myUpToDateTreeHash = JDOMUtil.getTreeHash(document.getRootElement());
-        return false;
-      }
-
-      return true;
+  protected class FileSaveSession extends MySaveSession {
+    public FileSaveSession(MyExternalizationSession externalizationSession) {
+      super(externalizationSession);
     }
-    catch (IOException e) {
-      LOG.debug(e);
-      return true;
+
+    protected boolean _needsSave() throws StateStorageException {
+      sort();
+
+      final Document document = getDocument();
+      if (myUpToDateTreeHash != null && JDOMUtil.getTreeHash(document) == myUpToDateTreeHash.intValue()) return false;
+
+      myUpToDateTreeHash = null;
+      try {
+        if (!myFile.exists()) return true;
+
+        final byte[] text = StorageUtil.printDocument(getDocumentToSave());
+
+        if (Arrays.equals(myFile.loadBytes(), text)) {
+          myUpToDateTreeHash = JDOMUtil.getTreeHash(document);
+          return false;
+        }
+
+        return true;
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        return true;
+      }
+    }
+
+    protected void doSave() throws StateStorageException {
+      myUpToDateTreeHash = JDOMUtil.getTreeHash(getDocument());
+
+      final byte[] text = StorageUtil.printDocument(getDocumentToSave());
+
+      StorageUtil.save(myFile, text);
     }
   }
 

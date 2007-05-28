@@ -81,6 +81,10 @@ public class JDOMUtil {
     return addToHash(0, root);
   }
 
+  public static int getTreeHash(Document document) {
+    return getTreeHash(document.getRootElement());
+  }
+
   private static int addToHash(int i, final Element element) {
     i = addToHash(i, element.getName());
     i = addToHash(i, element.getText());

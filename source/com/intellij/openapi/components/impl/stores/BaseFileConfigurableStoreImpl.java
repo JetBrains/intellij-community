@@ -3,7 +3,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,16 +44,25 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
-  @Override
-  protected void beforeSave() throws StateStorage.StateStorageException, SaveCancelledException {
-    final XmlElementStorage mainStorage = getMainStorage();
 
-    final Element rootElement = mainStorage.getRootElement();
-    if (rootElement == null) return;
+  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
+    return new BaseSaveSession();
+  }
 
-    writeRootElement(rootElement);
+  protected class BaseSaveSession extends MySaveSession {
+    public BaseSaveSession() throws StateStorage.StateStorageException {
+    }
 
-    super.beforeSave();
+    protected void commit() throws StateStorage.StateStorageException {
+      super.commit();
+
+      final XmlElementStorage mainStorage = getMainStorage();
+
+      final Element rootElement = mainStorage.getRootElement();
+      if (rootElement == null) return;
+
+      writeRootElement(rootElement);
+    }
   }
 
   protected void writeRootElement(final Element rootElement) {
@@ -129,23 +137,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
 
-  @Override
-  protected void doSave() throws IOException {
-    super.doSave();
-
-    saveStorageManager();
-  }
-
-  protected void saveStorageManager() throws IOException {
-    try {
-      getStateStorageManager().save();
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.info(e);
-      throw new IOException(e.getMessage());
-    }
-  }
-
   public void load() throws IOException {
   }
 
@@ -162,24 +153,9 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
 
-  public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
-    try {
-      return getStateStorageManager().getAllStorageFilesToSave();
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-      return Collections.emptyList();
-    }
-  }
-
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;
-  }
-
-  @Override
-  protected StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
-    return getStateStorageManager().getStateStorage(storageSpec);
   }
 
   public StateStorageManager getStateStorageManager() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
@@ -22,15 +23,21 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
   private Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
   private List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
+  private MySaveSession mySession;
 
+
+  protected abstract StateStorageManager getStateStorageManager();
+
+  @Deprecated
   @Nullable
-  protected StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
-    throw new UnsupportedOperationException("Method getStateStorage is not supported in " + getClass());
+  private StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
+    return getStateStorageManager().getStateStorage(storageSpec);
   }
 
+  @Deprecated
   @Nullable
-  protected StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
-    throw new UnsupportedOperationException("Method getOldStorage is not supported in " + getClass());
+  private StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
+    return getStateStorageManager().getOldStorage(component, componentName, operation);
   }
 
   protected StateStorage getDefaultsStorage() {
@@ -62,28 +69,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
 
-  public final boolean save() throws IOException {
+  public SaveSession startSave() throws IOException {
     try {
-      try {
-        beforeSave();
-      }
-      catch (SaveCancelledException e) {
-        return false;
-      }
-
-      try {
-        //noinspection EmptyCatchBlock
-        try {
-          doSave();
-          return true;
-        }
-        catch (SaveCancelledException e) {
-          return false;
-        }
-      }
-      finally {
-        afterSave();
-      }
+      assert mySession == null;
+      mySession = createSaveSession();
+      mySession.commit();
+      return mySession;
     }
     catch (StateStorage.StateStorageException e) {
       LOG.info(e);
@@ -91,68 +82,35 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-
-  protected void beforeSave() throws StateStorage.StateStorageException, SaveCancelledException {
-    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
+  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
+    return new MySaveSession();
   }
 
-  protected void afterSave() {
-    ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+  public void finishSave(final SaveSession saveSession) {
+    assert mySession == saveSession;
+    mySession.finishSave();
+    mySession = null;
   }
 
-  protected void doSave() throws IOException {
-    commit();
-  }
-
-
-  public void commit() {
-    final SettingsSavingComponent[] settingsComponents =
-      mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
-
-    for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
-      settingsSavingComponent.save();
-    }
-
-    final String[] names = myComponents.keySet().toArray(new String[myComponents.keySet().size()]);
-    
-    for (String name : names) {
-      Object component = myComponents.get(name);
-      if (component instanceof JDOMExternalizable) {
-        saveJdomExternalizable((JDOMExternalizable)component);
-      }
-      else if (component instanceof PersistentStateComponent) {
-        savePersistentComponent((PersistentStateComponent<?>)component);
-      }
-    }
-  }
-
-  private <T> void savePersistentComponent(final PersistentStateComponent<T> persistentStateComponent) {
+  private <T> void commitPersistentComponent(final PersistentStateComponent<T> persistentStateComponent, StateStorageManager.ExternalizationSession session) {
     try {
-      Storage[] storageSpecs = getComponentStorages(persistentStateComponent, StateStorageOperation.WRITE);
+      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+
 
       final T state = persistentStateComponent.getState();
 
-      for (Storage storageSpec : storageSpecs) {
-        StateStorage stateStorage = getStateStorage(storageSpec);
-
-        if (stateStorage == null) continue;
-
-
-        stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), state);
-      }
+      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
     }
   }
 
-  private void saveJdomExternalizable(final JDOMExternalizable component) {
+  private static void commitJdomExternalizable(final JDOMExternalizable component, StateStorageManager.ExternalizationSession session) {
     final String componentName = getComponentName(component);
 
     try {
-      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
-      assert stateStorage != null;
-      stateStorage.setState(component, componentName, component);
+      session.setStateInOldStorage(component, componentName, component);
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -246,7 +204,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     try {
-      Storage[] storageSpecs = getComponentStorages(component, StateStorageOperation.READ);
+      Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
 
       for (Storage storageSpec : storageSpecs) {
         StateStorage stateStorage = getStateStorage(storageSpec);
@@ -307,7 +265,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   @NotNull
-  private <T> Storage[] getComponentStorages(final PersistentStateComponent<T> persistentStateComponent,
+  private <T> Storage[] getComponentStorageSpecs(final PersistentStateComponent<T> persistentStateComponent,
                                                  final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
@@ -350,5 +308,71 @@ abstract class ComponentStoreImpl implements IComponentStore {
   @Nullable
   protected StateStorageChooser getDefaultStateStorageChooser() {
     return null;
+  }
+
+  protected class MySaveSession implements SaveSession {
+    private StateStorageManager.SaveSession mySaveSession;
+
+    public MySaveSession() {
+      ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
+    }
+
+    public Collection<String> getUsedMacros() throws StateStorage.StateStorageException {
+      return mySaveSession.getUsedMacros();
+    }
+
+    public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+      try {
+        return mySaveSession.getAllStorageFilesToSave();
+      }
+      catch (StateStorage.StateStorageException e) {
+        throw new IOException(e.getMessage());
+      }
+    }
+
+    public SaveSession save() throws IOException {
+      try {
+        mySaveSession.save();
+      }
+      catch (StateStorage.StateStorageException e) {
+        LOG.info(e);
+        throw new IOException(e.getMessage());
+      }
+
+      return this;
+    }
+
+    public void finishSave() {
+      getStateStorageManager().finishSave(mySaveSession);
+      mySaveSession = null;
+      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+      mySession = null;
+    }
+
+    protected void commit() throws StateStorage.StateStorageException {
+      final StateStorageManager storageManager = getStateStorageManager();
+
+      final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
+
+      final SettingsSavingComponent[] settingsComponents =
+        mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
+
+      for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
+        settingsSavingComponent.save();
+      }
+
+      final String[] names = myComponents.keySet().toArray(new String[myComponents.keySet().size()]);
+
+      for (String name : names) {
+        Object component = myComponents.get(name);
+        if (component instanceof JDOMExternalizable) {
+          commitJdomExternalizable((JDOMExternalizable)component, session);
+        }
+        else if (component instanceof PersistentStateComponent) {
+          commitPersistentComponent((PersistentStateComponent<?>)component, session);
+        }
+      }
+      mySaveSession = storageManager.startSave(session);
+    }
   }
 }

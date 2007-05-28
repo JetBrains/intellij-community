@@ -12,11 +12,11 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionInitializer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.IdeaPicoContainer;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +24,7 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -572,5 +573,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       return myDelegate;
     }
+  }
+
+  protected void doSave() throws IOException {
+    final IComponentStore.SaveSession session = getStateStore().startSave();
+    session.save();
+    session.finishSave();
   }
 }
