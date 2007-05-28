@@ -17,7 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -65,7 +68,6 @@ public class EmptyInitializerInspection extends BaseInspection{
             assert classInitializer!=null;
             deleteElement(classInitializer);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -81,11 +83,7 @@ public class EmptyInitializerInspection extends BaseInspection{
             if(!codeBlockIsEmpty(body)){
                 return;
             }
-            final PsiJavaToken startingBrace = body.getLBrace();
-            if (startingBrace == null) {
-                return;
-            }
-            registerError(startingBrace);
+            registerClassInitializerError(initializer);
         }
 
         private static boolean codeBlockIsEmpty(PsiCodeBlock codeBlock){

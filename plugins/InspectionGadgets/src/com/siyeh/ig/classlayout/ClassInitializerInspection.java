@@ -15,11 +15,16 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MakeStaticFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClassInitializerInspection extends BaseInspection {
 
@@ -40,27 +45,25 @@ public class ClassInitializerInspection extends BaseInspection {
                 "class.initializer.problem.descriptor");
     }
 
+    @Override
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MakeStaticFix();
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ClassInitializerVisitor();
     }
 
     private static class ClassInitializerVisitor extends BaseInspectionVisitor {
 
-        // todo use visitClassInitializer()
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for (final PsiClassInitializer initializer : initializers) {
-                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    continue;
-                }
-                final PsiCodeBlock body = initializer.getBody();
-                final PsiJavaToken leftBrace = body.getLBrace();
-                if (leftBrace == null) {
-                    continue;
-                }
-                registerError(leftBrace);
+        @Override
+        public void visitClassInitializer(PsiClassInitializer initializer) {
+            super.visitClassInitializer(initializer);
+            if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
             }
+            registerClassInitializerError(initializer);
         }
     }
 }

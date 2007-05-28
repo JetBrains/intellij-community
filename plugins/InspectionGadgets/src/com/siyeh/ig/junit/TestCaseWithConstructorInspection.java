@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestCaseWithConstructorInspection extends BaseInspection {
 
@@ -54,7 +55,6 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
             if (!method.isConstructor()) {
                 return;
             }
@@ -73,23 +73,14 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
             if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            final PsiElement parent = initializer.getParent();
-            if (parent instanceof PsiClass &&
-                !TestUtils.isJUnitTestClass((PsiClass) parent)) {
+            final PsiClass aClass = initializer.getContainingClass();
+            if (!TestUtils.isJUnitTestClass(aClass)) {
                 return;
             }
-            final PsiCodeBlock body = initializer.getBody();
-            if (isTrivial(body)) {
-                return;
-            }
-            final PsiJavaToken leftBrace = body.getLBrace();
-            if (leftBrace == null) {
-                return;
-            }
-            registerError(leftBrace, Boolean.TRUE);
+            registerClassInitializerError(initializer, Boolean.TRUE);
         }
 
-        private static boolean isTrivial(PsiCodeBlock codeBlock) {
+        private static boolean isTrivial(@Nullable PsiCodeBlock codeBlock) {
             if (codeBlock == null) {
                 return true;
             }
@@ -111,10 +102,11 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
             if (!(expression instanceof PsiMethodCallExpression)) {
                 return false;
             }
-            final PsiMethodCallExpression call =
+            final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)expression;
-            final PsiReferenceExpression ref = call.getMethodExpression();
-            final String text = ref.getText();
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String text = methodExpression.getText();
             return PsiKeyword.SUPER.equals(text);
         }
     }

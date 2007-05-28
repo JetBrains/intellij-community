@@ -15,16 +15,14 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MakeStaticFix;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,29 +48,6 @@ public class FieldMayBeStaticInspection extends BaseInspection {
         return new MakeStaticFix();
     }
 
-    private static class MakeStaticFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("make.static.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiJavaToken m_fieldNameToken =
-                    (PsiJavaToken)descriptor.getPsiElement();
-            final PsiField field = (PsiField)m_fieldNameToken.getParent();
-            if (field == null) {
-                return;
-            }
-            final PsiModifierList modifiers = field.getModifierList();
-            if (modifiers == null) {
-                return;
-            }
-            modifiers.setModifierProperty(PsiModifier.STATIC, true);
-        }
-    }
-
     private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
@@ -93,7 +68,6 @@ public class FieldMayBeStaticInspection extends BaseInspection {
                 return;
             }
             final PsiType type = field.getType();
-
             if (!ClassUtils.isImmutable(type)) {
                 return;
             }

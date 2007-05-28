@@ -146,6 +146,17 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
+    protected final void registerClassInitializerError(
+            @NotNull PsiClassInitializer initializer, Object... infos){
+        final PsiCodeBlock body = initializer.getBody();
+        final PsiJavaToken lBrace = body.getLBrace();
+        if (lBrace == null) {
+            registerError(initializer, infos);
+        } else {
+            registerError(lBrace, infos);
+        }
+    }
+
     protected final void registerError(@NotNull PsiElement location,
                                        Object... infos){
         final LocalQuickFix[] fixes = createFixes(location);
