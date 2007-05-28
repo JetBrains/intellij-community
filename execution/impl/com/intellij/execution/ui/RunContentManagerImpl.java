@@ -71,6 +71,8 @@ public class RunContentManagerImpl implements RunContentManager {
         if (myProject.isDisposed()) return;
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
           public void stateChanged() {
+            if (myProject.isDisposed()) return;
+
             ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
             Set<String> currentWindows = new HashSet<String>();
