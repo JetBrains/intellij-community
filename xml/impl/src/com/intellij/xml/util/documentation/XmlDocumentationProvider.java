@@ -39,6 +39,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
 
   private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
+  @NonNls private static final String NAME_ATTR_NAME = "name";
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
@@ -78,7 +79,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       XmlUtil.processXmlElements(tag,processor, true);
-      String name = tag.getAttributeValue("name");
+      String name = tag.getAttributeValue(NAME_ATTR_NAME);
       String typeName = null;
 
       if (processor.result == null) {
@@ -86,6 +87,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
+          name = declaration.getAttributeValue(NAME_ATTR_NAME);
           typeName = declaration.getName();
         }
       }
@@ -334,7 +336,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         result = result.trim();
 
         if (withCData) {
-          result = XmlUtil.escape(result).replaceAll("&apos;","'");
+          result = XmlUtil.escape(result).replaceAll("&apos;","'").replaceAll("\n","<br>");
         }
         url = tag.getAttributeValue("source");
         return false;
