@@ -334,7 +334,7 @@ public class TestNGResults  implements TestFrameworkRunningModel
 
     public void dispose() {
       for (ModelListener listener : myListeners) {
-        listener.onDispose(this);
+        listener.onDispose();
       }
         treeBuilder.dispose();
         animator.dispose();
