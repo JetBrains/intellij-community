@@ -17,7 +17,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.theoryinpractice.testng.ui.Printable;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -134,7 +133,7 @@ public class TestNGConsoleView implements ConsoleView
         consoleProperties = null;
     }
 
-    private List<Printable> getPrintables(TestResultMessage result, String s, ConsoleViewContentType type) {
+    private List<Printable> getPrintables(final TestResultMessage result, String s, ConsoleViewContentType type) {
         List<Printable> printables = new ArrayList<Printable>();
         //figure out if we have a diff we need to hyperlink
         //TODO replace this with a saner regexp
@@ -149,10 +148,13 @@ public class TestNGConsoleView implements ConsoleView
             int stackTraceEnd = s.lastIndexOf("org.testng.Assert.");
             stackTraceEnd = s.indexOf('\n', stackTraceEnd) + 1;
             //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-            DiffHyperLink link = new DiffHyperLink(expected, s.substring(actualStart + end.length(), actualEnd), null);
-            //TODO should do some more farting about to find the equality assertion that failed and show that as title
+            TestNGDiffHyperLink link = new TestNGDiffHyperLink(expected, s.substring(actualStart + end.length(), actualEnd), null, consoleProperties) {
+              protected String getTitle() {
+                //TODO should do some more farting about to find the equality assertion that failed and show that as title
+                return result.getTestClass() + '#' + result.getMethod() + "() failed";
+              }
+            };
             //same as junit diff view
-            link.setTitle(result.getTestClass() + '#' + result.getMethod() + "() failed");
             printables.add(link);
             printables.add(new Chunk(trimStackTrace(s.substring(stackTraceEnd)), type));
         } else {
