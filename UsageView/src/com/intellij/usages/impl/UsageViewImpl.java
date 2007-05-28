@@ -54,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -188,6 +190,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             }
           }, UsageViewBundle.message("usage.view.cancel.button"));
         }
+
+        myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+          public void valueChanged(final TreeSelectionEvent e) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                List<UsageInfo> infos = getSelectedUsageInfos();
+                if (infos != null && myUsagePreviewPanel != null) {
+                  myUsagePreviewPanel.updateLayout(infos);
+                }
+              }
+            });
+          }
+        });
+
       }
     });
   }
@@ -201,7 +217,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-      myUsagePreviewPanel = new UsagePreviewPanel(myTree, this, myProject);
+      myUsagePreviewPanel = new UsagePreviewPanel(myProject);
       splitter.setSecondComponent(myUsagePreviewPanel);
       myCentralPanel.add(splitter, BorderLayout.CENTER);
     }
@@ -681,7 +697,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (myProject.isDisposed()) return;
     checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
     if (myUsagePreviewPanel != null) {
-      myUsagePreviewPanel.update();
+      myUsagePreviewPanel.updateLayout(getSelectedUsageInfos());
     }
   }
 
@@ -910,7 +926,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (node instanceof UsageNode) {
       UsageNode usageNode = (UsageNode)node;
       final Usage usage = usageNode.getUsage();
-      if (usage != null && usage.isValid()) {
+      if (usage.isValid()) {
         usages.add(usage);
       }
     }

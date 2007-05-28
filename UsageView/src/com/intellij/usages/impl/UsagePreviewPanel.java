@@ -9,9 +9,9 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,8 +21,6 @@ import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.util.List;
 
@@ -32,26 +30,12 @@ import java.util.List;
 public class UsagePreviewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
-  private final UsageViewImpl myUsageView;
   private final Project myProject;
   private String myTitle;
   private volatile boolean isDisposed = false;
 
-  public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView, final Project project) {
-    myUsageView = usageView;
+  public UsagePreviewPanel(final Project project) {
     myProject = project;
-    usageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(final TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            List<UsageInfo> infos = usageView.getSelectedUsageInfos();
-            if (infos != null) {
-              resetEditor(infos);
-            }
-          }
-        });
-      }
-    });
 
     setLayout(new BorderLayout());
   }
@@ -157,9 +141,10 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     }
   }
 
-  public void update() {
-    List<UsageInfo> infos = myUsageView.getSelectedUsageInfos();
+  public void updateLayout(List<UsageInfo> infos) {
     if (infos == null) {
+      releaseEditor();
+      myTitle = null;
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
       add(titleComp, BorderLayout.CENTER);

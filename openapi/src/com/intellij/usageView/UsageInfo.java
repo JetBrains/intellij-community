@@ -97,12 +97,13 @@ public class UsageInfo {
   }
 
   public final void navigateTo(boolean requestFocus) {
-    VirtualFile file = getElement().getContainingFile().getVirtualFile();
-    TextRange range = getElement().getTextRange();
+    PsiElement element = getElement();
+    if (element == null) return;
+    VirtualFile file = element.getContainingFile().getVirtualFile();
+    TextRange range = element.getTextRange();
     int offset = range.getStartOffset() + startOffset;
-    Project project = getElement().getProject();
-    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset),
-                                                          requestFocus);
+    Project project = element.getProject();
+    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
   }
 
   public final boolean isWritable() {

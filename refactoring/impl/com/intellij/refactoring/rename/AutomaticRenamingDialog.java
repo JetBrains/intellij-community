@@ -4,24 +4,31 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
 import com.intellij.refactoring.ui.StringTableCellEditor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author dsl
@@ -34,16 +41,22 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private final AutomaticRenamer myRenamer;
   private boolean[] myShouldRename;
   private String[] myNewNames;
-  PsiNamedElement myRenames[];
+  private PsiNamedElement[] myRenames;
   private MyTableModel myTableModel;
   private Table myTable;
+  private JPanel myPanelForPreview;
+  private JButton mySelectAllButton;
+  private JButton myUnselectAllButton;
+  private JPanel myPanel;
+  private JSplitPane mySplitPane;
   private final Project myProject;
-
+  private final UsagePreviewPanel myUsagePreviewPanel;
 
   public AutomaticRenamingDialog(Project project, AutomaticRenamer renamer) {
     super(project, true);
     myProject = project;
     myRenamer = renamer;
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject);
     populateData();
     setTitle(myRenamer.getDialogTitle());
     init();
@@ -61,7 +74,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myRenames = temp.toArray(new PsiNamedElement[temp.size()]);
     Arrays.sort(myRenames, new Comparator<PsiNamedElement>() {
       public int compare(final PsiNamedElement e1, final PsiNamedElement e2) {
-        return e1.getName().compareTo(e2.getName());
+        return Comparing.compare(e1.getName(), e2.getName());
       }
     });
 
@@ -99,9 +112,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final Box box = Box.createVerticalBox();
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable.setModel(myTableModel);
     myTableModel.getSpaceAction().register();
     myTableModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
@@ -116,18 +128,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     columnModel.getColumn(CHECK_COLUMN).setMinWidth(checkBoxWidth);
 
     columnModel.getColumn(NEW_NAME_COLUMN).setCellEditor(new StringTableCellEditor(myProject));
-    final JScrollPane jScrollPane2 = ScrollPaneFactory.createScrollPane(myTable);
-    box.add(jScrollPane2);
-    final Box buttonBox = Box.createHorizontalBox();
-    buttonBox.add(Box.createHorizontalGlue());
-    final JButton selectAllButton = new JButton();
-    selectAllButton.setText(RefactoringBundle.message("select.all.button"));
-    buttonBox.add(selectAllButton);
-    buttonBox.add(Box.createHorizontalStrut(4));
-    final JButton deselectAllButton = new JButton();
-    deselectAllButton.setText(RefactoringBundle.message("unselect.all.button"));
-    buttonBox.add(deselectAllButton);
-    selectAllButton.addActionListener(new ActionListener() {
+    mySelectAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = true;
@@ -136,7 +137,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       }
     });
 
-    deselectAllButton.addActionListener(new ActionListener() {
+    myUnselectAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = false;
@@ -144,11 +145,34 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myTableModel.fireTableDataChanged();
       }
     });
-    box.add(Box.createVerticalStrut(4));
-    box.add(buttonBox);
-    box.add(Box.createVerticalStrut(4));
+    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        int index = myTable.getSelectionModel().getLeadSelectionIndex();
+        if (index != -1) {
+          PsiNamedElement element = myRenames[index];
+          UsageInfo usageInfo = new UsageInfo(element);
+          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+        }
+        else {
+          myUsagePreviewPanel.updateLayout(null);
+        }
+      }
+    });
 
-    return box;
+    myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
+    myUsagePreviewPanel.updateLayout(null);
+    mySplitPane.setDividerLocation(0.5);
+    
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+
+    if (myTableModel.getRowCount() != 0) {
+      myTable.getSelectionModel().addSelectionInterval(0,0);
+    }
+    return myPanel;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myTable;
   }
 
   protected void doOKAction() {
@@ -157,7 +181,12 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  protected void updateRenamer() {
+  protected void dispose() {
+    myUsagePreviewPanel.dispose();
+    super.dispose();
+  }
+
+  private void updateRenamer() {
     for (int i = 0; i < myRenames.length; i++) {
       PsiNamedElement element = myRenames[i];
       if (myShouldRename[i]) {
@@ -167,14 +196,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myRenamer.doNotRename(element);
       }
     }
-  }
-
-  protected void setChecked(int rowIndex, boolean checked) {
-    myTableModel.setValueAt(Boolean.valueOf(checked), rowIndex, CHECK_COLUMN);
-  }
-
-  protected String[] getNewNames() {
-    return myNewNames;
   }
 
   private class MyTableModel extends AbstractTableModel {
