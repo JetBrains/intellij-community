@@ -199,6 +199,15 @@ public class ChangesViewContentManager implements ProjectComponent {
     return null;
   }
 
+  public void selectContent(final String tabName) {
+    for(Content content: myContentManager.getContents()) {
+      if (content.getDisplayName().equals(tabName)) {
+        myContentManager.setSelectedContent(content);
+        break;
+      }
+    }
+  }
+
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();

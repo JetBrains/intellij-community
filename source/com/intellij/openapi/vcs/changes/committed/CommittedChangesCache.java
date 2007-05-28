@@ -414,10 +414,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     }
     myCachedIncomingChangeLists = map;
+    LOG.info("Incoming changes loaded");
+    notifyIncomingChangesUpdated(null);
     return map;
   }
 
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
+    LOG.info("Loading incoming changes");
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
       public void run(final ProgressIndicator indicator) {
         final Map<CommittedChangeList, Change[]> map = loadIncomingChanges();
@@ -491,6 +494,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           // checking revisions we have locally
           if (result) {
             cache.refreshIncomingChanges();
+            LOG.info("Clearing cached incoming changelists");
             myCachedIncomingChangeLists = null;
           }
           pendingUpdateProcessed();
@@ -544,7 +548,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         myRefreshingIncomingChanges = false;
         if (myAnyChanges) {
           myCachedIncomingChangeLists = null;
+          LOG.info("Incoming changes refresh complete, clearing cached incoming changes");
           notifyIncomingChangesUpdated(null);
+        }
+        else {
+          LOG.info("Incoming changes refresh complete, no new or obsolete changes");
         }
       }
     };

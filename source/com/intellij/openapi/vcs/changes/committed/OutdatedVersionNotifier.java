@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -35,6 +36,8 @@ import java.util.List;
  * @author yole
  */
 public class OutdatedVersionNotifier implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier");
+
   private FileEditorManager myFileEditorManager;
   private CommittedChangesCache myCache;
   private FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
@@ -62,6 +65,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void requestLoadIncomingChanges() {
+    LOG.info("Requesting load of incoming changes");
     if (!myIncomingChangesRequested) {
       myIncomingChangesRequested = true;
       myCache.loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
@@ -94,6 +98,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void updateAllEditorsLater() {
+    LOG.info("Queueing update of editors");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         updateAllEditors();
@@ -102,6 +107,11 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void updateAllEditors() {
+    if (myCache.getCachedIncomingChanges() == null) {
+      requestLoadIncomingChanges();
+      return;
+    }
+    LOG.info("Updating editors");
     final VirtualFile[] files = myFileEditorManager.getOpenFiles();
     for(VirtualFile file: files) {
       final CommittedChangeList list = myCache.getIncomingChangeList(file);

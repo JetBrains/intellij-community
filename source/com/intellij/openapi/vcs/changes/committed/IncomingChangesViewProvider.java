@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 
@@ -59,16 +58,14 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   }
 
   private void loadChangesToBrowser() {
-    CommittedChangesCache.getInstance(myProject).loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
-      public void consume(final List<CommittedChangeList> committedChangeLists) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            myBrowser.setItems(committedChangeLists, false);
-          }
-        });
-      }
-    });
+    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+    final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
+    if (list != null) {
+      myBrowser.setItems(list, false);
+    }
+    else {
+      cache.loadIncomingChangesAsync(null);
+    }
   }
 
   private class MyCommittedChangesListener implements CommittedChangesListener {
