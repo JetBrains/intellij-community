@@ -216,7 +216,6 @@ public class TreeState implements JDOMExternalizable {
           //ignore for invalid psi element
         }
       }
-      if (value != null) return value.toString();
     }
     return nodeDescriptor.toString();
   }
