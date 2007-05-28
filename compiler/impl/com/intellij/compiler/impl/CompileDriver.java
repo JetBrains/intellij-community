@@ -264,7 +264,7 @@ public class CompileDriver {
                        final boolean isRebuild,
                        final boolean forceCompile,
                        final CompileStatusNotification callback,
-                       CompilerMessage message,
+                       final CompilerMessage message,
                        final boolean checkCachesVersion,
                        final boolean trackDependencies) {
     final CompilerTask indicator = new CompilerTask(
@@ -280,11 +280,7 @@ public class CompileDriver {
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
     }
 
-    if (message != null) {
-      compileContext.addMessage(message);
-    }
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();   
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final Runnable compileThread = new Runnable() {
@@ -295,6 +291,9 @@ public class CompileDriver {
               try {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("COMPILATION STARTED");
+                }
+                if (message != null) {
+                  compileContext.addMessage(message);
                 }
                 doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
               }
