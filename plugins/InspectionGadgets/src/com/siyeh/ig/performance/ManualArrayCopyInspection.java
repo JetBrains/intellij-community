@@ -310,7 +310,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
         }
 
         private static boolean expressionIsArrayCopy(
-                PsiExpression expression, PsiLocalVariable variable) {
+                @Nullable PsiExpression expression,
+                @NotNull PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     PsiUtil.deparenthesizeExpression(expression);
             if (strippedExpression == null) {
@@ -356,8 +357,11 @@ public class ManualArrayCopyInspection extends BaseInspection {
             return ExpressionUtils.isOffsetArrayAccess(rhs, variable);
         }
 
-        private static boolean areExpressionsCopyable(PsiExpression lhs,
-                                                      PsiExpression rhs) {
+        private static boolean areExpressionsCopyable(
+                @Nullable PsiExpression lhs, @Nullable PsiExpression rhs) {
+            if (lhs == null || rhs == null) {
+                return false;
+            }
             final PsiType lhsType = lhs.getType();
             if (lhsType == null) {
                 return false;
