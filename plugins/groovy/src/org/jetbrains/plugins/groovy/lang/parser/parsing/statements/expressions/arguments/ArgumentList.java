@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -92,7 +94,7 @@ public class ArgumentList implements GroovyElementTypes {
     if (labeled) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     }
-    GroovyElementType result = StrictContextExpression.parse(builder);
+    GroovyElementType result = AssignmentExpression.parse(builder);
 
     // If expression is wrong...
     if (labeled && result.equals(WRONGWAY)) {
@@ -103,7 +105,7 @@ public class ArgumentList implements GroovyElementTypes {
             !closingBrace.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("expression.expected"));
       builder.advanceLexer();
-      result = StrictContextExpression.parse(builder);
+      result = AssignmentExpression.parse(builder);
     }
 
     if (labeled || expansed) {

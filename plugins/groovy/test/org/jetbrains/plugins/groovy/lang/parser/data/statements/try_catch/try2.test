@@ -19,14 +19,12 @@ Groovy script
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
-          Variable definitions
-            Modifiers
-              <empty list>
-            Type element
-              Reference element
-                PsiElement(identifier)('Exception1')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('e1')
+          Reference expression
+            PsiElement(identifier)('Exception1')
+          PsiErrorElement:')' expected
+            <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('e1')
           PsiElement())(')')
         PsiWhiteSpace(' ')
         Closable block
@@ -42,14 +40,12 @@ Groovy script
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
-          Variable definitions
-            Modifiers
-              <empty list>
-            Type element
-              Reference element
-                PsiElement(identifier)('Exception1')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('e2')
+          Reference expression
+            PsiElement(identifier)('Exception1')
+          PsiErrorElement:')' expected
+            <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('e2')
           PsiElement())(')')
         PsiWhiteSpace(' ')
         Closable block
