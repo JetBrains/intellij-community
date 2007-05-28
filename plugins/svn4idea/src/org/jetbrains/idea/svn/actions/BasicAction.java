@@ -32,10 +32,10 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -73,13 +73,14 @@ public abstract class BasicAction extends AnAction {
     final String actionName = getActionName(vcs);
 
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
+    LocalHistoryAction lvcsAction = null;
     if (actionName != null) {
-      helper.startVcsAction(actionName);
+      lvcsAction = helper.startVcsAction(actionName);
     }
 
     try {
-      List exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
-        public void run(List exceptions) {
+      List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
+        public void run(List<VcsException> exceptions) {
           VirtualFile badFile = null;
           try {
             if (isBatchAction()) {
@@ -103,8 +104,8 @@ public abstract class BasicAction extends AnAction {
       helper.showErrors(exceptions, actionName != null ? actionName : vcs.getName());
     }
     finally {
-      if (actionName != null) {
-        helper.finishVcsAction(LvcsAction.EMPTY);
+      if (lvcsAction != null) {
+        helper.finishVcsAction(lvcsAction);
       }
     }
   }
