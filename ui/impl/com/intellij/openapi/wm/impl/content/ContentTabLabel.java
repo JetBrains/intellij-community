@@ -58,13 +58,13 @@ class ContentTabLabel extends BaseLabel {
 
   protected void paintComponent(final Graphics g) {
     if (!isSelected() && myUi.isToDrawTabs()) {
-      g.translate(0, TitlePanel.STRUT);
+      g.translate(0, 2);
     }
 
     super.paintComponent(g);
 
     if (!isSelected() && myUi.isToDrawTabs()) {
-      g.translate(0, -TitlePanel.STRUT);
+      g.translate(0, -2);
     }
   }
 
