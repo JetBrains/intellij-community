@@ -98,7 +98,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     if (ex[0] != null) {
       throw ex[0];
     }
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
 

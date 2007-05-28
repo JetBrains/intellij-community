@@ -23,9 +23,9 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
   }
 
   protected void setUp() throws Exception {
-    final String compilerHome = CompilerConfiguration.getTestsExternalCompilerHome();
+    final String compilerHome = CompilerConfigurationImpl.getTestsExternalCompilerHome();
     if (compilerHome == null || compilerHome.length() == 0) {
-      throw new Exception("Property \"" + CompilerConfiguration.TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME + "\" must be specified in order to run JDK 1.5 compiler tests");
+      throw new Exception("Property \"" + CompilerConfigurationImpl.TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME + "\" must be specified in order to run JDK 1.5 compiler tests");
     }
     if (!new File(compilerHome).exists()) {
       throw new Exception("The home directory for tests external compiler does not exist: " + compilerHome);
