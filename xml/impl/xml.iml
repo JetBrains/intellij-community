@@ -12,6 +12,8 @@
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module" module-name="ui-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
