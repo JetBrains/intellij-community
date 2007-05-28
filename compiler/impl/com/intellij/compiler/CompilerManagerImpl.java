@@ -35,7 +35,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
   private AtomicBoolean myCompilationActive = new AtomicBoolean(false);
 
-  public CompilerManagerImpl(Project project, CompilerConfiguration compilerConfiguration) {
+  public CompilerManagerImpl(Project project, CompilerConfigurationImpl compilerConfiguration) {
     myProject = project;
 
     // predefined compilers
@@ -197,7 +197,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public boolean isExcludedFromCompilation(VirtualFile file) {
-    return CompilerConfiguration.getInstance(myProject).isExcludedFromCompilation(file);
+    return CompilerConfigurationImpl.getInstance(myProject).isExcludedFromCompilation(file);
   }
 
   public OutputToSourceMapping getJavaCompilerOutputMapping() {

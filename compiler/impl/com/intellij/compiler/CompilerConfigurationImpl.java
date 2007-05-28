@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2007, Your Corporation. All Rights Reserved.
+ */
+
 /**
  * created at Jan 3, 2002
  * @author Jeka
@@ -42,7 +46,7 @@ import java.util.*;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
+public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 46;
@@ -72,7 +76,7 @@ public class CompilerConfiguration implements PersistentStateComponent<Element>,
     loadDefaultWildcardPatterns();
   }
 
-  public CompilerConfiguration(Project project) {
+  public CompilerConfigurationImpl(Project project) {
     myProject = project;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
   }
@@ -297,6 +301,10 @@ public class CompilerConfiguration implements PersistentStateComponent<Element>,
     return false;
   }
 
+  public int getDeployAfterMake() {
+    return DEPLOY_AFTER_MAKE;
+  }
+
   // property names
   private static final @NonNls String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   private static final @NonNls String RESOURCE_EXTENSIONS = "resourceExtensions";
@@ -371,10 +379,6 @@ public class CompilerConfiguration implements PersistentStateComponent<Element>,
       }
       parentNode.addContent(wildcardPatterns);
     }
-  }
-
-  public static CompilerConfiguration getInstance(Project project) {
-    return project.getComponent(CompilerConfiguration.class);
   }
 
   @NotNull @NonNls

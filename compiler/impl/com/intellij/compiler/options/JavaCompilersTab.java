@@ -1,6 +1,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -11,8 +12,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 
 /**
@@ -27,12 +28,12 @@ public class JavaCompilersTab implements Configurable{
 
   private BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
-  private CompilerConfiguration myCompilerConfiguration;
+  private CompilerConfigurationImpl myCompilerConfiguration;
   private final Collection<Configurable> myConfigurables;
 
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
     myDefaultCompiler = defaultCompiler;
-    myCompilerConfiguration = CompilerConfiguration.getInstance(project);
+    myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myConfigurables = new ArrayList<Configurable>(compilers.size());
 
     myCardLayout = new CardLayout();

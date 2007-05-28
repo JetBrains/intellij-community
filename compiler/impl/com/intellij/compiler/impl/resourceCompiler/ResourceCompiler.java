@@ -6,6 +6,7 @@
 package com.intellij.compiler.impl.resourceCompiler;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,10 +34,10 @@ import java.util.List;
 public class ResourceCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.resourceCompiler.ResourceCompiler");
   private final Project myProject;
-  private CompilerConfiguration myConfiguration;
+  private CompilerConfigurationImpl myConfiguration;
   private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
-  public ResourceCompiler(Project project, CompilerConfiguration compilerConfiguration) {
+  public ResourceCompiler(Project project, CompilerConfigurationImpl compilerConfiguration) {
     myProject = project;
     myConfiguration = compilerConfiguration;
   }
@@ -47,7 +48,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public boolean validateConfiguration(CompileScope scope) {
-    CompilerConfiguration.getInstance(myProject).convertPatterns();
+    ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).convertPatterns();
     return true;
   }
 

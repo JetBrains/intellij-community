@@ -1,6 +1,7 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,7 +29,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   protected void doAction(DataContext dataContext, final Project project) {
-    CompilerConfiguration.getInstance(project).convertPatterns();
+    ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(project)).convertPatterns();
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
     dialog.show();
     if (dialog.isOK()) {

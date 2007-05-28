@@ -6,6 +6,7 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerException;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.*;
@@ -60,7 +61,7 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   private BackendCompiler getBackEndCompiler() {
-    CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     return configuration.getDefaultCompiler();
   }
 

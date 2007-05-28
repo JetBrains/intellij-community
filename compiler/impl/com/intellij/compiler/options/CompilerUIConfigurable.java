@@ -1,19 +1,21 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.RmicSettings;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.Options;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.Options;
 import org.apache.oro.text.regex.MalformedPatternException;
 
 import javax.swing.*;
@@ -43,7 +45,7 @@ public class CompilerUIConfigurable implements Configurable {
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
     for (LogicalRoot contentSourceRoot : LogicalRootsManager.getLogicalRootsManager(myProject).getLogicalRoots()) {
       descriptor.addRoot(contentSourceRoot.getVirtualFile());
@@ -89,7 +91,7 @@ public class CompilerUIConfigurable implements Configurable {
 
     myRmicConfigurable.reset();
 
-    final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     myCbCompileInBackground.setSelected(workspaceConfiguration.COMPILE_IN_BACKGROUND);
     myCbCloseMessageViewOnSuccess.setSelected(workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS);
@@ -130,7 +132,7 @@ public class CompilerUIConfigurable implements Configurable {
 
     myRmicConfigurable.apply();
 
-    CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
     workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS = myCbCloseMessageViewOnSuccess.isSelected();
@@ -140,13 +142,13 @@ public class CompilerUIConfigurable implements Configurable {
 
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
-    applyResourcePatterns(extensionString, CompilerConfiguration.getInstance(myProject));
+    applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
 
     configuration.DEPLOY_AFTER_MAKE = getSelectedDeploymentOption();
 
   }
 
-  private static void applyResourcePatterns(String extensionString, final CompilerConfiguration configuration)
+  private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
     java.util.List<String[]> errors = new ArrayList<String[]>();
@@ -192,7 +194,7 @@ public class CompilerUIConfigurable implements Configurable {
     isModified |= ComparingUtils.isModified(myCbCompileDependent, workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
 
-    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     isModified |= ComparingUtils.isModified(myResourcePatternsField, patternsToString(compilerConfiguration.getResourceFilePatterns()));
     isModified |= compilerConfiguration.DEPLOY_AFTER_MAKE != getSelectedDeploymentOption();

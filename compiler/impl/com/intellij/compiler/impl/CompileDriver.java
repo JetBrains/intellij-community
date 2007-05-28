@@ -325,7 +325,7 @@ public class CompileDriver {
           return;
         }
       }
-      writeStatus(new CompileStatus(CompilerConfiguration.DEPENDENCY_FORMAT_VERSION, true), compileContext);
+      writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, true), compileContext);
       if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return;
       }
@@ -349,7 +349,7 @@ public class CompileDriver {
         }, ModalityState.NON_MODAL);
       }
       else {
-        writeStatus(new CompileStatus(CompilerConfiguration.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
+        writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -379,7 +379,7 @@ public class CompileDriver {
     if (compileStatus == null) {
       compileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
     }
-    else if (compileStatus.CACHE_FORMAT_VERSION != -1 && compileStatus.CACHE_FORMAT_VERSION != CompilerConfiguration.DEPENDENCY_FORMAT_VERSION) {
+    else if (compileStatus.CACHE_FORMAT_VERSION != -1 && compileStatus.CACHE_FORMAT_VERSION != CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION) {
       compileContext.requestRebuildNextTime(CompilerBundle.message("error.caches.old.format"));
     }
     else if (compileStatus.COMPILATION_IN_PROGRESS) {

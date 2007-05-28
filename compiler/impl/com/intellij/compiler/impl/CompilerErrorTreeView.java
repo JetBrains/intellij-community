@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.HelpID;
 import com.intellij.compiler.options.CompilerConfigurable;
@@ -64,7 +65,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
       if (file != null && file.isValid()) {
         ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true);
-        CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
+        ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
         FileStatusManager.getInstance(myProject).fileStatusesChanged();
       }
     }

@@ -1,7 +1,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
@@ -132,7 +132,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static boolean isExcluded(final VirtualFile vFile, final Project project) {
     return vFile != null
            && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vFile)
-           && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
+           && CompilerConfigurationImpl.getInstance(project).isExcludedFromCompilation(vFile);
   }
 
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {

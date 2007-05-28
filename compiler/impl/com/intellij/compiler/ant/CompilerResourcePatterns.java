@@ -1,6 +1,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.taskdefs.Exclude;
 import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
@@ -17,7 +18,7 @@ public class CompilerResourcePatterns extends Generator{
   private final PatternSet myPatternSet;
 
   public CompilerResourcePatterns(Project project) {
-    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     final String[] patterns = compilerConfiguration.getResourceFilePatterns();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_RESOURCE_PATTERNS);
     for (String pattern : patterns) {

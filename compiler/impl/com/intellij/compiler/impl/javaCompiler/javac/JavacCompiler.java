@@ -1,6 +1,6 @@
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
@@ -323,7 +323,7 @@ public class JavacCompiler extends ExternalCompiler {
   private ProjectJdk getJdkForStartupCommand(final ModuleChunk chunk) {
     final ProjectJdk jdk = chunk.getJdk();
     if (ApplicationManager.getApplication().isUnitTestMode() && JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()) {
-      final String jdkHomePath = CompilerConfiguration.getTestsExternalCompilerHome();
+      final String jdkHomePath = CompilerConfigurationImpl.getTestsExternalCompilerHome();
       if (jdkHomePath == null) {
         throw new IllegalArgumentException("[TEST-MODE] Cannot determine home directory for JDK to use javac from");
       }

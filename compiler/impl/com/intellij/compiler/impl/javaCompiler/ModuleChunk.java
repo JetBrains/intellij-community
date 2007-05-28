@@ -4,8 +4,8 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.util.Chunk;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
@@ -103,7 +104,7 @@ public class ModuleChunk extends Chunk<Module> {
   public VirtualFile[] getSourceRoots() {
     final List<VirtualFile> filteredRoots = new ArrayList<VirtualFile>();
     final Project project = getNodes().iterator().next().getProject();
-    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
