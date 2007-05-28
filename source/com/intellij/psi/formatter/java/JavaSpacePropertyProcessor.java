@@ -29,13 +29,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   private ASTNode myChild2;
   private ImportHelper myImportHelper;
 
-  public JavaSpacePropertyProcessor(ASTNode child, final CodeStyleSettings settings) {
-    doInit(child, settings);
-  }
+  private static ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
 
-  void doInit(final ASTNode child, final CodeStyleSettings settings) {
-    clear();
+  private JavaSpacePropertyProcessor() {}
 
+  private void doInit(final ASTNode child, final CodeStyleSettings settings) {
     init(child);
     mySettings = settings;
 
@@ -1221,6 +1219,18 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   public void visitParameter(PsiParameter parameter) {
     if (myRole1 == ChildRole.TYPE) {
       createSpaceInCode(true);
+    }
+  }
+
+  public static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
+    JavaSpacePropertyProcessor spacePropertyProcessor = mySharedProcessorAllocator.get();
+    try {
+      if (spacePropertyProcessor == null) mySharedProcessorAllocator.set(spacePropertyProcessor = new JavaSpacePropertyProcessor());
+      spacePropertyProcessor.doInit(node, settings);
+      return spacePropertyProcessor.getResult();
+    }
+    finally {
+      spacePropertyProcessor.clear();
     }
   }
 }

@@ -32,7 +32,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected boolean myUseChildAttributes = false;
   private boolean myIsAfterClassKeyword = false;
   private Wrap myAnnotationWrap = null;
-  private static JavaSpacePropertyProcessor mySharedProcessor;
+  
 
   public AbstractJavaBlock(final ASTNode node,
                            final Wrap wrap,
@@ -180,10 +180,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
-    if (mySharedProcessor == null) mySharedProcessor = new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings);
-    else mySharedProcessor.doInit(AbstractJavaBlock.getTreeNode(child2), mySettings);
-    return mySharedProcessor.getResult();
-    //return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
+    return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings);
   }
 
   public ASTNode getFirstTreeNode() {

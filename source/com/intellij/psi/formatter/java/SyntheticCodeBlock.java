@@ -65,7 +65,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
-    return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
+    return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings);
   }
 
   public String toString() {
