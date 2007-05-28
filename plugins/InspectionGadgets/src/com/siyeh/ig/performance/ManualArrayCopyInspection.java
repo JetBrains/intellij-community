@@ -163,7 +163,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             return buffer.toString();
         }
 
-        @Nullable
+        @NonNls @Nullable
         private static String getLengthText(PsiExpression expression,
                                             PsiLocalVariable variable) {
             expression =
@@ -182,7 +182,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             return expressionText + '-' + initializer.getText();
         }
 
-        @Nullable
+        @NonNls @Nullable
         private static String getOffsetText(PsiExpression expression,
                                             PsiLocalVariable variable)
                 throws IncorrectOperationException {
@@ -222,7 +222,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             return collapseConstant(expression.getText(), variable);
         }
 
-        private static String collapseConstant(String expressionText,
+        private static String collapseConstant(@NonNls String expressionText,
                                                PsiElement context)
                 throws IncorrectOperationException {
             final PsiManager manager = context.getManager();

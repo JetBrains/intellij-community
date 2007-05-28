@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Bas Leijdekkers
+ * Copyright 2005-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ConstantExpressionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
@@ -41,7 +42,10 @@ public class ExpressionUtils {
         return PsiKeyword.NULL.equals(text);
     }
 
-    public static boolean isZero(PsiExpression expression) {
+    public static boolean isZero(@Nullable PsiExpression expression) {
+        if (expression == null) {
+            return false;
+        }
         final PsiType expressionType = expression.getType();
         final Object value = ConstantExpressionUtil.computeCastTo(expression,
                 expressionType);
@@ -66,7 +70,10 @@ public class ExpressionUtils {
         return value instanceof Byte && ((Byte) value).byteValue() == 0;
     }
 
-    public static boolean isOne(PsiExpression expression) {
+    public static boolean isOne(@Nullable PsiExpression expression) {
+        if (expression == null) {
+            return false;
+        }
         final PsiType expressionType = expression.getType();
         final Object value = ConstantExpressionUtil.computeCastTo(
                 expression, expressionType);
@@ -131,8 +138,8 @@ public class ExpressionUtils {
         }
     }
 
-    public static boolean isOffsetArrayAccess(PsiExpression expression,
-                                               PsiVariable variable) {
+    public static boolean isOffsetArrayAccess(
+            @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
         if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
@@ -148,7 +155,7 @@ public class ExpressionUtils {
     }
 
     private static boolean expressionIsOffsetVariableLookup(
-            PsiExpression expression, PsiVariable variable) {
+            @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
         if (VariableAccessUtils.evaluatesToVariable(strippedExpression,
@@ -175,8 +182,8 @@ public class ExpressionUtils {
                 !JavaTokenType.MINUS.equals(tokenType);
     }
 
-    public static boolean isComparison(PsiExpression expression,
-                                        PsiLocalVariable variable) {
+    public static boolean isComparison(@Nullable PsiExpression expression,
+                                       @NotNull PsiLocalVariable variable) {
         expression =
                 ParenthesesUtils.stripParentheses(expression);
         if (!(expression instanceof PsiBinaryExpression)) {
