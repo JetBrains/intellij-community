@@ -47,10 +47,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
@@ -82,7 +79,13 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       updatedRoots.addAll(roots);
     }
     if (updatedRoots.isEmpty()) {
-      Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"), SvnBundle.message("messate.text.update.error"));
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
+                                   SvnBundle.message("messate.text.update.error"));
+        }
+      });
+      return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
     }
 
     final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
@@ -107,7 +110,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               // refresh base directory so that conflict files should be detected
               vf.getParent().refresh(true, false);
               VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
-              if (ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(vf).equals(myVcs)) {
+              if (myVcs.equals(ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(vf))) {
                 vfFiles.add(vf);
               }
             }
