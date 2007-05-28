@@ -236,15 +236,22 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   protected final void initRootNode() {
-    new UiNotifyConnector.Once(myTree, new Activatable() {
+    final Activatable activatable = new Activatable() {
       public void showNotify() {
         if (!myRootNodeWasInitialized) {
           initRootNodeNow();
         }
       }
+
       public void hideNotify() {
       }
-    });
+    };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      activatable.showNotify();      
+    } else {
+      new UiNotifyConnector.Once(myTree, activatable);
+    }
   }
 
   private void initRootNodeNow() {
