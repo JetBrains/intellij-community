@@ -349,6 +349,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     Runnable selection = new Runnable() {
       public void run() {
+        if (getIndexOfContent(content) == -1) return;
+
         for (Content each : old) {
           removeSelectedContent(each);
           mySelection.clear();
