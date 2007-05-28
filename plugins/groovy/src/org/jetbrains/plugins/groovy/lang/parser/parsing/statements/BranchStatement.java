@@ -33,6 +33,7 @@ public class BranchStatement implements GroovyElementTypes {
           kBREAK,
           kCONTINUE,
           kTHROW,
+          kRETURN,
           kASSERT);
 
   public static GroovyElementType parse(PsiBuilder builder) {

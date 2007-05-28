@@ -59,8 +59,9 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder);
     }
 
-    ParserUtils.getToken(builder, mNLS);
-    if (kFINALLY.equals(builder.getTokenType())) {
+    if (kFINALLY.equals(builder.getTokenType()) |
+        ParserUtils.lookAhead(builder,mNLS, kFINALLY)) {
+      ParserUtils.getToken(builder, mNLS);
       PsiBuilder.Marker finallyMarker = builder.mark();
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
@@ -123,8 +124,9 @@ public class TryCatchStatement implements GroovyElementTypes {
 
     catchMarker.done(CATCH_CLAUSE);
 
-    ParserUtils.getToken(builder, mNLS);
-    if (builder.getTokenType() == kCATCH) {
+    if (builder.getTokenType() == kCATCH ||
+        ParserUtils.lookAhead(builder, mNLS, kCATCH)) {
+      ParserUtils.getToken(builder, mNLS);
       parseHandlers(builder);
     }
   }
