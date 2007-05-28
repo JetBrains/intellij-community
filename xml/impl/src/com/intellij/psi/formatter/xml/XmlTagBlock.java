@@ -192,8 +192,9 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
     if (syntheticBlock2.startsWithTag() ) {
       final XmlTag startTag = syntheticBlock2.getStartTag();
-      if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(startTag) && startTag.textContains('\n'))
-      return Spacing.getReadOnlySpacing();
+      if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(startTag) && startTag.textContains('\n')) {
+        return getChildrenIndent() != Indent.getNoneIndent() ? Spacing.getReadOnlySpacing():Spacing.createSpacing(0,0,0,true,myXmlFormattingPolicy.getKeepBlankLines());
+      }
     }
 
     boolean saveSpacesBetweenTagAndText = myXmlFormattingPolicy.shouldSaveSpacesBetweenTagAndText() &&
