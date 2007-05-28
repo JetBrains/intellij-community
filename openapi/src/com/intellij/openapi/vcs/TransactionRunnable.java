@@ -18,5 +18,5 @@ package com.intellij.openapi.vcs;
 import java.util.List;
 
 public interface TransactionRunnable {
-  void run(List exceptionList);
+  void run(List<VcsException> exceptionList);
 }
