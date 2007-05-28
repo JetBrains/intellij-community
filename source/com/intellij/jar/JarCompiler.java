@@ -1,6 +1,5 @@
 package com.intellij.jar;
 
-import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -116,17 +115,17 @@ public class JarCompiler implements PackagingCompiler {
     }
 
     public MyValState(final DataInputStream is) throws IOException {
-      myModuleName = CompilerIOUtil.readString(is);
+      myModuleName = IOUtil.readString(is);
       int size = is.readInt();
       sourceUrls = new String[size];
       timestamps = new long[size];
       for (int i=0;i<size;i++) {
-        String url = CompilerIOUtil.readString(is);
+        String url = IOUtil.readString(is);
         long timestamp = is.readLong();
         sourceUrls[i] = url;
         timestamps[i] = timestamp;
       }
-      outputJarUrl = CompilerIOUtil.readString(is);
+      outputJarUrl = IOUtil.readString(is);
       outputJarTimestamp = is.readLong();
     }
 
