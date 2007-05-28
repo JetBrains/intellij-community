@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -18,6 +19,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -279,7 +281,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private Collection<ChangesCacheFile> getAllCaches() {
     Collection<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
-    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+    final VirtualFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+      public VirtualFile[] compute() {
+        return ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+      }
+    });
     for(VirtualFile file: files) {
       final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
       assert vcs != null;
