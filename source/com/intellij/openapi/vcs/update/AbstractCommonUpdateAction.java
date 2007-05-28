@@ -42,20 +42,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -69,7 +70,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     myScopeInfo = scopeInfo;
   }
 
-  protected final String getCompleteActionName(VcsContext dataContext) {
+  private String getCompleteActionName(VcsContext dataContext) {
     return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
@@ -88,6 +89,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
         final FilePath[] roots = filterDescindingFiles(filterRoots(filePaths, context), project);
+        if (roots.length == 0) {
+          return;
+        }
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
@@ -291,6 +295,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return false;
   }
 
+  @NotNull
   private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<FilePath>();
     for (FilePath file : roots) {
@@ -301,13 +306,15 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           if (updateEnvironment != null) {
             result.add(file);
           }
-        } else {
+        }
+        else {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null && virtualFile.isDirectory()) {
-            final VirtualFile[] children = virtualFile.getChildren();
-            if (children != null) {
-              final FilePath[] childrenAsPaths = createFilePathsOn(children);
-              result.addAll(Arrays.asList(filterRoots(childrenAsPaths, vcsContext)));
+            final VirtualFile[] vcsRoots = ProjectLevelVcsManager.getInstance(vcsContext.getProject()).getAllVersionedRoots();
+            for(VirtualFile vcsRoot: vcsRoots) {
+              if (VfsUtil.isAncestor(virtualFile, vcsRoot, false)) {
+                result.add(file);
+              }
             }
           }
         }
@@ -349,7 +356,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       if (filterRootsBeforeAction()) {
         FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
-        if ( roots == null || roots.length == 0) {
+        if (roots.length == 0) {
           presentation.setVisible(false);
           presentation.setEnabled(false);
         }

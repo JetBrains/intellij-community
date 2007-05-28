@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -54,7 +55,8 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
     return result;
   }
 
-  protected static FilePath[] filterDescindingFiles(FilePath[] roots, Project project) {
+  @NotNull
+  protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     List<FilePath> result = new ArrayList<FilePath>(Arrays.asList(roots));
     for (FilePath first : roots) {
