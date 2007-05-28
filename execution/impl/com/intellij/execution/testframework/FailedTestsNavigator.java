@@ -30,7 +30,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     myModel.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose(final TestFrameworkRunningModel model) {
+      public void onDispose() {
         myModel = null;
       }
     });

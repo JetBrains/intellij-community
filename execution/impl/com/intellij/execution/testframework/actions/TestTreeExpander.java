@@ -12,7 +12,7 @@ public class TestTreeExpander implements TreeExpander {
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     model.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose(final TestFrameworkRunningModel model) {
+      public void onDispose() {
         myModel = null;
       }
     });

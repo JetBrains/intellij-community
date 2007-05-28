@@ -41,7 +41,7 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myModel = model;
     myModel.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose(final TestFrameworkRunningModel model) {
+      public void onDispose() {
         setModel(null);
         myModel = null;
       }

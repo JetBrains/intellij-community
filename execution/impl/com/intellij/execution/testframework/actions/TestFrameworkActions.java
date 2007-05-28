@@ -34,7 +34,7 @@ public class TestFrameworkActions {
       properties.addListener(property, propertyListener);
     }
     model.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose(final TestFrameworkRunningModel model) {
+      public void onDispose() {
         properties.removeListener(property, propertyListener);
       }
     });
