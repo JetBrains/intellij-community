@@ -33,13 +33,17 @@ public class DiffHyperlink implements Printable {
       expectedContent = DiffContent.fromFile(project, vFile);
       expectedTitle += " (" + vFile.getPresentableUrl() + ")";
     } else expectedContent = new SimpleContent(myExpected);
-    final SimpleDiffRequest diffData = new SimpleDiffRequest(project, ExecutionBundle.message("strings.equal.failed.dialog.title"));
+    final SimpleDiffRequest diffData = new SimpleDiffRequest(project, getTitle());
     diffData.setContents(expectedContent, new SimpleContent(myActual));
     diffData.setContentTitles(expectedTitle, ExecutionBundle.message("diff.content.actual.title"));
     diffData.addHint(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG);
     diffData.addHint(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES);
     diffData.setGroupKey("#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
     DiffManager.getInstance().getIdeaDiffTool().show(diffData);
+  }
+
+  protected String getTitle() {
+    return ExecutionBundle.message("strings.equal.failed.dialog.title");
   }
 
   public DiffHyperlink(final String expected, final String actual, final String filePath) {
