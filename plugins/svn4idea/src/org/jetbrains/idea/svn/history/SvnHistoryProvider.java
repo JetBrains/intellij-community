@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.util.ui.ColumnInfo;
@@ -75,14 +76,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    final List<VcsFileRevision> revisions = getRevisionsList(filePath);
+    final FilePath committedPath = ChangesUtil.getCommittedPath(myVcs.getProject(), filePath);
+    final List<VcsFileRevision> revisions = getRevisionsList(committedPath);
     if (revisions == null) {
       return null;
     }
     return new VcsHistorySession(revisions) {
       @Nullable
       public VcsRevisionNumber calcCurrentRevisionNumber() {
-        return getCurrentRevision(filePath);
+        return getCurrentRevision(committedPath);
       }
 
       @Override

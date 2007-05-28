@@ -382,10 +382,15 @@ public class SvnVcs extends AbstractVcs {
         status = createStatusClient().doStatus(file, false);
         cacheStatus(path.getVirtualFile(), status);
       }
-      return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_ADDED ||
-                                 status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
-                                 status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
-                                 status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED);
+      if (status != null) {
+        final SVNStatusType statusType = status.getContentsStatus();
+        if (statusType == SVNStatusType.STATUS_ADDED) {
+          return status.isCopied();
+        }
+        return !(status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
+                 status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
+                 status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED);
+      }
     }
     catch (SVNException e) {
       //
