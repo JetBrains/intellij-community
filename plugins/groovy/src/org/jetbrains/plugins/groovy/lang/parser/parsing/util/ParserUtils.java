@@ -98,7 +98,6 @@ public abstract class ParserUtils {
     return false;
   }
 
-
   /**
    * Checks, that following element sequence is like given
    *
@@ -107,17 +106,13 @@ public abstract class ParserUtils {
    * @return true if following sequence is like a given
    */
   public static boolean lookAhead(PsiBuilder builder, IElementType... elems) {
+    if (!elems[0].equals(builder.getTokenType())) return false;
 
-    if (elems.length == 0) {
-      return false;
-    }
-
-    if (elems.length == 1) {
-      return elems[0].equals(builder.getTokenType());
-    }
+    if (elems.length == 1) return true;
 
     Marker rb = builder.mark();
-    int i = 0;
+    builder.advanceLexer();
+    int i = 1;
     while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;

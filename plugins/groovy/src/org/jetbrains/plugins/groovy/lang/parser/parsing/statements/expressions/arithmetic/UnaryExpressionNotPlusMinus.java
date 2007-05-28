@@ -32,7 +32,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
     GroovyElementType result;
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.lookAhead(builder, mLPAREN)) {
+    if (builder.getTokenType() == mLPAREN) {
       if (!parseTypeCast(builder).equals(WRONGWAY)) {
         result = UnaryExpression.parse(builder);
         if (!result.equals(WRONGWAY)) {

@@ -45,9 +45,9 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return SWITCH_STATEMENT;
     }
-    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)) {
-      ParserUtils.getToken(builder, mNLS);
-    }
+
+    ParserUtils.getToken(builder, mNLS);
+
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
         builder.advanceLexer();
@@ -101,7 +101,7 @@ public class SwitchStatement implements GroovyElementTypes {
     while (kCASE.equals(builder.getTokenType()) ||
         kDEFAULT.equals(builder.getTokenType())) {
       parseCaseLabel(builder);
-      if (ParserUtils.lookAhead(builder, mRCURLY) ||
+      if (builder.getTokenType() == mRCURLY ||
           ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
@@ -132,8 +132,8 @@ public class SwitchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);
     ParserUtils.getToken(builder, mNLS);
-    if (ParserUtils.lookAhead(builder, kCASE) ||
-        ParserUtils.lookAhead(builder, kDEFAULT)) {
+    if (builder.getTokenType() == kCASE ||
+        builder.getTokenType() == kDEFAULT) {
       parseCaseLabel(builder);
     }
   }

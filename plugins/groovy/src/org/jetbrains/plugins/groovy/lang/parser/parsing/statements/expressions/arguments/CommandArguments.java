@@ -32,7 +32,7 @@ public class CommandArguments implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = ExpressionStatement.argParse(builder);
     if (!result.equals(WRONGWAY)) {
-      while (ParserUtils.lookAhead(builder, mCOMMA) && !result.equals(WRONGWAY)) {
+      while (builder.getTokenType() == mCOMMA && !result.equals(WRONGWAY)) {
         ParserUtils.getToken(builder, mCOMMA);
         ParserUtils.getToken(builder, mNLS);
         result = ExpressionStatement.argParse(builder);

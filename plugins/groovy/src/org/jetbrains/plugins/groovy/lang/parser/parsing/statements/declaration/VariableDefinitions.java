@@ -16,17 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -49,13 +46,13 @@ public class VariableDefinitions implements GroovyElementTypes {
   }
 
   public static GroovyElementType parseDefinitions(PsiBuilder builder, boolean isInClass, boolean isEnumConstantMember, boolean isAnnotationMember) {
-    if (!(ParserUtils.lookAhead(builder, mIDENT) || ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL))) {
+    if (!(builder.getTokenType() == mIDENT || builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL)) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
     }
 
     PsiBuilder.Marker varMarker = builder.mark();
-    boolean isStringName = ParserUtils.lookAhead(builder, mSTRING_LITERAL) || ParserUtils.lookAhead(builder, mGSTRING_LITERAL);
+    boolean isStringName = builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL;
 
     if (isAnnotationMember && isStringName) {
       builder.error(GroovyBundle.message("string.name.unexpected"));
@@ -100,7 +97,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       //if there is no OpenOrClosableBlock, nls haven'to be eaten
       PsiBuilder.Marker nlsMarker = builder.mark();
-      if (mNLS.equals(NlsWarn.parse(builder)) && !ParserUtils.lookAhead(builder, mLPAREN)) {
+      if (mNLS.equals(NlsWarn.parse(builder)) && !(builder.getTokenType() == mLPAREN)) {
         nlsMarker.rollbackTo();
       } else {
         nlsMarker.drop();

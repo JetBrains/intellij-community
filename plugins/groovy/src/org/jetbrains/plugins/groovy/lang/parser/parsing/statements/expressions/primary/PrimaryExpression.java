@@ -139,15 +139,15 @@ public class PrimaryExpression implements GroovyElementTypes {
       return NEW_EXPRESSION;
     }
 
-    if (ParserUtils.lookAhead(builder, mLPAREN) ||
+    if (builder.getTokenType() == mLPAREN ||
             ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
 
       ParserUtils.getToken(builder, mNLS);
       methodCallArgsParse(builder);
-      if (ParserUtils.lookAhead(builder, mLCURLY)) {
+      if (builder.getTokenType() == mLCURLY) {
         OpenOrClosableBlock.parseClosableBlock(builder);
       }
-    } else if (ParserUtils.lookAhead(builder, mLBRACK)) {
+    } else if (builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker forArray = builder.mark();
       while (ParserUtils.getToken(builder, mLBRACK)) {
         ParserUtils.getToken(builder, mNLS);

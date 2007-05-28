@@ -59,8 +59,8 @@ public class ParameterDeclaration implements GroovyElementTypes {
       if (mASSIGN.equals(builder.getTokenType())) {
         VariableInitializer.parse(builder);
       }
-      if (ParserUtils.lookAhead(builder, mCOMMA) ||
-              ParserUtils.lookAhead(builder, ending) ||
+      if (builder.getTokenType() == mCOMMA ||
+          builder.getTokenType() == ending ||
               ParserUtils.lookAhead(builder, mNLS, ending)) {
         pdMarker.done(PARAMETER);
         return PARAMETER;

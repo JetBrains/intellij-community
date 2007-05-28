@@ -86,7 +86,7 @@ public class DeclarationStart implements GroovyElementTypes {
     //@IDENT
     if (ParserUtils.getToken(builder, mAT)) {
       declStartMarker.rollbackTo();
-      return ParserUtils.lookAhead(builder, mIDENT);
+      return builder.getTokenType() == mIDENT;
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
@@ -115,14 +115,14 @@ public class DeclarationStart implements GroovyElementTypes {
 
   //todo: check it
   private static boolean parseNextTokenInDeclaration(PsiBuilder builder) {
-    return ParserUtils.lookAhead(builder, mIDENT) ||
+    return builder.getTokenType() == mIDENT ||
             TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
             TokenSets.MODIFIERS.contains(builder.getTokenType()) ||
-            ParserUtils.lookAhead(builder, kDEF) ||
-            ParserUtils.lookAhead(builder, mAT) ||
-            ParserUtils.lookAhead(builder, mASSIGN) ||
-            ParserUtils.lookAhead(builder, mGSTRING_LITERAL) ||
-            ParserUtils.lookAhead(builder, mSTRING_LITERAL);
+        builder.getTokenType() == kDEF ||
+        builder.getTokenType() == mAT ||
+        builder.getTokenType() == mASSIGN ||
+        builder.getTokenType() == mGSTRING_LITERAL ||
+        builder.getTokenType() == mSTRING_LITERAL;
   }
 
   private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder) {

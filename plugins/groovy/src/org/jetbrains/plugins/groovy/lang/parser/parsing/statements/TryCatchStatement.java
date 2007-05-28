@@ -47,23 +47,19 @@ public class TryCatchStatement implements GroovyElementTypes {
     }
     warn.drop();
 
-    if (!ParserUtils.lookAhead(builder, kCATCH) &&
-            !ParserUtils.lookAhead(builder, kFINALLY) &&
-            !ParserUtils.lookAhead(builder, mNLS, kCATCH) &&
-            !ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
+    ParserUtils.getToken(builder, mNLS);
+    if (!(builder.getTokenType() == kCATCH) &&
+        !(builder.getTokenType() == kFINALLY)) {
       builder.error(GroovyBundle.message("catch.or.finally.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
       return TRY_BLOCK_STATEMENT;
     }
-    ParserUtils.getToken(builder, mNLS);
 
     if (kCATCH.equals(builder.getTokenType())) {
       parseHandlers(builder);
     }
 
-    if (ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
-      ParserUtils.getToken(builder, mNLS);
-    }
+    ParserUtils.getToken(builder, mNLS);
     if (kFINALLY.equals(builder.getTokenType())) {
       PsiBuilder.Marker finallyMarker = builder.mark();
       warn = builder.mark();
@@ -105,9 +101,8 @@ public class TryCatchStatement implements GroovyElementTypes {
 //      return;
     }
 
-    if (ParserUtils.lookAhead(builder, mNLS, mRPAREN)) {
-      ParserUtils.getToken(builder, mNLS);
-    }
+    ParserUtils.getToken(builder, mNLS);
+
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       catchMarker.done(CATCH_CLAUSE);
       return;
@@ -129,7 +124,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     catchMarker.done(CATCH_CLAUSE);
 
     if (ParserUtils.lookAhead(builder, mNLS, kCATCH) ||
-            ParserUtils.lookAhead(builder, kCATCH)) {
+        builder.getTokenType() == kCATCH) {
       ParserUtils.getToken(builder, mNLS);
       parseHandlers(builder);
     }
