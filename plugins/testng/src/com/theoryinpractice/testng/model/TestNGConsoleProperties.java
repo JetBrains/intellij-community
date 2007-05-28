@@ -12,15 +12,9 @@ public class TestNGConsoleProperties extends TestConsoleProperties {
 
     public TestNGConsoleProperties(TestNGConfiguration config)
     {
-        this(config, new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()));
+      super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject());
+      myConfiguration = config;
     }
-
-    public TestNGConsoleProperties(TestNGConfiguration config, Storage storage)
-    {
-        super(storage, config.getProject());
-        myConfiguration = config;
-    }
-
 
     public TestNGConfiguration getConfiguration()
     {
