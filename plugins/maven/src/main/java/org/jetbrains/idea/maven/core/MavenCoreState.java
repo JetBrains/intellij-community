@@ -20,7 +20,7 @@ public class MavenCoreState implements Cloneable {
   private boolean produceExceptionErrorMessages = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
-  private int outputLevel = MavenExecutionRequest.LOGGING_LEVEL_DEBUG;
+  private int outputLevel = MavenExecutionRequest.LOGGING_LEVEL_INFO;
   @NotNull private String checksumPolicy = MavenExecutionRequest.CHECKSUM_POLICY_FAIL;
   @NotNull private String failureBehavior = MavenExecutionRequest.REACTOR_FAIL_FAST;
   private boolean pluginUpdatePolicy = false;
