@@ -267,6 +267,13 @@
         <separator/>
         <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
         <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.ShowBookmarksAction"/>
+        <separator/>
+        <reference ref="EditorCompleteStatement"/>
+        <reference ref="EditorJoinLines"/>
+        <reference ref="EditorDuplicate"/>
+        <reference ref="EditorIndentSelection"/>
+        <reference ref="EditorUnindentSelection"/>
+        <reference ref="EditorToggleCase"/>
       </group>
 
       <!-- Search -->

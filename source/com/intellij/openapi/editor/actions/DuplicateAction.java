@@ -9,6 +9,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -54,6 +55,17 @@ public class DuplicateAction extends EditorAction {
       }
       document.insertString(end, s);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+    }
+  }
+
+  @Override
+  public void update(final Editor editor, final Presentation presentation, final DataContext dataContext) {
+    super.update(editor, presentation, dataContext);
+    if (editor.getSelectionModel().hasSelection()) {
+      presentation.setText(EditorBundle.message("action.duplicate.block"), true);
+    }
+    else {
+      presentation.setText(EditorBundle.message("action.duplicate.line"), true);
     }
   }
 }
