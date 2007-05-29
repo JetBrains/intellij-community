@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -157,13 +159,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
     Editor editor = UIUtil.createEditor(doc, searchContext.getProject(), true, true);
 
-    editor.getContentComponent().addKeyListener(
-      new KeyAdapter() {
-        public void keyTyped(KeyEvent e) {
-          initiateValidation();
-        }
+    editor.getDocument().addDocumentListener(new DocumentListener() {
+      public void beforeDocumentChange(final DocumentEvent event) {}
+
+      public void documentChanged(final DocumentEvent event) {
+        initiateValidation();
       }
-    );
+    });
+
     return editor;
   }
 
