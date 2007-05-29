@@ -49,7 +49,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return new IFileElementType(Language.findInstance(GroovyLanguage.class));
+    return GroovyElementTypes.FILE;
   }
 
   @NotNull

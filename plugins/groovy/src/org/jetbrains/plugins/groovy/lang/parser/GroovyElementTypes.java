@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -36,7 +38,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType LITERAL = new GroovyElementType("Literal");
 
   // Top-level elements
-  GroovyElementType FILE = new GroovyElementType("Groovy file");
+  IFileElementType FILE = new IFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+
   GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
 
   //Packaging
