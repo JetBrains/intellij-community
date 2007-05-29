@@ -525,6 +525,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (document != null) getTextBlock(document, file).clear();
   }
 
+
+  public void clearUncommitedDocuments() {
+    myUncommittedDocuments.clear();
+  }
+
   public boolean isDocumentCommitted(Document doc) {
     return myIsCommitInProgress || !myUncommittedDocuments.contains(doc);
   }

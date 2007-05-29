@@ -92,6 +92,15 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
     myCaretMulticaster.addListener(listener);
   }
 
+  public void addCaretListener(final CaretListener listener, final Disposable parentDisposable) {
+    addCaretListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeCaretListener(listener);
+      }
+    });
+  }
+
   public void removeCaretListener(CaretListener listener) {
     myCaretMulticaster.removeListener(listener);
   }
