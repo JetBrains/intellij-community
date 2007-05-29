@@ -119,9 +119,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void initComponent() {
+    myFileStatusMap.markAllFilesDirty();
   }
 
   public void disposeComponent() {
+    myFileStatusMap.markAllFilesDirty();
   }
 
   public void projectOpened() {
@@ -131,6 +133,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     reloadScopes();
 
     myInitialized = true;
+    myFileStatusMap.markAllFilesDirty();
   }
   public void projectClosed() {
     myFileStatusMap.markAllFilesDirty();
@@ -188,18 +191,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void updateVisibleHighlighters(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
-    if (highlighter == null) return;
-    final HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
-    //setLastIntentionHint(null);
-
-    myPassExecutorService.renewVisiblePasses(textEditor, highlightingPasses, myUpdateVisibleProgress);
-  }
-  public void updateVisibleHighlightersSynchronously(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
