@@ -267,8 +267,15 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (prefixLength < commonPrefixLength) {
       final CharSequence sequence = editor.getDocument().getCharsSequence();
+      final int sequenceLength = sequence.length();
 
-      for(; replacedLength < commonPrefixLength && sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength);++replacedLength) {
+      for(;
+          replacedLength < commonPrefixLength &&
+          lookupStart + replacedLength < sequenceLength &&
+          sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength)
+          ;
+          ++replacedLength
+      ) {
       }
     }
     
