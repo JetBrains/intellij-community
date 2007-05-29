@@ -39,6 +39,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +60,9 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();
           if (actionInfo != null) {
-            ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(), VcsBundle.message("action.display.name.update"), actionInfo);
+            ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
+                                                                                    VcsBundle.message("action.display.name.update"), actionInfo);
+            CommittedChangesCache.getInstance(myProject).refreshIncomingChangesAsync();
           }
           myUpdateInfo = null;
         }
