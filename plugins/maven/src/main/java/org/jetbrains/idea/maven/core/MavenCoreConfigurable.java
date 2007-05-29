@@ -130,7 +130,7 @@ public class MavenCoreConfigurable implements Configurable {
     data.setOutputLevelString(ComboBoxUtil.getSelectedString(comboboxModelOutputLevel));
     data.setChecksumPolicy(ComboBoxUtil.getSelectedString(comboboxModelChecksumPolicy));
     data.setFailureBehavior(ComboBoxUtil.getSelectedString(comboboxModelMultiprojectBuildFailPolicy));
-    data.setPluginUpdatePolicyString(ComboBoxUtil.getSelectedString(comboboxModelPluginUpdatePolicy));
+    data.setPluginUpdatePolicy(Boolean.valueOf(ComboBoxUtil.getSelectedString(comboboxModelPluginUpdatePolicy)).booleanValue());
   }
 
   private void getData(MavenCoreState data) {
@@ -144,7 +144,7 @@ public class MavenCoreConfigurable implements Configurable {
     ComboBoxUtil.select(comboboxModelOutputLevel, data.getOutputLevelString());
     ComboBoxUtil.select(comboboxModelChecksumPolicy, data.getChecksumPolicy());
     ComboBoxUtil.select(comboboxModelMultiprojectBuildFailPolicy, data.getFailureBehavior());
-    ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, data.getPluginUpdatePolicyString());
+    ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, Boolean.toString(data.getPluginUpdatePolicy()));
   }
 
   public void disposeUIResources() {

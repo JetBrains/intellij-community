@@ -23,24 +23,15 @@ public class MavenCoreState implements Cloneable {
   private int outputLevel = MavenExecutionRequest.LOGGING_LEVEL_DEBUG;
   @NotNull private String checksumPolicy = MavenExecutionRequest.CHECKSUM_POLICY_FAIL;
   @NotNull private String failureBehavior = MavenExecutionRequest.REACTOR_FAIL_FAST;
-  @Nullable private Boolean pluginUpdatePolicy;
+  private boolean pluginUpdatePolicy = false;
 
 
-  @Nullable
-  public Boolean getPluginUpdatePolicy() {
+  public boolean getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
   }
 
-  public void setPluginUpdatePolicy(@Nullable Boolean pluginUpdatePolicy) {
+  public void setPluginUpdatePolicy(boolean pluginUpdatePolicy) {
     this.pluginUpdatePolicy = pluginUpdatePolicy;
-  }
-
-  public String getPluginUpdatePolicyString() {
-    return String.valueOf(pluginUpdatePolicy);
-  }
-
-  public void setPluginUpdatePolicyString(@Nullable String pluginUpdatePolicy) {
-    this.pluginUpdatePolicy = String.valueOf(pluginUpdatePolicy).equals("null") ? null : Boolean.valueOf(pluginUpdatePolicy);
   }
 
   @NotNull
@@ -171,6 +162,7 @@ public class MavenCoreState implements Cloneable {
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
+    if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (produceExceptionErrorMessages != that.produceExceptionErrorMessages) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;
@@ -178,8 +170,6 @@ public class MavenCoreState implements Cloneable {
     if (!failureBehavior.equals(that.failureBehavior)) return false;
     if (!localRepository.equals(that.localRepository)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
-    //noinspection RedundantIfStatement
-    if (pluginUpdatePolicy != null ? !pluginUpdatePolicy.equals(that.pluginUpdatePolicy) : that.pluginUpdatePolicy != null) return false;
 
     return true;
   }
@@ -195,7 +185,7 @@ public class MavenCoreState implements Cloneable {
     result = 31 * result + outputLevel;
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
-    result = 31 * result + (pluginUpdatePolicy != null ? pluginUpdatePolicy.hashCode() : 0);
+    result = 31 * result + (pluginUpdatePolicy ? 1 : 0);
     return result;
   }
 
