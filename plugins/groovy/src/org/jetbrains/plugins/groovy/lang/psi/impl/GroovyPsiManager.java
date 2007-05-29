@@ -16,25 +16,30 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 public class GroovyPsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
@@ -44,6 +49,8 @@ public class GroovyPsiManager implements ProjectComponent {
   private MessageBusConnection myRootConnection;
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   private static final String SWING_BUILDER_QNAME = "groovy.swing.SwingBuilder";
+
+  private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -60,6 +67,12 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void initComponent() {
+    ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
+      public void run() {
+        myCalculatedTypes.clear();
+      }
+    });
+
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         fillDefaultGroovyMethods();
@@ -218,5 +231,20 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public static GroovyPsiManager getInstance(Project project) {
     return project.getComponent(GroovyPsiManager.class);
+  }
+
+  public <T extends GroovyPsiElement> PsiType getType(T element, Function<T, PsiType> calculator) {
+    PsiType type = myCalculatedTypes.get(element);
+    if (type == null) {
+      type = calculator.fun(element);
+      if (type == null) {
+        type = PsiType.NULL;
+      }
+      type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
+    }
+    if (!type.isValid()) {
+      LOG.error("Type is invalid: " + type);
+    }
+    return type == PsiType.NULL ? null : type;
   }
 }

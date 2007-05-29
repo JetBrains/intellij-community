@@ -54,6 +54,7 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
         buffer.append(parameter.getName());
       }
       buffer.append(")");
+      return buffer.toString();
     }
 
     //todo

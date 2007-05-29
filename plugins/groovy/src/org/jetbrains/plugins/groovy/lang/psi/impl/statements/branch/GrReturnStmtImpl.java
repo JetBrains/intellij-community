@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -30,5 +31,9 @@ public class GrReturnStmtImpl extends GroovyPsiElementImpl implements GrReturnSt
 
   public String toString() {
     return "RETURN statement";
+  }
+
+  public GrExpression getReturnValue() {
+    return findChildByClass(GrExpression.class);
   }
 }

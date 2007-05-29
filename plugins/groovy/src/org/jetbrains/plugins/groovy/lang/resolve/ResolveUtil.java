@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -34,6 +35,8 @@ import java.util.Set;
  * @author ven
  */
 public class ResolveUtil {
+  public static final Key<Boolean> IS_BEING_RESOLVED = Key.create("IS_BEING_RESOLVED");
+
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
     PsiElement lastParent = null;
     while (place != null) {

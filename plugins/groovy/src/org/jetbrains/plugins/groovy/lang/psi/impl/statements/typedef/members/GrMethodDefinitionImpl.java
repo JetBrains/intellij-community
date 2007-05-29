@@ -17,36 +17,39 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.PomMethod;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.JavaIdentifier;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -97,18 +100,23 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return true;
   }
 
-/*
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitMethod(this);
+  private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
+
+    public PsiType fun(GrMethod method) {
+      GrTypeElement element = method.getReturnTypeElementGroovy();
+      if (element == null) {
+        return MethodTypeInferencer.inferMethodReturnType(method);
+      }
+      return element.getType();
+    }
   }
-*/
+
+  private static MyTypeCalculator ourTypesCalculator = new MyTypeCalculator();
 
   //PsiMethod implementation
   @Nullable
   public PsiType getReturnType() {
-    GrTypeElement element = getReturnTypeElementGroovy();
-    if (element == null) return null;
-    return element.getType();
+    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
   }
 
   @Nullable

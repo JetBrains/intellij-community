@@ -162,6 +162,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     private void processQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
       PsiType qualifierType = qualifier.getType();
+      if (qualifierType instanceof PsiIntersectionType) {
+        for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
+          processClassQualifierType(refExpr, processor, conjunct);
+        }
+      } else {
+        processClassQualifierType(refExpr, processor, qualifierType);
+      }
+    }
+
+    private void processClassQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType qualifierType) {
       if (qualifierType instanceof PsiClassType) {
         PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
         if (qualifierClass != null) {
@@ -303,6 +313,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private void getVariantsFromQualifier(ResolverProcessor processor, GrExpression qualifier) {
     PsiType qualifierType = qualifier.getType();
+    if (qualifierType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
+        getVaiantsFromClassQualifier(processor, conjunct);
+       }
+    } else {
+      getVaiantsFromClassQualifier(processor, qualifierType);
+    }
+  }
+
+  private void getVaiantsFromClassQualifier(ResolverProcessor processor, PsiType qualifierType) {
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
       if (qualifierClass != null) {

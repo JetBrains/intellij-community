@@ -22,10 +22,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.EnumSet;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,14 +43,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     } else if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = PsiUtil.isLValue(myPlace);
-      if (PropertyUtil.isSimplePropertyGetter(method) && !lValue) {
+      if (isSimplePropertyGetter(method) && !lValue) {
         String propName = PropertyUtil.getPropertyNameByGetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;
         }
-      } else if (PropertyUtil.isSimplePropertySetter(method) && lValue) {
+      } else if (isSimplePropertySetter(method) && lValue) {
         String propName = PropertyUtil.getPropertyNameBySetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
@@ -73,5 +70,42 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     }
 
     return super.getHint(hintClass);
+  }
+
+  //do not check return type
+  private static boolean isSimplePropertyGetter(PsiMethod method) {
+    if (method == null) return false;
+
+    if (method.isConstructor()) return false;
+
+    String methodName = method.getName();
+    if (methodName.startsWith("get") && methodName.length() > "get".length()) {
+      if (Character.isLowerCase(methodName.charAt("get".length()))
+          && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
+        return false;
+      }
+      return method.getParameterList().getParametersCount() == 0;
+    }
+    else if (methodName.startsWith("is")) {
+      return method.getParameterList().getParametersCount() == 0;
+    }
+    return false;
+  }
+
+  private static boolean isSimplePropertySetter(PsiMethod method) {
+    if (method == null) return false;
+
+    if (method.isConstructor()) return false;
+
+    String methodName = method.getName();
+
+    if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
+    if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
+
+    if (method.getParameterList().getParametersCount() != 1) {
+      return false;
+    }
+
+    return true;
   }
 }
