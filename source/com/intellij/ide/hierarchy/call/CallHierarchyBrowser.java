@@ -56,7 +56,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   private Content myContent;
   private final Project myProject;
   private final Map<String,HierarchyTreeBuilder> myBuilders = new HashMap<String, HierarchyTreeBuilder>();
-  private final Map<Object,JTree> myType2TreeMap = new HashMap<Object, JTree>();
+  private final Map<String,JTree> myType2TreeMap = new HashMap<String, JTree>();
   private final Map<String,String> myType2ScopeMap = new HashMap<String, String>();
 
   private final MyRefreshAction myRefreshAction = new MyRefreshAction();
@@ -71,7 +71,32 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   private static final String CALL_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.call.CallHierarchyBrowser";
   private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private static final CallHierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new CallHierarchyNodeDescriptor[0];
-  private final HashMap<Object, OccurenceNavigator> myOccurenceNavigators = new HashMap<Object, OccurenceNavigator>();
+  private final HashMap<String, OccurenceNavigator> myOccurenceNavigators = new HashMap<String, OccurenceNavigator>();
+  private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
+    public boolean hasNextOccurence() {
+      return false;
+    }
+
+    public boolean hasPreviousOccurence() {
+      return false;
+    }
+
+    public OccurenceInfo goNextOccurence() {
+      return null;
+    }
+
+    public OccurenceInfo goPreviousOccurence() {
+      return null;
+    }
+
+    public String getNextOccurenceActionName() {
+      return "";
+    }
+
+    public String getPreviousOccurenceActionName() {
+      return "";
+    }
+  };
 
   public CallHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
@@ -106,7 +131,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     myType2TreeMap.put(CalleeMethodsTreeStructure.TYPE, createTree());
     myType2TreeMap.put(CallerMethodsTreeStructure.TYPE, createTree());
 
-    for (Object key : myType2TreeMap.keySet()) {
+    for (String key : myType2TreeMap.keySet()) {
       final JTree tree = myType2TreeMap.get(key);
       myOccurenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
         @Nullable
@@ -259,27 +284,35 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   }
 
   public boolean hasNextOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewType).hasNextOccurence();
+    return getOccurrenceNavigator().hasNextOccurence();
+  }
+
+  private OccurenceNavigator getOccurrenceNavigator() {
+    if (myCurrentViewType == null) {
+      return EMPTY_NAVIGATOR;
+    }
+    final OccurenceNavigator navigator = myOccurenceNavigators.get(myCurrentViewType);
+    return navigator != null? navigator : EMPTY_NAVIGATOR;
   }
 
   public boolean hasPreviousOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewType).hasPreviousOccurence();
+    return getOccurrenceNavigator().hasPreviousOccurence();
   }
 
   public OccurenceInfo goNextOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewType).goNextOccurence();
+    return getOccurrenceNavigator().goNextOccurence();
   }
 
   public OccurenceInfo goPreviousOccurence() {
-    return myOccurenceNavigators.get(myCurrentViewType).goPreviousOccurence();
+    return getOccurrenceNavigator().goPreviousOccurence();
   }
 
   public String getNextOccurenceActionName() {
-    return myOccurenceNavigators.get(myCurrentViewType).getNextOccurenceActionName();
+    return getOccurrenceNavigator().getNextOccurenceActionName();
   }
 
   public String getPreviousOccurenceActionName() {
-    return myOccurenceNavigators.get(myCurrentViewType).getPreviousOccurenceActionName();
+    return getOccurrenceNavigator().getPreviousOccurenceActionName();
   }
 
   private abstract class ChangeViewTypeActionBase extends ToggleAction {

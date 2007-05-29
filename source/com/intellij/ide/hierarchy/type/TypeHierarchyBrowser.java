@@ -56,7 +56,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   private Content myContent;
   private final Project myProject;
   private final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
-  private final Hashtable<Object, JTree> myTrees = new Hashtable<Object, JTree>();
+  private final Hashtable<String, JTree> myTrees = new Hashtable<String, JTree>();
 
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -73,8 +73,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
   private static final String TYPE_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.TypeHierarchyBrowser";
   private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
-  private final HashMap<Object, OccurenceNavigator> myOccurenceNavigators = new HashMap<Object, OccurenceNavigator>();
-  private final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
+  private final HashMap<String, OccurenceNavigator> myOccurenceNavigators = new HashMap<String, OccurenceNavigator>();
+  private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     public boolean hasNextOccurence() {
       return false;
     }
@@ -123,9 +123,9 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     myTrees.put(TypeHierarchyTreeStructure.TYPE, createTree());
     myTrees.put(SupertypesHierarchyTreeStructure.TYPE, createTree());
     myTrees.put(SubtypesHierarchyTreeStructure.TYPE, createTree());
-    final Enumeration<Object> keys = myTrees.keys();
+    final Enumeration<String> keys = myTrees.keys();
     while (keys.hasMoreElements()) {
-      final Object key = keys.nextElement();
+      final String key = keys.nextElement();
       final JTree tree = myTrees.get(key);
       myOccurenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Nullable
