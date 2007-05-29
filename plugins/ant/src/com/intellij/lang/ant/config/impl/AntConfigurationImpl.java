@@ -146,7 +146,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               try {
                 result[0] = addBuildFileImpl(file);
                 updateRegisteredActions();
-                myPsiManager.getCachedValuesManager().releaseOutdatedValues();
               }
               catch (AntNoFileException e) {
                 ex[0] = e;
@@ -176,7 +175,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     myModificationCount++;
     removeBuildFileImpl(file);
     updateRegisteredActions();
-    myPsiManager.getCachedValuesManager().releaseOutdatedValues();
   }
 
   public void addAntConfigurationListener(final AntConfigurationListener listener) {
@@ -260,7 +258,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public void updateBuildFile(final AntBuildFile buildFile) {
     myModificationCount++;
-    myPsiManager.getCachedValuesManager().releaseOutdatedValues();
     myEventDispatcher.getMulticaster().buildFileChanged(buildFile);
     updateRegisteredActions();
   }

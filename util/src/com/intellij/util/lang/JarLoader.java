@@ -1,7 +1,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.TimedReference;
+import com.intellij.util.TimedComputable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ class JarLoader extends Loader {
   private static boolean myDebugTime = false;
 
   //private SoftReference<ZipFile> myZipFileRef;
-  private final TimedReference<ZipFile> myZipFileRef = new TimedReference<ZipFile>(null) {
+  private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
     @NotNull
     protected ZipFile calc() {
       try {

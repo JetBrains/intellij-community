@@ -72,7 +72,6 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
 
     if (!changedInsideCodeBlock) myOutOfCodeBlockModificationCount++;
 
-    myManager.getCachedValuesManager().releaseOutdatedValues();
   }
 
   public boolean isInsideCodeBlock(PsiElement element) {

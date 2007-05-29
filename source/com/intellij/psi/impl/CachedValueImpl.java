@@ -10,7 +10,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,8 +20,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
+import com.intellij.util.TimedReference;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
@@ -34,11 +37,11 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   
   private final PsiManager myManager;
   private final CachedValueProvider<T> myProvider;
-  private volatile boolean myComputed = false;
   private final boolean myTrackValue;
-  private volatile SoftReference<T> myValue = null;
-  private Object[] myDependencies = null;
-  private long[] myTimeStamps;
+
+  private final TimedReference<Data<T>> myData = new TimedReference<Data<T>>(null);
+
+
   private long myLastPsiTimeStamp = -1;
   private ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
   private Lock r = rw.readLock();
@@ -50,16 +53,21 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     myTrackValue = trackValue;
   }
 
-  public void releaseValueIfOutdated() {
-    w.lock();
+  private static class Data<T> implements Disposable {
+    private final T myValue;
+    private final Object[] myDependencies;
+    private final long[] myTimeStamps;
 
-    try {
-      if (!myComputed || isUpToDate()) return;
-      myValue = null;
-      myComputed = false;
+    public Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+      myValue = value;
+      myDependencies = dependencies;
+      myTimeStamps = timeStamps;
     }
-    finally {
-      w.unlock();
+
+    public void dispose() {
+      if (myValue instanceof Disposable) {
+        Disposer.dispose((Disposable)myValue);
+      }
     }
   }
 
@@ -85,10 +93,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
         CachedValueProvider.Result<T> result = myProvider.compute();
         value = result == null ? null : result.getValue();
-        myValue = new SoftReference<T>(value == null ? (T) NULL : value);
-        computeTimeStamps(result == null ? null : result.getDependencyItems());
 
-        myComputed = true;
+        setValue(value, result);
+
         return value;
       }
       finally {
@@ -99,6 +106,10 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     finally {
       r.unlock();
     }
+  }
+
+  private void setValue(final T value, final CachedValueProvider.Result<T> result) {
+    myData.set(computeData(value == null ? (T) NULL : value, result == null ? null : result.getDependencyItems()));
   }
 
   public boolean hasUpToDateValue() {
@@ -114,9 +125,11 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   @Nullable
   private T getUpToDateOrNull() {
-    if (myComputed) {
-      T value = myValue == null ? null : myValue.get();
-      if (isUpToDate()) {
+    final Data<T> data = myData.get();
+
+    if (data != null) {
+      T value = data.myValue;
+      if (isUpToDate(data)) {
         return value;
       }
       if (value instanceof Disposable) {
@@ -126,45 +139,43 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     return null;
   }
 
-  private boolean isUpToDate() {
-    if (myTimeStamps == null) return true;
+  private boolean isUpToDate(@NotNull Data data) {
+    if (data.myTimeStamps == null) return true;
     if (myManager.isDisposed()) return false;
 
-    for (int i = 0; i < myDependencies.length; i++) {
-      Object dependency = myDependencies[i];
+    for (int i = 0; i < data.myDependencies.length; i++) {
+      Object dependency = data.myDependencies[i];
       if (dependency == null) continue;
-      if (isDependencyOutOfDate(dependency, i)) return false;
+      if (isDependencyOutOfDate(dependency, data.myTimeStamps[i])) return false;
     }
 
     return true;
   }
 
-  private boolean isDependencyOutOfDate(Object dependency, int i) {
+  private boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
     if (dependency instanceof PsiElement &&
         myLastPsiTimeStamp == myManager.getModificationTracker().getModificationCount()) {
       return false;
     }
     final long timeStamp = getTimeStamp(dependency);
-    return timeStamp < 0 || timeStamp != myTimeStamps[i];
+    return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  private void computeTimeStamps(Object[] dependencies) {
+  private Data<T> computeData(T value, Object[] dependencies) {
     if (dependencies == null) {
-      myTimeStamps = null;
-      myDependencies = null;
-      return;
+      return new Data<T>(value, null, null);
     }
 
     TLongArrayList timeStamps = new TLongArrayList();
     List<Object> deps = new ArrayList<Object>();
     collectDependencies(timeStamps, deps, dependencies);
     if (myTrackValue) {
-      collectDependencies(timeStamps, deps, new Object[]{myValue.get()});
+      collectDependencies(timeStamps, deps, new Object[]{value});
     }
 
     myLastPsiTimeStamp = myManager.getModificationTracker().getModificationCount();
-    myTimeStamps = timeStamps.toNativeArray();
-    myDependencies = deps.toArray(new Object[deps.size()]);
+
+    return  new Data<T>(value, deps.toArray(new Object[deps.size()]), timeStamps.toNativeArray());
   }
 
   private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
@@ -229,10 +240,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
     try {
       T value = result.getValue();
-      myValue = new SoftReference<T>(value == null ? (T) NULL : value);
-      computeTimeStamps(result.getDependencyItems());
-
-      myComputed = true;
+      setValue(value, result);
       return value;
     }
     finally {
