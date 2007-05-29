@@ -30,7 +30,6 @@
   <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="CodeInsight.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="CodeInspection.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Refactoring.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>

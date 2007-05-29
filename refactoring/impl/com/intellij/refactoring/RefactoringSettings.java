@@ -1,19 +1,23 @@
-
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class RefactoringSettings implements JDOMExternalizable, ApplicationComponent {
+@State(
+  name = "RefactoringSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.RefactoringSettings");
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
@@ -88,13 +92,7 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
 
   public static RefactoringSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(RefactoringSettings.class);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
+    return ServiceManager.getService(RefactoringSettings.class);
   }
 
   public boolean isToSearchInCommentsForRename(PsiElement element) {
@@ -234,19 +232,6 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     }
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "RefactoringSettings";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
   public boolean isToRenameInheritors(final PsiElement psiElement) {
     return RENAME_INHERITORS;
   }
@@ -261,5 +246,13 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
 
   public void setRenameVariables(final boolean RENAME_VARIABLES) {
     this.RENAME_VARIABLES = RENAME_VARIABLES;
+  }
+
+  public RefactoringSettings getState() {
+    return this;
+  }
+
+  public void loadState(RefactoringSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }
