@@ -371,11 +371,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     final String directory = mapping.getDirectory();
     if (directory.length() == 0) {
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null && VfsUtil.isAncestor(baseDir, file, false)) {
+        return baseDir;
+      }
       final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
       if (contentRoot != null) {
         return contentRoot;
       }
-      return myProject.getBaseDir();
+      return null;
     }
     return LocalFileSystem.getInstance().findFileByPath(directory);
   }
