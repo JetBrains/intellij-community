@@ -177,4 +177,8 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     }
   }
 
+  public boolean needAdditionalConsole() {
+    return true;
+  }
+
 }

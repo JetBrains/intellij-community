@@ -26,7 +26,6 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.CloseAction;
@@ -46,7 +45,6 @@ import com.intellij.ui.content.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
@@ -259,7 +257,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
 
 
-    if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
+    if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()){
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
     }
 

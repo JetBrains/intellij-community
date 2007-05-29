@@ -14,12 +14,11 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -107,7 +106,7 @@ public class RunContentBuilder implements LogConsoleManager {
     if (myComponent == null) {
       final ExecutionConsole console = myExecutionResult.getExecutionConsole();
       if (console != null) {
-        if (myRunProfile instanceof JUnitConfiguration){
+        if (myRunProfile instanceof RunConfigurationBase && !((RunConfigurationBase)myRunProfile).needAdditionalConsole()){
           myComponent = console.getComponent();
         } else {
           if (myComponent == null){
