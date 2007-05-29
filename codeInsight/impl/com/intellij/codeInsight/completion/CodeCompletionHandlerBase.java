@@ -230,6 +230,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     String commonPrefix = null;
     boolean isStrict = false;
 
+    final int prefixLength = prefix.length();
     for (final LookupItem item : items) {
       final String lookupString = item.getLookupString();
       if (!StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
@@ -247,7 +248,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (commonPrefix.length() < lookupString.length()) {
           isStrict = true;
         }
-        if (commonPrefix.length() <= prefix.length()) {
+        if (commonPrefix.length() <= prefixLength) {
           return prefix;
         }
       }
@@ -260,9 +261,18 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     int offset =
       editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    int lookupStart = offset - prefix.length();
+    int lookupStart = offset - prefixLength;
+    int replacedLength = prefixLength;
+    final int commonPrefixLength = commonPrefix.length();
 
-    editor.getDocument().replaceString(lookupStart, lookupStart + prefix.length(), commonPrefix);
+    if (prefixLength < commonPrefixLength) {
+      final CharSequence sequence = editor.getDocument().getCharsSequence();
+
+      for(; replacedLength < commonPrefixLength && sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength);++replacedLength) {
+      }
+    }
+    
+    editor.getDocument().replaceString(lookupStart, lookupStart + replacedLength, commonPrefix);
 
     return commonPrefix;
   }
