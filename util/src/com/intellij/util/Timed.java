@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 abstract class Timed<T> implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Timed");
-  private static final Set<Timed> ourReferences = Collections.synchronizedSet(new HashSet<Timed>());
+  private static final Map<Timed, Boolean> ourReferences = Collections.synchronizedMap(new WeakHashMap<Timed, Boolean>());
 
   int myLastCheckedAccessCount;
   int myAccessCount;
@@ -33,7 +33,7 @@ abstract class Timed<T> implements Disposable {
   }
 
   protected final void poll() {
-    ourReferences.add(this);
+    ourReferences.put(this, Boolean.TRUE);
   }
 
   protected final void remove() {
@@ -50,8 +50,9 @@ abstract class Timed<T> implements Disposable {
     service.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         try {
-          final Timed[] references = ourReferences.toArray(new Timed[ourReferences.size()]);
+          final Timed[] references = ourReferences.keySet().toArray(new Timed[ourReferences.size()]);
           for (Timed timed : references) {
+            if (timed == null) continue;
             synchronized (timed) {
               if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
                 final Object t = timed.myT;
