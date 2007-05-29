@@ -13,23 +13,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
-
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 /**
  * @author ilyas
  */
-public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLabeledStatement {
-  public GrLabeledStatementImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Labeled statement";
-  }
+public interface GrLabeledStatement extends GrStatement{
 }

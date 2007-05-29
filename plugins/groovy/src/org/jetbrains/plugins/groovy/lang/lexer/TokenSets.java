@@ -47,9 +47,21 @@ public abstract class TokenSets implements GroovyTokenTypes {
       mLCURLY
   );
 
+  public static final TokenSet NUMBERS = TokenSet.create(mNUM_INT,
+      mNUM_BIG_DECIMAL,
+      mNUM_BIG_INT,
+      mNUM_DOUBLE,
+      mNUM_FLOAT,
+      mNUM_LONG);
+
 
   public static final TokenSet CONSTANTS = TokenSet.create(
       mNUM_INT,
+      mNUM_BIG_DECIMAL,
+      mNUM_BIG_INT,
+      mNUM_DOUBLE,
+      mNUM_FLOAT,
+      mNUM_LONG,
       kTRUE,
       kFALSE,
       kNULL,

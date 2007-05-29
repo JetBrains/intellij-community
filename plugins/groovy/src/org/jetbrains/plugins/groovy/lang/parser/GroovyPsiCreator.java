@@ -117,11 +117,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CATCH_CLAUSE)) return new GrCatchClauseImpl(node);
     if (elem.equals(FINALLY_CLAUSE)) return new GrFinallyClauseImpl(node);
     if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchroStmtImpl(node);
-    if (elem.equals(USE_STATEMENT)) return new GrUseStatementImpl(node);
     if (elem.equals(SWITCH_STATEMENT)) return new GrSwitchStatementImpl(node);
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
-    if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
       return new GrVariableDeclarationsImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);

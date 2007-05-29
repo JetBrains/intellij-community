@@ -55,7 +55,12 @@ public interface GroovyTokenTypes {
  *  Integers & floats
  * ****************************************************************************************************/
 
-  IElementType mNUM_INT = new GroovyElementType("number");
+  IElementType mNUM_INT = new GroovyElementType("Integer");
+  IElementType mNUM_LONG = new GroovyElementType("Long");
+  IElementType mNUM_BIG_INT = new GroovyElementType("BigInteger");
+  IElementType mNUM_BIG_DECIMAL = new GroovyElementType("BigDecimal");
+  IElementType mNUM_FLOAT = new GroovyElementType("Float");
+  IElementType mNUM_DOUBLE = new GroovyElementType("Double");
 
   /* **************************************************************************************************
  *  Strings & regular expressions

@@ -80,23 +80,41 @@ mML_COMMENT = {C_STYLE_COMMENT} | {DOC_COMMENT}
 mHEX_DIGIT = [0-9A-Fa-f]
 mDIGIT = [0-9]
 mBIG_SUFFIX = g | G
-mFLOAT_SUFFIX = f | F | d | D
+mFLOAT_SUFFIX = f | F
+mLONG_SUFFIX = l | L
+mINT_SUFFIX = i | I
+mDOUBLE_SUFFIX = d | D
 mEXPONENT = (e | E)("+" | "-")?([0-9])+
 
-mNUM_INT = ( 0
- ( (x | X)({mHEX_DIGIT})+
+mNUM_INT_PART =  0
+ ( (x | X){mHEX_DIGIT}+
    | {mDIGIT}+
    | ([0-7])+
  )?
  | {mDIGIT}+
-) ( (l | L)
- | (i | I)
- | {mBIG_SUFFIX}
- | ("." {mDIGIT}+ {mEXPONENT}? ({mFLOAT_SUFFIX}|{mBIG_SUFFIX})? )
- | {mEXPONENT} ({mFLOAT_SUFFIX}|{mBIG_SUFFIX})?
- | {mFLOAT_SUFFIX}
-)?
 
+// Integer
+mNUM_INT = {mNUM_INT_PART} {mINT_SUFFIX}?
+
+// Long
+mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
+
+// BigInteger
+mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
+
+//Float
+mNUM_FLOAT = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mFLOAT_SUFFIX}?)
+ | {mFLOAT_SUFFIX}
+ | {mEXPONENT} {mFLOAT_SUFFIX}? )
+
+// Double
+mNUM_DOUBLE = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mDOUBLE_SUFFIX})
+ | {mDOUBLE_SUFFIX}
+ | {mEXPONENT} {mDOUBLE_SUFFIX})
+
+// Big decimal
+mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX})
+ | {mEXPONENT} {mBIG_SUFFIX} )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
@@ -454,6 +472,11 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mNUM_INT}                                {  return mNUM_INT; }
+{mNUM_BIG_INT}                            {  return mNUM_BIG_INT; }
+{mNUM_BIG_DECIMAL}                        {  return mNUM_BIG_DECIMAL; }
+{mNUM_FLOAT}                              {  return mNUM_FLOAT; }
+{mNUM_DOUBLE}                             {  return mNUM_DOUBLE; }
+{mNUM_LONG}                               {  return mNUM_LONG; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////

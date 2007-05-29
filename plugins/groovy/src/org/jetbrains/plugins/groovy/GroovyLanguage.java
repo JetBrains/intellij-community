@@ -20,6 +20,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.annotation.Annotator;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovySurroundDescriptor;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 
 /**
  * All main properties for Groovy language
@@ -80,6 +82,11 @@ public class GroovyLanguage extends Language {
   @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return GroovyFindUsagesProvider.INSTANCE;
+  }
+
+  @NotNull
+  public RefactoringSupportProvider getRefactoringSupportProvider(){
+    return GroovyRefactoringSupportProvider.INSTANCE;
   }
 
   @Nullable

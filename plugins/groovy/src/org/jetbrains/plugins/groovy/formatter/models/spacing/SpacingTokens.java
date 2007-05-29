@@ -52,7 +52,6 @@ public abstract class SpacingTokens implements GroovyElementTypes {
   protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
 
   protected final static TokenSet BLOCKS = TokenSet.create(OPEN_BLOCK,
-//          CONSTRUCTOR_BODY,
           CLASS_BLOCK,
           ENUM_BLOCK,
           INTERFACE_BLOCK,
