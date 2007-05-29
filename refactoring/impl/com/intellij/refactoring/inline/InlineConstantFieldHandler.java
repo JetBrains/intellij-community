@@ -3,9 +3,11 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -15,6 +17,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
  */
 public class InlineConstantFieldHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
+
+  private InlineConstantFieldHandler() {
+  }
 
   public static void invoke(Project project, Editor editor, PsiField field) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
@@ -31,10 +36,7 @@ public class InlineConstantFieldHandler {
       return;
     }
 
-    PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    final PsiReference[] refs = searchHelper.findReferences(field, GlobalSearchScope.projectScope(project), false);
-
-    if (refs.length == 0){
+    if (ReferencesSearch.search(field, project.getProjectScope(), false).findFirst() == null) {
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
