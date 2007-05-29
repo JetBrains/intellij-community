@@ -412,7 +412,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean fileMatchesMapping(final VirtualFile file, final String path, final VcsDirectoryMapping mapping) {
     if (mapping.getDirectory().length() == 0) {
       final VirtualFile baseDir = myProject.getBaseDir();
-      return VfsUtil.getModuleForFile(myProject, file) != null || (baseDir != null && VfsUtil.isAncestor(baseDir, file, false));
+      if (VfsUtil.getModuleForFile(myProject, file) != null) {
+        return true;
+      }
+      if (baseDir != null && VfsUtil.isAncestor(baseDir, file, false)) {
+        return !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
+      }
     }
     return FileUtil.startsWith(path, mapping.getDirectory());
   }
