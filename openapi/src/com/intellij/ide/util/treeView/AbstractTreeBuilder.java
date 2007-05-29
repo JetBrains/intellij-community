@@ -319,8 +319,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
 
     if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
-      updateInBackground(node, descriptor);
-      return;
+      if (queueBackgroundUpdate(node, descriptor)) return;
     }
 
     Map<Object, Integer> elementToIndexMap = collectElementToIndexMap(descriptor);
@@ -453,15 +452,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return new DefaultMutableTreeNode(childDescr);
   }
 
-  private void updateInBackground(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
-    String text = getLoadingNodeText();
-    for (int i = 0; i < node.getChildCount(); i++) {
-      TreeNode child = node.getChildAt(i);
-      if (isLoadingNode(child) && text.equals(((LoadingNode)child).getUserObject())) {
-        return;
-      }
-    }
-    LoadingNode loadingNode = new LoadingNode(text);
+  private boolean queueBackgroundUpdate(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+    if (isLoadingChildrenFor(node)) return false;
+
+    LoadingNode loadingNode = new LoadingNode(getLoadingNodeText());
     myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
 
     Runnable updateRunnable = new Runnable() {
@@ -496,6 +490,18 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
     };
     addTaskToWorker(updateRunnable, true, postRunnable);
+    return true;
+  }
+
+  private boolean isLoadingChildrenFor(final DefaultMutableTreeNode node) {
+    boolean areChuldrenLoading = false;
+    for (int i = 0; i < node.getChildCount(); i++) {
+      TreeNode child = node.getChildAt(i);
+      if (isLoadingNode(child) && getLoadingNodeText().equals(((LoadingNode)child).getUserObject())) {
+        areChuldrenLoading = true;
+      }
+    }
+    return areChuldrenLoading;
   }
 
   protected String getLoadingNodeText() {

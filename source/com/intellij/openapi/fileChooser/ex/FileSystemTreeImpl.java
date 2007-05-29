@@ -50,23 +50,31 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final FileChooserDescriptor myDescriptor;
 
   public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor) {
-    this(project, descriptor, new Tree(), null);
+    this(project, descriptor, new Tree(), null, null);
     myTree.setRootVisible(descriptor.isTreeRootVisible());
     myTree.setShowsRootHandles(true);
   }
 
-  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer) {
+  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer,
+                            final Runnable onInitialized) {
     myProject = project;
     myTreeStructure = new FileTreeStructure(project, descriptor);
     myDescriptor = descriptor;
     myTree = tree;
-    DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
+    final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree.setModel(treeModel);
-    myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor);
+    addTreeExpansionListener();
+    myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor, new Runnable() {
+      public void run() {
+        myTree.expandPath(new TreePath(treeModel.getRoot()));
+        if (onInitialized != null) {
+          onInitialized.run();
+        }
+      }
+    });
 
     new TreeSpeedSearch(myTree);
     myTree.setLineStyleAngled();
-    myTree.expandPath(new TreePath(treeModel.getRoot()));
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
 
@@ -75,7 +83,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
         TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION :
         TreeSelectionModel.SINGLE_TREE_SELECTION
     );
-    addTreeExpansionListener();
     registerTreeActions();
 
     if (renderer == null) {
@@ -103,8 +110,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   }
 
-  protected AbstractTreeBuilder createTreeBuilder(final JTree tree, DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor) {
-    return new FileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor);
+  protected AbstractTreeBuilder createTreeBuilder(final JTree tree, DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure,
+                                                  final Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor,
+                                                  @Nullable final Runnable onInitialized) {
+    return new FileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
   }
 
   private void registerTreeActions() {

@@ -43,6 +43,10 @@ public class FileTreeStructure extends AbstractTreeStructure {
     myShownHiddens = Boolean.valueOf(value).booleanValue();
   }
 
+  public boolean isToBuildChildrenInBackground(final Object element) {
+    return true;
+  }
+
   public final boolean areHiddensShown() {
     return myShownHiddens;
   }

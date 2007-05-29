@@ -9,10 +9,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -23,17 +25,29 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
 
   private VirtualFileAdapter myVirtualFileListener;
+  private Runnable myOnInitialized;
 
 
   public FileTreeBuilder(JTree tree, DefaultTreeModel treeModel,
                          AbstractTreeStructure treeStructure,
                          Comparator<NodeDescriptor> comparator,
-                         FileChooserDescriptor chooserDescriptor) {
+                         FileChooserDescriptor chooserDescriptor, @Nullable Runnable onInitialized) {
     super(tree, treeModel, treeStructure, comparator);
+
+    myOnInitialized= onInitialized;
+
     myChooserDescriptor = chooserDescriptor;
     initRootNode();
 
     installVirtualFileListener();
+  }
+
+
+
+  protected void onRootNodeInitialized() {
+    if (myOnInitialized != null) {
+      myOnInitialized.run();
+    }
   }
 
   private void installVirtualFileListener() {
@@ -82,7 +96,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return false;
+    return nodeDescriptor.getElement() instanceof RootFileElement;
   }
 
   protected final void expandNodeChildren(DefaultMutableTreeNode node) {

@@ -26,6 +26,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -126,9 +127,23 @@ public class ContentEntryTreeEditor {
       final String url = contentEntryEditor.getContentEntry().getUrl();
       myDescriptor.setTitle(VirtualFileManager.extractPath(url).replace('/', File.separatorChar));
     }
-    myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer()) {
-      protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor) {
-        return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor);
+
+
+    final Runnable init = new Runnable() {
+      public void run() {
+        myFileSystemTree.updateTree();
+        if (file != null) {
+          select(file);
+        }
+      }
+    };
+
+
+    myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(), init) {
+      protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure,
+                                                      Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor,
+                                                      final Runnable onInitialized) {
+        return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
       }
     };
     final NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
@@ -138,10 +153,6 @@ public class ContentEntryTreeEditor {
     mousePopupGroup.add(newFolderAction);
     myFileSystemTree.registerMouseListener(mousePopupGroup);
 
-    myFileSystemTree.updateTree();
-    if (file != null) {
-      select(file);
-    }
   }
 
   public ContentEntryEditor getContentEntryEditor() {
@@ -213,8 +224,8 @@ public class ContentEntryTreeEditor {
   }
 
   private static class MyFileTreeBuilder extends FileTreeBuilder {
-    public MyFileTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor) {
-      super(tree, treeModel, treeStructure, comparator, descriptor);
+    public MyFileTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor, @Nullable Runnable onInitialized) {
+      super(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
     }
 
     protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
