@@ -12,9 +12,9 @@ public class MavenImporterPreferences implements Cloneable {
   private boolean lookForNested = false;
   private boolean createModuleGroups = false;
 
-  private boolean synchronizeOnStart = true;
-  private boolean downloadSources = true;
-  private boolean downloadJavadoc = true;
+  private boolean synchronizeOnStart = false;
+  private boolean downloadSources = false;
+  private boolean downloadJavadoc = false;
   private boolean generateSources = false;
 
   public boolean isAutoImportNew() {
