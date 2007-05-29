@@ -6,6 +6,8 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -15,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescendantClassesEnumMacro implements Macro{
+public class DescendantClassesEnumMacro implements Macro {
   public String getName() {
     return "descendantClassesEnum";
   }
@@ -52,19 +54,20 @@ public class DescendantClassesEnumMacro implements Macro{
 
     final String paramResult = params[0].calculateResult(context).toString();
     if (paramResult == null) return null;
-    final PsiClass myBaseClass = instance.findClass(
-      paramResult,
-      GlobalSearchScope.allScope(context.getProject())
-    );
 
-    if (myBaseClass!=null) {
+    final boolean isAllowAbstract = isAllowAbstract(context, params);
+    final PsiClass myBaseClass = instance.findClass(paramResult, GlobalSearchScope.allScope(context.getProject()));
+
+    if (myBaseClass != null) {
       PsiSearchHelper helper = instance.getSearchHelper();
 
       final List<PsiClass> classes = new ArrayList<PsiClass>();
 
       helper.processInheritors(new PsiElementProcessor<PsiClass>() {
         public boolean execute(PsiClass element) {
-          classes.add(element);
+          if (isAllowAbstract || !isAbstractOrInterface(element)) {
+            classes.add(element);
+          }
           return true;
         }
 
@@ -99,4 +102,13 @@ public class DescendantClassesEnumMacro implements Macro{
     return set.toArray(new LookupItem[set.size()]);
   }
 
+  private static boolean isAbstractOrInterface(final PsiClass psiClass) {
+    final PsiModifierList modifierList = psiClass.getModifierList();
+
+    return psiClass.isInterface() || (modifierList != null && modifierList.hasModifierProperty(PsiModifier.ABSTRACT));
+  }
+
+  private static boolean isAllowAbstract(final ExpressionContext context, final Expression[] params) {
+      return params.length > 2 ? Boolean.valueOf(params[2].calculateResult(context).toString()) : true;
+  }
 }
