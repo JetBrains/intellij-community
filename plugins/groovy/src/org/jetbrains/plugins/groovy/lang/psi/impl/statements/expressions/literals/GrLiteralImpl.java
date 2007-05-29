@@ -39,11 +39,15 @@ public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
 
   public PsiType getType() {
     IElementType elemType = getFirstChild().getNode().getElementType();
-    if (elemType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (elemType == GroovyTokenTypes.mGSTRING_LITERAL || elemType == GroovyTokenTypes.mSTRING_LITERAL) {
       return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_INT) {
+      //todo different token types
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.kFALSE || elemType == GroovyTokenTypes.kTRUE) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
     }
 
-    //todo
     return null;
   }
 }
