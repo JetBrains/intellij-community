@@ -27,6 +27,6 @@ Groovy script
             PsiElement(Gstring)('"bugaga"')
       PsiWhiteSpace(' ')
       PsiErrorElement:Wrong token
-        PsiElement(number)('3')
+        PsiElement(Integer)('3')
       PsiElement(})('}')
     PsiElement(Gstring end)(' ved"')

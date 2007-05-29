@@ -11,7 +11,7 @@ Groovy script
       PsiElement(==)('==')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
     PsiWhiteSpace(' ')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')

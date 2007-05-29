@@ -50,7 +50,7 @@ Groovy script
               PsiElement(=)('=')
               PsiWhiteSpace(' ')
               Literal
-                PsiElement(number)('3.7')
+                PsiElement(Float)('3.7')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

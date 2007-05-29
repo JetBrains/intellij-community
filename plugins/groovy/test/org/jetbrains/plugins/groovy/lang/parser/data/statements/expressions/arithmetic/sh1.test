@@ -4,7 +4,7 @@ Groovy script
   Range expression
     Shift expression
       Literal
-        PsiElement(number)('27')
+        PsiElement(Integer)('27')
       PsiWhiteSpace(' ')
       Composite shift operator
         PsiElement(<)('<')

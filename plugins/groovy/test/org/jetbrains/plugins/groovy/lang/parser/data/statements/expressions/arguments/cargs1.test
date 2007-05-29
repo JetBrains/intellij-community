@@ -10,19 +10,19 @@ Groovy script
     Command arguments
       Additive expression
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiWhiteSpace(' ')
         PsiElement(+)('+')
         PsiElement(new line)('\n  ')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Additive expression
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
         PsiWhiteSpace(' ')
         PsiElement(+)('+')
         PsiElement(new line)('\n    ')
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')

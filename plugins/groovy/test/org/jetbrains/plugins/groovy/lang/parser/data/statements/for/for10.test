@@ -15,7 +15,7 @@ Groovy script
         PsiElement(identifier)('i')
         PsiElement(=)('=')
         Literal
-          PsiElement(number)('0')
+          PsiElement(Integer)('0')
       PsiElement(,)(',')
       PsiErrorElement:Expression expected
         <empty list>

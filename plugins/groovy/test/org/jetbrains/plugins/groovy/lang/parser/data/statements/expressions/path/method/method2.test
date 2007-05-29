@@ -14,16 +14,16 @@ Groovy script
     PsiWhiteSpace('\n')
     Arguments
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
       PsiElement(new line)('\n')
       PsiElement(,)(',')
       PsiElement(new line)('\n')
       Literal
-        PsiElement(number)('2')
+        PsiElement(Integer)('2')
       PsiElement(,)(',')
       PsiElement(new line)('\n')
       Literal
-        PsiElement(number)('3')
+        PsiElement(Integer)('3')
       PsiElement(new line)('\n')
       PsiElement(,)(',')
       PsiElement(new line)('\n')

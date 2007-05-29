@@ -4,7 +4,7 @@ Groovy script
   Additive expression
     Additive expression
       Literal
-        PsiElement(number)('27')
+        PsiElement(Integer)('27')
       PsiElement(+)('+')
       Reference expression
         PsiElement(identifier)('a')

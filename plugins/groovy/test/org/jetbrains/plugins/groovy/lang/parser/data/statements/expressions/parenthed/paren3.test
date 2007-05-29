@@ -10,7 +10,7 @@ Groovy script
     PsiElement(()('(')
     Arguments
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
       PsiElement(,)(',')
       Parenthesized expression
         PsiElement(()('(')
@@ -19,6 +19,6 @@ Groovy script
         PsiErrorElement:')' expected
           <empty list>
         PsiWhiteSpace(' ')
-        PsiElement(number)('2')
+        PsiElement(Integer)('2')
         PsiElement())(')')
     PsiElement())(')')

@@ -13,7 +13,7 @@ Groovy script
             PsiElement(Gstring end)(' aga"')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Compound Gstring

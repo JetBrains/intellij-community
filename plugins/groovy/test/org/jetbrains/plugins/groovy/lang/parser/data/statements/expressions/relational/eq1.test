@@ -5,11 +5,11 @@ Groovy script
   Equality expression
     Equality expression
       Literal
-        PsiElement(number)('27')
+        PsiElement(Integer)('27')
       PsiElement(<=>)('<=>')
       PsiElement(new line)('\n')
       Reference expression
         PsiElement(identifier)('a')
     PsiElement(==)('==')
     Literal
-      PsiElement(number)('5')
+      PsiElement(Integer)('5')

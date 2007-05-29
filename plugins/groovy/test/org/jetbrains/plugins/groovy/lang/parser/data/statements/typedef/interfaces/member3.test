@@ -39,6 +39,6 @@ Groovy script
           PsiElement(=)('=')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(number)('3')
+            PsiElement(Integer)('3')
       PsiElement(new line)('\n')
       PsiElement(})('}')

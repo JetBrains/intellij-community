@@ -12,10 +12,10 @@ Groovy script
           PsiElement(()('(')
           Additive expression
             Literal
-              PsiElement(number)('1')
+              PsiElement(Integer)('1')
             PsiElement(+)('+')
             Literal
-              PsiElement(number)('3')
+              PsiElement(Integer)('3')
           PsiElement())(')')
         PsiElement(.)('.')
         PsiElement(identifier)('toString')

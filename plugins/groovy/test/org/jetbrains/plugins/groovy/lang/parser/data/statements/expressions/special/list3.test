@@ -13,13 +13,13 @@ Groovy script
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(number)('3')
+        PsiElement(Integer)('3')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Additive expression
         Literal
-          PsiElement(number)('4')
+          PsiElement(Integer)('4')
         PsiElement(+)('+')
         Literal
-          PsiElement(number)('8')
+          PsiElement(Integer)('8')
     PsiElement(])(']')

@@ -27,7 +27,7 @@ Groovy script
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
         PsiElement(:)(':')
       PsiWhiteSpace(' ')
       ASSERT statement

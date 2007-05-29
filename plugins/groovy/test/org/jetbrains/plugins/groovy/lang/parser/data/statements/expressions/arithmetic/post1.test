@@ -6,7 +6,7 @@ Groovy script
     Postfix expression
       Postfix expression
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')
         PsiElement(++)('++')
       PsiWhiteSpace(' ')
       PsiElement(--)('--')

@@ -6,7 +6,7 @@
 Groovy script
   Power expression
     Literal
-      PsiElement(number)('3')
+      PsiElement(Integer)('3')
     PsiWhiteSpace(' ')
     PsiElement(**)('**')
     PsiElement(new line)('\n')
@@ -17,5 +17,5 @@ Groovy script
         PsiElement(--)('--')
         PsiElement(new line)('\n')
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')
 

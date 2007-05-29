@@ -48,14 +48,15 @@ Groovy script
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
-        Constructor body
+        Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
-          PsiElement(this)('this')
-          PsiElement(()('(')
-          Arguments
-            <empty list>
-          PsiElement())(')')
+          Constructor invocation
+            PsiElement(this)('this')
+            PsiElement(()('(')
+            Arguments
+              <empty list>
+            PsiElement())(')')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

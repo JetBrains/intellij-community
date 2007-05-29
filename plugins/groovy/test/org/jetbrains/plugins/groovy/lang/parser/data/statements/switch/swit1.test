@@ -8,7 +8,7 @@ Groovy script
     PsiElement(switch)('switch')
     PsiElement(()('(')
     Literal
-      PsiElement(number)('3')
+      PsiElement(Integer)('3')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     Case block
@@ -18,16 +18,16 @@ Groovy script
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiWhiteSpace(' ')
         PsiElement(:)(':')
       PsiWhiteSpace(' ')
       Additive expression
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiElement(+)('+')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
       PsiElement(new line)('\n')
       Case label
         PsiElement(default)('default')

@@ -4,7 +4,7 @@ Groovy script
   Property selection
     Reference expression
       Literal
-        PsiElement(number)('3')
+        PsiElement(Integer)('3')
       PsiElement(.)('.')
       PsiElement(identifier)('toString')
     PsiElement(*.)('*.')

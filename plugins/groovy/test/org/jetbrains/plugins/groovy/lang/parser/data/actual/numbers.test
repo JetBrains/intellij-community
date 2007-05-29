@@ -1,0 +1,33 @@
+1
+1i
+1f
+1.0
+1D
+1L
+1G
+1.0G
+-----
+Groovy script
+  Literal
+    PsiElement(Integer)('1')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('1i')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Float)('1f')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Float)('1.0')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Double)('1D')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Long)('1L')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(BigInteger)('1G')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(BigDecimal)('1.0G')

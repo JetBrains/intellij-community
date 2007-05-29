@@ -21,4 +21,4 @@ Groovy script
         PsiElement(+=)('+=')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')

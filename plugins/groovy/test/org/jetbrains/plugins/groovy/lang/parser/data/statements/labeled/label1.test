@@ -3,7 +3,7 @@ l: {println 'bugaga'}
 -----
 Groovy script
   Literal
-    PsiElement(number)('1')
+    PsiElement(Integer)('1')
   PsiElement(new line)('\n')
   Labeled statement
     Label

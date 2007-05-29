@@ -34,9 +34,9 @@ Groovy script
       PsiWhiteSpace(' ')
       Additive expression
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiElement(+)('+')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
     PsiWhiteSpace(' ')
     PsiElement(})('}')

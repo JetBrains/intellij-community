@@ -19,7 +19,7 @@ Groovy script
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiErrorElement:':' expected
           <empty list>
       PsiWhiteSpace(' ')

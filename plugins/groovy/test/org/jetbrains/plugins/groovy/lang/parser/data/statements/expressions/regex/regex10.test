@@ -38,7 +38,7 @@ Groovy script
           PsiElement(()('(')
           Arguments
             Literal
-              PsiElement(number)('5')
+              PsiElement(Integer)('5')
           PsiElement())(')')
         PsiElement(})('}')
       PsiElement(regex end)(' /')

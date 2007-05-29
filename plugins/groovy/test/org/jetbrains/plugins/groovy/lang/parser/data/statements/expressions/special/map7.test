@@ -9,7 +9,7 @@ Groovy script
           PsiElement(identifier)('a')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       Named argument
         Argument label

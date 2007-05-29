@@ -7,15 +7,15 @@ Groovy script
       PsiElement(case)('case')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
       PsiElement(:)(':')
   PsiWhiteSpace(' ')
   Additive expression
     Literal
-      PsiElement(number)('1')
+      PsiElement(Integer)('1')
     PsiElement(+)('+')
     Literal
-      PsiElement(number)('2')
+      PsiElement(Integer)('2')
   PsiElement(new line)('\n')
   Literal
     PsiElement(true)('true')

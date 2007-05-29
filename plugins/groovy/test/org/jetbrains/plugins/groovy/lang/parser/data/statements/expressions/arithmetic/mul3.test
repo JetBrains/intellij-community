@@ -16,4 +16,4 @@ Groovy script
     Unary expression
       PsiElement(++)('++')
       Literal
-        PsiElement(number)('5')
+        PsiElement(Integer)('5')

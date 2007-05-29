@@ -24,7 +24,7 @@ Groovy script
           PsiElement(=)('=')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(number)('5')
+            PsiElement(Integer)('5')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         Parameter
@@ -34,7 +34,7 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(=)('=')
           Literal
-            PsiElement(number)('7')
+            PsiElement(Integer)('7')
       PsiWhiteSpace(' ')
       PsiElement(->)('->')
       PsiWhiteSpace(' ')

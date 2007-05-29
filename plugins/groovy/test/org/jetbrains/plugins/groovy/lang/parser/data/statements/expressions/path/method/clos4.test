@@ -18,6 +18,6 @@ Groovy script
             PsiElement(identifier)('it')
       PsiElement(new line)('\n')
       Literal
-        PsiElement(number)('3')
+        PsiElement(Integer)('3')
       PsiErrorElement:'}' expected
         <empty list>

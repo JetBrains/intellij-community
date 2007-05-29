@@ -45,7 +45,7 @@ Groovy script
                     PsiElement([)('[')
                     Arguments
                       Literal
-                        PsiElement(number)('0')
+                        PsiElement(Integer)('0')
                     PsiElement(])(']')
                   PsiElement(.)('.')
                   PsiElement(identifier)('toUpperCase')
@@ -61,12 +61,12 @@ Groovy script
                 Arguments
                   Range expression
                     Literal
-                      PsiElement(number)('1')
+                      PsiElement(Integer)('1')
                     PsiElement(..)('..')
                     Unary expression
                       PsiElement(-)('-')
                       Literal
-                        PsiElement(number)('1')
+                        PsiElement(Integer)('1')
                 PsiElement(])(']')
           PsiWhiteSpace(' ')
           PsiElement(})('}')

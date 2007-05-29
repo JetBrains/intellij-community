@@ -11,10 +11,10 @@ Groovy script
       PsiElement(()('(')
       Arguments
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
         PsiElement(,)(',')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
       PsiElement())(')')
       Closable block
         PsiElement({)('{')
@@ -30,8 +30,8 @@ Groovy script
     PsiElement([)('[')
     Arguments
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
       PsiElement(,)(',')
       Literal
-        PsiElement(number)('2')
+        PsiElement(Integer)('2')
     PsiElement(])(']')

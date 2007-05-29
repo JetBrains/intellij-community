@@ -11,4 +11,4 @@ Groovy script
       <empty list>
   PsiElement(new line)('\n')
   Literal
-    PsiElement(number)('3')
+    PsiElement(Integer)('3')

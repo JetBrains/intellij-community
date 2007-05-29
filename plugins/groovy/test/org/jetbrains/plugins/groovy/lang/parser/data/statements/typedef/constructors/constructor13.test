@@ -24,7 +24,7 @@ Groovy script
           PsiElement(=)('=')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(number)('8')
+            PsiElement(Integer)('8')
       PsiElement(new line)('\n  ')
       Constructor
         Modifiers
@@ -52,7 +52,7 @@ Groovy script
           PsiElement({)('{')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(number)('5')
+            PsiElement(Integer)('5')
           PsiElement(;)(';')
           PsiWhiteSpace(' ')
           Method call

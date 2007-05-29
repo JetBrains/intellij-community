@@ -16,7 +16,7 @@ Groovy script
           PsiElement(identifier)('i')
           PsiElement(=)('=')
           Literal
-            PsiElement(number)('1')
+            PsiElement(Integer)('1')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
       Relational expression
@@ -24,7 +24,7 @@ Groovy script
           PsiElement(identifier)('i')
         PsiElement(<)('<')
         Literal
-          PsiElement(number)('5')
+          PsiElement(Integer)('5')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
       Postfix expression

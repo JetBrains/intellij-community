@@ -9,7 +9,7 @@ Groovy script
           PsiElement(identifier)('id1')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')
       PsiElement(,)(',')
       PsiErrorElement:Expression expected
         <empty list>
@@ -18,7 +18,7 @@ Groovy script
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(number)('2')
+        PsiElement(Integer)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Named argument
@@ -27,6 +27,6 @@ Groovy script
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('4')
+          PsiElement(Integer)('4')
     PsiWhiteSpace(' ')
     PsiElement(])(']')

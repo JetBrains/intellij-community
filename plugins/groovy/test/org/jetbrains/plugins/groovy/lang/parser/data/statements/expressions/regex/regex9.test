@@ -52,7 +52,7 @@ Groovy script
           PsiElement(()('(')
           Arguments
             Literal
-              PsiElement(number)('5')
+              PsiElement(Integer)('5')
           PsiElement())(')')
         PsiElement(})('}')
       PsiErrorElement:Regex ending expected
@@ -65,4 +65,4 @@ Groovy script
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     Literal
-      PsiElement(number)('5')
+      PsiElement(Integer)('5')

@@ -27,7 +27,7 @@ Groovy script
           PsiElement(=)('=')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(number)('5')
+            PsiElement(Integer)('5')
       PsiWhiteSpace(' ')
       PsiElement(->)('->')
       PsiWhiteSpace(' ')
@@ -36,6 +36,6 @@ Groovy script
           PsiElement(identifier)('i')
         PsiElement(+)('+')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(new line)('\n')
       PsiElement(})('}')

@@ -21,12 +21,12 @@ Groovy script
               PsiElement())(')')
           PsiElement(:)(':')
           Literal
-            PsiElement(number)('3')
+            PsiElement(Integer)('3')
         PsiElement(,)(',')
         Named argument
           Argument label
             PsiElement(string)(''c'')
           PsiElement(:)(':')
           Literal
-            PsiElement(number)('4')
+            PsiElement(Integer)('4')
       PsiElement(])(']')

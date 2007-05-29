@@ -4,7 +4,7 @@ enum a implements A.B.C {
     def class a {}
     {a = 2}
     native def String a = b = 4
-     Integer getNumber() {
+     Integer getInteger() {
        a = 3
      } 
   }
@@ -84,7 +84,7 @@ Groovy script
                 PsiElement(=)('=')
                 PsiWhiteSpace(' ')
                 Literal
-                  PsiElement(number)('2')
+                  PsiElement(Integer)('2')
               PsiElement(})('}')
             PsiElement(new line)('\n    ')
             Variable definitions
@@ -109,7 +109,7 @@ Groovy script
                   PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   Literal
-                    PsiElement(number)('4')
+                    PsiElement(Integer)('4')
             PsiElement(new line)('\n     ')
             Method
               Modifiers
@@ -118,7 +118,7 @@ Groovy script
                 Reference element
                   PsiElement(identifier)('Integer')
               PsiWhiteSpace(' ')
-              PsiElement(identifier)('getNumber')
+              PsiElement(identifier)('getInteger')
               PsiElement(()('(')
               Parameter list
                 <empty list>
@@ -136,7 +136,7 @@ Groovy script
                   PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   Literal
-                    PsiElement(number)('3')
+                    PsiElement(Integer)('3')
                 PsiElement(new line)('\n     ')
                 PsiElement(})('}')
             PsiWhiteSpace(' ')

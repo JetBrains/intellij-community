@@ -16,10 +16,10 @@ Groovy script
           PsiElement(()('(')
           Arguments
             Literal
-              PsiElement(number)('5')
+              PsiElement(Integer)('5')
           PsiElement())(')')
         PsiElement(()('(')
         Arguments
           Literal
-            PsiElement(number)('6')
+            PsiElement(Integer)('6')
         PsiElement())(')')

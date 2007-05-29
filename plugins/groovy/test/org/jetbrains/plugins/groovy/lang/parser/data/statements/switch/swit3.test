@@ -18,10 +18,10 @@ Groovy script
         PsiWhiteSpace(' ')
         Range expression
           Literal
-            PsiElement(number)('16')
+            PsiElement(Integer)('16')
           PsiElement(..)('..')
           Literal
-            PsiElement(number)('20')
+            PsiElement(Integer)('20')
         PsiWhiteSpace(' ')
         PsiElement(:)(':')
       PsiWhiteSpace(' ')
@@ -32,7 +32,7 @@ Groovy script
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('0.05')
+          PsiElement(Float)('0.05')
       PsiWhiteSpace(' ')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')

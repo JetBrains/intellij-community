@@ -7,7 +7,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(number)('1')
+        PsiElement(Integer)('1')
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
@@ -15,4 +15,4 @@ Groovy script
         PsiElement(identifier)('id')
   PsiWhiteSpace(' ')
   PsiErrorElement:';' or new line expected
-    PsiElement(number)('3')
+    PsiElement(Integer)('3')

@@ -7,4 +7,4 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(number)('5')
+        PsiElement(Integer)('5')

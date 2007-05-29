@@ -4,13 +4,13 @@
 Groovy script
   Multiplicative expression
     Literal
-      PsiElement(number)('3')
+      PsiElement(Integer)('3')
     PsiWhiteSpace(' ')
     PsiElement(*)('*')
     PsiElement(new line)('\n')
     Power expression
       Literal
-        PsiElement(number)('2')
+        PsiElement(Integer)('2')
       PsiElement(**)('**')
       Literal
-        PsiElement(number)('6')
+        PsiElement(Integer)('6')

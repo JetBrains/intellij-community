@@ -10,7 +10,7 @@ Groovy script
           PsiElement(identifier)('a')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Reference expression
@@ -25,7 +25,7 @@ Groovy script
           <empty list>
         PsiElement(new line)('\n')
         Literal
-          PsiElement(number)('5')
+          PsiElement(Integer)('5')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Reference expression

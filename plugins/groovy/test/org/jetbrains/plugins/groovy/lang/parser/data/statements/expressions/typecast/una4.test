@@ -15,4 +15,4 @@ Groovy script
     PsiErrorElement:')' expected
       <empty list>
     PsiWhiteSpace(' ')
-    PsiElement(number)('3')
+    PsiElement(Integer)('3')

@@ -7,15 +7,15 @@ Groovy script
         PsiElement(()('(')
         Additive expression
           Literal
-            PsiElement(number)('1')
+            PsiElement(Integer)('1')
           PsiElement(+)('+')
           Literal
-            PsiElement(number)('2')
+            PsiElement(Integer)('2')
         PsiElement())(')')
       PsiElement(?.)('?.')
       PsiElement(class)('class')
     PsiElement(()('(')
     Arguments
       Literal
-        PsiElement(number)('5')
+        PsiElement(Integer)('5')
     PsiElement())(')')

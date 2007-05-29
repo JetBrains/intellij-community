@@ -9,11 +9,11 @@ Groovy script
     PsiWhiteSpace(' ')
     Shift expression
       Literal
-        PsiElement(number)('10')
+        PsiElement(Integer)('10')
       PsiWhiteSpace(' ')
       Composite shift operator
         PsiElement(<)('<')
         PsiElement(<)('<')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(number)('6')
+        PsiElement(Integer)('6')

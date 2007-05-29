@@ -9,7 +9,7 @@ Groovy script
           PsiElement(identifier)('a')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Named argument
@@ -17,7 +17,7 @@ Groovy script
           PsiElement(Gstring)('"b"')
         PsiElement(:)(':')
         Literal
-          PsiElement(number)('2')
+          PsiElement(Integer)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Named argument
@@ -26,5 +26,5 @@ Groovy script
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(number)('4')
+          PsiElement(Integer)('4')
     PsiElement(])(']')

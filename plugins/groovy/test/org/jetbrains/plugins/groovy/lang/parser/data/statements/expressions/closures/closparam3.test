@@ -13,14 +13,14 @@ Groovy script
         PsiElement(identifier)('a')
         PsiElement(=)('=')
         Literal
-          PsiElement(number)('1')
+          PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Variable
         PsiElement(identifier)('b')
         PsiElement(=)('=')
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     Additive expression

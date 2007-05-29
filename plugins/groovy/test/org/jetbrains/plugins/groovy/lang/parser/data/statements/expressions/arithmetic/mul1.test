@@ -11,11 +11,11 @@ Groovy script
       Unary expression
         PsiElement(--)('--')
         Literal
-          PsiElement(number)('3')
+          PsiElement(Integer)('3')
       PsiWhiteSpace(' ')
       PsiElement(**)('**')
       PsiWhiteSpace(' ')
       Unary expression
         PsiElement(++)('++')
         Literal
-          PsiElement(number)('4')
+          PsiElement(Integer)('4')
