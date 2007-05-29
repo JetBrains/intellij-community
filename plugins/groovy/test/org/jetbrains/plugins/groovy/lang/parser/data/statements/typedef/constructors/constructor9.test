@@ -39,7 +39,7 @@ Groovy script
           Reference element
             PsiElement(identifier)('NullPointerException')
         PsiWhiteSpace(' ')
-        Constructor body
+        Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
           Constructor invocation

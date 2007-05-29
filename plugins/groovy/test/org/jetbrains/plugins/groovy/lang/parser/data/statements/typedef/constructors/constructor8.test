@@ -35,7 +35,7 @@ Groovy script
             PsiElement(.)('.')
             PsiElement(identifier)('B')
         PsiWhiteSpace(' ')
-        Constructor body
+        Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
           Constructor invocation

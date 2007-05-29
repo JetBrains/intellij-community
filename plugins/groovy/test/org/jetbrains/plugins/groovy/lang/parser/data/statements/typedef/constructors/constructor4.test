@@ -43,7 +43,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
-        Constructor body
+        Open block
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n  ')
