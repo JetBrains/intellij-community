@@ -418,6 +418,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       if (baseDir != null && VfsUtil.isAncestor(baseDir, file, false)) {
         return !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
       }
+      return false;
     }
     return FileUtil.startsWith(path, mapping.getDirectory());
   }
