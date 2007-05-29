@@ -27,19 +27,21 @@ public abstract class SpacingTokens implements GroovyElementTypes {
   protected final static TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
 
   protected final static TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT,
-          mSPREAD_DOT,
-          mOPTIONAL_DOT,
-          mCOMMA,
-          mSEMI);
+      mMEMBER_POINTER,
+      mSPREAD_DOT,
+      mOPTIONAL_DOT,
+      mCOMMA,
+      mSEMI);
 
   protected final static TokenSet DOTS = TokenSet.create(mDOT,
-          mSPREAD_DOT,
-          mOPTIONAL_DOT);
+      mMEMBER_POINTER,
+      mSPREAD_DOT,
+      mOPTIONAL_DOT);
 
   protected final static TokenSet METHOD_OR_CALL = TokenSet.create(METHOD_DEFINITION,
-          PATH_METHOD_CALL,
-          NEW_EXPRESSION,
-          CONSTRUCTOR_DEFINITION);
+      PATH_METHOD_CALL,
+      NEW_EXPRESSION,
+      CONSTRUCTOR_DEFINITION);
   protected final static TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
   protected final static TokenSet THIS_OR_SUPER = TokenSet.create(kTHIS, kSUPER);
 
@@ -50,10 +52,10 @@ public abstract class SpacingTokens implements GroovyElementTypes {
   protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
 
   protected final static TokenSet BLOCKS = TokenSet.create(OPEN_BLOCK,
-          CONSTRUCTOR_BODY,
-          CLASS_BLOCK,
-          ENUM_BLOCK,
-          INTERFACE_BLOCK,
-          ANNOTATION_BLOCK);
+      CONSTRUCTOR_BODY,
+      CLASS_BLOCK,
+      ENUM_BLOCK,
+      INTERFACE_BLOCK,
+      ANNOTATION_BLOCK);
 
 }
