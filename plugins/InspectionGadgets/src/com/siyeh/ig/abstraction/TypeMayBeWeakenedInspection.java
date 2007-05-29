@@ -301,18 +301,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         assignmentExpression.getLExpression();
                 final PsiExpression rhs =
                         assignmentExpression.getRExpression();
-                if (referenceElement.equals(lhs) && rhs != null) {
-                    final PsiType type = rhs.getType();
-                    if (!(type instanceof PsiClassType)) {
-                        return Collections.EMPTY_LIST;
-                    }
-                    final PsiClassType classType = (PsiClassType) type;
-                    final PsiClass aClass = classType.resolve();
-                    if (aClass == null) {
-                        return Collections.EMPTY_LIST;
-                    }
-                    checkClass(weakestTypeClasses, aClass);
-                } else if (referenceElement.equals(rhs)) {
+                if (referenceElement.equals(rhs)) {
                     final PsiType type = lhs.getType();
                     if (!(type instanceof PsiClassType)) {
                         return Collections.EMPTY_LIST;
@@ -349,10 +338,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 }
                 checkClass(weakestTypeClasses, javaLangIterableClass);
             } else if (referenceParent instanceof PsiReturnStatement) {
-                final PsiReturnStatement returnStatement =
-                        (PsiReturnStatement)referenceParent;
                 final PsiMethod containingMethod =
-                        PsiTreeUtil.getParentOfType(returnStatement,
+                        PsiTreeUtil.getParentOfType(referenceParent,
                                 PsiMethod.class);
                 if (containingMethod == null) {
                     return Collections.EMPTY_LIST;
