@@ -4,8 +4,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -94,6 +96,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_MASK = "mask";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
   private final List<IgnoredFileBean> myFilesToIgnore = new ArrayList<IgnoredFileBean>();
+  private ProgressIndicator myUpdateChangesProgressIndicator;
 
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
@@ -145,6 +148,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void cancelUpdates() {
+    if (myUpdateChangesProgressIndicator != null) {
+      myUpdateChangesProgressIndicator.cancel();
+    }
     if (myCurrentUpdate != null) {
       myCurrentUpdate.cancel(false);
       myCurrentUpdate = null;
@@ -294,6 +300,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           final ChangeProvider changeProvider = vcs.getChangeProvider();
           if (changeProvider != null) {
             try {
+              myUpdateChangesProgressIndicator = new EmptyProgressIndicator();
               changeProvider.getChanges(scope, new ChangelistBuilder() {
                 public void processChange(final Change change) {
                   processChangeInList( change, (ChangeList)null );
@@ -401,7 +408,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 public boolean isUpdatingUnversionedFiles() {
                   return updateUnversionedFiles;
                 }
-              }, null); // TODO: make real indicator
+              }, myUpdateChangesProgressIndicator);
             }
             catch (VcsException e) {
               LOG.info(e);
@@ -438,6 +445,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       }
     }
     catch (DisposedException e) {
+      // OK, we're finishing all the stuff now.
+    }
+    catch(ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
     }
     catch(Exception ex) {

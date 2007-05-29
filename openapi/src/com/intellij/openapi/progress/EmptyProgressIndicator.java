@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 
 public class EmptyProgressIndicator implements ProgressIndicator {
   private boolean myIsRunning = false;
-  private boolean myIsCanceled = false;
+  private volatile boolean myIsCanceled = false;
 
   public void start() {
     myIsRunning = true;
@@ -95,5 +95,8 @@ public class EmptyProgressIndicator implements ProgressIndicator {
   }
 
   public void checkCanceled() {
+    if (myIsCanceled) {
+      throw new ProcessCanceledException();
+    }
   }
 }
