@@ -29,7 +29,7 @@ public class MavenProjectModel {
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
                            final Collection<VirtualFile> importRoots,
                            final MavenEmbedder embedder) {
-    this.mavenEmbedder = embedder;
+    mavenEmbedder = embedder;
 
     if (mavenEmbedder == null) {
       return;
@@ -62,9 +62,13 @@ public class MavenProjectModel {
     return rootProjects;
   }
 
+  @Nullable
   private Node createMavenTree(@NotNull VirtualFile pomFile, final Map<VirtualFile, Module> unprocessedFiles, boolean imported) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
+      if(indicator.isCanceled()) {
+        return null;
+      }
       indicator.setText2(FileUtil.toSystemDependentName(pomFile.getPath()));
     }
 
@@ -111,7 +115,8 @@ public class MavenProjectModel {
     return node;
   }
 
-  private VirtualFile getMavenModuleFile(VirtualFile parent, String name) {
+  @Nullable
+  private static VirtualFile getMavenModuleFile(VirtualFile parent, String name) {
     //noinspection ConstantConditions
     VirtualFile moduleDir = parent.getParent().findChild(name);
     return moduleDir != null ? moduleDir.findChild(MavenEnv.POM_FILE) : null;
