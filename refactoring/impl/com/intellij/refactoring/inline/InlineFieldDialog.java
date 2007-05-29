@@ -1,36 +1,23 @@
-
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.ui.IdeBorderFactory;
 
-import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-
-public class InlineFieldDialog extends RefactoringDialog implements InlineOptions {
+public class InlineFieldDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
   private PsiReferenceExpression myReferenceExpression;
 
-  private JLabel myFieldNameLabel = new JLabel();
-
   private final PsiField myField;
-  private final boolean myInvokedOnReference;
-
-  private JRadioButton myRbInlineAll;
-  private JRadioButton myRbInlineThisOnly;
 
   public InlineFieldDialog(Project project, PsiField field, PsiReferenceExpression ref) {
-    super(project, true);
+    super(project, true, field);
     myField = field;
     myReferenceExpression = ref;
     myInvokedOnReference = myReferenceExpression != null;
@@ -38,66 +25,28 @@ public class InlineFieldDialog extends RefactoringDialog implements InlineOption
     setTitle(REFACTORING_NAME);
 
     init();
+  }
 
+  protected String getNameLabelText() {
     String fieldText = PsiFormatUtil.formatVariable(myField,
                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE ,PsiSubstitutor.EMPTY);
-    myFieldNameLabel.setText(RefactoringBundle.message("inline.field.field.name.label", fieldText));
+    return RefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
-  public boolean isInlineThisOnly() {
-    return myRbInlineThisOnly.isSelected();
+  protected String getBorderTitle() {
+    return RefactoringBundle.message("inline.field.border.title");
   }
 
-  protected JComponent createNorthPanel() {
-    return myFieldNameLabel;
+  protected String getInlineThisText() {
+    return RefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
-  protected JComponent createCenterPanel() {
-    JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("inline.field.border.title")));
-    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+  protected String getInlineAllText() {
+    return RefactoringBundle.message("all.references.and.remove.the.field");
+  }
 
-    myRbInlineAll = new JRadioButton();
-    myRbInlineAll.setText(RefactoringBundle.message("all.references.and.remove.the.field"));
-    myRbInlineAll.setSelected(true);
-    myRbInlineThisOnly = new JRadioButton();
-    myRbInlineThisOnly.setText(RefactoringBundle.message("this.reference.only.and.keep.the.field"));
-
-    optionsPanel.add(myRbInlineAll);
-    optionsPanel.add(myRbInlineThisOnly);
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbInlineAll);
-    bg.add(myRbInlineThisOnly);
-
-    myRbInlineThisOnly.setEnabled(myInvokedOnReference);
-    final boolean writable = myField.isWritable();
-    myRbInlineAll.setEnabled(writable);
-    if(myInvokedOnReference) {
-      if (writable) {
-        final boolean inlineThis = RefactoringSettings.getInstance().INLINE_FIELD_THIS;
-        myRbInlineThisOnly.setSelected(inlineThis);
-        myRbInlineAll.setSelected(!inlineThis);
-      }
-      else {
-        myRbInlineAll.setSelected(false);
-        myRbInlineThisOnly.setSelected(true);
-      }
-    }
-    else {
-      myRbInlineAll.setSelected(true);
-      myRbInlineThisOnly.setSelected(false);
-    }
-    getPreviewAction().setEnabled(myRbInlineAll.isSelected());
-    myRbInlineAll.addItemListener(
-      new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          boolean enabled = myRbInlineAll.isSelected();
-          getPreviewAction().setEnabled(enabled);
-        }
-      }
-    );
-
-    return optionsPanel;
+  protected boolean isInlineThis() {
+    return RefactoringSettings.getInstance().INLINE_FIELD_THIS;
   }
 
   protected void doAction() {
