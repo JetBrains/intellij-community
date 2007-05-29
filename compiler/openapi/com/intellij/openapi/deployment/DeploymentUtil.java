@@ -118,7 +118,7 @@ public abstract class DeploymentUtil {
       if (len > 0 && builder.charAt(len - 1) != '/' && builder.charAt(len - 1) != File.separatorChar) {
         builder.append('/');
       }
-      builder.append(trimForwardSlashes(path));
+      builder.append(len != 0 ? trimForwardSlashes(path) : path);
     }
     return builder.toString();
   }
