@@ -1,6 +1,7 @@
 
 package com.intellij.refactoring.inline;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
@@ -22,6 +23,9 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getProcessedElementsHeader() {
+    if (myElement instanceof PsiClass) {
+      return RefactoringBundle.message("inline.class.elements.header");
+    }
     return myElement instanceof PsiMethod ?
            RefactoringBundle.message("inline.method.elements.header") :
            RefactoringBundle.message("inline.field.elements.header");
