@@ -367,12 +367,14 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       final int prefixLen = prefix.length();
       if (endOffset - offset > prefixLen + suffixLen) {
         boolean insertPrefix = false;
+        boolean haveWelformedComment = false;
         int i = endOffset - suffixLen;
         while (i >= offset) {
           if (insertPrefix) {
             if (CharArrayUtil.regionMatches(chars, i, prefix)) {
               i -= suffixLen;
               insertPrefix = false;
+              haveWelformedComment = true;
               continue;
             }
             if (CharArrayUtil.regionMatches(chars, i, suffix)) {
@@ -383,11 +385,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
             if (!CharArrayUtil.regionMatches(chars, i, suffix)) {
               myDocument.insertString(i + suffixLen, suffix);
             }
+            haveWelformedComment = false;
             insertPrefix = true;
           }
           --i;
         }
-        myDocument.insertString(offset, prefix);
+        if (!haveWelformedComment) myDocument.insertString(offset, prefix);
       }
       else {
         myDocument.insertString(endOffset, suffix);
