@@ -37,6 +37,9 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
   public void addCaretListener(CaretListener listener) {
   }
 
+  public void addCaretListener(CaretListener listener, Disposable parentDisposable) {
+  }
+
   public void removeCaretListener(CaretListener listener) {
   }
 
