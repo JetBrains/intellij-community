@@ -40,7 +40,6 @@ public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder 
     }
 
     GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
-//    assert catchClauses != null;
 
     if (catchClauses != null && catchClauses.length > 0) {
       GrParameter parameter = catchClauses[0].getParameter();

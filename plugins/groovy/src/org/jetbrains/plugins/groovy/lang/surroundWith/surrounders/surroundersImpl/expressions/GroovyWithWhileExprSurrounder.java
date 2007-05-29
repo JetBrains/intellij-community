@@ -2,10 +2,13 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -29,5 +32,9 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
 
   public String getTemplateDescription() {
     return "while (...) {}";
+  }
+
+  protected boolean isApplicable(PsiElement element) {
+    return element instanceof GrExpression && PsiType.BOOLEAN.equals(((GrExpression) element).getType());
   }
 }

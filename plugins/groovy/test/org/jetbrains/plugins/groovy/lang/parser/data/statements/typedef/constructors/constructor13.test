@@ -1,7 +1,6 @@
 class a {
-  def a (String s) {
-    this (s, a = b)
-  }
+  def a = 8
+  private a (s, p) { 5; super (s, p)}
 }
 -----
 Groovy script
@@ -15,9 +14,21 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Constructor
+      Variable definitions
         Modifiers
           PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(number)('8')
+      PsiElement(new line)('\n  ')
+      Constructor
+        Modifiers
+          PsiElement(private)('private')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
@@ -26,20 +37,27 @@ Groovy script
           Parameter
             Parameter modifiers
               <empty list>
-            Type element
-              Reference element
-                PsiElement(identifier)('String')
-            PsiWhiteSpace(' ')
             PsiElement(identifier)('s')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Parameter modifiers
+              <empty list>
+            PsiElement(identifier)('p')
         PsiElement())(')')
         PsiWhiteSpace(' ')
         Throw clause
           <empty list>
         Constructor body
           PsiElement({)('{')
-          PsiWhiteSpace('\n    ')
-          Constructor invocation
-            PsiElement(this)('this')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(number)('5')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          Method call
+            'super'reference expression
+              PsiElement(super)('super')
             PsiWhiteSpace(' ')
             PsiElement(()('(')
             Arguments
@@ -47,16 +65,9 @@ Groovy script
                 PsiElement(identifier)('s')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
-              Assignment expression
-                Reference expression
-                  PsiElement(identifier)('a')
-                PsiWhiteSpace(' ')
-                PsiElement(=)('=')
-                PsiWhiteSpace(' ')
-                Reference expression
-                  PsiElement(identifier)('b')
+              Reference expression
+                PsiElement(identifier)('p')
             PsiElement())(')')
-          PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

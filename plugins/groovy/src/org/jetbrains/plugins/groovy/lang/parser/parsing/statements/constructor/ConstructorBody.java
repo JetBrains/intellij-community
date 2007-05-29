@@ -41,7 +41,13 @@ public class ConstructorBody implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    parseExplicitConstructor(builder);
+    PsiBuilder.Marker constructorInvokationMarker = builder.mark();
+    boolean b = parseExplicitConstructor(builder);
+    if (b) {
+      constructorInvokationMarker.done(EXPLICIT_CONSTRUCTOR);
+    } else {
+      constructorInvokationMarker.drop();
+    }
 
     //explicit constructor invocation
     Separators.parse(builder);
@@ -53,8 +59,11 @@ public class ConstructorBody implements GroovyElementTypes {
       return CONSTRUCTOR_BODY_ERROR;
     }
 
-    cbMarker.done(CONSTRUCTOR_BODY);
-    return CONSTRUCTOR_BODY;
+//    cbMarker.done(CONSTRUCTOR_BODY);
+//    return CONSTRUCTOR_BODY;
+
+    cbMarker.done(OPEN_BLOCK);
+    return OPEN_BLOCK;
 
 //    ParserUtils.waitNextRCurly(builder);
 //
@@ -70,9 +79,9 @@ public class ConstructorBody implements GroovyElementTypes {
     TypeArguments.parse(builder);
 
     return (ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER))
-            && ParserUtils.getToken(builder, mLPAREN)
-            && !WRONGWAY.equals(ArgumentList.parse(builder, mRPAREN))
-            && ParserUtils.getToken(builder, mRPAREN);
+        && ParserUtils.getToken(builder, mLPAREN)
+        && !WRONGWAY.equals(ArgumentList.parse(builder, mRPAREN))
+        && ParserUtils.getToken(builder, mRPAREN);
 
   }
 }

@@ -18,11 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -40,5 +44,19 @@ public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implemen
 
   public boolean isConstructor() {
     return true;
+  }
+
+  @Nullable
+  public GrConstructorInvocation getConstructorInvocation() {
+    GrOpenBlock body = getBlock();
+    assert body != null;
+
+    GrStatement[] grStatements = body.getStatements();
+
+    if (grStatements != null && grStatements.length > 0 && grStatements[0] instanceof GrConstructorInvocation) {
+      return (GrConstructorInvocation) grStatements[0];
+    }
+
+    return null;
   }
 }

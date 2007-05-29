@@ -163,7 +163,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //bodies
   //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
-  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
+//  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
+  GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");  
 
   //throws
   GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
@@ -237,6 +238,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
           INTERFACE_BLOCK,
           ANNOTATION_BLOCK,
           ENUM_BLOCK,
-          CASE_BLOCK,
-          CONSTRUCTOR_BODY);
+          CASE_BLOCK/*,
+          CONSTRUCTOR_BODY*/);
 }

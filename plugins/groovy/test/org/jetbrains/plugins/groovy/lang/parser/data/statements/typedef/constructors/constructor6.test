@@ -32,11 +32,12 @@ Groovy script
         Constructor body
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
-          PsiElement(this)('this')
-          PsiElement(()('(')
-          Arguments
-            <empty list>
-          PsiElement())(')')
+          Constructor invocation
+            PsiElement(this)('this')
+            PsiElement(()('(')
+            Arguments
+              <empty list>
+            PsiElement())(')')
           PsiElement(;)(';')
           PsiElement(new line)('\n    ')
           Variable definitions
