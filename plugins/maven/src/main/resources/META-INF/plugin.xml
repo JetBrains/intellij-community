@@ -116,7 +116,7 @@
       <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
     </action>
     <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
-            text="Synchronize with Maven projects" description="Synchronize project structure with with Maven projects"
+            text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
             icon="/actions/sync.png">
       <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
     </action>
