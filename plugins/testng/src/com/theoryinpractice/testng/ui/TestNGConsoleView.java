@@ -17,6 +17,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -34,14 +36,16 @@ public class TestNGConsoleView implements ConsoleView
     private int mark;
     private TestNGConsoleProperties consoleProperties;
 
-    public TestNGConsoleView(Project project, TestNGConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+    public TestNGConsoleView(TestNGConfiguration config, final RunnerSettings runnerSettings,
                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-      this.consoleProperties = consoleProperties;
+      this.consoleProperties = new TestNGConsoleProperties(config);
+      final Project project = config.getProject();
       console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
       consoleProperties.setConsole(this);
-      testNGResults = new TestNGResults(project, this, runnerSettings, configurationPerRunnerSettings);
+      testNGResults = new TestNGResults(config, this, runnerSettings, configurationPerRunnerSettings);
       testNGResults.getTabbedPane().add("Output", console.getComponent());
       testNGResults.getTabbedPane().add("Statistics", new JScrollPane(testNGResults.getResultsTable()));
+      testNGResults.initLogConsole();
     }
 
     public TestNGResults getResultsView() {
@@ -125,9 +129,9 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void dispose() {
-        console.dispose();
+        Disposer.dispose(console);
         console = null;
-        testNGResults.dispose();
+        Disposer.dispose(testNGResults);
         testNGResults = null;
         consoleProperties.dispose();
         consoleProperties = null;
@@ -184,6 +188,7 @@ public class TestNGConsoleView implements ConsoleView
 
     public void attachToProcess(ProcessHandler processHandler) {
         console.attachToProcess(processHandler);
+        testNGResults.attachStopLogConsoleTrackingListeners(processHandler);
     }
 
     public void setOutputPaused(boolean value) {

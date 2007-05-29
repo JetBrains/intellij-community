@@ -11,11 +11,15 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,7 +27,12 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.diagnostic.logging.LogConsoleManager;
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogFilesManager;
 import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -39,14 +48,19 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.File;
 
-public class TestNGResults  implements TestFrameworkRunningModel
+public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleManager
 {
     @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
 
     private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+
+    private Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
 
     private TableView resultsTable;
     private JPanel main;
@@ -73,12 +87,19 @@ public class TestNGResults  implements TestFrameworkRunningModel
     private JSplitPane splitPane;
     private static final String NO_PACKAGE = "No Package";
     private TestNGToolbarPanel toolbar;
+    private final LogFilesManager myLogFilesManager;
     private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private List<ModelListener> myListeners = new ArrayList<ModelListener>();
+  private final TestNGConfiguration myConfiguration;
+  private ProcessHandler myRunProcess;
 
-  public TestNGResults(final Project project, final TestNGConsoleView console, final RunnerSettings runnerSettings,
+  public TestNGResults(final TestNGConfiguration configuration, final TestNGConsoleView console, final RunnerSettings runnerSettings,
                          final ConfigurationPerRunnerSettings configurationSettings) {
-        this.project = project;
+        myConfiguration = configuration;
+        this.project = myConfiguration.getProject();
+
+        myLogFilesManager = new LogFilesManager(project, this);
+
         model = new TestNGResultsTableModel();
         consoleProperties = console.getConsoleProperties();
         resultsTable = new TableView(model);
@@ -110,9 +131,19 @@ public class TestNGResults  implements TestFrameworkRunningModel
             });
           }
         });
+        Disposer.register(this, new Disposable() {
+          public void dispose() {
+            splitter.dispose();
+          }
+        });
     }
 
-    private void updateLabel(JLabel label) {
+  public void initLogConsole() {
+    myLogFilesManager.registerFileMatcher(myConfiguration);
+    myLogFilesManager.initLogConsoles(myConfiguration, myRunProcess);
+  }
+
+  private void updateLabel(JLabel label) {
         StringBuffer sb = new StringBuffer();
         if (end == 0) {
             sb.append("Running: ");
@@ -126,6 +157,15 @@ public class TestNGResults  implements TestFrameworkRunningModel
             sb.append(" (").append(Formatters.printTime(end - start)).append(")  ");
         }
         label.setText(sb.toString());
+    }
+
+    public void attachStopLogConsoleTrackingListeners(ProcessHandler process) {
+      myRunProcess = process;
+      for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
+        if (component instanceof LogConsole){
+          ((LogConsole)component).attachStopLogConsoleTrackingListener(process);
+        }
+      }
     }
 
     public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
@@ -341,16 +381,67 @@ public class TestNGResults  implements TestFrameworkRunningModel
       for (ModelListener listener : myListeners) {
         listener.onDispose();
       }
-        treeBuilder.dispose();
+        Disposer.dispose(treeBuilder);
         animator.dispose();
         toolbar.dispose();
         openSourceListener.structure = null;
         openSourceListener.console = null;
         tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
-
     }
 
-    private class OpenSourceSelectionListener implements TreeSelectionListener
+  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
+    myAdditionalComponents.put(tabComponent, tabbedPane.getTabCount());
+    tabbedPane.addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        removeAdditionalTabComponent(tabComponent);
+      }
+    });
+  }
+
+  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
+    tabbedPane.removeTabAt(myAdditionalComponents.get(component).intValue());
+    myAdditionalComponents.remove(component);
+    component.dispose();
+  }
+
+  public void addLogConsole(final String name, final String path, final long skippedContent){
+    final LogConsole log = new LogConsole(project, new File(path), skippedContent, name) {
+      public boolean isActive() {
+        return tabbedPane.getSelectedComponent() == this;
+      }
+    };
+
+    if (myRunProcess != null) {
+      log.attachStopLogConsoleTrackingListener(myRunProcess);
+    }
+    addAdditionalTabComponent(log);
+    tabbedPane.addChangeListener(log);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        tabbedPane.removeChangeListener(log);
+      }
+    });
+  }
+
+  public void removeLogConsole(final String path) {
+    LogConsole componentToRemove = null;
+    for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
+      if (tabComponent instanceof LogConsole) {
+        final LogConsole console = (LogConsole)tabComponent;
+        if (Comparing.strEqual(console.getPath(), path)) {
+          componentToRemove = console;
+          break;
+        }
+      }
+    }
+    if (componentToRemove != null) {
+      tabbedPane.removeChangeListener(componentToRemove);
+      removeAdditionalTabComponent(componentToRemove);
+    }
+  }
+
+  private class OpenSourceSelectionListener implements TreeSelectionListener
     {
         private TestTreeStructure structure;
         private TestNGConsoleView console;

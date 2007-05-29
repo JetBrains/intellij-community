@@ -6,6 +6,7 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.Location;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
-import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -162,10 +162,15 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
         group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
         group.addEditor(ExecutionBundle.message("coverage.tab.title"), new TestNGCoverageConfigurationEditor(getProject()));
+        group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
         return group;
     }
 
-    @Override
+    public boolean needAdditionalConsole() {
+      return false;
+    }
+
+  @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
         if (data.TEST_OBJECT == TestType.CLASS.getType() || data.TEST_OBJECT == TestType.METHOD.getType()) {
             PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
