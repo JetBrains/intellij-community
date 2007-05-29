@@ -93,7 +93,7 @@ public class FileStatusMap {
   /**
    * @param document
    * @param passId
-   * @return null for processed file, whole file for untouched or emtirely dirty file, PsiElement(usually code block) for dirty region (optimization)
+   * @return null for processed file, whole file for untouched or entirely dirty file, PsiElement(usually code block) for dirty region (optimization)
    */
   public PsiElement getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){

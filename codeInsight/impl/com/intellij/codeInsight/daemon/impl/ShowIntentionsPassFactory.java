@@ -14,7 +14,6 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.intention.IntentionManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,6 @@ public class ShowIntentionsPassFactory extends AbstractProjectComponent implemen
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new ShowIntentionsPass(myProject, editor, -1, IntentionManager.getInstance().getIntentionActions());
+    return new ShowIntentionsPass(myProject, editor, -1, null);
   }
 }

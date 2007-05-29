@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -113,7 +114,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           id2Pass.put(passId, pass);
           if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {
             Project project = psiFile.getProject();
-            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, new QuickFixAction());
+            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, new IntentionAction[] {new QuickFixAction()});
             intentionsPass.setCompletionPredecessorIds(new int[]{passId});
             int id = nextAvailableId++;
             intentionsPass.setId(id);

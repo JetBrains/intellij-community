@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -24,9 +25,9 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,11 +45,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -56,7 +58,7 @@ import java.util.regex.PatternSyntaxException;
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
   private final Editor myEditor;
-  private final IntentionAction[] myIntentionActions;
+  @Nullable private IntentionAction[] myIntentionActions; //null means all actions in IntentionManager
 
   private final PsiFile myFile;
 
@@ -64,7 +66,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private int myEndOffset;
   private final int myPassIdToShowIntentionsFor;
 
-  ShowIntentionsPass(Project project, Editor editor, int passId, IntentionAction... intentionActions) {
+  ShowIntentionsPass(Project project, Editor editor, int passId, @Nullable IntentionAction[] intentionActions) {
     super(project, editor.getDocument());
     myPassIdToShowIntentionsFor = passId;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -139,6 +141,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    if (myIntentionActions == null) {
+      myIntentionActions = IntentionManager.getInstance().getIntentionActions();
+    }
     getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myIntentionActions, myPassIdToShowIntentionsFor);
     if (myFile instanceof PsiCodeFragment) {
       final PsiCodeFragment.IntentionActionsFilter actionsFilter = ((PsiCodeFragment)myFile).getIntentionActionsFilter();
