@@ -14,6 +14,7 @@ import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -238,6 +239,7 @@ public class DirectoryBasedStorage implements StateStorage {
     throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
   }
 
+  @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
     final ExternalizationSession session = new ExternalizationSession() {
@@ -251,6 +253,7 @@ public class DirectoryBasedStorage implements StateStorage {
     return session;
   }
 
+  @NotNull
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 

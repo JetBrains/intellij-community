@@ -10,6 +10,7 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -165,6 +166,7 @@ abstract class XmlElementStorage implements StateStorage {
     return myUsedMacros;
   }
 
+  @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
     final ExternalizationSession session = new MyExternalizationSession();
@@ -173,6 +175,7 @@ abstract class XmlElementStorage implements StateStorage {
     return session;
   }
 
+  @NotNull
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 

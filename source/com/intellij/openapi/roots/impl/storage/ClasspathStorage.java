@@ -91,6 +91,7 @@ abstract public class ClasspathStorage implements StateStorage {
     }
   }
 
+  @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
     final ExternalizationSession session = new ExternalizationSession() {
@@ -104,6 +105,7 @@ abstract public class ClasspathStorage implements StateStorage {
     return session;
   }
 
+  @NotNull
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 

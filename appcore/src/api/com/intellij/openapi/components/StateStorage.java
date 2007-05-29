@@ -1,6 +1,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -14,7 +15,9 @@ public interface StateStorage {
 
   List<VirtualFile> getAllStorageFiles();
 
+  @NotNull
   ExternalizationSession startExternalization();
+  @NotNull
   SaveSession startSave(ExternalizationSession externalizationSession);
   void finishSave(SaveSession saveSession);
 

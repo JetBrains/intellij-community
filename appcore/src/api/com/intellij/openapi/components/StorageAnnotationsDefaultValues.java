@@ -3,6 +3,7 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,10 +37,12 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
     }
 
+    @NotNull
     public ExternalizationSession startExternalization() {
       throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
     }
 
+    @NotNull
     public SaveSession startSave(ExternalizationSession externalizationSession) {
       throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
     }

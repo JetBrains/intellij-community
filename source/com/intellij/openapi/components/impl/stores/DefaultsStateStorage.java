@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -65,10 +66,12 @@ class DefaultsStateStorage implements StateStorage {
     return Collections.EMPTY_SET;
   }
 
+  @NotNull
   public ExternalizationSession startExternalization() {
     throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
   }
 
+  @NotNull
   public SaveSession startSave(ExternalizationSession externalizationSession) {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
