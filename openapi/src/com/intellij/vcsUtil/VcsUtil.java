@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -87,20 +86,6 @@ public class VcsUtil {
         else {
           vFile.refresh(true, vFile.isDirectory());
         }
-      }
-    }
-  }
-
-  public static String getCanonicalPath(File file) {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      return file.getAbsolutePath().replace(File.separatorChar, '/');
-    }
-    else {
-      try {
-        return file.getCanonicalPath().replace(File.separatorChar, '/');
-      }
-      catch (IOException e) {
-        return null;
       }
     }
   }
@@ -440,13 +425,15 @@ public class VcsUtil {
    *         in this case name of files for "before" and "after" revisions must not
    *         coniside.
    */
-  public static boolean isRenameChange(Change change) {
+  public static boolean isRenameChange(Change change)
+  {
     boolean isRenamed = false;
     ContentRevision before = change.getBeforeRevision();
     ContentRevision after = change.getAfterRevision();
-    if (before != null && after != null) {
-      String prevFile = before.getFile().getPath();
-      String newFile = after.getFile().getPath();
+    if (before != null && after != null)
+    {
+      String prevFile = getCanonicalLocalPath( before.getFile().getPath() );
+      String newFile = getCanonicalLocalPath( after.getFile().getPath() );
       isRenamed = !prevFile.equals(newFile);
     }
     return isRenamed;
@@ -558,12 +545,8 @@ public class VcsUtil {
     final Ref<VcsException> ex = new Ref<VcsException>();
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        try {
-          runnable.run();
-        }
-        catch (VcsException e) {
-          ex.set(e);
-        }
+        try {  runnable.run();  }
+        catch (VcsException e) {  ex.set(e);  }
       }
     }, progressTitle, canBeCanceled, project);
     if (!ex.isNull()) {
@@ -578,32 +561,31 @@ public class VcsUtil {
     Runnable action = new Runnable() {
       public void run() {
         app.runWriteAction(new Runnable() {
-          public void run() {
-            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          }
+          public void run() {  file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);   }
         });
       }
     };
 
-    if (app.isDispatchThread()) {
+    if (app.isDispatchThread())
       action.run();
-    }
-    else {
-      app.invokeAndWait(action, ModalityState.defaultModalityState());
-    }
+    else
+      app.invokeAndWait( action, ModalityState.defaultModalityState() );
 
     return file[0];
   }
 
-  public static String getCanonicalLocalPath(String localPath) {
+  public static String getCanonicalLocalPath( String localPath )
+  {
     localPath = chopTrailingChars(localPath.trim().replace('\\', '/'), ourCharsToBeChopped);
-    if (localPath.length() == 2 && localPath.charAt(1) == ':') {
+    if (localPath.length() == 2 && localPath.charAt( 1 ) == ':') {
       localPath += '/';
     }
     return localPath;
   }
 
   /**
+   * @param source Source string
+   * @param chars Symbols to be trimmed
    * @return string without all specified chars at the end. For example,
    *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\'}) is <code>"c:\\my_directory\\//"</code>,
    *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\','/'}) is <code>"c:\my_directory"</code>.
