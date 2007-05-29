@@ -11,6 +11,7 @@ class A {
 }
 -----
 abstract
+assert
 boolean
 byte
 char
@@ -19,6 +20,7 @@ double
 enum
 final
 float
+for
 import
 int
 interface
@@ -27,9 +29,16 @@ native
 private
 protected
 public
+return
 short
 static
 strictfp
+switch
+synchronized
+throw
 transient
+try
 void
 volatile
+while
+with
