@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerEx;
 
@@ -100,6 +101,7 @@ public class PsiUtil {
       }
       parameterTypeToCheck =
           boxPrimitiveType(parameterTypeToCheck, method.getManager(), method.getResolveScope());
+      parameterTypeToCheck = TypeConversionUtil.erasure(parameterTypeToCheck);
       if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
 
