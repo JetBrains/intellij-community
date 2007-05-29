@@ -76,7 +76,7 @@ public class MavenCoreConfigurable implements Configurable {
 
   private void fillComboboxPluginUpdatePolicy() {
     ComboBoxUtil.addToModel(comboboxModelPluginUpdatePolicy,
-                            new Object[][]{{"null", "No Global Policy"}, {"true", "Check For Updates"}, {"false", "Supress Checking"}});
+                            new Object[][]{{"true", "Check For Updates"}, {"false", "Supress Checking"}});
 
     comboboxPluginUpdatePolicy.setModel(comboboxModelPluginUpdatePolicy);
   }
