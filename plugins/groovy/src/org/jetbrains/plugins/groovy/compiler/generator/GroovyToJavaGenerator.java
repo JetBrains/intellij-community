@@ -13,9 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.FinalWrapper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
@@ -409,6 +413,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   }
 
   private void writeConstructor(StringBuffer text, GrMethod constructor) {
+    GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
     text.append("public ");
 
     /************* name **********/
@@ -441,6 +446,34 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
     /************* body **********/
     text.append("{");
+    PsiParameterList list = constructor.getParameterList();
+    PsiParameter[] parameters = list.getParameters();
+
+    GrConstructorInvocation grConstructorInvocation = constrDefinition.getConstructorInvocation();
+    if (grConstructorInvocation != null && grConstructorInvocation.isSuperCall()) {
+      text.append("super");
+      text.append("(");
+
+      int i1 = 0;
+      while (i1 < parameters.length) {
+
+        if (i1 > 0) text.append(", ");
+
+        PsiParameter grParameter = parameters[i1];
+        PsiType type = grParameter.getType();
+        String initValueToText;
+
+        if (typesToInitialValues.containsKey(type.getCanonicalText()))
+          initValueToText = typesToInitialValues.get(type.getCanonicalText());
+        else
+          initValueToText = "null";
+
+        text.append(initValueToText);
+        i1++;
+      }
+      text.append(")");
+      text.append(";");
+    }
     text.append("}");
   }
 
