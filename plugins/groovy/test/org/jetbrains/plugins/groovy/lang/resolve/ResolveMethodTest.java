@@ -4,19 +4,10 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.ResolveTestCase;
-import org.jetbrains.plugins.groovy.GroovyLoader;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.DefaultGroovyMethod;
@@ -103,4 +94,19 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
    assertTrue(resolved instanceof PsiMethod);
    assertEquals("groovy.lang.Script", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
  }
+
+  public void testSwingBuilderMethod() throws Exception {
+    PsiReference ref = configureByFile("swingBuilder/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertFalse(resolved.isPhysical());
+  }
+
+  public void testSwingProperty() throws Exception {
+    PsiReference ref = configureByFile("swingProperty/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
+    assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  }
 }
