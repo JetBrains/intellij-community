@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -242,24 +243,19 @@ public class HighlightControlFlowUtil {
   @Nullable
   public static HighlightInfo checkFinalFieldInitialized(PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
-    boolean isInitialized = isFinalFieldInitialized(field);
-    if (!isInitialized) {
-      String description = JavaErrorMessages.message("variable.not.initialized", field.getName());
-      int start = field.getModifierList().getTextRange().getStartOffset();
-      int end = field.getNameIdentifier().getTextRange().getEndOffset();
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-          HighlightInfoType.ERROR,
-          start, end,
-          description);
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass != null && !containingClass.isInterface()) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-      }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field));
-      return highlightInfo;
+    if (isFinalFieldInitialized(field)) return null;
+
+    String description = JavaErrorMessages.message("variable.not.initialized", field.getName());
+    TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range.getStartOffset(), range.getEndOffset(), description);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field));
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null && !containingClass.isInterface()) {
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
     }
-    return null;
+    QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field));
+    return highlightInfo;
   }
 
 

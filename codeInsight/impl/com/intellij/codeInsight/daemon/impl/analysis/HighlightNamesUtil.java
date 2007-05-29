@@ -188,6 +188,11 @@ public class HighlightNamesUtil {
     return new TextRange(start, end);
   }
 
+  public static TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
+    int start = stripAnnotationsFromModifierList(field.getModifierList());
+    int end = field.getNameIdentifier().getTextRange().getEndOffset();
+    return new TextRange(start, end);
+  }
 
   public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiEnumConstantInitializer) {
