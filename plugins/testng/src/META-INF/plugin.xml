@@ -25,6 +25,7 @@
       <category>TestNG</category>
     </intentionAction>
     <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationProducer"/>
+    <testFramework implementation = "com.theoryinpractice.testng.util.TestNGUtil"/>
   </extensions>
 
 

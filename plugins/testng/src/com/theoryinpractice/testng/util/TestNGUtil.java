@@ -1,6 +1,7 @@
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFramework;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
  */
-public class TestNGUtil
+public class TestNGUtil implements TestFramework
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
@@ -368,4 +369,8 @@ public class TestNGUtil
         System.arraycopy(annotations, 0, array, 0, annotations.length);
         return array;
     }
+
+  public boolean isTestKlass(PsiClass psiClass) {
+    return hasTest(psiClass);
+  }
 }
