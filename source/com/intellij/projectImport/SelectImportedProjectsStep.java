@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +30,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   private final Context<T> myContext;
 
   private final JPanel panel;
-  private final ElementsChooser<T> fileChooser;
+  protected final ElementsChooser<T> fileChooser;
   private final JCheckBox openModuleSettingsCheckBox;
 
   public SelectImportedProjectsStep(Context<T> context, final boolean updating) {
@@ -38,6 +39,10 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     fileChooser = new ElementsChooser<T>(true) {
       protected String getItemText(T item) {
         return getElementText(item);
+      }
+
+      protected Icon getItemIcon(final T item) {
+        return getElementIcon (item);
       }
     };
 
@@ -51,6 +56,11 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     panel.add(openModuleSettingsCheckBox, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_HORIZONTAL,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+  }
+
+  @Nullable
+  protected Icon getElementIcon(final T item) {
+    return null;    
   }
 
   protected abstract String getElementText(final T item);
