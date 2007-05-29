@@ -8,30 +8,28 @@
  */
 package com.intellij.psi.controlFlow;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ControlFlowFactory extends AbstractProjectComponent {
+public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
   private final ConcurrentMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>> cachedFlows = new ConcurrentWeakHashMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>>();
 
   public static ControlFlowFactory getInstance(Project project) {
-    return project.getComponent(ControlFlowFactory.class);
+    return ServiceManager.getService(project, ControlFlowFactory.class);
   }
 
-  public ControlFlowFactory(Project project, PsiManagerImpl psiManager) {
-    super(project);
+  public ControlFlowFactory(PsiManagerEx psiManager) {
     psiManager.registerRunnableToRunOnChange(new Runnable(){
       public void run() {
         clearCache();
@@ -41,12 +39,6 @@ public class ControlFlowFactory extends AbstractProjectComponent {
 
   public void clearCache() {
     cachedFlows.clear();
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ControlFlowFactory";
   }
 
   public void registerSubRange(final PsiElement codeFragment, final ControlFlowSubRange flow, final boolean evaluateConstantIfConfition,

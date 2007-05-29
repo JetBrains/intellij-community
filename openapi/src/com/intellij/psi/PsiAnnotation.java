@@ -60,10 +60,21 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaBaseOwne
   /**
    * Returns the value of the annotation element with the specified name.
    *
-   * @param attributeName name of the annotation element for which the value is requested.
+   * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation, tha default
+   * value is returned.
    * @return the element value, or null if the annotation does not contain a value for
    * the element and the element has no default value.
    */
   @Nullable
   PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName);
+
+    /**
+   * Returns the value of the annotation element with the specified name.
+   *
+   * @param attributeName name of the annotation element for which the value is requested, declared in this annotation.
+   * @return the element value, or null if the annotation does not contain a value for
+   * the element.
+   */
+  @Nullable
+  PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName);
 }

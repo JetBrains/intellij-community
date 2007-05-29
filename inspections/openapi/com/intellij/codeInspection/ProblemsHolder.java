@@ -42,8 +42,7 @@ public class ProblemsHolder {
                               String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
-    ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType);
-    registerProblem(descriptor);
+    registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType));
   }
 
   public void registerProblem(ProblemDescriptor problemDescriptor) {

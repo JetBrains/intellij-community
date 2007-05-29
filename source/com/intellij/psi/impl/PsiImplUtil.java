@@ -20,6 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,14 +42,23 @@ public class PsiImplUtil {
     return constructorsList.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, String attributeName) {
+  @Nullable
+  public static PsiAnnotationMemberValue findDeclaredAttributeValue(PsiAnnotation annotation, @NonNls String attributeName) {
     if ("value".equals(attributeName)) attributeName = null;
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
-      final String name = attribute.getName();
+      @NonNls final String name = attribute.getName();
       if (ObjectUtils.equals(name, attributeName)
           || attributeName == null && name.equals("value")) return attribute.getValue();
     }
+    return null;
+  }
+  
+  @Nullable
+  public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, @NonNls String attributeName) {
+    final PsiAnnotationMemberValue value = findDeclaredAttributeValue(annotation, attributeName);
+    if (value != null) return value;
+
     if (attributeName == null) attributeName = "value";
     PsiElement resolved = annotation.getNameReferenceElement().resolve();
     if (resolved != null) {

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -55,10 +56,10 @@ public final class IterationState {
   private final int myCaretRowEnd;
   private final ArrayList<TextAttributes> myCachedAttributesList;
   private final DocumentImpl myDocument;
-  private final EditorImpl myEditor;
+  private final EditorEx myEditor;
   private final Color myReadOnlyColor;
 
-  public IterationState(EditorImpl editor, int start, boolean useCaretAndSelection) {
+  public IterationState(EditorEx editor, int start, boolean useCaretAndSelection) {
     myDocument = (DocumentImpl)editor.getDocument();
     myStartOffset = start;
     myEnd = editor.getDocument().getTextLength();
@@ -72,7 +73,7 @@ public final class IterationState {
     int longestViewHighlighterLength = editorList == null ? 0 : editorList.getLongestHighlighterLength();
     myViewHighlighters = editorList == null ? null : editorList.getSortedHighlighters();
 
-    final MarkupModelEx docMarkup = (MarkupModelEx)editor.getDocument().getMarkupModel(editor.myProject);
+    final MarkupModelEx docMarkup = (MarkupModelEx)editor.getDocument().getMarkupModel(editor.getProject());
 
     final HighlighterList docList = docMarkup.getHighlighterList();
     myDocumentHighlighters = docList != null
@@ -96,7 +97,7 @@ public final class IterationState {
     CaretModelImpl caretModel = (CaretModelImpl)editor.getCaretModel();
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
-    myDefaultForeground = editor.getForegroundColor();
+    myDefaultForeground = editor.getColorsScheme().getDefaultForeground();
 
     myCurrentHighlighters = new ArrayList<RangeHighlighterImpl>();
 

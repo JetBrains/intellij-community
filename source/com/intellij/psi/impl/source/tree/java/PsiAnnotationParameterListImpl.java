@@ -5,9 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -92,15 +94,26 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
         super.addInternal(created, created, getLastChildNode(), false);
       }
 
-      if (anchor == null) {
-        if (before == null || before.booleanValue()) {
-          anchor = findChildByRole(ChildRole.LPARENTH);
-          before = Boolean.FALSE;
+      final ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
+      if (nodes.length == 1) {
+        final ASTNode node = nodes[0];
+        if (node instanceof PsiNameValuePair) {
+          final PsiNameValuePair pair = (PsiNameValuePair)node;
+          if (pair.getName() == null) {
+            final String text = pair.getValue().getText();
+            try {
+              final PsiAnnotation annotation = getManager().getElementFactory().createAnnotationFromText("@AAA(value = " + text + ")", null);
+              replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
         }
-        else {
-          anchor = findChildByRole(ChildRole.RPARENTH);
-          before = Boolean.TRUE;
-        }
+      }
+
+      if (anchor == null && before != null) {
+        anchor = findChildByRole(before.booleanValue() ? ChildRole.RPARENTH : ChildRole.LPARENTH);
       }
     }
 

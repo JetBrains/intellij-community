@@ -11,6 +11,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ide.util.EditSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -76,6 +77,11 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation, 
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
+  }
+
+  @Nullable
+  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+    return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
   public String getText() {

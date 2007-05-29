@@ -31,10 +31,7 @@ public abstract class Spacing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Spacing");
 
   static void setFactory(SpacingFactory factory) {
-    LOG.assertTrue(myFactory == null);
-    if (myFactory == null) {
-      myFactory = factory;
-    }
+    myFactory = factory;
   }
 
   /**

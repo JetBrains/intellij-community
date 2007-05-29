@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -173,7 +175,9 @@ public class MockApplication extends MockComponentManager implements Application
     return 0;
   }
 
-
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
+  }
 
   public ModalityState getCurrentModalityState() {
     return null;

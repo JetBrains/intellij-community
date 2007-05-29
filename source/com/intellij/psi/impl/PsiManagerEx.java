@@ -3,12 +3,13 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 
 /**
  * @author peter
@@ -39,4 +40,6 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract void invalidateFile(PsiFile file);
 
   public abstract void beforeChildRemoval(final PsiTreeChangeEventImpl event);
+
+  public abstract CacheManager getCacheManager();
 }

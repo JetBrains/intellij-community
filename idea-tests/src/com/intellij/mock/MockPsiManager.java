@@ -14,7 +14,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -200,7 +203,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public CodeStyleManager getCodeStyleManager() {
-    return null;
+    return CodeStyleManager.getInstance(myProject);
   }
 
   @NotNull
@@ -221,7 +224,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiSearchHelper getSearchHelper() {
-    return null;
+    return new PsiSearchHelperImpl(this);
   }
 
   public PsiResolveHelper getResolveHelper() {
@@ -352,7 +355,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
-    return null;
+    return new PsiConstantEvaluationHelperImpl();
   }
 
   public boolean isBatchFilesProcessingMode() {
@@ -406,5 +409,9 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void beforeChildRemoval(final PsiTreeChangeEventImpl event) {
+  }
+
+  public CacheManager getCacheManager() {
+    return new CompositeCacheManager();
   }
 }

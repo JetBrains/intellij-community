@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -69,7 +69,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   }
 
   public PsiFile getPsi(@NotNull Language target) {
-    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+    ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;
   }
 

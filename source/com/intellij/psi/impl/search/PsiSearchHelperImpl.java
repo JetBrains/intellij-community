@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
 
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
   static {
@@ -176,7 +177,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
 
-  public PsiSearchHelperImpl(PsiManagerImpl manager) {
+  public PsiSearchHelperImpl(PsiManagerEx manager) {
     myManager = manager;
   }
 

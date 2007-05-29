@@ -74,12 +74,16 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void inspectRoot(final ProgressIndicator progress) {
-    if (!HighlightUtil.shouldInspect(myFile)) return;
+    if (!shouldInspect()) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
     inspect(tools, progress, iManager, true);
+  }
+
+  protected boolean shouldInspect() {
+    return HighlightUtil.shouldInspect(myFile);
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, InspectionTool[] toolWrappers, final ProgressIndicator progress) {

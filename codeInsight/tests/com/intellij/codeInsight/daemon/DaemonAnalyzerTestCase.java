@@ -167,22 +167,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
   protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
-    Document document = myEditor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), true);
-    action1.doCollectInformation(new MockProgressIndicator());
-    result.addAll(action1.getHighlights());
+    final PsiFile file = myFile;
+    final Editor editor = myEditor;
 
-    PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength());
-    action2.doCollectInformation(new MockProgressIndicator());
-    result.addAll(action2.getHighlights());
-
-    if (!myAvailableTools.isEmpty()) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength());
-      inspectionsPass.doCollectInformation(new MockProgressIndicator());
-      result.addAll(inspectionsPass.getHighlights());
-    }
+    List<HighlightInfo> result = collectHighlighInfos(file, editor);
 
     boolean isToLaunchExternal = true;
     for (HighlightInfo info : result) {
@@ -193,11 +182,32 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     if (isToLaunchExternal && doExternalValidation()) {
-      ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor, 0, myEditor.getDocument().getTextLength());
+      ExternalToolPass action3 = new ExternalToolPass(file, editor, 0, editor.getDocument().getTextLength());
       action3.doCollectInformation(new MockProgressIndicator());
       result.addAll(action3.getHighlights());
     }
 
+    return result;
+  }
+
+  public static List<HighlightInfo> collectHighlighInfos(final PsiFile file, final Editor editor) {
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    Document document = editor.getDocument();
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(file.getProject(), file, document, 0, file.getTextLength(), true);
+    action1.doCollectInformation(new MockProgressIndicator());
+    result.addAll(action1.getHighlights());
+
+    PostHighlightingPass action2 = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
+    action2.doCollectInformation(new MockProgressIndicator());
+    result.addAll(action2.getHighlights());
+
+    LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength()) {
+      protected boolean shouldInspect() {
+        return true;
+      }
+    };
+    inspectionsPass.doCollectInformation(new MockProgressIndicator());
+    result.addAll(inspectionsPass.getHighlights());
     return result;
   }
 

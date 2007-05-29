@@ -30,10 +30,7 @@ public class FormattingModelProvider {
   private static FormattingModelFactory myFactory;
 
   static void setFactory(FormattingModelFactory factory) {
-    LOG.assertTrue(myFactory == null);
-    if (myFactory == null) {
-      myFactory = factory;
-    }
+    myFactory = factory;
   }
 
   /**

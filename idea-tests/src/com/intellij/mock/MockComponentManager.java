@@ -19,6 +19,7 @@ import org.picocontainer.PicoContainer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
@@ -80,7 +81,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @NotNull
   public <T> T[] getComponents(Class<T> baseClass) {
-    return (T[])Array.newInstance(baseClass, 0);
+    final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
+    return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
 
   @NotNull

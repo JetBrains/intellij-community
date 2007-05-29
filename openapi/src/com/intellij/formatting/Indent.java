@@ -31,10 +31,7 @@ public abstract class Indent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Indent");
 
   static void setFactory(IndentFactory factory) {
-    LOG.assertTrue(myFactory == null);
-    if (myFactory == null) {
-      myFactory = factory;
-    }
+    myFactory = factory;
   }
 
   /**

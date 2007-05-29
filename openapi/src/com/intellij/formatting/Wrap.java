@@ -42,10 +42,7 @@ public abstract class Wrap {
   public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
 
   static void setFactory(WrapFactory factory) {
-    LOG.assertTrue(myFactory == null);
-    if (myFactory == null) {
-      myFactory = factory;
-    }
+    myFactory = factory;
   }
 
   /**

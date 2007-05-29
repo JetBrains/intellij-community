@@ -44,12 +44,15 @@ public abstract class OrderEntryFix implements IntentionAction {
   public static void registerFixes(HighlightInfo info, final PsiJavaCodeReferenceElement reference) {
     @NonNls final String referenceName = reference.getReferenceName();
     if (referenceName == null) return;
+
     Project project = reference.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     PsiFile containingFile = reference.getContainingFile();
     if (containingFile == null) return;
+
     VirtualFile classVFile = containingFile.getVirtualFile();
     if (classVFile == null) return;
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
 

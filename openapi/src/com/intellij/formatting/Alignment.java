@@ -32,10 +32,7 @@ public abstract class Alignment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Alignment");
 
   static void setFactory(AlignmentFactory factory) {
-    LOG.assertTrue(myFactory == null);
-    if (myFactory == null) {
-      myFactory = factory;
-    }
+    myFactory = factory;
   }
 
   /**

@@ -1934,9 +1934,10 @@ public class HighlightUtil {
   public static boolean shouldInspect(final PsiElement psiRoot) {
     if (!shouldHighlight(psiRoot)) return false;                                                                
     final Project project = psiRoot.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {
       return false;
     }
