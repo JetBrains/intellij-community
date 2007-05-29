@@ -109,7 +109,7 @@ abstract public class ClasspathStorage implements StateStorage {
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
-    return new SaveSession() {
+    final SaveSession session = new SaveSession() {
       public boolean needsSave() throws StateStorageException {
         assert mySession == this;
         return ClasspathStorage.this.needsSave();
@@ -125,6 +125,9 @@ abstract public class ClasspathStorage implements StateStorage {
         return Collections.EMPTY_SET;
       }
     };
+
+    mySession = session;
+    return session;
   }
 
   public void finishSave(final SaveSession saveSession) {
