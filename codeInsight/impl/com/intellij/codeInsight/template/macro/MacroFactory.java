@@ -63,6 +63,7 @@ public class MacroFactory {
   }
 
   public static void register(Macro macro) {
+    if (myMacroTable == null) init();
     myMacroTable.put(macro.getName(), macro);
   }
 }
