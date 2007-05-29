@@ -57,8 +57,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
     Entry right = new FileEntry(-1, "right", null, 123L);
 
     Difference d = new Difference(false, null, left, right);
-    DirectoryDifferenceModel nm = new DirectoryDifferenceModel(d);
-    FileDifferenceModel m = nm.getFileDifferenceModel();
+    DirectoryDifferenceModel dm = new DirectoryDifferenceModel(d);
+    FileDifferenceModel m = dm.getFileDifferenceModel();
 
     assertTrue(m.getLeftTitle().endsWith("left"));
     assertTrue(m.getRightTitle().endsWith("right"));

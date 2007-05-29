@@ -59,7 +59,7 @@ public class DirectoryDifferenceModel {
   }
 
   public FileDifferenceModel getFileDifferenceModel() {
-    return new FileDifferenceModel(myDiff.getLeft(), myDiff.getRight());
+    return new EntireFileDifferenceModel(myDiff.getLeft(), myDiff.getRight());
   }
 
   public boolean canShowFileDifference() {

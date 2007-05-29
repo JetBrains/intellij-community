@@ -7,44 +7,33 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.EditorFactory;
 
-public class FileDifferenceModel {
-  private Entry myLeft;
-  private Entry myRight;
-
-  public FileDifferenceModel(Entry left, Entry right) {
-    myLeft = left;
-    myRight = right;
-  }
-
+public abstract class FileDifferenceModel {
   public String getTitle() {
-    return myRight.getPath();
+    return getRightEntry().getPath();
   }
 
   public String getLeftTitle() {
-    return formatTitle(myLeft);
+    return formatTitle(getLeftEntry());
   }
 
   public String getRightTitle() {
-    return formatTitle(myRight);
+    return formatTitle(getRightEntry());
   }
+
+  protected abstract Entry getLeftEntry();
+
+  protected abstract Entry getRightEntry();
 
   private String formatTitle(Entry e) {
     return FormatUtil.formatTimestamp(e.getTimestamp()) + " - " + e.getName();
   }
 
-  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef) {
-    return getDiffContent(gw, ef, myLeft);
+  public abstract DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef);
+
+  public abstract DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef);
+
+  protected SimpleContent createDiffContent(IdeaGateway gw, EditorFactory ef, String content, Entry e) {
+    return new SimpleContent(content, gw.getFileType(e.getName()), ef);
   }
 
-  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef) {
-    return getDiffContent(gw, ef, myRight);
-  }
-
-  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Entry e) {
-    return new SimpleContent(getContentOf(e), gw.getFileType(e.getName()), ef);
-  }
-
-  private String getContentOf(Entry e) {
-    return new String(e.getContent().getBytes());
-  }
 }

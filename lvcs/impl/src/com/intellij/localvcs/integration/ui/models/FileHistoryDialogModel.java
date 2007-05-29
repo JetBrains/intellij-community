@@ -22,7 +22,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public FileDifferenceModel getDifferenceModel() {
-    return new FileDifferenceModel(getLeftEntry(), getRightEntry()) {
+    return new EntireFileDifferenceModel(getLeftEntry(), getRightEntry()) {
       @Override
       public String getRightTitle() {
         if (isCurrentRevisionSelected()) return "Current";
