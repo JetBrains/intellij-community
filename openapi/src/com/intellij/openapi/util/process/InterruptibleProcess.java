@@ -67,13 +67,13 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
     }
 
     public int read(final byte[] b) throws IOException {
-      final int r = super.read(b);
+      final int r = myDelegate.read(b);
       touch();
       return r;
     }
 
     public int read(final byte[] b, final int off, final int len) throws IOException {
-      final int r = super.read(b, off, len);
+      final int r = myDelegate.read(b, off, len);
       touch();
       return r;
     }
