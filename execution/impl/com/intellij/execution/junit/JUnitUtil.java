@@ -1,5 +1,7 @@
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFramework;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +28,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public class JUnitUtil {
+public class JUnitUtil implements TestFramework {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
@@ -100,7 +102,11 @@ public class JUnitUtil {
    * @return true iff aClassLocation can be used as JUnit test class.
    */
   public static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
-    return isTestClass(aClassLocation.getPsiElement());
+    return TestUtil.isTestClass(aClassLocation.getPsiElement());
+  }
+
+  public boolean isTestKlass(final PsiClass psiClass) {
+    return isTestClass(psiClass);
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {

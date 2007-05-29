@@ -1,8 +1,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -226,7 +226,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return CLASS_KIND_EXCEPTION;
     }
 
-    if (JUnitUtil.isTestClass(aClass)) {
+    if (TestUtil.isTestClass(aClass)) {
       return CLASS_KIND_JUNIT_TEST;
     }
     if (PsiClassUtil.isRunnableClass(aClass, false) && PsiMethodUtil.findMainMethod(aClass) != null) {

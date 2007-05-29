@@ -8,7 +8,7 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -113,7 +113,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       setServlet(servlet != null && psiClass.isInheritor(servlet, true));
     }
     if (!isApplet() && !isServlet()) {
-      setTestCase(JUnitUtil.isTestClass(psiClass));
+      setTestCase(TestUtil.isTestClass(psiClass));
       for (RefClass refBase : getBaseClasses()) {
         ((RefClassImpl)refBase).setTestCase(true);
       }

@@ -54,7 +54,7 @@ import java.util.List;
 
 public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_MAINS_TO_ENTRIES = true;
-  public boolean ADD_JUNIT_TO_ENTRIES = true;
+
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
@@ -96,7 +96,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myMainsCheckbox;
-    private final JCheckBox myJUnitCheckbox;
     private final JCheckBox myAppletToEntries;
     private final JCheckBox myServletToEntries;
     private final JCheckBox myNonJavaCheckbox;
@@ -119,17 +118,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       gc.gridy = 0;
       add(myMainsCheckbox, gc);
-
-      myJUnitCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option2"));
-      myJUnitCheckbox.setSelected(ADD_JUNIT_TO_ENTRIES);
-      myJUnitCheckbox.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          ADD_JUNIT_TO_ENTRIES = myJUnitCheckbox.isSelected();
-        }
-      });
-
-      gc.gridy++;
-      add(myJUnitCheckbox, gc);
 
       myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
@@ -191,10 +179,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private boolean isAddMainsEnabled() {
     return ADD_MAINS_TO_ENTRIES;
-  }
-
-  private boolean isAddJUnitEnabled() {
-    return ADD_JUNIT_TO_ENTRIES;
   }
 
   private boolean isAddAppletEnabled() {
@@ -325,21 +309,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
             public void visitClass(RefClass aClass) {
               final PsiClass psiClass = aClass.getElement();
-              if (isAddJUnitEnabled() && aClass.isTestCase()) {
-                getEntryPointsManager().addEntryPoint(aClass, false);
-                final PsiMethod[] testMethods = psiClass.getMethods();
-                for (PsiMethod psiMethod : testMethods) {
-                  @NonNls final String name = psiMethod.getName();
-                  if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
-                      !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                      name.startsWith("test") || "suite".equals(name)
-                                              || "setUp".equals(name)
-                                              || "tearDown".equals(name)) {
-                    getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
-                  }
-                }
-              }
-              else if (
+              if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
