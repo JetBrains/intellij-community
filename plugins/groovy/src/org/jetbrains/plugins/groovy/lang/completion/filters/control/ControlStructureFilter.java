@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -34,6 +35,21 @@ import org.jetbrains.annotations.NonNls;
 
 public class ControlStructureFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null &&
+        GroovyCompletionUtil.isNewStatement(context, true)) {
+      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      if (parent instanceof GroovyFile ||
+          parent instanceof GrOpenBlock ||
+          parent instanceof  GrClosableBlock) {
+        return true;
+      }
+      if (parent instanceof GrCaseBlock &&
+          ((GrCaseBlock) parent).getCaseLabels().length != 0 &&
+          ((GrCaseBlock) parent).getCaseLabels()[0].getTextOffset() < context.getTextOffset()){
+        return true;
+      }
+    }
+
     if (context.getParent() != null) {
       PsiElement parent = context.getParent();
 

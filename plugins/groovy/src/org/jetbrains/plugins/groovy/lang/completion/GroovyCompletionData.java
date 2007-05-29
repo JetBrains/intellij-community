@@ -156,25 +156,24 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   /**
-   * Template to add all standard keywords complettions
+   * Template to add all standard keywords completions
    *
    * @param filter   - Semantic filter for given keywords
-   * @param keywords - Keyword to be completed
+   * @param keywords - Keywords to be completed
    */
   private void registerStandardCompletion(ElementFilter filter, String... keywords) {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-    addCompletions(variant, keywords);
     variant.setInsertHandler(new GroovyInsertHandler());
+    addCompletions(variant, keywords);
     registerVariant(variant);
   }
 
 
   public String findPrefix(PsiElement insertedElement, int offset) {
     return WordCompletionData.findPrefixSimple(insertedElement, offset);
-
   }
 
   /**
@@ -185,7 +184,7 @@ public class GroovyCompletionData extends CompletionData {
    */
   private void addCompletions(CompletionVariant variant, String... comps) {
     for (String completion : comps) {
-      variant.addCompletion(completion);
+      variant.addCompletion(completion, TailType.SPACE);
     }
   }
 

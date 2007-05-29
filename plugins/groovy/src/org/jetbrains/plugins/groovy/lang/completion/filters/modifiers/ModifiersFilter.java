@@ -20,12 +20,14 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author ilyas
- */           
+ */
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
@@ -37,13 +39,15 @@ public class ModifiersFilter implements ElementFilter {
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
-    if (context.getTextOffset() == 0){
+    if (context.getTextOffset() == 0) {
       return true;
     }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null  &&
-        GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent() instanceof GroovyFile &&
-        GroovyCompletionUtil.isNewStatement(context,false)) {
-      return true;
+    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null &&
+        GroovyCompletionUtil.isNewStatement(context, false)) {
+      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      if (parent instanceof GroovyFile) {
+        return true;
+      }
     }
     return context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GrApplicationExpression &&

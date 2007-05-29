@@ -4,12 +4,15 @@ import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.TailType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.CaretModel;
+
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -40,6 +43,27 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       }
       return;
     }
+
+    addTailType(item);
     super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+
+  }
+
+  private void addTailType(LookupItem item){
+    if ("default".equals(item.toString())){
+      item.setTailType(TailType.CASE_COLON);
+      return;
+    }
+    String[] exprs = {"true", "false", "null", "super", "this"};
+    String[] withSemi = {"break", "continue"};
+    if (Arrays.asList(withSemi).contains(item.toString())) {
+      item.setTailType(TailType.SEMICOLON);
+      return;
+    }
+    if (Arrays.asList(exprs).contains(item.toString())) {
+      item.setTailType(TailType.NONE);
+      return;
+    }
+    item.setTailType(TailType.SPACE);
   }
 }

@@ -16,14 +16,22 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+
+import java.util.Arrays;
 
 /**
  * @author ilyas
  */
 public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock {
+
+  private final TokenSet CASE_LABEL_SET = TokenSet.create(GroovyElementTypes.CASE_LABEL);
 
   public GrCaseBlockImpl(@NotNull ASTNode node) {
     super(node);
@@ -31,5 +39,9 @@ public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock
 
   public String toString() {
     return "Case block";
+  }
+
+  public GrCaseLabel[] getCaseLabels() {
+    return findChildrenByClass(GrCaseLabel.class);
   }
 }

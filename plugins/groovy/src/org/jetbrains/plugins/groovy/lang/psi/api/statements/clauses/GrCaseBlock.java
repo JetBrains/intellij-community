@@ -21,4 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author ilyas
  */
 public interface GrCaseBlock extends GroovyPsiElement {
+
+  public GrCaseLabel[] getCaseLabels();
+
 }

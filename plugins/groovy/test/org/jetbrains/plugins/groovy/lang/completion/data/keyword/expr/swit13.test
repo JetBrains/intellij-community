@@ -1,0 +1,9 @@
+class A{
+  def foo() {
+    sw<caret>(k){
+      default: {}
+    }
+  }
+}
+-----
+switch
