@@ -108,7 +108,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   protected Converter<T> getConverter() {
-    return myGenericValue.getConverter();
+    return WrappingConverter.getDeepestConverter(myGenericValue.getConverter(), myGenericValue);
   }
 
   @Nullable
@@ -122,7 +122,8 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   public String getUnresolvedMessagePattern() {
-    return getConverter().getErrorMessage(getStringValue(), getConvertContext());
+    final ConvertContextImpl context = getConvertContext();
+    return getConverter().getErrorMessage(getStringValue(), context);
   }
 
   private ConvertContextImpl getConvertContext() {
@@ -161,8 +162,8 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
-      final ConvertContext convertContext = getConvertContext();
       ArrayList<Object> result = new ArrayList<Object>();
+      final ConvertContext convertContext = getConvertContext();
       for (T variant: resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);
         if (name != null) {

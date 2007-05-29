@@ -72,13 +72,12 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (!(domElement instanceof GenericDomValue)) {
       return PsiReference.EMPTY_ARRAY;
     }
-
-    GenericDomValue domValue = (GenericDomValue)domElement;
+    final GenericDomValue domValue = (GenericDomValue)domElement;
 
     final Referencing referencing = domValue.getAnnotation(Referencing.class);
     final Object converter;
     if (referencing == null) {
-      converter = domValue.getConverter();
+      converter = WrappingConverter.getDeepestConverter(domValue.getConverter(), domValue);
     }
     else {
       Class<? extends CustomReferenceConverter> clazz = referencing.value();
@@ -98,6 +97,19 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     return references;
   }
 
+  private AbstractConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
+    return new AbstractConvertContext() {
+      @NotNull
+      public DomElement getInvocationElement() {
+        return domValue;
+      }
+
+      public PsiManager getPsiManager() {
+        return psiElement.getManager();
+      }
+    };
+  }
+
   @Nullable
   private static DomInvocationHandler getInvocationHandler(final GenericDomValue domValue) {
     return DomManagerImpl.getDomInvocationHandler(domValue);
@@ -107,16 +119,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
     if (converter instanceof CustomReferenceConverter) {
       final PsiReference[] references =
-        ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, new AbstractConvertContext() {
-          @NotNull
-          public DomElement getInvocationElement() {
-            return domValue;
-          }
-
-          public PsiManager getPsiManager() {
-            return psiElement.getManager();
-          }
-        });
+        ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, createConvertContext(psiElement, domValue));
 
       if (references.length == 0 && converter instanceof ResolvingConverter) {
         return new PsiReference[]{new GenericDomValueReference(domValue)};
@@ -159,7 +162,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
 
-    return new PsiReference[]{new GenericDomValueReference(domValue)};
+    return PsiReference.EMPTY_ARRAY;
   }
 
   @Nullable

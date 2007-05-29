@@ -632,7 +632,9 @@ public class GenericInfoImpl implements DomGenericInfo {
         final Convert annotation = description.getAnnotation(Convert.class);
         final boolean hasResolveConverter = annotation != null &&
                                             (ReflectionCache.isAssignable(ResolvingConverter.class, annotation.value()) ||
-                                             ReflectionCache.isAssignable(CustomReferenceConverter.class, annotation.value()));
+                                             ReflectionCache.isAssignable(CustomReferenceConverter.class, annotation.value()) ||
+                                             ReflectionCache.isAssignable(WrappingConverter.class, annotation.value())
+                                            );
         final Type type = description.getType();
         if (condition.value(ReflectionUtil.getRawType(type))) {
           if (hasResolveConverter ||
