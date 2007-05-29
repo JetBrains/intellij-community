@@ -46,7 +46,7 @@ public class ConstructorBody implements GroovyElementTypes {
     if (b) {
       constructorInvokationMarker.done(EXPLICIT_CONSTRUCTOR);
     } else {
-      constructorInvokationMarker.drop();
+      constructorInvokationMarker.rollbackTo();
     }
 
     //explicit constructor invocation
