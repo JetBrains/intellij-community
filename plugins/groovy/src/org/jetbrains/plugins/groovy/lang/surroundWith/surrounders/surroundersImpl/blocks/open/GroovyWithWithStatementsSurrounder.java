@@ -25,7 +25,7 @@ public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurr
 
     GrWithStatement grWithStatement = (GrWithStatement) element;
     GrCondition condition = grWithStatement.getCondition();
-    int endOffset = condition.getTextRange().getEndOffset();
+    int endOffset = condition.getTextRange().getStartOffset();
 
     condition.getParent().getNode().removeChild(condition.getNode());
 

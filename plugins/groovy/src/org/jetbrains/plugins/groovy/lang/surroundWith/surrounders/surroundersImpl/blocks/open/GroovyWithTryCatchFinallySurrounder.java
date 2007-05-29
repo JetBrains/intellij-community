@@ -13,6 +13,6 @@ public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurro
   }
 
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return super.getElementsTemplateAsString(nodes) + "finally { \n }";
+    return super.getElementsTemplateAsString(nodes) + " finally { handler \n }";
   }
 }

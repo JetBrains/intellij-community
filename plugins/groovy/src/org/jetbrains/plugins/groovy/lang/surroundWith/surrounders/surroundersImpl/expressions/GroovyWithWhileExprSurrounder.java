@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -12,15 +13,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
  */
 public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
   protected String getExpressionTemplateAsString(ASTNode node) {
-    return "while " + "(" + node.getText() + ") { \n }";
+    return "while " + "(" + node.getText() + ") { 4 \n }";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrIfStatement;
+    assert element instanceof GrWhileStatement;
 
-    GrWhileStatement grIfStatement = (GrWhileStatement) element;
-    int endOffset = grIfStatement.getBody().getTextRange().getEndOffset();
+    GrWhileStatement grWhileStatement = (GrWhileStatement) element;
+    GrStatement grStatement = grWhileStatement.getBody();
+    int endOffset = grStatement.getTextRange().getEndOffset();
 
+    grStatement.getParent().getNode().removeChild(grStatement.getNode());
     return new TextRange(endOffset, endOffset);
   }
 

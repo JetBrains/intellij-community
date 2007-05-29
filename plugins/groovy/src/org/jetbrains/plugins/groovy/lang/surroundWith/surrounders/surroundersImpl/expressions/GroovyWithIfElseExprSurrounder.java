@@ -14,14 +14,14 @@ public class GroovyWithIfElseExprSurrounder extends GroovyWithIfExprSurrounder {
     return super.getExpressionTemplateAsString(node) + " else { \n }";
   }
 
-  protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrIfStatement;
-
-    GrIfStatement grIfStatement = (GrIfStatement) element;
-    int endOffset = grIfStatement.getThenBranch().getTextRange().getEndOffset();
-
-    return new TextRange(endOffset, endOffset);
-  }
+//  protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
+//    assert element instanceof GrIfStatement;
+//
+//    GrIfStatement grIfStatement = (GrIfStatement) element;
+//    int endOffset = grIfStatement.getThenBranch().getTextRange().getEndOffset();
+//
+//    return new TextRange(endOffset, endOffset);
+//  }
 
   public String getTemplateDescription() {
     return "if (...) / else";

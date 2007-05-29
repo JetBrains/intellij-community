@@ -4,6 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -18,16 +21,36 @@ public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder 
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrTryCatchStatement;
-    GrCatchClause[] catchClauses = ((GrTryCatchStatement) element).getCatchClauses();
-    assert catchClauses != null;
-
     int endOffset = element.getTextRange().getEndOffset();
-    if (catchClauses.length > 0) {
+    GrTryCatchStatement tryCatchStatement = (GrTryCatchStatement) element;
+
+    GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
+
+    if (finallyClause != null) {
+      GrOpenBlock grOpenBlock = finallyClause.getBody();
+      assert grOpenBlock != null;
+      GrStatement[] grStatements = grOpenBlock.getStatements();
+      assert grStatements.length > 0;
+
+      GrStatement grStatement = grStatements[0];
+      assert grStatement != null;
+
+      endOffset = grStatement.getTextRange().getStartOffset();
+      grStatement.getParent().getNode().removeChild(grStatement.getNode());
+    }
+
+    GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
+//    assert catchClauses != null;
+
+    if (catchClauses != null && catchClauses.length > 0) {
       GrParameter parameter = catchClauses[0].getParameter();
       if (parameter == null) {
-        endOffset = catchClauses[0].getTextRange().getEndOffset();
+        GrOpenBlock grOpenBlock = catchClauses[0].getBody();
+        assert grOpenBlock != null;
+        endOffset = grOpenBlock.getTextRange().getEndOffset();
       } else {
-        endOffset = parameter.getTextRange().getEndOffset();
+        endOffset = parameter.getTextRange().getStartOffset();
+        parameter.getParent().getNode().removeChild(parameter.getNode());
       }
     }
 

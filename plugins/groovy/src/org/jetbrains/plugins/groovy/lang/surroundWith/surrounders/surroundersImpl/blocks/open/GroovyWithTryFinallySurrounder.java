@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode;
  */
 public class GroovyWithTryFinallySurrounder extends GroovyWithTrySurrounder {
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return super.getElementsTemplateAsString(nodes) + "finally { \n }";
+    return super.getElementsTemplateAsString(nodes) + "finally { handler \n }";
   }
 
   public String getTemplateDescription() {

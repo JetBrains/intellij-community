@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -49,6 +50,6 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
       return (GrStatement) statements[1];
     }
     return null;
+//    return findChildByClass(GrOpenBlock.class);
   }
-
 }
