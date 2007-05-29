@@ -52,20 +52,21 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     if (!isSerializable) return;
 
+    if (component instanceof SettingsSavingComponent) {
+      SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
+      mySettingsSavingComponents.add(settingsSavingComponent);
+    }
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (component instanceof JDOMExternalizable) {
-          initJdomExternalizable((JDOMExternalizable)component);
-        }
-        else if (component instanceof PersistentStateComponent) {
-          initPersistentComponent((PersistentStateComponent<?>)component);
-        }
-        else if (component instanceof SettingsSavingComponent) {
-          SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
-          mySettingsSavingComponents.add(settingsSavingComponent);
-        }
-      }
-    });
+          public void run() {
+            if (component instanceof JDOMExternalizable) {
+              initJdomExternalizable((JDOMExternalizable)component);
+            }
+            else if (component instanceof PersistentStateComponent) {
+              initPersistentComponent((PersistentStateComponent<?>)component);
+            }
+          }
+        });
   }
 
 
