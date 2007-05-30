@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -31,8 +30,9 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.util.FileFinder;
@@ -52,8 +52,7 @@ import java.util.*;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectNavigator extends PomTreeStructure
-  implements ProjectComponent, FileWatcher, PersistentStateComponent<MavenNavigatorState> {
+public class MavenProjectNavigator extends PomTreeStructure implements FileWatcher, PersistentStateComponent<MavenNavigatorState> {
 
   public static MavenProjectNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectNavigator.class);
@@ -67,6 +66,8 @@ public class MavenProjectNavigator extends PomTreeStructure
 
   private final SimpleTreeBuilder treeBuilder;
   private final SimpleTree tree;
+  private NavigatorPanel navigatorPanel;
+  private boolean rebuildOnShow = true;
 
   private Map<VirtualFile, PomNode> fileToNode = new HashMap<VirtualFile, PomNode>();
 
@@ -84,6 +85,13 @@ public class MavenProjectNavigator extends PomTreeStructure
     treeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
     treeBuilder.initRoot();
     Disposer.register(project, treeBuilder);
+
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        createToolWindow();
+        createListeners();
+      }
+    });
   }
 
   public boolean isRelevant(VirtualFile file) {
@@ -130,6 +138,54 @@ public class MavenProjectNavigator extends PomTreeStructure
     restorePluginState();
 
     updateFromRoot(true, true);
+  }
+
+  private void requestRebuild() {
+    if (navigatorPanel.isShowing()) {
+      rebuildOnShow = false;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (project.isInitialized() && project.isOpen()) {
+            rebuild();
+          }
+        }
+      });
+    }
+    else {
+      rebuildOnShow = true;
+    }
+  }
+
+  private void createToolWindow() {
+    navigatorPanel = new NavigatorPanel();
+
+    ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
+      .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, project);
+    pomToolWindow.setIcon(myIcon);
+
+    new UiNotifyConnector(navigatorPanel, new Activatable() {
+      public void showNotify() {
+        if (rebuildOnShow) {
+          requestRebuild();
+        }
+      }
+
+      public void hideNotify() {
+      }
+    });
+  }
+
+  private void createListeners() {
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiFileChangeWatcher(this));
+
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        requestRebuild();
+      }
+    });
   }
 
   public PomTreeViewSettings getTreeViewSettings() {
@@ -277,49 +333,6 @@ public class MavenProjectNavigator extends PomTreeStructure
       }
     }
     return id;
-  }
-
-  public void initComponent() {
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        rebuild();
-
-        PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiFileChangeWatcher(MavenProjectNavigator.this));
-
-        project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-          public void beforeRootsChange(ModuleRootEvent event) {
-          }
-
-          public void rootsChanged(ModuleRootEvent event) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (project.isInitialized() && project.isOpen()) {
-                  rebuild();
-                }
-              }
-            });
-          }
-        });
-      }
-    });
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-    ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
-      .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, new NavigatorPanel(), ToolWindowAnchor.RIGHT);
-    pomToolWindow.setIcon(myIcon);
-  }
-
-  public void projectClosed() {
-    ToolWindowManager.getInstance(project).unregisterToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "MavenProjectNavigator";
   }
 
   class NavigatorPanel extends JPanel implements DataProvider {
