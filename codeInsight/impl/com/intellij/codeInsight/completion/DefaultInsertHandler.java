@@ -162,7 +162,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myEditor.getSelectionModel().removeSelection();
 
     try{
-      myStartOffset = addImportForItem(myFile, myStartOffset, myLookupItem);
+      final int previousStartOffset = myStartOffset;
+      myStartOffset = addImportForItem(myFile, previousStartOffset, myLookupItem);
+      myContext.startOffset += (myStartOffset - previousStartOffset);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -189,13 +191,24 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
 
     if (insertingAnnotation()) {
+      // Check if someone inserts annotation class that require @
       final Document document = context.editor.getDocument();
       PsiDocumentManager.getInstance(context.project).commitDocument(document);
       PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
+
       if (elementAt instanceof PsiIdentifier &&
-          PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null //we are inserting '@' only in annotation parameters
+          ( PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null || //we are inserting '@' only in annotation parameters
+            (parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile) // top level annotation without @
+          )
           && isAtTokenNeeded()) {
-        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+        PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+        if (parent == null && parentElement instanceof PsiErrorElement) {
+          PsiElement nextElement = parentElement.getNextSibling();
+          if (nextElement instanceof PsiWhiteSpace) nextElement = nextElement.getNextSibling();
+          if (nextElement instanceof PsiClass) parent = nextElement;
+        }
+
         if (parent instanceof PsiModifierListOwner) {
           int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
           document.insertString(expectedOffsetForAtToken, "@");
