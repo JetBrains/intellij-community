@@ -53,6 +53,10 @@ public class IdeaGateway {
     Messages.showErrorDialog(myProject, s, "Error");
   }
 
+  public void showMessage(String s) {
+    Messages.showInfoMessage(myProject, s, "Information");
+  }
+
   public void performCommandInsideWriteAction(final String name, final Runnable r) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

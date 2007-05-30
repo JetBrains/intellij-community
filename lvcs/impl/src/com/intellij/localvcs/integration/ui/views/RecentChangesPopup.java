@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class RecentChangesPopup {
   private IdeaGateway myGateway;
@@ -21,21 +22,35 @@ public class RecentChangesPopup {
   }
 
   public void show() {
-    DefaultListModel m = new DefaultListModel();
-
-    for (RecentChange c : myVcs.getRecentChanges()) {
-      m.addElement(c);
+    List<RecentChange> cc = myVcs.getRecentChanges();
+    if (cc.isEmpty()) {
+      myGateway.showMessage("There is no changes");
+      return;
     }
 
-    final JList list = new JList(m);
+    final JList list = new JList(createModel(cc));
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());
 
     Runnable selectAction = new Runnable() {
       public void run() {
-        showRecentChangeDialog(list);
+        RecentChange c = (RecentChange)list.getSelectedValue();
+        showRecentChangeDialog(c);
       }
     };
 
+    showList(list, selectAction);
+  }
+
+  private ListModel createModel(List<RecentChange> cc) {
+    DefaultListModel m = new DefaultListModel();
+    for (RecentChange c : cc) {
+      m.addElement(c);
+    }
+    return m;
+  }
+
+  private void showList(JList list, Runnable selectAction) {
     new PopupChooserBuilder(list).
       setTitle("Recent Changes").
       setItemChoosenCallback(selectAction).
@@ -43,8 +58,7 @@ public class RecentChangesPopup {
       showCenteredInCurrentWindow(myGateway.getProject());
   }
 
-  private void showRecentChangeDialog(JList list) {
-    RecentChange c = (RecentChange)list.getSelectedValue();
+  private void showRecentChangeDialog(RecentChange c) {
     DialogWrapper d = new RecentChangeDialog(myGateway, c);
     d.show();
   }
@@ -80,7 +94,6 @@ public class RecentChangesPopup {
       Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
-      //mySpacePanel.setBackground(bg);
     }
 
     private void setColors(Color bg, Color fg, JComponent... cc) {

@@ -70,6 +70,18 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testDoesNotIncludeLabels() {
+    vcs.beginChangeSet();
+    vcs.createFile("f", null, -1);
+    vcs.endChangeSet("change");
+    vcs.putLabel("label");
+
+    List<RecentChange> cc = vcs.getRecentChanges();
+    assertEquals(1, cc.size());
+    assertEquals("change", cc.get(0).getChangeName());
+  }
+
+  @Test
   public void testRecentChangesForSeveralRoots() {
     vcs.createDirectory("root/dir");
     vcs.createDirectory("anotherRoot/anotherDir");
