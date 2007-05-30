@@ -42,6 +42,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testMethodUsage() throws Exception {
+    doTest();
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
@@ -56,6 +60,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   public void testNoInlineSuperclassInterface() throws Exception {
     doTestNoInline("Classes which have a superclass and implement an interface cannot be inlined");
+  }
+
+  public void testNoInlineMethodUsage() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has usages of methods not inherited from its superclass or interface");
+  }
+
+  public void testNoInlineFieldUsage() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has usages of fields not inherited from its superclass");
   }
 
   private void doTestNoInline(final String expectedMessage) throws Exception {
@@ -82,6 +94,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, PsiClass.class);
+    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, inlineThisOnly);
     processor.run();
   }

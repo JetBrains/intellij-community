@@ -2,12 +2,13 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,6 +47,34 @@ public class InlineToAnonymousClassHandler {
       }
     }
 
+    final PsiMethod[] methods = psiClass.getMethods();
+    for(PsiMethod method: methods) {
+      if (!method.isConstructor() && method.findSuperMethods().length == 0) {
+        if (!ReferencesSearch.search(method).forEach(new CheckAncestorProcessor(psiClass))) {
+          return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
+        }
+      }
+    }
+
+    final PsiField[] fields = psiClass.getFields();
+    for(PsiField field: fields) {
+      if (!ReferencesSearch.search(field).forEach(new CheckAncestorProcessor(psiClass))) {
+        return "Class cannot be inlined because it has usages of fields not inherited from its superclass";
+      }
+    }
+
     return null;
+  }
+
+  private static class CheckAncestorProcessor implements Processor<PsiReference> {
+    private final PsiElement myPsiElement;
+
+    public CheckAncestorProcessor(final PsiElement psiElement) {
+      myPsiElement = psiElement;
+    }
+
+    public boolean process(final PsiReference psiReference) {
+      return PsiTreeUtil.isAncestor(myPsiElement, psiReference.getElement(), false);
+    }
   }
 }
