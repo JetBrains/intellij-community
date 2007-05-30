@@ -43,4 +43,6 @@ public interface GroovyFile extends PsiFile, GroovyPsiElement {
   GrImportStatement[] getImportStatements();
 
   void addImportForClass(PsiClass aClass);
+
+  boolean isScript();
 }

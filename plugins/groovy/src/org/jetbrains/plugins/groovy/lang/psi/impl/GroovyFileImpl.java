@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -159,6 +158,15 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     }
   }
 
+  public boolean isScript()
+  {
+    GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
+    for (GrTopStatement st : top)
+      if ( !(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition))
+        return true;
+
+    return false;
+  }
 
 
 }
