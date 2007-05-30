@@ -49,6 +49,8 @@ class DefaultStateSerializer {
                 if (!storageId.value().equals(storage.id())) return false;
               }
             }
+
+            return storage.isDefault();
           }
 
           return true;
