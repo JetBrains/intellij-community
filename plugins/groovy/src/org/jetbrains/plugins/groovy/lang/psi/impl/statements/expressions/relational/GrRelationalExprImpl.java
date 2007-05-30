@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRelationalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
@@ -33,4 +34,7 @@ public class GrRelationalExprImpl extends GrBinaryExpressionImpl implements GrRe
     return "Relational expression";
   }
 
+  public PsiType getType() {
+    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
+  }
 }
