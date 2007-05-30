@@ -1,0 +1,13 @@
+public class A {
+
+    public void test() {
+        int c = 0;
+        final int c1 = 1;
+        Runnable i = new Runnable() {
+            public void run() {
+                System.out.println(c1);
+            }
+        };
+        new Thread(i).start();
+    }
+}
