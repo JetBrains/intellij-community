@@ -44,6 +44,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider</implementation-class>
+    </component>
   </project-components>
   <module-components>
     <component>
