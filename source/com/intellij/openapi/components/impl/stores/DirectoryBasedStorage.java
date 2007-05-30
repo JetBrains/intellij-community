@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
@@ -101,10 +102,10 @@ public class DirectoryBasedStorage implements StateStorage {
     }
   }
 
-  public void setState(Object component, final String componentName, Object state) throws StateStorageException {
+  public void setState(Object component, final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
     if (myStates == null) myStates = new HashMap<String, Map<IFile, Element>>();
     try {
-      final Element element = DefaultStateSerializer.serializeState(state);
+      final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
 
       if (myPathMacroSubstitutor != null) {
         myPathMacroSubstitutor.collapsePaths(element);
@@ -243,9 +244,9 @@ public class DirectoryBasedStorage implements StateStorage {
   public ExternalizationSession startExternalization() {
     assert mySession == null;
     final ExternalizationSession session = new ExternalizationSession() {
-      public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
+      public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
         assert mySession == this;
-        DirectoryBasedStorage.this.setState(component, componentName, state);
+        DirectoryBasedStorage.this.setState(component, componentName, state, storageSpec);
       }
     };
 

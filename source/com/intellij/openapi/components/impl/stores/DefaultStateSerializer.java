@@ -1,9 +1,12 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageId;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -11,6 +14,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.lang.annotation.Annotation;
 
 
 @SuppressWarnings({"deprecation"})
@@ -20,7 +24,7 @@ class DefaultStateSerializer {
   private DefaultStateSerializer() {
   }
 
-  static Element serializeState(Object state) throws ParserConfigurationException, WriteExternalException {
+  static Element serializeState(Object state, final Storage storage) throws ParserConfigurationException, WriteExternalException {
     if (state instanceof Element) {
       return (Element)state;
     }
@@ -32,7 +36,24 @@ class DefaultStateSerializer {
       return element;
     }
     else {
-      return  XmlSerializer.serialize(state, ourSerializationFilter);
+      return  XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters() {
+        public boolean accepts(final Accessor accessor, final Object bean) {
+          if (!super.accepts(accessor, bean)) return false;
+
+          if (storage != null) {
+            final Annotation[] annotations = accessor.getAnnotations();
+            for (Annotation annotation : annotations) {
+              if (StorageId.class.isAssignableFrom(annotation.annotationType())) {
+                StorageId storageId = (StorageId)annotation;
+
+                if (!storageId.value().equals(storage.id())) return false;
+              }
+            }
+          }
+
+          return true;
+        }
+      });
     }
   }
 

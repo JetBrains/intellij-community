@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -194,11 +195,11 @@ abstract class XmlElementStorage implements StateStorage {
   protected class MyExternalizationSession implements ExternalizationSession {
     private Set<Element> mySavedElements = new HashSet<Element>();
 
-    public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
+    public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
       assert mySession == this;
 
       try {
-        setState(componentName,  DefaultStateSerializer.serializeState(state));
+        setState(componentName,  DefaultStateSerializer.serializeState(state, storageSpec));
       }
       catch (ParserConfigurationException e) {
         LOG.error(e);

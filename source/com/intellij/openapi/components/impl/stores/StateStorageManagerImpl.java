@@ -184,21 +184,20 @@ abstract class StateStorageManagerImpl implements StateStorageManager {
       throws StateStorage.StateStorageException {
       assert mySession == this;
 
-      StateStorage stateStorage = null;
+      StateStorage stateStorage;             
       for (Storage storageSpec : storageSpecs) {
         stateStorage = getStateStorage(storageSpec);
-        if (stateStorage != null) break;
+        if (stateStorage == null) continue;
 
-      }
-      if (stateStorage != null) {
-        myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state);
+        final StateStorage.ExternalizationSession extSession = myCompoundExternalizationSession.getExternalizationSession(stateStorage);
+        extSession.setState(component, componentName, state, storageSpec);
       }
     }
 
     public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorage.StateStorageException {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
-      myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state);
+      myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
     }
   }
 

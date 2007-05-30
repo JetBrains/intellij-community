@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Attribute;
@@ -609,40 +610,39 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
     public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
-        Storage currentStorage = null;
-        Storage defaultStorage = null;
+        OrderedSet<Storage> result = new OrderedSet<Storage>();
 
         for (Storage storage : storages) {
-          if (storage.scheme() == myScheme) currentStorage = storage;
+          if (storage.scheme() == myScheme) {
+            result.add(0, storage);
+          }
         }
 
         for (Storage storage : storages) {
-          if (storage.scheme() == StorageScheme.DEFAULT) defaultStorage = storage;
+          if (storage.scheme() == StorageScheme.DEFAULT) {
+            result.add(storage);
+          }
         }
 
-        if (currentStorage != null && defaultStorage != null) {
-          return new Storage[]{currentStorage, defaultStorage};
-        }
-        else if (defaultStorage != null) {
-          return new Storage[]{defaultStorage};
-        }
-        else if (currentStorage != null) {
-          return new Storage[]{currentStorage};
-        }
-        else {
-          return new Storage[]{};
-        }
+        return result.toArray(new Storage[result.size()]);
       }
       else if (operation == StateStorageOperation.WRITE) {
+        List<Storage> result = new ArrayList<Storage>();
         for (Storage storage : storages) {
-          if (storage.scheme() == myScheme) return new Storage[]{storage};
+          if (storage.scheme() == myScheme) {
+            result.add(storage);
+          }
         }
 
+        if (!result.isEmpty()) return result.toArray(new Storage[result.size()]);
+
         for (Storage storage : storages) {
-          if (storage.scheme() == StorageScheme.DEFAULT) return new Storage[]{storage};
+          if (storage.scheme() == StorageScheme.DEFAULT) {
+            result.add(storage);
+          }
         }
 
-        return new Storage[]{};
+        return result.toArray(new Storage[result.size()]);
       }
 
       return new Storage[]{};

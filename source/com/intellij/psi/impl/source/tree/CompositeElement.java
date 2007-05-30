@@ -184,6 +184,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return TreeUtil.findSibling(anchor, typesSet);
   }
 
+  @NotNull
   public String getText() {
     char[] buffer = new char[getTextLength()];
     SourceUtil.toBuffer(this, buffer, 0);

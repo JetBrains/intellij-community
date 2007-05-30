@@ -213,7 +213,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
         if (!stateStorage.hasState(component, name, stateClass)) continue;
 
         state = stateStorage.getState(component, name, stateClass, state);
-        break;
       }
     }
     catch (StateStorage.StateStorageException e) {

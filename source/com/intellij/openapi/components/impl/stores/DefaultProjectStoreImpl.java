@@ -152,11 +152,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
     throws StateStorage.StateStorageException {
-      externalizationSession.setState(component, componentName, state);
+      externalizationSession.setState(component, componentName, state, null);
     }
 
     public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorage.StateStorageException {
-      externalizationSession.setState(component, componentName, state);
+      externalizationSession.setState(component, componentName, state, null);
     }
   }
 

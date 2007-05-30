@@ -22,7 +22,7 @@ public interface StateStorage {
   void finishSave(SaveSession saveSession);
 
   interface ExternalizationSession {
-    void setState(Object component, final String componentName, Object state) throws StateStorageException;
+    void setState(Object component, final String componentName, Object state, @Nullable final Storage storageSpec) throws StateStorageException;
   }
 
   interface SaveSession {

@@ -123,7 +123,9 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   }
 
   public void add(final int index, final T element) {
-    throw new UnsupportedOperationException();
+    if (myHashSet.add(element)){
+      myElements.add(index, element);
+    }
   }
 
   public T remove(final int index) {

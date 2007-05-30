@@ -37,6 +37,6 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
   }
 
   protected void configure(final Object o) {
-    //todo put your own default object configuration herei
+    //todo put your own default object configuration here
   }
 }
