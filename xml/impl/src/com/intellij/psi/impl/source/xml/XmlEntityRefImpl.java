@@ -41,12 +41,12 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   public static XmlEntityDecl getCachedEntity(PsiFile file, String name) {
+    CachedValue<XmlEntityDecl> cachedValue;
     synchronized(PsiLock.LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
-      CachedValue<XmlEntityDecl> cachedValue = cachingMap.get(name);
-      if (cachedValue != null) return cachedValue.getValue();
-      return null;
+      cachedValue = cachingMap.get(name);
     }
+    return cachedValue != null ? cachedValue.getValue():null;
   }
 
   public static void cacheParticularEntity(PsiFile file, final XmlEntityDecl decl) {
@@ -76,10 +76,11 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
 
     final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : element;
+    CachedValue<XmlEntityDecl> value;
     synchronized(PsiLock.LOCK) {
       Map<String, CachedValue<XmlEntityDecl>> map = getCachingMap(targetElement);
 
-      CachedValue<XmlEntityDecl> value = map.get(entityName);
+      value = map.get(entityName);
       if (value == null) {
         final PsiManager manager = element.getManager();
         if(manager == null){
@@ -94,9 +95,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
         map.put(entityName, value);
       }
-
-      return value.getValue();
     }
+    return value.getValue();
   }
 
   private static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
