@@ -162,7 +162,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
           public void contentsChanged(VirtualFileEvent event) {
-            processFileChange(event.getFile());
+            processVfsChange(event.getFile());
           }
 
           public void fileCreated(VirtualFileEvent event) {
