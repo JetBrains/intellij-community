@@ -307,6 +307,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   }
 
   private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+    boolean isScript = typeDefinition == null;
+
     if (packageDefinition != null) {
       text.append("package ");
       text.append(packageDefinition.getPackageName());
@@ -339,12 +341,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     text.append(typeDefinitionName);
     text.append(" ");
 
-    if (typeDefinition != null) {
+    if (isScript) {
+      text.append("extends ");
+      text.append("groovy.lang.Script");
+    } else {
+//    if (typeDefinition != null) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
         text.append("extends ");
-
         final FinalWrapper<String> canonicalTextWrapper = new FinalWrapper<String>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -357,6 +362,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
         if (canonicalText == null) text.append("<smotri 4to nasleduesh'!>");
         else text.append(canonicalText);
         text.append(" ");
+      } else {
+        if (isClassDef) {
+          text.append("extends ");
+          text.append("groovy.lang.GroovyObjectSupport");
+        }
       }
 
       PsiClassType[] implementsClassTypes = typeDefinition.getImplementsListTypes();
@@ -394,6 +404,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     text.append("{");
     text.append("\n");
 
+    boolean isRunMethodWrote = false;
+
     for (GrTopStatement statement : statements) {
       if (statement instanceof GrMethod) {
         if (((GrMethod) statement).isConstructor()) {
@@ -402,19 +414,36 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
         }
         writeMethod(text, (GrMethod) statement, isInteraface);
         text.append("\n");
-      }
 
+        isRunMethodWrote = "run".equals(((GrMethod) statement).getNameIdentifierGroovy().getText()) &&
+            ((GrMethod) statement).getReturnTypeElementGroovy() != null &&
+            "java.lang.Object".equals(((GrMethod) statement).getReturnTypeElementGroovy().getType().getCanonicalText());
+
+      }
       if (statement instanceof GrVariableDeclarations) {
         writeVariableDeclarations(text, (GrVariableDeclarations) statement);
       }
     }
 
+    if (isScript && !isRunMethodWrote) writeRunMethod(text);
+
     text.append("}");
+  }
+
+  private void writeRunMethod(StringBuffer text) {
+    text.append("public Object run() {\n" +
+        "           return null;\n" +
+        "        }");
   }
 
   private void writeConstructor(StringBuffer text, GrMethod constructor) {
     GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
-    text.append("public ");
+
+//    text.append("public ");
+    boolean b = writeModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
+    if (!b) text.append("public");
+
+    text.append(" ");
 
     /************* name **********/
     //append constructor name
