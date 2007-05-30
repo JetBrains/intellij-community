@@ -129,31 +129,36 @@ public class FindUsagesUtil {
     }, psiMethod, options.searchScope, options.isCheckDeepInheritance);
   }
 
-  private static String getStringToSearch(PsiElement element) {
-    if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      element = ((PsiDirectory)element).getPackage();
-    }
-    if (element instanceof PsiPackage){
-      return ((PsiPackage)element).getQualifiedName();
-    }
-    if (element instanceof PsiClass){
-      return ((PsiClass)element).getQualifiedName();
-    }
-    if (element instanceof PsiMethod){
-      return ((PsiMethod)element).getName();
-    }
-    if (element instanceof PsiVariable){
-      return ((PsiVariable)element).getName();
-    }
-    if (element instanceof PsiMetaBaseOwner){
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)element).getMetaData();
-      if (metaData != null) {
-        return metaData.getName();
-      }
-    }
+  private static String getStringToSearch(final PsiElement element) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        PsiElement norm = element;
+        if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
+          norm = ((PsiDirectory)element).getPackage();
+        }
+        if (norm instanceof PsiPackage) {
+          return ((PsiPackage)norm).getQualifiedName();
+        }
+        if (norm instanceof PsiClass) {
+          return ((PsiClass)norm).getQualifiedName();
+        }
+        if (norm instanceof PsiMethod) {
+          return ((PsiMethod)norm).getName();
+        }
+        if (norm instanceof PsiVariable) {
+          return ((PsiVariable)norm).getName();
+        }
+        if (norm instanceof PsiMetaBaseOwner) {
+          final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)norm).getMetaData();
+          if (metaData != null) {
+            return metaData.getName();
+          }
+        }
 
-    LOG.error("Unknown element type: "+element);
-    return null;
+        LOG.error("Unknown element type: " + element);
+        return null;
+      }
+    });
   }
 
   private static void addElementUsages(final PsiElement element, final Processor<UsageInfo> results, final FindUsagesOptions options) {
