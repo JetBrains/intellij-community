@@ -42,6 +42,34 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNoInlineAbstract() throws Exception {
+    doTestNoInline("Abstract classes cannot be inlined");
+  }
+
+  public void testNoInlineWithSubclasses() throws Exception {
+    doTestNoInline("Classes which have subclasses cannot be inlined");
+  }
+
+  public void testNoInlineMultipleInterfaces() throws Exception {
+    doTestNoInline("Classes which implement multiple interfaces cannot be inlined");
+  }
+
+  public void testNoInlineSuperclassInterface() throws Exception {
+    doTestNoInline("Classes which have a superclass and implement an interface cannot be inlined");
+  }
+
+  private void doTestNoInline(final String expectedMessage) throws Exception {
+    String name = getTestName(false);
+    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
+    configureByFile(fileName);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
+            TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertInstanceOf(element, PsiClass.class);
+
+    String message = InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element);
+    assertEquals(expectedMessage, message);
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
