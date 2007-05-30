@@ -331,9 +331,20 @@ public class ChangeContextUtil {
       public void visitElement(PsiElement element) {
         final PsiReference[] refs = element.getReferences();
         if (refs.length > 0) {
-          final PsiElement resolved = refs[refs.length - 1].resolve();
-          if (resolved instanceof PsiFileSystemItem) {
-            element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)resolved));
+          final PsiReference ref = refs[refs.length - 1];
+          if (ref instanceof PsiPolyVariantReference) {
+            final ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
+            for (ResolveResult result : results) {
+              if (result.getElement() instanceof PsiFileSystemItem) {
+                element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)result.getElement()));
+                break;
+              }
+            }
+          } else {
+          final PsiElement resolved = ref.resolve();
+            if (resolved instanceof PsiFileSystemItem) {
+              element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)resolved));
+            }
           }
         }
         element.acceptChildren(this);

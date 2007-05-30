@@ -10,14 +10,15 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -107,10 +108,11 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return myElement;
   }
 
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
-    final PsiReference reference = chooseReference();
-    if (reference != null) {
-      return reference.bindToElement(element);
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    for (PsiReference reference : myReferences) {
+      if (reference instanceof FileReference) {
+        return reference.bindToElement(element);
+      }
     }
     return myElement;
   }
