@@ -58,8 +58,27 @@ public class InlineToAnonymousClassHandler {
 
     final PsiField[] fields = psiClass.getFields();
     for(PsiField field: fields) {
+      final PsiModifierList fieldModifiers = field.getModifierList();
+      if (fieldModifiers != null && fieldModifiers.hasModifierProperty(PsiModifier.STATIC)) {
+        Object initValue = null;
+        final PsiExpression initializer = field.getInitializer();
+        if (initializer != null) {
+          initValue = psiClass.getManager().getConstantEvaluationHelper().computeConstantExpression(initializer);
+        }
+        if (initValue == null) {
+          return "Class cannot be inlined because it has static fields with non-constant initializers";
+        }
+      }
       if (!ReferencesSearch.search(field).forEach(new CheckAncestorProcessor(psiClass))) {
         return "Class cannot be inlined because it has usages of fields not inherited from its superclass";
+      }
+    }
+
+    final PsiClassInitializer[] initializers = psiClass.getInitializers();
+    for(PsiClassInitializer initializer: initializers) {
+      final PsiModifierList modifiers = initializer.getModifierList();
+      if (modifiers != null && modifiers.hasModifierProperty(PsiModifier.STATIC)) {
+        return "Class cannot be inlined because it has static initializers";
       }
     }
 
