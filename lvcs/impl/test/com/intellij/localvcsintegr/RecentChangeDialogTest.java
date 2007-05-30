@@ -35,7 +35,7 @@ public class RecentChangeDialogTest extends IntegrationTestCase {
     getVcs().endChangeSet("another change");
 
     RecentChange c = getVcs().getRecentChanges().get(1);
-    RecentChangeDialogModel m = new RecentChangeDialogModel(getVcs(), gateway, c);
+    RecentChangeDialogModel m = new RecentChangeDialogModel(gateway, getVcs(), c);
 
     Reverter r = m.createReverter();
     r.revert();

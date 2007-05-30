@@ -22,7 +22,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
 
   @Override
   protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
-    return new RecentChangeDialogModel(vcs, myGateway, myChange);
+    return new RecentChangeDialogModel(myGateway, vcs, myChange);
   }
 
   @Override

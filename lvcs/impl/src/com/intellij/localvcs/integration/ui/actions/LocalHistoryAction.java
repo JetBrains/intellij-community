@@ -19,7 +19,12 @@ public abstract class LocalHistoryAction extends AnAction {
       p.setVisible(false);
       return;
     }
+    p.setText(getText(e));
     p.setEnabled(isEnabled(getVcs(e), getGateway(e), getFile(e)));
+  }
+
+  protected String getText(AnActionEvent e) {
+    return e.getPresentation().getText();
   }
 
   protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f) {

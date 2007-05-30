@@ -11,8 +11,8 @@ import java.util.List;
 public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   private RecentChange myChange;
 
-  public RecentChangeDialogModel(ILocalVcs vcs, IdeaGateway gw, RecentChange c) {
-    super(null, vcs, gw);
+  public RecentChangeDialogModel(IdeaGateway gw, ILocalVcs vcs, RecentChange c) {
+    super(gw, vcs, null);
     myChange = c;
     selectChanges(0, 0);
   }

@@ -7,12 +7,12 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.EditorFactory;
 
-public class FileBlockFileDifferenceModel extends FileDifferenceModel {
-  private SelectedBlockCalculator myCalculator;
+public class SelectionDifferenceModel extends FileDifferenceModel {
+  private SelectionCalculator myCalculator;
   private Revision myLeftRevision;
   private Revision myRightRevision;
 
-  public FileBlockFileDifferenceModel(SelectedBlockCalculator c, Revision left, Revision right) {
+  public SelectionDifferenceModel(SelectionCalculator c, Revision left, Revision right) {
     myCalculator = c;
     myLeftRevision = left;
     myRightRevision = right;
@@ -43,6 +43,6 @@ public class FileBlockFileDifferenceModel extends FileDifferenceModel {
   }
 
   private String getContentOf(Revision r) {
-    return myCalculator.getBlock(r).getBlockContent();
+    return myCalculator.getSelectionFor(r).getBlockContent();
   }
 }

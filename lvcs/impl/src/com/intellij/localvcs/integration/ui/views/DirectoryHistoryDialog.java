@@ -37,7 +37,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
-    return new DirectoryHistoryDialogModel(myFile, vcs, myGateway);
+    return new DirectoryHistoryDialogModel(myGateway, vcs, myFile);
   }
 
   @Override

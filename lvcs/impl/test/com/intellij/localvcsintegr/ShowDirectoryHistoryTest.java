@@ -15,7 +15,7 @@ public class ShowDirectoryHistoryTest extends IntegrationTestCase {
   public void testRevertion() throws Exception {
     root.createChildData(null, "f.java");
 
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(root, getVcs(), gateway);
+    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), root);
     m.selectRevisions(1, 1);
     m.createReverter().revert();
 
@@ -26,7 +26,7 @@ public class ShowDirectoryHistoryTest extends IntegrationTestCase {
     root.createChildData(null, "f1.java");
     root.createChildData(null, "f2.java");
 
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(root, getVcs(), gateway);
+    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), root);
     m.selectRevisions(2, 2);
     m.createRevisionReverter(m.getRootDifferenceNodeModel().getChildren().get(0)).revert();
 
@@ -40,7 +40,7 @@ public class ShowDirectoryHistoryTest extends IntegrationTestCase {
     dir.rename(null, "newDir");
     f.move(null, root);
 
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(dir, getVcs(), gateway);
+    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), dir);
     m.selectChanges(1, 1); // rename
     m.createReverter().revert();
 

@@ -24,6 +24,13 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
+  protected String getText(AnActionEvent e) {
+    VcsContext c = VcsContextWrapper.createCachedInstanceOn(e);
+    VcsSelection sel = VcsUtil.getSelection(c);
+    return sel == null ? super.getText(e) : sel.getActionName();
+  }
+
+  @Override
   protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f) {
     return super.isEnabled(vcs, gw, f) && !f.isDirectory();
   }

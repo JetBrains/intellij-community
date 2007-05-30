@@ -9,8 +9,8 @@ import com.intellij.localvcs.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
-  public DirectoryHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
-    super(f, vcs, gw);
+  public DirectoryHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
+    super(gw, vcs, f);
   }
 
   public String getTitle() {

@@ -36,7 +36,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected FileHistoryDialogModel createModel(ILocalVcs vcs) {
-    return new FileHistoryDialogModel(myFile, vcs, myGateway);
+    return new FileHistoryDialogModel(myGateway, vcs, myFile);
   }
 
   @Override

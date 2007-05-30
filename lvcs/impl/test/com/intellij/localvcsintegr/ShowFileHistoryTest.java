@@ -100,6 +100,6 @@ public class ShowFileHistoryTest extends IntegrationTestCase {
   }
 
   private FileHistoryDialogModel createFileModelFor(VirtualFile f) {
-    return new FileHistoryDialogModel(f, getVcs(), gateway);
+    return new FileHistoryDialogModel(gateway, getVcs(), f);
   }
 }

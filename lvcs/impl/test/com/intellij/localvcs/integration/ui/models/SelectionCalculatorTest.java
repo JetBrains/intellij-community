@@ -9,16 +9,16 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class SelectedBlockCalculatorTest extends LocalVcsTestCase {
+public class SelectionCalculatorTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testSelectionWasNotChanged() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\ndef\nghi");
-    SelectedBlockCalculator c = new SelectedBlockCalculator(rr, 0, 2);
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 2);
 
-    Block b0 = c.getBlock(rr.get(0));
-    Block b1 = c.getBlock(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0));
+    Block b1 = c.getSelectionFor(rr.get(1));
 
     assertBlock(0, 2, "abc\ndef\nghi", b0);
     assertBlock(0, 2, "abc\ndef\nghi", b1);
@@ -27,10 +27,10 @@ public class SelectedBlockCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testSelectionWasMoved() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
-    SelectedBlockCalculator c = new SelectedBlockCalculator(rr, 0, 1);
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
-    Block b0 = c.getBlock(rr.get(0));
-    Block b1 = c.getBlock(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0));
+    Block b1 = c.getSelectionFor(rr.get(1));
 
     assertBlock(0, 1, "def\nghi", b0);
     assertBlock(1, 2, "def\nghi", b1);
@@ -39,15 +39,20 @@ public class SelectedBlockCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testSelectionForVeryOldRevisionTakenBackward() {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
-    SelectedBlockCalculator c = new SelectedBlockCalculator(rr, 0, 1);
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
-    Block b2 = c.getBlock(rr.get(2));
-    Block b1 = c.getBlock(rr.get(1));
-    Block b0 = c.getBlock(rr.get(0));
+    Block b2 = c.getSelectionFor(rr.get(2));
+    Block b1 = c.getSelectionFor(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0));
 
     assertBlock(0, 1, "abc\ndef", b0);
     assertBlock(0, 2, "abc\nghi\ndef", b1);
     assertBlock(1, 2, "abc\ndef", b2);
+  }
+
+  @Test
+  public void test() {
+
   }
 
   private List<Revision> createRevisions(String... contents) {

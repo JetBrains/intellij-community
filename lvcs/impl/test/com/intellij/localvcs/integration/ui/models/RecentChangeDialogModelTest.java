@@ -25,7 +25,7 @@ public class RecentChangeDialogModelTest extends LocalVcsTestCase {
     vcs.endChangeSet("change");
 
     c = vcs.getRecentChanges().get(0);
-    m = new RecentChangeDialogModel(vcs, gw, c);
+    m = new RecentChangeDialogModel(gw, vcs, c);
   }
 
   @Test

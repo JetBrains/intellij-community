@@ -173,7 +173,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
-    m = new HistoryDialogModel(f, vcs, gw) {
+    m = new HistoryDialogModel(gw, vcs, f) {
       @Override
       protected RevisionReverter createRevisionReverter() {
         throw new UnsupportedOperationException();

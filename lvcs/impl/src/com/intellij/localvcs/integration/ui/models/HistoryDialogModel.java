@@ -20,7 +20,7 @@ public abstract class HistoryDialogModel {
   private boolean myIsChangesSelected = false;
   private List<Revision> myRevisionsCache;
 
-  public HistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
+  public HistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
     myVcs = vcs;
     myFile = f;
     myGateway = gw;

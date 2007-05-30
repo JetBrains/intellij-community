@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
-  public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
-    super(f, vcs, gw);
+  public FileHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
+    super(gw, vcs, f);
   }
 
   public boolean canShowDifference() {

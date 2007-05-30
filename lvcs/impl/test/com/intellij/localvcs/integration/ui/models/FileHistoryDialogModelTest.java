@@ -106,6 +106,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   private void initModelFor(String path, String content) {
     TestVirtualFile f = new TestVirtualFile(path, content, -1);
-    m = new FileHistoryDialogModel(f, vcs, new TestIdeaGateway());
+    m = new FileHistoryDialogModel(new TestIdeaGateway(), vcs, f);
   }
 }
