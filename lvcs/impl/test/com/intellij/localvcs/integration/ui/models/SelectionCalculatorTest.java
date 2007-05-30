@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.diff.Block;
+import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.TestLocalVcs;
@@ -51,14 +52,40 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void test() {
+  public void testNormailingLineEnds() {
+    List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
+    Block b0 = c.getSelectionFor(rr.get(0));
+    Block b1 = c.getSelectionFor(rr.get(1));
+
+    assertBlock(0, 1, "abc\ndef", b0);
+    assertBlock(0, 1, "abc\ndef", b1);
+  }
+
+  @Test
+  public void testCanNotCalculateIfThereWasUnavailableContent() {
+    List<Revision> rr = createRevisions(cf("one"), bigContentFactory(), cf("two"));
+
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+
+    assertTrue(c.canCalculateFor(rr.get(0)));
+    assertFalse(c.canCalculateFor(rr.get(1)));
+    assertFalse(c.canCalculateFor(rr.get(2)));
   }
 
   private List<Revision> createRevisions(String... contents) {
-    vcs.createFile("f", cf(contents[0]), -1);
-    for (int i = 1; i < contents.length; i++) {
-      vcs.changeFileContent("f", cf(contents[i]), -1);
+    ContentFactory[] ff = new ContentFactory[contents.length];
+    for (int i = 0; i < contents.length; i++) {
+      ff[i] = cf(contents[i]);
+    }
+    return createRevisions(ff);
+  }
+
+  private List<Revision> createRevisions(ContentFactory... ff) {
+    vcs.createFile("f", ff[0], -1);
+    for (int i = 1; i < ff.length; i++) {
+      vcs.changeFileContent("f", ff[i], -1);
     }
     return vcs.getRevisionsFor("f");
   }

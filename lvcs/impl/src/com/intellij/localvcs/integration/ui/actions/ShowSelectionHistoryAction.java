@@ -14,8 +14,7 @@ import com.intellij.vcsUtil.VcsUtil;
 public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
   protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f, AnActionEvent e) {
-    VcsContext c = VcsContextWrapper.createCachedInstanceOn(e);
-    VcsSelection sel = VcsUtil.getSelection(c);
+    VcsSelection sel = getSelection(e);
 
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
@@ -25,13 +24,17 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
 
   @Override
   protected String getText(AnActionEvent e) {
-    VcsContext c = VcsContextWrapper.createCachedInstanceOn(e);
-    VcsSelection sel = VcsUtil.getSelection(c);
+    VcsSelection sel = getSelection(e);
     return sel == null ? super.getText(e) : sel.getActionName();
   }
 
   @Override
-  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f) {
-    return super.isEnabled(vcs, gw, f) && !f.isDirectory();
+  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+    return super.isEnabled(vcs, gw, f, e) && !f.isDirectory() && getSelection(e) != null;
+  }
+
+  private VcsSelection getSelection(AnActionEvent e) {
+    VcsContext c = VcsContextWrapper.createCachedInstanceOn(e);
+    return VcsUtil.getSelection(c);
   }
 }

@@ -15,7 +15,7 @@ public class ShowHistoryAction extends LocalHistoryActionWithDialog {
   }
 
   @Override
-  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f) {
+  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return f != null && gw.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 }

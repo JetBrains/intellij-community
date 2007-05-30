@@ -8,12 +8,17 @@ import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
 import com.intellij.localvcs.integration.ui.models.SelectionDifferenceModel;
 import com.intellij.openapi.vfs.VirtualFile;
 
-class SelectionHistoryDialogModel extends FileHistoryDialogModel {
+public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private SelectionCalculator myCalculator;
 
   public SelectionHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f, int from, int to) {
     super(gw, vcs, f);
     myCalculator = new SelectionCalculator(getRevisions(), from, to);
+  }
+
+  @Override
+  public boolean canShowDifference() {
+    return myCalculator.canCalculateFor(getLeftRevision()) && myCalculator.canCalculateFor(getRightRevision());
   }
 
   @Override

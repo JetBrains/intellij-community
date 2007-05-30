@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration.ui.models;
 import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.core.storage.Content;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,11 +21,21 @@ public class SelectionCalculator {
     myToLine = toLine;
   }
 
-  public Block getSelectionFor(Revision r) {
-    return getBlock(myRevisions.indexOf(r));
+  public boolean canCalculateFor(Revision r) {
+    try {
+      getSelectionFor(myRevisions.indexOf(r));
+    }
+    catch (ContentIsUnavailableException e) {
+      return false;
+    }
+    return true;
   }
 
-  private Block getBlock(int revisionIndex) {
+  public Block getSelectionFor(Revision r) {
+    return getSelectionFor(myRevisions.indexOf(r));
+  }
+
+  private Block getSelectionFor(int revisionIndex) {
     Block cached = myCache.get(revisionIndex);
     if (cached != null) return cached;
 
@@ -35,7 +46,7 @@ public class SelectionCalculator {
       result = new Block(content, myFromLine, myToLine);
     }
     else {
-      Block prev = getBlock(revisionIndex - 1);
+      Block prev = getSelectionFor(revisionIndex - 1);
       result = new FindBlock(content, prev).getBlockInThePrevVersion();
     }
 
@@ -44,8 +55,11 @@ public class SelectionCalculator {
   }
 
   private String getRevisionContent(Revision r) {
-    // todo test conversion and line-end
-    // todo test unavailable content
-    return new String(r.getEntry().getContent().getBytes());
+    Content c = r.getEntry().getContent();
+    if (!c.isAvailable()) throw new ContentIsUnavailableException();
+    return new String(c.getBytes());
+  }
+
+  private static class ContentIsUnavailableException extends RuntimeException {
   }
 }

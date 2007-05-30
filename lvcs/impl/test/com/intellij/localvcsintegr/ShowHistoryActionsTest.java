@@ -16,35 +16,65 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public class ShowHistoryActionsTest extends IntegrationTestCase {
-  public void testShowHistoryAction() {
-    ShowHistoryAction a = new ShowHistoryAction();
-    assertStatus(a, root, true);
-    assertStatus(a, null, false);
+  VirtualFile f;
+  Editor editor;
+  Document document;
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    f = root.createChildData(null, "f.java");
+
+    document = FileDocumentManager.getInstance().getDocument(f);
+    document.setText("foo");
+
+    editor = getEditorFactory().createEditor(document);
   }
 
-  public void testShowSelectionHistoryAction() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+  @Override
+  protected void tearDown() throws Exception {
+    getEditorFactory().releaseEditor(editor);
+    super.tearDown();
+  }
+
+  private EditorFactory getEditorFactory() {
+    return EditorFactory.getInstance();
+  }
+
+  public void testShowHistoryAction() throws IOException {
+    ShowHistoryAction a = new ShowHistoryAction();
+    assertStatus(a, root, true);
+    assertStatus(a, f, true);
+    assertStatus(a, null, false);
+
+    VirtualFile ignored = root.createChildData(null, "f.xxx");
+    VirtualFile notUnderContentRoot = root.createChildData(null, "CVS");
+
+    assertStatus(a, ignored, false);
+    assertStatus(a, notUnderContentRoot, false);
+  }
+
+  public void testShowSelectionHistoryActionForSelection() throws Exception {
+    editor.getSelectionModel().setSelection(0, 2);
 
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    assertStatus(a, f, true);
+    AnActionEvent e = createEventFor(a, f);
+    a.update(e);
+
+    assertTrue(e.getPresentation().isEnabled());
+
+    assertEquals("Show History for Selection", e.getPresentation().getText());
+  }
+
+  public void testShowSelectionHistoryActionDisabledForNonFiles() throws IOException {
+    ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
     assertStatus(a, root, false);
     assertStatus(a, null, false);
   }
 
-  public void testShowSelectionHistoryActionTextForSelection() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
-    Document d = FileDocumentManager.getInstance().getDocument(f);
-    d.setText("foo");
-    EditorFactory ef = EditorFactory.getInstance();
-    Editor editor = ef.createEditor(d);
-    editor.getSelectionModel().setSelection(0, 2);
-
+  public void testShowSelectionHistoryActionDisabledForEmptySelection() throws Exception {
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    AnActionEvent e = createEventFor(a, f, editor);
-    a.update(e);
-    ef.releaseEditor(editor);
-
-    assertEquals("Show History for Selection", e.getPresentation().getText());
+    assertStatus(a, f, false);
   }
 
   private void assertStatus(AnAction a, VirtualFile f, boolean isEnabled) {
@@ -53,16 +83,12 @@ public class ShowHistoryActionsTest extends IntegrationTestCase {
     assertEquals(isEnabled, e.getPresentation().isEnabled());
   }
 
-  private AnActionEvent createEventFor(AnAction a, VirtualFile f) {
-    return createEventFor(a, f, null);
-  }
-
-  private AnActionEvent createEventFor(AnAction a, final VirtualFile f, final Editor e) {
+  private AnActionEvent createEventFor(AnAction a, final VirtualFile f) {
     DataContext dc = new DataContext() {
       @Nullable
       public Object getData(String id) {
         if (id.equals(DataKeys.VIRTUAL_FILE.getName())) return f;
-        if (id.equals(DataKeys.EDITOR.getName())) return e;
+        if (id.equals(DataKeys.EDITOR.getName())) return editor;
         if (id.equals(DataKeys.PROJECT.getName())) return myProject;
         return null;
       }
