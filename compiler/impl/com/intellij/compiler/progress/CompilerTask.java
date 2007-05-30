@@ -67,6 +67,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   private ProgressIndicator myIndicator;
   private Runnable myCompileWork;
+  private boolean myMessageViewWasPrepared;
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     super(project, contentName);
@@ -89,13 +90,16 @@ public class CompilerTask extends Task.Backgroundable {
 
     if (!isHeadless()) {
       addIndicatorDelegate();
-      prepareMessageView();
     }
 
     myCompileWork.run();
   }
 
   private void prepareMessageView() {
+    if (myMessageViewWasPrepared) return;
+
+    myMessageViewWasPrepared = true;
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myIsBackgroundMode) {
@@ -117,6 +121,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   private void addIndicatorDelegate() {
     ((ProgressIndicatorEx)myIndicator).addStateDelegate(new ProgressIndicatorBase() {
+
       public void cancel() {
         super.cancel();
         closeUI();
@@ -140,6 +145,10 @@ public class CompilerTask extends Task.Backgroundable {
       public void setFraction(final double fraction) {
         updateProgressText();
       }
+
+      protected void onProgressChange() {
+        prepareMessageView();
+      }
     });
   }
 
@@ -150,6 +159,8 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
+    prepareMessageView();
+
     openMessageView();
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
@@ -242,17 +253,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   public void start(Runnable compileWork) {
     myCompileWork = compileWork;
-
-    if (isHeadlessMode()) {
-      queue();
-    } else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          queue();
-        }
-      }, ModalityState.NON_MODAL);
-    }
-
+    queue();
   }
 
   private void updateProgressText() {
