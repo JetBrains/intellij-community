@@ -8,9 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 public abstract class LocalHistoryActionWithDialog extends LocalHistoryAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DialogWrapper d = createDialog(getGateway(e), getFile(e));
+    DialogWrapper d = createDialog(getGateway(e), getFile(e), e);
     d.show();
   }
 
-  protected abstract DialogWrapper createDialog(IdeaGateway gw, VirtualFile f);
+  protected abstract DialogWrapper createDialog(IdeaGateway gw, VirtualFile f, AnActionEvent e);
 }

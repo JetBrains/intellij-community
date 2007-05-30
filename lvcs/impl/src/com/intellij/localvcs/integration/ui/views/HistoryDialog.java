@@ -28,31 +28,29 @@ import java.util.List;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected IdeaGateway myGateway;
+  protected VirtualFile myFile;
   protected Splitter mySplitter;
   protected T myModel;
 
-  protected HistoryDialog(IdeaGateway gw, VirtualFile f) {
-    this(gw);
-    init(f);
-  }
-
-  // no-init constructor (for RecentChangeDialog)
-  protected HistoryDialog(IdeaGateway gw) {
+  protected HistoryDialog(IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(gw.getProject(), true);
     myGateway = gw;
+    myFile = f;
+    if (doInit) init();
   }
 
-  protected void init(VirtualFile f) {
-    initModel(f);
-    init();
+  @Override
+  protected void init() {
+    initModel();
+    super.init();
   }
 
-  private void initModel(VirtualFile f) {
+  private void initModel() {
     ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
-    myModel = createModelFor(f, vcs);
+    myModel = createModel(vcs);
   }
 
-  protected abstract T createModelFor(VirtualFile f, ILocalVcs vcs);
+  protected abstract T createModel(ILocalVcs vcs);
 
   @Override
   protected JComponent createCenterPanel() {

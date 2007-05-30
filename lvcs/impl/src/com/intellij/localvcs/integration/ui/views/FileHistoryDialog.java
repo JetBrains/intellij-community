@@ -20,8 +20,12 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private JLabel myCanNotShowDifferenceLabel;
   private JPanel myPanel;
 
-  public FileHistoryDialog(VirtualFile f, IdeaGateway gw) {
-    super(gw, f);
+  public FileHistoryDialog(IdeaGateway gw, VirtualFile f) {
+    this(gw, f, true);
+  }
+
+  protected FileHistoryDialog(IdeaGateway gw, VirtualFile f, boolean doInit) {
+    super(gw, f, doInit);
   }
 
   @Override
@@ -31,8 +35,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new FileHistoryDialogModel(f, vcs, myGateway);
+  protected FileHistoryDialogModel createModel(ILocalVcs vcs) {
+    return new FileHistoryDialogModel(myFile, vcs, myGateway);
   }
 
   @Override

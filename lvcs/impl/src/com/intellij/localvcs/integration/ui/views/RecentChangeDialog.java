@@ -6,7 +6,6 @@ import com.intellij.localvcs.core.revisions.RecentChange;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.localvcs.integration.ui.models.RecentChangeDialogModel;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -16,13 +15,13 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   private RecentChange myChange;
 
   public RecentChangeDialog(IdeaGateway gw, RecentChange c) {
-    super(gw);
+    super(gw, null, false);
     myChange = c;
-    init(null);
+    init();
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
+  protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
     return new RecentChangeDialogModel(vcs, myGateway, myChange);
   }
 

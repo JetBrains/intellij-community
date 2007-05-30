@@ -22,23 +22,22 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   private CheckinPanelTreeTable myDiffTree;
 
   public DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f) {
-    super(gw, f);
+    this(gw, f, true);
   }
 
-  // no-init constructor (for RecentChangeDialog)
-  protected DirectoryHistoryDialog(IdeaGateway gw) {
-    super(gw);
+  protected DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f, boolean doInit) {
+    super(gw, f, doInit);
   }
 
   @Override
-  protected void init(VirtualFile f) {
-    super.init(f);
+  protected void init() {
+    super.init();
     setTitle(myModel.getTitle());
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new DirectoryHistoryDialogModel(f, vcs, myGateway);
+  protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
+    return new DirectoryHistoryDialogModel(myFile, vcs, myGateway);
   }
 
   @Override
