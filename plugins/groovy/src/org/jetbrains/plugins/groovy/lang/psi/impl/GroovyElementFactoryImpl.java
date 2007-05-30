@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
@@ -42,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent {
   Project myProject;
 
-  public GroovyElementFactoryImpl(Project project){
+  public GroovyElementFactoryImpl(Project project) {
     myProject = project;
   }
 
@@ -53,17 +56,32 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
   }
 
+  public GrVariableDeclarations createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
+    StringBuffer text = new StringBuffer();
+    text.append("def ");
+    if (isFinal) {
+      text.append("final ");
+    }
+    if (type != null) {
+      text.append(type.getPresentableText());
+    }
+    text.append("=").append(initializer.getText());
+    PsiFile file = createGroovyFile(text.toString());
+    return ((GrVariableDeclarations) ((GroovyFile) file).getTopStatements()[0]);
+  }
+
   @Nullable
   public GroovyPsiElement createTopElementFromText(String text) {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-            text);
+        text);
     return (GroovyPsiElement) dummyFile.getFirstChild();
   }
 
   public GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException {
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
     ASTNode node = psiFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK) throw new IncorrectOperationException("Invalid closure text");
+    if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK)
+      throw new IncorrectOperationException("Invalid closure text");
     return (GrClosableBlock) node.getPsi();
   }
 
@@ -76,7 +94,8 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     }
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), fileText);
     ASTNode node = psiFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION) throw new IncorrectOperationException("Invalid closure text");
+    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION)
+      throw new IncorrectOperationException("Invalid closure text");
     return ((GrMethod) node.getPsi()).getParameters()[0];
   }
 
@@ -104,13 +123,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public PsiElement createWhiteSpace() {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-            " ");
+        " ");
     return dummyFile.getFirstChild();
   }
 
   public GrImportStatement createImportStatementFromText(String qName) {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-            "import " + qName + " ");
+        "import " + qName + " ");
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
 

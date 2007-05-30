@@ -64,13 +64,18 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
 
   }
 
-  private void addTailType(LookupItem item){
-    if ("default".equals(item.toString())){
+  private void addTailType(LookupItem item) {
+    if ("default".equals(item.toString())) {
       item.setTailType(TailType.CASE_COLON);
       return;
     }
     String[] exprs = {"true", "false", "null", "super", "this"};
     String[] withSemi = {"break", "continue"};
+    String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
+        "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
+        "new", "try", "while", "with", "switch", "for", "return", "throw", "thros", "assert", "synchronized", "package",
+        "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",
+        "import", "final",};
     if (Arrays.asList(withSemi).contains(item.toString())) {
       item.setTailType(TailType.SEMICOLON);
       return;
@@ -79,6 +84,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       item.setTailType(TailType.NONE);
       return;
     }
-    item.setTailType(TailType.SPACE);
+    if (Arrays.asList(withSpace).contains(item.toString())) {
+      item.setTailType(TailType.SPACE);
+      return;
+    }
+    item.setTailType(TailType.NONE);
   }
 }

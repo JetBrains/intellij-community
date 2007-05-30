@@ -17,18 +17,23 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -44,6 +49,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
     }
+    trimSpaces(editor, file);
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
@@ -51,8 +57,11 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    // Expression to be introduced as a variable
-    GrExpression tempExpr = CodeInsightUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    if (!(file instanceof GroovyFile)) {
+      return false;
+    }
+    // Expression or block to be introduced as a variable
+    GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFile) file), startOffset, endOffset, GrExpression.class);
     return invokeImpl(project, tempExpr, editor);
   }
 
@@ -68,29 +77,47 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
 
-    // Get parent element
+    if (expr.getType() == PsiType.VOID) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
+      showErrorMessage(message, project);
+      return false;
+    }
+
+    // Get container element
     PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(expr);
     // TODO implement loop and fork statements as containers
     if (tempContainer == null) {
       return tempContainerNotFound(project);
     }
-
-    if (!(tempContainer instanceof GrCodeBlock)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
+    if (!isAppropriateContainer(tempContainer)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
       showErrorMessage(message, project);
       return false;
     }
-
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
-    // TODO add expression occurences checking
+    // Find occurences
+    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(expr, tempContainer);
+    // Getting settings
+    GroovyIntroduceVariableSettings settings = getSettings(project, editor, expr, expr.getType(), occurences, false, null);
 
+    if (!settings.isOK()) {
+      return false;
+    }
 
-
+/*
+    CommandProcessor.getInstance().executeCommand(
+        project,
+        new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(runnable);
+          }
+        }, REFACTORING_NAME, null);
+    return true;
+*/
 
     return false;
   }
-
 
   private boolean tempContainerNotFound(final Project project) {
     String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
@@ -102,5 +129,36 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Does nothing
   }
 
+  protected abstract GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, PsiElement expr,
+                                                                 PsiType type, PsiElement[] occurrences, boolean decalreFinal,
+                                                                 InputValidator validator);
+
   protected abstract void showErrorMessage(String message, Project project);
+
+  private static boolean isAppropriateContainer(PsiElement tempContainer) {
+    return tempContainer instanceof GrCodeBlock ||
+        tempContainer instanceof GroovyFile ||
+        tempContainer instanceof GrCaseBlock;
+  }
+
+  private static void trimSpaces(Editor editor, PsiFile file) {
+    int start = editor.getSelectionModel().getSelectionStart();
+    int end = editor.getSelectionModel().getSelectionEnd();
+    while (file.findElementAt(start) instanceof PsiWhiteSpace ||
+        file.findElementAt(start) instanceof PsiComment ||
+        (file.findElementAt(start) != null &&
+            GroovyTokenTypes.mNLS.equals(file.findElementAt(start).getNode().getElementType()))) {
+      start++;
+    }
+    while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
+        file.findElementAt(end - 1) instanceof PsiComment ||
+        (file.findElementAt(end - 1) != null &&
+            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
+                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
+      end--;
+    }
+
+    editor.getSelectionModel().setSelection(start, end);
+
+  }
 }

@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,8 @@ public class FinalFilter implements ElementFilter {
         ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
         context.getParent() instanceof GrReferenceElement  &&
         !(context.getParent() instanceof GrReferenceExpression)  &&
-        !(context.getParent().getParent() instanceof GrImportStatement)) {
+        !(context.getParent().getParent() instanceof GrImportStatement) &&
+        !(context.getParent().getParent() instanceof GrPackageDefinition)) {
       return true;
     }
     if (GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {

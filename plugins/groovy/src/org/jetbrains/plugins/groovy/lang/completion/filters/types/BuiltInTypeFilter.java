@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -46,7 +47,8 @@ public class BuiltInTypeFilter implements ElementFilter {
     if ((context.getParent() instanceof GrParameter &&
         ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
         context.getParent() instanceof GrReferenceElement &&
-        !(context.getParent().getParent() instanceof GrImportStatement)) {
+        !(context.getParent().getParent() instanceof GrImportStatement) &&
+        !(context.getParent().getParent() instanceof GrPackageDefinition)) {
       return true;
     }
     if (GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
