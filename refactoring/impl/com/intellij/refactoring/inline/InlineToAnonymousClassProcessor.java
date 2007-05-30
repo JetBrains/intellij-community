@@ -133,6 +133,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         }
         anonymousClass.addBefore(child, anonymousClass.getRBrace());
       }
+      else if (child instanceof PsiField) {
+        //noinspection RedundantCast
+        if (fieldMap == null || !fieldMap.containsKey((PsiField) child)) {
+          anonymousClass.addBefore(child, anonymousClass.getRBrace());
+        }
+      }
     }
   }
 
