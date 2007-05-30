@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
@@ -80,19 +82,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static final MyResolver RESOLVER = new MyResolver();
 
-  public PsiType getType() {
+  private static final MyTypesCalculator TYPES_CALCULATOR = new MyTypesCalculator();
 
-    PsiElement resolved = resolve();
+  private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
+
+    public PsiType fun(GrReferenceExpressionImpl refExpr) {
+      PsiElement resolved = refExpr.resolve();
     PsiType result = null;
-    if (resolved instanceof PsiClass) {
-      result = getManager().getElementFactory().createType((PsiClass) resolved);
+      PsiManager manager = refExpr.getManager();
+      if (resolved instanceof PsiClass) {
+      result = manager.getElementFactory().createType((PsiClass) resolved);
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else if (resolved instanceof PsiMethod) {
-      PsiElement nameElement = getReferenceNameElement();
+      PsiElement nameElement = refExpr.getReferenceNameElement();
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(nameElement, PsiWhiteSpace.class);
       if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mMEMBER_POINTER) {
-        return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+        return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", refExpr.getResolveScope());
       }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method)) {
@@ -114,7 +120,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    return PsiUtil.boxPrimitiveType(result, getManager(), getResolveScope());
+    return PsiUtil.boxPrimitiveType(result, manager, refExpr.getResolveScope());
+    }
+  }
+
+
+  public PsiType getType() {
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
   public String getName() {
