@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -32,8 +32,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
  */
-public class GrVariableDeclarationsImpl extends GroovyPsiElementImpl implements GrVariableDeclarations {
-  public GrVariableDeclarationsImpl(@NotNull ASTNode node) {
+public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements GrVariableDeclaration {
+  public GrVariableDeclarationImpl(@NotNull ASTNode node) {
     super(node);
   }
 

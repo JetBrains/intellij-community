@@ -4,8 +4,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiParameterList;
@@ -53,7 +52,7 @@ public class GroovyElementPresentation {
     return presentableText.toString();
   }
 
-  public static String getVariablePresentableText(GrVariableDeclarations varDecls, String variableName) {
+  public static String getVariablePresentableText(GrVariableDeclaration varDecls, String variableName) {
     assert varDecls != null;
     StringBuffer presentableText = new StringBuffer();
 

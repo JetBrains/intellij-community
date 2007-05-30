@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,10 +31,10 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
   }
 
   public GrField[] getFields() {
-    GrVariableDeclarations[] declarations = findChildrenByClass(GrVariableDeclarations.class);
+    GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
     if (declarations.length == 0) return GrField.EMPTY_ARRAY;
     List<GrField> result = new ArrayList<GrField>();
-    for (GrVariableDeclarations declaration : declarations) {
+    for (GrVariableDeclaration declaration : declarations) {
       GrVariable[] variables = declaration.getVariables();
       for (GrVariable variable : variables) {
         result.add((GrField) variable);

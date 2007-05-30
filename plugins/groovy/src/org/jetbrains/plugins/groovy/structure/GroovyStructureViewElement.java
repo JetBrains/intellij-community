@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.annotations.Nullable;
@@ -92,8 +92,8 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
         if (topStatement instanceof GrTypeDefinition || topStatement instanceof GrMethod) {
           addNewChild(children, topStatement);
 
-        } else if (topStatement instanceof GrVariableDeclarations) {
-            addVariables(children, ((GrVariableDeclarations) topStatement));
+        } else if (topStatement instanceof GrVariableDeclaration) {
+            addVariables(children, ((GrVariableDeclaration) topStatement));
         }
       }
 
@@ -101,8 +101,8 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
       GrStatement[] statements = ((GrTypeDefinition) element).getStatements();
 
       for (GrStatement statement : statements) {
-        if (statement instanceof GrVariableDeclarations) {
-          addVariables(children, (GrVariableDeclarations) statement);
+        if (statement instanceof GrVariableDeclaration) {
+          addVariables(children, (GrVariableDeclaration) statement);
         } else {
           addNewChild(children, statement);
         }
@@ -112,8 +112,8 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
     return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
-  private void addVariables(List<GroovyStructureViewElement> children, final GrVariableDeclarations variableDeclarations) {
-    GrVariable[] grVariables = variableDeclarations.getVariables();
+  private void addVariables(List<GroovyStructureViewElement> children, final GrVariableDeclaration variableDeclaration) {
+    GrVariable[] grVariables = variableDeclaration.getVariables();
 
     for (final GrVariable variable : grVariables) {
       final Icon icon = variable.getIcon(Iconable.ICON_FLAG_OPEN);
@@ -122,7 +122,7 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
         public ItemPresentation getPresentation() {
           return new ItemPresentation() {
             public String getPresentableText() {
-              return GroovyElementPresentation.getVariablePresentableText(variableDeclarations, variable.getNameIdentifierGroovy().getText());
+              return GroovyElementPresentation.getVariablePresentableText(variableDeclaration, variable.getNameIdentifierGroovy().getText());
             }
 
             @Nullable

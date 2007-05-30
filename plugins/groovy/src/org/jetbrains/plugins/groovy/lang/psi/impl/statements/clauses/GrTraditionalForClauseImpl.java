@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
@@ -35,8 +35,8 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   }
 
   public GrVariable[] getDeclaredVariables() {
-    GrVariableDeclarations declarations = findChildByClass(GrVariableDeclarations.class);
-    if (declarations == null) return GrVariable.EMPTY_ARRAY;
-    return declarations.getVariables();
+    GrVariableDeclaration declaration = findChildByClass(GrVariableDeclaration.class);
+    if (declaration == null) return GrVariable.EMPTY_ARRAY;
+    return declaration.getVariables();
   }
 }

@@ -5,21 +5,18 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.util.FinalWrapper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
@@ -29,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
+import org.jetbrains.plugins.groovy.util.FinalWrapper;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -40,9 +40,7 @@ import java.util.Map;
  * @author: Dmitry.Krasilschikov
  * @date: 03.05.2007
  */
-public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassPostProcessingCompiler
-{
-
+public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
 
   static {
@@ -325,7 +323,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     if (typeDefinition != null) {
       PsiModifierList modifierList = typeDefinition.getModifierList();
 
-      boolean wasAddedModifiers = writeModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS);
+      boolean wasAddedModifiers = writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS);
       if (!wasAddedModifiers) {
         text.append("public");
       }
@@ -345,7 +343,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       text.append("extends ");
       text.append("groovy.lang.Script");
     } else {
-//    if (typeDefinition != null) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
@@ -359,7 +356,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
         String canonicalText = canonicalTextWrapper.myValue;
 
-        if (canonicalText == null) text.append("<smotri 4to nasleduesh'!>");
+        if (canonicalText == null) text.append("!wrond type to extends here!");
         else text.append(canonicalText);
         text.append(" ");
       } else {
@@ -420,14 +417,94 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
             "java.lang.Object".equals(((GrMethod) statement).getReturnTypeElementGroovy().getType().getCanonicalText());
 
       }
-      if (statement instanceof GrVariableDeclarations) {
-        writeVariableDeclarations(text, (GrVariableDeclarations) statement);
+      if (statement instanceof GrVariableDeclaration) {
+        writeVariableDeclarations(text, (GrVariableDeclaration) statement);
+        writeGetterAndSetter(text, (GrVariableDeclaration) statement);
       }
     }
 
     if (isScript && !isRunMethodWrote) writeRunMethod(text);
 
     text.append("}");
+  }
+
+  private void writeGetterAndSetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
+    writeGetter(text, grVariableDeclaration);
+    writeSetter(text, grVariableDeclaration);
+  }
+
+  private void writeGetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
+    GrModifierListImpl list = (GrModifierListImpl) grVariableDeclaration.getModifierList();
+
+    writeMethodModifiers(text, list, JAVA_MODIFIERS);
+
+    GrTypeElement element = grVariableDeclaration.getTypeElementGroovy();
+    String type;
+    if (element == null) {
+      type = "java.lang.Object";
+    } else {
+      type = element.getType().getCanonicalText();
+    }
+
+    text.append(type);
+    text.append(" ");
+
+    GrVariable[] grVariables = grVariableDeclaration.getVariables();
+
+    for (GrVariable grVariable : grVariables) {
+      text.append("get").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
+
+      text.append("()");
+      text.append(" ");
+      text.append("{");
+
+      String returnType = typesToInitialValues.get(type);
+
+      if (returnType == null) returnType = "null";
+
+
+      text.append("return ");
+      text.append(returnType);
+      text.append(";");
+      text.append("}");
+      text.append("\n");
+    }
+  }
+
+  private void writeSetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
+    GrModifierListImpl modifierList = (GrModifierListImpl) grVariableDeclaration.getModifierList();
+    if (modifierList.hasVariableModifierProperty(PsiModifier.FINAL)) return;
+
+    writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
+
+    GrTypeElement element = grVariableDeclaration.getTypeElementGroovy();
+    String type;
+    if (element == null) {
+      type = "java.lang.Object";
+    } else {
+      type = element.getType().getCanonicalText();
+    }
+
+    text.append("void ");
+
+    GrVariable[] grVariables = grVariableDeclaration.getVariables();
+
+    for (GrVariable grVariable : grVariables) {
+      text.append("set").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
+
+      text.append("(");
+      text.append(type);
+      text.append(" ");
+      text.append("new").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
+      text.append(")");
+      text.append(" ");
+      text.append("{");
+      text.append("return;");
+      text.append("}");
+
+      text.append(";");
+      text.append("\n");
+    }
   }
 
   private void writeRunMethod(StringBuffer text) {
@@ -439,9 +516,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
   private void writeConstructor(StringBuffer text, GrMethod constructor) {
     GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
 
-//    text.append("public ");
-    boolean b = writeModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
-    if (!b) text.append("public");
+    writeMethodModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
 
     text.append(" ");
 
@@ -506,8 +581,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
     text.append("}");
   }
 
-  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclarations variableDeclarations) {
-    GrTypeElement varTypeElement = variableDeclarations.getTypeElementGroovy();
+  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+    GrTypeElement varTypeElement = variableDeclaration.getTypeElementGroovy();
     String varQualifiedTypeName = getResolvedType(varTypeElement);
 
     String initValueToText;
@@ -517,14 +592,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
       initValueToText = "null";
 
     //append method name
-    PsiModifierList modifierList = variableDeclarations.getModifierList();
-    GrVariable[] grVariables = variableDeclarations.getVariables();
+    PsiModifierList modifierList = variableDeclaration.getModifierList();
+    GrVariable[] grVariables = variableDeclaration.getVariables();
     GrVariable variable;
     int i = 0;
     while (i < grVariables.length) {
       variable = grVariables[i];
 
-      writeModifiers(text, modifierList, JAVA_MODIFIERS);
+      writeVariableDefinitionModifiers(text, modifierList, JAVA_MODIFIERS);
 
       //type
       text.append(varQualifiedTypeName);
@@ -548,7 +623,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
     PsiModifierList modifierList = method.getModifierList();
 
-    writeModifiers(text, modifierList, JAVA_MODIFIERS);
+    writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
     //append qualified type name
     text.append(qualifiedTypeName);
@@ -600,10 +675,43 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler//, ClassP
 
   }
 
-  private boolean writeModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+  private boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+    assert modifierList instanceof GrModifierListImpl;
+    GrModifierListImpl list = (GrModifierListImpl) modifierList;
+
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType)) {
+      if (list.hasMethodModifierProperty(modifierType)) {
+        text.append(modifierType);
+        text.append(" ");
+        wasAddedModifiers = true;
+      }
+    }
+    return wasAddedModifiers;
+  }
+
+  private boolean writeVariableDefinitionModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+    assert modifierList instanceof GrModifierListImpl;
+    GrModifierListImpl list = (GrModifierListImpl) modifierList;
+
+    boolean wasAddedModifiers = false;
+    for (String modifierType : modifiers) {
+      if (list.hasVariableModifierProperty(modifierType)) {
+        text.append(modifierType);
+        text.append(" ");
+        wasAddedModifiers = true;
+      }
+    }
+    return wasAddedModifiers;
+  }
+
+  private boolean writeTypeDefinitionMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+    assert modifierList instanceof GrModifierListImpl;
+    GrModifierListImpl list = (GrModifierListImpl) modifierList;
+
+    boolean wasAddedModifiers = false;
+    for (String modifierType : modifiers) {
+      if (list.hasClassExplicitModifier(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;

@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -46,7 +47,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
 
   @NotNull
   public PsiType getType() {
-    GrTypeElement typeElement = ((GrVariableDeclarations) getParent()).getTypeElementGroovy();
+    GrTypeElement typeElement = ((GrVariableDeclaration) getParent()).getTypeElementGroovy();
     if (typeElement != null) return typeElement.getType();
 
     GrExpression initializer = getInitializerGroovy();
@@ -121,14 +122,15 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   @Nullable
-  public PsiModifierList getModifierList() {
+  public GrModifierList getModifierList() {
     PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclarations) {
-      return ((GrVariableDeclarations) parent).getModifierList();
+    if (parent instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration) parent).getModifierList();
     }
     return null;
   }
 
+  //todo: see GrModifierListImpl.hasVariableModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
     if (modifierList != null) return modifierList.hasModifierProperty(property);

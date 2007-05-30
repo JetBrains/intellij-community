@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedAr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrConstructorBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
@@ -121,7 +120,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
-      return new GrVariableDeclarationsImpl(node);
+      return new GrVariableDeclarationImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
 
     if (elem.equals(FIELD)) return new GrFieldImpl(node);
