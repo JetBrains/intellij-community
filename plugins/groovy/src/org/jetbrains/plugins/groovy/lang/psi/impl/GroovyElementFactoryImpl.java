@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclarations;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
@@ -56,7 +56,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
   }
 
-  public GrVariableDeclarations createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
+  public GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
     StringBuffer text = new StringBuffer();
     text.append("def ");
     if (isFinal) {
@@ -67,7 +67,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     }
     text.append("=").append(initializer.getText());
     PsiFile file = createGroovyFile(text.toString());
-    return ((GrVariableDeclarations) ((GroovyFile) file).getTopStatements()[0]);
+    return ((GrVariableDeclaration) ((GroovyFile) file).getTopStatements()[0]);
   }
 
   @Nullable
