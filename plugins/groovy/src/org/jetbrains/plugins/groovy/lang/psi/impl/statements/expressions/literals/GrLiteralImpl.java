@@ -42,8 +42,17 @@ public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
     if (elemType == GroovyTokenTypes.mGSTRING_LITERAL || elemType == GroovyTokenTypes.mSTRING_LITERAL) {
       return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
     } else if (elemType == GroovyTokenTypes.mNUM_INT) {
-      //todo different token types
       return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_LONG) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Long", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_FLOAT) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Float", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_DOUBLE) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Double", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.math.BigInteger", getResolveScope());
+    } else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.math.BigDecimal", getResolveScope());
     } else if (elemType == GroovyTokenTypes.kFALSE || elemType == GroovyTokenTypes.kTRUE) {
       return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
     }
