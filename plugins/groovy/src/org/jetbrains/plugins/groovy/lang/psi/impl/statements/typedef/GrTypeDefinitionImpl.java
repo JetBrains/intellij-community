@@ -541,4 +541,22 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
+
+  @Nullable
+  public Icon getIcon(int i)
+  {
+    if (isInterface())
+      return Icons.INTERFACE;
+
+    if (isAnnotationType())
+      return Icons.ANNOTAION;
+
+    if (isEnum())
+      return Icons.ENUM;
+
+    if (hasModifierProperty(PsiModifier.ABSTRACT))
+      return Icons.ABSTRACT;
+
+    return Icons.CLAZZ;
+  }
 }
