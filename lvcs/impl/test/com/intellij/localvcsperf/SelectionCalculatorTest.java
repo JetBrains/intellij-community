@@ -1,13 +1,15 @@
 package com.intellij.localvcsperf;
 
+import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Calendar;
 import java.util.List;
 
-
+@Bombed(month = Calendar.AUGUST, day = 31, user = "anton")
 public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   private List<Revision> rr;
   private SelectionCalculator c;
