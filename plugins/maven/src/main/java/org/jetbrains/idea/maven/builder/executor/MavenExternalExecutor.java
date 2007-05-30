@@ -61,7 +61,7 @@ public class MavenExternalExecutor extends MavenExecutor implements Runnable {
 
     List<String> executionCommand;
     try {
-      executionCommand = MavenExternalParameters.createCommand(parameters, myBuilderState, myMavenCoreState);
+      executionCommand = MavenExternalParameters.createCommand(myParameters, myBuilderState, myMavenCoreState);
       logCommand(executionCommand);
     }
     catch (MavenExternalParameters.MavenConfigErrorException e) {
@@ -72,7 +72,7 @@ public class MavenExternalExecutor extends MavenExecutor implements Runnable {
 
     try {
       mavenProcess = Runtime.getRuntime()
-        .exec(executionCommand.toArray(new String[executionCommand.size()]), null, new File(parameters.getWorkingDir()));
+        .exec(executionCommand.toArray(new String[executionCommand.size()]), null, new File(myParameters.getWorkingDir()));
     }
     catch (IOException e) {
       LOG.error(e.getMessage(), e);

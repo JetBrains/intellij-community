@@ -20,8 +20,6 @@ package org.jetbrains.idea.maven.builder.executor;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
 import org.jetbrains.idea.maven.builder.logger.LogListener;
 import org.jetbrains.idea.maven.builder.logger.MavenBuildLogger;
@@ -30,24 +28,18 @@ import org.jetbrains.idea.maven.core.MavenCoreState;
 import java.util.List;
 
 public abstract class MavenExecutor implements Runnable {
-  void displayProgress() {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(BuilderBundle.message("maven.building", FileUtil.toSystemDependentName(parameters.getPomFile())));
-      indicator.setText2(parameters.getGoals().toString());
-    }
-  }
-
   public interface Parameters {
 
-    public List<String> getGoals();
+    List<String> getGoals();
 
-    public String getPomFile();
+    String getPomFile();
 
-    public String getWorkingDir();
+    String getWorkingDir();
+
+    String getCaption();
   }
 
-  final Parameters parameters;
+  final Parameters myParameters;
   final MavenCoreState myMavenCoreState;
   final MavenBuilderState myBuilderState;
 
@@ -55,9 +47,9 @@ public abstract class MavenExecutor implements Runnable {
   private boolean cancelled = false;
 
   public MavenExecutor(Parameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
-    this.parameters = parameters;
-    this.myMavenCoreState = mavenCoreState;
-    this.myBuilderState = builderState;
+    myParameters = parameters;
+    myMavenCoreState = mavenCoreState;
+    myBuilderState = builderState;
   }
 
   public boolean isStopped() {
@@ -80,8 +72,16 @@ public abstract class MavenExecutor implements Runnable {
   }
 
   public void cancel() {
-    this.cancelled = true;
+    cancelled = true;
     stop();
+  }
+
+  void displayProgress() {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText(myParameters.getCaption());
+      indicator.setText2(myParameters.getGoals().toString());
+    }
   }
 
   public abstract String getCaption();
