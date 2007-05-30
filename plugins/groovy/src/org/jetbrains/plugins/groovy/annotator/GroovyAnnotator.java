@@ -81,6 +81,10 @@ public class GroovyAnnotator implements Annotator {
         if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        } else {
+          if (refExpr.getParent() instanceof GrReferenceExpression) {
+            holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
+          }
         }
       }
     }

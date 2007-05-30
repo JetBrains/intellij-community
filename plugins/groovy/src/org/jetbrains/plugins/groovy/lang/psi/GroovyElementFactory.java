@@ -17,11 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiClass;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
@@ -50,5 +49,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GroovyPsiElement createTopElementFromText(String text);
 
-  public abstract GroovyPsiElement createClosureFromText(String s);
+  public abstract GroovyPsiElement createClosureFromText(String s) throws IncorrectOperationException;
+
+  public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
 }

@@ -16,11 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
@@ -30,6 +34,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author ilyas
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl");
+  private GrParameter mySyntheticItParameter;
+  private static final String SYNTHETIC_PARAMETER_NAME = "it";
 
   public GrClosableBlockImpl(@NotNull ASTNode node) {
     super(node);
@@ -50,19 +57,42 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public GrParameter[] getParameters() {
-    GrParameterListImpl parameterList = getParameterList();
-    if (parameterList != null) {
-      return parameterList.getParameters();
+    if (hasParametersSection()) {
+      GrParameterListImpl parameterList = getParameterList();
+      if (parameterList != null) {
+        return parameterList.getParameters();
+      }
+
+      return GrParameter.EMPTY_ARRAY;
     }
 
-    return GrParameter.EMPTY_ARRAY;
+    return new GrParameter[] {getSyntheticItParameter()};
   }
 
   public GrParameterListImpl getParameterList() {
     return findChildByClass(GrParameterListImpl.class);
   }
 
+  public boolean hasParametersSection() {
+    return findChildByType(GroovyElementTypes.mCLOSABLE_BLOCK_OP) != null;
+  }
+
   public PsiType getType() {
     return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+  }
+
+  public void subtreeChanged() {
+    mySyntheticItParameter = null;
+  }
+
+  public GrParameter getSyntheticItParameter() {
+    if (mySyntheticItParameter == null) {
+      try {
+        mySyntheticItParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.Object");
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+    return mySyntheticItParameter;
   }
 }

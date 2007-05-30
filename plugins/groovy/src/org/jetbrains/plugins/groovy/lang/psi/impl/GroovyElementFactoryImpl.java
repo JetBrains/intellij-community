@@ -15,20 +15,26 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
@@ -54,9 +60,24 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GroovyPsiElement) dummyFile.getFirstChild();
   }
 
-  public GroovyPsiElement createClosureFromText(String s) {
+  public GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException {
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
-    return (GroovyPsiElement) psiFile.getFirstChild();
+    ASTNode node = psiFile.getFirstChild().getNode();
+    if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK) throw new IncorrectOperationException("Invalid closure text");
+    return (GrClosableBlock) node.getPsi();
+  }
+
+  public GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException {
+    String fileText;
+    if (typeText != null) {
+      fileText = "def foo(" + typeText + " " + name + ") {}";
+    } else {
+      fileText = "def foo(" + name + ") {}";
+    }
+    PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), fileText);
+    ASTNode node = psiFile.getFirstChild().getNode();
+    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION) throw new IncorrectOperationException("Invalid closure text");
+    return ((GrMethod) node.getPsi()).getParameters()[0];
   }
 
   private PsiFile createGroovyFile(String idText) {

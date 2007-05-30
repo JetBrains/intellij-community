@@ -26,4 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
  */
 public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParametersOwner {
   GrParameterList getParameterList();
+
+  boolean hasParametersSection();
 }
