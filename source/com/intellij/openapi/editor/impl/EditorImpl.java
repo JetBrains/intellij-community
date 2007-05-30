@@ -3893,7 +3893,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           myLineWidths.insert(oldEndLine + 1, delta);
         }
         else if (oldEndLine > newEndLine && !toAddNewLines) {
-          myLineWidths.remove(newEndLine + 1, oldEndLine - newEndLine);
+          myLineWidths.remove(newEndLine + 1, Math.min(oldEndLine, lineWidthSize) - newEndLine);
         }
         myIsDirty = true;
       }
