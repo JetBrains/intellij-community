@@ -103,9 +103,9 @@ mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
 mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
 
 //Float
-mNUM_FLOAT = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mFLOAT_SUFFIX}?)
+mNUM_FLOAT = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mFLOAT_SUFFIX})
  | {mFLOAT_SUFFIX}
- | {mEXPONENT} {mFLOAT_SUFFIX}? )
+ | {mEXPONENT} {mFLOAT_SUFFIX} )
 
 // Double
 mNUM_DOUBLE = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mDOUBLE_SUFFIX})
@@ -113,8 +113,8 @@ mNUM_DOUBLE = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mDOUBLE_SUFFIX})
  | {mEXPONENT} {mDOUBLE_SUFFIX})
 
 // Big decimal
-mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX})
- | {mEXPONENT} {mBIG_SUFFIX} )
+mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX}?)
+ | {mEXPONENT} {mBIG_SUFFIX}? )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
