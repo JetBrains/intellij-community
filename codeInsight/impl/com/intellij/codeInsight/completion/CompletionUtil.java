@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CompletionUtil {
-  public static final Key TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
+  public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
 
   private static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
   private static final NotNullLazyValue<CompletionData> ourJavaCompletionData = new NotNullLazyValue<CompletionData>() {

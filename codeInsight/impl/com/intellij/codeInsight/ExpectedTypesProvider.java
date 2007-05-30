@@ -265,19 +265,19 @@ public class ExpectedTypesProvider {
 
     public void visitIfStatement(PsiIfStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                 PsiType.BOOLEAN, TailType.IF_RPARENTH);
+                                                 PsiType.BOOLEAN, TailTypes.IF_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
     public void visitWhileStatement(PsiWhileStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                 PsiType.BOOLEAN, TailType.WHILE_RPARENTH);
+                                                 PsiType.BOOLEAN, TailTypes.WHILE_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
     public void visitDoWhileStatement(PsiDoWhileStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                 PsiType.BOOLEAN, TailType.WHILE_RPARENTH);
+                                                 PsiType.BOOLEAN, TailTypes.WHILE_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
@@ -801,8 +801,8 @@ public class ExpectedTypesProvider {
           PsiType returnType = method.getReturnType();
 
           tailType = (returnType == null || returnType == PsiType.VOID) && isArgumentOfTopLevelExpression(argument) ?
-                     TailType.CALL_RPARENTH_SEMICOLON :
-                     TailType.CALL_RPARENTH;
+                     TailTypes.CALL_RPARENTH_SEMICOLON :
+                     TailTypes.CALL_RPARENTH;
         }
         else {
           tailType = TailType.COMMA;
@@ -840,8 +840,8 @@ public class ExpectedTypesProvider {
             PsiType returnType = method.getReturnType();
             if (returnType != null) returnType = substitutor.substitute(returnType);
             tailType = (returnType == PsiType.VOID) ?
-                       TailType.CALL_RPARENTH_SEMICOLON :
-                       TailType.CALL_RPARENTH;
+                       TailTypes.CALL_RPARENTH_SEMICOLON :
+                       TailTypes.CALL_RPARENTH;
           }
           else {
             tailType = TailType.COMMA;

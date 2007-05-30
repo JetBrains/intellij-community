@@ -277,7 +277,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
             myState.caretOffset++;
           }
           else{
-            if (tailType != TailType.CALL_RPARENTH || generateAnonymousBody) {
+            if (tailType != TailTypes.CALL_RPARENTH || generateAnonymousBody) {
               myState.tailOffset += 2;
               myState.caretOffset += 2;
             }

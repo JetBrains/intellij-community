@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -44,6 +43,8 @@ public class LookupItem implements Comparable{
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
+
+  public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
 
   private Object myObject;
   private String myLookupString;
@@ -118,7 +119,24 @@ public class LookupItem implements Comparable{
     }
   }
 
+  public <T> T getAttribute(Key<T> key) {
+    if (myAttributes != null){
+      //noinspection unchecked
+      return (T)myAttributes.get(key);
+    }
+    else{
+      return null;
+    }
+  }
+
   public void setAttribute(Object key, Object value){
+    if (myAttributes == null){
+      myAttributes = new HashMap<Object, Object>(5);
+    }
+    myAttributes.put(key, value);
+  }
+
+  public <T> void setAttribute(Key<T> key, T value){
     if (myAttributes == null){
       myAttributes = new HashMap<Object, Object>(5);
     }
@@ -130,12 +148,12 @@ public class LookupItem implements Comparable{
   }
 
   public TailType getTailType(){
-    final TailType tailType = (TailType) getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+    final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
   public LookupItem setTailType(TailType type){
-    setAttribute(CompletionUtil.TAIL_TYPE_ATTR, type);
+    setAttribute(TAIL_TYPE_ATTR, type);
     return this;
   }
 
