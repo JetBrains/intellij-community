@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Semaphore;
 
 public class CompilerManagerImpl extends CompilerManager {
   private final Project myProject;
@@ -33,7 +33,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private Set<FileType> myCompilableTypes = new HashSet<FileType>();
   private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
-  private AtomicBoolean myCompilationActive = new AtomicBoolean(false);
+  private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
 
   public CompilerManagerImpl(Project project, CompilerConfigurationImpl compilerConfiguration) {
     myProject = project;
@@ -51,8 +51,12 @@ public class CompilerManagerImpl extends CompilerManager {
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
   }
 
+  public Semaphore getCompilationSemaphore() {
+    return myCompilationSemaphore;
+  }
+
   public boolean isCompilationActive() {
-    return myCompilationActive.get();
+    return myCompilationSemaphore.availablePermits() == 0;
   }
 
   public final void addCompiler(Compiler compiler) {
@@ -240,18 +244,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
     public ListenerNotificator(CompileStatusNotification delegate) {
       myDelegate = delegate;
-      myCompilationActive.set(true);
     }
 
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      try {
-        myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
-        if (myDelegate != null) {
-          myDelegate.finished(aborted, errors, warnings, compileContext);
-        }
-      }
-      finally {
-        myCompilationActive.set(false);
+      myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
+      if (myDelegate != null) {
+        myDelegate.finished(aborted, errors, warnings, compileContext);
       }
     }
   }

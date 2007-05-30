@@ -47,10 +47,10 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Chunk;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.Chunk;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -289,20 +290,21 @@ public class CompileDriver {
 
     indicator.start(new Runnable() {
       public void run() {
-        synchronized (CompilerManager.getInstance(myProject)) {
-          try {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("COMPILATION STARTED");
-            }
-            if (message != null) {
-              compileContext.addMessage(message);
-            }
-            doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
+        final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
+        semaphore.acquireUninterruptibly();
+        try {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("COMPILATION STARTED");
           }
-          finally {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("COMPILATION FINISHED");
-            }
+          if (message != null) {
+            compileContext.addMessage(message);
+          }
+          doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
+        }
+        finally {
+          semaphore.release();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("COMPILATION FINISHED");
           }
         }
       }
