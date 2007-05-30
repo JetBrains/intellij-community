@@ -37,18 +37,15 @@ public class EditorFactoryImpl extends EditorFactory {
 
   private ArrayList<Editor> myEditors = new ArrayList<Editor>();
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
+  private final ModalityStateListener myModalityStateListener = new ModalityStateListener() {
+    public void beforeModalityStateChanged() {
+      for (Editor editor : myEditors) {
+        ((EditorImpl)editor).beforeModalityStateChanged();
+      }
+    }
+  };
 
   public EditorFactoryImpl(ProjectManager projectManager) {
-    LaterInvocator.addModalityStateListener(
-      new ModalityStateListener() {
-        public void beforeModalityStateChanged() {
-          for (Editor editor : myEditors) {
-            ((EditorImpl)editor).beforeModalityStateChanged();
-          }
-        }
-      }
-    );
-
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectClosed(final Project project) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -65,7 +62,9 @@ public class EditorFactoryImpl extends EditorFactory {
     return "EditorFactory";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+    LaterInvocator.addModalityStateListener(myModalityStateListener);
+  }
 
   public void validateEditorsAreReleased(Project project) {
     for (Editor editor : myEditors) {
@@ -87,6 +86,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   public void disposeComponent() {
+    LaterInvocator.removeModalityStateListener(myModalityStateListener);
   }
 
   @NotNull
