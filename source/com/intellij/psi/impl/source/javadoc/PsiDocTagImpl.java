@@ -3,8 +3,10 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -17,6 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
+  private static final Class ourReferenceClass = PsiDocTag.class;
+
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
     JAVA_CODE_REFERENCE,
     DOC_TAG_VALUE_TOKEN,
@@ -78,6 +82,11 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
     else {
       return ChildRole.NONE;
     }
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

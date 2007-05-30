@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
@@ -83,6 +84,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
     registerManipulator(XmlTag.class, new XmlTagValueManipulator());
+    registerManipulator(PsiDocTag.class, new PsiDocTagValueManipulator());
 
     // Binding declarations
 
@@ -316,6 +318,11 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
+  }
+
+  public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
+                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
+    registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider);
   }
 
   private void registerNamedReferenceProvider(

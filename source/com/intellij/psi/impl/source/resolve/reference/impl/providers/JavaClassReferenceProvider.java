@@ -1,16 +1,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -81,23 +80,13 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    String text = element.getText();
-
-    if (element instanceof XmlAttributeValue) {
-      final String valueString = ((XmlAttributeValue)element).getValue();
-      int startOffset = StringUtil.startsWithChar(text, '"') || StringUtil.startsWithChar(text, '\'') ? 1 : 0;
-      return getReferencesByString(valueString, element, type, startOffset);
+    final String text = element.getText();
+    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
+    if (manipulator != null) {
+      final TextRange textRange = manipulator.getRangeInElement(element);
+      final String valueString = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
+      return getReferencesByString(valueString, element, type, textRange.getStartOffset());
     }
-    else if (element instanceof XmlTag) {
-      final XmlTagValue value = ((XmlTag)element).getValue();
-
-      text = value.getText();
-      final String trimmedText = text.trim();
-
-      return getReferencesByString(trimmedText, element, type,
-                                   value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset());
-    }
-
     return getReferencesByString(text, element, type, 0);
   }
 
