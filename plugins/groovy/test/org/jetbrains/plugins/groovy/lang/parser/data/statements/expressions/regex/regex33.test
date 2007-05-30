@@ -1,0 +1,19 @@
+a = /abs$$$/
+-----
+Groovy script
+  Call expression
+    Assignment expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Compound regular expression
+        PsiElement(regex begin)('/abs$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+    Command arguments
+      Literal
+        PsiElement(wrong regex)('$$/')
+        PsiErrorElement:Wrong string literal
+          <empty list>

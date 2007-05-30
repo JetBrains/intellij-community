@@ -18,7 +18,7 @@ Groovy script
     PsiElement(Float)('1f')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(Float)('1.0')
+    PsiElement(BigDecimal)('1.0')
   PsiElement(new line)('\n')
   Literal
     PsiElement(Double)('1D')
