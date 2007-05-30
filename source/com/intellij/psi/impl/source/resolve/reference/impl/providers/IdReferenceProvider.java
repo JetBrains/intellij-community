@@ -53,8 +53,9 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
           final String nsPrefix = tag.getNamespacePrefix();
 
           if (nsPrefix.length() > 0) {
-            final String s = tag.getNamespace();
-            return !ourNamespacesWithoutIdRefs.contains(s) && grandParent.getLanguage() != StdLanguages.XML;
+            String ns = tag.getNamespace();
+            if (ns.endsWith("-el")) ns = ns.substring(0, ns.length() - 3);
+            return !ourNamespacesWithoutIdRefs.contains(ns) && grandParent.getLanguage() != StdLanguages.XML;
           }
         }
         return false;
