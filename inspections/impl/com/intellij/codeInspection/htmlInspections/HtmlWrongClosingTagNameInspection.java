@@ -54,7 +54,7 @@ public class HtmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspec
       final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
 
       final RenameTagBeginOrEndIntentionAction action1 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tokenParent, token, tagName, tokenText, false);
-      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tag, (XmlToken)tag.getChildren()[1], tokenText, tagName, true);
+      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tag, (XmlToken)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()), tokenText, tagName, true);
 
       holder.registerProblem(token, XmlErrorMessages.message("wrong.closing.tag.name"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              new RemoveExtraClosingTagIntentionAction(token), action1, action2);
