@@ -51,6 +51,7 @@ public class ImplementsClause implements GroovyElementTypes {
       }
     }
 
+    ParserUtils.getToken(builder, mNLS);
     isMarker.done(IMPLEMENTS_CLAUSE);
     return IMPLEMENTS_CLAUSE;
   }
