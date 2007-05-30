@@ -110,8 +110,18 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
     String currentPackageName = getPackageName();
     PsiPackage currentPackage = manager.findPackage(currentPackageName);
-    return currentPackage == null || currentPackage.processDeclarations(processor, substitutor, lastParent, place);
+    if (currentPackage != null &&  !currentPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
 
+    if (currentPackageName.length() > 0) { //otherwise already processed default package
+      PsiPackage defaultPackage = manager.findPackage("");
+      if (defaultPackage != null) {
+        for (PsiPackage subpackage : defaultPackage.getSubPackages(getResolveScope())) {
+          if (!ResolveUtil.processElement(processor, subpackage)) return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private static final String[] IMPLICITLY_IMPORTED_PACKAGES = {

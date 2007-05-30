@@ -23,17 +23,16 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -83,7 +82,8 @@ public class GroovyAnnotator implements Annotator {
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         } else {
           if (refExpr.getParent() instanceof GrReferenceExpression) {
-            holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
+            Annotation annotation = holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
+            registerAddImportFixes(refExpr, annotation);
           }
         }
       }
@@ -99,15 +99,19 @@ public class GroovyAnnotator implements Annotator {
 
         // Register quickfix
         final Annotation annotation = holder.createErrorAnnotation(refElement, message);
-        final IntentionAction[] actions = OuterImportsActionCreator.getOuterImportFixes(refElement, annotation, refElement.getProject());
-        for (IntentionAction action : actions) {
-          annotation.registerFix(action);
-        }
+        registerAddImportFixes(refElement, annotation);
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       } else if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
         holder.createErrorAnnotation(refElement, message);
       }
+    }
+  }
+
+  private void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
+    final IntentionAction[] actions = OuterImportsActionCreator.getOuterImportFixes(refElement, refElement.getProject());
+    for (IntentionAction action : actions) {
+      annotation.registerFix(action);
     }
   }
 }

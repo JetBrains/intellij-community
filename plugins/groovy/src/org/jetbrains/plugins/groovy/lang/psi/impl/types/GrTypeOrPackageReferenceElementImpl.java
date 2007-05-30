@@ -139,7 +139,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS), this, true);
+          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), this, true);
           ResolveUtil.treeWalkUp(this, processor);
           GroovyResolveResult[] candidates = processor.getCandidates();
           return ResolveUtil.mapToElements(candidates);
@@ -196,7 +196,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
               }
             }
           } else {
-            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), groovyRef, false);
+            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), groovyRef, false);
             ResolveUtil.treeWalkUp(groovyRef, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;

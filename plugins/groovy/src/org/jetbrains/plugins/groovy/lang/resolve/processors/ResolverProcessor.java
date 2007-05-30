@@ -95,7 +95,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public boolean shouldProcess(Class elementClass) {
     if (PsiMethod.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.METHOD);
     if (PsiVariable.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.PROPERTY);
-    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.CLASS);
+    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.CLASS_OR_PACKAGE);
     return true;
   }
 

@@ -76,7 +76,7 @@ public class ResolveUtil {
 
     else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
 
-    else return ClassHint.ResolveKind.CLASS;
+    else return ClassHint.ResolveKind.CLASS_OR_PACKAGE;
   }
 
   public static Object[] mapToElements(GroovyResolveResult[] candidates) {
