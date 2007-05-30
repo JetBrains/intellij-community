@@ -4,6 +4,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -78,6 +80,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because it has usages of fields not inherited from its superclass");
   }
 
+  public void testNoInlineClassLiteral() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because it has usages of its class literal");
+  }
+
   private void doTestNoInline(final String expectedMessage) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
@@ -96,6 +102,21 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     configureByFile(fileName);
     performAction(false);
     checkResultByFile(null, fileName + ".after", true);
+  }
+
+  private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
+    String name = getTestName(false);
+    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
+    configureByFile(fileName);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
+                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertInstanceOf(element, PsiClass.class);
+
+    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
+    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, false);
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
+    String message = processor.getPreprocessUsagesMessage(refUsages);
+    assertEquals(message, expectedMessage);
   }
 
   private void performAction(final boolean inlineThisOnly) {

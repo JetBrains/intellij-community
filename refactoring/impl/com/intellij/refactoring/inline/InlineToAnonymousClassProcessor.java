@@ -3,17 +3,21 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -49,6 +53,15 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+    String s = getPreprocessUsagesMessage(refUsages);
+    if (s != null) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
+      return false;
+    }
+    return super.preprocessUsages(refUsages);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -269,5 +282,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return "Inline class " + myClass;
+  }
+
+  @Nullable
+  public String getPreprocessUsagesMessage(final Ref<UsageInfo[]> refUsages) {
+    final UsageInfo[] usages = refUsages.get();
+    for(UsageInfo usage: usages) {
+      final PsiElement element = usage.getElement();
+      final PsiElement parentElement = element.getParent();
+      if (parentElement != null && parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
+        return "Class cannot be inlined because it has usages of its class literal";
+      }
+    }
+    return null;
   }
 }
