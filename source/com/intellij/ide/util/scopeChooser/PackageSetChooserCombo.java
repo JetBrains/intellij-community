@@ -20,6 +20,7 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
 
   public PackageSetChooserCombo(final Project project, String preselect) {
     final JComboBox combo = getComboBox();
+    combo.setBorder(null);
     myProject = project;
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
