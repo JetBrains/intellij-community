@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
 
@@ -81,6 +82,9 @@ public class RenameUtil {
 
       if (element instanceof PsiVariable) {
         addLocalsCollisions(element, newName, result, allRenames);
+        if (element instanceof PsiField) {
+          addFieldHidesOuterCollisions((PsiField)element, newName, result, allRenames);
+        }
       }
     }
 
@@ -138,6 +142,7 @@ public class RenameUtil {
     return result.toArray(new UsageInfo[result.size()]);
   }
 
+
   public static void buildPackagePrefixChangedMessage(final VirtualFile[] virtualFiles, StringBuffer message, final String qualifiedName) {
     if (virtualFiles.length > 0) {
       message.append(RefactoringBundle.message("package.occurs.in.package.prefixes.of.the.following.source.folders.n", qualifiedName));
@@ -171,7 +176,10 @@ public class RenameUtil {
         final PsiElement collisionReferenceElement = reference.getElement();
         if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
           final PsiElement parent = collisionReferenceElement.getParent();
-          if (!(parent instanceof PsiImportStatement)) {
+          if (parent instanceof PsiImportStatement) {
+            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, myRenamedClass));
+          }
+          else {
             if (aClass.getQualifiedName() != null) {
               results.add(new ClassHidesImportedClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
                                                                myRenamedClass, aClass));
@@ -180,9 +188,6 @@ public class RenameUtil {
               results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
                                                                     myRenamedClass, aClass));
             }
-          }
-          else {
-            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, myRenamedClass));
           }
         }
       }
@@ -196,7 +201,7 @@ public class RenameUtil {
     return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
   }
 
-  public static void findUnresolvableMemberCollisions(final PsiElement element, final String newName, List<UsageInfo> result) {
+  private static void findUnresolvableMemberCollisions(final PsiElement element, final String newName, List<UsageInfo> result) {
     PsiManager manager = element.getManager();
     final PsiSearchHelper helper = manager.getSearchHelper();
 
@@ -211,7 +216,6 @@ public class RenameUtil {
       MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
                                                                                oldSignature.getTypeParameters(),
                                                                                oldSignature.getSubstitutor());
-
       for (PsiClass inheritor : inheritors) {
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
         final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
@@ -222,7 +226,6 @@ public class RenameUtil {
           }
         }
       }
-
     }
     else if (element instanceof PsiField) {
       final PsiField field = (PsiField)element;
@@ -277,7 +280,7 @@ public class RenameUtil {
     }
   }
 
-  public static void findUnresolvableLocalsCollisions(final PsiElement element, final String newName,
+  private static void findUnresolvableLocalsCollisions(final PsiElement element, final String newName,
                                                       final List<UsageInfo> result) {
     if (!(element instanceof PsiLocalVariable || element instanceof PsiParameter)) {
       return;
@@ -349,11 +352,10 @@ public class RenameUtil {
     void visitCollidingElement(PsiVariable collidingVariable);
   }
 
-  public static void visitUpstreamLocalCollisions(PsiElement element, PsiElement scope,
+  private static void visitUpstreamLocalCollisions(PsiElement element, PsiElement scope,
                                                   String newName,
                                                   final CollidingVariableVisitor collidingNameVisitor) {
-    final PsiVariable collidingVariable = scope.getManager().getResolveHelper().resolveReferencedVariable(newName,
-                                                                                                          scope);
+    final PsiVariable collidingVariable = scope.getManager().getResolveHelper().resolveReferencedVariable(newName, scope);
     if (collidingVariable instanceof PsiLocalVariable || collidingVariable instanceof PsiParameter) {
       final PsiElement commonParent = PsiTreeUtil.findCommonParent(element, collidingVariable);
       if (commonParent != null) {
@@ -382,7 +384,6 @@ public class RenameUtil {
     PsiClass toplevel = PsiUtil.getTopLevelClass(element);
     if (toplevel == null) return;
 
-
     PsiElement scopeElement;
     if (element instanceof PsiLocalVariable) {
       scopeElement = RefactoringUtil.getVariableScope((PsiLocalVariable)element);
@@ -407,6 +408,26 @@ public class RenameUtil {
         }
       }
     });
+  }
+
+  private static void addFieldHidesOuterCollisions(final PsiField field, final String newName, final List<UsageInfo> result,
+                                                   final Map<? extends PsiElement, String> allRenames) {
+    final PsiClass fieldClass = field.getContainingClass();
+    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
+      final PsiField conflict = aClass.findFieldByName(newName, false);
+      if (conflict == null) continue;
+      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference reference) {
+          PsiElement refElement = reference.getElement();
+          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
+            FieldHidesOuterFieldUsageInfo info = new FieldHidesOuterFieldUsageInfo(refElement, field);
+            result.add(info);
+          }
+          return true;
+        }
+      });
+    }
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava) {
@@ -635,16 +656,16 @@ public class RenameUtil {
     ArrayList<UsageInfo> postponedCollisions = new ArrayList<UsageInfo>();
     // rename all references
     for (final UsageInfo usage : usages) {
-      if (!(usage instanceof ResolvableCollisionUsageInfo)) {
-        rename(usage, newName);
-      }
-      else {
+      if (usage instanceof ResolvableCollisionUsageInfo) {
         if (usage instanceof CollidingClassImportUsageInfo) {
           ((CollidingClassImportUsageInfo)usage).getImportStatement().delete();
         }
         else {
           postponedCollisions.add(usage);
         }
+      }
+      else {
+        rename(usage, newName);
       }
     }
 
@@ -704,27 +725,13 @@ public class RenameUtil {
                                        String newName,
                                        UsageInfo[] usages,
                                        RefactoringElementListener listener) throws IncorrectOperationException {
+    List<FieldHidesOuterFieldUsageInfo> outerHides = new ArrayList<FieldHidesOuterFieldUsageInfo>();
     // rename all references
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (!(usage instanceof LocalHidesFieldUsageInfo)) {
-        final PsiReference ref;
-        if (!(usage instanceof MoveRenameUsageInfo)) {
-          ref = element.getReference();
-        }
-        else {
-          ref = usage.getReference();
-        }
-        if (ref != null) {
-          PsiElement newElem = ref.handleElementRename(newName);
-          if (variable instanceof PsiField) {
-            fixPossibleNameCollisionsForFieldRenaming((PsiField)variable, newName, newElem);
-          }
-        }
-      }
-      else {
+      if (usage instanceof LocalHidesFieldUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiElement resolved = collidingRef.resolve();
 
@@ -735,22 +742,46 @@ public class RenameUtil {
           // do nothing
         }
       }
-    }
+      else if (usage instanceof FieldHidesOuterFieldUsageInfo) {
+        PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
+        PsiField resolved = (PsiField)collidingRef.resolve();
+        outerHides.add(new FieldHidesOuterFieldUsageInfo(element, resolved));
+      }
+      else {
+        final PsiReference ref;
+        if (usage instanceof MoveRenameUsageInfo) {
+          ref = usage.getReference();
+        }
+        else {
+          ref = element.getReference();
+        }
+        if (ref != null) {
+          PsiElement newElem = ref.handleElementRename(newName);
+          if (variable instanceof PsiField) {
+            fixPossibleNameCollisionsForFieldRenaming((PsiField)variable, newName, newElem);
+          }
+        }
+      }
+      }
     // do actual rename
-    //PsiIdentifier newNameIdentifier = factory.createIdentifier(newName);
-    //variable.getNameIdentifier().replace(newNameIdentifier);
     variable.setName(newName);
     listener.elementRenamed(variable);
+
+    for (FieldHidesOuterFieldUsageInfo usage : outerHides) {
+      final PsiElement element = usage.getElement();
+      PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
+      PsiField field = (PsiField)usage.getReferencedElement();
+      PsiReferenceExpression ref = createFieldReference(field, collidingRef);
+      collidingRef.replace(ref);
+    }
   }
 
 
-  private static void fixPossibleNameCollisionsForFieldRenaming(PsiField field, String newName,
-                                                                PsiElement replacedOccurence)
-    throws IncorrectOperationException {
+  private static void fixPossibleNameCollisionsForFieldRenaming(PsiField field, String newName, PsiElement replacedOccurence) throws IncorrectOperationException {
     if (!(replacedOccurence instanceof PsiReferenceExpression)) return;
     PsiElement elem = ((PsiReferenceExpression)replacedOccurence).resolve();
 
-    if (elem == null) {
+    if (elem == null || elem == field) {
       // If reference is unresolved, then field is not hidden by anyone...
       return;
     }
@@ -760,22 +791,18 @@ public class RenameUtil {
     }
   }
 
-  private static void qualifyField(PsiField field, PsiElement occurence, String newName)
-    throws IncorrectOperationException {
+  private static void qualifyField(PsiField field, PsiElement occurence, String newName) throws IncorrectOperationException {
     PsiManager psiManager = occurence.getManager();
     PsiElementFactory factory = psiManager.getElementFactory();
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiReferenceExpression qualified =
-        (PsiReferenceExpression)factory.createExpressionFromText("this." + newName, null);
+    if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("a." + newName, null);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
+      qualified.getQualifierExpression().replace(factory.createReferenceExpression(field.getContainingClass()));
       occurence.replace(qualified);
     }
     else {
-      PsiReferenceExpression qualified =
-        (PsiReferenceExpression)factory.createExpressionFromText("a." + newName, null);
+      PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("this." + newName, null);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
-      qualified.getQualifierExpression().replace(
-        factory.createReferenceExpression(field.getContainingClass()));
       occurence.replace(qualified);
     }
   }
@@ -788,7 +815,14 @@ public class RenameUtil {
     PsiElement resolved = ref.resolve();
     if (manager.areElementsEquivalent(resolved, field)) return ref;
     final PsiJavaCodeReferenceElement qualifier;
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+    if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
+      qualifier = (PsiReferenceExpression)ref.getQualifierExpression();
+      final PsiClass containingClass = field.getContainingClass();
+      final PsiReferenceExpression classReference = factory.createReferenceExpression(containingClass);
+      qualifier.replace(classReference);
+    }
+    else {
       ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + name, context);
       resolved = ref.resolve();
       if (manager.areElementsEquivalent(resolved, field)) return ref;
@@ -796,12 +830,6 @@ public class RenameUtil {
       qualifier = ((PsiThisExpression)ref.getQualifierExpression()).getQualifier();
       final PsiClass containingClass = field.getContainingClass();
       final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(containingClass);
-      qualifier.replace(classReference);
-    } else {
-      ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
-      qualifier = (PsiReferenceExpression)ref.getQualifierExpression();
-      final PsiClass containingClass = field.getContainingClass();
-      final PsiReferenceExpression classReference = factory.createReferenceExpression(containingClass);
       qualifier.replace(classReference);
     }
     return ref;

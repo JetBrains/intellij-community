@@ -12,30 +12,34 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.jetbrains.annotations.NonNls;
 
-public class RenameFieldsTest extends CodeInsightTestCase {
+public class RenameFieldTest extends CodeInsightTestCase {
+  protected void doTest(@NonNls String newName, @NonNls String ext) throws Exception {
+    String suffix = getTestName(false);
+    configureByFile("/refactoring/renameField/before" + suffix + "." + ext);
+    perform(newName);
+    checkResultByFile("/refactoring/renameField/after" + suffix + "." + ext);
+  }
+
   public void testSimpleFieldRenaming() throws Exception {
-    configureByFile("/refactoring/renameField/before01.java");
-    perform("myNewField");
-    checkResultByFile("/refactoring/renameField/after01.java");
+    doTest("myNewField", "java");
   }
 
   public void testCollisionsInMethod() throws Exception {
-    configureByFile("/refactoring/renameField/before02.java");
-    perform("newFieldName");
-    checkResultByFile("/refactoring/renameField/after02.java");
+    doTest("newFieldName", "java");
   }
 
   public void testCollisionsInMethodOfSubClass() throws Exception {
-    configureByFile("/refactoring/renameField/before03.java");
-    perform("newFieldName");
-    checkResultByFile("/refactoring/renameField/after03.java");
+    doTest("newFieldName", "java");
   }
 
   public void testCollisionsRenamingFieldWithSetter() throws Exception {
-    configureByFile("/refactoring/renameField/before05.java");
-    perform("utm");
-    checkResultByFile("/refactoring/renameField/after05.java");
+    doTest("utm", "java");
+  }
+
+  public void testHidesOuter() throws Exception {
+    doTest("x", "java");
   }
 
   protected void perform(String newName) {
