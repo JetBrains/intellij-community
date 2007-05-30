@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,8 +25,7 @@ class RootModelAdapter {
     for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
       modifiableRootModel.removeContentEntry(contentEntry);
     }
-    modifiableRootModel.inheritJdk();
-    modifiableRootModel.inheritCompilerOutputPath(true);
+    modifiableRootModel.inheritJdk(); // TODO should be able to import
     modifiableRootModel.setExcludeOutput(true);
     for (OrderEntry entry : modifiableRootModel.getOrderEntries()) {
       if (!(entry instanceof ModuleSourceOrderEntry) && !(entry instanceof JdkOrderEntry)) {
@@ -58,6 +58,16 @@ class RootModelAdapter {
     if (dir != null) {
       findOrCreateContentRoot(dir).addExcludeFolder(dir);
     }
+  }
+
+  public void useProjectOutput() {
+    modifiableRootModel.inheritCompilerOutputPath(true);
+  }
+
+  public void useModuleOutput(final String production, final String test) {
+    modifiableRootModel.inheritCompilerOutputPath(false);
+    modifiableRootModel.setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(production)));
+    modifiableRootModel.setCompilerOutputPathForTests(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(test)));
   }
 
   ContentEntry findOrCreateContentRoot(VirtualFile srcDir) {

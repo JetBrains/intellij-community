@@ -28,10 +28,10 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
   public static void convert(final MavenProjectModel projectModel,
                              final ModifiableModuleModel modifiableModel,
                              final MavenToIdeaMapping mapping,
-                             final boolean markSynthetic,
-                             final boolean createGroups) {
+                             final MavenImporterPreferences preferences,
+                             final boolean markSynthetic) {
 
-    projectModel.visit(new MavenToIdeaConverter(modifiableModel, mapping, markSynthetic, createGroups));
+    projectModel.visit(new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic));
 
     for (Module module : mapping.getExistingModules()) {
       new RootModelAdapter(module).resolveModuleDependencies(mapping.getLibraryNameToModuleName());
@@ -46,19 +46,19 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
 
   final private ModifiableModuleModel modifiableModuleModel;
   final private MavenToIdeaMapping mavenToIdeaMapping;
+  final private MavenImporterPreferences preferences;
   final private boolean markSynthetic;
-  final private boolean createGroups;
 
   final private Stack<String> groups = new Stack<String>();
 
   private MavenToIdeaConverter(ModifiableModuleModel model,
                                final MavenToIdeaMapping mavenToIdeaMapping,
-                               final boolean markSynthetic,
-                               final boolean createGroups) {
+                               final MavenImporterPreferences preferences,
+                               final boolean markSynthetic) {
     this.markSynthetic = markSynthetic;
     this.mavenToIdeaMapping = mavenToIdeaMapping;
     this.modifiableModuleModel = model;
-    this.createGroups = createGroups;
+    this.preferences = preferences;
   }
 
   public void visit(MavenProjectModel.Node node) {
@@ -69,9 +69,11 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
 
     convertRootModel(module, node);
 
+    createFacets(module, node);
+
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
 
-    if (createGroups && !node.mavenModules.isEmpty()) {
+    if (preferences.isCreateModuleGroups() && !node.mavenModules.isEmpty()) {
       groups.push(ProjectBundle.message("module.group.name", module.getName()));
     }
 
@@ -79,7 +81,7 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
   }
 
   public void leave(MavenProjectModel.Node node) {
-    if (createGroups && !node.mavenModules.isEmpty()) {
+    if (preferences.isCreateModuleGroups() && !node.mavenModules.isEmpty()) {
       groups.pop();
     }
   }
@@ -90,13 +92,28 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
 
     // TODO: do this properly
     rootModel.createSrcDir(new File(node.getDirectory(), "target/generated-sources/modello").getPath(), false);
+    rootModel.createSrcDir(new File(node.getDirectory(), "target/generated-sources/antlr").getPath(), false);
 
-    createSourceRoots(rootModel, node.getMavenProject());
-    createDependencies(rootModel, node.getMavenProject());
+    final MavenProject mavenProject = node.getMavenProject();
+    createSourceRoots(rootModel, mavenProject);
+    createOutput(rootModel, mavenProject);
+    createDependencies(rootModel, mavenProject);
+
     rootModel.commit();
   }
 
-  void createSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
+  private void createFacets(final Module module, final MavenProjectModel.Node node) {
+    /*
+    final String packaging = node.getMavenProject().getPackaging();
+    for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
+      if(converter.isApplicable(packaging)) {
+        converter.convert(module, node);
+      }
+    }
+    */
+  }
+
+  static void createSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
     for (Object o : mavenProject.getCompileSourceRoots()) {
       rootModel.createSrcDir((String)o, false);
     }
@@ -110,10 +127,18 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
     for (Object o : mavenProject.getTestResources()) {
       rootModel.createSrcDir(((Resource)o).getDirectory(), true);
     }
+  }
 
+  private void createOutput(final RootModelAdapter rootModel, final MavenProject mavenProject) {
     Build build = mavenProject.getBuild();
-    rootModel.excludeRoot(build.getOutputDirectory());
-    rootModel.excludeRoot(build.getTestOutputDirectory());
+    if (preferences.isUseMavenOutput()) {
+      rootModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
+    }
+    else {
+      rootModel.useProjectOutput();
+      rootModel.excludeRoot(build.getOutputDirectory());
+      rootModel.excludeRoot(build.getTestOutputDirectory());
+    }
   }
 
   void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
@@ -130,7 +155,7 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
     }
   }
 
-  private List<Artifact> extractDependencies(final MavenProject mavenProject) {
+  private static List<Artifact> extractDependencies(final MavenProject mavenProject) {
     Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
     for (Object o : mavenProject.getArtifacts()) {
       Artifact newArtifact = (Artifact)o;

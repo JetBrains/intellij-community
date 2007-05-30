@@ -11,6 +11,7 @@ public class MavenImporterPreferences implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean createModuleGroups = false;
+  private boolean useMavenOutput = true;
 
   private boolean synchronizeOnStart = false;
   private boolean downloadSources = false;
@@ -48,6 +49,14 @@ public class MavenImporterPreferences implements Cloneable {
 
   public void setCreateModuleGroups(final boolean createModuleGroups) {
     this.createModuleGroups = createModuleGroups;
+  }
+
+  public boolean isUseMavenOutput() {
+    return useMavenOutput;
+  }
+
+  public void setUseMavenOutput(final boolean useMavenOutput) {
+    this.useMavenOutput = useMavenOutput;
   }
 
   public boolean isSynchronizeOnStart() {
@@ -95,7 +104,7 @@ public class MavenImporterPreferences implements Cloneable {
     if (generateSources != that.generateSources) return false;
     if (lookForNested != that.lookForNested) return false;
     if (synchronizeOnStart != that.synchronizeOnStart) return false;
-    //noinspection RedundantIfStatement
+    if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
 
     return true;
@@ -107,6 +116,7 @@ public class MavenImporterPreferences implements Cloneable {
     result = 31 * result + dedicatedModuleDir.hashCode();
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
+    result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (synchronizeOnStart ? 1 : 0);
     result = 31 * result + (downloadSources ? 1 : 0);
     result = 31 * result + (downloadJavadoc ? 1 : 0);
