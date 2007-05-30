@@ -169,7 +169,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     else {
       if (isAutocompleteCommonPrefixOnInvocation() && !doNotAutocomplete) {
-        final String newPrefix = fillInCommonPrefix(items, prefix, editor);
+        final int offset = context.startOffset;
+        final String newPrefix = fillInCommonPrefix(items, prefix, context);
 
         if (!newPrefix.equals(prefix)) {
           final int shift = newPrefix.length() - prefix.length();
@@ -177,7 +178,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           prefix = newPrefix;
           context.shiftOffsets(shift);
           //context.offset1 += shift;
-          editor.getCaretModel().moveToOffset(context.startOffset + shift);
+          editor.getCaretModel().moveToOffset(offset + shift);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
       }
@@ -226,7 +227,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     lookupItemSelected(context, startOffset, data, item, signatureSelected, completionChar);
   }
 
-  private static String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor) {
+  private static String fillInCommonPrefix(LookupItem[] items, final String prefix, CompletionContext context) {
+    final Editor editor = context.editor;
     String commonPrefix = null;
     boolean isStrict = false;
 
@@ -276,6 +278,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           ;
           ++replacedLength
       ) {
+        context.selectionEndOffset++;
+        context.startOffset++;
+        context.offset++;
+        context.shiftOffsets(-1); // compensation of next adjustment
       }
     }
     
