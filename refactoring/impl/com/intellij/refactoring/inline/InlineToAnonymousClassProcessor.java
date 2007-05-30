@@ -89,15 +89,26 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
-        if (typeElement != null) {
-          PsiType psiType = typeElement.getType();
-          LOG.assertTrue(psiType instanceof PsiClassType && ((PsiClassType) psiType).resolve() == myClass);
+        PsiImportStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
+        if (statement != null) {
           try {
-            typeElement.replace(factory.createTypeElement(factory.createType(superClass)));
+            statement.delete();
           }
-          catch(IncorrectOperationException e) {
+          catch (IncorrectOperationException e) {
             LOG.error(e);
+          }
+        }
+        else {
+          PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
+          if (typeElement != null) {
+            PsiType psiType = typeElement.getType();
+            LOG.assertTrue(psiType instanceof PsiClassType && ((PsiClassType) psiType).resolve() == myClass);
+            try {
+              typeElement.replace(factory.createTypeElement(factory.createType(superClass)));
+            }
+            catch(IncorrectOperationException e) {
+              LOG.error(e);
+            }
           }
         }
       }
