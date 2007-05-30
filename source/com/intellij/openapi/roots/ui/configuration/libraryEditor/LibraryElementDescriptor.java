@@ -1,15 +1,15 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
-import java.io.File;
 import java.awt.*;
+import java.io.File;
 
 class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
   private final LibraryElement myElement;
@@ -25,18 +25,20 @@ class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
     final Library library = myElement.getLibrary();
     final String name;
     final Icon icon;
+    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor(library);
     if (myElement.isAnonymous()) {
-      final VirtualFile[] files = myParentEditor.getLibraryEditor(library).getFiles(OrderRootType.CLASSES);
+      final VirtualFile[] files = libraryEditor.getFiles(OrderRootType.CLASSES);
       if (files.length > 0) {
         name = files[0].getPresentableUrl();
-        icon = LibraryTableEditor.getIconForUrl(files[0].getUrl(), true);
+        final String url = files[0].getUrl();
+        icon = LibraryTableEditor.getIconForUrl(url, true, libraryEditor.isJarDirectory(url));
       }
       else {
-        final String[] urls = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.CLASSES);
+        final String[] urls = libraryEditor.getUrls(OrderRootType.CLASSES);
         if (urls.length > 0) {
           final String url = urls[0];
           name = LibraryTableEditor.getPresentablePath(url).replace('/', File.separatorChar);
-          icon = LibraryTableEditor.getIconForUrl(url, false);
+          icon = LibraryTableEditor.getIconForUrl(url, false, libraryEditor.isJarDirectory(url));
         }
         else {
           name = ProjectBundle.message("library.empty.item"); // the library is anonymous, library.getName() == null
@@ -45,7 +47,7 @@ class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
       }
     }
     else {
-      name = myParentEditor.getLibraryEditor(library).getName();
+      name = libraryEditor.getName();
       icon = Icons.LIBRARY_ICON;
     }
     myColor = myElement.hasInvalidPaths()? Color.RED : null;

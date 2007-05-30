@@ -130,7 +130,12 @@ public class CellAppearanceUtils {
     if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
     }
-    throw new RuntimeException(library.toString());
+    String url = files[0];
+    if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+      url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+    }
+    int startIndex = Math.min(url.lastIndexOf('/') + 1, url.length() - 1);
+    return SimpleTextCellAppearance.normal(url.substring(startIndex), Icons.LIBRARY_ICON);
   }
 
   public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {

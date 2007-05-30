@@ -14,8 +14,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FilteringIterator;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,11 +35,11 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     }
 
     public String getDescription() {
-      throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
+      return ProjectBundle.message("libraries.node.text.module");
     }
 
     public String getLibraryTableEditorTitle() {
-      throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
+      return ProjectBundle.message("library.configure.module.title");
     }
   };
 
@@ -78,6 +78,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
         if (libraryOrderEntry.isModuleLevel()) {
           if (library.equals(libraryOrderEntry.getLibrary())) {
             myRootModel.removeOrderEntry(orderEntry);
+            library.dispose();
             return;
           }
         }

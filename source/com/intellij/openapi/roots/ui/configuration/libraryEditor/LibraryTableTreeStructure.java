@@ -2,16 +2,15 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrariesAlphaComparator;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.ArrayUtil;
-
-import java.util.*;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 class LibraryTableTreeStructure extends AbstractTreeStructure {
   private final Object myRootElement = new Object();
@@ -85,50 +84,19 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
   }
 
   private Object[] buildItems(Object parent, Library library, OrderRootType orderRootType) {
-    final VirtualFile[] files = myParentEditor.getLibraryEditor(library).getFiles(orderRootType);
-    final Set<String> validUrls;
-    if (files.length > 0) {
-      validUrls = new HashSet<String>();
-      for (VirtualFile file : files) {
-        validUrls.add(file.getUrl());
-      }
-    }
-    else {
-      validUrls = Collections.emptySet();
-    }
     ArrayList<ItemElement> items = new ArrayList<ItemElement>();
-
-
-    final String[] urls = myParentEditor.getLibraryEditor(library).getUrls(orderRootType);
-    Arrays.sort(urls, myParentEditor.ourUrlComparator);
+    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor(library);
+    final String[] urls = libraryEditor.getUrls(orderRootType);
+    Arrays.sort(urls, LibraryTableEditor.ourUrlComparator);
     for (String url : urls) {
-      items.add(new ItemElement(parent, library, url, orderRootType, validUrls.contains(url)));
+      items.add(new ItemElement(parent, library, url, orderRootType, libraryEditor.isJarDirectory(url), libraryEditor.isValid(url, orderRootType)));
     }
 
     return items.toArray();
   }
 
   private boolean allPathsValid(Library library, OrderRootType orderRootType) {
-    final VirtualFile[] files = myParentEditor.getLibraryEditor(library).getFiles(orderRootType);
-    final Set<String> validUrls;
-    if (files.length > 0) {
-      validUrls = new HashSet<String>();
-      for (VirtualFile file : files) {
-        validUrls.add(file.getUrl());
-      }
-    }
-    else {
-      validUrls = Collections.emptySet();
-    }
-
-    final String[] urls = myParentEditor.getLibraryEditor(library).getUrls(orderRootType);
-    for (String url : urls) {
-      if (!validUrls.contains(url)) {
-        return false;
-      }
-    }
-
-    return true;
+    return myParentEditor.getLibraryEditor(library).allPathsValid(orderRootType);
   }
 
   public Object getParentElement(Object element) {

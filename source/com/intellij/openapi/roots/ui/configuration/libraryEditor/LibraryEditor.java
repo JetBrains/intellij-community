@@ -1,7 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class LibraryEditor {
@@ -47,6 +48,14 @@ public class LibraryEditor {
     getModel().addRoot(file, rootType);
   }
 
+  public void addJarDirectory(String url, boolean recursive) {
+    getModel().addJarDirectory(url, recursive);
+  }
+
+  public void addJarDirectory(VirtualFile file, boolean recursive) {
+    getModel().addJarDirectory(file, recursive);
+  }
+
   public void removeRoot(String url, OrderRootType rootType) {
     while (getModel().removeRoot(url, rootType)) ;
   }
@@ -67,9 +76,27 @@ public class LibraryEditor {
   }
 
   public boolean hasChanges() {
+    return myModel != null && myModel.isChanged();
+  }
+  
+  public boolean isJarDirectory(String url) {
     if (myModel != null) {
-      return myModel.isChanged();
+      return myModel.isJarDirectory(url);
     }
-    return false;
+    return myLibrary.isJarDirectory(url); 
+  }
+  
+  public boolean allPathsValid(OrderRootType orderRootType) {
+    if (myModel != null) {
+      return ((LibraryEx.ModifiableModelEx)myModel).allPathsValid(orderRootType);
+    }
+    return ((LibraryEx)myLibrary).allPathsValid(orderRootType); 
+  }
+
+  public boolean isValid(final String url, final OrderRootType orderRootType) {
+    if (myModel != null) {
+      return myModel.isValid(url, orderRootType);
+    }
+    return myLibrary.isValid(url, orderRootType); 
   }
 }

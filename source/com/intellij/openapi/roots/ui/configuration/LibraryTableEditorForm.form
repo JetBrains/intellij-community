@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor">
-  <grid id="e9129" binding="myPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="6" vgap="-1">
+  <grid id="e9129" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="6" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="91" y="83" width="401" height="317"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="1f4da" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="6">
+      <grid id="1f4da" layout-manager="GridLayoutManager" row-count="9" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="6">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="252" y="0" width="149" height="317"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="9f375" class="javax.swing.JButton" binding="myAddLibraryButton">
             <constraints>
-              <xy x="0" y="0" width="149" height="25"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.add.button"/>
@@ -29,8 +26,7 @@
           </component>
           <component id="f673d" class="javax.swing.JButton" binding="myAttachClassesButton">
             <constraints>
-              <xy x="0" y="62" width="149" height="25"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.attach.classes.button"/>
@@ -38,14 +34,12 @@
           </component>
           <vspacer id="3da7">
             <constraints>
-              <xy x="69" y="211" width="11" height="106"/>
-              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
           <component id="86446" class="javax.swing.JButton" binding="myAttachSourcesButton">
             <constraints>
-              <xy x="0" y="93" width="149" height="25"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.attach.sources.button"/>
@@ -53,8 +47,7 @@
           </component>
           <component id="733a5" class="javax.swing.JButton" binding="myAttachJavadocsButton">
             <constraints>
-              <xy x="0" y="124" width="149" height="25"/>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.javadoc.attach.button"/>
@@ -62,8 +55,7 @@
           </component>
           <component id="56f78" class="javax.swing.JButton" binding="myRemoveButton">
             <constraints>
-              <xy x="0" y="186" width="149" height="25"/>
-              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.remove.button"/>
@@ -71,8 +63,7 @@
           </component>
           <component id="47ce1" class="javax.swing.JButton" binding="myAttachUrlJavadocsButton">
             <constraints>
-              <xy x="0" y="155" width="149" height="25"/>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.javadoc.url.button"/>
@@ -80,20 +71,26 @@
           </component>
           <component id="16495" class="javax.swing.JButton" binding="myRenameLibraryButton">
             <constraints>
-              <xy x="0" y="31" width="149" height="25"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ProjectBundle" key="module.libraries.rename.button"/>
             </properties>
           </component>
+          <component id="3a1fb" class="javax.swing.JButton" binding="myAttachJarDirectoriesButton">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="module.libraries.attach.jar.directories.button"/>
+            </properties>
+          </component>
         </children>
       </grid>
-      <xy id="bc98" binding="myTreePanel" hgap="-1" vgap="-1">
+      <xy id="bc98" binding="myTreePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="246" height="317"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3">
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="300" height="-1"/>
           </grid>
         </constraints>

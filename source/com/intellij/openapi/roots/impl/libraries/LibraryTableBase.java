@@ -89,6 +89,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public void disposeComponent() {
+    for (Library library : getLibraries()) {
+      library.dispose();
+    }
   }
 
   public Library createLibrary() {
@@ -125,6 +128,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
     myModel = model;
     for (Library library : removedLibraries) {
+      library.dispose();
       fireAfterLibraryRemoved(library);
     }
     for (Library library : addedLibraries) {

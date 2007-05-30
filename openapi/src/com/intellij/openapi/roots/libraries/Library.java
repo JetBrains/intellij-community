@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,7 +26,7 @@ import org.jdom.Element;
 /**
  *  @author dsl
  */
-public interface Library extends JDOMExternalizable {
+public interface Library extends JDOMExternalizable, Disposable {
   String getName();
 
   String[] getUrls(OrderRootType rootType);
@@ -38,6 +39,10 @@ public interface Library extends JDOMExternalizable {
 
   RootProvider getRootProvider();
 
+  boolean isJarDirectory(String url);
+  
+  boolean isValid(String url, OrderRootType rootType);
+  
   interface ModifiableModel {
     String[] getUrls(OrderRootType rootType);
 
@@ -46,8 +51,12 @@ public interface Library extends JDOMExternalizable {
     String getName();
 
     void addRoot(String url, OrderRootType rootType);
+    
+    void addJarDirectory(String url, boolean recursive);
 
     void addRoot(VirtualFile file, OrderRootType rootType);
+    
+    void addJarDirectory(VirtualFile file, boolean recursive);
 
     void moveRootUp(String url, OrderRootType rootType);
 
@@ -60,6 +69,10 @@ public interface Library extends JDOMExternalizable {
     VirtualFile[] getFiles(OrderRootType rootType);
 
     boolean isChanged();
+    
+    boolean isJarDirectory(String url);
+    
+    boolean isValid(String url, OrderRootType rootType);
   }
 
   void readExternal(Element element) throws InvalidDataException;

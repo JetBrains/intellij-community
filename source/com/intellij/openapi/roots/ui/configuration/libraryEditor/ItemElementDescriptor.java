@@ -2,8 +2,8 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 
-import java.io.File;
 import java.awt.*;
+import java.io.File;
 
 class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
     private final ItemElement myElement;
@@ -11,9 +11,9 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
     public ItemElementDescriptor(NodeDescriptor parentDescriptor, ItemElement element) {
       super(null, parentDescriptor);
       myElement = element;
-      final String url = myElement.getUrl();
+      final String url = element.getUrl();
       myName = LibraryTableEditor.getPresentablePath(url).replace('/', File.separatorChar);
-      myOpenIcon = myClosedIcon = LibraryTableEditor.getIconForUrl(url, element.isValid());
+      myOpenIcon = myClosedIcon = LibraryTableEditor.getIconForUrl(url, element.isValid(), element.isJarDirectory());
     }
 
     public boolean update() {

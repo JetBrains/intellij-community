@@ -11,4 +11,9 @@ public interface LibraryEx extends Library {
   Library cloneLibrary();
   void setRootModel(ModifiableRootModel rootModel);
   boolean allPathsValid(OrderRootType type);
+  
+  interface ModifiableModelEx extends ModifiableModel {
+    boolean allPathsValid(OrderRootType type);
+  }
+  
 }

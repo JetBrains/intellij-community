@@ -57,6 +57,7 @@ public interface LibraryTable {
 
   interface ModifiableModel {
     Library createLibrary(String name);
+    
     void removeLibrary(@NotNull Library library);
 
     void commit();

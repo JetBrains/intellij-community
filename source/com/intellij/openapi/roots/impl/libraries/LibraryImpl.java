@@ -2,6 +2,8 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
@@ -10,33 +12,40 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  *  @author dsl
  */
-public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
+public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls static final String LIBRARY_NAME_ATTR = "name";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
+  @NonNls public static final String ELEMENT = "library";
+  @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
+  @NonNls private static final String URL_ATTR = "url";
+  @NonNls private static final String RECURSIVE_ATTR = "recursive";
   private String myName;
   private final LibraryTable myLibraryTable;
-  private HashMap<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private Map<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
+  private List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private LibraryImpl mySource;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
-  @NonNls public static final String ELEMENT = "library";
   private ModifiableRootModel myRootModel;
 
   LibraryImpl(String name, LibraryTable table) {
@@ -46,10 +55,10 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     mySource = null;
   }
 
-  LibraryImpl(LibraryTable table) {
+  LibraryImpl(final LibraryTable table) {
     myLibraryTable = table;
     myRoots = initRoots();
-    mySource = null;
+    mySource = null; 
   }
 
 
@@ -69,6 +78,14 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
       final VirtualFilePointerContainer thatContainer = that.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
     }
+    myJarDirectories.putAll(that.myJarDirectories);
+  }
+
+  public void dispose() {
+    if (myWatchRequests.size() > 0) {
+      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
+      myWatchRequests.clear();
+    }
   }
 
   public String getName() {
@@ -81,8 +98,43 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   }
 
   public VirtualFile[] getFiles(OrderRootType rootType) {
-    final VirtualFilePointerContainer result = myRoots.get(rootType);
-    return result.getFiles();
+    final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
+    for (VirtualFile file : myRoots.get(rootType).getFiles()) {
+      if (file.isDirectory()) {
+        final Boolean expandRecursively = myJarDirectories.get(file.getUrl());
+        if (expandRecursively != null) {
+          addChildren(file, expanded, expandRecursively.booleanValue());
+          continue;
+        }
+      }
+      expanded.add(file);
+    }
+    return expanded.toArray(new VirtualFile[expanded.size()]);
+  }
+
+  private static void addChildren(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
+    for (VirtualFile child : dir.getChildren()) {
+      final FileType fileType = child.getFileType();
+      if (StdFileTypes.ARCHIVE.equals(fileType)) {
+        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          builder.append(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, child.getPath()));
+          builder.append(JarFileSystem.JAR_SEPARATOR);
+          final VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(builder.toString());
+          if (jarRoot != null) {
+            container.add(jarRoot);
+          }
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
+      }
+      else {
+        if (recursively && child.isDirectory()) {
+          addChildren(child, container, recursively);
+        }
+      }
+    }
   }
 
   public void setName(String name) {
@@ -98,6 +150,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     LOG.assertTrue(myLibraryTable == null);
     final LibraryImpl that = new LibraryImpl(this);
     that.mySource = null;
+    that.updateWatchedRoots();
     return that;
   }
 
@@ -107,25 +160,12 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   }
 
   public boolean allPathsValid(OrderRootType type) {
-    final VirtualFile[] files = getFiles(type);
-    final Set<String> validUrls;
-    if (files.length > 0) {
-      validUrls = new HashSet<String>();
-      for (VirtualFile file : files) {
-        validUrls.add(file.getUrl());
-      }
-    }
-    else {
-      validUrls = Collections.emptySet();
-    }
-
-    final String[] urls = getUrls(type);
-    for (String url : urls) {
-      if (!validUrls.contains(url)) {
+    final List<VirtualFilePointer> pointers = myRoots.get(type).getList();
+    for (VirtualFilePointer pointer : pointers) {
+      if (!pointer.isValid()) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -155,9 +195,22 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
       final Element rootChild = element.getChild(rootType.name());
-      if (rootChild == null) continue;
+      if (rootChild == null) {
+        continue;
+      }
       roots.readExternal(rootChild, ROOT_PATH_ELEMENT);
     }
+    myJarDirectories.clear();
+    final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
+    for (Object item : jarDirs) {
+      final Element jarDir = (Element)item;
+      final String url = jarDir.getAttributeValue(URL_ATTR);
+      final String recursive = jarDir.getAttributeValue(RECURSIVE_ATTR);
+      if (url != null) {
+        myJarDirectories.put(url, Boolean.valueOf(Boolean.parseBoolean(recursive)));
+      }
+    }
+    updateWatchedRoots();
   }
 
 
@@ -166,12 +219,23 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
-
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       final Element rootTypeElement = new Element(rootType.name());
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
+    }
+    List<String> urls = new ArrayList<String>(myJarDirectories.keySet());
+    Collections.sort(urls, new Comparator<String>() {
+      public int compare(final String url1, final String url2) {
+        return url1.compareToIgnoreCase(url2);
+      }
+    });
+    for (String url : urls) {
+      final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
+      jarDirElement.setAttribute(URL_ATTR, url);
+      jarDirElement.setAttribute(RECURSIVE_ATTR, myJarDirectories.get(url).toString());
+      element.addContent(jarDirElement);
     }
     rootElement.addContent(element);
   }
@@ -194,16 +258,40 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     container.add(file);
   }
 
+  public void addJarDirectory(final String url, final boolean recursive) {
+    LOG.assertTrue(isWritable());
+    final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
+    container.add(url);
+    myJarDirectories.put(url, Boolean.valueOf(recursive));
+  }
+
+  public void addJarDirectory(final VirtualFile file, final boolean recursive) {
+    LOG.assertTrue(isWritable());
+    final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
+    container.add(file);
+    myJarDirectories.put(file.getUrl(), Boolean.valueOf(recursive));
+  }
+
+  public boolean isJarDirectory(final String url) {
+    return myJarDirectories.containsKey(url);
+  }
+
+  public boolean isValid(final String url, final OrderRootType rootType) {
+    final VirtualFilePointerContainer container = myRoots.get(rootType);
+    final VirtualFilePointer fp = container.findByUrl(url);
+    return fp != null && fp.isValid();
+  }
+
   public boolean removeRoot(String url, OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer byUrl = container.findByUrl(url);
     if (byUrl != null) {
       container.remove(byUrl);
+      myJarDirectories.remove(url);
       return true;
-    } else {
-      return false;
-    }
+    } 
+    return false;
   }
 
   public void moveRootUp(String url, OrderRootType rootType) {
@@ -219,14 +307,28 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   }
 
   public boolean isChanged() {
-    final boolean sameName = Comparing.equal(mySource.myName, myName);
-    if (!sameName) return true;
+    return !Comparing.equal(mySource.myName, myName) || areRootchChanged(mySource);
+  }
+
+  private boolean areRootchChanged(final LibraryImpl that) {
     final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
     for (OrderRootType type : allTypes) {
-      final String[] orderedRootUrls1 = getUrls(type);
-      final String[] orderedRootUrls2 = mySource.getUrls(type);
-      if (!Arrays.equals(orderedRootUrls1, orderedRootUrls2)) {
+      final String[] urls = getUrls(type);
+      final String[] thatUrls = that.getUrls(type);
+      if (urls.length != thatUrls.length) {
         return true;
+      }
+      for (int idx = 0; idx < urls.length; idx++) {
+        final String url = urls[idx];
+        final String thatUrl = thatUrls[idx];
+        if (!Comparing.equal(url, thatUrl)) {
+          return true;
+        }
+        final Boolean jarDirRecursive = myJarDirectories.get(url);
+        final Boolean sourceJarDirRecursive = that.myJarDirectories.get(thatUrl);
+        if (jarDirRecursive == null? sourceJarDirRecursive != null : !jarDirRecursive.equals(sourceJarDirRecursive)) {
+          return true;
+        }
       }
     }
     return false;
@@ -245,34 +347,51 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   private void commit(LibraryImpl model) {
     if (myLibraryTable != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-    } else if (myRootModel != null) {
+    } 
+    else if (myRootModel != null) {
       LOG.assertTrue(myRootModel.isWritable());
     }
-    final boolean sameName = Comparing.equal(model.myName, myName);
-    boolean sameRoots = true;
-    for (final OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
-      final VirtualFilePointerContainer container = myRoots.get(rootType);
-      final VirtualFilePointerContainer thatContainer = model.myRoots.get(rootType);
-      sameRoots = Arrays.equals(container.getUrls(), thatContainer.getUrls());
-      if (!sameRoots) break;
-    }
-    final boolean isChanged = sameName && sameRoots;
-    if (isChanged) return;
-    if (!sameName) {
+    if (!Comparing.equal(model.myName, myName)) {
       myName = model.myName;
       if (myLibraryTable instanceof LibraryTableBase) {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
-    if (!sameRoots) {
+    if (areRootchChanged(model)) {
       myRoots = model.myRoots;
+      myJarDirectories = model.myJarDirectories;
+      updateWatchedRoots();
       myRootProvider.fireRootSetChanged();
+    }
+  }
+
+  private void updateWatchedRoots() {
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    if (myWatchRequests.size() > 0) {
+      fs.removeWatchedRoots(myWatchRequests);
+      myWatchRequests.clear();
+    }
+    final VirtualFileManager fm = VirtualFileManager.getInstance();
+    for (String url : myJarDirectories.keySet()) {
+      if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
+        final boolean watchRecursively = myJarDirectories.get(url).booleanValue();
+        final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
+        myWatchRequests.add(request);
+      }
     }
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
     public String[] getUrls(OrderRootType rootType) {
-      return LibraryImpl.this.getUrls(rootType);
+      final VirtualFile[] files = getFiles(rootType);
+      if (files.length == 0) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      final String[] urls = new String[files.length];
+      for (int i = 0; i < files.length; i++) {
+        urls[i] = files[i].getUrl();
+      }
+      return urls;
     }
 
     public void fireRootSetChanged() {

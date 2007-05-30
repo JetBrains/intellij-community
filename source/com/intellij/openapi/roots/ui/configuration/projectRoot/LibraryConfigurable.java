@@ -29,28 +29,17 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
 
   private LibraryTableEditor myLibraryEditor;
   private final Library myLibrary;
-  private String myLibraryName;
   private final LibraryTableModifiableModelProvider myModel;
   private final Project myProject;
 
   protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
                                 final Library library,
-                                final String libraryName,
                                 final Project project,
                                 final Runnable updateTree) {
-    this(libraryTable, library, project, updateTree);
-    myLibraryName = libraryName;
-  }
-
-  protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
-                                final Library library,
-                                final Project project,
-                                final Runnable updateTree) {
-    super(library.getTable() != null, updateTree);
+    super(true, updateTree);
     myModel = libraryTable;
     myProject = project;
     myLibrary = library;
-    myLibraryName = myLibrary.getName();
   }
 
   public JComponent createOptionsPanel() {
@@ -79,12 +68,8 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   }
 
   public void setDisplayName(final String name) {
-    if (myLibrary.getTable() != null){
-      final LibraryEditor libraryEditor
-        = ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
-      libraryEditor.setName(name);
-      myLibraryName = name;
-    }
+    final LibraryEditor libraryEditor = ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
+    libraryEditor.setName(name);
   }
 
   public Library getEditableObject() {
@@ -96,11 +81,12 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
     String libraryType = libraryTable == null
                          ? ProjectBundle.message("module.library.display.name", 1)
                          : libraryTable.getPresentation().getDisplayName(false);
-    return ProjectBundle.message("project.roots.library.banner.text", myLibraryName, libraryType);
+    return ProjectBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
   }
 
   public String getDisplayName() {
-    return myLibraryName;
+    final LibraryEditor libraryEditor = ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
+    return libraryEditor.getName();
   }
 
   public Icon getIcon() {

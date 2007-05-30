@@ -1,12 +1,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -29,7 +27,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -69,6 +66,7 @@ public class LibraryTableEditor implements Disposable {
   private JButton myRemoveButton;
   private JButton myRenameLibraryButton;
   private JButton myAttachClassesButton;
+  private JButton myAttachJarDirectoriesButton;
   private JButton myAttachSourcesButton;
   private JButton myAttachJavadocsButton;
   private JButton myAttachUrlJavadocsButton;
@@ -76,33 +74,32 @@ public class LibraryTableEditor implements Disposable {
   private Tree myTree;
   private Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
-  private LibraryTableModifiableModelProvider myLibraryTable;
+  private LibraryTableModifiableModelProvider myLibraryTableProvider;
   private final boolean myEditingModuleLibraries;
   private LibraryTableTreeBuilder myTreeBuilder;
   private LibraryTable.ModifiableModel myTableModifiableModel;
   private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
-  private boolean myLibraryTableEditable = true;
+  private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
-
   @Nullable private Project myProject = null;
 
-  private LibraryTableEditor(final LibraryTable libraryTable) {
+  private LibraryTableEditor(final LibraryTable libraryTableProvider) {
     this(new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
-        return libraryTable.getModifiableModel();
+        return libraryTableProvider.getModifiableModel();
       }
 
       public String getTableLevel() {
-        return libraryTable.getTableLevel();
+        return libraryTableProvider.getTableLevel();
       }
 
       public LibraryTablePresentation getLibraryTablePresentation() {
-        return libraryTable.getPresentation();
+        return libraryTableProvider.getPresentation();
       }
 
       public boolean isLibraryTableEditable() {
-        return libraryTable.isEditable();
+        return libraryTableProvider.isEditable();
       }
     });
   }
@@ -137,16 +134,34 @@ public class LibraryTableEditor implements Disposable {
   public static LibraryTableEditor editLibrary(LibraryTableModifiableModelProvider provider, Library library){
     LibraryTableEditor result = new LibraryTableEditor(provider);
     result.init(new LibraryTreeStructure(result, library));
-    result.myAddLibraryButton.setVisible(false);
-    result.myRenameLibraryButton.setVisible(false);
     return result;
   }
 
+  private static boolean libraryAlreadyExists(LibraryTable.ModifiableModel table, String libraryName) {
+    for (Iterator<Library> it = table.getLibraryIterator(); it.hasNext(); ) {
+      if (libraryName.equals(it.next().getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+    
+  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table) {
+    final String name = "Unnamed";
+    String candidataName = name;
+    for (int idx = 1; libraryAlreadyExists(table, candidataName); candidataName = name + (idx++));
+    return candidataName;
+  }
+
   private LibraryTableEditor(LibraryTableModifiableModelProvider provider){
-    myLibraryTable = provider;
-    myTableModifiableModel = myLibraryTable.getModifiableModel();
+    myLibraryTableProvider = provider;
+    myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
     final String tableLevel = provider.getTableLevel();
     myEditingModuleLibraries = LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel);
+    if (!provider.isLibraryTableEditable()) {
+      myAddLibraryButton.setVisible(false);
+      myRenameLibraryButton.setVisible(false);
+    }
   }
 
   private void init(AbstractTreeStructure treeStructure) {
@@ -166,15 +181,13 @@ public class LibraryTableEditor implements Disposable {
     myAddLibraryButton.addActionListener(new AddLibraryAction());
     myRemoveButton.addActionListener(new RemoveAction());
     if (myEditingModuleLibraries) {
-      myAttachClassesButton.setVisible(false);
       myRenameLibraryButton.setVisible(false);
     }
-    else {
-      myRenameLibraryButton.setVisible(true);
+    else if (myRenameLibraryButton.isVisible()){
       myRenameLibraryButton.addActionListener(new RenameLibraryAction());
-      myAttachClassesButton.setVisible(true);
-      myAttachClassesButton.addActionListener(new AttachClassesAction());
     }
+    myAttachClassesButton.addActionListener(new AttachClassesAction());
+    myAttachJarDirectoriesButton.addActionListener(new AttachJarDirectoriesAction());
     myAttachSourcesButton.addActionListener(new AttachSourcesAction());
     myAttachJavadocsButton.addActionListener(new AttachJavadocAction());
     myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
@@ -185,12 +198,6 @@ public class LibraryTableEditor implements Disposable {
 
   public JComponent getComponent() {
     return myPanel;
-  }
-
-  public void hideAddRemoveRenameButtons() {
-    myAddLibraryButton.setVisible(false);
-    myRenameLibraryButton.setVisible(false);
-    myLibraryTableEditable = false;
   }
 
   public static boolean showEditDialog(final Component parent, LibraryTable libraryTable, final Collection<Library> selection) {
@@ -259,7 +266,7 @@ public class LibraryTableEditor implements Disposable {
         myTableModifiableModel.commit();
       }
     });
-    myTableModifiableModel = myLibraryTable.getModifiableModel();
+    myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
     myLibraryToEditorMap.clear();
   }
 
@@ -376,7 +383,6 @@ public class LibraryTableEditor implements Disposable {
       libraryEditor.setName(newName);
     }
     librariesChanged(false);
-
   }
 
   /**
@@ -398,91 +404,65 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public ActionListener createAddLibraryAction(boolean select, JComponent parent){
-    return new AddLibraryAction(select, parent);
+    return new AddLibraryAction(select);
   }
 
   public void dispose() {
   }
 
   private class AddLibraryAction implements ActionListener {
-    private final FileChooserDescriptor myFileChooserDescriptor = new FileChooserDescriptor(false, true, true, false, false, true);
-    private boolean myNeedToSelect;
-    private JComponent myParent;
+    private boolean myNeedSelection;
 
     public AddLibraryAction() {
-      this(false, myPanel);
+      this(false);
     }
 
-    public AddLibraryAction(boolean select, JComponent parent) {
-      myNeedToSelect = select;
-      myParent = parent;
-      myFileChooserDescriptor.setTitle(ProjectBundle.message("library.choose.classes.title"));
-      myFileChooserDescriptor.setDescription(ProjectBundle.message("library.choose.classes.description"));
+    public AddLibraryAction(boolean select) {
+      myNeedSelection = select;
     }
 
     public void actionPerformed(ActionEvent e) {
-      final Module contextModule = (Module)DataManager.getInstance().getDataContext(myAddLibraryButton).getData(DataConstants.MODULE_CONTEXT);
-      myFileChooserDescriptor.setContextModule(contextModule);
-      final VirtualFile[] files;
-      final String name;
-      if (myEditingModuleLibraries) {
-        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myParent, false, LibraryTableEditor.this).chooseNameAndFiles();
-        files = filterAlreadyAdded(null, pair.getSecond(), OrderRootType.CLASSES);
-        name = null;
-      }
-      else {
-        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myParent, true, LibraryTableEditor.this).chooseNameAndFiles();
-        files = pair.getSecond();
-        name = pair.getFirst();
-      }
-      if (files == null || files.length == 0) {
-        return;
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          if (myEditingModuleLibraries) {
-            final Module module=contextModule != null ? contextModule : (Module)DataManager.getInstance().getDataContext().getData(DataConstants.MODULE_CONTEXT);
-            for (VirtualFile file : files) {
-              final Library library = myTableModifiableModel.createLibrary(null);
-              getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
-              commitLibrary(library, file.getName(), module);
-            }
+      final String initial = suggestNewLibraryName(myTableModifiableModel);
+      final String prompt = ProjectBundle.message("library.name.prompt");
+      final String title = myAddLibraryButton.getText();
+      final Icon icon = Messages.getQuestionIcon();
+      final String libraryName = Messages.showInputDialog(myTreePanel, prompt, title, icon, initial, new InputValidator() {
+        public boolean checkInput(final String inputString) {
+          return true;
+        }
+        public boolean canClose(final String inputString) {
+          if (inputString.length() == 0)  {
+            Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error"), ProjectBundle.message("library.name.not.specified.title"));
+            return false;
           }
-          else {
-            final Library library = myTableModifiableModel.createLibrary(name);
-            final LibraryEditor libraryEditor = getLibraryEditor(library);
-            for (VirtualFile file : files) {
-              libraryEditor.addRoot(file, OrderRootType.CLASSES);
-            }
-            commitLibrary(library, null, null);
+          if (libraryAlreadyExists(myTableModifiableModel, inputString)) {
+            Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", inputString), ProjectBundle.message("library.name.already.exists.title"));
+            return false;
           }
+          return true;
         }
       });
-      librariesChanged(true);
-    }
-
-    private void commitLibrary(final Library libraryToSelect, final String libraryPresentableName, final Module module) {
-      if (libraryToSelect != null) {
-        selectLibrary(libraryToSelect, false);
-        if (myProject != null){
-          final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
-          final LibraryEditor libraryEditor = getLibraryEditor(libraryToSelect);
-          if (libraryEditor.hasChanges()) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable(){
-              public void run() {
-                libraryEditor.commit();  //update lib node
-              }
-            });
-          }
-          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect, libraryPresentableName, module);
-          if (myNeedToSelect){
-            rootConfigurable.selectNodeInTree(libraryNode);
-            if (!myEditingModuleLibraries) {
-              appendLibraryToModules(rootConfigurable, libraryToSelect);
+      final Library library = myTableModifiableModel.createLibrary(libraryName);
+      selectLibrary(library, true);
+      if (myProject != null){
+        final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+        final LibraryEditor libraryEditor = getLibraryEditor(library);
+        if (libraryEditor.hasChanges()) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable(){
+            public void run() {
+              libraryEditor.commit();  //update lib node
             }
+          });
+        }
+        final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(library, null, null);
+        if (myNeedSelection){
+          rootConfigurable.selectNodeInTree(libraryNode);
+          if (!myEditingModuleLibraries) {
+            appendLibraryToModules(rootConfigurable, library);
           }
         }
       }
+      librariesChanged(true);
     }
 
     private void appendLibraryToModules(final ProjectRootConfigurable rootConfigurable, final Library libraryToSelect) {
@@ -525,26 +505,35 @@ public class LibraryTableEditor implements Disposable {
       return rootCandidates;
     }
 
+    protected boolean addAsJarDirectories() {
+      return false;
+    }
+    
     public final void actionPerformed(ActionEvent e) {
       final Library library = getSelectedLibrary();
       if (library != null) {
         myDescriptor.setTitle(getTitle());
         myDescriptor.setTitle(getDescription());
-        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor)), getRootType());
+        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor)), getRootType(), addAsJarDirectories());
       }
       fireLibrariesChanged();
       myTree.requestFocus();
     }
   }
 
-  private void attachFiles(final Library library, final VirtualFile[] files, final OrderRootType rootType) {
+  private void attachFiles(final Library library, final VirtualFile[] files, final OrderRootType rootType, final boolean isJarDirectories) {
     final VirtualFile[] filesToAttach = filterAlreadyAdded(library, files, rootType);
     if (filesToAttach.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           final LibraryEditor libraryEditor = getLibraryEditor(library);
-          for (VirtualFile aFilesToAttach : filesToAttach) {
-            libraryEditor.addRoot(aFilesToAttach, rootType);
+          for (VirtualFile file : filesToAttach) {
+            if (isJarDirectories) {
+              libraryEditor.addJarDirectory(file, false);
+            }
+            else {
+              libraryEditor.addRoot(file, rootType);
+            }
           }
           if (myEditingModuleLibraries) {
             commitChanges();
@@ -565,16 +554,12 @@ public class LibraryTableEditor implements Disposable {
       final Library[] libraries = myTableModifiableModel.getLibraries();
       for (Library library : libraries) {
         final VirtualFile[] libraryFiles = getLibraryEditor(library).getFiles(rootType);
-        for (VirtualFile libraryFile : libraryFiles) {
-          alreadyAdded.add(libraryFile);
-        }
+        alreadyAdded.addAll(Arrays.asList(libraryFiles));
       }
     }
     else {
       final VirtualFile[] libraryFiles = getLibraryEditor(lib).getFiles(rootType);
-      for (VirtualFile libraryFile : libraryFiles) {
-        alreadyAdded.add(libraryFile);
-      }
+      alreadyAdded.addAll(Arrays.asList(libraryFiles));
     }
     chosenFilesSet.removeAll(alreadyAdded);
     return chosenFilesSet.toArray(new VirtualFile[chosenFilesSet.size()]);
@@ -598,6 +583,35 @@ public class LibraryTableEditor implements Disposable {
 
     protected String getDescription() {
       return ProjectBundle.message("library.attach.classes.description");
+    }
+
+    protected OrderRootType getRootType() {
+      return OrderRootType.CLASSES;
+    }
+  }
+
+  private class AttachJarDirectoriesAction extends AttachItemAction {
+    @SuppressWarnings({"RefusedBequest"})
+    protected FileChooserDescriptor createDescriptor() {
+      return new FileChooserDescriptor(false, true, false, false, false, true);
+    }
+
+    protected boolean addAsJarDirectories() {
+      return true;
+    }
+
+    protected String getTitle() {
+      final Library selectedLibrary = getSelectedLibrary();
+      if (selectedLibrary != null) {
+        return ProjectBundle.message("library.attach.jar.directory.to.library.action", getLibraryEditor(selectedLibrary).getName());
+      }
+      else {
+        return ProjectBundle.message("library.attach.jar.directory.action");
+      }
+    }
+
+    protected String getDescription() {
+      return ProjectBundle.message("library.attach.jar.directory.description");
     }
 
     protected OrderRootType getRootType() {
@@ -670,7 +684,7 @@ public class LibraryTableEditor implements Disposable {
       if (library != null) {
         final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(myPanel);
         if (vFile != null) {
-          attachFiles(library, new VirtualFile[] {vFile}, OrderRootType.JAVADOC);
+          attachFiles(library, new VirtualFile[] {vFile}, OrderRootType.JAVADOC, false);
         }
       }
       myTree.requestFocus();
@@ -734,10 +748,9 @@ public class LibraryTableEditor implements Disposable {
       if (selectedLibrary == null) {
         return;
       }
-      final LibraryEditor libraryEditor = getLibraryEditor(selectedLibrary);
       final String currentName = selectedLibrary.getName();
       final String newName = Messages.showInputDialog(myTree, ProjectBundle.message("library.rename.prompt"),
-                                                      ProjectBundle.message("library.rename.title", libraryEditor.getName()), Messages.getQuestionIcon(), libraryEditor.getName(), new InputValidator() {
+                                                      ProjectBundle.message("library.rename.title", getLibraryEditor(selectedLibrary).getName()), Messages.getQuestionIcon(), getLibraryEditor(selectedLibrary).getName(), new InputValidator() {
         public boolean checkInput(String inputString) {
           return true;
         }
@@ -752,12 +765,8 @@ public class LibraryTableEditor implements Disposable {
           return true;
         }
       });
-      if (newName != null) {
-        libraryEditor.setName(newName);
-      }
-      librariesChanged(true);
+      renameLibrary(selectedLibrary, newName);
     }
-
   }
 
   boolean libraryAlreadyExists(String libraryName) {
@@ -773,10 +782,11 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private class MyDialogWrapper extends DialogWrapper {
+    private JTextField myNameField;
 
     public MyDialogWrapper(final Component parent) {
       super(parent, true);
-      setTitle(LibraryTableEditor.this.myLibraryTable.getLibraryTablePresentation().getLibraryTableEditorTitle());
+      setTitle(myLibraryTableProvider.getLibraryTablePresentation().getLibraryTableEditorTitle());
       init();
     }
 
@@ -787,10 +797,25 @@ public class LibraryTableEditor implements Disposable {
 
     @SuppressWarnings({"RefusedBequest"})
     public JComponent getPreferredFocusedComponent() {
+      if (myNameField != null) {
+        return myNameField;
+      }
       return myTree;
     }
 
     protected void doOKAction() {
+      if (myNameField != null) {
+        final Library library = getSelectedLibrary();
+        final String currentName = getLibraryEditor(library).getName();
+        final String newName = myNameField.getText().trim();
+        if (!newName.equals(currentName)) {
+          if (libraryAlreadyExists(newName)) {
+            Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
+            return;
+          }
+          renameLibrary(library, newName);
+        }
+      }
       commitChanges();
       super.doOKAction();
       ApplicationManager.getApplication().invokeLater(new Runnable(){
@@ -806,12 +831,27 @@ public class LibraryTableEditor implements Disposable {
       super.doCancelAction();
     }
 
+    protected JComponent createNorthPanel() {
+      if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
+        final Library library = getSelectedLibrary();
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        myNameField = new JTextField(getLibraryEditor(library).getName());
+        panel.add(myNameField, BorderLayout.CENTER);
+        final JLabel label = new JLabel("Name: ");
+        panel.add(label, BorderLayout.WEST);
+        label.setLabelFor(myNameField);
+        label.setDisplayedMnemonic('N');
+        myNameField.selectAll();
+        return panel;
+      }
+      return super.createNorthPanel();
+    }
+
     protected JComponent createCenterPanel() {
       return LibraryTableEditor.this.getComponent();
     }
   }
-
-
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
@@ -824,7 +864,7 @@ public class LibraryTableEditor implements Disposable {
       myRemoveButton.setEnabled(
         elementsClass != null &&
         !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class))
-        && (myLibraryTableEditable || !elementsClass.isAssignableFrom(LibraryElement.class))
+        && (myLibraryTableProvider.isLibraryTableEditable() || !elementsClass.isAssignableFrom(LibraryElement.class))
       );
       myRenameLibraryButton.setEnabled(selectedElements.length == 1 && elementsClass != null && elementsClass.equals(LibraryElement.class));
       if (elementsClass != null && elementsClass.isAssignableFrom(ItemElement.class)) {
@@ -832,12 +872,6 @@ public class LibraryTableEditor implements Disposable {
       }
       else {
         myRemoveButton.setText(ProjectBundle.message("library.remove.action"));
-      }
-      if (myEditingModuleLibraries){
-        if (selectedElements.length > 0 && selectedElements[0] instanceof ItemElement){
-          final OrderRootType rootType = ((ItemElement)selectedElements[0]).getRootType();
-          myRemoveButton.setEnabled(rootType == OrderRootType.SOURCES || rootType == OrderRootType.JAVADOC);
-        }
       }
       boolean attachActionsEnabled = selectedElements.length == 1 || getSelectedLibrary() != null;
       myAttachClassesButton.setEnabled(attachActionsEnabled);
@@ -868,7 +902,7 @@ public class LibraryTableEditor implements Disposable {
 
 
 
-  static Icon getIconForUrl(final String url, final boolean isValid) {
+  static Icon getIconForUrl(final String url, final boolean isValid, final boolean isJarDirectory) {
     final Icon icon;
     if (isValid) {
       VirtualFile presentableFile;
@@ -883,7 +917,17 @@ public class LibraryTableEditor implements Disposable {
           icon = Icons.WEB_ICON;
         }
         else {
-          icon = presentableFile.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : IconUtilEx.getIcon(presentableFile, 0, null);
+          if (presentableFile.isDirectory()) {
+            if (isJarDirectory) {
+              icon = JAR_DIRECTORY_ICON;
+            }
+            else {
+              icon = Icons.DIRECTORY_CLOSED_ICON;
+            }
+          }
+          else {
+            icon = IconUtilEx.getIcon(presentableFile, 0, null);
+          }
         }
       }
       else {

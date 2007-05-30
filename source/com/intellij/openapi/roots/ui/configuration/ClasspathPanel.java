@@ -15,26 +15,22 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
@@ -45,10 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -80,11 +72,6 @@ public class ClasspathPanel extends JPanel {
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private PopupAction[] myPopupActions = null;
   private Icon[] myIcons = null;
-  private static final Comparator<Library> LIBRARIES_COMPARATOR = new Comparator<Library>() {
-    public int compare(Library elem1, Library elem2) {
-      return elem1.getName().compareToIgnoreCase(elem2.getName());
-    }
-  };
   private static final Comparator<Module> MODULES_COMPARATOR = new Comparator<Module>() {
     public int compare(Module elem1, Module elem2) {
       return elem1.getName().compareToIgnoreCase(elem2.getName());
@@ -237,12 +224,14 @@ public class ClasspathPanel extends JPanel {
   private JComponent createButtonsBlock() {
     final JButton addButton = new JButton(ProjectBundle.message("button.add"));
     final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
+    final JButton editButton = new JButton(ProjectBundle.message("button.edit"));
     final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
     final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    panel.add(editButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
 
@@ -266,6 +255,7 @@ public class ClasspathPanel extends JPanel {
         upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
         downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
         removeButton.setEnabled(removeButtonEnabled);
+        editButton.setEnabled(selectedRows.length == 1 && myModel.getItemAt(selectedRows[0]) instanceof LibItem);
       }
     });
 
@@ -318,8 +308,6 @@ public class ClasspathPanel extends JPanel {
         if (removedRows.size() == 0) {
           return;
         }
-        final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
-        LibraryTable.ModifiableModel modifiableModel = null;
         for (final Object removedRow : removedRows) {
           final TableItem item = (TableItem)((Object[])removedRow)[MyTableModel.ITEM_COLUMN];
           final OrderEntry orderEntry = item.getEntry();
@@ -330,26 +318,62 @@ public class ClasspathPanel extends JPanel {
           final Project project = module.getProject();
           final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
           if (orderEntry instanceof LibraryOrderEntry) {
-            final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
-            if (libEntry.isValid() && moduleLibraryTable.getTableLevel().equals(libEntry.getLibraryLevel())) {
-              if (modifiableModel == null) {
-                modifiableModel = moduleLibraryTable.getModifiableModel();
-              }
-              modifiableModel.removeLibrary(libEntry.getLibrary());
-              rootConfigurable.deleteLibraryNode(libEntry);
-              continue;
-            }
+            final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;            
             rootConfigurable.clearCaches(module, libEntry);
           }
           rootConfigurable.clearCaches(module);
           myRootModel.removeOrderEntry(orderEntry);
-        }
-        if (modifiableModel != null) {
-          modifiableModel.commit();
-        }
+        }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
         myModel.fireTableDataChanged();
         TableUtil.selectRows(myEntryTable, selectedRows);
+      }
+    });
+    
+    editButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final int row = myEntryTable.getSelectedRow();
+        final TableItem item = myModel.getItemAt(row);
+        if (!(item instanceof LibItem)) {
+          return;
+        }
+        final LibraryOrderEntry libraryOrderEntry = ((LibItem)item).getEntry();
+        if (libraryOrderEntry == null) {
+          return;
+        }
+        final Library library = libraryOrderEntry.getLibrary();
+        if (library == null) {
+          return;
+        }
+        final LibraryTableModifiableModelProvider provider;
+        final LibraryTable table = library.getTable();
+        if (table == null) {
+          final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
+          provider = new LibraryTableModifiableModelProvider() {
+            public LibraryTable.ModifiableModel getModifiableModel() {
+              return moduleLibraryTable.getModifiableModel();
+            }
+
+            public String getTableLevel() {
+              return moduleLibraryTable.getTableLevel();
+            }
+
+            public LibraryTablePresentation getLibraryTablePresentation() {
+              return moduleLibraryTable.getPresentation();
+            }
+
+            public boolean isLibraryTableEditable() {
+              return false;
+            }
+          };
+        }
+        else {
+          provider = ProjectRootConfigurable.getInstance(myProject).createModifiableModelProvider(table.getTableLevel(), false);
+        }
+        final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
+        editor.openDialog(ClasspathPanel.this, Collections.singletonList(library), true);
+        myEntryTable.repaint();
+        ProjectRootConfigurable.getInstance(myProject).getTree().repaint();
       }
     });
     return panel;
@@ -477,7 +501,6 @@ public class ClasspathPanel extends JPanel {
               if (entry instanceof LibraryOrderEntry) {
                 final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
                 if (item.equals(libraryOrderEntry.getLibrary())) {
-                  projectRootConfigurable.createLibraryNode(libraryOrderEntry, myRootModel);
                   return new LibItem(libraryOrderEntry);
                 }
               }
@@ -487,37 +510,14 @@ public class ClasspathPanel extends JPanel {
           }
 
           protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), getFileToSelect());
-          }
-
-          private @Nullable VirtualFile getFileToSelect() {
-            final int selectedRow = myEntryTable.getSelectedRow();
-            if (selectedRow < 0) {
-              return null;
-            }
-            final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
-            if (!(entry instanceof LibraryOrderEntry)) {
-              return null;
-            }
-            final LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)entry);
-            if (!LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
-              return null;
-            }
-            final VirtualFile[] files = libraryOrderEntry.getLibrary().getFiles(OrderRootType.CLASSES);
-            final VirtualFile file = files.length == 0? null : files[0];
-            if (file == null) {
-              return null;
-            }
-            // the following will switch from the JarFileSystem to the LocalFileSystem
-            return LocalFileSystem.getInstance().findFileByIoFile(VfsUtil.virtualToIoFile(file));
+            return new CreateModuleLibraryDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), myProject);
           }
         },
-        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider()),
-        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider())
-      ));
+        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider(true)),
+        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider(true))));
 
       int index = 4;
-      for (final LibraryTableModifiableModelProvider provider : projectRootConfigurable.getCustomLibrariesProviders()) {
+      for (final LibraryTableModifiableModelProvider provider : projectRootConfigurable.getCustomLibrariesProviders(true)) {
         actions.add(new ChooseNamedLibraryAction(index++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
       }
 
@@ -915,75 +915,68 @@ public class ClasspathPanel extends JPanel {
       super.dispose();
     }
   }
-
-  private static class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ChooserDialog<Library> {
-    private Pair<String, VirtualFile[]> myLastChosen;
+  private static class CreateModuleLibraryDialog implements ChooserDialog<Library> {
+    private boolean myIsOk;
+    private final Component myParent;
     private final LibraryTable myLibraryTable;
-    private final @Nullable VirtualFile myFileToSelect;
+    private final Project myProject;
+    private Library myChosenLibrary;
 
-    public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable, final VirtualFile fileToSelect) {
-      super(createFileChooserDescriptor(parent), parent, false, null);
+    public CreateModuleLibraryDialog(Component parent, final LibraryTable libraryTable, final Project project) {
+      myParent = parent;
       myLibraryTable = libraryTable;
-      myFileToSelect = fileToSelect;
-    }
-
-    private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, false, true);
-      final Module contextModule = (Module)DataManager.getInstance().getDataContext(parent).getData(DataConstantsEx.MODULE_CONTEXT);
-      descriptor.setContextModule(contextModule);
-      return descriptor;
+      myProject = project;
     }
 
     public List<Library> getChosenElements() {
-      if (myLastChosen == null) {
-        return Collections.emptyList();
-      }
-      final VirtualFile[] files = filterAlreadyAdded(myLastChosen.getSecond());
-      if (files.length == 0) {
-        return Collections.emptyList();
-      }
-      final LibraryTable.ModifiableModel modifiableModel = myLibraryTable.getModifiableModel();
-      final List<Library> addedLibraries = new ArrayList<Library>(files.length);
-      for (VirtualFile file : files) {
-        final Library library = modifiableModel.createLibrary(null);
-        final Library.ModifiableModel libModel = library.getModifiableModel();
-        libModel.addRoot(file, OrderRootType.CLASSES);
-        libModel.commit();
-        addedLibraries.add(library);
-      }      
-      return addedLibraries;
-    }
-
-    private VirtualFile[] filterAlreadyAdded(final VirtualFile[] files) {
-      if (files == null || files.length == 0) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      final Set<VirtualFile> chosenFilesSet = new HashSet<VirtualFile>(Arrays.asList(files));
-      final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
-      final Library[] libraries = myLibraryTable.getLibraries();
-      for (Library library : libraries) {
-        final VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
-        for (VirtualFile libraryFile : libraryFiles) {
-          alreadyAdded.add(libraryFile);
-        }
-      }
-      chosenFilesSet.removeAll(alreadyAdded);
-      return chosenFilesSet.toArray(new VirtualFile[chosenFilesSet.size()]);
+      return myChosenLibrary == null? Collections.<Library>emptyList() : Collections.singletonList(myChosenLibrary);
     }
 
     public void doChoose() {
-      myLastChosen = chooseNameAndFiles(myFileToSelect);
+      final LibraryTable.ModifiableModel libraryModifiableModel = myLibraryTable.getModifiableModel();
+      final LibraryTableModifiableModelProvider provider = new LibraryTableModifiableModelProvider() {
+        public LibraryTable.ModifiableModel getModifiableModel() {
+          return libraryModifiableModel;
+        }
+
+        public String getTableLevel() {
+          return myLibraryTable.getTableLevel();
+        }
+
+        public LibraryTablePresentation getLibraryTablePresentation() {
+          return myLibraryTable.getPresentation();
+        }
+
+        public boolean isLibraryTableEditable() {
+          return false;
+        }
+      };
+      final Library library = libraryModifiableModel.createLibrary(LibraryTableEditor.suggestNewLibraryName(libraryModifiableModel));
+      final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
+      myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true);
+      if (myIsOk && library.getUrls(OrderRootType.CLASSES).length > 0) {
+        myChosenLibrary = library;
+      }
+      else {
+        myChosenLibrary = null;
+        libraryModifiableModel.removeLibrary(library);
+      }
+    }
+
+    public boolean isOK() {
+      return myIsOk;
+    }
+
+    public void dispose() {
     }
   }
-
+  
   private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
     private LibraryTableModifiableModelProvider myLibraryTableModelProvider;
-    private boolean myLibraryTableEditable;
 
     public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable) {
       super(index, title, Icons.LIBRARY_ICON);
       myLibraryTableModelProvider = libraryTable;
-      myLibraryTableEditable = libraryTable.isLibraryTableEditable();
     }
 
     @Nullable
@@ -1030,9 +1023,6 @@ public class ClasspathPanel extends JPanel {
 
       MyChooserDialog(){
         myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
-        if (!myLibraryTableEditable) {
-          myEditor.hideAddRemoveRenameButtons();
-        }
         Disposer.register(this, myEditor);
       }
 

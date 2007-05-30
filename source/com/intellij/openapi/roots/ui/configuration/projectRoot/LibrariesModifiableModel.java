@@ -28,13 +28,13 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   public Library createLibrary(String name) {
     final Library library = myLibrariesModifiableModel.createLibrary(name);
-    myLibrary2EditorMap.put(library, new LibraryEditor(library));
+    createLibraryEditor(library);
     return library;
   }
 
   public void removeLibrary(@NotNull Library library) {
     myRemovedLibraries.add(library);
-    myLibrary2EditorMap.remove(library);
+    removeLibraryEditor(library);
     myLibrariesModifiableModel.removeLibrary(library);
   }
 
@@ -85,10 +85,28 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   public LibraryEditor getLibraryEditor(Library library){
     LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
     if (libraryEditor == null){
-      libraryEditor = new LibraryEditor(library);
-      myLibrary2EditorMap.put(library, libraryEditor);
+      libraryEditor = createLibraryEditor(library);
     }
     return libraryEditor;
+  }
+
+  private LibraryEditor createLibraryEditor(final Library library) {
+    final LibraryEditor libraryEditor = new LibraryEditor(library);
+    myLibrary2EditorMap.put(library, libraryEditor);
+    myLibrary2EditorMap.put((Library)libraryEditor.getModel(), libraryEditor);
+    return libraryEditor;
+  }
+
+  private void removeLibraryEditor(final Library library) {
+    final LibraryEditor libraryEditor = myLibrary2EditorMap.remove(library);
+    if (libraryEditor != null) {
+      for (Iterator it = myLibrary2EditorMap.keySet().iterator(); it.hasNext();) {
+        final Library lib = (Library)it.next();
+        if (libraryEditor == myLibrary2EditorMap.get(lib)) {
+          it.remove();
+        }
+      }
+    }
   }
 
 }
