@@ -112,7 +112,7 @@ mNUM_DOUBLE = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mDOUBLE_SUFFIX})
  | {mDOUBLE_SUFFIX}
  | {mEXPONENT} {mDOUBLE_SUFFIX})
 
-// Big decimal
+// BigDecimal
 mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX}?)
  | {mEXPONENT} {mBIG_SUFFIX}? )
 
@@ -143,7 +143,7 @@ mREGEX_BEGIN = "/""$"
 mREGEX_CONTENT = ({mSTRING_ESC}
    | [^"/"\r\n"$"])*
 
-mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT} "/"
+mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT} ("$""/" | "/")
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -416,7 +416,7 @@ mGSTRING_LITERAL = \"\"
   "{"                                     {  blockStack.push(mDIV);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
+  ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL;  }
   {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
@@ -428,7 +428,7 @@ mGSTRING_LITERAL = \"\"
 <IN_REGEX> {
   {mREGEX_CONTENT}"$"                     {  yybegin(IN_REGEX_DOLLAR);
                                              return mREGEX_CONTENT; }
-  {mREGEX_CONTENT}"/"                     {  gStringStack.pop();
+  {mREGEX_CONTENT} ("$" "/" | "/")        {  gStringStack.pop();
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
