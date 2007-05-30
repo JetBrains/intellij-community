@@ -1,6 +1,5 @@
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.TestFramework;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
@@ -102,7 +101,7 @@ public class JUnitUtil implements TestFramework {
    * @return true iff aClassLocation can be used as JUnit test class.
    */
   public static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
-    return TestUtil.isTestClass(aClassLocation.getPsiElement());
+    return isTestClass(aClassLocation.getPsiElement());
   }
 
   public boolean isTestKlass(final PsiClass psiClass) {
