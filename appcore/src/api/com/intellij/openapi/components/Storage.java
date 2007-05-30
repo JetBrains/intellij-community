@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
   String id();
+  boolean isDefault() default true;
   String file() default "";
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
