@@ -91,6 +91,22 @@
     </resources>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>ideauidesigner-maven-plugin</artifactId>
+        <executions>
+           <execution>
+              <goals>
+                 <goal>javac2</goal>
+              </goals>
+           </execution>
+        </executions>
+        <configuration>
+          <fork>true</fork>
+          <debug>true</debug>
+          <failOnError>true</failOnError>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.0.2</version>
@@ -200,32 +216,37 @@
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>forms_rt</artifactId>
-      <version>6.0.4</version>
+      <version>7.0</version>
       <scope>provided</scope>
+      <classifier>6981</classifier>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
-      <version>6.0.4</version>
+      <version>7.0</version>
       <scope>provided</scope>
+      <classifier>6981</classifier>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>idea</artifactId>
+      <version>7.0</version>
+      <scope>provided</scope>
+      <classifier>6981</classifier>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
-      <version>6.0.4</version>
+      <version>7.0</version>
       <scope>provided</scope>
+      <classifier>6981</classifier>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>extensions</artifactId>
-      <version>6.0.4</version>
+      <version>7.0</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jgoodies</groupId>
-      <artifactId>forms</artifactId>
-      <version>1.0.7</version>
-      <scope>provided</scope>
+      <classifier>6981</classifier>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
