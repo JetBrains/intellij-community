@@ -579,7 +579,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       getSubstitutionForTypeParameterConstraint(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
     if (constraint == null) {
-      PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
+      final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
+      PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);
       if (superType == null) superType = PsiType.getJavaLangObject(manager, methodCall.getResolveScope());
       if (forCompletion && !(superType instanceof PsiWildcardType)) {
         return new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(manager, superType), ConstraintType.EQUALS);
