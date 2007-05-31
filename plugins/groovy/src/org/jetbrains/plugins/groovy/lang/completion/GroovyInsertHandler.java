@@ -52,11 +52,11 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       if (parameters.length == 0 || parameters.length > 1) {
         if (document.getCharsSequence().charAt(offset) != '(') {
           document.insertString(offset, "()");
-          if (parameters.length > 0) {
-            caretModel.moveToOffset(offset + 1);
-          } else {
-            caretModel.moveToOffset(offset + 2);
-          }
+        }
+        if (parameters.length > 0) {
+          caretModel.moveToOffset(offset + 1);
+        } else {
+          caretModel.moveToOffset(offset + 2);
         }
       } else {
         PsiType paramType = parameters[0].getType();
