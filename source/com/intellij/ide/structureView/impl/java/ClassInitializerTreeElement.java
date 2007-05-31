@@ -6,12 +6,13 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 
-public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInitializer> {
+public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInitializer> implements AccessLevelProvider{
   public ClassInitializerTreeElement(PsiClassInitializer initializer) {
     super(initializer);
   }
@@ -43,5 +44,13 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
 
   public TextAttributesKey getTextAttributesKey() {
     return null;
+  }
+
+  public int getAccessLevel() {
+    return PsiUtil.ACCESS_LEVEL_PRIVATE;
+  }
+
+  public int getSubLevel() {
+    return 0;
   }
 }

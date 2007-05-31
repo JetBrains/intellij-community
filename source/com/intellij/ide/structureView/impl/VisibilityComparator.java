@@ -15,7 +15,7 @@ public class VisibilityComparator implements Comparator {
   public static Comparator IMSTANCE = new VisibilityComparator(null);
 
   private Comparator myNextComparator;
-  public static final int UNKNOWN_ACCESS_LEVEL = -1;
+  private static final int UNKNOWN_ACCESS_LEVEL = -1;
 
   public VisibilityComparator(Comparator comparator) {
     myNextComparator = comparator;
@@ -30,12 +30,12 @@ public class VisibilityComparator implements Comparator {
     return accessLevel2 - accessLevel1;
   }
 
-  private int getAccessLevel(Object element) {
+  private static int getAccessLevel(Object element) {
     if (element instanceof AccessLevelProvider) {
       return ((AccessLevelProvider)element).getAccessLevel() * (GROUP_ACCESS_SUBLEVEL + 1) + ((AccessLevelProvider)element).getSubLevel();
     }
     else {
-      LOG.assertTrue(false, element.getClass().getName());
+      LOG.error(element.getClass().getName());
       return UNKNOWN_ACCESS_LEVEL;
     }    
   }
