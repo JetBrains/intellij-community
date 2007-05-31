@@ -1,13 +1,24 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.com/idea">
   <name>Maven Integration</name>
+  <id>org.jetbrains.idea.maven</id>
   <description>Maven Integration plugin</description>
   <version>2.0</version>
   <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
   <change-notes>
     <![CDATA[]]>
   </change-notes>
+  <depends>com.intellij.javaee</depends>
   <idea-version since-build="6800"/>
+  <extensionPoints>
+    <extensionPoint name="packagingConverter"
+                    interface="org.jetbrains.idea.maven.project.packaging.PackagingConverter"/>
+  </extensionPoints>
+  <extensions xmlns="org.jetbrains.idea.maven">
+    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.WarPackagingConverter"/>
+    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.EarPackagingConverter"/>
+    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.EjbPackagingConverter"/>
+  </extensions>
   <extensions xmlns="com.intellij">
     <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>

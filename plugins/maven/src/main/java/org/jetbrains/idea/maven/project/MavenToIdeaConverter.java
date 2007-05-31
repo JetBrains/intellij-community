@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
@@ -12,6 +13,7 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.project.packaging.PackagingConverter;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -103,14 +105,14 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
   }
 
   private void createFacets(final Module module, final MavenProjectModel.Node node) {
-    /*
     final String packaging = node.getMavenProject().getPackaging();
-    for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
-      if(converter.isApplicable(packaging)) {
-        converter.convert(module, node);
+    if ( !packaging.equals("jar")){
+      for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
+        if(converter.isApplicable(packaging)) {
+          converter.convert(module, node, mavenToIdeaMapping);
+        }
       }
     }
-    */
   }
 
   static void createSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
