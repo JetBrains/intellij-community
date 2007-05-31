@@ -8,11 +8,12 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -21,8 +22,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.text.MessageFormat;
+import java.util.*;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
@@ -162,7 +163,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return navigatableResults;
     }
     PsiElement resolved = reference.resolve();
-    if (resolved != null) {
+    if (resolved instanceof NavigationItem) {
       return Collections.singleton(resolved);
     }
     return Collections.emptyList();
