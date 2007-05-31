@@ -29,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -51,7 +52,7 @@ public abstract class BaseRefactoringProcessor {
     this(project, null);
   }
 
-  protected BaseRefactoringProcessor(Project project, Runnable prepareSuccessfulCallback) {
+  protected BaseRefactoringProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback) {
     myProject = project;
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
   }

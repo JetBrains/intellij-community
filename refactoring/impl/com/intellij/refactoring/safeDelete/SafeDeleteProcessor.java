@@ -35,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -48,7 +49,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean mySearchNonJava;
   private boolean myPreviewNonCodeUsages = true;
 
-  private SafeDeleteProcessor(Project project, Runnable prepareSuccessfulCallback,
+  private SafeDeleteProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback,
                               PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
     super(project, prepareSuccessfulCallback);
     myElements = elementsToDelete;
@@ -785,12 +786,12 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return provider.isSafeDeleteAvailable(element);
   }
 
-  public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallback,
+  public static SafeDeleteProcessor createInstance(Project project, @Nullable Runnable prepareSuccessfulCallback,
                                                    PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
     return new SafeDeleteProcessor(project, prepareSuccessfulCallback, elementsToDelete, isSearchInComments, isSearchNonJava);
   }
 
-  public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallBack,
+  public static SafeDeleteProcessor createInstance(Project project, @Nullable Runnable prepareSuccessfulCallBack,
                                                    PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
                                                    boolean askForAccessors) {
     PsiManager manager = PsiManager.getInstance(project);

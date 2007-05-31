@@ -20,6 +20,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Processor;
@@ -108,25 +109,28 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
 
     final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
-    final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
-      public void run(final SafeDeleteDialog dialog) {
-        SafeDeleteProcessor.createInstance(project, new Runnable() {
-          public void run() {
-            if (successRunnable != null) {
-              successRunnable.run();
-            }
-            dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-          }
-        }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
-      }
-
-    };
-    SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      callback.run(dialog);
+      RefactoringSettings settings = RefactoringSettings.getInstance();
+      SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
+                                         settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true).run();
     }
     else {
+      final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
+        public void run(final SafeDeleteDialog dialog) {
+          SafeDeleteProcessor.createInstance(project, new Runnable() {
+            public void run() {
+              if (successRunnable != null) {
+                successRunnable.run();
+              }
+              dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+            }
+          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
+        }
+
+      };
+
+      SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
       dialog.show();
     }
   }
