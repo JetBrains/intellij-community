@@ -919,7 +919,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void updateActiveVcss() {
     HashSet<AbstractVcs> oldActiveVcss = new HashSet<AbstractVcs>(myActiveVcss);
     myActiveVcss.clear();
-    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+    // some VCSes may want to reconfigure mappings on activation, so we need to iterate a copy of the list
+    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(myDirectoryMappings);
+    for(VcsDirectoryMapping mapping: mappings) {
       if (mapping.getVcs().length() > 0) {
         AbstractVcs vcs = findVcsByName(mapping.getVcs());
         if (vcs != null && !myActiveVcss.contains(vcs)) {
