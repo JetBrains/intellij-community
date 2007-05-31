@@ -125,7 +125,7 @@ public class ResolveUtil {
       }
 
       for (PsiType superType : type.getSuperTypes()) {
-        processDefaultMethods(superType, processor, project, visited);
+        processDefaultMethods(TypeConversionUtil.erasure(superType), processor, project, visited);
       }
     }
 
