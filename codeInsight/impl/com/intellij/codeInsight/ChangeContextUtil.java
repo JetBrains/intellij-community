@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
@@ -94,7 +95,7 @@ public class ChangeContextUtil {
 
   public static PsiElement decodeContextInfo(PsiElement scope,
                                              PsiClass thisClass,
-                                             PsiExpression thisAccessExpr) throws IncorrectOperationException {
+                                             @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     if (scope.getCopyableUserData(ENCODED_KEY) != null){
       scope.putCopyableUserData(ENCODED_KEY, null);
 

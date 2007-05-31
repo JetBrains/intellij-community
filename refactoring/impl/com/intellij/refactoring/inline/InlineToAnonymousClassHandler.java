@@ -56,6 +56,14 @@ public class InlineToAnonymousClassHandler {
       }
     }
 
+    final PsiClass[] innerClasses = psiClass.getInnerClasses();
+    for(PsiClass innerClass: innerClasses) {
+      PsiModifierList classModifiers = innerClass.getModifierList();
+      if (classModifiers.hasModifierProperty(PsiModifier.STATIC)) {
+        return "Class cannot be inlined because it has static inner classes";
+      }
+    }
+
     final PsiField[] fields = psiClass.getFields();
     for(PsiField field: fields) {
       final PsiModifierList fieldModifiers = field.getModifierList();

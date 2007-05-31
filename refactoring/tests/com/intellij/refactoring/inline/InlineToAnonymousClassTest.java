@@ -68,6 +68,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testInnerClass() throws Exception {
+    doTest();
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
@@ -110,6 +114,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   public void testNoInlineUnresolvedConstructor2() throws Exception {
     doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
+  }
+
+  public void testNoInlineStaticInnerClass() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has static inner classes");
   }
 
   private void doTestNoInline(final String expectedMessage) throws Exception {
