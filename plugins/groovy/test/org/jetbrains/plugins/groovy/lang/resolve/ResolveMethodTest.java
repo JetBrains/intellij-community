@@ -102,6 +102,12 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof DefaultGroovyMethod);
   }
 
+  public void testArrayDefault1() throws Exception {
+    PsiReference ref = configureByFile("arrayDefault1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+  }
 
   public void testSwingBuilderMethod() throws Exception {
     PsiReference ref = configureByFile("swingBuilder/A.groovy");
