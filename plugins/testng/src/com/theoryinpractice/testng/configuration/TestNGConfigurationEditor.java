@@ -212,7 +212,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       else if (packagesAcrossModules.isSelected()) data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     else {
-      data.setScope(TestSearchScope.SINGLE_MODULE);
+      data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     commonJavaParameters.applyTo(config);
     config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
