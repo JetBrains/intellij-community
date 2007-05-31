@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfig
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -379,9 +380,7 @@ public class LibraryTableEditor implements Disposable {
       return;
     }
     final LibraryEditor libraryEditor = getLibraryEditor(library);
-    if (newName != null) {
-      libraryEditor.setName(newName);
-    }
+    libraryEditor.setName(newName);
     librariesChanged(false);
   }
 
@@ -426,7 +425,7 @@ public class LibraryTableEditor implements Disposable {
       final String prompt = ProjectBundle.message("library.name.prompt");
       final String title = myAddLibraryButton.getText();
       final Icon icon = Messages.getQuestionIcon();
-      final String libraryName = Messages.showInputDialog(myTreePanel, prompt, title, icon, initial, new InputValidator() {
+      final String libraryName = Messages.showInputDialog(myProject, prompt, title, icon, initial, new InputValidator() {
         public boolean checkInput(final String inputString) {
           return true;
         }
@@ -807,11 +806,20 @@ public class LibraryTableEditor implements Disposable {
       if (myNameField != null) {
         final Library library = getSelectedLibrary();
         final String currentName = getLibraryEditor(library).getName();
-        final String newName = myNameField.getText().trim();
-        if (!newName.equals(currentName)) {
-          if (libraryAlreadyExists(newName)) {
-            Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
-            return;
+        String newName = myNameField.getText().trim();
+        if (newName.length() == 0) {
+          newName = null;
+        }
+        if (!Comparing.equal(newName, currentName)) {
+          if (!myEditingModuleLibraries) {
+            if (newName == null) {
+              Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error", newName), ProjectBundle.message("library.name.not.specified.title"));
+              return;
+            }
+            if (libraryAlreadyExists(newName)) {
+              Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
+              return;
+            }
           }
           renameLibrary(library, newName);
         }
@@ -836,7 +844,19 @@ public class LibraryTableEditor implements Disposable {
         final Library library = getSelectedLibrary();
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        myNameField = new JTextField(getLibraryEditor(library).getName());
+        final LibraryEditor libraryEditor = getLibraryEditor(library);
+        String currentName = libraryEditor.getName();
+        /*
+        if (currentName == null || currentName.length() == 0) {
+          final String[] urls = libraryEditor.getUrls(OrderRootType.CLASSES);
+          if (urls.length > 0) {
+            String url = urls[0];
+            final int idx = url.lastIndexOf('/');
+            if (idx)
+          }
+        }
+        */
+        myNameField = new JTextField(currentName);
         panel.add(myNameField, BorderLayout.CENTER);
         final JLabel label = new JLabel("Name: ");
         panel.add(label, BorderLayout.WEST);

@@ -77,6 +77,7 @@ public class ClasspathPanel extends JPanel {
       return elem1.getName().compareToIgnoreCase(elem2.getName());
     }
   };
+  private JButton myEditButton;
 
   protected ClasspathPanel(Project project, ModifiableRootModel rootModel, final ModulesProvider modulesProvider) {
     super(new BorderLayout());
@@ -202,36 +203,31 @@ public class ClasspathPanel extends JPanel {
     final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject());
     if (entry instanceof ModuleOrderEntry){
       toSelect = ((ModuleOrderEntry)entry).getModule();
-    } else if (entry instanceof LibraryOrderEntry){
-      final Library library = ((LibraryOrderEntry)entry).getLibrary();
-      if (library != null){
-        if (library.getTable() != null){
-          toSelect = ((LibraryImpl)library).getSource();
-          if (toSelect == null){
-            toSelect = library;
-          }
-        } else {
-          toSelect = library;
-        }
-      }
-    } else if (entry instanceof JdkOrderEntry){
+    } 
+    else if (entry instanceof LibraryOrderEntry){
+      myEditButton.doClick();
+      return;
+    } 
+    else if (entry instanceof JdkOrderEntry){
       toSelect = ((JdkOrderEntry)entry).getJdk();
     }
-    rootConfigurable.selectNodeInTree(toSelect);
+    if (toSelect != null) {
+      rootConfigurable.selectNodeInTree(toSelect);
+    }
   }
 
 
   private JComponent createButtonsBlock() {
     final JButton addButton = new JButton(ProjectBundle.message("button.add"));
     final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
-    final JButton editButton = new JButton(ProjectBundle.message("button.edit"));
+    myEditButton = new JButton(ProjectBundle.message("button.edit"));
     final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
     final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(editButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    panel.add(myEditButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
 
@@ -255,7 +251,7 @@ public class ClasspathPanel extends JPanel {
         upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
         downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
         removeButton.setEnabled(removeButtonEnabled);
-        editButton.setEnabled(selectedRows.length == 1 && myModel.getItemAt(selectedRows[0]) instanceof LibItem);
+        myEditButton.setEnabled(selectedRows.length == 1 && myModel.getItemAt(selectedRows[0]) instanceof LibItem);
       }
     });
 
@@ -330,7 +326,7 @@ public class ClasspathPanel extends JPanel {
       }
     });
     
-    editButton.addActionListener(new ActionListener() {
+    myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final int row = myEntryTable.getSelectedRow();
         final TableItem item = myModel.getItemAt(row);
@@ -951,7 +947,7 @@ public class ClasspathPanel extends JPanel {
           return false;
         }
       };
-      final Library library = libraryModifiableModel.createLibrary(LibraryTableEditor.suggestNewLibraryName(libraryModifiableModel));
+      final Library library = myLibraryTable.createLibrary();
       final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
       myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true);
       if (myIsOk && library.getUrls(OrderRootType.CLASSES).length > 0) {
