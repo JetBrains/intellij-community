@@ -3,7 +3,9 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -20,6 +22,8 @@ import com.intellij.packageDependencies.*;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
@@ -59,6 +63,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private DependenciesBuilder myBuilder;
   private Content myContent;
   private DependencyPanelSettings mySettings = new DependencyPanelSettings();
+  private static final Logger LOG = Logger.getInstance("#" + DependenciesPanel.class.getName());
 
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder) {
@@ -195,6 +200,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new ShowModulesAction());
     group.add(new GroupByScopeTypeAction());
     group.add(new FilterLegalsAction());
+    group.add(new MarkAsIllegalAction());
     group.add(new EditDependencyRulesAction());
     group.add(new HelpAction());
 
@@ -633,6 +639,44 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       if (manager.areElementsEquivalent(child.getPsiElement(), elt)) {
         myLeftTree.setSelectionPath(new TreePath(((DefaultTreeModel)myLeftTree.getModel()).getPathToRoot(child)));
         break;
+      }
+    }
+  }
+
+  private class MarkAsIllegalAction extends AnAction {
+    public MarkAsIllegalAction() {
+      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"), IconLoader.getIcon("/ant/filter.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
+      final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
+      if (leftNode != null && rightNode != null) {
+        PackageSet leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, true);
+        if (leftPackageSet == null) {
+          leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, false);
+        }
+        LOG.assertTrue(leftPackageSet != null);
+        PackageSet rightPackageSet = ScopeEditorPanel.getNodePackageSet(rightNode, true);
+        if (rightPackageSet == null) {
+          rightPackageSet = ScopeEditorPanel.getNodePackageSet(rightNode, false);
+        }
+        LOG.assertTrue(rightPackageSet != null);
+        DependencyValidationManager.getInstance(myProject)
+          .addRule(new DependencyRule(new NamedScope.UnnamedScope(leftPackageSet),
+                                      new NamedScope.UnnamedScope(rightPackageSet), true));
+        rebuild();
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
+      final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
+      if (leftNode != null && rightNode != null) {
+        presentation.setEnabled((ScopeEditorPanel.getNodePackageSet(leftNode, true) != null || ScopeEditorPanel.getNodePackageSet(leftNode, false) != null) &&
+                                (ScopeEditorPanel.getNodePackageSet(rightNode, true) != null || ScopeEditorPanel.getNodePackageSet(rightNode, false) != null));
       }
     }
   }

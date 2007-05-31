@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -27,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
@@ -41,10 +37,15 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
   @NonNls private static final String TO_SCOPE_KEY = "to_scope";
   @NonNls private static final String IS_DENY_KEY = "is_deny";
+  @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
+  @NonNls private static final String VALUE = "value";
+
   private NamedScope myProjectTestScope;
   private NamedScope myProjectProductionScope;
   private NamedScope myProblemsScope;
   private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
+
+  private Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;
@@ -187,6 +188,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     SKIP_IMPORT_STATEMENTS = skip;
   }
 
+  public Map<String, PackageSet> getUnnamedScopes() {
+    return myUnnamedScopes;
+  }
+
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);
   }
@@ -196,7 +201,18 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void addRule(DependencyRule rule) {
+    appendUnnamedScope(rule.getFromScope());
+    appendUnnamedScope(rule.getToScope());
     myRules.add(rule);
+  }
+
+  private void appendUnnamedScope(final NamedScope fromScope) {
+    if (getScope(fromScope.getName()) == null) {
+      final PackageSet packageSet = fromScope.getValue();
+      if (packageSet != null && !myUnnamedScopes.containsKey(packageSet.getText())) {
+        myUnnamedScopes.put(packageSet.getText(), packageSet);
+      }
+    }
   }
 
   public void projectOpened() {
@@ -252,6 +268,19 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     DefaultJDOMExternalizer.readExternal(this, element);
     super.readExternal(element);
 
+    myUnnamedScopes.clear();
+    final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
+    final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
+    for (Object unnamedScope : unnamedScopes) {
+      try {
+        final String packageSet = ((Element)unnamedScope).getAttributeValue(VALUE);
+        myUnnamedScopes.put(packageSet, packageSetFactory.compile(packageSet));
+      }
+      catch (ParsingException e) {
+        //skip pattern
+      }
+    }
+
     List rules = element.getChildren(DENY_RULE_KEY);
     for (Object rule1 : rules) {
       DependencyRule rule = readRule((Element)rule1);
@@ -265,12 +294,30 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     DefaultJDOMExternalizer.writeExternal(this, element);
     super.writeExternal(element);
 
+    for (String unnamedScope : myUnnamedScopes.keySet()) {
+      Element unnamedElement = new Element(UNNAMED_SCOPE);
+      unnamedElement.setAttribute(VALUE, unnamedScope);
+      element.addContent(unnamedElement);
+    }
+
     for (DependencyRule rule : myRules) {
       Element ruleElement = writeRule(rule);
       if (ruleElement != null) {
         element.addContent(ruleElement);
       }
     }
+  }
+
+  @Nullable
+  public NamedScope getScope(@Nullable final String name) {
+    final NamedScope scope = super.getScope(name);
+    if (scope == null) {
+      final PackageSet packageSet = myUnnamedScopes.get(name);
+      if (packageSet != null) {
+        return new NamedScope.UnnamedScope(packageSet);
+      }
+    }
+    return scope;
   }
 
   @Nullable

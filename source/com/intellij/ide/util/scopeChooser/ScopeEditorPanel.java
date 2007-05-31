@@ -244,7 +244,7 @@ public class ScopeEditorPanel {
   }
 
   @Nullable
-  private static PackageSet getNodePackageSet(final PackageDependenciesNode node, final boolean recursively) {
+  public static PackageSet getNodePackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);

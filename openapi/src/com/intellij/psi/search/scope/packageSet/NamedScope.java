@@ -40,4 +40,10 @@ public class NamedScope {
   public NamedScope createCopy() {
     return new NamedScope(myName, myValue != null ? myValue.createCopy() : null);
   }
+
+  public static class UnnamedScope extends NamedScope {
+    public UnnamedScope(@NotNull PackageSet value) {
+      super(value.getText(), value);
+    }
+  }
 }

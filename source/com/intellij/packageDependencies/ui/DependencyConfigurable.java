@@ -6,9 +6,11 @@ import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.refactoring.ui.EditableRowTableManager;
 import com.intellij.refactoring.ui.RowEditableTableModel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -23,16 +25,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 public class DependencyConfigurable extends BaseConfigurable {
   private Project myProject;
   private MyTableModel myDenyRulesModel;
   private MyTableModel myAllowRulesModel;
-  private TableView myDenyTable;
-  private TableView myAllowTable;
+  private TableView<DependencyRule> myDenyTable;
+  private TableView<DependencyRule> myAllowTable;
 
   private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_OF = new LeftColumn(AnalysisScopeBundle.message("dependency.configurable.deny.table.column1"));
   private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_IN = new RightColumn(AnalysisScopeBundle.message("dependency.configurable.deny.table.column2"));
@@ -43,6 +44,7 @@ public class DependencyConfigurable extends BaseConfigurable {
   private JPanel myDenyPanel;
   private JPanel myAllowPanel;
   private JCheckBox mySkipImports;
+  private static final Logger LOG = Logger.getInstance("#" + DependencyConfigurable.class.getName());
 
   public DependencyConfigurable(Project project) {
     myProject = project;
@@ -67,14 +69,14 @@ public class DependencyConfigurable extends BaseConfigurable {
     myAllowRulesModel = new MyTableModel(new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
     myAllowRulesModel.setSortable(false);
 
-    myDenyTable = new TableView(myDenyRulesModel);
+    myDenyTable = new TableView<DependencyRule>(myDenyRulesModel);
     myDenyPanel.add(createRulesPanel(myDenyRulesModel, myDenyTable), BorderLayout.CENTER);
-    myAllowTable = new TableView(myAllowRulesModel);
+    myAllowTable = new TableView<DependencyRule>(myAllowRulesModel);
     myAllowPanel.add(createRulesPanel(myAllowRulesModel, myAllowTable), BorderLayout.CENTER);
     return myWholePanel;
   }
 
-  private JPanel createRulesPanel(MyTableModel model, TableView table) {
+  private JPanel createRulesPanel(MyTableModel model, TableView<DependencyRule> table) {
     JPanel panel = new JPanel(new BorderLayout());
     table.setSurrendersFocusOnKeystroke(true);
 
@@ -97,14 +99,23 @@ public class DependencyConfigurable extends BaseConfigurable {
     stopTableEditing();
     DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     validationManager.removeAllRules();
+    final HashMap<String, PackageSet> unUsed = new HashMap<String, PackageSet>(validationManager.getUnnamedScopes());
     List<DependencyRule> modelItems = new ArrayList<DependencyRule>();
     modelItems.addAll(myDenyRulesModel.getItems());
     modelItems.addAll(myAllowRulesModel.getItems());
     for (DependencyRule rule : modelItems) {
-      if (isRuleValid(rule)) {
-        validationManager.addRule(rule);
-      }
+      validationManager.addRule(rule);
+      final PackageSet fromPackageSet = rule.getFromScope().getValue();
+      LOG.assertTrue(fromPackageSet != null);
+      unUsed.remove(fromPackageSet.getText());
+      final PackageSet toPackageSet = rule.getToScope().getValue();
+      LOG.assertTrue(toPackageSet != null);
+      unUsed.remove(toPackageSet.getText());
     }
+    for (String text : unUsed.keySet()) {//cleanup
+      validationManager.getUnnamedScopes().remove(text);
+    }
+
     validationManager.setSkipImportStatements(mySkipImports.isSelected());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -113,14 +124,6 @@ public class DependencyConfigurable extends BaseConfigurable {
   private void stopTableEditing() {
     myDenyTable.stopEditing();
     myAllowTable.stopEditing();
-  }
-
-  private boolean isRuleValid(DependencyRule rule) {
-    return scopeExists(rule.getFromScope()) && scopeExists(rule.getToScope());
-  }
-
-  private boolean scopeExists(NamedScope scope) {
-    return scope != null && DependencyValidationManager.getInstance(myProject).getScope(scope.getName()) != null;
   }
 
   public void reset() {
@@ -190,7 +193,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
-          return new CellEditorComponentWithBrowseButton(myCombo, this);
+          return new CellEditorComponentWithBrowseButton<JComboBox>(myCombo, this);
         }
       };
     }

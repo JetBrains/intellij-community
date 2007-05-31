@@ -20,8 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * User: anna
@@ -56,4 +59,7 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
   public abstract boolean skipImportStatements();
 
   public abstract void setSkipImportStatements(boolean skip);
+
+  public abstract Map<String,PackageSet> getUnnamedScopes();
+
 }
