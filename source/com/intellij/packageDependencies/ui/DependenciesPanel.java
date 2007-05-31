@@ -645,7 +645,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class MarkAsIllegalAction extends AnAction {
     public MarkAsIllegalAction() {
-      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"), IconLoader.getIcon("/ant/filter.png"));
+      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"), IconLoader.getIcon(
+        "/actions/lightning.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
