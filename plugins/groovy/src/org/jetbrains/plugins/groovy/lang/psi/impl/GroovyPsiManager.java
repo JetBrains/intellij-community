@@ -48,6 +48,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private Map<String, List<PsiMethod>> myDefaultMethods;
   private MessageBusConnection myRootConnection;
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
+  private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
   private static final String SWING_BUILDER_QNAME = "groovy.swing.SwingBuilder";
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
@@ -101,25 +102,38 @@ public class GroovyPsiManager implements ProjectComponent {
     if (defaultMethodsClass != null) {
       for (PsiMethod method : defaultMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        LOG.assertTrue(parameters.length > 0);
-        PsiType thisType = parameters[0].getType();
-        String thisCanonicalText = thisType.getCanonicalText();
-        LOG.assertTrue(thisCanonicalText != null);
-        List<PsiMethod> hisMethods = myDefaultMethods.get(thisCanonicalText);
-        if (hisMethods == null) {
-          hisMethods = new ArrayList<PsiMethod>();
-          myDefaultMethods.put(thisCanonicalText, hisMethods);
-        }
-        hisMethods.add(convertToNonStatic(method));
+        addDefaultMethod(method, false);
       }
 
-      try {
-        addSwingBuilderMethods();
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
+    }
+
+    PsiClass defaultStaticMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    if (defaultStaticMethodsClass != null) {
+      for (PsiMethod method : defaultStaticMethodsClass.getMethods()) {
+        if (method.isConstructor()) continue;
+        addDefaultMethod(method, true);
       }
     }
+
+    try {
+      addSwingBuilderMethods();
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void addDefaultMethod(PsiMethod method, boolean isStatic) {
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    LOG.assertTrue(parameters.length > 0);
+    PsiType thisType = parameters[0].getType();
+    String thisCanonicalText = thisType.getCanonicalText();
+    LOG.assertTrue(thisCanonicalText != null);
+    List<PsiMethod> hisMethods = myDefaultMethods.get(thisCanonicalText);
+    if (hisMethods == null) {
+      hisMethods = new ArrayList<PsiMethod>();
+      myDefaultMethods.put(thisCanonicalText, hisMethods);
+    }
+    hisMethods.add(convertMethod(method, isStatic));
   }
 
   private static final String[] SWING_WIDGETS_METHODS = {
@@ -207,8 +221,8 @@ public class GroovyPsiManager implements ProjectComponent {
     myDefaultMethods.put(SWING_BUILDER_QNAME, methods);
   }
 
-  private PsiMethod convertToNonStatic(PsiMethod method) {
-    return new DefaultGroovyMethod(method, null);
+  private PsiMethod convertMethod(PsiMethod method, boolean isStatic) {
+    return new DefaultGroovyMethod(method, isStatic);
   }
 
   public void disposeComponent() {

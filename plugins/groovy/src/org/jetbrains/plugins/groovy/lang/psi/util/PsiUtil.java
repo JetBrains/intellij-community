@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.*;
@@ -126,6 +127,15 @@ public class PsiUtil {
           result.add(type);
         }
       }
+
+      GrClosableBlock closure = methodCall.getClosureArgument();
+      if (closure != null) {
+        PsiType closureType = closure.getType();
+        if (closureType != null) {
+          result.add(closureType);
+        }
+      }
+
       return result.toArray(new PsiType[result.size()]);
 
     } else if (parent instanceof GrApplicationExpression) {

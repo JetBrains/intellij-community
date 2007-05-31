@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -79,6 +80,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("defaultMethod1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof DefaultGroovyMethod);
+  }
+
+  public void testDefaultStaticMethod() throws Exception {
+    PsiReference ref = configureByFile("defaultStaticMethod/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(((DefaultGroovyMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
   }
 
   public void testDefaultMethod2() throws Exception {

@@ -43,14 +43,14 @@ public class DefaultGroovyMethod extends LightMethod {
     return true;
   }
 
-  public DefaultGroovyMethod(PsiMethod method, PsiClass containingClass) {
-    super(method.getManager(), method, containingClass);
+  public DefaultGroovyMethod(PsiMethod method, boolean isStatic) {
+    super(method.getManager(), method, null);
     myMethod = method;
     PsiElementFactory elementFactory = method.getManager().getElementFactory();
     try {
       myModifiedMethod = elementFactory.createMethod(method.getName(), method.getReturnType());
       myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-      myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
+      myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
       PsiParameter[] originalParameters = method.getParameterList().getParameters();
       PsiParameterList newParamList = myModifiedMethod.getParameterList();
       for (int i = 1; i < originalParameters.length; i++) {

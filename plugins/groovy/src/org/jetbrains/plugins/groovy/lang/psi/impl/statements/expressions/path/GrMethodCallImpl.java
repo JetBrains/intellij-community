@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -67,6 +68,10 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
   public GrExpression[] getExpressionArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
+  }
+
+  public GrClosableBlock getClosureArgument() {
+    return findChildByClass(GrClosableBlock.class);
   }
 
   public GrExpression getInvokedExpression() {

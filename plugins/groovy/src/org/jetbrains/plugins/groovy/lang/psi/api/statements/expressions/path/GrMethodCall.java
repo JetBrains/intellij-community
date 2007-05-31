@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 /**
  * @author ilyas
@@ -28,6 +29,8 @@ public interface GrMethodCall extends GrExpression {
   GrNamedArgument[] getNamedArguments();
 
   GrExpression[] getExpressionArguments();
+
+  GrClosableBlock getClosureArgument();
 
   GrExpression getInvokedExpression();
 }
