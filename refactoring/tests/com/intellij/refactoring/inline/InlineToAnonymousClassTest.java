@@ -60,6 +60,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testWritableInitializedField() throws Exception {
+    doTest();
+  }
+
+  public void testNullInitializedField() throws Exception {
+    doTest();
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
