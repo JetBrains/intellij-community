@@ -247,9 +247,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
     }
     else {
-      PsiElement child = annotation.getFirstChild();
-      PsiElement toHighlight = child == null ? annotation : child;
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, toHighlight, JavaErrorMessages.message("annotations.prior.15")));
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, JavaErrorMessages.message("annotations.prior.15"));
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+      myHolder.add(info);
     }
   }
 
@@ -316,9 +316,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (aClass instanceof JspClass) return;
     if (aClass.isAnnotationType()) {
       if (PsiUtil.getLanguageLevel(aClass).compareTo(LanguageLevel.JDK_1_5) < 0) {
-        myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(),
-                                                       JavaErrorMessages.message("annotations.prior.15")));
-
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), JavaErrorMessages.message("annotations.prior.15"));
+        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+        myHolder.add(info);
       }
     }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
@@ -555,17 +555,17 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitForeachStatement(PsiForeachStatement statement) {
     if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     statement.getFirstChild(),
-                                                     JavaErrorMessages.message("foreach.prior.15")));
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+      myHolder.add(info);
     }
   }
 
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     statement.getFirstChild(),
-                                                     JavaErrorMessages.message("static.imports.prior.15")));
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+      myHolder.add(info);
     }
   }
 

@@ -68,7 +68,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles;
 
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
-  private @Nullable LanguageLevel myLanguageLevel;
+  @Nullable private LanguageLevel myLanguageLevel;
 
   public ModuleRootManagerImpl(Module module,
                                DirectoryIndex directoryIndex,
@@ -189,7 +189,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       while (orderIterator.hasNext()) {
         OrderEntry entry = (OrderEntry)orderIterator.next();
         final String [] urls;
-        if (entry instanceof ModuleOrderEntry) {
+        if (entry instanceof ModuleOrderEntryImpl) {
           urls = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
         }
         else {
@@ -230,7 +230,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     while (orderIterator.hasNext()) {
       final OrderEntry entry = (OrderEntry)orderIterator.next();
       final String[] urls;
-      if (entry instanceof ModuleOrderEntry) {
+      if (entry instanceof ModuleOrderEntryImpl) {
         urls = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
       }
       else {
@@ -294,7 +294,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   }
 
-  static List<RootModelImpl> getSortedChangedModels(ModifiableRootModel[] _rootModels,
+  private static List<RootModelImpl> getSortedChangedModels(ModifiableRootModel[] _rootModels,
                                                     final ModifiableModuleModel moduleModel) {
     List<RootModelImpl> rootModels = new ArrayList<RootModelImpl>();
     for (ModifiableRootModel _rootModel : _rootModels) {
@@ -548,7 +548,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myCachedExportedFiles.clear();
   }
 
-  private void killPointers(final VirtualFilePointerManager manager, Map<OrderRootType, Set<VirtualFilePointer>> cach) {
+  private static void killPointers(final VirtualFilePointerManager manager, Map<OrderRootType, Set<VirtualFilePointer>> cach) {
     for (Set<VirtualFilePointer> pointers : cach.values()) {
       for (VirtualFilePointer pointer : pointers) {
         manager.kill(pointer, null);
@@ -573,8 +573,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
   }
 
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
+  public void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
+    boolean needToReload = myLanguageLevel != languageLevel;
     myLanguageLevel = languageLevel;
+    if (needToReload && myModule.getProject().isOpen()) {
+      myProjectRootManager.reloadProjectOnLanguageLevelChange(languageLevel, true);
+    }
   }
 
   @Nullable

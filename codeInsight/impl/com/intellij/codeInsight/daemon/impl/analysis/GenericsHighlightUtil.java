@@ -89,6 +89,7 @@ public class GenericsHighlightUtil {
       if (referenceParameterList.getTypeParameterElements().length > 0) {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, GENERICS_ARE_NOT_SUPPORTED);
         QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(referenceParameterList));
+        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
         return info;
       }
     }
@@ -795,6 +796,7 @@ public class GenericsHighlightUtil {
     if (PsiUtil.getLanguageLevel(parameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, GENERICS_ARE_NOT_SUPPORTED);
       QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(parameterList));
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       return info;
     }
     final PsiElement parent = parameterList.getParent();
@@ -928,13 +930,13 @@ public class GenericsHighlightUtil {
       PsiParameter[] params = ((PsiMethod)declarationScope).getParameterList().getParameters();
       if (parameter.isVarArgs()) {
         if (!PsiUtil.getLanguageLevel(parameter).hasEnumKeywordAndAutoboxing()) {
-          return HighlightInfo
-            .createHighlightInfo(HighlightInfoType.ERROR, parameter, JavaErrorMessages.message("varargs.prior.15"));
+          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, JavaErrorMessages.message("varargs.prior.15"));
+          QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+          return info;
         }
 
         if (params[params.length - 1] != parameter) {
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                 parameter,
+          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter,
                                                                  JavaErrorMessages.message("vararg.not.last.parameter"));
           String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
           QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null, displayName);

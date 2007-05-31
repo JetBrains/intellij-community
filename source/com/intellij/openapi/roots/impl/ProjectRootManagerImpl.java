@@ -45,6 +45,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -86,7 +87,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Runnable myReloadProjectRequest = null;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new com.intellij.util.containers.ConcurrentHashMap<List<Module>, GlobalSearchScope>();
+  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
   private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
   private VirtualFilePointer myCompilerOutput;
@@ -177,6 +178,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void setLanguageLevel(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
+    reloadProjectOnLanguageLevelChange(languageLevel, false);
+  }
+
+  public void reloadProjectOnLanguageLevelChange(final LanguageLevel languageLevel, final boolean forceReload) {
     if (myProject.isOpen()) {
       myReloadProjectRequest = new Runnable() {
         public void run() {
@@ -184,8 +189,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
             // obsolete, another request has already replaced this one
             return;
           }
-          if (myOriginalLanguageLevel.equals(getLanguageLevel())) {
-            // the question does not make sence now
+          if (!forceReload && myOriginalLanguageLevel.equals(getLanguageLevel())) {
+            // the question does not make sense now
             return;
           }
           final String _message = ProjectBundle.message("project.language.level.reload.prompt", myProject.getName());
@@ -207,7 +212,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myReloadProjectRequest;
   }
 
-  private final static HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
+  private static final HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
 
   static {
     ourProjectRootTypeToOrderRootType.put(ProjectRootType.CLASS, OrderRootType.CLASSES);
@@ -385,6 +390,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myProjectOpened = false;
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectRootManager";
   }
@@ -612,11 +618,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.add(extractLocalPath(url));
     }
 
-    final String projectFile = ((ProjectEx)myProject).getStateStore().getProjectFilePath();
-    if (projectFile != null) {
-      rootPaths.add(projectFile);
-      // No need to add workspace file separately since they're definetely on same directory with ipr.
-    }
+    final String projectFile = myProject.getStateStore().getProjectFilePath();
+    rootPaths.add(projectFile);
+    // No need to add workspace file separately since they're definetely on same directory with ipr.
 
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

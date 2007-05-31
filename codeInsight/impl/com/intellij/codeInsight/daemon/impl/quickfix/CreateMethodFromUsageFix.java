@@ -55,8 +55,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                                                                            //strictly inside arg list
                                                                       argumentList.getTextRange().getStartOffset()+1,
                                                                       argumentList.getTextRange().getEndOffset()-1);
-    if (errorsInArgList.length != 0) return true;
-    return false;
+    return errorsInArgList.length != 0;
   }
 
   protected PsiElement getElement() {

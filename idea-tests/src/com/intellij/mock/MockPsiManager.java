@@ -64,10 +64,12 @@ public class MockPsiManager extends PsiManagerEx {
     myDirectories.put(file, psiDirectory);
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   public PsiDirectory[] getRootDirectories(int rootType) {
     return PsiDirectory.EMPTY_ARRAY;
   }
@@ -76,7 +78,7 @@ public class MockPsiManager extends PsiManagerEx {
     return null;  //To change body of implemented methods use Options | File Templates.
   }
 
-  public PsiFile findFile(VirtualFile file) {
+  public PsiFile findFile(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -94,7 +96,7 @@ public class MockPsiManager extends PsiManagerEx {
     return new Language[0];
   }
 
-  public PsiDirectory findDirectory(VirtualFile file) {
+  public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     return myDirectories.get(file);
   }
 
@@ -151,11 +153,12 @@ public class MockPsiManager extends PsiManagerEx {
     return findClass(qualifiedName);
   }
 
-  public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
+  @NotNull
+  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
   }
 
-  public PsiPackage findPackage(final String qualifiedName) {
+  public PsiPackage findPackage(@NotNull final String qualifiedName) {
     return ContainerUtil.find(myPackages, new Condition<PsiPackage>() {
       public boolean value(final PsiPackage psiPackage) {
         return psiPackage.getQualifiedName().equals(qualifiedName);
@@ -167,6 +170,7 @@ public class MockPsiManager extends PsiManagerEx {
     return Comparing.equal(element1, element2);
   }
 
+  @NotNull
   public LanguageLevel getEffectiveLanguageLevel() {
     return LanguageLevel.HIGHEST;
   }
@@ -176,6 +180,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
 
+  @NotNull
   public PsiMigration startMigration() {
     return null;
   }
@@ -190,18 +195,19 @@ public class MockPsiManager extends PsiManagerEx {
     return PsiFile.EMPTY_ARRAY;
   }
 
-  public void reloadFromDisk(PsiFile file) {
+  public void reloadFromDisk(@NotNull PsiFile file) {
   }
 
-  public void addPsiTreeChangeListener(PsiTreeChangeListener listener) {
+  public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, Disposable parentDisposable) {
   }
 
-  public void removePsiTreeChangeListener(PsiTreeChangeListener listener) {
+  public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 
+  @NotNull
   public CodeStyleManager getCodeStyleManager() {
     return CodeStyleManager.getInstance(myProject);
   }
@@ -223,10 +229,12 @@ public class MockPsiManager extends PsiManagerEx {
     return getElementFactory();
   }
 
+  @NotNull
   public PsiSearchHelper getSearchHelper() {
     return new PsiSearchHelperImpl(this);
   }
 
+  @NotNull
   public PsiResolveHelper getResolveHelper() {
     return new MockResolveHelper(this) {
       public boolean isAccessible(final PsiMember member, final PsiModifierList modifierList, final PsiElement place,
@@ -240,17 +248,20 @@ public class MockPsiManager extends PsiManagerEx {
     };
   }
 
+  @NotNull
   public PsiShortNamesCache getShortNamesCache() {
     return null;
   }
 
-  public void registerShortNamesCache(PsiShortNamesCache cache) {
+  public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
   }
 
+  @NotNull
   public JavadocManager getJavadocManager() {
     return null;
   }
 
+  @NotNull
   public PsiNameHelper getNameHelper() {
     return new PsiNameHelperImpl(this);
   }
@@ -259,6 +270,7 @@ public class MockPsiManager extends PsiManagerEx {
   //  return new PsiConstantEvaluationHelperImpl();
   //}
 
+  @NotNull
   public PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(this);
@@ -266,6 +278,7 @@ public class MockPsiManager extends PsiManagerEx {
     return myPsiModificationTracker;
   }
 
+  @NotNull
   public CachedValuesManager getCachedValuesManager() {
     if (myCachedValuesManager == null) {
       myCachedValuesManager = new CachedValuesManagerImpl(this);
@@ -273,13 +286,13 @@ public class MockPsiManager extends PsiManagerEx {
     return myCachedValuesManager;
   }
 
-  public void moveFile(PsiFile file, PsiDirectory newParentDir) throws IncorrectOperationException {
+  public void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException {
   }
 
-  public void moveDirectory(PsiDirectory dir, PsiDirectory newParentDir) throws IncorrectOperationException {
+  public void moveDirectory(@NotNull PsiDirectory dir, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException {
   }
 
-  public void checkMove(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
+  public void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException {
   }
 
   public void startBatchFilesProcessingMode() {
@@ -300,23 +313,23 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
 
-  public void setEffectiveLanguageLevel(LanguageLevel languageLevel) {
+  public void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel) {
   }
 
   public void dropResolveCaches() {
   }
 
-  public boolean isInPackage(PsiElement element, PsiPackage aPackage) {
+  public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
     return false;
   }
 
-  public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
+  public boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     PsiFile file1 = ResolveUtil.getContextFile(element1);
     PsiFile file2 = ResolveUtil.getContextFile(element2);
     return Comparing.equal(file1, file2);
   }
 
-  public boolean isInProject(PsiElement element) {
+  public boolean isInProject(@NotNull PsiElement element) {
     return false;
   }
 
@@ -332,7 +345,7 @@ public class MockPsiManager extends PsiManagerEx {
     return r.compute();
   }
 
-  public void registerLanguageInjector(LanguageInjector injector) {
+  public void registerLanguageInjector(@NotNull LanguageInjector injector) {
   }
 
   public void registerLanguageInjector(@NotNull LanguageInjector injector, Disposable parentDisposable) {
@@ -354,6 +367,7 @@ public class MockPsiManager extends PsiManagerEx {
     return Collections.emptyList();
   }
 
+  @NotNull
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return new PsiConstantEvaluationHelperImpl();
   }

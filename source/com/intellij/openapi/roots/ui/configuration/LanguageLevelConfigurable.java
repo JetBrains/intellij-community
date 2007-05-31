@@ -7,14 +7,8 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
@@ -59,23 +53,9 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    final LanguageLevel newLanguageLevel = myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL ? (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
-    final boolean needToReload = myModule.getLanguageLevel() != newLanguageLevel;
+    final LanguageLevel newLanguageLevel = myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL ?
+      (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
     ModuleRootManager.getInstance(myModule).setLanguageLevel(newLanguageLevel);
-    if (needToReload) {
-      final Project project = myModule.getProject();
-      final Runnable reloadProjectRequest =
-            ((ProjectRootManagerImpl)ProjectRootManagerEx.getInstanceEx(project)).getReloadProjectRequest();
-          if (reloadProjectRequest != null) return; //reload already requested
-      ProjectRootConfigurable.getInstance(project).addReloadProjectRequest(new Runnable() {
-        public void run() {
-          final String _message = ProjectBundle.message("module.project.language.level.changed.reload.prompt", project.getName());
-          if (Messages.showYesNoDialog(project, _message, ProjectBundle.message("modules.title"), Messages.getQuestionIcon()) == 0) {
-            ProjectManagerEx.getInstanceEx().reloadProject(project);
-          }
-        }
-      });
-    }
   }
 
   public void reset() {
