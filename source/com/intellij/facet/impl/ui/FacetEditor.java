@@ -10,12 +10,12 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
@@ -28,6 +28,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author nik
@@ -39,6 +41,7 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
+  private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
@@ -66,20 +69,21 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   public JComponent createComponent() {
     final JComponent editorComponent;
     if (myEditorTabs.length > 1) {
-      myTabbedPane = new TabbedPaneWrapper();
+      final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
       for (FacetEditorTab editorTab : myEditorTabs) {
-        myTabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
+        tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
       }
-      myTabbedPane.addChangeListener(new ChangeListener() {
+      tabbedPane.addChangeListener(new ChangeListener() {
         private int myTabIndex;
 
         public void stateChanged(ChangeEvent e) {
           myEditorTabs[myTabIndex].onTabLeaving();
-          myTabIndex = myTabbedPane.getSelectedIndex();
-          onTabSelected(myTabbedPane, myEditorTabs[myTabIndex]);
+          myTabIndex = tabbedPane.getSelectedIndex();
+          onTabSelected(myEditorTabs[myTabIndex]);
         }
       });
-      editorComponent = myTabbedPane.getComponent();
+      editorComponent = tabbedPane.getComponent();
+      myTabbedPane = tabbedPane;
     }
     else if (myEditorTabs.length == 1) {
       editorComponent = myEditorTabs[0].createComponent();
@@ -95,17 +99,19 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
     return panel;
   }
 
-  private static void onTabSelected(final TabbedPaneWrapper tabbedPane, final FacetEditorTab selectedTab) {
+  private void onTabSelected(final FacetEditorTab selectedTab) {
     selectedTab.onTabEntering();
-    final JComponent preferredFocusedComponent = selectedTab.getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (tabbedPane.getComponent().isShowing()) {
-            preferredFocusedComponent.requestFocus();
+    if (myVisitedTabs.add(selectedTab)) {
+      final JComponent preferredFocusedComponent = selectedTab.getPreferredFocusedComponent();
+      if (preferredFocusedComponent != null) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (preferredFocusedComponent.isShowing()) {
+              preferredFocusedComponent.requestFocus();
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
