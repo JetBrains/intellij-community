@@ -19,7 +19,6 @@ import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -47,8 +46,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -59,6 +58,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -217,7 +217,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             );
           } else {
             bindMessageToAstNode(
-              element.getNode(),
+              element,
               infoType,
               0,
               messageLength,
@@ -231,15 +231,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int offset,
                                 final int messageLength, final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
-    ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
-    ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
+    XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
     bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
-    childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tagElement);
+    childByRole = XmlTagUtil.getEndTagNameElement(tag);
     bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
   }
 
-  private void bindMessageToAstNode(final ASTNode childByRole,
+  private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
                                     final int offset,
                                     final int length,
@@ -457,7 +456,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (tag.getAttributeValue(TAGDIR_ATT) == null) {
           final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
             HighlightInfoType.WRONG_REF,
-            XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(tag)),
+            XmlTagUtil.getStartTagNameElement(tag),
             XmlErrorMessages.message("either.uri.or.tagdir.attribute.should.be.specified")
           );
 

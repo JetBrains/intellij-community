@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -10,11 +9,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nullable;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
@@ -133,10 +131,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       anchor = ((PsiVariable)element).getNameIdentifier();
     }
     else if (element instanceof XmlTag) {
-      final ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(element);
-      if (astNode != null) {
-        anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild(astNode));
-      }
+      anchor = XmlTagUtil.getStartTagNameElement((XmlTag)element);
     }
     if (anchor != null && !anchor.isPhysical()) return null;
     return anchor;

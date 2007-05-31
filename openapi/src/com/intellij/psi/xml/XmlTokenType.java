@@ -79,7 +79,6 @@ public interface XmlTokenType {
   IElementType XML_CHAR_ENTITY_REF = new IXmlLeafElementType("XML_CHAR_ENTITY_REF");
 
   IElementType XML_BAD_CHARACTER = new IXmlLeafElementType("XML_BAD_CHARACTER");
-  IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 
   TokenSet COMMENTS = TokenSet.create(XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END);
   TokenSet WHITESPACES = TokenSet.create(XML_WHITE_SPACE);

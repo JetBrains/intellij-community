@@ -1,45 +1,28 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.DefaultRoleFinder;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlChildRole {
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
     public ASTNode findChild(@NotNull ASTNode parent) {
-      //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
-      ASTNode current = parent.getFirstChildNode();
-      IElementType elementType;
-      while(current != null
-            && (elementType = current.getElementType()) != XmlTokenType.XML_NAME
-            && elementType != XmlTokenType.XML_TAG_NAME){
-        current = current.getTreeNext();
-      }
-      return current;
+      final PsiElement element = XmlTagUtil.getStartTagNameElement((XmlTag)parent.getPsi());
+      return element == null ? null : element.getNode();
     }
   };
 
   RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
     @Nullable
     public ASTNode findChild(@NotNull ASTNode parent) {
-      ASTNode current = parent.getLastChildNode();
-      ASTNode prev = current;
-
-      while(current != null){
-        final IElementType elementType = prev.getElementType();
-        if((elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME) && current.getElementType() == XmlTokenType.XML_END_TAG_START) {
-          return prev;
-        }
-
-        prev = current;
-        current = current.getTreePrev();
-      }
-      return current;
+      final PsiElement element = XmlTagUtil.getEndTagNameElement((XmlTag)parent.getPsi());
+      return element == null ? null : element.getNode();
     }
   };
 

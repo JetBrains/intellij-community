@@ -77,4 +77,5 @@ public interface XmlElementType extends XmlTokenType {
       return true;
     }
   };
+  IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 }

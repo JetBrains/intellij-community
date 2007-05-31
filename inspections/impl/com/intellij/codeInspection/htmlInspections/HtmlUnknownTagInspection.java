@@ -9,15 +9,15 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.lang.ASTNode;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -186,16 +186,13 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
             new AddCutomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
           final String message = XmlErrorMessages.message("unknown.html.tag", name);
 
-          final ASTNode node = tag.getNode();
-          assert node != null;
+          final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
+          final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-          final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
-          final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(node);
-
-          holder.registerProblem(startTagName.getPsi(), message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
+          holder.registerProblem(startTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
 
           if (endTagName != null) {
-            holder.registerProblem(endTagName.getPsi(), message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
+            holder.registerProblem(endTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
           }
         }
       }

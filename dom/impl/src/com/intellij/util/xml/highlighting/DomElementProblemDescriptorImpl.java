@@ -5,7 +5,6 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,11 +12,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,11 +150,9 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   private static Pair<TextRange, PsiElement> createTagNameRange(final XmlTag tag) {
-    final ASTNode node = tag.getNode();
-    assert node != null;
-    final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
-    assert startNode != null;
-    return Pair.create(startNode.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
+    final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
+    assert startToken != null;
+    return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
   }
 
   public String toString() {

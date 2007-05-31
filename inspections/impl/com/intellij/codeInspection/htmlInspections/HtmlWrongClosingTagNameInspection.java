@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class HtmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspec
       final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
 
       final RenameTagBeginOrEndIntentionAction action1 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tokenParent, token, tagName, tokenText, false);
-      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tag, (XmlToken)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()), tokenText, tagName, true);
+      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tag, XmlTagUtil.getStartTagNameElement(tag), tokenText, tagName, true);
 
       holder.registerProblem(token, XmlErrorMessages.message("wrong.closing.tag.name"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              new RemoveExtraClosingTagIntentionAction(token), action1, action2);
@@ -71,8 +72,7 @@ public class HtmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspec
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action1, action2));
       }
       else {
-        final ASTNode startTagNameNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(astNode);
-        holder.registerProblem(startTagNameNode.getPsi(), XmlErrorMessages.message("tag.has.wrong.closing.tag.name"),
+        holder.registerProblem(XmlTagUtil.getStartTagNameElement(tag), XmlErrorMessages.message("tag.has.wrong.closing.tag.name"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action1, action2);
       }
     }

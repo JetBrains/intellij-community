@@ -14,6 +14,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.util.XmlTagUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +117,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   public TextRange getRangeToFold(PsiElement element) {
     if (element instanceof XmlTag) {
       final ASTNode tagNode = element.getNode();
-      ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagNode);
+      XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement((XmlTag)element);
       if (tagNameElement == null) return null;
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();
