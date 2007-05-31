@@ -25,14 +25,14 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
 
   @Nullable
   public T generate(final Project project, final Editor editor, final PsiFile file) {
-    return generate(getParentDomElement(project, editor, file));
+    return generate(getParentDomElement(project, editor, file), editor);
   }
 
   @Nullable
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
   @Nullable
-  public T generate(@Nullable final DomElement parent) {
+  public T generate(@Nullable final DomElement parent, final Editor editor) {
     if (parent != null) {
       final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
 
