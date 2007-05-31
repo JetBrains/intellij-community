@@ -561,10 +561,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               }
               catch (Throwable t) {
                 handleInitComponentError(t, componentInstance == null, componentKey.toString());
-                if (componentInstance == null) {
-                  System.exit(1);
-                }
-
               }
               return componentInstance;
             }
