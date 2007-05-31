@@ -120,7 +120,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
 
-      return PsiUtil.boxPrimitiveType(result, manager, refExpr.getResolveScope());
+      return PsiUtil.boxPrimitiveTypeAndEraseGenerics(result, manager, refExpr.getResolveScope());
     }
   }
 

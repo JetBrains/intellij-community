@@ -48,7 +48,7 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
       PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
       if (resolved instanceof PsiMethod && resolved.getCopyableUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
         PsiType returnType = ((PsiMethod) resolved).getReturnType();
-        return PsiUtil.boxPrimitiveType(returnType, getManager(), getResolveScope());
+        return PsiUtil.boxPrimitiveTypeAndEraseGenerics(returnType, getManager(), getResolveScope());
       }
     }
 

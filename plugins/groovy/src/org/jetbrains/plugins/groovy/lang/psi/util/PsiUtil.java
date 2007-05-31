@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.impl.PsiManagerEx;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -65,7 +64,7 @@ public class PsiUtil {
     return false;
   }
 
-  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiType boxPrimitiveTypeAndEraseGenerics(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
     if (result instanceof PsiPrimitiveType) {
       PsiPrimitiveType primitive = (PsiPrimitiveType) result;
       String boxedTypeName = primitive.getBoxedTypeName();
@@ -74,7 +73,7 @@ public class PsiUtil {
       }
     }
 
-    return result;
+    return TypeConversionUtil.erasure(result);
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method) {
@@ -100,8 +99,7 @@ public class PsiUtil {
           }
       }
       parameterTypeToCheck =
-          boxPrimitiveType(parameterTypeToCheck, method.getManager(), method.getResolveScope());
-      parameterTypeToCheck = TypeConversionUtil.erasure(parameterTypeToCheck);
+          boxPrimitiveTypeAndEraseGenerics(parameterTypeToCheck, method.getManager(), method.getResolveScope());
       if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
 
