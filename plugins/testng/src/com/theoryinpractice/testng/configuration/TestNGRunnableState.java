@@ -10,7 +10,10 @@ import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
@@ -38,9 +41,8 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
-import com.theoryinpractice.testng.util.TestNGUtil;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
-import edu.emory.mathcs.backport.java.util.Queue;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
@@ -151,7 +153,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     // Add plugin jars first...
     javaParameters.getClassPath().add(new File(PathManager.getPreinstalledPluginsPath(), "testng/lib/testng.jar").getPath());
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
-                                      PathUtil.getJarPathForClass(Queue.class));//testng-jdk14.jar
+                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
