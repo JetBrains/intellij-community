@@ -16,13 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
@@ -42,6 +48,16 @@ public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap
     if (isMapLiteral()) {
       return getManager().getElementFactory().createTypeByFQClassName("java.util.Map", getResolveScope());
     }
+
+    PsiElement parent = getParent();
+    if (parent.getParent() instanceof GrVariableDeclaration) {
+      GrTypeElement typeElement = ((GrVariableDeclaration) parent.getParent()).getTypeElementGroovy();
+      if (typeElement != null) {
+        PsiType declaredType = typeElement.getType();
+        if (declaredType instanceof PsiArrayType) return declaredType;
+      }
+    }
+
     return getManager().getElementFactory().createTypeByFQClassName("java.util.List", getResolveScope());
   }
 
