@@ -215,4 +215,7 @@ public interface GroovyTokenTypes {
   TokenSet IDENTIFIER_SET = TokenSet.create(mIDENT);
   TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
   TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL);
+
+  TokenSet ASSIGN_OP_SET = TokenSet.create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN,
+      mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
 }

@@ -21,8 +21,10 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -55,6 +57,10 @@ public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements 
       return exprs[1];
     }
     return null;
+  }
+
+  public IElementType getOperationToken() {
+    return findChildByType(GroovyTokenTypes.ASSIGN_OP_SET).getNode().getElementType();
   }
 
   public PsiType getType() {

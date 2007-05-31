@@ -20,19 +20,26 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 
 /**
  * @author ven
@@ -50,6 +57,43 @@ public class GroovyAnnotator implements Annotator {
       checkReferenceExpression(holder, (GrReferenceExpression) element);
     } else if (element instanceof GrTypeDefinition) {
       checkTypeDefinition(holder, (GrTypeDefinition) element);
+    } else if (element instanceof GrVariable) {
+      checkVariable(holder, (GrVariable) element);
+    } else if (element instanceof GrAssignmentExpression) {
+      checkAssignmentExpression((GrAssignmentExpression)element, holder);
+    }
+  }
+
+  private void checkAssignmentExpression(GrAssignmentExpression assignment, AnnotationHolder holder) {
+    IElementType opToken = assignment.getOperationToken();
+    if (opToken == GroovyTokenTypes.mASSIGN) {
+      GrExpression lValue = assignment.getLValue();
+      GrExpression rValue = assignment.getRValue();
+      if (lValue != null && rValue != null) {
+        PsiType lType = lValue.getType();
+        PsiType rType = rValue.getType();
+        if (lType != null && rType != null) {
+          checkAssignability(holder, lType, rType, rValue);
+        }
+      }
+    }
+  }
+
+  private void checkVariable(AnnotationHolder holder, GrVariable element) {
+    GrVariable var = (GrVariable) element;
+    PsiType varType = var.getType();
+    GrExpression initializer = var.getInitializerGroovy();
+    if (initializer != null) {
+      PsiType rType = initializer.getType();
+      if (rType != null) {
+        checkAssignability(holder, varType, rType, initializer);
+      }
+    }
+  }
+
+  private void checkAssignability(AnnotationHolder holder, @NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement element) {
+    if (!TypesUtil.isAssignable(lType, rType)) {
+      holder.createWarningAnnotation(element, GroovyBundle.message("cannot.assign", rType.getInternalCanonicalText(), lType.getInternalCanonicalText()));
     }
   }
 
@@ -76,7 +120,7 @@ public class GroovyAnnotator implements Annotator {
       }
     } else {
       if (refExpr.getQualifierExpression() == null) {
-        GrMethod method = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class); //todo for static fields as well
+        PsiModifierListOwner method = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class); //todo for static fields as well
         if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

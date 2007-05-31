@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.tree.IElementType;
+
 /**
  * @author ilyas
  */
@@ -24,4 +26,5 @@ public interface GrAssignmentExpression extends GrExpression {
 
   public GrExpression getRValue();
 
+  IElementType getOperationToken();
 }

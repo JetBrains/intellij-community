@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -49,4 +52,20 @@ public class TypesUtil {
     RANK_TO_TYPE.put(8, "java.lang.Double");
   }
 
+  public static boolean isAssignable(PsiType lType, PsiType rType) {
+    //all numeric types are assignable
+    if (isNumericType(lType) && isNumericType(rType)) return true;
+    if (lType.equalsToText("java.lang.String") || rType.equalsToText("java.lang.String")) return true; //need to parse string value?
+    
+    return TypeConversionUtil.isAssignable(lType, rType);
+  }
+
+  private static boolean isNumericType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      return TYPE_TO_RANK.contains(type.getCanonicalText());
+    }
+
+    return type instanceof PsiPrimitiveType &&
+           TypeConversionUtil.isNumericType(type);
+  }
 }
