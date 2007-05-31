@@ -7,16 +7,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.wagon.events.TransferEvent;
-import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.Tree;
 
-import java.io.File;
 import java.util.*;
 
 public class MavenProjectModel {
@@ -24,16 +20,12 @@ public class MavenProjectModel {
 
   private final List<Node> rootProjects = new ArrayList<Node>();
 
-  private final MavenEmbedder mavenEmbedder;
+  private final MavenProjectReader myProjectReader;
 
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
                            final Collection<VirtualFile> importRoots,
-                           final MavenEmbedder embedder) {
-    mavenEmbedder = embedder;
-
-    if (mavenEmbedder == null) {
-      return;
-    }
+                           final MavenProjectReader projectReader) {
+    this.myProjectReader = projectReader;
 
     Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
 
@@ -46,11 +38,11 @@ public class MavenProjectModel {
     }
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(ProjectBundle.message("maven.reading.pom"));
-    }
 
     while (fileToModule.size() != 0) {
+      if (indicator != null && indicator.isCanceled()) {
+        break;
+      }
       final MavenProjectModel.Node node = createMavenTree(fileToModule.keySet().iterator().next(), fileToModule, false);
       if (node != null) {
         rootProjects.add(node);
@@ -64,20 +56,20 @@ public class MavenProjectModel {
 
   @Nullable
   private Node createMavenTree(@NotNull VirtualFile pomFile, final Map<VirtualFile, Module> unprocessedFiles, boolean imported) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      if(indicator.isCanceled()) {
-        return null;
-      }
-      indicator.setText2(FileUtil.toSystemDependentName(pomFile.getPath()));
-    }
-
     final Module linkedModule = unprocessedFiles.get(pomFile);
     unprocessedFiles.remove(pomFile);
 
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null && indicator.isCanceled()) {
+      return null;
+    }
+    if (indicator != null) {
+      indicator.setText(ProjectBundle.message("maven.reading.pom", FileUtil.toSystemDependentName(pomFile.getPath())));
+    }
+
     MavenProject mavenProject;
     try {
-      mavenProject = mavenEmbedder.readProjectWithDependencies(new File(pomFile.getPath()), createTransferListener());
+      mavenProject = myProjectReader.readBare(pomFile.getPath());
     }
     catch (Exception e) {
       LOG.info(e);
@@ -94,6 +86,9 @@ public class MavenProjectModel {
     final Node node = new Node(pomFile, mavenProject, imported ? null : linkedModule);
 
     for (Object moduleName : mavenProject.getModules()) {
+      if (indicator != null && indicator.isCanceled()) {
+        return null;
+      }
       VirtualFile childFile = getMavenModuleFile(pomFile, (String)moduleName);
       if (childFile != null) {
         final Node existingRoot = findExistingRoot(childFile);
@@ -115,6 +110,22 @@ public class MavenProjectModel {
     return node;
   }
 
+  public void resolve() {
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    visit(new MavenProjectVisitorPlain() {
+      public void visit(final Node node) {
+        if (progressIndicator != null) {
+          if (progressIndicator.isCanceled()) {
+            setResult(node);
+            return;
+          }
+          progressIndicator.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
+        }
+        node.resolve();
+      }
+    });
+  }
+
   @Nullable
   private static VirtualFile getMavenModuleFile(VirtualFile parent, String name) {
     //noinspection ConstantConditions
@@ -134,47 +145,6 @@ public class MavenProjectModel {
         return null;
       }
     });
-  }
-
-  private static TransferListener createTransferListener() {
-    return new TransferListener() {
-      @Nullable final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
-      int counter = 0;
-      String path;
-
-      public void transferInitiated(TransferEvent event) {
-      }
-
-      public void transferStarted(TransferEvent event) {
-        path = FileUtil.toSystemDependentName(event.getLocalFile().getPath());
-        counter = 0;
-        setText();
-      }
-
-      private void setText() {
-        if (indicator != null) {
-          indicator.setText2(ProjectBundle.message("maven.transfer.progress", counter, path));
-        }
-      }
-
-      public void transferProgress(TransferEvent event, byte[] bytes, int i) {
-        counter += i;
-        setText();
-      }
-
-      public void transferCompleted(TransferEvent event) {
-        if (indicator != null) {
-          indicator.setText2("");
-        }
-      }
-
-      public void transferError(TransferEvent event) {
-      }
-
-      public void debug(String s) {
-      }
-    };
   }
 
   abstract static class MavenProjectVisitor<Result> extends Tree.VisitorAdapter<Node, Result> {
@@ -203,7 +173,7 @@ public class MavenProjectModel {
   public class Node {
 
     @NotNull final private VirtualFile pomFile;
-    @NotNull final private MavenProject mavenProject;
+    @NotNull private MavenProject mavenProject;
     private Module linkedModule;
 
     private boolean included = true;
@@ -258,6 +228,13 @@ public class MavenProjectModel {
 
     public void unlinkModule() {
       linkedModule = null;
+    }
+
+    public void resolve() {
+      final MavenProject resolved = myProjectReader.readResolved(getPath());
+      if (resolved != null) {
+        mavenProject = resolved;
+      }
     }
   }
 }

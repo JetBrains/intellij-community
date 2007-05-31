@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.core.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -39,6 +39,9 @@ public class FileFinder {
                                                         final ProgressIndicator indicator,
                                                         final boolean lookForNested) {
     for (VirtualFile file : files) {
+      if (indicator != null && indicator.isCanceled()) {
+        break;
+      }
       if (fileIndex != null && fileIndex.isIgnored(file)) {
         continue;
       }
@@ -53,6 +56,9 @@ public class FileFinder {
       }
     }
     for (VirtualFile file : files) {
+      if (indicator != null && indicator.isCanceled()) {
+        break;
+      }
       if (fileIndex != null && fileIndex.isIgnored(file)) {
         continue;
       }
@@ -64,15 +70,15 @@ public class FileFinder {
   }
 
   public static VirtualFile refreshRecursively(final String path) {
-    final Ref<VirtualFile> dir = new Ref<VirtualFile>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        dir.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
-        if (!dir.isNull()) {
-          dir.get().refresh(false, true);
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @SuppressWarnings({"ConstantConditions"})
+      public VirtualFile compute() {
+        final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        if (dir != null ) {
+          dir.refresh(false, true);
         }
+        return dir;
       }
     });
-    return dir.get();
   }
 }

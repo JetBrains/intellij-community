@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -62,11 +61,10 @@ class MavenImportRootStep extends ProjectImportWizardStep {
 
   public void updateDataModel() {
     myImporterPreferencesForm.getData(myImporterPreferences);
-    myImportContext.createMavenProjectModel(FileUtil.toSystemDependentName(myRootPathComponent.getPath()));
   }
 
   public boolean validate() {
-    return myRootPathComponent.getPath() != null && new File(myRootPathComponent.getPath()).exists();
+    return myImportContext.createMavenProjectModel(myRootPathComponent.getPath());
   }
 
   public void updateStep() {
