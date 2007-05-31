@@ -117,7 +117,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
     for(PsiElement element: elementsToDelete) {
       try {
-        element.delete();
+        if (element.isValid()) {
+          element.delete();
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
