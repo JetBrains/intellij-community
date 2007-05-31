@@ -161,7 +161,6 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       }
       if (psiElementAfter != null &&
               psiElementAfter.getNode() != null) {
-//        psiElementAfter.getNode().addChild(whiteSpace.getNode());
         addAfter(ourImportStatement, psiElementAfter);
       } else {
         addBefore(ourImportStatement, getFirstChild());
@@ -182,5 +181,8 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   }
 
 
+  public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Cannot be replaced as AST node");
+  }
 }
 

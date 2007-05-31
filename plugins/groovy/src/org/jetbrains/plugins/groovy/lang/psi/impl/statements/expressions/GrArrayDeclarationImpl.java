@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -23,12 +24,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrArrayDeclaration {
+public class GrArrayDeclarationImpl extends GrExpressionImpl implements GrArrayDeclaration {
   public GrArrayDeclarationImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Array declaration";
+  }
+
+  public PsiType getType() {
+    return null;
   }
 }

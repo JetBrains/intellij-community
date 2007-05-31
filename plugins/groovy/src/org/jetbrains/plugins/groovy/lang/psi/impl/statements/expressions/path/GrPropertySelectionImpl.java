@@ -20,11 +20,12 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrPropertySelectionImpl extends GroovyPsiElementImpl implements GrPropertySelection {
+public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPropertySelection {
 
   public GrPropertySelectionImpl(@NotNull ASTNode node) {
     super(node);

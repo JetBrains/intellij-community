@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrBinaryExpressionImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
+public class GrBinaryExpressionImpl extends GrExpressionImpl implements GrBinaryExpression {
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);

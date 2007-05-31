@@ -20,11 +20,12 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrUnaryExprImpl extends GroovyPsiElementImpl implements GrUnaryExpression {
+public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpression {
 
   public GrUnaryExprImpl(@NotNull ASTNode node) {
     super(node);

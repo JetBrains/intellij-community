@@ -20,11 +20,12 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrRegexImpl extends GroovyPsiElementImpl implements GrRegex {
+public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
 
   public GrRegexImpl(@NotNull ASTNode node) {
     super(node);

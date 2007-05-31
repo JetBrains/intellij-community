@@ -19,7 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 /**
  * @author ilyas
  */
-public class GrThisReferenceExpressionImpl extends GroovyPsiElementImpl implements GrThisReferenceExpression {
+public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements GrThisReferenceExpression {
   public GrThisReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }

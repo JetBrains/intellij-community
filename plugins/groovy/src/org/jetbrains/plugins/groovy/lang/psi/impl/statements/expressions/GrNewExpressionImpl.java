@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 /**
  * @author ilyas
  */
-public class GrNewExpressionImpl extends GroovyPsiElementImpl implements GrNewExpression {
+public class GrNewExpressionImpl extends GrExpressionImpl implements GrNewExpression {
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }

@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrParenthesizedExprImpl extends GroovyPsiElementImpl implements GrParenthesizedExpr {
+public class GrParenthesizedExprImpl extends GrExpressionImpl implements GrParenthesizedExpr {
 
   public GrParenthesizedExprImpl(@NotNull ASTNode node) {
     super(node);

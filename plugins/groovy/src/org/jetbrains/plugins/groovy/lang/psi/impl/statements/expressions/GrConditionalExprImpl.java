@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrConditionalExprImpl extends GroovyPsiElementImpl implements GrConditionalExpression {
+public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditionalExpression {
 
   public GrConditionalExprImpl(@NotNull ASTNode node) {
     super(node);

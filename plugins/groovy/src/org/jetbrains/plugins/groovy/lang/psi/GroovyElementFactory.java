@@ -17,9 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
@@ -44,6 +48,12 @@ public abstract class GroovyElementFactory {
    * @return new line psi element
    */
   public abstract PsiElement createWhiteSpace();
+
+  public abstract PsiElement createNewLine();
+
+  public abstract GrReferenceExpression createReferenceExpressionFromText(String idText);
+
+  public abstract GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal);
 
   public abstract PsiElement createIdentifierFromText(String idText);
 

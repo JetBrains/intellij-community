@@ -21,13 +21,14 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
  */
-public class GrLiteralImpl extends GroovyPsiElementImpl implements GrLiteral {
+public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
 
   public GrLiteralImpl(@NotNull ASTNode node) {
     super(node);

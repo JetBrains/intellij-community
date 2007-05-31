@@ -14,7 +14,7 @@ import com.intellij.psi.PsiType;
 /**
  * @author ilyas
  */
-public class GrSuperReferenceExpressionImpl extends GroovyPsiElementImpl implements GrSuperReferenceExpression {
+public class GrSuperReferenceExpressionImpl extends GrExpressionImpl implements GrSuperReferenceExpression {
   public GrSuperReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }

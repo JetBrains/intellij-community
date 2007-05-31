@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrApplicationExpressionImpl extends GroovyPsiElementImpl implements GrApplicationExpression {
+public class GrApplicationExpressionImpl extends GrExpressionImpl implements GrApplicationExpression {
 
   public GrApplicationExpressionImpl(@NotNull ASTNode node) {
     super(node);

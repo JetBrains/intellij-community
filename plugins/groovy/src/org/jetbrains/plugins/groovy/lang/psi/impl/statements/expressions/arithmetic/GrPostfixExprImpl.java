@@ -20,11 +20,12 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrPostfixExprImpl extends GroovyPsiElementImpl implements GrPostfixExpression {
+public class GrPostfixExprImpl extends GrExpressionImpl implements GrPostfixExpression {
 
   public GrPostfixExprImpl(@NotNull ASTNode node) {
     super(node);

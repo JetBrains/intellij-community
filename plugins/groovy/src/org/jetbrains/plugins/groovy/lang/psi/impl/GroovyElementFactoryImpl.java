@@ -56,6 +56,11 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
   }
 
+  public GrReferenceExpression createReferenceExpressionFromText(String idText) {
+    PsiFile file = createGroovyFile(idText);
+    return (GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0];
+  }
+
   public GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
     StringBuffer text = new StringBuffer();
     text.append("def ");
@@ -63,8 +68,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       text.append("final ");
     }
     if (type != null) {
-      text.append(type.getPresentableText());
+      text.append(type.getPresentableText()).append(" ");
     }
+    text.append(identifier);
     text.append("=").append(initializer.getText());
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFile) file).getTopStatements()[0]);
@@ -124,6 +130,12 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   public PsiElement createWhiteSpace() {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         " ");
+    return dummyFile.getFirstChild();
+  }
+
+  public PsiElement createNewLine() {
+        PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+        "\n");
     return dummyFile.getFirstChild();
   }
 

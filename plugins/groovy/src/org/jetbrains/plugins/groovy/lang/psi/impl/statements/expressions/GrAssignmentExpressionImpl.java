@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 /**
  * @author ilyas
  */
-public class GrAssignmentExpressionImpl extends GroovyPsiElementImpl implements GrAssignmentExpression {
+public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAssignmentExpression {
 
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);

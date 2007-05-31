@@ -20,11 +20,12 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrStringImpl extends GroovyPsiElementImpl implements GrString {
+public class GrStringImpl extends GrExpressionImpl implements GrString {
 
   public GrStringImpl(@NotNull ASTNode node) {
     super(node);

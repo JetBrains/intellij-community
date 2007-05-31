@@ -72,7 +72,9 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    if (right.getElementType() == kIMPORT && left.getElementType() != mWS) return MUST_LINE_BREAK;
+    if (right.getElementType() == kIMPORT && left.getElementType() != mWS){
+      return MUST_LINE_BREAK;
+    }
     return MAY;
   }
 }

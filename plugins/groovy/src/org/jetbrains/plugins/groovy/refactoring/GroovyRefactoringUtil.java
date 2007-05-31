@@ -21,7 +21,10 @@ import com.intellij.lang.Language;
 import com.intellij.util.ReflectionCache;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -79,19 +82,30 @@ public abstract class GroovyRefactoringUtil {
 
   private static void accumulateOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
     for (PsiElement child : scope.getChildren()) {
-      if (PsiEquivalenceUtil.areElementsEquivalent(child, expr)) {
-        acc.add(child);
-      } else {
-        accumulateOccurences(expr, child, acc);
+      if (!(child instanceof GrTypeDefinition) &&
+          !(child instanceof GrMethod && scope instanceof GroovyFile)) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr)) {
+          acc.add(child);
+        } else {
+          accumulateOccurences(expr, child, acc);
+        }
       }
     }
   }
 
   // todo add type hierarchy
-  public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type){
-    HashMap<String,  PsiType> map = new HashMap<String, PsiType>();
+  public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
+    HashMap<String, PsiType> map = new HashMap<String, PsiType>();
     map.put(type.getPresentableText(), type);
     return map;
+  }
+
+  public static GrExpression getUnparenthesizedExpr(GrExpression expr){
+    GrExpression operand = expr;
+    while (operand instanceof GrParenthesizedExpr){
+      operand = ((GrParenthesizedExpr) operand).getOperand();
+    }
+    return operand;
   }
 
 }

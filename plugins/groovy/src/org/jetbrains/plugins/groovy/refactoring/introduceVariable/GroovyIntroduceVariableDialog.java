@@ -76,7 +76,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   @Nullable
   public String getEnteredName() {
     // todo add validator!
-    if (myNameSelector.getSelectedItem() instanceof String) {
+    if (myNameSelector.getSelectedItem() instanceof String &&
+        ((String) myNameSelector.getSelectedItem()).length() > 0) {
       return (String) myNameSelector.getSelectedItem();
     } else {
       return "preved";
@@ -92,7 +93,11 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   }
 
   public PsiType getSelectedType() {
-    return myTypeMap.get(myTypeSelector.getSelectedItem());
+    if (!myCbTypeSpec.isSelected()) {
+      return null;
+    } else {
+      return myTypeMap.get(myTypeSelector.getSelectedItem());
+    }
   }
 
   private void setUpDialog() {
@@ -116,7 +121,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
     // Replace occurences
     if (myOccurrencesCount > 1) {
-      myCbReplaceAllOccurences.setSelected(true);
+      myCbReplaceAllOccurences.setSelected(false);
       myCbReplaceAllOccurences.setEnabled(true);
       myCbReplaceAllOccurences.setText(myCbReplaceAllOccurences.getText() + " (" + myOccurrencesCount + " occurences)");
     } else {

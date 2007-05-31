@@ -27,13 +27,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
  */
-public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCall {
+public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);

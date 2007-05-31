@@ -16,9 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 
 /**
- * @author ilyas, Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  */
 public interface GroovyPsiElement extends PsiElement {
+
+  public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException;
+
 }

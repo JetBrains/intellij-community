@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -81,5 +82,15 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
 
     return dialog;
   }
+
+  protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {
+    if (editor == null) return;
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
+    WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+  }
+
 
 }
