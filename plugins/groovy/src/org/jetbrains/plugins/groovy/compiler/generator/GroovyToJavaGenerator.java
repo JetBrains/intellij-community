@@ -362,7 +362,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
       } else {
         if (isClassDef) {
           text.append("extends ");
-          text.append("groovy.lang.GroovyObjectSupport");
+          text.append(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
         }
       }
 

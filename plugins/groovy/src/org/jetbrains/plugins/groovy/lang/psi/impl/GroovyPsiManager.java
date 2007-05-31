@@ -104,15 +104,12 @@ public class GroovyPsiManager implements ProjectComponent {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         LOG.assertTrue(parameters.length > 0);
         PsiType thisType = parameters[0].getType();
-        if (!(thisType instanceof PsiClassType)) continue;
-        PsiClass resolved = ((PsiClassType) thisType).resolve();
-        if (resolved == null) continue;
-        String thisQName = resolved.getQualifiedName();
-        LOG.assertTrue(thisQName != null);
-        List<PsiMethod> hisMethods = myDefaultMethods.get(thisQName);
+        String thisCanonicalText = thisType.getCanonicalText();
+        LOG.assertTrue(thisCanonicalText != null);
+        List<PsiMethod> hisMethods = myDefaultMethods.get(thisCanonicalText);
         if (hisMethods == null) {
           hisMethods = new ArrayList<PsiMethod>();
-          myDefaultMethods.put(thisQName, hisMethods);
+          myDefaultMethods.put(thisCanonicalText, hisMethods);
         }
         hisMethods.add(convertToNonStatic(method));
       }

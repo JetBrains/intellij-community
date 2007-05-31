@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -193,15 +194,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
 
     private void processClassQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType qualifierType) {
+      Project project = refExpr.getProject();
       if (qualifierType instanceof PsiClassType) {
         PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
         if (qualifierClass != null) {
-          qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
-          if (!(qualifierClass instanceof GrTypeDefinition)) {
-            ResolveUtil.processDefaultMethods(qualifierClass, processor);
-          }
+          if (!qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+        }
+      } else if (qualifierType instanceof PsiArrayType) {
+        PsiManager manager = PsiManager.getInstance(project);
+        PsiClass baseClass = manager.findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
+        if (baseClass != null) {
+          if (!baseClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+          PsiClassType baseType = manager.getElementFactory().createType(baseClass);
+          if (!ResolveUtil.processDefaultMethods(baseType, processor, project)) return;
         }
       }
+
+      ResolveUtil.processDefaultMethods(qualifierType, processor, project);
     }
   }
 
@@ -338,26 +347,34 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else {
+      Project project = qualifier.getProject();
       if (qualifierType instanceof PsiIntersectionType) {
         for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
-          getVaiantsFromClassQualifier(processor, conjunct);
+          getVaiantsFromQualifierType(processor, conjunct, project);
          }
       } else {
-        getVaiantsFromClassQualifier(processor, qualifierType);
+        getVaiantsFromQualifierType(processor, qualifierType, project);
       }
     }
   }
 
-  private void getVaiantsFromClassQualifier(ResolverProcessor processor, PsiType qualifierType) {
+  private void getVaiantsFromQualifierType(ResolverProcessor processor, PsiType qualifierType, Project project) {
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
       if (qualifierClass != null) {
         qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
-        if (!(qualifierClass instanceof GrTypeDefinition)) {
-          ResolveUtil.processDefaultMethods(qualifierClass, processor);
-        }
+      }
+    } else if (qualifierType instanceof PsiArrayType) {
+      PsiManager manager = PsiManager.getInstance(project);
+      PsiClass baseClass = manager.findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope());
+      if (baseClass != null) {
+        if (!baseClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this)) return;
+        PsiClassType baseType = manager.getElementFactory().createType(baseClass);
+        if (!ResolveUtil.processDefaultMethods(baseType, processor, project)) return;
       }
     }
+
+    ResolveUtil.processDefaultMethods(qualifierType, processor, project);
   }
 
   public boolean isSoft() {

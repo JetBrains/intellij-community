@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
  * @date: 18.03.2007
  */
 public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion {
+  String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 

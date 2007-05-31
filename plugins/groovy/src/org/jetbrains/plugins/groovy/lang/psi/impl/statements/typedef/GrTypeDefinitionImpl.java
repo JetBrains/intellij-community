@@ -325,7 +325,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       }
       i = extendsRefs.length;
     } else if (!isInterface()) {
-      result[0] = getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope());
+      result[0] = getManager().getElementFactory().createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
       i = 1;
     }
 

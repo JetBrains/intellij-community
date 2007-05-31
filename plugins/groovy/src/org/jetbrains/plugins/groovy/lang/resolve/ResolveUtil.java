@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -108,22 +109,23 @@ public class ResolveUtil {
     return false;
   }
 
-  public static boolean processDefaultMethods(PsiClass clazz, PsiScopeProcessor processor) {
-    return processDefaultMethods(clazz, processor, new com.intellij.util.containers.HashSet<PsiClass>());
+  public static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project) {
+    return processDefaultMethods(type, processor, project, new HashSet<String>());
   }
 
-  private static boolean processDefaultMethods(PsiClass clazz, PsiScopeProcessor processor, Set<PsiClass> visited) {
-    if (visited.contains(clazz)) return true;
-    visited.add(clazz);
+  private static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project,  Set<String> visited) {
+    String qName = type.getCanonicalText();
 
-    String qName = clazz.getQualifiedName();
     if (qName != null) {
-      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(clazz.getProject()).getDefaultMethods(qName);
+      if (visited.contains(qName)) return true;
+      visited.add(qName);
+      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(project).getDefaultMethods(qName);
       for (PsiMethod defaultMethod : defaultMethods) {
         if (!processElement(processor, defaultMethod)) return false;
       }
-      for (PsiClass aSuper : clazz.getSupers()) {
-        processDefaultMethods(aSuper, processor, new HashSet<PsiClass>());
+
+      for (PsiType superType : type.getSuperTypes()) {
+        processDefaultMethods(superType, processor, project, visited);
       }
     }
 
