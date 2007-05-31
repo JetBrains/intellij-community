@@ -119,12 +119,12 @@ public final class IconLoader {
   @Nullable
   private static Icon findIcon(URL url) {
     if (url == null) return null;
-      Icon icon = ourIconsCache.get(url);
-      if (icon == null) {
-        icon = new CachedImageIcon(url);
-        icon = ourIconsCache.cacheOrGet(url, icon);
-      }
-      return icon;
+    Icon icon = ourIconsCache.get(url);
+    if (icon == null) {
+      icon = new CachedImageIcon(url);
+      icon = ourIconsCache.cacheOrGet(url, icon);
+    }
+    return icon;
   }
 
   @Nullable

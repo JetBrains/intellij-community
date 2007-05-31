@@ -28,8 +28,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
-                                                                                 PsiSubstitutor.EMPTY);
+        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
         PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
         if (found == null || !isAcceptable(found, method)) {

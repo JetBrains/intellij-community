@@ -16,7 +16,6 @@ import com.intellij.util.Query;
  */
 public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   public static OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
-  private static EmptyQuery<PsiMethod> EMPTY = new EmptyQuery<PsiMethod>();
 
   public static class SearchParameters {
     private final PsiMethod myMethod;
@@ -46,7 +45,7 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, SearchScope scope, final boolean checkDeep) {
-    if (cannotBeOverriden(method)) return EMPTY; // Optimization
+    if (cannotBeOverriden(method)) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
   }
 

@@ -16,8 +16,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,10 +24,11 @@ import java.util.List;
 public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   public boolean execute(final AllOverridingMethodsSearch.SearchParameters p, final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
-    final List<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(psiClass.getMethods()));
-    for (Iterator<PsiMethod> it = methods.iterator(); it.hasNext();) {
-      PsiMethod method = it.next();
-      if (!PsiUtil.canBeOverriden(method)) it.remove();
+
+    PsiMethod[] methodsArray = psiClass.getMethods();
+    final List<PsiMethod> methods = new ArrayList<PsiMethod>(methodsArray.length);
+    for (PsiMethod method : methodsArray) {
+      if (PsiUtil.canBeOverriden(method)) methods.add(method);
     }
 
     final SearchScope scope = p.getScope();
@@ -37,8 +36,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
         //could be null if not java inheritor, TODO only JavaClassInheritors are needed
-        PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor,
-                                                                            PsiSubstitutor.EMPTY);
+        PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
         if (substitutor == null) return true;
 
         for (PsiMethod method : methods) {

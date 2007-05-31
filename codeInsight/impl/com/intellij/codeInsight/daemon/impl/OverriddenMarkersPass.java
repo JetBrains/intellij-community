@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -22,15 +22,18 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private static final Icon OVERRIDEN_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
   private static final Icon IMPLEMENTED_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
-  private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
-  private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
+  private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IMPLEMENTED_METHOD_MARKER_RENDERER;
+  private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = OVERRIDEN_METHOD_MARKER_RENDERER;
 
   private final PsiFile myFile;
   private final int myStartOffset;
@@ -106,8 +109,9 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
 
   private static void collectOverridingMethods(final Set<PsiMethod> methods, Collection<LineMarkerInfo> result) {
     final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
-    Set<PsiClass> classes = new HashSet<PsiClass>();
+    Set<PsiClass> classes = new THashSet<PsiClass>();
     for (PsiMethod method : methods) {
+      ProgressManager.getInstance().checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
       if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
         classes.add(parentClass);

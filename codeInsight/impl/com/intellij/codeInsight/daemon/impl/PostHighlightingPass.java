@@ -49,7 +49,9 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -100,11 +102,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
 
-  public PostHighlightingPass(Project project, PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
+  public PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
     this(project, file, editor, editor.getDocument(), startOffset, endOffset);
   }
 
-  public PostHighlightingPass(Project project, PsiFile file, Document document, int startOffset, int endOffset) {
+  public PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
     this(project, file, null, document, startOffset, endOffset);
   }
 
@@ -391,13 +393,21 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
            SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, unusedSymbolInspection.INJECTION_ANNOS);
   }
 
+  private static boolean isOverriddenOrOverrides(PsiMethod method) {
+    boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    if (overrides) return true;
+
+    boolean overridden = OverridingMethodsSearch.search(method).findFirst() != null;
+    return overridden;
+  }
+
   @Nullable
   private HighlightInfo processParameter(PsiParameter parameter, final String displayName, final PsiIdentifier context) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
       if (PsiUtil.hasErrorElementChild(method)) return null;
-      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC))
+      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.ABSTRACT) && !isOverriddenOrOverrides(method))
           && !method.hasModifierProperty(PsiModifier.NATIVE)
           && !HighlightMethodUtil.isSerializationRelatedMethod(method)
           && !isMainMethod(method)

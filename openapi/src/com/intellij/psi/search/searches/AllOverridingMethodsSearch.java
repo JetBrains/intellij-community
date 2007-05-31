@@ -15,7 +15,6 @@ import com.intellij.util.Query;
  */
 public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   public static AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
-  private static EmptyQuery<Pair<PsiMethod, PsiMethod>> EMPTY = new EmptyQuery<Pair<PsiMethod, PsiMethod>>();
 
   public static class SearchParameters {
     private final PsiClass myClass;
@@ -39,7 +38,7 @@ public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiM
   }
 
   public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass, SearchScope scope) {
-    if (aClass.hasModifierProperty(PsiModifier.FINAL)) return AllOverridingMethodsSearch.EMPTY; // Optimization
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
