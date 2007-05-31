@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ShowDirectoryHistoryTest extends IntegrationTestCase {
+public class DirectoryHistoryDialogTest extends IntegrationTestCase {
   public void testDialogWorks() throws IOException {
     DirectoryHistoryDialog d = new DirectoryHistoryDialog(gateway, root);
-    d.dispose();
+    d.close(0);
   }
 
   public void testRevertion() throws Exception {

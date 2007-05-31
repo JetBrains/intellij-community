@@ -21,7 +21,7 @@ public class RecentChangeDialogTest extends IntegrationTestCase {
       d = new RecentChangeDialog(gateway, c);
     }
     finally {
-      if (d != null) d.dispose();
+      if (d != null) d.close(0);
     }
   }
 

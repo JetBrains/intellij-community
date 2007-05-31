@@ -9,12 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ShowFileHistoryTest extends IntegrationTestCase {
+public class FileHistoryDialogTest extends IntegrationTestCase {
   public void testDialogWorks() throws IOException {
     VirtualFile file = root.createChildData(null, "f.java");
 
     FileHistoryDialog d = new FileHistoryDialog(gateway, file);
-    d.dispose();
+    d.close(0);
   }
 
   public void testContentWhenOnlyOneRevisionSelected() throws IOException {

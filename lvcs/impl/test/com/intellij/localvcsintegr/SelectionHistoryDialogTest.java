@@ -5,12 +5,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ShowSelectionHistoryTest extends IntegrationTestCase {
+public class SelectionHistoryDialogTest extends IntegrationTestCase {
   public void testDialogWorks() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
     f.setBinaryContent("abc".getBytes());
 
     SelectionHistoryDialog d = new SelectionHistoryDialog(gateway, f, 0, 1);
-    d.dispose();
+    d.close(0);
   }
 }

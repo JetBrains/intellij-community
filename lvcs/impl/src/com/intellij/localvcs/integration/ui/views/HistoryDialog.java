@@ -69,7 +69,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   @Override
-  public void dispose() {
+  protected void dispose() {
     saveSplitterProportion();
     super.dispose();
   }

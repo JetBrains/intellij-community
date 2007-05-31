@@ -29,7 +29,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  public void dispose() {
+  protected void dispose() {
     myDiffPanel.dispose();
     super.dispose();
   }
