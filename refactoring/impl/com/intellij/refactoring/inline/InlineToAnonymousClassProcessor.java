@@ -170,10 +170,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         PsiField field = (PsiField) child;
         FieldInfo info = fieldMap.get(field);
         if (info == null || !info.replaceWithLocal) {
-          if (info != null && info.initializer != null && field.getInitializer() == null) {
+          boolean noInitializer = (field.getInitializer() == null);
+          field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
+          if (info != null && info.initializer != null && noInitializer) {
             field.setInitializer(info.initializer);
           }
-          anonymousClass.addBefore(field, anonymousClass.getRBrace());
         }
       }
     }
