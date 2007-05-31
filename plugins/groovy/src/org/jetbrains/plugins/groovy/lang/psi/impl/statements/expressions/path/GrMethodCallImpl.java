@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -46,7 +47,8 @@ public class GrMethodCallImpl extends GroovyPsiElementImpl implements GrMethodCa
     if (invoked instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
       if (resolved instanceof PsiMethod && resolved.getCopyableUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
-        return ((PsiMethod) resolved).getReturnType();
+        PsiType returnType = ((PsiMethod) resolved).getReturnType();
+        return PsiUtil.boxPrimitiveType(returnType, getManager(), getResolveScope());
       }
     }
 
