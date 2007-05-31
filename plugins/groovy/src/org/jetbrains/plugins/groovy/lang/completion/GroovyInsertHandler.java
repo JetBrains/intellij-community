@@ -15,14 +15,16 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.CaretModel;
@@ -36,18 +38,25 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
     Object obj = item.getObject();
     if (obj instanceof PsiMethod) {
-      PsiParameter[] parameters = ((PsiMethod) obj).getParameterList().getParameters();
+      PsiMethod method = (PsiMethod) obj;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.editor;
       Document document = editor.getDocument();
+      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+        handleOverwrite(editor.getCaretModel().getOffset(), document);
+      }
+
       if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //closure creation
       CaretModel caretModel = editor.getCaretModel();
-      int offset = caretModel.getOffset();
+      int offset = startOffset + method.getName().length();
       if (parameters.length == 0 || parameters.length > 1) {
-        document.insertString(offset, "()");
-        if (parameters.length > 0) {
-          caretModel.moveToOffset(offset + 1);
-        } else {
-          caretModel.moveToOffset(offset + 2);
+        if (document.getCharsSequence().charAt(offset) != '(') {
+          document.insertString(offset, "()");
+          if (parameters.length > 0) {
+            caretModel.moveToOffset(offset + 1);
+          } else {
+            caretModel.moveToOffset(offset + 2);
+          }
         }
       } else {
         PsiType paramType = parameters[0].getType();
@@ -62,6 +71,13 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     addTailType(item);
     super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
 
+  }
+
+  private void handleOverwrite(final int offset, final Document document) {
+    final CharSequence sequence = document.getCharsSequence();
+    int i = offset;
+    while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
+    document.deleteString(offset, i);
   }
 
   private void addTailType(LookupItem item) {
