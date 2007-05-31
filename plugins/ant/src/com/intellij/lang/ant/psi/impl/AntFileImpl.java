@@ -650,10 +650,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     synchronized (PsiLock.LOCK) {
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
-      myTypeDefinitions.remove(classname);
-      final String registeredClassName = myProjectElements.get(def.getTypeId());
-      if (registeredClassName != null && registeredClassName.equals(classname)) {
-        myProjectElements.remove(def.getTypeId());
+      if (myTypeDefinitions != null) {
+        myTypeDefinitions.remove(classname);
+      }
+      if (myProjectElements != null) {
+        final String registeredClassName = myProjectElements.get(def.getTypeId());
+        if (registeredClassName != null && registeredClassName.equals(classname)) {
+          myProjectElements.remove(def.getTypeId());
+        }
       }
       if (myTargetDefinition != null && myTargetDefinition != def) {
         myTargetDefinition = null;
