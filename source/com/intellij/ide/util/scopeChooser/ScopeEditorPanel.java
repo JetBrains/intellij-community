@@ -63,9 +63,15 @@ public class ScopeEditorPanel {
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private PanelProgressIndicator myCurrentProgress;
+  private NamedScopesHolder myHolder;
+
+  public ScopeEditorPanel(Project project) {
+    this(project, null);
+  }
 
   public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
     myProject = project;
+    myHolder = holder;
     myButtonsPanel.add(createActionsPanel());
 
     myPackageTree = new Tree(new RootNode());
@@ -79,7 +85,7 @@ public class ScopeEditorPanel {
 
     myTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
-        return myCurrentScope != null && myCurrentScope.contains(file, holder);
+        return myCurrentScope != null && myCurrentScope.contains(file, getHolder());
       }
     };
 
@@ -524,6 +530,10 @@ public class ScopeEditorPanel {
 
   public void clearCaches() {
     TreeModelBuilder.clearCaches(myProject);
+  }
+
+  public NamedScopesHolder getHolder() {
+    return myHolder;
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {

@@ -25,8 +25,12 @@ public class NamedPackageSetReference implements PackageSet {
   }
 
   public boolean contains(PsiFile file, NamedScopesHolder holder) {
-    NamedScope scope = holder.getScope(myName);
-    return scope != null && scope.getValue().contains(file, holder);
+    final NamedScope scope = holder.getScope(myName);
+    if (scope != null) {
+      final PackageSet packageSet = scope.getValue();
+      return packageSet != null && packageSet.contains(file, holder);
+    }
+    return false;
   }
 
   public PackageSet createCopy() {

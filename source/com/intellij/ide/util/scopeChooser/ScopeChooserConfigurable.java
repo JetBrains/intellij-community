@@ -43,10 +43,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -68,11 +65,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
   private NamedScopesHolder mySharedScopesManager;
 
   private Project myProject;
-
-  private MyNode myLocalScopesNode;
-  private MyNode mySharedScopesNode;
-
-  private int myTotalFilesCount = -1;
 
   public static ScopeChooserConfigurable getInstance(Project project) {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
@@ -104,14 +96,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     return result;
   }
 
-  public void disposeUIResources() {
-    super.disposeUIResources();
-    myLocalScopesNode = null;
-    mySharedScopesNode = null;
-    myTotalFilesCount = -1;
-  }
-
-
   public void reset() {
     reloadTree();
     super.reset();
@@ -120,66 +104,68 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
 
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
-    roots.add(myLocalScopesNode);
-    roots.add(mySharedScopesNode);
     if (canApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"))) {
       super.apply();
-      processScopes(myLocalScopesManager, myLocalScopesNode);
-      processScopes(mySharedScopesManager, mySharedScopesNode);
+      processScopes();
+      myState.order.clear();
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
+      for(int i = 0; i < node.getChildCount(); i++) {
+        myState.order.add(((MyNode)node.getChildAt(i)).getDisplayName());
+      }
     }
   }
 
   public boolean isModified() {
-    return super.isModified() || isScopesModified(myLocalScopesManager, myLocalScopesNode) ||
-           isScopesModified(mySharedScopesManager, mySharedScopesNode);
-  }
-
-  private static boolean isScopesModified(NamedScopesHolder holder, MyNode root) {
-    final NamedScope[] scopes = holder.getEditableScopes();
-    if (scopes.length != root.getChildCount()) return true;
-    for (int i = 0; i < root.getChildCount(); i++) {
-      final MyNode node = (MyNode)root.getChildAt(i);
-      final NamedScope namedScope = (NamedScope)node.getConfigurable().getEditableObject();
-      final NamedScope scope = scopes[i];
-      if (scope == null) return true;
-      if (!Comparing.strEqual(scope.getName(), namedScope.getName())) return true;
-      final PackageSet set = scope.getValue();
-      final PackageSet packageSet = namedScope.getValue();
-      if (packageSet == null && set != null) return true;
-      if (set == null && packageSet != null) return true;
-      if (set != null) {
-        if (!Comparing.strEqual(set.getText(), packageSet.getText())) return true;
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
+      final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
+      final NamedScope namedScope = scopeConfigurable.getEditableObject();
+      if (myState.order.size() <= i) return true;
+      final String name = myState.order.get(i);
+      if (!Comparing.strEqual(name, namedScope.getName())) return true;
+      if (isInitialized(scopeConfigurable)) {
+        final NamedScopesHolder holder = scopeConfigurable.getHolder();
+        final NamedScope scope = holder.getScope(name);
+        if (scope == null) return true;
+        if (scopeConfigurable.isModified()) return true;
       }
     }
     return false;
   }
 
-  private static void processScopes(NamedScopesHolder holder, MyNode root) {
-    holder.removeAllSets();
-    for (int i = 0; i < root.getChildCount(); i++) {
-      final MyNode node = (MyNode)root.getChildAt(i);
-      holder.addScope((NamedScope)node.getConfigurable().getEditableObject());
+  private void processScopes() {
+    myLocalScopesManager.removeAllSets();
+    mySharedScopesManager.removeAllSets();
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
+      final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
+      final NamedScope namedScope = scopeConfigurable.getEditableObject();
+      if (scopeConfigurable.getHolder() == myLocalScopesManager) {
+        myLocalScopesManager.addScope(namedScope);
+      } else {
+        mySharedScopesManager.addScope(namedScope);
+      }
     }
   }
 
   private void reloadTree() {
     myRoot.removeAllChildren();
-
-    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager), true);
-    loadScopes(myLocalScopesManager, myLocalScopesNode);
-    myRoot.add(myLocalScopesNode);
-
-    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager), true);
-    loadScopes(mySharedScopesManager, mySharedScopesNode);
-
-    myRoot.add(mySharedScopesNode);
+    loadScopes(mySharedScopesManager);
+    loadScopes(myLocalScopesManager);
+    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>(){
+      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
+        final int idx1 = myState.order.indexOf(((MyNode)o1).getDisplayName());
+        final int idx2 = myState.order.indexOf(((MyNode)o2).getDisplayName());
+        return idx1- idx2;
+      }
+    });
   }
 
-  private void loadScopes(final NamedScopesHolder holder, final MyNode localScopesNode) {
+  private void loadScopes(final NamedScopesHolder holder) {
     final NamedScope[] scopes = holder.getScopes();
     for (NamedScope scope : scopes) {
       if (isPredefinedScope(scope)) continue;
-      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, TREE_UPDATER)));
+      myRoot.add(new MyNode(new ScopeConfigurable(scope, holder == mySharedScopesManager, myProject, TREE_UPDATER)));
     }
   }
 
@@ -211,6 +197,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
       }
     });
     super.initTree();
+    myTree.setShowsRootHandles(false);
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
@@ -255,8 +242,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
   private String createUniqueName() {
     String str = InspectionsBundle.message("inspection.profile.unnamed");
     final HashSet<String> treeScopes = new HashSet<String>();
-    obtainCurrentScopes(treeScopes, myLocalScopesNode);
-    obtainCurrentScopes(treeScopes, mySharedScopesNode);
+    obtainCurrentScopes(treeScopes);
     if (!treeScopes.contains(str)) return str;
     int i = 1;
     while (true) {
@@ -265,21 +251,18 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     }
   }
 
-  private static void obtainCurrentScopes(final HashSet<String> scopes, final MyNode root) {
-    for (int i = 0; i < root.getChildCount(); i++) {
-      final MyNode node = (MyNode)root.getChildAt(i);
+  private void obtainCurrentScopes(final HashSet<String> scopes) {
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
       final NamedScope scope = (NamedScope)node.getConfigurable().getEditableObject();
       scopes.add(scope.getName());
     }
   }
 
   private void addNewScope(final NamedScope scope, final boolean isLocal) {
-    final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
-    final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope,
-                                                              myProject, holder, TREE_UPDATER));
-    final MyNode root = isLocal ? myLocalScopesNode : mySharedScopesNode;
-    root.add(nodeToAdd);
-    ((DefaultTreeModel)myTree.getModel()).reload(root);
+    final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, !isLocal, myProject, TREE_UPDATER));
+    myRoot.add(nodeToAdd);
+    ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     selectNodeInTree(nodeToAdd);
   }
 
@@ -417,9 +400,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     public void actionPerformed(AnActionEvent e) {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
-        MyNode parent = (MyNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
         final NamedScope newScope = scope.createCopy();
-        addNewScope(newScope, parent == myLocalScopesNode);
+        final ScopeConfigurable configurable = (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
+        addNewScope(newScope, configurable.getHolder() == myLocalScopesManager);
       }
     }
 
@@ -443,8 +426,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
           final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)configurable;
           PackageSet set = scopeConfigurable.getScope();
           if (set != null) {
-            MyNode parent = (MyNode)node.getParent();
-            if (parent == myLocalScopesNode) {
+            if (scopeConfigurable.getHolder() == mySharedScopesManager) {
               createScope(false, IdeBundle.message("scopes.save.dialog.title.shared"), set.createCopy());
             } else {
               createScope(true, IdeBundle.message("scopes.save.dialog.title.local"), set.createCopy());

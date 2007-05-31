@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.List;
 
 
 /**
@@ -52,9 +53,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   public static class UIState {
     public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
     public String lastEditedConfigurable;
+    public List<String> order = new ArrayList<String>();
   }
 
-  private UIState myState = new UIState();
+  protected UIState myState = new UIState();
 
   protected Runnable TREE_UPDATER = new Runnable() {
     public void run() {
@@ -241,6 +243,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   public void loadState(final UIState object) {
     myState.lastEditedConfigurable = object.lastEditedConfigurable;
     myState.proportions = object.proportions;
+    myState.order = object.order;
   }
 
   public void disposeUIResources() {
