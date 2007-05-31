@@ -21,6 +21,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
@@ -30,7 +31,7 @@ public class GroovyRefactoringSupportProvider implements RefactoringSupportProvi
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
   public boolean isSafeDeleteAvailable(PsiElement element) {
-    return false;
+    return element instanceof GrTypeDefinition;
   }
 
   /**
