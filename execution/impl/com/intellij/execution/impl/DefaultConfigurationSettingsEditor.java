@@ -44,7 +44,6 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
     final JPanel wholePanel = new JPanel(new BorderLayout());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
     wholePanel.add(pane, BorderLayout.WEST);
     final JPanel rightPanel = new JPanel(new BorderLayout());
     wholePanel.add(rightPanel, BorderLayout.CENTER);
