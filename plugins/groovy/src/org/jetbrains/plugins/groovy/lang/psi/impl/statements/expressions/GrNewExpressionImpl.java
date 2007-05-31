@@ -20,6 +20,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -37,9 +38,16 @@ public class GrNewExpressionImpl extends GroovyPsiElementImpl implements GrNewEx
   }
 
   public PsiType getType() {
+    PsiType type = null;
     GrTypeOrPackageReferenceElement refElement = getReferenceElement();
     if (refElement != null) {
-      PsiType type = new GrClassReferenceType(refElement);
+      type = new GrClassReferenceType(refElement);
+    } else {
+      GrBuiltInTypeElement builtin = findChildByClass(GrBuiltInTypeElement.class);
+      if (builtin != null) type = builtin.getType();
+    }
+
+    if (type != null) {
       for(int i = 0; i < getArrayCount(); i++) {
         type = type.createArrayType();
       }
