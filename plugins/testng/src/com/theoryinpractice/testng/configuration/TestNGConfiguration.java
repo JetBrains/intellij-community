@@ -30,6 +30,7 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.testng.xml.Parser;
 
 import java.util.Collection;
 import java.util.List;
@@ -121,6 +122,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         if (TestType.METHOD.getType().equals(data.TEST_OBJECT)) {
             return data.getMethodName() + "()";
         }
+        if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
+          return data.getSuiteName();
+        }
         return data.getGroupName();
     }
 
@@ -180,6 +184,13 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
             PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(data.getPackageName());
             if (psiPackage == null)
                 throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
+        } else if (data.TEST_OBJECT == TestType.SUITE.getType()) {
+          try {
+            new Parser(data.getSuiteName()).parse(); //try to parse suite.xml
+          }
+          catch (Exception e) {
+            throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
+          }
         }
         //TODO add various checks here
     }

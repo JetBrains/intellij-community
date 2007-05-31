@@ -223,7 +223,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
 
     Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
-    if (!fillTestObjects(classes, project)) return null;
+    fillTestObjects(classes, project);
 
     //if we have testclasses, then we're not running a suite and we have to create one
     //LaunchSuite suite = null;
@@ -288,9 +288,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       }
       catch (Exception e) {
-        ExecutionUtil.showExecutionErrorMessage(new CantRunException("Unable to parse suite: " + e.getMessage()),
-                                                "Can't Run " + config.getName(), project);
-        return null;
+        throw new CantRunException("Unable to parse suite: " + e.getMessage());
       }
     }
     // Configure for debugging
@@ -311,7 +309,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     return javaParameters;
   }
 
-  protected boolean fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project) throws CantRunException {
+  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project) throws CantRunException {
     final TestData data = config.getPersistantData();
     PsiManager psiManager = PsiManager.getInstance(project);
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
@@ -324,9 +322,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         TestClassFilter filter = getFilter(psiPackage);
         classes.putAll(calculateDependencies(data, true, TestNGUtil.getAllTestClasses(filter)));
         if (classes.size() == 0) {
-          ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the package \"" + packageName + '\"'),
-                                                  "Can't Run " + config.getName(), project);
-          return false;
+          throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
       }
     }
@@ -334,9 +330,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       //it's a class
       PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
-        ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"'),
-                                                "Can't Run " + config.getName(), project);
-        return false;
+        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(data, true, psiClass));
 
@@ -345,9 +339,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       //it's a method
       PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
-        ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"'),
-                                                "Can't Run " + config.getName(), project);
-        return false;
+        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(data, false, psiClass));
       classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), true)));
@@ -360,7 +352,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
         classes.put(c, new HashSet<PsiMethod>());
       }
     }
-    return true;
   }
 
   private static Map<String, String> buildTestParameters(TestData data) {

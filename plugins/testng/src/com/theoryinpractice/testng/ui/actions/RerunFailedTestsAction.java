@@ -89,7 +89,7 @@ public class RerunFailedTestsAction extends AnAction {
                                         RunnerSettings runnerSettings,
                                         ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
           return new TestNGRunnableState(runnerSettings, configurationSettings, configuration) {
-            protected boolean fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project)
+            protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project)
               throws CantRunException {
               for (AbstractTestProxy proxy : failed) {
                 final Location location = proxy.getLocation(project);
@@ -107,7 +107,6 @@ public class RerunFailedTestsAction extends AnAction {
                   }
                 }
               }
-              return true;
             }
           };
         }
