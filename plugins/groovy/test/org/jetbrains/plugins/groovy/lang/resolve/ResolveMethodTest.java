@@ -95,6 +95,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
    assertEquals("groovy.lang.Script", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
  }
 
+  public void testArrayDefault() throws Exception {
+    PsiReference ref = configureByFile("arrayDefault/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+  }
+
+
   public void testSwingBuilderMethod() throws Exception {
     PsiReference ref = configureByFile("swingBuilder/A.groovy");
     PsiElement resolved = ref.resolve();
