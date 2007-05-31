@@ -1,0 +1,12 @@
+class A {
+    private Object b = new Object() {
+        {
+            doStuff();
+        }
+        
+        public String doStuff() {
+            return "A";
+        }
+    };
+
+}

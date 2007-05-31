@@ -1,11 +1,17 @@
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.impl.MatchingContext;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.impl.TraverseContext;
+import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -17,7 +23,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.ChangeContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +38,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private PsiClass myClass;
   private boolean myInlineThisOnly;
 
+  private static Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
   private static Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
+  private static Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
+  private static Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
+  private static Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
 
   protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, boolean inlineThisOnly) {
     super(project);
@@ -148,11 +157,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
                                                                                                       newExpression.getContainingFile());
 
     Map<String, FieldInfo> fieldMap = new HashMap<String, FieldInfo>();
+    PsiCodeBlock initializerBlock = factory.createCodeBlock();
     if (constructor != null) {
       final PsiExpressionList argumentList = superNewExpressionTemplate.getArgumentList();
       assert argumentList != null;
 
-      fieldMap = analyzeConstructorFieldAssignments(constructor, constructorArguments);
+      fieldMap = analyzeConstructor(constructor, constructorArguments, initializerBlock);
       generateLocalsForFields(fieldMap, newExpression);
 
       addSuperConstructorArguments(constructor, argumentList, constructorArguments);
@@ -164,6 +174,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     final PsiNewExpression superNewExpression = (PsiNewExpression) newExpression.replace(superNewExpressionTemplate);
     final PsiClass anonymousClass = superNewExpression.getAnonymousClass();
     assert anonymousClass != null;
+
+    if (initializerBlock.getStatements().length > 0) {
+      anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
+    }
+
     for(PsiElement child: classCopy.getChildren()) {
       if ((child instanceof PsiMethod && !((PsiMethod) child).isConstructor()) ||
           child instanceof PsiClassInitializer ||
@@ -190,50 +205,63 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
   }
 
-  private Map<String, FieldInfo> analyzeConstructorFieldAssignments(final PsiMethod constructor, final PsiExpressionList constructorArguments) {
+  private Map<String, FieldInfo> analyzeConstructor(final PsiMethod constructor, final PsiExpressionList constructorArguments,
+                                                    final PsiCodeBlock initializerBlock) throws IncorrectOperationException {
     final Map<String, FieldInfo> result = new HashMap<String, FieldInfo>();
-    constructor.accept(new PsiRecursiveElementVisitor() {
-      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-        super.visitAssignmentExpression(expression);
-        if (expression.getLExpression() instanceof PsiReferenceExpression) {
-          PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
-          final PsiExpression rExpr = expression.getRExpression();
-          final PsiElement psiElement = lExpr.resolve();
-          if (psiElement instanceof PsiField && rExpr != null) {
-            PsiField field = (PsiField) psiElement;
-            if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
-              FieldInfo info = result.get(field.getName());
-              if (info == null) {
-                info = new FieldInfo(field.getType());
-                result.put(field.getName(), info);
-              }
+    PsiCodeBlock body = constructor.getBody();
+    assert body != null;
+    for(PsiStatement stmt: body.getStatements()) {
+      MatchingContext context = new MatchingContext();
+      if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
+        PsiAssignmentExpression expression = context.get(ourAssignmentKey);
+        processAssignmentInConstructor(constructor, constructorArguments, result, expression);
+      }
+      else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
+        initializerBlock.addBefore(stmt.copy(), initializerBlock.getRBrace());
+      }
+    }
 
-              Object constantValue = myClass.getManager().getConstantEvaluationHelper().computeConstantExpression(rExpr);
-              final boolean isConstantInitializer = constantValue != null || ourNullPattern.accepts(rExpr);
-              if (!isConstantInitializer) {
-                final PsiExpression initializer;
-                try {
-                  initializer = replaceParameterReferences(constructor.getParameterList(),
-                                                           (PsiExpression)rExpr.copy(),
-                                                           constructorArguments);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                  return;
-                }
+    return result;
+  }
 
-                info.initializer = initializer;
-                info.replaceWithLocal = true;
-              }
-              else {
-                info.initializer = (PsiExpression) rExpr.copy();
-              }
+  private void processAssignmentInConstructor(final PsiMethod constructor, final PsiExpressionList constructorArguments, final Map<String, FieldInfo> result,
+                                              final PsiAssignmentExpression expression) {
+    if (expression.getLExpression() instanceof PsiReferenceExpression) {
+      PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
+      final PsiExpression rExpr = expression.getRExpression();
+      final PsiElement psiElement = lExpr.resolve();
+      if (psiElement instanceof PsiField && rExpr != null) {
+        PsiField field = (PsiField) psiElement;
+        if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
+          FieldInfo info = result.get(field.getName());
+          if (info == null) {
+            info = new FieldInfo(field.getType());
+            result.put(field.getName(), info);
+          }
+
+          Object constantValue = myClass.getManager().getConstantEvaluationHelper().computeConstantExpression(rExpr);
+          final boolean isConstantInitializer = constantValue != null || ourNullPattern.accepts(rExpr);
+          if (!isConstantInitializer) {
+            final PsiExpression initializer;
+            try {
+              initializer = replaceParameterReferences(constructor.getParameterList(),
+                                                       (PsiExpression)rExpr.copy(),
+                                                       constructorArguments);
             }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+              return;
+            }
+
+            info.initializer = initializer;
+            info.replaceWithLocal = true;
+          }
+          else {
+            info.initializer = (PsiExpression) rExpr.copy();
           }
         }
       }
-    });
-    return result;
+    }
   }
 
   private void generateLocalsForFields(final Map<String, FieldInfo> fieldMap, final PsiNewExpression newExpression) {
