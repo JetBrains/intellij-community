@@ -219,7 +219,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processFileChange(final VirtualFile file) {
-    //if (StdFileTypes.XML != file.getFileType()) return;
+    if (StdFileTypes.XML != file.getFileType()) return;
     processFileChange(PsiManager.getInstance(myProject).findFile(file));
   }
 
