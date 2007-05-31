@@ -22,6 +22,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
@@ -883,7 +884,7 @@ public class PluginManager {
   public static void addPluginClass(String className, PluginId pluginId) {
     synchronized(PLUGIN_CLASSES_LOCK) {
       if (ourPluginClasses == null) {
-        ourPluginClasses = new HashMap<String, PluginId>();
+        ourPluginClasses = new THashMap<String, PluginId>();
       }
       ourPluginClasses.put(className, pluginId);
     }
