@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomElementsNavigationManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,6 +20,10 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
     myDescription = description;
   }
 
+  public boolean isAvailableForElement(@NotNull DomElement contextElement) {
+    return true;
+  }
+  
   @Nullable
   public abstract T generate(final Project project, final Editor editor, final PsiFile file);
 
