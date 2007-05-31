@@ -94,10 +94,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
-      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
-      if (newExpression != null) {
+      if (element.getParent() instanceof PsiNewExpression) {
         try {
-          replaceNewExpression(newExpression, superClass);
+          replaceNewExpression((PsiNewExpression) element.getParent(), superClass);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -377,8 +376,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (parentElement != null && parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
         return "Class cannot be inlined because it has usages of its class literal";
       }
-      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
-      if (newExpression != null) {
+      if (parentElement instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
         final PsiMethod[] constructors = myClass.getConstructors();
         if (constructors.length == 0) {
           if (newExpression.getArgumentList().getExpressions().length > 0) {
