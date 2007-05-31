@@ -31,7 +31,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private CommandProcessor myCommandProcessor;
   private Storage myStorage;
   private ILocalVcs myVcs;
-  private LocalVcsService myService;
+  private LocalHistoryService myService;
 
   // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
@@ -66,7 +66,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   protected void initService() {
-    myService = new LocalVcsService(myVcs, createIdeaGateway(), myStartupManager, myRootManager, myFileManager, myCommandProcessor);
+    myService = new LocalHistoryService(myVcs, createIdeaGateway(), myStartupManager, myRootManager, myFileManager, myCommandProcessor);
   }
 
   public File getStorageDir() {

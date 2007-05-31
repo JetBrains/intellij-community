@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalVcsService {
+public class LocalHistoryService {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   // todo get rid of all this managers...
@@ -25,18 +25,16 @@ public class LocalVcsService {
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
 
-  private ServiceStateHolder myStateHolder;
-
-  private FileListener myFileListener;
+  private EventDispatcher myEventDispatcher;
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
-  public LocalVcsService(ILocalVcs vcs,
-                         IdeaGateway gw,
-                         StartupManager sm,
-                         ProjectRootManagerEx rm,
-                         VirtualFileManagerEx fm,
-                         CommandProcessor cp) {
+  public LocalHistoryService(ILocalVcs vcs,
+                             IdeaGateway gw,
+                             StartupManager sm,
+                             ProjectRootManagerEx rm,
+                             VirtualFileManagerEx fm,
+                             CommandProcessor cp) {
     myVcs = vcs;
     myGateway = gw;
     myStartupManager = sm;
@@ -44,17 +42,14 @@ public class LocalVcsService {
     myFileManager = fm;
     myCommandProcessor = cp;
 
-    myStateHolder = new ServiceStateHolder();
-    myStateHolder.setState(new ListeningServiceState(myStateHolder, myVcs, myGateway));
-
     registerStartupActivity();
     subscribeForRootChanges();
   }
 
   public void shutdown() {
     myFileManager.unregisterFileContentProvider(myFileContentProvider);
-    myFileManager.removeVirtualFileManagerListener(myFileListener);
-    myCommandProcessor.removeCommandListener(myFileListener);
+    myFileManager.removeVirtualFileManagerListener(myEventDispatcher);
+    myCommandProcessor.removeCommandListener(myEventDispatcher);
     myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
 
@@ -73,7 +68,7 @@ public class LocalVcsService {
   }
 
   private void registerListenersAndContentProvider() {
-    myFileListener = new FileListener(myVcs, myGateway, myStateHolder);
+    myEventDispatcher = new EventDispatcher(myVcs, myGateway);
     myFileContentProvider = new FileContentProvider() {
       public VirtualFile[] getCoveredDirectories() {
         return myRootManager.getContentRoots();
@@ -85,13 +80,13 @@ public class LocalVcsService {
       }
 
       public VirtualFileListener getVirtualFileListener() {
-        return myFileListener;
+        return myEventDispatcher;
       }
     };
 
     // todo check the order of vfm-listener
-    myCommandProcessor.addCommandListener(myFileListener);
-    myFileManager.addVirtualFileManagerListener(myFileListener);
+    myCommandProcessor.addCommandListener(myEventDispatcher);
+    myFileManager.addVirtualFileManagerListener(myEventDispatcher);
     myFileManager.registerFileContentProvider(myFileContentProvider);
   }
 
@@ -106,7 +101,7 @@ public class LocalVcsService {
   }
 
   public LocalHistoryAction startAction(String name) {
-    LocalHistoryActionImpl a = new LocalHistoryActionImpl(myFileListener, name);
+    LocalHistoryActionImpl a = new LocalHistoryActionImpl(myEventDispatcher, name);
     a.start();
     return a;
   }

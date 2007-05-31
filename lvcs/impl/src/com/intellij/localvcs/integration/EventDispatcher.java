@@ -14,51 +14,51 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 // todo split this class and rename it
-public class FileListener extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
+public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
-  private ServiceStateHolder myStateHolder;
+  private LocalHistoryFacade myState;
 
-  public FileListener(ILocalVcs vcs, IdeaGateway gw, ServiceStateHolder h) {
+  public EventDispatcher(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-    myStateHolder = h;
+    myState = new LocalHistoryFacade(vcs, gw);
   }
 
   public void beforeRefreshStart(boolean asynchonous) {
-    getState().startRefreshing();
+    myState.startRefreshing();
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
-    getState().finishRefreshing();
+    myState.finishRefreshing();
   }
 
   public void commandStarted(CommandEvent e) {
-    getState().startCommand(e.getCommandName());
+    myState.startCommand();
   }
 
   public void commandFinished(CommandEvent e) {
-    getState().finishCommand();
+    myState.finishCommand(e.getCommandName());
   }
 
-  public void startAction(String name) {
-    getState().startAction(name);
+  public void startAction() {
+    myState.startAction();
   }
 
-  public void finishAction() {
-    getState().finishAction();
+  public void finishAction(String name) {
+    myState.finishAction(name);
   }
 
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    getState().create(e.getFile());
+    myState.create(e.getFile());
   }
 
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    getState().changeFileContent(e.getFile());
+    myState.changeFileContent(e.getFile());
   }
 
   @Override
@@ -71,16 +71,16 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
 
     // todo try make it more clear... and refactor
     if (notAllowedOrNotUnderContentRoot(newFile)) {
-      if (wasInContent) getState().delete(oldFile);
+      if (wasInContent) myState.delete(oldFile);
       return;
     }
 
     if (!wasInContent) {
-      getState().create(newFile);
+      myState.create(newFile);
       return;
     }
 
-    getState().rename(oldFile, e.getFile().getName());
+    myState.rename(oldFile, e.getFile().getName());
   }
 
   @Override
@@ -90,7 +90,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
 
     if (isMovedFromOutside(e)) {
       if (notAllowedOrNotUnderContentRoot(e)) return;
-      getState().create(e.getFile());
+      myState.create(e.getFile());
       return;
     }
 
@@ -98,12 +98,12 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
 
     if (isMovedToOutside(e)) {
       boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
-      if (wasInContent) getState().delete(oldFile);
+      if (wasInContent) myState.delete(oldFile);
       return;
     }
 
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    getState().move(oldFile, e.getNewParent());
+    myState.move(oldFile, e.getNewParent());
   }
 
   @Override
@@ -117,7 +117,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     }
 
     if (!myVcs.hasEntry(f.getPath())) return;
-    getState().delete(f);
+    myState.delete(f);
   }
 
   private boolean notAllowedOrNotUnderContentRoot(VirtualFile f) {
@@ -143,10 +143,6 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
   }
 
   public void undoTransparentActionFinished() {
-  }
-
-  private ServiceState getState() {
-    return myStateHolder.getState();
   }
 
   private FileFilter getFileFilter() {

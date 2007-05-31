@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import java.io.File;
 
-public class LocalVcsComponentTest extends TempDirTestCase {
+public class LocalHistoryComponentTest extends TempDirTestCase {
   private MyStartupManager sm;
   private LocalHistoryComponent c;
 

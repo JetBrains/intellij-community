@@ -7,7 +7,7 @@ import static org.easymock.classextension.EasyMock.*;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FileListenerListeningTest extends FileListenerTestCase {
+public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   TestFileFilter filter = new TestFileFilter();
 
   @Override

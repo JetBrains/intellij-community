@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServiceTestCase {
+public class LocalHistoryServiceCommandProcessingAndActionsTest extends LocalHistoryServiceTestCase {
   @Test
   public void testActions() {
     TestVirtualFile dir = new TestVirtualFile("dir");

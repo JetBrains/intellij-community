@@ -4,19 +4,19 @@ public class LocalHistoryActionImpl implements LocalHistoryAction {
   public static LocalHistoryAction NULL = new Null(); // todo try to get rid of this
 
   private String myName;
-  private FileListener myListener;
+  private EventDispatcher myDispatcher;
 
-  public LocalHistoryActionImpl(FileListener l, String name) {
+  public LocalHistoryActionImpl(EventDispatcher l, String name) {
     myName = name;
-    myListener = l;
+    myDispatcher = l;
   }
 
   public void start() {
-    myListener.startAction(myName);
+    myDispatcher.startAction();
   }
 
   public void finish() {
-    myListener.finishAction();
+    myDispatcher.finishAction(myName);
   }
 
   private static class Null extends LocalHistoryActionImpl {

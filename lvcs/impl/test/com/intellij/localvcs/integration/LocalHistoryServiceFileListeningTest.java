@@ -4,7 +4,7 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
-public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
+public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTestCase {
   @Test
   public void testListening() {
     VirtualFile f = new TestVirtualFile("file", "content", 123L);

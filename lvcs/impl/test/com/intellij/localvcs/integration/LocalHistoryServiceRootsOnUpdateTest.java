@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
-public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
+public class LocalHistoryServiceRootsOnUpdateTest extends LocalHistoryServiceTestCase {
   TestVirtualFile root;
 
   @Test

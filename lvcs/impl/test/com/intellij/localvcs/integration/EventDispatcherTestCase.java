@@ -13,21 +13,15 @@ import static org.easymock.classextension.EasyMock.createMock;
 import static org.easymock.classextension.EasyMock.replay;
 import org.junit.Before;
 
-public class FileListenerTestCase extends LocalVcsTestCase {
+public class EventDispatcherTestCase extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
   TestIdeaGateway gateway;
-  FileListener l;
+  EventDispatcher d;
 
   @Before
   public void setUp() {
     gateway = new TestIdeaGateway();
-    l = new FileListener(vcs, gateway, createInitialStateHolder(gateway));
-  }
-
-  private ServiceStateHolder createInitialStateHolder(IdeaGateway gw) {
-    ServiceStateHolder h = new ServiceStateHolder();
-    h.setState(new ListeningServiceState(h, vcs, gw));
-    return h;
+    d = new EventDispatcher(vcs, gateway);
   }
 
   protected CommandEvent createCommandEvent(String name) {
@@ -38,11 +32,11 @@ public class FileListenerTestCase extends LocalVcsTestCase {
   }
 
   protected void fireCreated(VirtualFile f) {
-    l.fileCreated(new VirtualFileEvent(null, f, null, null));
+    d.fileCreated(new VirtualFileEvent(null, f, null, null));
   }
 
   protected void fireContentChanged(VirtualFile f) {
-    l.contentsChanged(new VirtualFileEvent(null, f, null, null));
+    d.contentsChanged(new VirtualFileEvent(null, f, null, null));
   }
 
   protected void fireRenamed(VirtualFile newFile, String oldName) {
@@ -50,14 +44,14 @@ public class FileListenerTestCase extends LocalVcsTestCase {
   }
 
   protected void firePropertyChanged(VirtualFile f, String prop, String oldValue) {
-    l.propertyChanged(new VirtualFilePropertyEvent(null, f, prop, oldValue, null));
+    d.propertyChanged(new VirtualFilePropertyEvent(null, f, prop, oldValue, null));
   }
 
   protected void fireMoved(VirtualFile f, VirtualFile oldParent, VirtualFile newParent) {
-    l.fileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    d.fileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
   }
 
   protected void fireDeleted(VirtualFile f, VirtualFile parent) {
-    l.fileDeleted(new VirtualFileEvent(null, f, null, parent));
+    d.fileDeleted(new VirtualFileEvent(null, f, null, parent));
   }
 }

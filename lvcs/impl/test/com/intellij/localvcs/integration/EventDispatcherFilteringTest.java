@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FileListenerFilteringTest extends FileListenerTestCase {
+public class EventDispatcherFilteringTest extends EventDispatcherTestCase {
   @Override
   @Before
   public void setUp() {

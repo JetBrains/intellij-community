@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class FileListenerActionPerformingTest extends FileListenerTestCase {
+public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringState() {
     vcs.createFile("file", cf("old"), 123L);
@@ -13,7 +13,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     Clock.setCurrentTimestamp(456);
     gateway.addUnsavedDocument("file", "new");
 
-    l.startAction(null);
+    d.startAction();
 
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(456L, vcs.getEntry("file").getTimestamp());
@@ -31,7 +31,7 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
 
     gateway.addUnsavedDocument("dir/one", "one");
     gateway.addUnsavedDocument("dir/two", "two");
-    l.startAction(null);
+    d.startAction();
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
@@ -41,9 +41,9 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     vcs.createFile("f", cf("one"), -1);
 
     gateway.addUnsavedDocument("f", "two");
-    l.startAction(null);
+    d.startAction();
     vcs.changeFileContent("f", cf("three"), -1);
-    l.finishAction();
+    d.finishAction(null);
 
     assertEquals(3, vcs.getRevisionsFor("f").size());
   }
@@ -51,12 +51,12 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeExitingState() {
     vcs.createFile("file", cf("old"), 123L);
-    l.startAction(null);
+    d.startAction();
 
     Clock.setCurrentTimestamp(789);
     gateway.addUnsavedDocument("file", "new");
 
-    l.finishAction();
+    d.finishAction(null);
 
     assertEquals(c("new"), vcs.getEntry("file").getContent());
     assertEquals(789L, vcs.getEntry("file").getTimestamp());
@@ -72,21 +72,21 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
     vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
-    l.startAction(null);
+    d.startAction();
     vcs.createFile("dir/three", null, -1);
 
     gateway.addUnsavedDocument("dir/one", "one");
     gateway.addUnsavedDocument("dir/two", "two");
-    l.finishAction();
+    d.finishAction(null);
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
   }
 
   @Test
   public void testPuttingLabel() {
-    l.startAction("label");
+    d.startAction();
     vcs.createDirectory("dir");
-    l.finishAction();
+    d.finishAction("label");
 
     assertEquals("label", vcs.getRevisionsFor("dir").get(0).getCauseChangeName());
   }
@@ -95,17 +95,17 @@ public class FileListenerActionPerformingTest extends FileListenerTestCase {
   public void testActionInsideCommand() {
     vcs.createFile("f", cf("1"), -1);
 
-    l.commandStarted(createCommandEvent("command"));
+    d.commandStarted(null);
     vcs.changeFileContent("f", cf("2"), -1);
     gateway.addUnsavedDocument("f", "3");
 
-    l.startAction("action");
+    d.startAction();
     vcs.changeFileContent("f", cf("4"), -1);
     gateway.addUnsavedDocument("f", "5");
-    l.finishAction();
+    d.finishAction("action");
 
     vcs.changeFileContent("f", cf("6"), -1);
-    l.commandFinished(null);
+    d.commandFinished(createCommandEvent("command"));
 
     List<Revision> rr = vcs.getRevisionsFor("f");
     assertEquals(3, rr.size());

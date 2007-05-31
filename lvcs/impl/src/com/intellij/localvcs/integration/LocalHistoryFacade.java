@@ -7,48 +7,67 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 
 // todo synchronization
-public abstract class ServiceState {
-  protected ServiceStateHolder myHolder;
-  protected ILocalVcs myVcs;
-  protected IdeaGateway myGateway;
+public class LocalHistoryFacade {
+  private ILocalVcs myVcs;
+  private IdeaGateway myGateway;
+  private int myChangeSetDepth = 0;
 
-  public ServiceState(ServiceStateHolder h, ILocalVcs vcs, IdeaGateway gw) {
-    myHolder = h;
+  public LocalHistoryFacade(ILocalVcs vcs, IdeaGateway gw) {
     myGateway = gw;
     myVcs = vcs;
   }
 
   public void startRefreshing() {
-    illegalState();
+    beginChangeSet();
   }
 
   public void finishRefreshing() {
-    illegalState();
+    endChangeSet(null);
   }
 
-  public void startCommand(String name) {
-    illegalState();
+  public void startCommand() {
+    beginChangeSet();
   }
 
-  public void finishCommand() {
-    illegalState();
+  public void finishCommand(String name) {
+    endChangeSet(name);
   }
 
-  public void startAction(String name) {
-    illegalState();
+  public void startAction() {
+    if (myChangeSetDepth == 0) myVcs.beginChangeSet();
+    registerUnsavedDocumentChanges();
+    myVcs.endChangeSet(null);
+    if (myChangeSetDepth > 0) myVcs.beginChangeSet();
+    beginChangeSet();
   }
 
-  public void finishAction() {
-    illegalState();
+  public void finishAction(String name) {
+    registerUnsavedDocumentChanges();
+    endChangeSet(name);
   }
 
-  protected void goToState(ServiceState s) {
-    beforeExitingFromState();
-    myHolder.setState(s);
+  private void registerUnsavedDocumentChanges() {
+    myGateway.registerUnsavedDocuments(myVcs);
+  }
+
+  private void beginChangeSet() {
+    myChangeSetDepth++;
+    if (myChangeSetDepth == 1) {
+      myVcs.beginChangeSet();
+    }
+  }
+
+  private void endChangeSet(String name) {
+    myChangeSetDepth--;
+    if (myChangeSetDepth == 0) {
+      myVcs.endChangeSet(name);
+    }
   }
 
   public void create(VirtualFile f) {
+    myVcs.beginChangeSet();
     createRecursively(f);
+    myVcs.endChangeSet(null);
   }
 
   private void createRecursively(VirtualFile f) {
@@ -89,16 +108,5 @@ public abstract class ServiceState {
 
   public void delete(VirtualFile f) {
     myVcs.delete(f.getPath());
-  }
-
-  protected void afterEnteringState() {
-  }
-
-  protected void beforeExitingFromState() {
-  }
-
-  private void illegalState() {
-    // todo move to logging proxy...
-    throw new IllegalStateException(getClass().getSimpleName());
   }
 }

@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class LocalVcsServiceRootsOnStartupTest extends LocalVcsServiceTestCase {
+public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTestCase {
   // todo what about roots in jars (non-local file system)?
 
   @Before

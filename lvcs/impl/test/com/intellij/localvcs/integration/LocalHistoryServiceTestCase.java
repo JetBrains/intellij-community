@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 // todo review LocalVcsServiceTests...
-public class LocalVcsServiceTestCase extends LocalVcsTestCase {
+public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   // todo 2 test broken storage
   // todo 3 take a look at the old-lvcs tests
 
   protected LocalVcs vcs;
-  protected LocalVcsService service;
+  protected LocalHistoryService service;
   protected TestIdeaGateway gateway;
   protected List<VirtualFile> roots = new ArrayList<VirtualFile>();
   protected MyStartupManager startupManager;
@@ -58,7 +58,7 @@ public class LocalVcsServiceTestCase extends LocalVcsTestCase {
     fileManager = new MyVirtualFileManagerEx();
     commandProcessor = new MyCommandProcessor();
 
-    service = new LocalVcsService(vcs, gateway, startupManager, rootManager, fileManager, commandProcessor);
+    service = new LocalHistoryService(vcs, gateway, startupManager, rootManager, fileManager, commandProcessor);
   }
 
   protected LocalVcs createLocalVcs() {
