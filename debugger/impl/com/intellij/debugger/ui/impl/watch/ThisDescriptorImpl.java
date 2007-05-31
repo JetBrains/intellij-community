@@ -3,7 +3,6 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -17,16 +16,13 @@ import com.sun.jdi.Value;
  * Time: 5:08:07 PM
  */
 public class ThisDescriptorImpl extends ValueDescriptorImpl{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl");  
-  private final Value myValue;
 
-  public ThisDescriptorImpl(Project project, Value value) {
+  public ThisDescriptorImpl(Project project) {
     super(project);
-    myValue = value;
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return myValue;
+    return evaluationContext.getThisObject();
   }
 
   public String getName() {

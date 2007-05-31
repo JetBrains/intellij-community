@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
@@ -99,7 +100,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myCurrentHistoryTree = createDescriptorTree(context, tree);
   }
 
-  private DescriptorTree createDescriptorTree(final StackFrameContext context, final DescriptorTree fromTree) {
+  private static DescriptorTree createDescriptorTree(final StackFrameContext context, final DescriptorTree fromTree) {
     int frameCount = -1;
     int frameIndex = -1;
     final StackFrameProxy frameProxy = context.getFrameProxy();
@@ -150,7 +151,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   public ValueDescriptorImpl getThisDescriptor(NodeDescriptorImpl parent, Value value) {
-    return getDescriptor(parent, new ThisData(value));
+    return getDescriptor(parent, new ThisData());
   }
 
   public ValueDescriptorImpl getMethodReturnValueDescriptor(NodeDescriptorImpl parent, Method method, Value value) {
@@ -169,6 +170,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, data);
   }
 
+  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value){
+    return getDescriptor(parent, new WatchItemData(text, value));
+  }
+  
   private static class DescriptorTreeSearcher {
     private final MarkedDescriptorTree myDescriportTree;
 

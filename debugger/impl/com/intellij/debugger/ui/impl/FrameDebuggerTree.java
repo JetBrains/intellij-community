@@ -123,7 +123,7 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
       // add expressions
       for (TextWithImports text : usedVars.second) {
-        myChildren.add(myNodeManager.createNode(new WatchItemDescriptor(getProject(), text), evaluationContext));
+        myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evaluationContext));
       }
     }
   }
