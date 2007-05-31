@@ -350,7 +350,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         return false;
       }
       classes.putAll(calculateDependencies(data, false, psiClass));
-      classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), false)));
+      classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), true)));
     }
     else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
