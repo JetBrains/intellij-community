@@ -64,7 +64,23 @@
     </class>
   </field>
   <description>Cannot annotate with both @Nullable and @NotNull</description>
+
 </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>13</line>
+    <field>
+      <name>String s</name>
+      <display_name>s</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Y</name>
+        <display_name>Y</display_name>
+      </class>
+    </field>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
+    <description>Cannot annotate with both @Nullable and @NotNull</description>
+  </problem>
 
 
 <problem>
@@ -131,5 +147,23 @@
     </method>
     <description>Primitive type members cannot be Nullable/NotNull annotated</description>
   </problem>
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>20</line>
+    <method>
+      <name>void p(String p2)</name>
+      <name>p(String)</name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Y</name>
+        <display_name>Y</display_name>
+      </class>
+    </method>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
+    <description>Cannot annotate with both @Nullable and @NotNull</description>
+  </problem>
+
 </problems>
 

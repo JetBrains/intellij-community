@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
@@ -27,7 +26,6 @@ import java.util.*;
  */
 class RootModelImpl implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
-  static final Key<RootModelImpl> ORIGINATING_ROOT_MODEL = Key.create("ORIGINATING_ROOT_MODEL");
 
   private TreeSet<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
 
@@ -313,7 +311,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
-  public String[] getSourceRootUrls(boolean testFlagValue) {
+  private String[] getSourceRootUrls(boolean testFlagValue) {
     final ArrayList<String> result = new ArrayList<String>();
     for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
@@ -418,7 +416,7 @@ class RootModelImpl implements ModifiableRootModel {
     removeOrderEntryInternal(entry);
   }
 
-  void removeOrderEntryInternal(OrderEntry entry) {
+  private void removeOrderEntryInternal(OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
     myOrderEntries.remove(entry);
   }
@@ -732,7 +730,7 @@ class RootModelImpl implements ModifiableRootModel {
     return myModuleRootManager.getModule();
   }
 
-  VirtualFilePointerListener getFileListener() {
+  private VirtualFilePointerListener getFileListener() {
     return myVirtualFilePointerListener;
   }
 
@@ -855,25 +853,9 @@ class RootModelImpl implements ModifiableRootModel {
     return !Arrays.equals(urls, thatUrls);
   }
 
-  void addExportedFiles(OrderRootType type, List<VirtualFile> result, Set<Module> processed) {
-    for (final OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof ModuleSourceOrderEntryImpl) {
-        ((ModuleSourceOrderEntryImpl)orderEntry).addExportedFiles(type, result);
-      }
-      else if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).isExported()) {
-        if (orderEntry instanceof ModuleOrderEntryImpl) {
-          result.addAll(Arrays.asList(((ModuleOrderEntryImpl)orderEntry).getFiles(type, processed)));
-        }
-        else {
-          result.addAll(Arrays.asList(orderEntry.getFiles(type)));
-        }
-      }
-    }
-  }
-
   void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
     for (final OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof ModuleSourceOrderEntry) {
+      if (orderEntry instanceof ModuleSourceOrderEntryImpl) {
         ((ModuleSourceOrderEntryImpl)orderEntry).addExportedUrls(type, result);
       }
       else if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).isExported()) {
@@ -951,10 +933,6 @@ class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     disposeModel();
     myWritable = false;
-  }
-
-  boolean isDisposed() {
-    return myDisposed;
   }
 
   void disposeModel() {

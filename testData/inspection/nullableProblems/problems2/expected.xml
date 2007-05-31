@@ -15,6 +15,21 @@
     </method>
     <description>Cannot annotate with both @Nullable and @NotNull</description>
   </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>23</line>
+    <method>
+      <name>String f()</name>
+      <name>f()</name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>CC</name>
+        <display_name>CC</display_name>
+      </class>
+    </method>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
+    <description>Cannot annotate with both @Nullable and @NotNull</description>
+  </problem>
 
 
   <problem>

@@ -33,7 +33,7 @@ public class AddAnnotationFix implements IntentionAction {
     return CodeInsightBundle.message("intention.add.annotation.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myModifierListOwner != null
       && myModifierListOwner.isValid()
       && PsiManager.getInstance(project).isInProject(myModifierListOwner)
@@ -41,7 +41,7 @@ public class AddAnnotationFix implements IntentionAction {
       ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiModifierList modifierList = myModifierListOwner.getModifierList();
     if (modifierList.findAnnotation(myFQN) != null) return;
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;

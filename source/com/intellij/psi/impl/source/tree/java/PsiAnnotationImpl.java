@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author ven
  */
-public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements PsiModifier, PsiAnnotation {
+public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements PsiAnnotation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl");
   private CompositeElement myParsedFromRepository;
 
