@@ -164,6 +164,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+    superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
   }
 
   private Map<PsiField, PsiVariable> generateLocalsForFields(final PsiMethod constructor, final PsiExpressionList constructorArguments,
@@ -179,7 +180,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
           final PsiElement psiElement = lExpr.resolve();
           if (psiElement instanceof PsiField && rExpr != null) {
             PsiField field = (PsiField) psiElement;
-            if (field.getContainingClass() == myClass) {
+            if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
               final PsiExpression initializer;
               try {
                 initializer = replaceParameterReferences(constructor.getParameterList(),
@@ -303,6 +304,21 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       final PsiElement parentElement = element.getParent();
       if (parentElement != null && parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
         return "Class cannot be inlined because it has usages of its class literal";
+      }
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+      if (newExpression != null) {
+        final PsiMethod[] constructors = myClass.getConstructors();
+        if (constructors.length == 0) {
+          if (newExpression.getArgumentList().getExpressions().length > 0) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
+        else {
+          final JavaResolveResult resolveResult = newExpression.resolveMethodGenerics();
+          if (!resolveResult.isValidResult()) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
       }
     }
     return null;

@@ -96,6 +96,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestPreprocessUsages("Class cannot be inlined because it has usages of its class literal");
   }
 
+  public void testNoInlineUnresolvedConstructor() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
+  }
+
+  public void testNoInlineUnresolvedConstructor2() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
+  }
+
   private void doTestNoInline(final String expectedMessage) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
@@ -128,7 +136,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, false);
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
     String message = processor.getPreprocessUsagesMessage(refUsages);
-    assertEquals(message, expectedMessage);
+    assertEquals(expectedMessage, message);
   }
 
   private void performAction(final boolean inlineThisOnly) {
