@@ -89,6 +89,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(((DefaultGroovyMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
   }
 
+  public void testPrimitiveSubtyping() throws Exception {
+    PsiReference ref = configureByFile("primitiveSubtyping/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(((DefaultGroovyMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
+  }
+
   public void testDefaultMethod2() throws Exception {
     PsiReference ref = configureByFile("defaultMethod2/A.groovy");
     PsiElement resolved = ref.resolve();

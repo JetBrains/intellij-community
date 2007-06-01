@@ -24,12 +24,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashMap;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author ven
@@ -63,6 +66,32 @@ public class PsiUtil {
           element.equals(((GrAssignmentExpression) parent).getLValue());
     }
     return false;
+  }
+
+  @NonNls
+  private static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
+
+  static {
+    ourQNameToUnboxed.put("java.lang.Boolean", PsiType.BOOLEAN);
+    ourQNameToUnboxed.put("java.lang.Byte", PsiType.BYTE);
+    ourQNameToUnboxed.put("java.lang.Character", PsiType.CHAR);
+    ourQNameToUnboxed.put("java.lang.Short", PsiType.SHORT);
+    ourQNameToUnboxed.put("java.lang.Integer", PsiType.INT);
+    ourQNameToUnboxed.put("java.lang.Long", PsiType.LONG);
+    ourQNameToUnboxed.put("java.lang.Float", PsiType.FLOAT);
+    ourQNameToUnboxed.put("java.lang.Double", PsiType.DOUBLE);
+  }
+
+  public static PsiType unboxPrimitiveTypeAndEraseGenerics(PsiType result) {
+    return TypeConversionUtil.erasure(unboxPrimitiveType(result));
+  }
+
+  private static PsiType unboxPrimitiveType(PsiType result) {
+    if (result instanceof PsiClassType) {
+      PsiType unboxed = ourQNameToUnboxed.get(result.getCanonicalText());
+      if (unboxed != null) result = unboxed;
+    }
+    return result;
   }
 
   public static PsiType boxPrimitiveTypeAndEraseGenerics(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
@@ -99,8 +128,8 @@ public class PsiUtil {
             return false;
           }
       }
-      parameterTypeToCheck =
-          boxPrimitiveTypeAndEraseGenerics(parameterTypeToCheck, method.getManager(), method.getResolveScope());
+      parameterTypeToCheck = unboxPrimitiveTypeAndEraseGenerics(parameterTypeToCheck);
+      argType = unboxPrimitiveType(argType);
       if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
     }
 
