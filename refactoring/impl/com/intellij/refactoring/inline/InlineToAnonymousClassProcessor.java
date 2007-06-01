@@ -239,6 +239,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+    ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
     final PsiNewExpression superNewExpression = (PsiNewExpression) newExpression.replace(superNewExpressionTemplate);
     superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
   }
