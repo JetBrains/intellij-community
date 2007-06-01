@@ -181,7 +181,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
     }
 
-    if (isToLaunchExternal && doExternalValidation()) {
+    if (forceExternalValidation()) {
+      result.clear();
+    }
+
+    if ((isToLaunchExternal && doExternalValidation()) ||
+        forceExternalValidation()
+       ) {
       ExternalToolPass action3 = new ExternalToolPass(file, editor, 0, editor.getDocument().getTextLength());
       action3.doCollectInformation(new MockProgressIndicator());
       result.addAll(action3.getHighlights());
@@ -213,6 +219,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected boolean doExternalValidation() {
     return true;
+  }
+
+  protected boolean forceExternalValidation() {
+    return false;
   }
 
   protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,

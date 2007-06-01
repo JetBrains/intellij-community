@@ -273,6 +273,9 @@ public class ExternalDocumentValidator {
     if (currentElement==null) {
       currentElement = PsiTreeUtil.getParentOfType(originalElement,XmlElementDecl.class,false);
     }
+    if (currentElement == null) {
+      currentElement = originalElement;
+    }
     assertValidElement(currentElement, originalElement,localizedMessage);
 
     if (currentElement!=null) {
