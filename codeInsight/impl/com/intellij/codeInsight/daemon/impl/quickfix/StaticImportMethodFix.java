@@ -29,11 +29,10 @@ import java.util.Vector;
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
   private final PsiMethodCallExpression myMethodCall;
-  private final List<PsiMethod> candidates;
+  private List<PsiMethod> candidates;
 
   public StaticImportMethodFix(PsiMethodCallExpression methodCallExpression) {
     myMethodCall = methodCallExpression;
-    candidates = getMethodsToImport();
   }
 
   @NotNull
@@ -59,7 +58,7 @@ public class StaticImportMethodFix implements IntentionAction {
            && myMethodCall != null 
            && myMethodCall.isValid()
            && file.getManager().isInProject(file)
-           && !candidates.isEmpty()
+           && !(candidates == null ? candidates = getMethodsToImport() : candidates).isEmpty()
       ;
   }
 
