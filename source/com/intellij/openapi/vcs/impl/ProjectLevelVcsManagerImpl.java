@@ -638,8 +638,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private void removeRedundantMappings() {
     int i=1;
     while(i < myDirectoryMappings.size()) {
-      if (myDirectoryMappings.get(i).getDirectory().startsWith(myDirectoryMappings.get(i-1).getDirectory()) &&
-          myDirectoryMappings.get(i).getVcs().equals(myDirectoryMappings.get(i-1).getVcs())) {
+      VcsDirectoryMapping mapping = myDirectoryMappings.get(i);
+      VcsDirectoryMapping prevMapping = myDirectoryMappings.get(i - 1);
+      String dir = FileUtil.toSystemIndependentName(mapping.getDirectory());
+      String prevDir = FileUtil.toSystemIndependentName(prevMapping.getDirectory());
+      if (!prevDir.endsWith("/")) {
+        prevDir += "/";
+      }
+      if (dir.startsWith(prevDir) && mapping.getVcs().equals(prevMapping.getVcs())) {
         myDirectoryMappings.remove(i);
       }
       else {
