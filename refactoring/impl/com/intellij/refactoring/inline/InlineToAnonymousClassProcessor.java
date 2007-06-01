@@ -9,20 +9,23 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.impl.MatchingContext;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.StandardPatterns;
-import com.intellij.patterns.impl.TraverseContext;
 import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
+import com.intellij.patterns.impl.TraverseContext;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,8 +198,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         if (info == null || !info.replaceWithLocal) {
           boolean noInitializer = (field.getInitializer() == null);
           field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
-          if (info != null && info.initializer != null && noInitializer) {
-            field.setInitializer(info.initializer);
+          if (info != null) {
+            if (info.localVar != null) {
+              field.setInitializer(factory.createExpressionFromText(info.localVar.getName(), field));
+            }
+            else if (info.initializer != null && noInitializer) {
+              field.setInitializer(info.initializer);
+            }
           }
         }
       }
@@ -219,8 +227,35 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         initializerBlock.addBefore(stmt.copy(), initializerBlock.getRBrace());
       }
     }
+    checkFieldWriteUsages(result);
 
     return result;
+  }
+
+  private void checkFieldWriteUsages(final Map<String, FieldInfo> result) {
+    for(Map.Entry<String, FieldInfo> e: result.entrySet()) {
+      FieldInfo info = e.getValue();
+      if (info.generateLocal) {
+        PsiField field = myClass.findFieldByName(e.getKey(), false);
+        assert field != null;
+        boolean hasOnlyReadUsages = ReferencesSearch.search(field, new LocalSearchScope(myClass)).forEach(new Processor<PsiReference>() {
+          public boolean process(final PsiReference psiReference) {
+            PsiElement psiElement = psiReference.getElement();
+            if (psiElement instanceof PsiExpression) {
+              PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+              if (method == null || !method.isConstructor()) {
+                return !PsiUtil.isAccessedForWriting((PsiExpression)psiElement);
+              }
+            }
+            
+            return true;
+          }
+        });
+        if (hasOnlyReadUsages) {
+          info.replaceWithLocal = true;
+        }
+      }
+    }
   }
 
   private void processAssignmentInConstructor(final PsiMethod constructor, final PsiExpressionList constructorArguments, final Map<String, FieldInfo> result,
@@ -253,7 +288,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
             }
 
             info.initializer = initializer;
-            info.replaceWithLocal = true;
+            info.generateLocal = true;
           }
           else {
             info.initializer = (PsiExpression) rExpr.copy();
@@ -266,7 +301,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private void generateLocalsForFields(final Map<String, FieldInfo> fieldMap, final PsiNewExpression newExpression) {
     for(Map.Entry<String, FieldInfo> e: fieldMap.entrySet()) {
       FieldInfo info = e.getValue();
-      if (info.replaceWithLocal) {
+      if (info.generateLocal) {
         final CodeStyleManager codeStyleManager = myClass.getManager().getCodeStyleManager();
         final String fieldName = e.getKey();
         String varName = codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.FIELD);
@@ -403,6 +438,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     PsiType type;
     PsiVariable localVar;
     PsiExpression initializer;
+    boolean generateLocal;
     boolean replaceWithLocal;
   }
 }

@@ -1,0 +1,15 @@
+class A {
+    public void doTest() {
+        int i = 2;
+        final int i1 = i * 2;
+        Object b = new Object() {
+            private int i = i1;
+
+            public String toString() {
+                i++;
+                return "A";
+            }
+        };
+    }
+
+}
