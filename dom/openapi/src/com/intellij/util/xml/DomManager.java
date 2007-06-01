@@ -133,6 +133,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    * this method to resolve DOM references. This result's subtree will be traversed recursively searching for the reference target. See
    * {@link @com.intellij.util.xml.Resolve} annotaion.
    */
+  @NotNull
   public abstract DomElement getResolvingScope(GenericDomValue element);
 
   /**

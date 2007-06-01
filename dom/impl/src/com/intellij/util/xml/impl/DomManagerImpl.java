@@ -624,6 +624,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
   }
 
+  @NotNull
   public final DomElement getResolvingScope(GenericDomValue element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getRoot() : description.getResolveScope(element);
