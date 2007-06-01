@@ -605,7 +605,11 @@ public class JavaDocManager implements ProjectComponent {
               component.setData(element, text);
             }
 
-            final String dimensionServiceKey = ((JBPopupImpl)getDocInfoHint()).getDimensionServiceKey();
+            final JBPopupImpl jbPopup = (JBPopupImpl)getDocInfoHint();
+            if(jbPopup==null){
+              return;
+            }
+            final String dimensionServiceKey = jbPopup.getDimensionServiceKey();
             Dimension dimension = component.getPreferredSize();
             final Dimension storedSize = dimensionServiceKey != null ? DimensionService.getInstance().getSize(dimensionServiceKey, getProject(element)) : null;
             if (storedSize != null) {
