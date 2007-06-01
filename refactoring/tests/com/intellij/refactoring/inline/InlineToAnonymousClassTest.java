@@ -6,12 +6,32 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
 public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
+  private LanguageLevel myPreviousLanguageLevel;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
+    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  protected void tearDown() throws Exception {
+    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
+
+  protected ProjectJdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
+  }
+
   public void testSimple() throws Exception {
     doTest();
   }
@@ -81,6 +101,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   public void testWritableFieldInitializedWithParameter() throws Exception {
+    doTest();
+  }
+
+  public void testGenerics() throws Exception {
+    doTest();
+  }
+
+  public void testGenericsSubstitute() throws Exception {
     doTest();
   }
 

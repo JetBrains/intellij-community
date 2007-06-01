@@ -82,24 +82,15 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    PsiClass superClass;
-    final PsiClass[] interfaces = myClass.getInterfaces();
-    if (interfaces.length > 0) {
-      assert interfaces.length == 1;
-      superClass = interfaces [0];
-    }
-    else {
-      superClass = myClass.getSuperClass();
-    }
-
     PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiClassType superType = getSuperType();
 
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
       if (element.getParent() instanceof PsiNewExpression) {
         try {
-          replaceNewExpression((PsiNewExpression) element.getParent(), superClass);
+          replaceNewExpression((PsiNewExpression) element.getParent(), superType);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -113,10 +104,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         else {
           PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
           if (typeElement != null) {
-            PsiType psiType = typeElement.getType();
-            LOG.assertTrue(psiType instanceof PsiClassType && ((PsiClassType) psiType).resolve() == myClass);
+            PsiClassType psiType = (PsiClassType) typeElement.getType();
+            PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
+            PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
+            assert classResolveResult.getElement() == myClass;
             try {
-              typeElement.replace(factory.createTypeElement(factory.createType(superClass)));
+              typeElement.replace(factory.createTypeElement(substType));
             }
             catch(IncorrectOperationException e) {
               LOG.error(e);
@@ -146,18 +139,53 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void replaceNewExpression(final PsiNewExpression newExpression, final PsiClass superClass) throws IncorrectOperationException {
+  private PsiClassType getSuperType() {
+    PsiElementFactory factory = myClass.getManager().getElementFactory();
+
+    PsiClassType superType;
+    final PsiClass[] interfaces = myClass.getInterfaces();
+    if (interfaces.length > 0) {
+      PsiClassType[] interfaceTypes = myClass.getImplementsListTypes();
+      assert interfaces.length == 1;
+      assert interfaceTypes.length == 1;
+      superType = interfaceTypes [0];
+    }
+    else {
+      PsiClass superClass = myClass.getSuperClass();
+      PsiClassType[] classTypes = myClass.getExtendsListTypes();
+      if (classTypes.length > 0) {
+        superType = classTypes [0];
+      }
+      else {
+        superType = factory.createType(superClass);
+      }
+    }
+    return superType;
+  }
+
+  private void replaceNewExpression(final PsiNewExpression newExpression, final PsiClassType superType) throws IncorrectOperationException {
+    JavaResolveResult classResolveResult = newExpression.getClassReference().advancedResolve(false);
+    JavaResolveResult methodResolveResult = newExpression.resolveMethodGenerics();
+
+    PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();
+    PsiType substType = classResolveSubstitutor.substitute(superType);
+
+    PsiTypeParameter[] typeParams = myClass.getTypeParameters();
+    PsiType[] substitutedParameters = new PsiType[typeParams.length];
+    for(int i=0; i< typeParams.length; i++) {
+      substitutedParameters [i] = classResolveSubstitutor.substitute(typeParams [i]);
+    }
+
     @NonNls StringBuilder builder = new StringBuilder("new ");
-    builder.append(superClass.getQualifiedName());
+    builder.append(substType.getPresentableText());
     builder.append("() {}");
 
     PsiElementFactory factory = myClass.getManager().getElementFactory();
-    final PsiMethod constructor = newExpression.resolveConstructor();
+    final PsiMethod constructor = (PsiMethod) methodResolveResult.getElement();
     final PsiExpressionList constructorArguments = newExpression.getArgumentList();
 
     PsiNewExpression superNewExpressionTemplate = (PsiNewExpression) factory.createExpressionFromText(builder.toString(),
                                                                                                       newExpression.getContainingFile());
-
     Map<String, FieldInfo> fieldMap = new HashMap<String, FieldInfo>();
     PsiCodeBlock initializerBlock = factory.createCodeBlock();
     if (constructor != null) {
@@ -173,8 +201,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.encodeContextInfo(myClass.getNavigationElement(), true);
     PsiClass classCopy = (PsiClass) myClass.getNavigationElement().copy();
     ChangeContextUtil.clearContextInfo(myClass);
-    final PsiNewExpression superNewExpression = (PsiNewExpression) newExpression.replace(superNewExpressionTemplate);
-    final PsiClass anonymousClass = superNewExpression.getAnonymousClass();
+    final PsiClass anonymousClass = superNewExpressionTemplate.getAnonymousClass();
     assert anonymousClass != null;
 
     if (initializerBlock.getStatements().length > 0) {
@@ -182,15 +209,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
 
     for(PsiElement child: classCopy.getChildren()) {
-      if ((child instanceof PsiMethod && !((PsiMethod) child).isConstructor()) ||
-          child instanceof PsiClassInitializer ||
-          child instanceof PsiClass) {
-        if (fieldMap.size() > 0) {
-          replaceFieldReferences((PsiMember) child, fieldMap);
+      if ((child instanceof PsiMethod && !((PsiMethod) child).isConstructor())) {
+        if (fieldMap.size() > 0 || classResolveSubstitutor != PsiSubstitutor.EMPTY) {
+          replaceReferences((PsiMember) child, fieldMap, substitutedParameters);
         }
-//        ChangeContextUtil.encodeContextInfo(child, true);
         child = anonymousClass.addBefore(child, anonymousClass.getRBrace());
-//        ChangeContextUtil.decodeContextInfo(child, anonymousClass, null);
+      }
+      else if (child instanceof PsiClassInitializer || child instanceof PsiClass) {
+
+        if (fieldMap.size() > 0 || classResolveSubstitutor != PsiSubstitutor.EMPTY) {
+          replaceReferences((PsiMember) child, fieldMap, substitutedParameters);
+        }
+        child = anonymousClass.addBefore(child, anonymousClass.getRBrace());
       }
       else if (child instanceof PsiField) {
         PsiField field = (PsiField) child;
@@ -209,6 +239,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+    final PsiNewExpression superNewExpression = (PsiNewExpression) newExpression.replace(superNewExpressionTemplate);
     superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
   }
 
@@ -375,8 +406,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return argument;
   }
 
-  private void replaceFieldReferences(final PsiMember method, final Map<String, FieldInfo> fieldMap) throws  IncorrectOperationException {
+  private void replaceReferences(final PsiMember method, final Map<String, FieldInfo> fieldMap,
+                                 final PsiType[] substitutedParameters) throws  IncorrectOperationException {
+    final PsiElementFactory factory = myClass.getManager().getElementFactory();
     final Map<PsiReferenceExpression, PsiVariable> referencesToReplace = new HashMap<PsiReferenceExpression, PsiVariable>();
+    final Map<PsiTypeElement, PsiTypeElement> typesToReplace = new HashMap<PsiTypeElement, PsiTypeElement>();
     method.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -391,10 +425,30 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+
+      public void visitTypeElement(final PsiTypeElement typeElement) {
+        super.visitTypeElement(typeElement);
+        if (typeElement.getType() instanceof PsiClassType) {
+          PsiClassType classType = (PsiClassType) typeElement.getType();
+          PsiClass psiClass = classType.resolve();
+          if (psiClass instanceof PsiTypeParameter) {
+            PsiClass containingClass = method.getContainingClass();
+            PsiTypeParameter[] psiTypeParameters = containingClass.getTypeParameters();
+            for(int i=0; i<psiTypeParameters.length; i++) {
+              if (psiTypeParameters [i] == psiClass) {
+                typesToReplace.put(typeElement, factory.createTypeElement(substitutedParameters [i]));
+              }
+            }
+          }
+        }
+      }
     });
     for(Map.Entry<PsiReferenceExpression, PsiVariable> e: referencesToReplace.entrySet()) {
-      final PsiExpression expression = myClass.getManager().getElementFactory().createExpressionFromText(e.getValue().getName(), method);
+      final PsiExpression expression = factory.createExpressionFromText(e.getValue().getName(), method);
       e.getKey().replace(expression);
+    }
+    for(Map.Entry<PsiTypeElement, PsiTypeElement> e: typesToReplace.entrySet()) {
+      e.getKey().replace(e.getValue());
     }
   }
 
