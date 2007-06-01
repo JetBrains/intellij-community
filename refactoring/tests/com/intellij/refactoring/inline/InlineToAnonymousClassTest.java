@@ -132,6 +132,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because it has static inner classes");
   }
 
+  public void testNoInlineReturnInConstructor() throws Exception {
+    doTestNoInline("Class cannot be inlined because its constructor contains 'return' statements");
+  }
+
   private void doTestNoInline(final String expectedMessage) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";

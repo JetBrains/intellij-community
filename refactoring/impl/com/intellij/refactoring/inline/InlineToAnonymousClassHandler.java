@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -49,7 +50,13 @@ public class InlineToAnonymousClassHandler {
 
     final PsiMethod[] methods = psiClass.getMethods();
     for(PsiMethod method: methods) {
-      if (!method.isConstructor() && method.findSuperMethods().length == 0) {
+      if (method.isConstructor()) {
+        PsiReturnStatement stmt = findReturnStatement(method);
+        if (stmt != null) {
+          return "Class cannot be inlined because its constructor contains 'return' statements";
+        }
+      }
+      else if (method.findSuperMethods().length == 0) {
         if (!ReferencesSearch.search(method).forEach(new CheckAncestorProcessor(psiClass))) {
           return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
         }
@@ -91,6 +98,17 @@ public class InlineToAnonymousClassHandler {
     }
 
     return null;
+  }
+
+  private static PsiReturnStatement findReturnStatement(final PsiMethod method) {
+    final Ref<PsiReturnStatement> stmt = Ref.create(null);
+    method.accept(new PsiRecursiveElementVisitor() {
+      public void visitReturnStatement(final PsiReturnStatement statement) {
+        super.visitReturnStatement(statement);
+        stmt.set(statement);
+      }
+    });
+    return stmt.get();
   }
 
   private static class CheckAncestorProcessor implements Processor<PsiReference> {
