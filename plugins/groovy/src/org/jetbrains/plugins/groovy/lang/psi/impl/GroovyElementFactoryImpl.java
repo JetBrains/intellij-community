@@ -32,11 +32,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
@@ -137,6 +142,36 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
         PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         "\n");
     return dummyFile.getFirstChild();
+  }
+
+  public PsiElement createSemicolon() {
+        PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+        ";");
+    return dummyFile.getFirstChild();
+  }
+
+  public GrArgumentList createArgumentList(GrExpression... expressions) {
+    StringBuffer text = new StringBuffer();
+    text.append("ven (");
+    for (GrExpression expression : expressions) {
+      text.append(expression.getText());
+    }
+    text.append(")");
+    PsiFile file = createGroovyFile(text.toString());
+    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCall);
+    return (((GrMethodCall) file.getChildren()[0])).getArgumentList();
+  }
+
+  public GrOpenBlock createOpenBlockFromStatements(@NonNls GrStatement... statements) {
+    StringBuffer text = new StringBuffer();
+    text.append("while (true) { \n");
+    for (GrStatement statement : statements) {
+      text.append(statement.getText()).append("\n");
+    }
+    text.append("}");
+    PsiFile file = createGroovyFile(text.toString());
+    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement);
+    return ((GrOpenBlock) ((GrWhileStatement) file.getChildren()[0]).getBody());
   }
 
   public GrImportStatement createImportStatementFromText(String qName) {

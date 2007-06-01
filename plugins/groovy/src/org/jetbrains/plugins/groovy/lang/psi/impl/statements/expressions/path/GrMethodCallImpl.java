@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -77,4 +78,10 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
   public GrExpression getInvokedExpression() {
     return findChildByClass(GrExpression.class);
   }
+
+  // TODO implement me!
+  public GrArgumentList replaceArgumenList(GrArgumentList argList) throws IncorrectOperationException {
+    return null;
+  }
+
 }

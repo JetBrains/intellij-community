@@ -15,17 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author ilyas
  */
-public interface GrWhileStatement extends GrStatement, GrControlStatement, GrLoopStatement {
+public interface GrLoopStatement {
 
-  public GrCondition getCondition();
-
-  public GrCondition getBody();
+  GrCondition replaceBody (GrCondition statement) throws IncorrectOperationException;
 
 }

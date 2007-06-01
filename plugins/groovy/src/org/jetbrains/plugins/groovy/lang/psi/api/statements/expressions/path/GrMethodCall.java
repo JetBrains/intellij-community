@@ -19,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ilyas
@@ -30,7 +32,10 @@ public interface GrMethodCall extends GrExpression {
 
   GrExpression[] getExpressionArguments();
 
+  // TODO fix me!
   GrClosableBlock getClosureArgument();
 
   GrExpression getInvokedExpression();
+
+  GrArgumentList replaceArgumenList(GrArgumentList argList) throws IncorrectOperationException;
 }

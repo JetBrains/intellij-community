@@ -19,4 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literal
  * @author ilyas
  */
 public interface GrString extends GrLiteral {
+
+  boolean isSimple();
+
 }

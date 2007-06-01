@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @autor: ilyas
@@ -26,8 +27,13 @@ public interface GrIfStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 
-  public GroovyPsiElement getThenBranch();
+  public GrCondition getThenBranch();
 
-  public GroovyPsiElement getElseBranch();
+  public GrCondition getElseBranch();
+
+  public GrCondition replaceThenBranch(GrCondition newBranch) throws IncorrectOperationException;
+
+  public GrCondition replaceElseBranch(GrCondition newBranch) throws IncorrectOperationException;
+
 
 }

@@ -38,5 +38,9 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
   public PsiType getType() {
     return null;
   }
+
+  public boolean isSimple() {
+    return true;
+  }
 }
 

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -35,25 +36,30 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     super(node);
   }
 
+  public boolean mayUseNewLinesAsSeparators(){
+    PsiElement parent = this;
+    while (parent != null){
+      if (parent instanceof GrString) {
+        GrString grString = (GrString) parent;
+        return !grString.isSimple();
+      }
+      parent = parent.getParent();
+    }
+    return true;
+  }
+
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
 
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     if (element.getNode() == null ||
-//        !(element instanceof GrStatement) ||
         !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
     ASTNode elemNode = element.getNode();
     getNode().addChild(elemNode, anchor.getNode());
-/*
-    if (!(elemNode.getPsi() instanceof GrStatement)) {
-      throw new IncorrectOperationException();
-    }
-*/
     return elemNode.getPsi();
-
   }
 
   public GrStatement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {

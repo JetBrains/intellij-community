@@ -23,4 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrCodeBlock extends GroovyPsiElement {
   GrStatement[] getStatements();
+
+  boolean mayUseNewLinesAsSeparators();
 }

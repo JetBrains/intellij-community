@@ -38,4 +38,10 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   public PsiType getType() {
     return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
   }
+
+  public boolean isSimple() {
+    if (getFirstChild() == null) return true;
+    return !(getFirstChild().getText().length() >= 3 &&
+        getFirstChild().getText().substring(0,3).equals("\"\"\""));
+  }
 }

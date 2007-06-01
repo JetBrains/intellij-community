@@ -23,11 +23,16 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -46,10 +51,17 @@ public abstract class GroovyRefactoringUtil {
     while (parent != null &&
         !(parent instanceof GrCodeBlock) &&
         !(parent instanceof GrCaseBlock) &&
-        !(parent instanceof GroovyFile)) {
+        !(parent instanceof GroovyFile) &&
+        !isLoopOrForkStatement(parent)) {
       parent = parent.getParent();
     }
     return parent;
+  }
+
+  public static boolean isLoopOrForkStatement(PsiElement elem) {
+    return elem instanceof GrForStatement ||
+        elem instanceof GrWhileStatement ||
+        elem instanceof GrIfStatement;
   }
 
   public static <T extends PsiElement> T findElementInRange(final GroovyFile file,
@@ -78,12 +90,25 @@ public abstract class GroovyRefactoringUtil {
 
   public static PsiElement[] getExpressionOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurences = new ArrayList<PsiElement>();
-    accumulateOccurences(expr, scope, occurences);
+    if (isLoopOrForkStatement(scope)) {
+      PsiElement son = expr;
+      while (son.getParent() != null && !isLoopOrForkStatement(son.getParent())) {
+        son = son.getParent();
+      }
+      assert scope.equals(son.getParent());
+      accumulateOccurences(expr, son, occurences);
+    } else {
+      accumulateOccurences(expr, scope, occurences);
+    }
     return occurences.toArray(PsiElement.EMPTY_ARRAY);
   }
 
 
   private static void accumulateOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
+    if (scope.equals(expr)) {
+     acc.add(expr);
+      return;
+    }
     for (PsiElement child : scope.getChildren()) {
       if (!(child instanceof GrTypeDefinition) &&
           !(child instanceof GrMethod && scope instanceof GroovyFile)) {
@@ -106,6 +131,31 @@ public abstract class GroovyRefactoringUtil {
       }
     }
   }
+
+  /**
+   * Indicates that the given expression is result expression of some closure or method
+   * and cannot be replace by variable definition
+   *
+   * @param expr
+   * @return
+   */
+  public static boolean isResultExpression(@NotNull GrExpression expr) {
+    if (expr.getType() != null && expr.getType().equals(PsiType.VOID)) {
+      return false;
+    }
+    if (expr.getParent() instanceof GrClosableBlock ||
+        expr.getParent() instanceof GrOpenBlock &&
+            expr.getParent().getParent() != null &&
+            expr.getParent().getParent() instanceof GrMethod) {
+      GrCodeBlock parent = ((GrCodeBlock) expr.getParent());
+      GrStatement[] statements = parent.getStatements();
+      if (statements.length > 0 && expr.equals(statements[statements.length - 1])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   // todo add type hierarchy
   public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {

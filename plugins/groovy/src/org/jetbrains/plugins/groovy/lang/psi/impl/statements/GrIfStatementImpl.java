@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -44,20 +45,19 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
-  public GroovyPsiElement getThenBranch() {
-    GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
+  public GrCondition getThenBranch() {
+    GrCondition[] statements = findChildrenByClass(GrCondition.class);
     if (statements.length > 1 && (statements[1] instanceof GrStatement)) {
       return statements[1];
     }
     if (statements.length > 1 && (statements[1] instanceof GrOpenBlock)) {
       return statements[1];
     }
-
     return null;
   }
 
-  public GroovyPsiElement getElseBranch() {
-    GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
+  public GrCondition getElseBranch() {
+    GrCondition[] statements = findChildrenByClass(GrCondition.class);
     if (statements.length == 3 && (statements[2] instanceof GrStatement)) {
       return statements[2];
     }
@@ -66,4 +66,34 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     }
     return null;
   }
+
+  public GrCondition replaceThenBranch(GrCondition newBranch) throws IncorrectOperationException {
+    if (getThenBranch() == null ||
+        newBranch == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode oldBodyNode = getThenBranch().getNode();
+    this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
+    ASTNode newNode = newBranch.getNode();
+    if (!(newNode.getPsi() instanceof GrCondition)) {
+      throw new IncorrectOperationException();
+    }
+    return (GrCondition) newNode.getPsi();
+  }
+
+  public GrCondition replaceElseBranch(GrCondition newBranch) throws IncorrectOperationException {
+    if (getElseBranch() == null ||
+        newBranch == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode oldBodyNode = getElseBranch().getNode();
+    this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
+    ASTNode newNode = newBranch.getNode();
+    if (!(newNode.getPsi() instanceof GrCondition)) {
+      throw new IncorrectOperationException();
+    }
+    return (GrCondition) newNode.getPsi();
+  }
+
 }
+

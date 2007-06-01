@@ -22,6 +22,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -38,7 +41,6 @@ public abstract class GroovyElementFactory {
   }
 
   /**
-   *
    * @param qName
    * @return import statement for given class
    */
@@ -50,6 +52,12 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createWhiteSpace();
 
   public abstract PsiElement createNewLine();
+
+  public abstract PsiElement createSemicolon();
+
+  public abstract GrArgumentList createArgumentList(GrExpression ... expressions);
+
+  public abstract GrOpenBlock createOpenBlockFromStatements(GrStatement... statements);
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String idText);
 

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -51,4 +52,19 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     }
     return null;
   }
+
+  public GrCondition replaceBody(GrCondition newBody) throws IncorrectOperationException {
+    if (getBody() == null ||
+        newBody == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode oldBodyNode = getBody().getNode();
+    this.getNode().replaceChild(oldBodyNode, newBody.getNode());
+    ASTNode newNode = newBody.getNode();
+    if (!(newNode.getPsi() instanceof GrCondition)) {
+      throw new IncorrectOperationException();
+    }
+    return (GrCondition) newNode.getPsi();
+  }
+
 }
