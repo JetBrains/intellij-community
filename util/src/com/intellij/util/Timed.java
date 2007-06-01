@@ -21,6 +21,7 @@ abstract class Timed<T> implements Disposable {
   int myLastCheckedAccessCount;
   int myAccessCount;
   T myT;
+  boolean myPolled;
 
   protected Timed(final Disposable parentDisposable) {
     if (parentDisposable != null) {
@@ -29,15 +30,19 @@ abstract class Timed<T> implements Disposable {
   }
 
   public synchronized void dispose() {
-    ourReferences.remove(this);
+    remove();
   }
 
   protected final void poll() {
-    ourReferences.put(this, Boolean.TRUE);
+    if (!myPolled) {
+      ourReferences.put(this, Boolean.TRUE);
+      myPolled = true;
+    }
   }
 
   protected final void remove() {
     ourReferences.remove(this);
+    myPolled = false;
   }
 
   protected boolean isLocked() {
@@ -61,7 +66,7 @@ abstract class Timed<T> implements Disposable {
                   Disposable disposable = (Disposable)t;
                   Disposer.dispose(disposable);
                 }
-                ourReferences.remove(timed);
+                timed.remove();
               }
               else {
                 timed.myLastCheckedAccessCount = timed.myAccessCount;
