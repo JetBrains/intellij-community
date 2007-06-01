@@ -62,7 +62,9 @@ public class FileUtil {
 
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
-    while (len < filePath.length() && len < basePath.length() && filePath.charAt(len) == basePath.charAt(len)) {
+    String basePathToCompare = SystemInfo.isFileSystemCaseSensitive ? basePath : basePath.toLowerCase();
+    String filePathToCompare = SystemInfo.isFileSystemCaseSensitive ? filePath : filePath.toLowerCase();
+    while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
       if (basePath.charAt(len) == File.separatorChar) {
         lastSeparatorIndex = len;
       }
