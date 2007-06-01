@@ -45,6 +45,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class EnterHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterHandler");
@@ -586,11 +587,17 @@ public class EnterHandler extends EditorWriteActionHandler {
       CodeInsightSettings settings = CodeInsightSettings.getInstance();
       StringBuffer buffer = new StringBuffer();
       final String docCommentLinePrefix = commenter.getDocumentationCommentLinePrefix();
+      if(docCommentLinePrefix==null){
+        return;
+      }
       buffer.append(docCommentLinePrefix);
       buffer.append(LINE_SEPARATOR);
       buffer.append(commenter.getDocumentationCommentSuffix());
 
       PsiComment comment = createComment(buffer, settings);
+      if(comment==null){
+        return;
+      }
 
       myOffset = comment.getTextRange().getStartOffset();
       myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
@@ -610,6 +617,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
 
+    @Nullable
     private PsiComment createComment(final StringBuffer buffer, final CodeInsightSettings settings)
       throws IncorrectOperationException {
       myDocument.insertString(myOffset, buffer.toString());
