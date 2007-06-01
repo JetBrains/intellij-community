@@ -44,12 +44,11 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
-  public GrStatement getBody() {
-    GroovyPsiElement[] statements = findChildrenByClass(GrCondition.class);
-    if (statements.length == 2 && (statements[1] instanceof GrStatement)) {
-      return (GrStatement) statements[1];
+  public GrCondition getBody() {
+    GrCondition[] statements = findChildrenByClass(GrCondition.class);
+    if (statements.length == 2) {
+      return statements[1];
     }
     return null;
-//    return findChildByClass(GrOpenBlock.class);
   }
 }

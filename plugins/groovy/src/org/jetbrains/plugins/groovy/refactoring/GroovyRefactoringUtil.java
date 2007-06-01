@@ -40,7 +40,7 @@ import java.util.HashMap;
 public abstract class GroovyRefactoringUtil {
 
   public static PsiElement getEnclosingContainer(PsiElement place) {
-    PsiElement parent = place;
+    PsiElement parent = place.getParent();
     while (parent != null &&
         !(parent instanceof GrCodeBlock) &&
         !(parent instanceof GrCaseBlock) &&

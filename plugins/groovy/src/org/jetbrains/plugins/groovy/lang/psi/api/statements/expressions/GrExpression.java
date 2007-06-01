@@ -23,6 +23,8 @@ import com.intellij.psi.PsiType;
  * @author ilyas
  */
 public interface GrExpression extends GrStatement, GrCondition {
-  public static final GrExpression[] EMPTY_ARRAY = new GrExpression[0];
-  public PsiType getType();
+  GrExpression[] EMPTY_ARRAY = new GrExpression[0];
+  PsiType getType();
+
+  //GrExpression replaceWithExpresssion(GrExpression expression);
 }

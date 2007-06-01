@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -23,7 +24,7 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
     assert element instanceof GrWhileStatement;
 
     GrWhileStatement grWhileStatement = (GrWhileStatement) element;
-    GrStatement grStatement = grWhileStatement.getBody();
+    GrCondition grStatement = grWhileStatement.getBody();
     int endOffset = grStatement.getTextRange().getEndOffset();
 
     grStatement.getParent().getNode().removeChild(grStatement.getNode());
