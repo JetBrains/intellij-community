@@ -140,7 +140,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static class MyResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
     public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
-      GrExpression qualifier = refExpr.getQualifierExpression();
       String name = refExpr.getReferenceName();
       if (name == null) return null;
       ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, false);
@@ -334,8 +333,26 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
-    return ResolveUtil.mapToElements(candidates);
+    PsiElement[] elements = ResolveUtil.mapToElements(candidates);
+    String[] properties = addPretendedProperties(elements);
+    return ArrayUtil.mergeArrays(elements, properties, Object.class);
   }
+
+  private String[] addPretendedProperties(PsiElement[] elements) {
+    List<String> result = new ArrayList<String>();
+    for (PsiElement element : elements) {
+      if (element instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod) element;
+        String propName = PropertyUtil.getPropertyName(method);
+        if (propName != null) {
+          result.add(propName);
+        }
+      }
+    }
+
+    return result.toArray(new String[result.size()]);
+  }
+
 
   private void getVariantsFromQualifier(ResolverProcessor processor, GrExpression qualifier) {
     PsiType qualifierType = qualifier.getType();

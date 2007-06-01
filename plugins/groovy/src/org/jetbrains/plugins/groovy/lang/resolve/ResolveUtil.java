@@ -80,7 +80,7 @@ public class ResolveUtil {
     else return ClassHint.ResolveKind.CLASS_OR_PACKAGE;
   }
 
-  public static Object[] mapToElements(GroovyResolveResult[] candidates) {
+  public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
     PsiElement[] elements = new PsiElement[candidates.length];
     for (int i = 0; i < elements.length; i++) {
       elements[i] = candidates[i].getElement();
