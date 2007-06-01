@@ -1,9 +1,9 @@
 package com.intellij.ide.actions;
 
 
-
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,9 +14,11 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +26,9 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 
 
-
 abstract class SelectInContextImpl implements SelectInContext {
 
   protected final PsiFile myPsiFile;
-
 
 
   protected SelectInContextImpl(PsiFile psiFile) {
@@ -38,11 +38,11 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   @NotNull
 
-  public Project getProject() { return myPsiFile.getProject(); }
-
+  public Project getProject() {
+    return myPsiFile.getProject();
+  }
 
 
   @NotNull
@@ -53,8 +53,8 @@ abstract class SelectInContextImpl implements SelectInContext {
 
     assert vFile != null;
 
-    return vFile; }
-
+    return vFile;
+  }
 
 
   public Object getSelectorInFile() {
@@ -64,13 +64,11 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   @Nullable
 
   public static SelectInContext createContext(AnActionEvent event) {
 
     DataContext dataContext = event.getDataContext();
-
 
 
     SelectInContext result = createEditorContext(dataContext);
@@ -82,7 +80,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
 
-
     JComponent sourceComponent = getEventComponent(event);
 
     if (sourceComponent == null) {
@@ -90,7 +87,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       return null;
 
     }
-
 
 
     SelectInContext selectInContext = (SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID);
@@ -124,11 +120,9 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
 
-
     return selectInContext;
 
   }
-
 
 
   @Nullable
@@ -162,7 +156,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
 
-
     if (editor instanceof TextEditor) {
 
       return new TextEditorContext((TextEditor)editor, psiFile);
@@ -176,7 +169,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
   }
-
 
 
   @Nullable
@@ -206,7 +198,6 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   @Nullable
 
   private static JComponent getEventComponent(AnActionEvent event) {
@@ -230,7 +221,6 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   @Nullable
 
   @SuppressWarnings({"unchecked"})
@@ -244,11 +234,9 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   private static class TextEditorContext extends SelectInContextImpl {
 
     private final TextEditor myEditor;
-
 
 
     public TextEditorContext(TextEditor editor, PsiFile psiFile) {
@@ -258,7 +246,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       myEditor = editor;
 
     }
-
 
 
     public FileEditorProvider getFileEditorProvider() {
@@ -276,7 +263,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
 
-
     public Object getSelectorInFile() {
       if (myPsiFile instanceof JspFile) return super.getSelectorInFile();
       final int offset = myEditor.getEditor().getCaretModel().getOffset();
@@ -284,13 +270,12 @@ abstract class SelectInContextImpl implements SelectInContext {
       if (offset >= 0 && offset < myPsiFile.getTextLength()) {
         PsiElement javaPsi = myPsiFile.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
         if (javaPsi != null) return javaPsi;
+        return myPsiFile.findElementAt(offset);
       }
-
       return super.getSelectorInFile();
     }
 
   }
-
 
 
   private static class OpenFileDescriptorContext extends SelectInContextImpl {
@@ -300,7 +285,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       super(psiFile);
 
     }
-
 
 
     public FileEditorProvider getFileEditorProvider() {
@@ -316,7 +300,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       };
 
     }
-
 
 
     @Nullable
@@ -338,11 +321,9 @@ abstract class SelectInContextImpl implements SelectInContext {
   }
 
 
-
   private static class SimpleSelectInContext extends SelectInContextImpl {
 
     private final PsiElement myElementToSelect;
-
 
 
     public SimpleSelectInContext(PsiFile psiFile) {
@@ -350,7 +331,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       this(psiFile, psiFile);
 
     }
-
 
 
     public FileEditorProvider getFileEditorProvider() {
@@ -368,7 +348,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
 
-
     public SimpleSelectInContext(PsiFile psiFile, PsiElement elementToSelect) {
 
       super(psiFile);
@@ -376,7 +355,6 @@ abstract class SelectInContextImpl implements SelectInContext {
       myElementToSelect = elementToSelect;
 
     }
-
 
 
   }
