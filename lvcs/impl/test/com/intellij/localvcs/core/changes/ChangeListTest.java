@@ -164,6 +164,13 @@ public class ChangeListTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testDoesNotIncludePreviousLabels() {
+    applyAndAddChange(cs(new PutLabelChange(-1, null, false)));
+    applyAndAddChange(cs(new CreateFileChange(1, "file", null, -1)));
+    assertEquals(1, getChangesFor("file").size());
+  }
+
+  @Test
   public void testChangesForComplexMovingCase() {
     applyAndAddChange(cs(new CreateDirectoryChange(1, "d1"), new CreateFileChange(2, "d1/file", null, -1),
                          new CreateDirectoryChange(3, "d1/d11"), new CreateDirectoryChange(4, "d1/d12"),
@@ -191,22 +198,91 @@ public class ChangeListTest extends LocalVcsTestCase {
     Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
     Change cs2 = cs(new CreateDirectoryChange(2, "dir"));
     Change cs3 = cs(new MoveChange("file", "dir"));
-    applyAndAddChange(cs1);
-    applyAndAddChange(cs2);
-    applyAndAddChange(cs3);
+    applyAndAddChange(cs1, cs2, cs3);
 
-    assertEquals(2, getChangesFor("dir/file").size());
-    assertEquals(cs3, getChangesFor("dir/file").get(0));
-    assertEquals(cs1, getChangesFor("dir/file").get(1));
-
-    assertEquals(2, getChangesFor("dir").size());
-    assertEquals(cs3, getChangesFor("dir").get(0));
-    assertEquals(cs2, getChangesFor("dir").get(1));
+    assertEquals(list(cs3, cs1), getChangesFor("dir/file"));
+    assertEquals(list(cs3, cs2), getChangesFor("dir"));
   }
 
-  private void applyAndAddChange(Change c) {
-    c.applyTo(r);
-    cl.addChange(c);
+  @Test
+  public void testChangesForRestoreFile() {
+    Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
+    Change cs2 = cs(new ChangeFileContentChange("file", null, -1));
+    Change cs3 = cs(new DeleteChange("file"));
+    Change cs4 = cs(new CreateFileChange(1, "file", null, -1));
+    Change cs5 = cs(new ChangeFileContentChange("file", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
+
+    assertEquals(list(cs5, cs2, cs1), getChangesFor("file"));
+  }
+
+  @Test
+  public void testChangesForFileRestoredSeveralTimes() {
+    Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
+    Change cs2 = cs(new DeleteChange("file"));
+    Change cs3 = cs(new CreateFileChange(1, "file", null, -1));
+    Change cs4 = cs(new DeleteChange("file"));
+    Change cs5 = cs(new CreateFileChange(1, "file", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
+
+    assertEquals(list(cs1), getChangesFor("file"));
+  }
+
+  @Test
+  public void testChangesForRestoredDirectory() {
+    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
+    Change cs2 = cs(new DeleteChange("dir"));
+    Change cs3 = cs(new CreateDirectoryChange(1, "dir"));
+
+    applyAndAddChange(cs1, cs2, cs3);
+
+    assertEquals(list(cs1), getChangesFor("dir"));
+  }
+
+  @Test
+  public void testChangesForRestoredDirectoryWithRestoredChildren() {
+    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
+    Change cs2 = cs(new CreateFileChange(2, "dir/file", null, -1));
+    Change cs3 = cs(new DeleteChange("dir"));
+    Change cs4 = cs(new CreateDirectoryChange(1, "dir"));
+    Change cs5 = cs(new CreateFileChange(2, "dir/file", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
+
+    assertEquals(list(cs5, cs2, cs1), getChangesFor("dir"));
+    assertEquals(list(cs2), getChangesFor("dir/file"));
+  }
+
+  @Test
+  public void testDoesNotIncludeChangesMadeBetweenDeletionAndRestore() {
+    Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
+    Change cs2 = cs(new DeleteChange("file"));
+    Change cs3 = cs(new PutLabelChange(-1, null, false));
+    Change cs4 = cs(new CreateFileChange(1, "file", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3, cs4);
+
+    assertEquals(list(cs1), getChangesFor("file"));
+  }
+
+  @Test
+  public void testDoesNotIgnoreDeletionOfChildren() {
+    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
+    Change cs2 = cs(new CreateFileChange(2, "dir/file", null, -1));
+    Change cs3 = cs(new DeleteChange("dir/file"));
+
+    applyAndAddChange(cs1, cs2, cs3);
+
+    assertEquals(list(cs3, cs2, cs1), getChangesFor("dir"));
+  }
+
+  private void applyAndAddChange(Change... cc) {
+    for (Change c : cc) {
+      c.applyTo(r);
+      cl.addChange(c);
+    }
   }
 
   private List<Change> getChangesFor(String path) {

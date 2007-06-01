@@ -107,8 +107,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void createFile(String path, ContentFactory f, long timestamp) {
-    Content c = createContentFrom(f);
-    applyChange(new CreateFileChange(getNextId(), path, c, timestamp));
+    doCreateFile(getNextId(), path, f, timestamp);
   }
 
   protected Content createContentFrom(ContentFactory h) {
@@ -116,11 +115,28 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void createDirectory(String path) {
-    applyChange(new CreateDirectoryChange(getNextId(), path));
+    doCreateDirectory(getNextId(), path);
   }
 
   private int getNextId() {
     return myEntryCounter++;
+  }
+
+  public void restoreFile(int id, String path, ContentFactory f, long timestamp) {
+    doCreateFile(id, path, f, timestamp);
+  }
+
+  private void doCreateFile(int id, String path, ContentFactory f, long timestamp) {
+    Content c = createContentFrom(f);
+    applyChange(new CreateFileChange(id, path, c, timestamp));
+  }
+
+  public void restoreDirectory(int id, String path) {
+    doCreateDirectory(id, path);
+  }
+
+  private void doCreateDirectory(int id, String path) {
+    applyChange(new CreateDirectoryChange(id, path));
   }
 
   public void changeFileContent(String path, ContentFactory f, long timestamp) {

@@ -150,6 +150,54 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRevisionsForRestoredFile() {
+    vcs.createFile("f", cf("one"), -1);
+    vcs.changeFileContent("f", cf("two"), -1);
+    int id = vcs.getEntry("f").getId();
+    vcs.delete("f");
+    vcs.restoreFile(id, "f", cf("two"), -1);
+    vcs.changeFileContent("f", cf("three"), -1);
+
+    List<Revision> rr = vcs.getRevisionsFor("f");
+    assertEquals(3, rr.size());
+    assertEquals(c("three"), rr.get(0).getEntry().getContent());
+    assertEquals(c("two"), rr.get(1).getEntry().getContent());
+    assertEquals(c("one"), rr.get(2).getEntry().getContent());
+  }
+
+  @Test
+  public void testRevisionForRestoredDirectory() {
+    vcs.createDirectory("dir");
+    int id = vcs.getEntry("dir").getId();
+    vcs.delete("dir");
+    vcs.restoreDirectory(id, "dir");
+
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(1, rr.size());
+  }
+
+  @Test
+  public void testRevisionForRestoredDirectoryWithRestoreChildren() {
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/f", cf("one"), -1);
+    int dirId = vcs.getEntry("dir").getId();
+    int fileId = vcs.getEntry("dir/f").getId();
+    vcs.delete("dir");
+    vcs.beginChangeSet();
+    vcs.restoreDirectory(dirId, "dir");
+    vcs.restoreFile(fileId, "dir/f", cf("one"), -1);
+    vcs.endChangeSet(null);
+
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(3, rr.size());
+    assertEquals(1, rr.get(0).getEntry().getChildren().size());
+    assertEquals(1, rr.get(1).getEntry().getChildren().size());
+    assertEquals(0, rr.get(2).getEntry().getChildren().size());
+
+    assertEquals(1, vcs.getRevisionsFor("dir/f").size());
+  }
+
+  @Test
   public void testRevisionsForFileCreatenInPlaceOfRenamedOne() {
     vcs.createFile("file1", cf("content1"), -1);
     vcs.rename("file1", "file2");

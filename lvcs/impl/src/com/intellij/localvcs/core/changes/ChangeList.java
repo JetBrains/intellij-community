@@ -1,5 +1,6 @@
 package com.intellij.localvcs.core.changes;
 
+import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
@@ -8,6 +9,7 @@ import com.intellij.localvcs.utils.Reversed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class ChangeList {
@@ -68,13 +70,38 @@ public class ChangeList {
     Entry e = rootCopy.getEntry(path);
 
     List<Change> result = new ArrayList<Change>();
+    IdPath idPath = e.getIdPath();
+    boolean exists = true;
     for (Change c : Reversed.list(myChanges)) {
-      if (c.affects(e)) result.add(c);
-      if (c.isCreationalFor(e)) break;
-      c.revertOn(rootCopy);
+      for (Change cc : Reversed.list(c.getChanges())) {
+        if (!exists) {
+          if (cc instanceof DeleteChange) {
+            DeleteChange ccc = (DeleteChange)cc;
+            if (idPath.startsWith(ccc.getAffectedIdPaths()[0])) {
+              result.remove(result.size() - 1); // remove next creation
+              exists = true;
+            }
+          }
+          cc.revertOn(rootCopy);
+          if (exists) e = rootCopy.getEntry(idPath);
+        }
+        else {
+          if (cc.affects(idPath)) result.add(c);
+          if (cc instanceof CreateEntryChange) {
+            CreateEntryChange ccc = (CreateEntryChange)cc;
+            if (ccc.getAffectedIdPaths()[0].equals(idPath)) {
+              exists = false;
+            }
+            cc.revertOn(rootCopy);
+          }
+          else {
+            cc.revertOn(rootCopy);
+            idPath = e.getIdPath();
+          }
+        }
+      }
     }
-
-    return result;
+    return new ArrayList<Change>(new LinkedHashSet<Change>(result));
   }
 
   public void addChange(Change c) {

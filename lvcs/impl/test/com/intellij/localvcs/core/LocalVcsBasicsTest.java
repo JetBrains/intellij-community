@@ -178,6 +178,37 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRestoringDeletedFile() {
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/f", null, -1);
+    Entry e = vcs.getEntry("dir/f");
+
+    vcs.delete("dir/f");
+    vcs.restoreFile(e.getId(), "dir/f", cf("content"), 123);
+
+    Entry restored = vcs.findEntry("dir/f");
+    assertNotNull(restored);
+    assertEquals(e.getId(), restored.getId());
+    assertEquals(c("content"), restored.getContent());
+    assertEquals(123, restored.getTimestamp());
+  }
+
+  @Test
+  public void testRestoringDeletedDirectory() {
+    vcs.createDirectory("dir");
+    vcs.createDirectory("dir/subDir");
+    Entry e = vcs.getEntry("dir/subDir");
+
+    vcs.delete("dir/subDir");
+    vcs.restoreDirectory(e.getId(), "dir/subDir");
+
+    Entry restored = vcs.findEntry("dir/subDir");
+    assertNotNull(restored);
+    assertTrue(restored.isDirectory());
+    assertEquals(e.getId(), restored.getId());
+  }
+
+  @Test
   public void testCreatingRoots() {
     vcs.createDirectory("c:/dir/root");
 
