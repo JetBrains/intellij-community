@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
@@ -556,8 +557,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
-  public Icon getIcon(int i)
+  public Icon getIcon(int flags)
   {
+    Icon icon = getIconInner();
+    final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
+    return ElementBase.createLayeredIcon(icon, ElementBase.getFlags(this, isLocked));
+  }
+
+  private Icon getIconInner() {
     if (isInterface())
       return Icons.INTERFACE;
 
