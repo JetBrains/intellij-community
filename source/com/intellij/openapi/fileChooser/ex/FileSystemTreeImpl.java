@@ -213,16 +213,15 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
   }
 
-  public boolean expand(VirtualFile directory) {
-    if (!directory.isDirectory()) return false;
-    DefaultMutableTreeNode node = getNodeForFile(directory);
-    if (node == null) return false;
-    myTree.expandPath(new TreePath(node.getPath()));
-    return true;
+  public void select(VirtualFile file, @Nullable final Runnable onDone) {
+    myTreeBuilder.select(getFileElementFor(file), onDone);
   }
 
-  @Nullable
-  private DefaultMutableTreeNode getNodeForFile(VirtualFile file) {
+  public void expand(final VirtualFile file, @Nullable final Runnable onDone) {
+    myTreeBuilder.expand(getFileElementFor(file), onDone);
+  }
+
+  private FileElement getFileElementFor(VirtualFile file) {
     VirtualFile selectFile;
 
     if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
@@ -236,7 +235,21 @@ public class FileSystemTreeImpl implements FileSystemTree {
       selectFile = file;
     }
 
-    FileElement descriptor = new FileElement(selectFile, selectFile.getName());
+    return new FileElement(selectFile, selectFile.getName());
+  }
+
+  public boolean expand(VirtualFile directory) {
+    if (!directory.isDirectory()) return false;
+    DefaultMutableTreeNode node = getNodeForFile(directory);
+    if (node == null) return false;
+    myTree.expandPath(new TreePath(node.getPath()));
+    return true;
+  }
+
+  @Nullable
+  private DefaultMutableTreeNode getNodeForFile(VirtualFile file) {
+    FileElement descriptor = getFileElementFor(file);
+    if (descriptor == null) return null;
 
     myTreeBuilder.buildNodeForElement(descriptor);
     return myTreeBuilder.getNodeForElement(descriptor);

@@ -21,11 +21,14 @@ public final class GotoProjectDirectory extends FileChooserDialogImpl.FileChoose
     super(UIBundle.message("file.chooser.goto.project.action.name"), UIBundle.message("file.chooser.goto.project.action.description"), IconLoader.getIcon("/nodes/ideaProject.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_MASK));
   }
 
-  protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
+  protected void actionPerformed(final FileSystemTree fileSystemTree, AnActionEvent e) {
     final VirtualFile projectPath = getProjectPath(e);
     LOG.assertTrue(projectPath != null);
-    fileSystemTree.select(projectPath);
-    fileSystemTree.expand(projectPath);
+    fileSystemTree.select(projectPath, new Runnable() {
+      public void run() {
+        fileSystemTree.expand(projectPath, null);
+      }
+    });
   }
 
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {

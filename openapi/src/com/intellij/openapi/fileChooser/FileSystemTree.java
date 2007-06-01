@@ -30,9 +30,20 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getSelectedFile();
 
+  /**
+   * @deprecated
+   */
   boolean select(VirtualFile file);
 
-  boolean expand(VirtualFile homeDirectory);
+  void select(VirtualFile file, @Nullable Runnable onDone);
+
+
+  /**
+   * @deprecated
+   */
+  boolean expand(VirtualFile file);
+
+  void expand(VirtualFile file, @Nullable Runnable onDone);
 
   boolean isUnderRoots(VirtualFile file);
 

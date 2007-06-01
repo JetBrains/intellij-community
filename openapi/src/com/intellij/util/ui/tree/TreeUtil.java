@@ -405,7 +405,7 @@ public final class TreeUtil {
     showAndSelect(tree, top, bottom, row, -1);
   }
 
-  private static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
+  public static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
     final TreePath path = tree.getPathForRow(row);
     if (path == null) return;
 
@@ -468,7 +468,12 @@ public final class TreeUtil {
         bounds.width = visible.width;
       }
 
-      tree.scrollRectToVisible(bounds);
+      final Rectangle b1 = bounds;
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          tree.scrollRectToVisible(b1);
+        }
+      });
     }
   }
 

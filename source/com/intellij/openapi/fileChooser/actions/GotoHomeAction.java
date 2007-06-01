@@ -22,10 +22,13 @@ public final class GotoHomeAction extends FileChooserDialogImpl.FileChooserActio
     super(UIBundle.message("file.chooser.goto.home.action.name"), UIBundle.message("file.chooser.goto.home.action.description"), IconLoader.getIcon("/nodes/homeFolder.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_MASK));
   }
 
-  protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
-    VirtualFile homeDirectory = getHomeDirectory();
-    fileSystemTree.select(homeDirectory);
-    fileSystemTree.expand(homeDirectory);
+  protected void actionPerformed(final FileSystemTree fileSystemTree, AnActionEvent e) {
+    final VirtualFile homeDirectory = getHomeDirectory();
+    fileSystemTree.select(homeDirectory, new Runnable() {
+      public void run() {
+        fileSystemTree.expand(homeDirectory, null);
+      }
+    });
   }
 
   private static VirtualFile getHomeDirectory(){
