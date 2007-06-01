@@ -151,7 +151,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
     LOGGER.info("is15 is " + is15);
 
     // Add plugin jars first...
-    javaParameters.getClassPath().add(new File(PathManager.getPreinstalledPluginsPath(), "testng/lib/testng.jar").getPath());
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
                                       new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
 
