@@ -179,10 +179,5 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
     return false;
   }
-
-
-  public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Cannot be replaced as AST node");
-  }
 }
 

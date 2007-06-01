@@ -23,6 +23,4 @@ import com.intellij.util.IncorrectOperationException;
  */
 public interface GroovyPsiElement extends PsiElement {
 
-  public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException;
-
 }

@@ -18,11 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +37,8 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
 
   public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {
     if (getParent() == null ||
-        getParent().getNode() == null ||
-        newStmt.getNode() == null ||
-        !(newStmt instanceof GrStatement)) {
+            getParent().getNode() == null ||
+            newStmt.getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = getParent().getNode();
@@ -54,15 +48,6 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
       throw new IncorrectOperationException();
     }
     return (GrStatement) newNode.getPsi();
-  }
-
-  public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException {
-    if (getParent() == null ||
-        getParent().getNode() == null ||
-        newExpr.getNode() == null) {
-      throw new IncorrectOperationException();
-    }
-    getParent().getNode().replaceChild(this.getNode(), newExpr.getNode());
   }
 
   public <T extends GroovyPsiElement> Iterable<T> childrenOfType(final TokenSet tokSet) {
