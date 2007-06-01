@@ -64,13 +64,12 @@ public class ConstructorDefinition implements GroovyElementTypes {
     if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
       ParserUtils.getToken(builder, mNLS);
       GroovyElementType methodBody = ConstructorBody.parse(builder);
+      if (!WRONGWAY.equals(methodBody)) {
+        return CONSTRUCTOR_DEFINITION;
+      }
     }
 
-    if (!WRONGWAY.equals(methodBody)) {
-      return CONSTRUCTOR_DEFINITION;
-    } else {
-      return WRONGWAY;
-    }
+    return WRONGWAY;
   }
 
   private static IElementType parseModifiers(PsiBuilder builder) {
