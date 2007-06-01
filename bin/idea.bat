@@ -42,6 +42,7 @@ SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\openapi.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\jdom.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\log4j.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\extensions.jar
+SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\trove4j.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_JDK%\lib\tools.jar
 
 :: ---------------------------------------------------------------------
