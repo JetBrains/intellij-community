@@ -90,8 +90,6 @@ public final class WindowWatcher implements PropertyChangeListener{
     if(LOG.isDebugEnabled()){
       LOG.debug("exit: propertyChange()");
     }
-
-    IdeEventQueue.getInstance().getPopupManager().processWindowGainedFocus(myFocusedWindow);
   }
 
   final void dispatchComponentEvent(final ComponentEvent e){

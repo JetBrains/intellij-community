@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.MnemonicHelper;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
 /**
  * @author Anton Katilin
@@ -62,6 +64,17 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     setupCloseAction();
     new MnemonicHelper().register(this);
+
+    addWindowFocusListener(new WindowFocusListener() {
+      public void windowGainedFocus(final WindowEvent e) {
+        if (e.getOppositeWindow() == null) {
+          IdeEventQueue.getInstance().getPopupManager().processWindowGainedFocus(IdeFrameImpl.this);
+        }
+      }
+
+      public void windowLostFocus(final WindowEvent e) {
+      }
+    });
   }
 
   /**
