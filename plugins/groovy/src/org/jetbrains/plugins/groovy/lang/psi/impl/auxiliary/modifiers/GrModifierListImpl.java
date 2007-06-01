@@ -69,15 +69,16 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   public boolean hasModifierProperty(@NotNull @NonNls String name) {
-    return hasExplicitModifier(name);
-  }
-
-  public boolean hasExplicitModifier(@NotNull @NonNls String name) {
     if (name.equals(PsiModifier.PUBLIC)) {
       //groovy class members are public by default
       return findChildByType(GroovyElementTypes.kPRIVATE) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
     }
 
+    return hasExplicitModifier(name);
+  }
+
+  public boolean hasExplicitModifier(@NotNull @NonNls String name) {
+    if (name.equals(PsiModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
     if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
     if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
     if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;

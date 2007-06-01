@@ -519,7 +519,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
-    return false;
+    PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   @Nullable
