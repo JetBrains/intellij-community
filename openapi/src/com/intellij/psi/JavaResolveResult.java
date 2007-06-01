@@ -18,7 +18,9 @@ package com.intellij.psi;
 /**
  * JavaResolveResult holds additional information that is obtained
  * when Java references are being resolved
- *  @author ik, dsl
+ *
+ * @author ik, dsl
+ * @see com.intellij.psi.PsiCall#resolveMethodGenerics()
  */
 public interface JavaResolveResult extends ResolveResult {
   JavaResolveResult[] EMPTY_ARRAY = new JavaResolveResult[0];

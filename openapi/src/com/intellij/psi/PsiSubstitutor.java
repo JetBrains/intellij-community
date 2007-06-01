@@ -24,6 +24,7 @@ import java.util.Map;
  * Represents a mapping between type parameters and their values.
  *
  * @author ik, dsl
+ * @see com.intellij.psi.JavaResolveResult#getSubstitutor()
  */
 public interface PsiSubstitutor {
   /**
