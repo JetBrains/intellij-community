@@ -27,21 +27,21 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   private VirtualFileAdapter myVirtualFileListener;
   private Runnable myOnInitialized;
 
-
-  public FileTreeBuilder(JTree tree, DefaultTreeModel treeModel,
+  public FileTreeBuilder(JTree tree,
+                         DefaultTreeModel treeModel,
                          AbstractTreeStructure treeStructure,
                          Comparator<NodeDescriptor> comparator,
-                         FileChooserDescriptor chooserDescriptor, @Nullable Runnable onInitialized) {
+                         FileChooserDescriptor chooserDescriptor,
+                         @Nullable Runnable onInitialized) {
     super(tree, treeModel, treeStructure, comparator);
 
-    myOnInitialized= onInitialized;
+    myOnInitialized = onInitialized;
 
     myChooserDescriptor = chooserDescriptor;
     initRootNode();
 
     installVirtualFileListener();
   }
-
 
 
   protected void onRootNodeInitialized() {
@@ -79,10 +79,10 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object element = nodeDescriptor.getElement();
-    if (element != null){
+    if (element != null) {
       FileElement descriptor = (FileElement)element;
       VirtualFile file = descriptor.getFile();
-      if (file != null){
+      if (file != null) {
         if (myChooserDescriptor.isChooseJarContents() && FileElement.isArchive(file)) {
           return true;
         }
@@ -97,29 +97,6 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getElement() instanceof RootFileElement;
-  }
-
-  protected final void expandNodeChildren(DefaultMutableTreeNode node) {
-    final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-    if (descriptor == null) {
-      super.expandNodeChildren(node);
-      return;
-    }
-
-    Object element = descriptor.getElement();
-    if (element instanceof FileElement){
-      final VirtualFile file = ((FileElement)element).getFile();
-      if (file != null && file.isValid()){
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            public void run() {
-              file.refresh(false, false);
-            }
-          }
-        );
-      }
-    }
-    super.expandNodeChildren(node);
   }
 
   @NotNull

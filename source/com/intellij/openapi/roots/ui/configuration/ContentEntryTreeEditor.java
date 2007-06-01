@@ -77,7 +77,6 @@ public class ContentEntryTreeEditor {
 
     myTreePanel = new JPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setPreferredSize(new Dimension(300, 300));
     myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);

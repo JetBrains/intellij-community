@@ -25,8 +25,12 @@ public class WorkerThread implements Runnable {
   private LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
   private boolean myDisposed = false;
+  private int mySleep;
+  private String myName;
 
-  public WorkerThread(@NonNls String name) {
+  public WorkerThread(@NonNls String name, int sleep) {
+    mySleep = sleep;
+    myName = name;
   }
 
   public void start() {
@@ -63,6 +67,13 @@ public class WorkerThread implements Runnable {
     }
   }
 
+  public void cancelTasks() {
+    synchronized(myTasks){
+      myTasks.clear();
+      myTasks.notifyAll();
+    }
+  }
+
   public boolean isDisposeRequested() {
     synchronized(myTasks){
       return myToDispose;
@@ -84,6 +95,14 @@ public class WorkerThread implements Runnable {
           task = myTasks.removeFirst();
         }
         task.run();
+        try {
+          if (mySleep > 0) {
+            Thread.currentThread().sleep(mySleep);
+          }
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
 
       synchronized(myTasks){
