@@ -101,11 +101,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected void paintComponent(Graphics g) {
-    final Component parent = findNearestOpaque();
-    if (parent != null) {
-      g.setColor(parent.getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-    }
+    g.setColor(UIUtil.getBgFillColor(this));
+    g.fillRect(0, 0, getWidth(), getHeight());
 
     Icon icon;
 
@@ -120,17 +117,6 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     int y = (size.height - icon.getIconHeight()) / 2;
 
     icon.paintIcon(this, g, x, y);
-  }
-
-  private @Nullable
-  Component findNearestOpaque() {
-    Component eachParent = this;
-    while(eachParent != null) {
-      if (eachParent.isOpaque()) return eachParent;
-      eachParent = eachParent.getParent();
-    }
-
-    return eachParent;
   }
 
   protected Icon getPassiveIcon() {

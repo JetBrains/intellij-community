@@ -23,6 +23,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -715,5 +716,21 @@ public class UIUtil {
     if (e.isPopupTrigger() || e.getClickCount() != 1 || e.getID() != MouseEvent.MOUSE_PRESSED) return false;
     return e.getButton() == MouseEvent.BUTTON2 || (e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown());
   }
+
+  public static @NotNull Color getBgFillColor(@NotNull JComponent c) {
+    final Component parent = findNearestOpaque(c);
+    return parent == null ? c.getBackground() : parent.getBackground();
+  }
+
+  private static @Nullable Component findNearestOpaque(JComponent c) {
+    Component eachParent = c;
+    while(eachParent != null) {
+      if (eachParent.isOpaque()) return eachParent;
+      eachParent = eachParent.getParent();
+    }
+
+    return eachParent;
+  }
+
 }
 

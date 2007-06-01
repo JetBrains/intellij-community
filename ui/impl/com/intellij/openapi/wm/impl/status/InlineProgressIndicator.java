@@ -52,6 +52,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
 
     if (myCompact) {
+      myComponent.setOpaque(true);
       myComponent.setLayout(new BorderLayout(2, 0));
       final JPanel textAndProgress = new JPanel(new BorderLayout());
       myText.setHorizontalAlignment(JLabel.RIGHT);
@@ -257,8 +258,12 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   }
 
   private class MyComponent extends JPanel {
+
     protected void paintComponent(final Graphics g) {
-      if (myCompact) return;
+      if (myCompact) {
+        super.paintComponent(g);
+        return;
+      }
 
       final GraphicsConfig c = new GraphicsConfig(g);
       c.setAntialiasing(true);

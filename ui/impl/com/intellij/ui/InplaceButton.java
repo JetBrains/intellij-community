@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.CenteredIcon;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,6 +23,7 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
 
   private int myXTransform = 0;
   private int myYTransform = 0;
+  private boolean myFill;
 
   public InplaceButton(String tooltip, final Icon icon, final ActionListener listener) {
     this(new IconButton(tooltip, icon, icon), listener);
@@ -51,6 +53,11 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     setOpaque(false);
   }
 
+  public InplaceButton setFillBg(boolean fill) {
+    myFill = fill;
+    return this;
+  }
+
   public void setPainting(final boolean active) {
     myPainting = active;
     repaint();
@@ -75,6 +82,11 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     super.paintComponent(g);
 
     if (!myPainting) return;
+
+    if (myFill) {
+      g.setColor(UIUtil.getBgFillColor(this));
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
 
     g.translate(myXTransform, myYTransform);
 
