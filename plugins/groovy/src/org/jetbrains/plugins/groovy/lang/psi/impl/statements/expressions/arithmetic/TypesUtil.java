@@ -55,7 +55,10 @@ public class TypesUtil {
   public static boolean isAssignable(PsiType lType, PsiType rType) {
     //all numeric types are assignable
     if (isNumericType(lType) && isNumericType(rType)) return true;
-    if (lType.equalsToText("java.lang.String") || rType.equalsToText("java.lang.String")) return true; //need to parse string value?
+    if (lType.equalsToText("java.lang.String") && isNumericType(rType) ||
+        rType.equalsToText("java.lang.String") && isNumericType(lType)) {
+      return true; //need to parse string value?
+    }
     
     return TypeConversionUtil.isAssignable(lType, rType);
   }
