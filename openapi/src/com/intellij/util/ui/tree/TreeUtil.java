@@ -469,11 +469,17 @@ public final class TreeUtil {
       }
 
       final Rectangle b1 = bounds;
-      SwingUtilities.invokeLater(new Runnable() {
+      final Runnable runnable = new Runnable() {
         public void run() {
           tree.scrollRectToVisible(b1);
         }
-      });
+      };
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();        
+      } else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
   }
 
