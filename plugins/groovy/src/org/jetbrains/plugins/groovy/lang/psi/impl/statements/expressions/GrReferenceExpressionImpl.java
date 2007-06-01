@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
@@ -128,23 +129,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
-    if (getParent() == null ||
-        getParent().getNode() == null ||
-        newExpr.getNode() == null) {
-      throw new IncorrectOperationException();
-    }
-    // Remove unnecessary parentheses
-    if (getParent() instanceof GrParenthesizedExpr &&
-        newExpr instanceof GrReferenceExpression) {
-      return ((GrExpression) getParent()).replaceWithExpresssion(newExpr);
-    }
-    ASTNode parentNode = getParent().getNode();
-    ASTNode newNode = newExpr.getNode();
-    parentNode.replaceChild(this.getNode(), newNode);
-    if (!(newNode.getPsi() instanceof GrExpression)) {
-      throw new IncorrectOperationException();
-    }
-    return ((GrExpression) newNode.getPsi());
+    return PsiImplUtil.replaceExpression(this, newExpr);
   }
 
   public String getName() {

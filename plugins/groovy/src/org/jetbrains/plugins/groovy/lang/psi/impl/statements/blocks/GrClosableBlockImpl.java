@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -85,23 +86,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
-    if (getParent() == null ||
-        getParent().getNode() == null ||
-        newExpr.getNode() == null) {
-      throw new IncorrectOperationException();
-    }
-    // Remove unnecessary parentheses
-    if (getParent() instanceof GrParenthesizedExpr &&
-        newExpr instanceof GrReferenceExpression) {
-      return ((GrExpression) getParent()).replaceWithExpresssion(newExpr);
-    }
-    ASTNode parentNode = getParent().getNode();
-    ASTNode newNode = newExpr.getNode();
-    parentNode.replaceChild(this.getNode(), newNode);
-    if (!(newNode.getPsi() instanceof GrExpression)) {
-      throw new IncorrectOperationException();
-    }
-    return ((GrExpression) newNode.getPsi());
+    return PsiImplUtil.replaceExpression(this, newExpr);
   }
 
   public void subtreeChanged() {
