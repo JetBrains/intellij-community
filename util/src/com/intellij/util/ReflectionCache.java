@@ -16,12 +16,15 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -45,17 +48,11 @@ public class ReflectionCache {
     }
   };
 
-  private static final ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class,Boolean>> ourAssignables = new ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {
-    @NotNull
-    protected ConcurrentFactoryMap<Class, Boolean> create(final Class key1) {
-      return new ConcurrentFactoryMap<Class, Boolean>() {
-        @NotNull
-        protected Boolean create(final Class key2) {
-          return key1.isAssignableFrom(key2);
-        }
-      };
-    }
-  };
+  private static final Map<Class, Map<Class,Boolean>> ourAssignables = new THashMap<Class, Map<Class, Boolean>>();
+  private static final ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
+  private static final ReentrantReadWriteLock.ReadLock r = ourLock.readLock();
+  private static final ReentrantReadWriteLock.WriteLock w = ourLock.writeLock();
+
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @NotNull
@@ -98,7 +95,31 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
-    return ancestor == descendant || ourAssignables.get(ancestor).get(descendant);
+    if (ancestor == descendant) return true;
+    r.lock();
+    try {
+      Map<Class, Boolean> map = ourAssignables.get(ancestor);
+      if (map != null) {
+        final Boolean aBoolean = map.get(descendant);
+        if (aBoolean != null) {
+          return aBoolean;
+        }
+      }
+    } finally{
+      r.unlock();
+    }
+    w.lock();
+    try {
+      Map<Class, Boolean> map = ourAssignables.get(ancestor);
+      if (map == null) {
+        ourAssignables.put(ancestor, map = new THashMap<Class, Boolean>());
+      }
+      final boolean result = ancestor.isAssignableFrom(descendant);
+      map.put(descendant, result);
+      return result;
+    } finally{
+      w.unlock();
+    }
   }
 
   public static boolean isInstance(Object instance, Class clazz) {
