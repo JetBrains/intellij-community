@@ -268,6 +268,27 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return myClassLoader;
   }
 
+  @NotNull
+  public AntInstallation getAntInstallation() {
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+    if (buildFile != null) {
+      final AntInstallation assignedInstallation = AntBuildFileImpl.ANT_INSTALLATION.get(buildFile.getAllOptions());
+      if (assignedInstallation != null) {
+        return assignedInstallation;
+      }
+    }
+    
+    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getProject());
+    if (configuration != null) {
+      final AntInstallation projectDefaultInstallation = configuration.getProjectDefaultAnt();
+      if (projectDefaultInstallation != null) {
+        return projectDefaultInstallation;
+      }
+    }
+    
+    return GlobalAntConfiguration.getInstance().getBundledAnt();
+  }
+
   @Nullable
   public AntElement getAntParent() {
     return null;

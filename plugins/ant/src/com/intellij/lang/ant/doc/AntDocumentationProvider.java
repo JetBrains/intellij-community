@@ -1,77 +1,112 @@
 package com.intellij.lang.ant.doc;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class AntDocumentationProvider implements DocumentationProvider {
+  
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-
     if (!(originalElement instanceof AntElement)) {
       return null;
     }
+    final AntElement antElement = (AntElement)originalElement;
+    String doc = generateDocForElement(antElement);
+    if (doc != null) {
+      return doc;
+    }
+    
+    final File helpFile = getHelpFile(originalElement);
+    if (helpFile == null) {
+      return null;
+    }
+    final VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().findFileByIoFile(helpFile);
+      }
+    });
 
-    AntElement antElement = (AntElement)originalElement;
+    if (fileByIoFile == null) {
+      return null;
+    }
+    try {
+      return VfsUtil.loadText(fileByIoFile);
+    }
+    catch (IOException ignored) {
+    }
+    return null;
+  }
 
-    PsiFile containingFile = antElement.getContainingFile();
-    AntConfiguration instance = AntConfiguration.getInstance(antElement.getProject());
-
-    for (AntBuildFile buildFile : instance.getBuildFiles()) {
-      if (buildFile.getAntFile().equals(containingFile)) {
-        final AntInstallation installation = AntBuildFileImpl.ANT_INSTALLATION.get(((AntBuildFileImpl)buildFile).getAllOptions());
-        if (installation != null) {
-          final String antHomeDir = AntInstallation.HOME_DIR.get(installation.getProperties());
-
-          if (antHomeDir != null) {
-            final @NonNls String path = antHomeDir + "/docs/manual";
-
-            File helpFile = new File(path).exists() ? getHelpFile(antElement, path) : null;
-
-            if (helpFile != null) {
-              final File helpFile1 = helpFile;
-              VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-                public VirtualFile compute() {
-                  return LocalFileSystem.getInstance().findFileByIoFile(helpFile1);
-                }
-              });
-
-              if (fileByIoFile != null) {
-                try {
-                  return VfsUtil.loadText(fileByIoFile);
-                }
-                catch (IOException e) {
-                  // ignore exception
-                }
-              }
-            }
-          }
+  @Nullable
+  private static String generateDocForElement(final AntElement antElement) {
+    if (antElement instanceof AntFilesProvider) {
+      final List<File> list = ((AntFilesProvider)antElement).getFiles();
+      final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        final XmlElement srcElement = antElement.getSourceElement();
+        if (srcElement instanceof XmlTag) {
+          builder.append("<b>");
+          builder.append(((XmlTag)srcElement).getName());
+          builder.append(":</b>");
         }
+        for (File file : list) {
+          if (builder.length() > 0) {
+            builder.append("<br>");
+          }
+          builder.append(file.getPath());
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
       }
     }
     return null;
   }
 
+  @Nullable
+  private static File getHelpFile(final PsiElement element) {
+    if (!(element instanceof AntElement)) {
+      return null;
+    }
+    final AntElement antElement = (AntElement)element;
+    final AntFile antFile = antElement.getAntFile();
+    if (antFile == null) {
+      return null;
+    }
+    final AntInstallation installation = antFile.getAntInstallation();
+    if (installation == null) {
+      return null; // not configured properly and bundled installation missing
+    }
+    final String antHomeDir = AntInstallation.HOME_DIR.get(installation.getProperties());
 
+    if (antHomeDir == null) {
+      return null;
+    }
+    
+    final @NonNls String path = antHomeDir + "/docs/manual";
+
+    return new File(path).exists() ? getHelpFile(antElement, path) : null;
+  }
+  
   @NonNls private static final String CORE_TASKS_FOLDER_NAME = "/CoreTasks/";
   @NonNls private static final String CORE_TYPES_FOLDER_NAME = "/CoreTypes/";
   @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "/OptionalTypes/";
@@ -108,11 +143,21 @@ public class AntDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
+    if (element instanceof AntTarget) {
+      final String description = ((AntTarget)element).getDescription();
+      if (description != null && description.length() > 0) {
+        return description;
+      }
+    }
     return null;
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;
+    final File helpFile = getHelpFile(originalElement);
+    if (helpFile == null) {
+      return null;
+    }
+    return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(helpFile.getPath()));
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {

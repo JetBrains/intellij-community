@@ -2,6 +2,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,8 +37,13 @@ public final class TargetFilter implements JDOMExternalizable {
     myVisible = Boolean.valueOf(element.getAttributeValue(FILTER_IS_VISIBLE));
   }
 
-  public void writeExternal(Element element) {
-    element.setAttribute(FILTER_TARGET_NAME, getTargetName());
+  public void writeExternal(Element element) throws WriteExternalException {
+    final String targetName = getTargetName();
+    if (targetName == null) {
+      // incomplete tag
+      throw new WriteExternalException();
+    }
+    element.setAttribute(FILTER_TARGET_NAME, targetName);
     element.setAttribute(FILTER_IS_VISIBLE, Boolean.valueOf(isVisible()).toString());
   }
 
