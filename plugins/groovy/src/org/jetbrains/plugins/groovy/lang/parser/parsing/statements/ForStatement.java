@@ -199,7 +199,7 @@ public class ForStatement implements GroovyElementTypes {
                                                          PsiBuilder.Marker declMarker) {
     if (ParserUtils.getToken(builder, mIDENT)) {
       if (kIN.equals(builder.getTokenType())) {
-        declMarker.done(VARIABLE);
+        declMarker.done(PARAMETER);
         ParserUtils.getToken(builder, kIN);
         if (WRONGWAY.equals(ShiftExpression.parse(builder))) {
           builder.error(GroovyBundle.message("expression.expected"));
