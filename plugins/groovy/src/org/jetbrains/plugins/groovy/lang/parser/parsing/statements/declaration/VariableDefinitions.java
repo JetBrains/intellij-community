@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -85,15 +84,10 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
-      //if there is no OpenOrClosableBlock, nls haven'to be eaten
-      PsiBuilder.Marker nlsMarker = builder.mark();
-      if (mNLS.equals(NlsWarn.parse(builder)) && !(builder.getTokenType() == mLPAREN)) {
-        nlsMarker.rollbackTo();
-      } else {
-        nlsMarker.drop();
+      if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
+        ParserUtils.getToken(builder, mNLS);
+        OpenOrClosableBlock.parseOpenBlock(builder);
       }
-
-      OpenOrClosableBlock.parseOpenBlock(builder);
 
       varMarker.drop();
       return METHOD_DEFINITION;

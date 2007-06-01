@@ -20,7 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.NlsWarn;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
@@ -62,9 +61,10 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     ThrowClause.parse(builder);
 
-    NlsWarn.parse(builder);
-
-    GroovyElementType methodBody = ConstructorBody.parse(builder);
+    if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
+      ParserUtils.getToken(builder, mNLS);
+      GroovyElementType methodBody = ConstructorBody.parse(builder);
+    }
 
     if (!WRONGWAY.equals(methodBody)) {
       return CONSTRUCTOR_DEFINITION;
