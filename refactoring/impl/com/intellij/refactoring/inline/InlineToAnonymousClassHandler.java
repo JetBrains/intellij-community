@@ -29,6 +29,15 @@ public class InlineToAnonymousClassHandler {
 
   @Nullable
   public static String getCannotInlineMessage(final PsiClass psiClass) {
+    if (psiClass.isAnnotationType()) {
+      return "Annotation types cannot be inlined";
+    }
+    if (psiClass.isInterface()) {
+      return "Interfaces cannot be inlined";
+    }
+    if (psiClass.isEnum()) {
+      return "Enums cannot be inlined";
+    }
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return RefactoringBundle.message("inline.to.anonymous.no.abstract");
     }

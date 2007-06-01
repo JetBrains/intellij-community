@@ -116,6 +116,18 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Abstract classes cannot be inlined");
   }
 
+  public void testNoInlineInterface() throws Exception {
+    doTestNoInline("Interfaces cannot be inlined");
+  }
+
+  public void testNoInlineEnum() throws Exception {
+    doTestNoInline("Enums cannot be inlined");
+  }
+
+  public void testNoInlineAnnotationType() throws Exception {
+    doTestNoInline("Annotation types cannot be inlined");
+  }
+
   public void testNoInlineWithSubclasses() throws Exception {
     doTestNoInline("Classes which have subclasses cannot be inlined");
   }
