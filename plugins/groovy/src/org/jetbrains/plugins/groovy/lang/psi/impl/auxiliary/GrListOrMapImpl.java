@@ -27,11 +27,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrListOrMapImpl extends GroovyPsiElementImpl implements GrListOrMap {
+public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final TokenSet MAP_LITERAL_TOKENS = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
 
   public GrListOrMapImpl(@NotNull ASTNode node) {

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ilyas
@@ -26,5 +27,5 @@ public interface GrExpression extends GrStatement, GrCondition {
   GrExpression[] EMPTY_ARRAY = new GrExpression[0];
   PsiType getType();
 
-  //GrExpression replaceWithExpresssion(GrExpression expression);
+  GrExpression replaceWithExpresssion(GrExpression expression) throws IncorrectOperationException;
 }

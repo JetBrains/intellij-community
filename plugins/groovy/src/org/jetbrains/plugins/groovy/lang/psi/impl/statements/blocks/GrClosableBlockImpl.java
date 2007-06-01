@@ -27,6 +27,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -66,7 +69,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       return GrParameter.EMPTY_ARRAY;
     }
 
-    return new GrParameter[] {getSyntheticItParameter()};
+    return new GrParameter[]{getSyntheticItParameter()};
   }
 
   public GrParameterListImpl getParameterList() {
@@ -79,6 +82,26 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   public PsiType getType() {
     return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+  }
+
+  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
+    if (getParent() == null ||
+        getParent().getNode() == null ||
+        newExpr.getNode() == null) {
+      throw new IncorrectOperationException();
+    }
+    // Remove unnecessary parentheses
+    if (getParent() instanceof GrParenthesizedExpr &&
+        newExpr instanceof GrReferenceExpression) {
+      return ((GrExpression) getParent()).replaceWithExpresssion(newExpr);
+    }
+    ASTNode parentNode = getParent().getNode();
+    ASTNode newNode = newExpr.getNode();
+    parentNode.replaceChild(this.getNode(), newNode);
+    if (!(newNode.getPsi() instanceof GrExpression)) {
+      throw new IncorrectOperationException();
+    }
+    return ((GrExpression) newNode.getPsi());
   }
 
   public void subtreeChanged() {

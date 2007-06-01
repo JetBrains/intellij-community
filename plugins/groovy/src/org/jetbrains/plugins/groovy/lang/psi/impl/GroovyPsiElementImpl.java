@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import java.util.Iterator;
 
@@ -37,6 +38,22 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
 
   public GroovyPsiElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {
+    if (getParent() == null ||
+        getParent().getNode() == null ||
+        newStmt.getNode() == null ||
+        !(newStmt instanceof GrStatement)) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode parentNode = getParent().getNode();
+    ASTNode newNode = newStmt.getNode();
+    parentNode.replaceChild(this.getNode(), newNode);
+    if (!(newNode.getPsi() instanceof GrStatement)) {
+      throw new IncorrectOperationException();
+    }
+    return (GrStatement) newNode.getPsi();
   }
 
   public void replaceAsNode(PsiElement newExpr) throws IncorrectOperationException {

@@ -17,11 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 21.03.2007
  */
 public interface GrStatement extends GrTopStatement, GrCondition {
-  //GrStatement replaceWithStatement (GrStatement statement);
+
+  GrStatement replaceWithStatement (GrStatement statement) throws IncorrectOperationException;
 }

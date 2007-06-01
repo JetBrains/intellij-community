@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -128,6 +125,26 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public PsiType getType() {
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
+  }
+
+  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
+    if (getParent() == null ||
+        getParent().getNode() == null ||
+        newExpr.getNode() == null) {
+      throw new IncorrectOperationException();
+    }
+    // Remove unnecessary parentheses
+    if (getParent() instanceof GrParenthesizedExpr &&
+        newExpr instanceof GrReferenceExpression) {
+      return ((GrExpression) getParent()).replaceWithExpresssion(newExpr);
+    }
+    ASTNode parentNode = getParent().getNode();
+    ASTNode newNode = newExpr.getNode();
+    parentNode.replaceChild(this.getNode(), newNode);
+    if (!(newNode.getPsi() instanceof GrExpression)) {
+      throw new IncorrectOperationException();
+    }
+    return ((GrExpression) newNode.getPsi());
   }
 
   public String getName() {
@@ -305,7 +322,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
             propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
           }
 
-          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class); 
+          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
         }
       }
     }
@@ -368,7 +385,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (qualifierType instanceof PsiIntersectionType) {
         for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
           getVaiantsFromQualifierType(processor, conjunct, project);
-         }
+        }
       } else {
         getVaiantsFromQualifierType(processor, qualifierType, project);
       }

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Comparator;
 
 /**
  * @author ilyas
@@ -80,11 +82,23 @@ public abstract class GroovyRefactoringUtil {
     return occurences.toArray(PsiElement.EMPTY_ARRAY);
   }
 
+
   private static void accumulateOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
     for (PsiElement child : scope.getChildren()) {
       if (!(child instanceof GrTypeDefinition) &&
           !(child instanceof GrMethod && scope instanceof GroovyFile)) {
-        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr)) {
+        Comparator<PsiElement> psiComparator = new Comparator<PsiElement>() {
+          public int compare(PsiElement psiElement, PsiElement psiElement1) {
+            if (psiElement instanceof GrParameter &&
+                psiElement1 instanceof GrParameter &&
+                PsiEquivalenceUtil.areElementsEquivalent(psiElement, psiElement1)) {
+              return 0;
+            } else {
+              return 1;
+            }
+          }
+        };
+        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, psiComparator, false)) {
           acc.add(child);
         } else {
           accumulateOccurences(expr, child, acc);
@@ -100,9 +114,9 @@ public abstract class GroovyRefactoringUtil {
     return map;
   }
 
-  public static GrExpression getUnparenthesizedExpr(GrExpression expr){
+  public static GrExpression getUnparenthesizedExpr(GrExpression expr) {
     GrExpression operand = expr;
-    while (operand instanceof GrParenthesizedExpr){
+    while (operand instanceof GrParenthesizedExpr) {
       operand = ((GrParenthesizedExpr) operand).getOperand();
     }
     return operand;

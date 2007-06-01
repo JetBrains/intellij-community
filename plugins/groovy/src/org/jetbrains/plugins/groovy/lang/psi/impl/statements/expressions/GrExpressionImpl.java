@@ -6,6 +6,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
@@ -20,25 +22,24 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
     super(node);
   }
 
-  public GrStatement replace(@NotNull PsiElement newExpr) throws IncorrectOperationException {
+  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
     if (getParent() == null ||
         getParent().getNode() == null ||
-        newExpr.getNode() == null ||
-        !(newExpr instanceof GrStatement)) {
+        newExpr.getNode() == null) {
       throw new IncorrectOperationException();
+    }
+    // Remove unnecessary parentheses
+    if (getParent() instanceof GrParenthesizedExpr &&
+        newExpr instanceof GrReferenceExpression){
+      return ((GrExpression) getParent()).replaceWithExpresssion(newExpr);
     }
     ASTNode parentNode = getParent().getNode();
     ASTNode newNode = newExpr.getNode();
     parentNode.replaceChild(this.getNode(), newNode);
-    if (!(newNode.getPsi() instanceof GrStatement)){
+    if (!(newNode.getPsi() instanceof GrExpression)){
       throw new IncorrectOperationException();
     }
-    return (GrStatement) newNode.getPsi();
+    return ((GrExpression) newNode.getPsi());
   }
-
-  
-
-
-
 
 }

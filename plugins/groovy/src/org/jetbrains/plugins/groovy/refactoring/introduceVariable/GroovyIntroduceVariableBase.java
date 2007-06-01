@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -107,7 +108,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
     // Find occurences
-    final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(expr, tempContainer);
+    final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(expr), tempContainer);
     // Getting settings
     GroovyIntroduceVariableSettings settings = getSettings(project, editor, expr, expr.getType(), occurences, false, null);
 
@@ -126,7 +127,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          // insert new variable
+          /* insert new variable */
           sortOccurences(occurences);
           if (occurences.length == 0 || !(occurences[0] instanceof GrExpression)) {
             throw new IncorrectOperationException("Wrong expression occurence");
@@ -137,22 +138,24 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
           } else {
             firstOccurence = expr;
           }
+          // Replace at the place of first occurence
           boolean alreadyDefined = replaceAloneExpression(firstOccurence, tempContainer, varDecl);
           if (!alreadyDefined) {
+            // Insert before first occurence
             PsiElement anchorElement = calculatePositionToInsertBefore(tempContainer, expr, occurences, replaceAllOccurences);
             tempContainer.addBefore(varDecl, anchorElement);
             tempContainer.addBefore(factory.createNewLine(), anchorElement);
           }
 
-          //replace occurences
+          //Replace other occurences
           GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(varName);
           if (replaceAllOccurences) {
             ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
             for (PsiElement occurence : occurences) {
               if (!(alreadyDefined && firstOccurence.equals(occurence))) {
                 if (occurence instanceof GrExpression) {
-                  GroovyPsiElement element = (GrExpression) occurence;
-                  replaced.add(element.replace(refExpr));
+                  GrExpression element = (GrExpression) occurence;
+                  replaced.add(element.replaceWithExpresssion(refExpr));
                   refExpr = factory.createReferenceExpressionFromText(varName);
                 } else {
                   throw new IncorrectOperationException("Expression occurence to be replaced is not instance of GroovyPsiElement");
@@ -165,7 +168,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             }
           } else {
             if (!alreadyDefined) {
-              expr.replace(refExpr);
+              expr.replaceWithExpresssion(refExpr);
             }
           }
         } catch (IncorrectOperationException e) {
@@ -231,7 +234,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                                          @NotNull PsiElement context,
                                          @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
     if (context.equals(expr.getParent())) {
-      expr.replace(definition);
+      expr.replaceWithStatement(definition);
       return true;
     }
     return false;
