@@ -2,7 +2,6 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.TimedComputable;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +10,8 @@ import sun.misc.Resource;
 import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -35,7 +36,7 @@ class JarLoader extends Loader {
     }
   };
 
-  private TObjectIntHashMap<String> myPackages = null;
+  private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final long NS_THRESHOLD = 10000000;
@@ -73,9 +74,9 @@ class JarLoader extends Loader {
   }
 
   private void initPackageCache() throws IOException {
-    if (myPackages != null || !myUseCache) return;
-    myPackages = new TObjectIntHashMap<String>();
-    myPackages.put("", 0);
+    if (myDirectories != null || !myUseCache) return;
+    myDirectories = new HashMap<String,Boolean>();
+    myDirectories.put("",Boolean.FALSE);
 
     final ZipFile zipFile = getZipFile();
     if (zipFile == null) return;
@@ -89,11 +90,10 @@ class JarLoader extends Loader {
       String packageName = i > 0 ? name.substring(0, i) : "";
 
       if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
-        myPackages.put(packageName, 1);
+        myDirectories.put(packageName,Boolean.TRUE);
       } else {
-        if (!myPackages.containsKey(packageName)) {
-          myPackages.put(packageName, 0);
-        }
+        final Boolean status = myDirectories.get(packageName);
+        myDirectories.put(packageName,status != Boolean.TRUE ? Boolean.FALSE:Boolean.TRUE);
       }
     }
 
@@ -118,9 +118,10 @@ class JarLoader extends Loader {
       if (myUseCache) {
         String packageName = getPackageName(name);
 
-        if (!myPackages.containsKey(packageName)) return null;
+        final Boolean hasClassFiles = myDirectories.get(packageName);
+        if (hasClassFiles == null) return null;
 
-        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION) && myPackages.get(packageName) == 0) {
+        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION) && !hasClassFiles.booleanValue()) {
           return null;
         }
       }
