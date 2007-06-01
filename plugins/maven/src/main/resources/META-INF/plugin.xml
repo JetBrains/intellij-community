@@ -8,17 +8,10 @@
   <change-notes>
     <![CDATA[]]>
   </change-notes>
-  <depends>com.intellij.javaee</depends>
   <idea-version since-build="6800"/>
   <extensionPoints>
-    <extensionPoint name="packagingConverter"
-                    interface="org.jetbrains.idea.maven.project.packaging.PackagingConverter"/>
+    <extensionPoint name="packagingConverter" interface="org.jetbrains.idea.maven.project.PackagingConverter"/>
   </extensionPoints>
-  <extensions xmlns="org.jetbrains.idea.maven">
-    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.WarPackagingConverter"/>
-    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.EarPackagingConverter"/>
-    <packagingConverter implementation="org.jetbrains.idea.maven.project.packaging.EjbPackagingConverter"/>
-  </extensions>
   <extensions xmlns="com.intellij">
     <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>

@@ -9,7 +9,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven-embedder-2.1.jar!/" />
@@ -25,9 +25,6 @@
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="treeStructure" />
-    <orderEntry type="module" module-name="web-impl" />
-    <orderEntry type="module" module-name="J2EE" />
-    <orderEntry type="module" module-name="EJB" />
     <orderEntryProperties />
   </component>
 </module>

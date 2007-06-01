@@ -13,7 +13,6 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.project.packaging.PackagingConverter;
 
 import java.io.File;
 import java.text.MessageFormat;
