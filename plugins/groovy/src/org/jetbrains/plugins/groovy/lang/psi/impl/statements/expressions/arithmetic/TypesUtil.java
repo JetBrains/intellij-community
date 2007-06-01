@@ -3,15 +3,24 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Map;
 
 /**
  * @author ven
  */
 public class TypesUtil {
+  @NonNls
+  public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
+
   public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
     PsiType lType = binaryExpression.getLeftOperand().getType();
     PsiType rType = binaryExpression.getRightOperand().getType();
@@ -40,6 +49,18 @@ public class TypesUtil {
     TYPE_TO_RANK.put("java.lang.Double", 8);
   }
 
+  static {
+    ourQNameToUnboxed.put("java.lang.Boolean", PsiType.BOOLEAN);
+    ourQNameToUnboxed.put("java.lang.Byte", PsiType.BYTE);
+    ourQNameToUnboxed.put("java.lang.Character", PsiType.CHAR);
+    ourQNameToUnboxed.put("java.lang.Short", PsiType.SHORT);
+    ourQNameToUnboxed.put("java.lang.Integer", PsiType.INT);
+    ourQNameToUnboxed.put("java.lang.Long", PsiType.LONG);
+    ourQNameToUnboxed.put("java.lang.Float", PsiType.FLOAT);
+    ourQNameToUnboxed.put("java.lang.Double", PsiType.DOUBLE);
+  }
+
+
   private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
   static {
     RANK_TO_TYPE.put(1, "java.lang.Integer");
@@ -52,14 +73,15 @@ public class TypesUtil {
     RANK_TO_TYPE.put(8, "java.lang.Double");
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType) {
+  public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
-    if (isNumericType(lType) && isNumericType(rType)) return true;
-    if (lType.equalsToText("java.lang.String") && isNumericType(rType) ||
-        rType.equalsToText("java.lang.String") && isNumericType(lType)) {
-      return true; //need to parse string value?
+    if (isNumericType(lType)) {
+      return isNumericType(rType) || rType.equalsToText("java.lang.String");
+    } else {
+      if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
+      rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
     }
-    
+
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
@@ -70,5 +92,41 @@ public class TypesUtil {
 
     return type instanceof PsiPrimitiveType &&
            TypeConversionUtil.isNumericType(type);
+  }
+
+  public static PsiType unboxPrimitiveTypeAndEraseGenerics(PsiType result) {
+    return TypeConversionUtil.erasure(unboxPrimitiveType(result));
+  }
+
+  public static PsiType unboxPrimitiveType(PsiType result) {
+    if (result instanceof PsiClassType) {
+      PsiType unboxed = ourQNameToUnboxed.get(result.getCanonicalText());
+      if (unboxed != null) result = unboxed;
+    }
+    return result;
+  }
+
+  public static PsiType boxPrimitiveTypeAndEraseGenerics(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
+    if (result instanceof PsiPrimitiveType) {
+      PsiPrimitiveType primitive = (PsiPrimitiveType) result;
+      String boxedTypeName = primitive.getBoxedTypeName();
+      if (boxedTypeName != null) {
+        return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+      }
+    }
+
+    return TypeConversionUtil.erasure(result);
+  }
+
+  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
+    if (result instanceof PsiPrimitiveType) {
+      PsiPrimitiveType primitive = (PsiPrimitiveType) result;
+      String boxedTypeName = primitive.getBoxedTypeName();
+      if (boxedTypeName != null) {
+        return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+      }
+    }
+
+    return result;
   }
 }

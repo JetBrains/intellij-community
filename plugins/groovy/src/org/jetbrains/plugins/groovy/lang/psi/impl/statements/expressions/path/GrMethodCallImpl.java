@@ -26,9 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -50,7 +49,7 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
       PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
       if (resolved instanceof PsiMethod && resolved.getCopyableUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
         PsiType returnType = ((PsiMethod) resolved).getReturnType();
-        return PsiUtil.boxPrimitiveTypeAndEraseGenerics(returnType, getManager(), getResolveScope());
+        return TypesUtil.boxPrimitiveTypeAndEraseGenerics(returnType, getManager(), getResolveScope());
       }
     }
 

@@ -95,7 +95,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkAssignability(AnnotationHolder holder, @NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement element) {
-    if (!TypesUtil.isAssignable(lType, rType)) {
+    if (!TypesUtil.isAssignable(lType, rType, element.getManager(), element.getResolveScope())) {
       holder.createWarningAnnotation(element, GroovyBundle.message("cannot.assign", rType.getInternalCanonicalText(), lType.getInternalCanonicalText()));
     }
   }

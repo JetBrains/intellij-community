@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -118,7 +118,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
 
-      return PsiUtil.boxPrimitiveTypeAndEraseGenerics(result, manager, refExpr.getResolveScope());
+      return TypesUtil.boxPrimitiveTypeAndEraseGenerics(result, manager, refExpr.getResolveScope());
     }
   }
 
