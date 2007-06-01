@@ -58,7 +58,7 @@ public class Change {
       return Type.DELETED;
     }
 
-    if (!Comparing.equal(myBeforeRevision.getFile().getPath(), myAfterRevision.getFile().getPath())) {
+    if (!Comparing.equal(myBeforeRevision.getFile(), myAfterRevision.getFile())) {
       return Type.MOVED;
     }
 
