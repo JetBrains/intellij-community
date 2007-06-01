@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDocTag> {
 
   public PsiDocTag handleContentChange(PsiDocTag tag, TextRange range, String newContent) throws IncorrectOperationException {
-    final StringBuffer replacement = new StringBuffer( tag.getText() );
+    final StringBuilder replacement = new StringBuilder( tag.getText() );
 
     replacement.replace(
       range.getStartOffset(),

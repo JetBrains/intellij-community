@@ -13,7 +13,7 @@ public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
 
   public XmlTag handleContentChange(XmlTag tag, TextRange range, String newContent) throws IncorrectOperationException {
     
-    final StringBuffer replacement = new StringBuffer( tag.getValue().getText() );
+    final StringBuilder replacement = new StringBuilder( tag.getValue().getText() );
     final int valueOffset = tag.getValue().getTextRange().getStartOffset() - tag.getTextOffset();
 
     replacement.replace(
