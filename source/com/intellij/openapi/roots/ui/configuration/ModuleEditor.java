@@ -121,7 +121,7 @@ public class ModuleEditor {
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
-    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, myModifiableRootModelProxy,
+    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy(), 
                                                                       myFacetsProvider);
   }
 
