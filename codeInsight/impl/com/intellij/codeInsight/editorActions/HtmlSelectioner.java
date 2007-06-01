@@ -71,7 +71,11 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     HighlighterIterator i = highlighter.createIterator(cursorOffset);
     if (i.atEnd()) return result;
 
-    if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || i.getTokenType() == XmlTokenType.XML_NAME) {
+    final IElementType tokenType = i.getTokenType();
+    if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+        tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
+        tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN ||
+        tokenType == XmlTokenType.XML_NAME) {
       addAttributeSelection(result, i);
     }
 
@@ -122,30 +126,87 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
 
   private static void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
     result.add(new TextRange(i.getStart(), i.getEnd()));
+
+    if (i.getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF || i.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+      i.retreat();
+      if (i.atEnd()) {
+        i.advance();
+      } else if (i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+        i.advance();
+        i.advance();
+        if (i.atEnd() || i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+          i.retreat();
+          return;
+        }
+      }
+    }
+
     if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      int start = i.getStart() - 1;
+      int end = i.getEnd() + 1;
 
       // Check quote before value
       i.retreat();
       boolean hasQuotes = true;
+      int retreatCount = 1;
+
       if (!i.atEnd()) {
-        final IElementType tokenType = i.getTokenType();
+        IElementType tokenType = i.getTokenType();
+
+        while(tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+              tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
+              tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
+          )   {
+          retreatCount++;
+          i.retreat();
+          if (i.atEnd()) {
+            tokenType = null;
+            break;
+          }
+          tokenType = i.getTokenType();
+        }
+
         if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
           hasQuotes = false;
+        } else {
+          start = i.getStart();
         }
       }
-      i.advance();
+
+      while(retreatCount-- > 0) i.advance();
 
       // Check quote after value
       i.advance();
+      int advanceCount = 1;
+
       if (!i.atEnd()) {
-        final IElementType tokenType = i.getTokenType();
+        IElementType tokenType = i.getTokenType();
+        while(tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+              tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
+              tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
+          )   {
+          advanceCount++;
+          i.advance();
+          if (i.atEnd()) {
+            tokenType = null;
+            break;
+          }
+          tokenType = i.getTokenType();
+        }
+
         if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
           hasQuotes = false;
+        }else {
+          end = i.getEnd();
         }
       }
-      i.retreat();
 
-      if (hasQuotes) result.add(new TextRange(i.getStart() - 1, i.getEnd() + 1));
+      while(advanceCount-- > 0) i.retreat();
+
+      if (hasQuotes) {
+        result.add(new TextRange(start , end ));
+        if (i.getStart() != start + 1 ||  i.getEnd() != end - 1) result.add(new TextRange(start + 1, end - 1 ));
+      }
     }
 
     while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_NAME) { i.retreat(); }
