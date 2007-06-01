@@ -42,11 +42,11 @@ public class TypesUtil {
 
   private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
   static {
-    RANK_TO_TYPE.put(1, "java.lang,Integer");
-    RANK_TO_TYPE.put(2, "java.lang,Integer");
-    RANK_TO_TYPE.put(3, "java.lang,Integer");
-    RANK_TO_TYPE.put(4, "java.lang,Long");
-    RANK_TO_TYPE.put(5, "java.lang,BigInteger");
+    RANK_TO_TYPE.put(1, "java.lang.Integer");
+    RANK_TO_TYPE.put(2, "java.lang.Integer");
+    RANK_TO_TYPE.put(3, "java.lang.Integer");
+    RANK_TO_TYPE.put(4, "java.lang.Long");
+    RANK_TO_TYPE.put(5, "java.lang.BigInteger");
     RANK_TO_TYPE.put(6, "java.math.BigDecimal");
     RANK_TO_TYPE.put(7, "java.math.Double");
     RANK_TO_TYPE.put(8, "java.lang.Double");

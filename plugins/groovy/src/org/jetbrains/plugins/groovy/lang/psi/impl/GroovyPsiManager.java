@@ -35,6 +35,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -208,14 +209,17 @@ public class GroovyPsiManager implements ProjectComponent {
   };
 
   private void addSwingBuilderMethods() throws IncorrectOperationException {
+    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (int i = 0; i < SWING_WIDGETS_METHODS.length / 2; i++) {
       String methodName = SWING_WIDGETS_METHODS[2 * i];
       String returnTypeText = SWING_WIDGETS_METHODS[2 * i + 1];
-      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
       PsiClassType returnType = factory.createTypeByFQClassName(returnTypeText, scope);
-      methods.add(factory.createMethod(methodName, returnType));
+      PsiMethod method = factory.createMethod(methodName, returnType);
+      method.putUserData(GrMethod.BUILDER_METHOD, true);
+      methods.add(method);
     }
 
     myDefaultMethods.put(SWING_BUILDER_QNAME, methods);

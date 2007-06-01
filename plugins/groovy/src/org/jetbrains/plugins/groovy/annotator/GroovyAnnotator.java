@@ -23,12 +23,14 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -45,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
  * @author ven
  */
 public class GroovyAnnotator implements Annotator {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+
   private GroovyAnnotator() {
   }
 
@@ -79,10 +83,9 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkVariable(AnnotationHolder holder, GrVariable element) {
-    GrVariable var = (GrVariable) element;
-    PsiType varType = var.getType();
-    GrExpression initializer = var.getInitializerGroovy();
+  private void checkVariable(AnnotationHolder holder, GrVariable variable) {
+    PsiType varType = variable.getType();
+    GrExpression initializer = variable.getInitializerGroovy();
     if (initializer != null) {
       PsiType rType = initializer.getType();
       if (rType != null) {
@@ -110,13 +113,15 @@ public class GroovyAnnotator implements Annotator {
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
-      } else if (element instanceof PsiMethod) {
-        /*PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
+      } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
+        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
         if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod)element)) {
+          GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(refExpr);
+          LOG.assertTrue(elementToHighlight != null);
           //todo more specific error message
           String message = GroovyBundle.message("cannot.apply.method", refExpr.getReferenceName());
-          holder.createWarningAnnotation(refExpr, message);
-        }*/
+          holder.createWarningAnnotation(elementToHighlight, message);
+        }
       }
     } else {
       if (refExpr.getQualifierExpression() == null) {

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrMethod extends GrMember, GrNamedElement, PsiMethod, GrStatement, GrParametersOwner, GrTopLevelDefintion {
   public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
+  Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 
   GrOpenBlock getBlock();
 

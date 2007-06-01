@@ -19,10 +19,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.*;
@@ -120,7 +122,7 @@ public class PsiUtil {
         parameterTypeToCheck = parameters[i].getType();
       } else {
         PsiType lastParameterType = parameters[parameters.length - 1].getType();
-        if (lastParameterType instanceof PsiArrayType) {
+        if (lastParameterType instanceof PsiArrayType && !(argType instanceof PsiArrayType)) {
           parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
         } else if (parameters.length == argumentTypes.length) {
             parameterTypeToCheck = lastParameterType;
@@ -130,10 +132,21 @@ public class PsiUtil {
       }
       parameterTypeToCheck = unboxPrimitiveTypeAndEraseGenerics(parameterTypeToCheck);
       argType = unboxPrimitiveType(argType);
-      if (!parameterTypeToCheck.isAssignableFrom(argType)) return false;
+      if (!TypesUtil.isAssignable(parameterTypeToCheck, argType)) return false;
     }
 
     return true;
+  }
+
+  @Nullable
+  public static GroovyPsiElement getArgumentsElement(GrReferenceExpression methodRef) {
+    PsiElement parent = methodRef.getParent();
+    if (parent instanceof GrMethodCall) {
+      return ((GrMethodCall) parent).getArgumentList();
+    } else if (parent instanceof GrApplicationExpression) {
+      return ((GrApplicationExpression) parent).getArgumentList();
+    }
+    return null;
   }
 
   @Nullable
