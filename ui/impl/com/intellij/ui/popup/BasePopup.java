@@ -204,20 +204,20 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
   }
 
-  public final void show(RelativePoint aPoint) {
+  public final void show(@NotNull RelativePoint aPoint) {
     final Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y);
   }
 
-  public void showInScreenCoordinates(@NotNull Component owner, Point point) {
+  public void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point) {
     show(owner, point.x, point.y);
   }
 
-  public void showInBestPositionFor(DataContext dataContext) {
+  public void showInBestPositionFor(@NotNull DataContext dataContext) {
     show(JBPopupFactory.getInstance().guessBestPopupLocation(dataContext));
   }
 
-  public void showInBestPositionFor(Editor editor) {
+  public void showInBestPositionFor(@NotNull Editor editor) {
     show(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
   }
 
@@ -330,7 +330,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
   }
 
-  public void showCenteredInCurrentWindow(Project project) {
+  public void showCenteredInCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
@@ -348,7 +348,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     showInCenterOf(window);
   }  
 
-  public void showUnderneathOf(Component aComponent) {
+  public void showUnderneathOf(@NotNull Component aComponent) {
     final JComponent component = getTargetComponent(aComponent);
 
     final Point point = aComponent.getLocationOnScreen();
@@ -516,11 +516,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     myParent.onChildSelectedFor(myParentValue);
   }
 
-  public void setLocation(final Point screenPoint) {
+  public void setLocation(@NotNull final Point screenPoint) {
     JBPopupImpl.moveTo(myContainer, screenPoint, null);
   }
 
-  public void setSize(final Dimension size) {
+  public void setSize(@NotNull final Dimension size) {
     JBPopupImpl.setSize(myContainer, size);
   }
 }

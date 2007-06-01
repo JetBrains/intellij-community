@@ -23,16 +23,16 @@ public interface JBPopup extends Disposable {
    *
    * @param componentUnder the component near which the popup should be displayed.
    */
-  void showUnderneathOf(Component componentUnder);
+  void showUnderneathOf(@NotNull Component componentUnder);
 
   /**
    * Shows the popup at the specified point.
    *
    * @param point the relative point where the popup should be displayed.
    */
-  void show(RelativePoint point);
+  void show(@NotNull RelativePoint point);
 
-  void showInScreenCoordinates(@NotNull Component owner, Point point);
+  void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
   /**
    * Shows the popup in the position most appropriate for the specified data context.
@@ -40,7 +40,7 @@ public interface JBPopup extends Disposable {
    * @param dataContext the data context to which the popup is related.
    * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.actionSystem.DataContext)
    */
-  void showInBestPositionFor(DataContext dataContext);
+  void showInBestPositionFor(@NotNull DataContext dataContext);
 
   /**
    * Shows the popup near the cursor location in the specified editor.
@@ -48,7 +48,7 @@ public interface JBPopup extends Disposable {
    * @param editor the editor relative to which the popup should be displayed.
    * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.editor.Editor)
    */
-  void showInBestPositionFor(Editor editor);
+  void showInBestPositionFor(@NotNull Editor editor);
 
   /**
    * Shows the popup in the center of the specified component.
@@ -68,7 +68,7 @@ public interface JBPopup extends Disposable {
    *
    * @param project the project in which the popup should be displayed.
    */
-  void showCenteredInCurrentWindow(Project project);
+  void showCenteredInCurrentWindow(@NotNull Project project);
 
   /**
    * Cancels the popup (as if Esc was pressed).
@@ -101,7 +101,7 @@ public interface JBPopup extends Disposable {
    * Moves popup to the given point. Does nothhinbg if popup is invisible.
    * @param screenPoint
    */
-  void setLocation(final Point screenPoint);
+  void setLocation(@NotNull Point screenPoint);
 
-  void setSize(Dimension size);
+  void setSize(@NotNull Dimension size);
 }

@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -6,10 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AdjustPackageNameFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix");
   private final PsiJavaFile myFile;
   private final PsiPackageStatement myStatement;
   private final PsiPackage myTargetPackage;

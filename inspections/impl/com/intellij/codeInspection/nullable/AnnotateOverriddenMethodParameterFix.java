@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -14,6 +14,9 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
