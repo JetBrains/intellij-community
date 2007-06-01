@@ -33,7 +33,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
                          Comparator<NodeDescriptor> comparator,
                          FileChooserDescriptor chooserDescriptor,
                          @Nullable Runnable onInitialized) {
-    super(tree, treeModel, treeStructure, comparator);
+    super(tree, treeModel, treeStructure, comparator, false);
 
     myOnInitialized = onInitialized;
 

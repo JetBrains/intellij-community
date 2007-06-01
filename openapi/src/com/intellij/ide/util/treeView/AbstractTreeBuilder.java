@@ -74,6 +74,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
+  private boolean myUpdateIfInactive;
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper(null);
@@ -83,11 +84,19 @@ public abstract class AbstractTreeBuilder implements Disposable {
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              Comparator<NodeDescriptor> comparator) {
+    this(tree, treeModel, treeStructure, comparator, true);
+  }
+  public AbstractTreeBuilder(JTree tree,
+                             DefaultTreeModel treeModel,
+                             AbstractTreeStructure treeStructure,
+                             Comparator<NodeDescriptor> comparator,
+                             boolean updateIfInactive) {
     myTree = tree;
     myTreeModel = treeModel;
     myRootNode = (DefaultMutableTreeNode)treeModel.getRoot();
     myTreeStructure = treeStructure;
     myNodeDescriptorComparator = comparator;
+    myUpdateIfInactive = updateIfInactive;
 
     myExpansionListener = new MyExpansionListener();
     myTree.addTreeExpansionListener(myExpansionListener);
@@ -276,7 +285,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myUpdateIfInactive || ApplicationManager.getApplication().isUnitTestMode()) {
       activatable.showNotify();      
     } else {
       new UiNotifyConnector.Once(myTree, activatable);
@@ -284,6 +293,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   private void initRootNodeNow() {
+    if (myRootNodeWasInitialized) return;
+
+    myRootNodeWasInitialized = true;
+
     Object rootElement = myTreeStructure.getRootElement();
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
     myRootNode.setUserObject(nodeDescriptor);
@@ -303,7 +316,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myRootNode.getChildCount() == 0) {
       myTreeModel.nodeChanged(myRootNode);
     }
-    myRootNodeWasInitialized = true;
   }
 
   public void updateFromRoot() {
@@ -1082,7 +1094,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  private static class LoadingNode extends DefaultMutableTreeNode {
+  public static class LoadingNode extends DefaultMutableTreeNode {
     public LoadingNode() {
       super(IdeBundle.message("treenode.loading"));
     }

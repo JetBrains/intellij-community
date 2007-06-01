@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,9 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
+
+  private static Icon LOADING_NODE_ICON = new EmptyIcon(8, 16);
+
   /**
    * Defines whether the tree is selected or not
    */
@@ -75,6 +80,14 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       }else{
         setBackground(null);
       }
+    }
+
+    if (value instanceof AbstractTreeBuilder.LoadingNode) {
+      setForeground(Color.gray);
+      setIcon(LOADING_NODE_ICON);
+    } else {
+      setForeground(tree.getForeground());
+      setIcon(null);
     }
 
     customizeCellRenderer(tree,value,selected,expanded,leaf,row,hasFocus);
