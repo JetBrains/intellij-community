@@ -3,23 +3,22 @@
 Groovy script
   Generalized list
     PsiElement([)('[')
-    Arguments
+    Literal
+      PsiElement(Gstring)('"abc"')
+    PsiElement(,)(',')
+    PsiErrorElement:Expression expected
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('3')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Additive expression
       Literal
-        PsiElement(Gstring)('"abc"')
-      PsiElement(,)(',')
-      PsiErrorElement:Expression expected
-        <empty list>
-      PsiWhiteSpace(' ')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
+        PsiElement(Integer)('4')
+      PsiElement(+)('+')
       Literal
-        PsiElement(Integer)('3')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
-      Additive expression
-        Literal
-          PsiElement(Integer)('4')
-        PsiElement(+)('+')
-        Literal
-          PsiElement(Integer)('8')
+        PsiElement(Integer)('8')
     PsiElement(])(']')

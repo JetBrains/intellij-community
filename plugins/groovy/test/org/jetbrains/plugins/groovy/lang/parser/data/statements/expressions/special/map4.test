@@ -4,30 +4,29 @@
 Groovy script
   Generalized list
     PsiElement([)('[')
-    Arguments
-      Named argument
-        Argument label
-          PsiElement(identifier)('a')
-        PsiElement(:)(':')
-        Literal
-          PsiElement(Integer)('1')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('b')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
-      Named argument
-        Argument label
-          PsiElement(identifier)('f')
-        PsiElement(:)(':')
-        PsiErrorElement:Expression expected
-          <empty list>
-        PsiElement(new line)('\n')
-        Literal
-          PsiElement(Integer)('5')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('cool')
+    Named argument
+      Argument label
+        PsiElement(identifier)('a')
+      PsiElement(:)(':')
+      Literal
+        PsiElement(Integer)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Named argument
+      Argument label
+        PsiElement(identifier)('f')
+      PsiElement(:)(':')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiElement(new line)('\n')
+      Literal
+        PsiElement(Integer)('5')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('cool')
     PsiElement(])(']')

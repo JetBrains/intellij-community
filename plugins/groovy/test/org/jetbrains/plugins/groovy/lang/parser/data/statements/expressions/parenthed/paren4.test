@@ -7,26 +7,25 @@ Groovy script
     PsiElement(=)('=')
     Generalized list
       PsiElement([)('[')
-      Arguments
-        Named argument
-          Argument label
-            Parenthesized expression
-              PsiElement(()('(')
-              Additive expression
-                Literal
-                  PsiElement(string)(''a'')
-                PsiElement(+)('+')
-                Literal
-                  PsiElement(string)(''b'')
-              PsiElement())(')')
-          PsiElement(:)(':')
-          Literal
-            PsiElement(Integer)('3')
-        PsiElement(,)(',')
-        Named argument
-          Argument label
-            PsiElement(string)(''c'')
-          PsiElement(:)(':')
-          Literal
-            PsiElement(Integer)('4')
+      Named argument
+        Argument label
+          Parenthesized expression
+            PsiElement(()('(')
+            Additive expression
+              Literal
+                PsiElement(string)(''a'')
+              PsiElement(+)('+')
+              Literal
+                PsiElement(string)(''b'')
+            PsiElement())(')')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(Integer)('3')
+      PsiElement(,)(',')
+      Named argument
+        Argument label
+          PsiElement(string)(''c'')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(Integer)('4')
       PsiElement(])(']')

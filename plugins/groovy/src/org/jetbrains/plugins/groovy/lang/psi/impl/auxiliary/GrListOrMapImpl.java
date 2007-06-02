@@ -26,14 +26,13 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
-  private static final TokenSet MAP_LITERAL_TOKENS = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
+  private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
@@ -61,6 +60,6 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   }
 
   private boolean isMapLiteral() {
-    return findChildByType(MAP_LITERAL_TOKENS) != null;
+    return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
 }

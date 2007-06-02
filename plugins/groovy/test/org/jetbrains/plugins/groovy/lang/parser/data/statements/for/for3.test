@@ -20,15 +20,14 @@ Groovy script
       PsiWhiteSpace(' ')
       Generalized list
         PsiElement([)('[')
-        Arguments
-          Literal
-            PsiElement(Integer)('1')
-          PsiElement(,)(',')
-          Literal
-            PsiElement(Integer)('2')
-          PsiElement(,)(',')
-          Literal
-            PsiElement(Integer)('3')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(,)(',')
+        Literal
+          PsiElement(Integer)('3')
         PsiElement(])(']')
     PsiElement())(')')
     PsiWhiteSpace(' ')
