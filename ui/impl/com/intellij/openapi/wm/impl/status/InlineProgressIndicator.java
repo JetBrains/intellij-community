@@ -45,7 +45,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       public void actionPerformed(final ActionEvent e) {
         cancelRequest();
       }
-    });
+    }).setFillBg(true);
 
     myCancelButton.setVisible(myInfo.isCancellable());
     myCancelButton.setOpaque(true);
