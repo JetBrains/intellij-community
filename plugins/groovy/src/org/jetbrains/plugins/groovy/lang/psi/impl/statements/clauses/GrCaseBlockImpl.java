@@ -17,12 +17,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 
@@ -43,5 +47,9 @@ public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock
 
   public GrCaseLabel[] getCaseLabels() {
     return findChildrenByClass(GrCaseLabel.class);
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    return ResolveUtil.processChildren(this, processor, substitutor, lastParent, place);
   }
 }
