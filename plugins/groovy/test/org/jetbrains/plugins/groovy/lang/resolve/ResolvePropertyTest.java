@@ -64,7 +64,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testCaseClause() throws Exception {
-    doTest("CaseClause/CaseClause.groovy");
+    doTest("caseClause/CaseClause.groovy");
   }
 
   public void testField3() throws Exception {
