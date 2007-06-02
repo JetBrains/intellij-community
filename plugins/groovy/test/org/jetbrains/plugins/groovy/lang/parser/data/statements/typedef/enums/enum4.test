@@ -36,15 +36,15 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
-          PsiElement(()('(')
           Arguments
+            PsiElement(()('(')
             Reference expression
               PsiElement(identifier)('a')
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Gstring)('"bar"')
-          PsiElement())(')')
+            PsiElement())(')')
           PsiWhiteSpace(' ')
           Type definition body
             PsiElement({)('{')
@@ -74,8 +74,8 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(identifier)('bar')
           PsiWhiteSpace(' ')
-          PsiElement(()('(')
           Arguments
+            PsiElement(()('(')
             Literal
               PsiElement(Gstring)('"foo"')
             PsiElement(,)(',')
@@ -97,7 +97,7 @@ Groovy script
                   Literal
                     PsiElement(Integer)('8')
                   PsiElement())(')')
-          PsiElement())(')')
+            PsiElement())(')')
           PsiWhiteSpace(' ')
           Type definition body
             PsiElement({)('{')

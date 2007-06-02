@@ -39,7 +39,7 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
     } else if (ParserUtils.getToken(builder, mCOLON)) {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
-      ArgumentList.parseBare(builder, mRBRACK);
+      ArgumentList.parse(builder, mRBRACK);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }

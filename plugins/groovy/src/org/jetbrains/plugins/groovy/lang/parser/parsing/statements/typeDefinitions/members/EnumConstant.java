@@ -40,15 +40,14 @@ public class EnumConstant implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (ParserUtils.getToken(builder, mLPAREN)) {
+    if (mLPAREN.equals(builder.getTokenType())) {
+      PsiBuilder.Marker marker = builder.mark();
+      ParserUtils.getToken(builder, mLPAREN);
       ArgumentList.parse(builder, mRPAREN);
 
       ParserUtils.getToken(builder, mNLS);
-      if (!ParserUtils.getToken(builder, mRPAREN)) {
-        builder.error(GroovyBundle.message("rparen.expected"));
-        ecMarker.rollbackTo();
-        return ENUM_CONSTANT_ERROR;
-      }
+      ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
+      marker.done(ARGUMENTS);
     }
 
     if (builder.getTokenType() == mLCURLY) {

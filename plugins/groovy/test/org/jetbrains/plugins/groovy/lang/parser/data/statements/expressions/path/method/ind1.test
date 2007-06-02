@@ -4,8 +4,8 @@ Groovy script
   Property by index
     Reference expression
       PsiElement(identifier)('counter')
-    PsiElement([)('[')
     Arguments
+      PsiElement([)('[')
       Reference expression
         PsiElement(identifier)('fieldName')
-    PsiElement(])(']')
+      PsiElement(])(']')

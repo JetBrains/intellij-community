@@ -165,15 +165,15 @@ public class PathExpression implements GroovyElementTypes {
    * @return
    */
   private static GroovyElementType indexPropertyArgsParse(PsiBuilder builder) {
-    if (ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
-      ParserUtils.getToken(builder, mNLS);
-      if (ParserUtils.getToken(builder, mRBRACK)) {
-        return PATH_INDEX_PROPERTY;
-      }
-      ArgumentList.parse(builder, mRBRACK);
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
-    }
+    assert mLBRACK.equals(builder.getTokenType());
+
+    PsiBuilder.Marker marker = builder.mark();
+    ParserUtils.getToken(builder, mLBRACK);
+    ParserUtils.getToken(builder, mNLS);
+    ArgumentList.parse(builder, mRBRACK);
+    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+    marker.done(ARGUMENTS);
     return PATH_INDEX_PROPERTY;
   }
 

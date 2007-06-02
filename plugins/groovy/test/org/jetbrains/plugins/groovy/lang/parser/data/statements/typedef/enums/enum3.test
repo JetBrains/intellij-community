@@ -50,15 +50,15 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(identifier)('item1')
           PsiWhiteSpace(' ')
-          PsiElement(()('(')
           Arguments
+            PsiElement(()('(')
             Reference expression
               PsiElement(identifier)('a')
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Reference expression
               PsiElement(identifier)('b')
-          PsiElement())(')')
+            PsiElement())(')')
           PsiWhiteSpace(' ')
           Type definition body
             PsiElement({)('{')

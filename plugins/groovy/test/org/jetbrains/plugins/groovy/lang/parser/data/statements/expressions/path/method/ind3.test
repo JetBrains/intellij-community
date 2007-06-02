@@ -27,11 +27,11 @@ Groovy script
           Reference expression
             PsiElement(identifier)('it')
         PsiElement(})('}')
-    PsiElement([)('[')
     Arguments
+      PsiElement([)('[')
       Literal
         PsiElement(Integer)('1')
       PsiElement(,)(',')
       Literal
         PsiElement(Integer)('2')
-    PsiElement(])(']')
+      PsiElement(])(']')

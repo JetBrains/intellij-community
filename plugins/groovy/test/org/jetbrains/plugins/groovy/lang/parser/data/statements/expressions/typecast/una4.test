@@ -8,10 +8,12 @@ Groovy script
         Built in type
           PsiElement(double)('double')
         PsiWhiteSpace(' ')
+        Arguments
+          PsiElement([)('[')
+          PsiElement(])(']')
+      Arguments
         PsiElement([)('[')
         PsiElement(])(']')
-      PsiElement([)('[')
-      PsiElement(])(']')
     PsiErrorElement:')' expected
       <empty list>
     PsiWhiteSpace(' ')

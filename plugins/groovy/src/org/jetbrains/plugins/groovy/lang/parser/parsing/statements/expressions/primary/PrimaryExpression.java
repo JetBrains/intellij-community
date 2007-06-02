@@ -178,7 +178,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       ParserUtils.getToken(builder, mNLS);
-      ArgumentList.parseBare(builder, mRPAREN);
+      ArgumentList.parse(builder, mRPAREN);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     }

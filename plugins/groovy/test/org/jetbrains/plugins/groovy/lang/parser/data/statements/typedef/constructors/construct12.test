@@ -42,11 +42,11 @@ Groovy script
                   Property by index
                     Reference expression
                       PsiElement(identifier)('who')
-                    PsiElement([)('[')
                     Arguments
+                      PsiElement([)('[')
                       Literal
                         PsiElement(Integer)('0')
-                    PsiElement(])(']')
+                      PsiElement(])(']')
                   PsiElement(.)('.')
                   PsiElement(identifier)('toUpperCase')
                 Arguments
@@ -58,8 +58,8 @@ Groovy script
               Property by index
                 Reference expression
                   PsiElement(identifier)('who')
-                PsiElement([)('[')
                 Arguments
+                  PsiElement([)('[')
                   Range expression
                     Literal
                       PsiElement(Integer)('1')
@@ -68,7 +68,7 @@ Groovy script
                       PsiElement(-)('-')
                       Literal
                         PsiElement(Integer)('1')
-                PsiElement(])(']')
+                  PsiElement(])(']')
           PsiWhiteSpace(' ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

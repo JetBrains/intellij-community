@@ -32,22 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ArgumentList implements GroovyElementTypes {
 
-  /**
-   * Parsing argument list
-   *
-   * @param builder
-   * @param closingBrace
-   * @return
-   */
-  public static GroovyElementType parse(PsiBuilder builder, IElementType closingBrace) {
-
-    PsiBuilder.Marker marker = builder.mark();
-    parseBare(builder, closingBrace);
-    marker.done(ARGUMENTS);
-    return ARGUMENTS;
-  }
-
-  public static void parseBare(PsiBuilder builder, IElementType closingBrace) {
+  public static void parse(PsiBuilder builder, IElementType closingBrace) {
     GroovyElementType result = argumentParse(builder, closingBrace);
     if (result.equals(WRONGWAY)) {
       if (!closingBrace.equals(builder.getTokenType())) {

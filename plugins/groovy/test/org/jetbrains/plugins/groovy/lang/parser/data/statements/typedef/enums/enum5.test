@@ -19,10 +19,9 @@ Groovy script
         Enumeration constant
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
-          PsiElement(()('(')
           Arguments
-            <empty list>
-          PsiElement())(')')
+            PsiElement(()('(')
+            PsiElement())(')')
         PsiElement(,)(',')
       PsiElement(new line)('\n\n  ')
       Variable definitions
