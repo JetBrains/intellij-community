@@ -45,11 +45,11 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     // For left parentheses in method declarations or calls
     if (mLPAREN.equals(rightNode.getElementType()) &&
             rightNode.getPsi().getParent().getNode() != null &&
-            METHOD_OR_CALL.contains(rightNode.getPsi().getParent().getNode().getElementType())) {
+            METHOD_DEFS.contains(rightNode.getPsi().getParent().getNode().getElementType())) {
       return NO_SPACING;
     }
-    // For "super" and "this" calls
-    if (mLPAREN.equals(rightNode.getElementType()) && THIS_OR_SUPER.contains(leftNode.getElementType())) {
+
+    if (ARGUMENTS.equals(rightNode.getElementType())) {
       return NO_SPACING;
     }
     // For left square bracket in array declarations and selections by index
