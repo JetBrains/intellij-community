@@ -63,6 +63,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   @NonNls private static final String NAME_ATTR_NAME = "name";
   @NonNls private static final String ELEMENT_TAG_NAME = "element";
   @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
+  private boolean myHasAnyFromOwnNs;
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     myDocumentDescriptor = documentDescriptor;
@@ -340,6 +341,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(tag.getAttributeValue("namespace"))) {
         return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
       }
+      myHasAnyFromOwnNs = true;
       return true;
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "group")) {
@@ -445,5 +447,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
 
     return false;
+  }
+
+  public boolean hasAnyFromOwnNs() {
+    return myHasAnyFromOwnNs;
   }
 }

@@ -203,6 +203,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
     XmlElementDescriptor elementDescriptor = null;
+    String elementNamespace = null;
 
     {
       PsiElement curElement = element.getParent();
@@ -216,7 +217,10 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
           if(descriptor != null) {
             descriptorsMap.put(namespace, descriptor);
-            if(elementDescriptor == null) elementDescriptor = descriptor;
+            if(elementDescriptor == null) {
+              elementDescriptor = descriptor;
+              elementNamespace = namespace;
+            }
           }
         }
         curElement = curElement.getContext();
@@ -232,9 +236,11 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
       if(descriptorsMap.containsKey(namespace)){
         final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
-
-        for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(element)) {
-          if (containedDescriptor != null) variants.add(containedDescriptor);
+        
+        if(isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)){
+          for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(element)) {
+            if (containedDescriptor != null) variants.add(containedDescriptor);
+          }
         }
 
         if (element instanceof HtmlTag) {
@@ -253,9 +259,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
           nsDescriptor = PsiUtil.getJspFile(element).getDocument().getRootTag().getNSDescriptor(namespace, false);
 
         if(nsDescriptor != null && !visited.contains(nsDescriptor) &&
-           ( !(elementDescriptor instanceof XmlElementDescriptorImpl) ||
-             ((XmlElementDescriptorImpl)elementDescriptor).allowElementsFromNamespace(namespace, element.getParentTag())
-           )
+           isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)
           ){
           visited.add(nsDescriptor);
           final XmlElementDescriptor[] rootElementsDescriptors =
@@ -276,6 +280,15 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       ret[index++] = descriptor.getName(element);
     }
     return ret;
+  }
+
+  private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,
+                                        final String elementNamespace,
+                                        final String namespace) {
+    return !(elementDescriptor instanceof XmlElementDescriptorImpl) ||
+        elementNamespace == null ||
+        elementNamespace.equals(namespace) ||
+         ((XmlElementDescriptorImpl)elementDescriptor).allowElementsFromNamespace(namespace, element.getParentTag());
   }
 
   public boolean isSoft() {
