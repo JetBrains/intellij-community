@@ -42,11 +42,12 @@ public class ArgumentList implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, mCOMMA)) {
-      marker.done(ARGUMENTS);
-      return ARGUMENTS;
-    }
+    parseBare(builder, closingBrace);
+    marker.done(ARGUMENTS);
+    return ARGUMENTS;
+  }
 
+  public static void parseBare(PsiBuilder builder, IElementType closingBrace) {
     GroovyElementType result = argumentParse(builder, closingBrace);
     if (result.equals(WRONGWAY)) {
       if (!closingBrace.equals(builder.getTokenType())) {
@@ -74,9 +75,7 @@ public class ArgumentList implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
     }
 
-    marker.done(ARGUMENTS);
     ParserUtils.getToken(builder, mNLS);
-    return ARGUMENTS;
   }
 
   /**

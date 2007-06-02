@@ -91,7 +91,7 @@ public class PathExpression implements GroovyElementTypes {
         marker.drop();
       }
     } else if (mLPAREN.equals(builder.getTokenType())) {
-      methodCallArgsParse(builder);
+      PrimaryExpression.methodCallArgsParse(builder);
       if (mLCURLY.equals(builder.getTokenType())) {
         pathElementParse(builder, marker);
       } else {
@@ -175,25 +175,6 @@ public class PathExpression implements GroovyElementTypes {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }
     return PATH_INDEX_PROPERTY;
-  }
-
-  /**
-   * Parses method arguments
-   *
-   * @param builder
-   * @return
-   */
-  private static GroovyElementType methodCallArgsParse(PsiBuilder builder) {
-    if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      ParserUtils.getToken(builder, mNLS);
-      if (ParserUtils.getToken(builder, mRPAREN)) {
-        return PATH_METHOD_CALL;
-      }
-      ArgumentList.parse(builder, mRPAREN);
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
-    }
-    return PATH_METHOD_CALL;
   }
 
   /**

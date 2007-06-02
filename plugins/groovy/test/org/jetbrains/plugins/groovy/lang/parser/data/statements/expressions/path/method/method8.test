@@ -8,8 +8,8 @@ Groovy script
       PsiElement(.)('.')
       PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Literal
         PsiElement(Integer)('3')
       PsiElement(,)(',')
@@ -18,4 +18,4 @@ Groovy script
       PsiElement(,)(',')
       Literal
         PsiElement(Integer)('4')
-    PsiElement())(')')
+      PsiElement())(')')

@@ -20,8 +20,9 @@ Groovy script
                 Method call
                   Reference expression
                     PsiElement(identifier)('isNull')
-                  PsiElement(()('(')
-                  PsiElement())(')')
+                  Arguments
+                    PsiElement(()('(')
+                    PsiElement())(')')
                 PsiWhiteSpace(' ')
                 PsiElement(?)('?')
                 PsiWhiteSpace(' ')

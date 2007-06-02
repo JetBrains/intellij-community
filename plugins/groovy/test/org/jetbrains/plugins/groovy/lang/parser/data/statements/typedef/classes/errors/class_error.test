@@ -27,5 +27,6 @@ Groovy script
             PsiElement(identifier)('groovy')
           PsiElement(.)('.')
           PsiElement(identifier)('GwtBuilder')
-        PsiElement(()('(')
-        PsiElement())(')')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')

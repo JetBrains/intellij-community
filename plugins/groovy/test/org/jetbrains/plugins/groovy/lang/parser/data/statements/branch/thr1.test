@@ -9,5 +9,6 @@ Groovy script
       PsiWhiteSpace(' ')
       Reference element
         PsiElement(identifier)('Exception')
-      PsiElement(()('(')
-      PsiElement())(')')
+      Arguments
+        PsiElement(()('(')
+        PsiElement())(')')

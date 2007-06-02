@@ -41,8 +41,8 @@ Groovy script
             Reference expression
               PsiElement(identifier)('println')
             PsiWhiteSpace(' ')
-            PsiElement(()('(')
             Arguments
+              PsiElement(()('(')
               Reference expression
                 PsiElement(identifier)('s')
               PsiElement(,)(',')
@@ -55,7 +55,7 @@ Groovy script
                 PsiWhiteSpace(' ')
                 Reference expression
                   PsiElement(identifier)('b')
-            PsiElement())(')')
+              PsiElement())(')')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

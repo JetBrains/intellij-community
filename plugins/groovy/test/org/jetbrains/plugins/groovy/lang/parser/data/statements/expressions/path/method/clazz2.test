@@ -14,8 +14,8 @@ Groovy script
         PsiElement())(')')
       PsiElement(?.)('?.')
       PsiElement(class)('class')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Literal
         PsiElement(Integer)('5')
-    PsiElement())(')')
+      PsiElement())(')')

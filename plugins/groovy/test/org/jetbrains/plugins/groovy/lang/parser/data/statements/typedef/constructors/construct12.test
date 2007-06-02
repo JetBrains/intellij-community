@@ -49,8 +49,9 @@ Groovy script
                     PsiElement(])(']')
                   PsiElement(.)('.')
                   PsiElement(identifier)('toUpperCase')
-                PsiElement(()('(')
-                PsiElement())(')')
+                Arguments
+                  PsiElement(()('(')
+                  PsiElement())(')')
               PsiWhiteSpace(' ')
               PsiElement(+)('+')
               PsiWhiteSpace(' ')

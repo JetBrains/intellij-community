@@ -5,10 +5,10 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('f')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Generalized list
         PsiElement([)('[')
         PsiElement(])(']')
       PsiElement(new line)('\n')
-    PsiElement())(')')
+      PsiElement())(')')

@@ -17,7 +17,8 @@ Groovy script
       Method call
         Reference expression
           PsiElement(identifier)('do')
-        PsiElement(()('(')
-        PsiElement())(')')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
       PsiElement(new line)('\n')
       PsiElement(})('}')

@@ -6,8 +6,8 @@ Groovy script
     Reference expression
       PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Reference expression
         PsiElement(identifier)('a')
       PsiElement(,)(',')
@@ -26,7 +26,8 @@ Groovy script
             PsiElement(Integer)('3')
           PsiElement(.)('.')
           PsiElement(identifier)('toString')
-        PsiElement(()('(')
-        PsiElement())(')')
-    PsiErrorElement:')' expected
-      <empty list>
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiErrorElement:')' expected
+        <empty list>

@@ -11,5 +11,6 @@ Groovy script
         Literal
           PsiElement(string)(''parse'')
         PsiElement(})('}')
-    PsiElement(()('(')
-    PsiElement())(')')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

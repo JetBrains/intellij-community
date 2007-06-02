@@ -117,8 +117,7 @@ public class GroovyAnnotator implements Annotator {
         PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
         if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod)element)) {
           GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(refExpr);
-          //LOG.assertTrue(elementToHighlight != null);
-          if (elementToHighlight == null) elementToHighlight = refExpr; //todo never return null
+          LOG.assertTrue(elementToHighlight != null);
           //todo more specific error message
           String message = GroovyBundle.message("cannot.apply.method", refExpr.getReferenceName());
           holder.createWarningAnnotation(elementToHighlight, message);

@@ -5,8 +5,8 @@ Groovy script
     Reference expression
       PsiElement(identifier)('println')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Generalized list
         PsiElement([)('[')
         Arguments
@@ -19,4 +19,4 @@ Groovy script
           Literal
             PsiElement(Integer)('3')
         PsiElement(])(']')
-    PsiElement())(')')
+      PsiElement())(')')

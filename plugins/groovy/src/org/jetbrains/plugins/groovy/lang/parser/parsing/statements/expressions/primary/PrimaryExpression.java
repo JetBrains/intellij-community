@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
@@ -175,18 +174,15 @@ public class PrimaryExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType methodCallArgsParse(PsiBuilder builder) {
+  public static void methodCallArgsParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       ParserUtils.getToken(builder, mNLS);
-      if (ParserUtils.getToken(builder, mRPAREN)) {
-        return PATH_METHOD_CALL;
-      }
-      ArgumentList.parse(builder, mRPAREN);
+      ArgumentList.parseBare(builder, mRPAREN);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     }
-    return PATH_METHOD_CALL;
+
+    marker.done(ARGUMENTS);
   }
-
-
 }

@@ -8,8 +8,8 @@ Groovy script
         PsiElement(identifier)('A')
       PsiElement(.)('.')
       PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Reference expression
         PsiElement(identifier)('a')
       PsiElement(,)(',')
@@ -17,4 +17,4 @@ Groovy script
       Reference expression
         PsiElement(identifier)('b')
       PsiElement(,)(',')
-    PsiElement())(')')
+      PsiElement())(')')

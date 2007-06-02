@@ -26,10 +26,10 @@ Groovy script
         Reference expression
           PsiElement(identifier)('assertFalse')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Arguments
+          PsiElement(()('(')
           Reference expression
             PsiElement(identifier)('someObj')
-        PsiElement())(')')
+          PsiElement())(')')
       PsiElement(new line)('\n')
       PsiElement(})('}')

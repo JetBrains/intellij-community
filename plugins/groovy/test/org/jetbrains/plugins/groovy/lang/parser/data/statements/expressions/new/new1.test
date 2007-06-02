@@ -12,15 +12,15 @@ Groovy script
       PsiWhiteSpace(' ')
       Reference element
         PsiElement(identifier)('MyClass')
-      PsiElement(()('(')
       Arguments
+        PsiElement(()('(')
         Literal
           PsiElement(Integer)('1')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         Literal
           PsiElement(string)(''abc'')
-      PsiElement())(')')
+        PsiElement())(')')
       Closable block
         PsiElement({)('{')
         Parameter list

@@ -92,11 +92,11 @@ Groovy script
                 PsiWhiteSpace(' ')
                 Reference element
                   PsiElement(identifier)('Integer')
-                PsiElement(()('(')
                 Arguments
+                  PsiElement(()('(')
                   Literal
                     PsiElement(Integer)('8')
-                PsiElement())(')')
+                  PsiElement())(')')
           PsiElement())(')')
           PsiWhiteSpace(' ')
           Type definition body

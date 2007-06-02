@@ -59,15 +59,15 @@ Groovy script
             'super'reference expression
               PsiElement(super)('super')
             PsiWhiteSpace(' ')
-            PsiElement(()('(')
             Arguments
+              PsiElement(()('(')
               Reference expression
                 PsiElement(identifier)('s')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
               Reference expression
                 PsiElement(identifier)('p')
-            PsiElement())(')')
+              PsiElement())(')')
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')

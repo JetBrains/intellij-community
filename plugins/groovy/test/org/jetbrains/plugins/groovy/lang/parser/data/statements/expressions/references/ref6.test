@@ -4,8 +4,8 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('a')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Literal
         PsiElement(Integer)('3')
-    PsiElement())(')')
+      PsiElement())(')')

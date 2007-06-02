@@ -22,11 +22,11 @@ Groovy script
             PsiElement(identifier)('out')
           PsiElement(.)('.')
           PsiElement(identifier)('println')
-        PsiElement(()('(')
         Arguments
+          PsiElement(()('(')
           Literal
             PsiElement(Gstring)('"bugaga"')
-        PsiElement())(')')
+          PsiElement())(')')
       PsiElement(;)(';')
       PsiElement(new line)('\n')
       PsiElement(})('}')

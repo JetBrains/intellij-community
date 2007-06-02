@@ -65,8 +65,9 @@ Groovy script
           Method call
             'this' reference expression
               PsiElement(this)('this')
-            PsiElement(()('(')
-            PsiElement())(')')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
           PsiElement(;)(';')
           PsiElement(})('}')
       PsiElement(new line)('\n')

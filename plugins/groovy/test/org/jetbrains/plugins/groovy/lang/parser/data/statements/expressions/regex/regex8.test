@@ -48,10 +48,10 @@ Groovy script
             PsiElement(.)('.')
             Property selector
               PsiElement(regexp)('/sdf/')
-          PsiElement(()('(')
           Arguments
+            PsiElement(()('(')
             Literal
               PsiElement(Integer)('5')
-          PsiElement())(')')
+            PsiElement())(')')
         PsiElement(})('}')
       PsiElement(regex end)(' /')

@@ -9,15 +9,15 @@ Groovy script
     Reference expression
       PsiElement(identifier)('use')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Reference expression
         PsiElement(identifier)('StringCalculationCategory')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Literal
         PsiElement(Integer)('3')
-    PsiElement())(')')
+      PsiElement())(')')
     PsiWhiteSpace(' ')
     Closable block
       PsiElement({)('{')

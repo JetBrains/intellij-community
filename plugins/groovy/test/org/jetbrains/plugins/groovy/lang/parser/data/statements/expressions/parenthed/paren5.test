@@ -21,5 +21,6 @@ Groovy script
         PsiElement())(')')
       PsiElement(.)('.')
       PsiElement(identifier)('toString')
-    PsiElement(()('(')
-    PsiElement())(')')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

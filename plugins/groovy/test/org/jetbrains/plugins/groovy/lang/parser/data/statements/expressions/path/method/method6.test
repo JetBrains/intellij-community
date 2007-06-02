@@ -6,9 +6,11 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('foo')
-    PsiElement(()('(')
-    PsiWhiteSpace('\n')
     Arguments
+      PsiElement(()('(')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiWhiteSpace('\n')
       PsiElement(,)(',')
-    PsiElement(new line)('\n')
-    PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement())(')')

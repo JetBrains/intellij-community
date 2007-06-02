@@ -51,7 +51,8 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference element
             PsiElement(identifier)('IllegalArgumentException')
-          PsiElement(()('(')
-          PsiElement())(')')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
       PsiElement(new line)('\n')
       PsiElement(})('}')

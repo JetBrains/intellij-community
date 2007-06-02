@@ -7,8 +7,8 @@ Groovy script
         PsiElement(identifier)('A')
       PsiElement(.)('.')
       PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       PsiErrorElement:Expression expected
         <empty list>
       PsiElement(wrong token)('#')
@@ -32,4 +32,4 @@ Groovy script
       PsiWhiteSpace(' ')
       Literal
         PsiElement(Integer)('5')
-    PsiElement())(')')
+      PsiElement())(')')

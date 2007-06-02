@@ -5,12 +5,12 @@ Groovy script
     Reference expression
       PsiElement(identifier)('println')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Arguments
+      PsiElement(()('(')
       Reference expression
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
         PsiElement(identifier)('toString')
-    PsiErrorElement:')' expected
-      <empty list>
+      PsiErrorElement:')' expected
+        <empty list>

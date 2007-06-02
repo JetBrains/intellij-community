@@ -6,9 +6,9 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('foo')
-    PsiElement(()('(')
-    PsiWhiteSpace('\n')
     Arguments
+      PsiElement(()('(')
+      PsiWhiteSpace('\n')
       Assignment expression
         Reference expression
           PsiElement(identifier)('a')
@@ -20,4 +20,4 @@ Groovy script
       PsiWhiteSpace(' ')
       Literal
         PsiElement(Integer)('3')
-    PsiElement())(')')
+      PsiElement())(')')
