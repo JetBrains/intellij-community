@@ -152,17 +152,23 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     if (type instanceof ComplexTypeDescriptor) {
       final ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
       String contextNs;
+      PsiFile containingFile = context.getContainingFile();
+
+      if (!containingFile.isPhysical() && containingFile.getOriginalFile() != null) {
+        containingFile = containingFile.getOriginalFile();
+        context = context.getParentTag();
+      }
 
       if (context != null &&
-          ( descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace()) &&
-            (!contextNs.equals(getNS()) || descriptor.hasAnyFromOwnNs())
+          ( descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace() ) &&
+            (!contextNs.equals(getNamespace()) || descriptor.hasAnyInContentModel())
           ) ) {
         final XmlNSDescriptor nsDescriptor = getNSDescriptor();
 
         if (nsDescriptor != null) {
           elementsDescriptors = ArrayUtil.mergeArrays(
             elementsDescriptors,
-            nsDescriptor.getRootElementsDescriptors(((XmlFile)context.getContainingFile()).getDocument()),
+            nsDescriptor.getRootElementsDescriptors(((XmlFile)containingFile).getDocument()),
             XmlElementDescriptor.class
           );
         }

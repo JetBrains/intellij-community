@@ -63,7 +63,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   @NonNls private static final String NAME_ATTR_NAME = "name";
   @NonNls private static final String ELEMENT_TAG_NAME = "element";
   @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
-  private boolean myHasAnyFromOwnNs;
+  private boolean myHasAnyInContentModel;
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     myDocumentDescriptor = documentDescriptor;
@@ -338,10 +338,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     visited.add(tag);
 
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "any")) {
+      myHasAnyInContentModel = true;
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(tag.getAttributeValue("namespace"))) {
         return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
       }
-      myHasAnyFromOwnNs = true;
       return true;
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "group")) {
@@ -363,7 +363,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, visited)) return true;
+          if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, visited)) {
+            myHasAnyInContentModel |= complexTypeDescriptor.myHasAnyInContentModel;
+            return true;
+          }
         }
       }
     } else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
@@ -449,7 +452,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return false;
   }
 
-  public boolean hasAnyFromOwnNs() {
-    return myHasAnyFromOwnNs;
+  public boolean hasAnyInContentModel() {
+    return myHasAnyInContentModel;
   }
 }
