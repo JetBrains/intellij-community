@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
@@ -23,9 +24,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
  * @author ilyas
  */
 public class GrRegexExprImpl extends GrBinaryExpressionImpl {
+  private static final String MATCHER_FQ_NAME = "java.util.regex.Matcher";
 
   public GrRegexExprImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public PsiType getType() {
+    return getManager().getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
   }
 
   public String toString() {
