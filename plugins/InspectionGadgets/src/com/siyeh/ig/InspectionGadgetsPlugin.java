@@ -90,7 +90,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 586;
+    private static final int NUM_INSPECTIONS = 587;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -101,22 +101,21 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     @NonNls private static final String INSPECTION = "Inspection";
     @NonNls private static final String BUILD_FIXES_ONLY_ON_THE_FLY = "(r)";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         final PrintStream out;
         if (args.length == 0) {
             out = System.out;
         } else {
-            final OutputStream stream;
-            try {
-                stream = new FileOutputStream(args[0]);
-            } catch (final FileNotFoundException e) {
-                System.err.println(e.getMessage());
-                return;
-            }
+            final OutputStream stream = new FileOutputStream(args[0]);
             out = new PrintStream(stream);
         }
-        final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
-        plugin.createDocumentation(out);
+        try {
+            final InspectionGadgetsPlugin plugin =
+                    new InspectionGadgetsPlugin();
+            plugin.createDocumentation(out);
+        } finally {
+            out.close();
+        }
     }
 
     private void createDocumentation(PrintStream out) {
@@ -827,6 +826,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
         m_inspectionClasses.add(SynchronizeOnLockInspection.class);
         m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
+        m_inspectionClasses.add(SynchronizeOnStringObjectInspection.class);
         m_inspectionClasses.add(SynchronizeOnThisInspection.class);
         m_inspectionClasses.add(SynchronizedMethodInspection.class);
         m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
