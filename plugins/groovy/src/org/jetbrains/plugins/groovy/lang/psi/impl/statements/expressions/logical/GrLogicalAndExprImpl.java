@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrLogicalAndExprImpl extends GrBinaryExpressionImpl {
+public class GrLogicalAndExprImpl extends GrLogicalExpressionImpl {
 
   public GrLogicalAndExprImpl(@NotNull ASTNode node) {
     super(node);
@@ -33,7 +33,4 @@ public class GrLogicalAndExprImpl extends GrBinaryExpressionImpl {
     return "Logical AND expression";
   }
 
-  public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
-  }
 }

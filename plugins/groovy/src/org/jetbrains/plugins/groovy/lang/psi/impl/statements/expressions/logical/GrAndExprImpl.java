@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrAndExprImpl extends GrBinaryExpressionImpl {
+public class GrAndExprImpl extends GrLogicalExpressionImpl {
 
   public GrAndExprImpl(@NotNull ASTNode node) {
     super(node);
