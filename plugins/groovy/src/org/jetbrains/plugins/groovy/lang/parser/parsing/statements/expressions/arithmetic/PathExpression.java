@@ -62,12 +62,6 @@ public class PathExpression implements GroovyElementTypes {
    */
   private static GroovyElementType pathElementParse(PsiBuilder builder,
                                                     PsiBuilder.Marker marker) {
-    TokenSet DOTS = TokenSet.create(
-            mSPREAD_DOT,
-            mOPTIONAL_DOT,
-            mMEMBER_POINTER,
-            mDOT
-    );
     GroovyElementType res;
 
     // Property reference

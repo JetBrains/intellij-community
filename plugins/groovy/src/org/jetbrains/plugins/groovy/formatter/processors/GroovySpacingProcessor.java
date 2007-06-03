@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameters;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import com.intellij.formatting.Spacing;
@@ -83,7 +84,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return NO_SPACING;
     }
 
-    if (DOTS.contains(leftNode.getElementType())) {
+    if (GroovyTokenTypes.DOTS.contains(leftNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
 

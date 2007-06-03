@@ -15,12 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author ilyas
  */
 public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
   GrExpression getQualifierExpression();
+
+  IElementType getDotTokenType();
 }

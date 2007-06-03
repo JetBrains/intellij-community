@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 import java.util.*;
 
@@ -170,7 +172,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           }
         }
       } else {
-        processQualifier(refExpr, processor, qualifier);
+        if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+          processQualifier(refExpr, processor, qualifier);
+        } else {
+          //todo
+        }
       }
     }
 
@@ -330,7 +336,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       qualifier = getRuntimeQualifier(this);
       if (qualifier != null) getVariantsFromQualifier(processor, qualifier);
     } else {
-      getVariantsFromQualifier(processor, qualifier);
+      if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+        getVariantsFromQualifier(processor, qualifier);
+      } else {
+        //todo
+      }
     }
 
     GroovyResolveResult[] candidates = processor.getCandidates();
@@ -402,6 +412,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public GrExpression getQualifierExpression() {
     return findChildByClass(GrExpression.class);
+  }
+
+  public IElementType getDotTokenType() {
+    return findChildByType(GroovyTokenTypes.DOTS).getNode().getElementType();
   }
 
   public GroovyResolveResult advancedResolve() {

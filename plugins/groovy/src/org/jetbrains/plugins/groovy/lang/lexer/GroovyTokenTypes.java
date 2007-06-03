@@ -220,4 +220,11 @@ public interface GroovyTokenTypes {
       mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
 
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
+
+  TokenSet DOTS = TokenSet.create(
+          mSPREAD_DOT,
+          mOPTIONAL_DOT,
+          mMEMBER_POINTER,
+          mDOT
+  );
 }
