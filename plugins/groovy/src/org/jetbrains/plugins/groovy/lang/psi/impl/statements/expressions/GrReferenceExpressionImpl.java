@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
@@ -49,7 +50,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 import java.util.*;
 
@@ -88,6 +88,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
 
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
+      IElementType dotType = refExpr.getDotTokenType();
       PsiElement resolved = refExpr.resolve();
       PsiType result = null;
       PsiManager manager = refExpr.getManager();
@@ -96,9 +97,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       } else if (resolved instanceof PsiVariable) {
         result = ((PsiVariable) resolved).getType();
       } else if (resolved instanceof PsiMethod) {
-        PsiElement nameElement = refExpr.getReferenceNameElement();
-        PsiElement prev = PsiTreeUtil.skipSiblingsBackward(nameElement, PsiWhiteSpace.class);
-        if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mMEMBER_POINTER) {
+        if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
           return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", refExpr.getResolveScope());
         }
         PsiMethod method = (PsiMethod) resolved;
@@ -121,7 +120,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
 
-      return TypesUtil.boxPrimitiveTypeAndEraseGenerics(result, manager, refExpr.getResolveScope());
+      result = TypesUtil.boxPrimitiveType(result, manager, refExpr.getResolveScope());
+      if (dotType != GroovyTokenTypes.mSPREAD_DOT) {
+        return result;
+      } else {
+        return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
+      }
     }
   }
 
@@ -175,7 +179,27 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
           processQualifier(refExpr, processor, qualifier);
         } else {
-          //todo
+          processQualifierForSpreadDot(refExpr, processor, qualifier);
+        }
+      }
+    }
+
+    private void processQualifierForSpreadDot(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
+      PsiType qualifierType = qualifier.getType();
+      if (qualifierType instanceof PsiClassType) {
+        PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
+        PsiClass clazz = result.getElement();
+        if (clazz != null) {
+          PsiClass listClass = ResolveUtil.findListClass(refExpr.getManager(), refExpr.getResolveScope());
+          if (listClass != null && listClass.getTypeParameters().length == 1) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(clazz, listClass, result.getSubstitutor());
+            if (substitutor != null) {
+              PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
+              if (componentType != null) {
+                processClassQualifierType(refExpr, processor, componentType);
+              }
+            }
+          }
         }
       }
     }
@@ -339,7 +363,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(processor, qualifier);
       } else {
-        //todo
+        getVariantsFromQualifierForSpreadOperator(processor, qualifier);
       }
     }
 
@@ -348,6 +372,26 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     String[] properties = addPretendedProperties(elements);
     return ArrayUtil.mergeArrays(elements, properties, Object.class);
+  }
+
+  private void getVariantsFromQualifierForSpreadOperator(ResolverProcessor processor, GrExpression qualifier) {
+    PsiType qualifierType = qualifier.getType();
+    if (qualifierType instanceof PsiClassType) {
+      PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
+      PsiClass clazz = result.getElement();
+      if (clazz != null) {
+        PsiClass listClass = getManager().findClass("java.util.List", getResolveScope());
+        if (listClass != null && listClass.getTypeParameters().length == 1) {
+          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(clazz, listClass, result.getSubstitutor());
+          if (substitutor != null) {
+            PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
+            if (componentType != null) {
+              getVaiantsFromQualifierType(processor, componentType, getProject());
+            }
+          }
+        }
+      }
+    }
   }
 
   private String[] addPretendedProperties(PsiElement[] elements) {
@@ -414,8 +458,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return findChildByClass(GrExpression.class);
   }
 
+  @Nullable
   public IElementType getDotTokenType() {
-    return findChildByType(GroovyTokenTypes.DOTS).getNode().getElementType();
+    PsiElement dot = findChildByType(GroovyTokenTypes.DOTS);
+    return dot == null ? null : dot.getNode().getElementType();
   }
 
   public GroovyResolveResult advancedResolve() {

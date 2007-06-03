@@ -42,6 +42,7 @@ public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpressi
   public PsiType getType() {
     IElementType opToken = getOperationTokenType();
     GrExpression operand = getOperand();
+    if (operand == null) return null;
     PsiType opType = operand.getType();
     if (opToken == GroovyTokenTypes.mBNOT) {
       if (opType.equalsToText("java.lang.String")) {

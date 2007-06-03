@@ -16,15 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
@@ -43,8 +44,9 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   }
 
   public PsiType getType() {
+    PsiManager manager = getManager();
     if (isMapLiteral()) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.util.Map", getResolveScope());
+      return manager.getElementFactory().createTypeByFQClassName("java.util.Map", getResolveScope());
     }
 
     PsiElement parent = getParent();
@@ -56,10 +58,31 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       }
     }
 
-    return getManager().getElementFactory().createTypeByFQClassName("java.util.List", getResolveScope());
+    PsiClass listClass = manager.findClass("java.util.List", getResolveScope());
+    if (listClass != null) {
+      PsiTypeParameter[] typeParameters = listClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        GrExpression[] initializers = getInitializers();
+        PsiType initializerType = initializers.length > 0 ? initializers[0].getType() : null;
+        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(typeParameters[0], initializerType);
+        return manager.getElementFactory().createType(listClass, substitutor);
+      } else {
+        return manager.getElementFactory().createType(listClass);
+      }
+    }
+
+    return null;
   }
 
   private boolean isMapLiteral() {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
+  }
+
+  public GrExpression[] getInitializers() {
+    return findChildrenByClass(GrExpression.class);
+  }
+
+  public GrNamedArgument[] getNamedArguments() {
+    return findChildrenByClass(GrNamedArgument.class);
   }
 }

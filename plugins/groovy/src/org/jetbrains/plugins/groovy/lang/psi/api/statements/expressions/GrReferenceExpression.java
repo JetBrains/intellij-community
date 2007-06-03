@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -25,5 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
   GrExpression getQualifierExpression();
 
+  @Nullable
   IElementType getDotTokenType();
 }

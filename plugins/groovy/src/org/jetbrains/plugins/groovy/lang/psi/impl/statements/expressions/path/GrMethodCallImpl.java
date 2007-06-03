@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
@@ -47,10 +48,16 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
   public PsiType getType() {
     GrExpression invoked = getInvokedExpression();
     if (invoked instanceof GrReferenceExpression) {
-      PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
+      GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
+      PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiMethod && resolved.getCopyableUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
         PsiType returnType = ((PsiMethod) resolved).getReturnType();
-        return TypesUtil.boxPrimitiveTypeAndEraseGenerics(returnType, getManager(), getResolveScope());
+        returnType = TypesUtil.boxPrimitiveType(returnType, getManager(), getResolveScope());
+        if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+          return returnType;
+        } else {
+          return ResolveUtil.getListTypeForSpreadOperator(refExpr, returnType);
+        }
       }
     }
 

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -130,5 +131,22 @@ public class ResolveUtil {
     }
 
     return true;
+  }
+
+  public static PsiType getListTypeForSpreadOperator(GrReferenceExpression refExpr, PsiType componentType) {
+    PsiClass clazz = findListClass(refExpr.getManager(), refExpr.getResolveScope());
+    if (clazz != null) {
+      PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
+      if (typeParameters.length == 1) {
+        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(typeParameters[0], componentType);
+        return refExpr.getManager().getElementFactory().createType(clazz, substitutor);
+      }
+    }
+
+    return null;
+  }
+
+  public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
+      return manager.findClass("java.util.List", resolveScope);
   }
 }

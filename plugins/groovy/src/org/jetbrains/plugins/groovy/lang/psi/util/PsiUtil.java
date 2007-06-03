@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 
@@ -159,4 +160,5 @@ public class PsiUtil {
 
     return null;
   }
+
 }

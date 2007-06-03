@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,10 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
 
 
-    if (selectedExpr.getType() == PsiType.VOID) {
+    PsiType type = selectedExpr.getType();
+    if (type != null) type = TypeConversionUtil.erasure(type);
+
+    if (type == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(message, project);
       return false;
@@ -113,7 +117,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Find occurences
     final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     // Getting settings
-    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, selectedExpr.getType(), occurences, false, null);
+    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurences, false, null);
 
     if (!settings.isOK()) {
       return false;
