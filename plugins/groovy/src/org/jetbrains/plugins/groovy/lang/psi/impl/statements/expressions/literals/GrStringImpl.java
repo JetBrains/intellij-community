@@ -40,8 +40,6 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   }
 
   public boolean isSimple() {
-    if (getFirstChild() == null) return true;
-    return !(getFirstChild().getText().length() >= 3 &&
-        getFirstChild().getText().substring(0,3).equals("\"\"\""));
+    return !getText().startsWith("\"\"\"");
   }
 }
