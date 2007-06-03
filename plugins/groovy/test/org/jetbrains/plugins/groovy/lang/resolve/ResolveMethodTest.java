@@ -4,12 +4,10 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -123,6 +121,19 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
     assertTrue(resolved instanceof DefaultGroovyMethod);
   }
+
+  public void testSpreadOperator() throws Exception {
+    PsiReference ref = configureByFile("spreadOperator/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    GrMethodCall methodCall = (GrMethodCall) ref.getElement().getParent();
+    PsiType type = methodCall.getType();
+    assertTrue(type instanceof PsiClassType);
+    PsiClass clazz = ((PsiClassType) type).resolve();
+    assertNotNull(clazz);
+    assertEquals("java.util.List", clazz.getQualifiedName());
+  }
+
 
   public void testSwingBuilderMethod() throws Exception {
     PsiReference ref = configureByFile("swingBuilder/A.groovy");
