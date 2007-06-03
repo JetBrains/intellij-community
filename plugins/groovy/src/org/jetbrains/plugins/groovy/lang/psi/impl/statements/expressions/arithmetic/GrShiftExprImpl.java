@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -30,5 +32,19 @@ public class GrShiftExprImpl extends GrBinaryExpressionImpl {
 
   public String toString() {
     return "Shift expression";
+  }
+
+  public PsiType getType() {
+    GrExpression lop = getLeftOperand();
+    if (lop == null) return null;
+    PsiType lopType = lop.getType();
+    if (lopType == null) return null;
+    if (lopType.equalsToText("java.lang.Byte") ||
+        lopType.equalsToText("java.lang.Character") ||
+        lopType.equalsToText("java.lang.Short")) {
+      return getTypeByFQName("java.lang.Integer");
+    }
+
+    return lopType;
   }
 }
