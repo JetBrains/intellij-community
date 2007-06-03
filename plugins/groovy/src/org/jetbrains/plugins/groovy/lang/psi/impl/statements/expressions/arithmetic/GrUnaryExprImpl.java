@@ -16,16 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
 public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpression {
+  private static final String PATTERN_FQ_NAME = "java.util.regex.Pattern";
 
   public GrUnaryExprImpl(@NotNull ASTNode node) {
     super(node);
@@ -36,6 +40,26 @@ public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpressi
   }
 
   public PsiType getType() {
-    return null;
+    IElementType opToken = getOperationTokenType();
+    GrExpression operand = getOperand();
+    PsiType opType = operand.getType();
+    if (opToken == GroovyTokenTypes.mBNOT) {
+      if (opType.equalsToText("java.lang.String")) {
+        return getTypeByFQName(PATTERN_FQ_NAME);
+      }
+    }
+    return opType;
+  }
+
+  public IElementType getOperationTokenType() {
+    PsiElement opElement = findChildByType(GroovyTokenTypes.UNARY_OP_SET);
+    assert opElement != null;
+    ASTNode node = opElement.getNode();
+    assert node != null;
+    return node.getElementType();
+  }
+
+  public GrExpression getOperand() {
+    return findChildByClass(GrExpression.class);
   }
 }

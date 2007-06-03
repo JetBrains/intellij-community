@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiType;
 
 /**
  * @author ilyas
@@ -23,4 +24,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
     return PsiImplUtil.replaceExpression(this, newExpr);
   }
 
+  public PsiType getTypeByFQName(String fqName) {
+    return getManager().getElementFactory().createTypeByFQClassName(fqName, getResolveScope());
+  }
 }

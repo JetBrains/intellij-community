@@ -15,9 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.tree.IElementType;
+
 /**
  * @author ilyas
  */
 public interface GrUnaryExpression extends GrExpression {
   public String toString();
+
+  IElementType getOperationTokenType();
+
+  GrExpression getOperand();
 }

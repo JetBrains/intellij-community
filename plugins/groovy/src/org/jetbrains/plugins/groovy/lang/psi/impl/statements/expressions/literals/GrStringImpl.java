@@ -36,7 +36,7 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   }
 
   public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+    return getTypeByFQName("java.lang.String");
   }
 
   public boolean isSimple() {
