@@ -50,7 +50,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       CaretModel caretModel = editor.getCaretModel();
       int offset = startOffset + method.getName().length();
       if (parameters.length == 0 || parameters.length > 1) {
-        if (document.getCharsSequence().charAt(offset) != '(') {
+        if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
           document.insertString(offset, "()");
         }
         if (parameters.length > 0) {
