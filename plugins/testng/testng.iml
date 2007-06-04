@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -14,7 +15,7 @@
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
     <orderEntry type="module-library">
-      <library>
+      <library name="testng15">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/testng-jdk15.jar!/" />
         </CLASSES>
@@ -32,6 +33,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="ui-openapi" />
+    <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntryProperties />
   </component>
 </module>
