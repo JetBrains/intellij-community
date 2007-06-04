@@ -251,7 +251,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void inlineConstructorCall(PsiCall constructorCall) {
+  public static void inlineConstructorCall(PsiCall constructorCall) {
     final PsiMethod oldConstructor = constructorCall.resolveMethod();
     LOG.assertTrue(oldConstructor != null);
     final PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();

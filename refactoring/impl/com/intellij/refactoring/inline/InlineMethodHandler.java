@@ -48,7 +48,7 @@ class InlineMethodHandler {
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
         return;
       }
-      if (!checkChainingConstructor(method)) {
+      if (!isChainingConstructor(method)) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
         return;
@@ -74,7 +74,7 @@ class InlineMethodHandler {
     dialog.show();
   }
 
-  private static boolean checkChainingConstructor(PsiMethod constructor) {
+  public static boolean isChainingConstructor(PsiMethod constructor) {
     PsiCodeBlock body = constructor.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();

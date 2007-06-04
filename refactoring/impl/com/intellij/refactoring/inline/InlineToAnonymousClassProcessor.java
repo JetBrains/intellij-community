@@ -165,8 +165,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   private void replaceNewExpression(final PsiNewExpression newExpression, final PsiClassType superType) throws IncorrectOperationException {
+    checkInlineChainingConstructor(newExpression);
     JavaResolveResult classResolveResult = newExpression.getClassReference().advancedResolve(false);
     JavaResolveResult methodResolveResult = newExpression.resolveMethodGenerics();
+    final PsiMethod constructor = (PsiMethod) methodResolveResult.getElement();
 
     PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();
     PsiType substType = classResolveSubstitutor.substitute(superType);
@@ -182,7 +184,6 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     builder.append("() {}");
 
     PsiElementFactory factory = myClass.getManager().getElementFactory();
-    final PsiMethod constructor = (PsiMethod) methodResolveResult.getElement();
     final PsiExpressionList constructorArguments = newExpression.getArgumentList();
 
     PsiNewExpression superNewExpressionTemplate = (PsiNewExpression) factory.createExpressionFromText(builder.toString(),
@@ -241,6 +242,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
     final PsiNewExpression superNewExpression = (PsiNewExpression) newExpression.replace(superNewExpressionTemplate);
     superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
+  }
+
+  private static void checkInlineChainingConstructor(final PsiNewExpression newExpression) {
+    while(true) {
+      PsiMethod constructor = newExpression.resolveConstructor();
+      if (constructor == null || !InlineMethodHandler.isChainingConstructor(constructor)) break;
+      InlineMethodProcessor.inlineConstructorCall(newExpression);
+    }
   }
 
   private Map<String, FieldInfo> analyzeConstructor(final PsiMethod constructor, final PsiExpressionList constructorArguments,
