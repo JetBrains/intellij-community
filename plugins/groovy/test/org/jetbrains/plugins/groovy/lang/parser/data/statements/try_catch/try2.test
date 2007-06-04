@@ -27,6 +27,8 @@ Groovy script
           PsiElement(identifier)('e1')
           PsiElement())(')')
         PsiWhiteSpace(' ')
+        Arguments
+          <empty list>
         Closable block
           PsiElement({)('{')
           Parameter list
@@ -48,6 +50,8 @@ Groovy script
           PsiElement(identifier)('e2')
           PsiElement())(')')
         PsiWhiteSpace(' ')
+        Arguments
+          <empty list>
         Closable block
           PsiElement({)('{')
           Parameter list

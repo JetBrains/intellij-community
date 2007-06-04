@@ -39,7 +39,7 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
     return null;
   }
 
-  public boolean isSimple() {
+  public boolean isPlainString() {
     return true;
   }
 }

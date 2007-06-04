@@ -39,7 +39,7 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
     return getTypeByFQName("java.lang.String");
   }
 
-  public boolean isSimple() {
+  public boolean isPlainString() {
     return !getText().startsWith("\"\"\"");
   }
 }

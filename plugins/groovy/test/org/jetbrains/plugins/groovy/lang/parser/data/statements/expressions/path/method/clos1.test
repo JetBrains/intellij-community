@@ -7,6 +7,8 @@ Groovy script
         PsiElement(identifier)('C')
       PsiElement(.)('.')
       PsiElement(identifier)('foo')
+    Arguments
+      <empty list>
     Closable block
       PsiElement({)('{')
       Parameter list

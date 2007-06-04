@@ -5,6 +5,8 @@ Groovy script
   Method call
     Reference expression
       PsiElement(identifier)('foo')
+    Arguments
+      <empty list>
     Closable block
       PsiElement({)('{')
       Parameter list

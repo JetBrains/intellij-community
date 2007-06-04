@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
@@ -41,7 +40,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     while (parent != null){
       if (parent instanceof GrString) {
         GrString grString = (GrString) parent;
-        return !grString.isSimple();
+        return !grString.isPlainString();
       }
       parent = parent.getParent();
     }
