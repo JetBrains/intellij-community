@@ -9,15 +9,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author peter
@@ -183,7 +182,9 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           break;
         }
       }
-      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(element, domReference);
+      final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
+      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(element, domReference)
+        || converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants().contains(element.getStringValue());
       boolean hasBadResolve = false;
       if (!domReferenceResolveOK) {
         for (final PsiReference reference : psiReferences) {
@@ -192,12 +193,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
             list.add(holder.createResolveProblem(element, reference));
           }
         }
-        final boolean isResolvingConverter = element.getConverter() instanceof ResolvingConverter;
+        final boolean isResolvingConverter = converter instanceof ResolvingConverter;
         if (!hasBadResolve &&
             (domReference != null || isResolvingConverter &&
                                      hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
-          final Converter converter = element.getConverter();
           final String errorMessage = converter
             .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
           if (errorMessage != null && XmlHighlightVisitor.getErrorDescription(domReference) != null) {
@@ -206,7 +206,6 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         }
       }
       if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null) {
-        final Converter converter = element.getConverter();
         final String errorMessage = converter
           .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
         if (errorMessage != null) {
@@ -238,18 +237,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   private static boolean hasBadResolve(GenericDomValue value, PsiReference reference) {
-    if (XmlHighlightVisitor.hasBadResolve(reference)) {
-      final Converter converter = value.getConverter();
-      if (converter instanceof ResolvingConverter) {
-        final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-        final Set additionalVariants = resolvingConverter.getAdditionalVariants();
-        if (additionalVariants.contains(value.getStringValue())) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
+    return XmlHighlightVisitor.hasBadResolve(reference);
   }
 
   private static boolean isSoftReference(GenericDomValue value) {

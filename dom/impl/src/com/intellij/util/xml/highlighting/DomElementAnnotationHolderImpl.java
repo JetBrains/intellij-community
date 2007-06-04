@@ -12,10 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -88,7 +85,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
 
   private static LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
-    final Converter converter = element.getConverter();
+    final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
       result
