@@ -17,7 +17,7 @@ import java.util.Map;
  */
 
 
-public class SurroundStatementsTester extends TestSuite {
+public class SurroundStatementsTest extends TestSuite {
   protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
   private static Map<Class, String> surroundersOfStmtToPathsMap = new HashMap<Class, String>();
 
@@ -35,7 +35,7 @@ public class SurroundStatementsTester extends TestSuite {
     }
   }
 
-  public SurroundStatementsTester() {
+  public SurroundStatementsTest() {
     Surrounder[] surrounders = GroovyStmtsSurroundDescriptor.getStmtsSurrounders();
 
     String path;
@@ -46,6 +46,6 @@ public class SurroundStatementsTester extends TestSuite {
   }
 
   public static Test suite() {
-    return new SurroundStatementsTester();
+    return new SurroundStatementsTest();
   }
 }

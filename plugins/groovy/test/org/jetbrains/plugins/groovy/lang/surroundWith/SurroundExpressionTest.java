@@ -14,7 +14,7 @@ import java.util.Map;
  * User: Dmitry.Krasilschikov
  * Date: 01.06.2007
  */
-public class SurroundExpressionTester extends TestSuite {
+public class SurroundExpressionTest extends TestSuite {
   protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
 
   private static Map<String, String> surroundersOfExprToPathsMap = new HashMap<String, String>();
@@ -31,7 +31,7 @@ public class SurroundExpressionTester extends TestSuite {
     }
   }
 
-  public SurroundExpressionTester() {
+  public SurroundExpressionTest() {
     Surrounder[] surrounders = GroovyStmtsSurroundDescriptor.getExprSurrounders();
 
     String path;
@@ -42,6 +42,6 @@ public class SurroundExpressionTester extends TestSuite {
   }
 
   public static Test suite() {
-    return new SurroundExpressionTester();
+    return new SurroundExpressionTest();
   }
 }
