@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +170,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
 
   @NotNull PsiModifierList getModifierList();
 
-  @NotNull
+  @NotNull @NonNls
   String getName();
   
   @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();

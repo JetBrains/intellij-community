@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public interface PsiImportList extends PsiElement {
    * @return the import statement, or null if one was not found.
    */
   @Nullable
-  PsiImportStatement findOnDemandImportStatement(String packageName);
+  PsiImportStatement findOnDemandImportStatement(@NonNls String packageName);
 
   /**
    * Searches the list for a single import or import static statement importing the specified

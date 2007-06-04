@@ -313,7 +313,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * @return the import statement instance.
    * @throws IncorrectOperationException if <code>packageName</code> is not a valid qualified package name.
    */
-  @NotNull PsiImportStatement createImportStatementOnDemand(@NotNull String packageName) throws IncorrectOperationException;
+  @NotNull PsiImportStatement createImportStatementOnDemand(@NotNull @NonNls String packageName) throws IncorrectOperationException;
 
   /**
    * Creates a local variable declaration statement with the specified name, type and initializer,
