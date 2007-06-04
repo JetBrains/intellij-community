@@ -203,6 +203,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because an interface implemented by it cannot be resolved");
   }
 
+  public void testNoInlineArrayType() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because it is used in an array instance creation expression");
+  }
+
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());

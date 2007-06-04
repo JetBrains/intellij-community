@@ -549,9 +549,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
       if (parentElement instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
+        if (newExpression.getArrayDimensions().length > 0) {
+          return "Class cannot be inlined because it is used in an array instance creation expression";
+        }
         final PsiMethod[] constructors = myClass.getConstructors();
         if (constructors.length == 0) {
-          if (newExpression.getArgumentList().getExpressions().length > 0) {
+          PsiExpressionList newArgumentList = newExpression.getArgumentList();
+          if (newArgumentList != null && newArgumentList.getExpressions().length > 0) {
             return "Class cannot be inlined because a call to its constructor is unresolved";
           }
         }
