@@ -28,6 +28,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
+    if (parent instanceof PsiJavaCodeReferenceCodeFragment) return true;
+
     if (parent instanceof PsiTypeElement) {
       if (parent.getParent() instanceof PsiReferenceParameterList) return true;
 

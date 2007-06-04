@@ -6,8 +6,12 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
@@ -16,12 +20,11 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -44,8 +47,13 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiClassPanel();
     }
-    return initReferenceEditorWithBrowseButton(boundedComponent,
-                                               new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true), this);
+    ReferenceEditorWithBrowseButton editor = new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
+    Document document = editor.getChildComponent().getDocument();
+    PsiCodeFragment fragment = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(document);
+    assert fragment != null;
+    fragment.setIntentionActionsFilter(PsiCodeFragment.IntentionActionsFilter.EVERYTHING_AVAILABLE);
+    fragment.putUserData(ModuleUtil.KEY_MODULE, getDomWrapper().getExistingDomElement().getModule());
+    return initReferenceEditorWithBrowseButton(boundedComponent, editor, this);
   }
 
   protected static <T extends JPanel> T initReferenceEditorWithBrowseButton(final T boundedComponent,
