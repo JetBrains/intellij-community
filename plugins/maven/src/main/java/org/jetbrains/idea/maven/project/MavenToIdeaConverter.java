@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorPlain {
+public class MavenToIdeaConverter {
   @NonNls public static final String JAR_TYPE = "jar";
   @NonNls public static final String JAVADOC_CLASSIFIER = "javadoc";
   @NonNls public static final String SOURCES_CLASSIFIER = "sources";
@@ -32,7 +32,11 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
                              final MavenImporterPreferences preferences,
                              final boolean markSynthetic) {
 
-    projectModel.visit(new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic));
+    final MavenToIdeaConverter mavenToIdeaConverter = new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic);
+
+    for (MavenProjectModel.Node project : sortProjectsByDependencies(projectModel)) {
+      mavenToIdeaConverter.convert(project);
+    }
 
     for (Module module : mapping.getExistingModules()) {
       new RootModelAdapter(module).resolveModuleDependencies(mapping.getLibraryNameToModuleName());
@@ -43,6 +47,26 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
     }
     catch (ModuleCircularDependencyException ignore) {
     }
+  }
+
+  private static List<MavenProjectModel.Node> sortProjectsByDependencies(final MavenProjectModel projectModel) {
+    final List<MavenProjectModel.Node> projects = new ArrayList<MavenProjectModel.Node>();
+    projectModel.visit( new MavenProjectModel.MavenProjectVisitorPlain() {
+      public void visit(final MavenProjectModel.Node node) {
+        projects.add(node);
+      }
+    });
+
+    // Dumb implementation just puts all EAR modules after all others
+    // TODO replace with proper topo sort on dependencies
+    Collections.sort(projects, new Comparator<MavenProjectModel.Node>() {
+      public int compare(final MavenProjectModel.Node o1, final MavenProjectModel.Node o2) {
+        final boolean isEar1 = o1.getMavenProject().getPackaging().equalsIgnoreCase("ear");
+        final boolean isEar2 = o2.getMavenProject().getPackaging().equalsIgnoreCase("ear");
+        return !isEar1 && isEar2 ? -1 : isEar1 && !isEar2 ? 1 : 0;
+      }
+    });
+    return projects;
   }
 
   final private ModifiableModuleModel modifiableModuleModel;
@@ -62,7 +86,7 @@ public class MavenToIdeaConverter extends MavenProjectModel.MavenProjectVisitorP
     this.preferences = preferences;
   }
 
-  public void visit(MavenProjectModel.Node node) {
+  public void convert(MavenProjectModel.Node node) {
     Module module = mavenToIdeaMapping.getModule(node);
     if (module == null) {
       module = modifiableModuleModel.newModule(mavenToIdeaMapping.getModuleFilePath(node));
