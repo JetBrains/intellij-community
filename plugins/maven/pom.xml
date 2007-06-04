@@ -72,6 +72,13 @@
     </site>
   </distributionManagement>
   <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-webdav</artifactId>
+        <version>1.0-beta-2</version>
+      </extension>
+    </extensions>
     <resources>
       <resource>
         <filtering>true</filtering>
@@ -93,13 +100,13 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>ideauidesigner-maven-plugin</artifactId>
-        <version>1.0-beta-1-SNAPSHOT</version>
+        <version>1.0-beta-1-SNAPSHOT-IDEA7</version>
         <executions>
-           <execution>
-              <goals>
-                 <goal>javac2</goal>
-              </goals>
-           </execution>
+          <execution>
+            <goals>
+              <goal>javac2</goal>
+            </goals>
+          </execution>
         </executions>
         <configuration>
           <fork>true</fork>
@@ -144,19 +151,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.3</version>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.0</version>
-        <!-- Version 2.1 only shows coverage of tested classes -->
-        <executions>
-          <execution>
-            <goals>
-              <goal>clean</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
   <repositories>
@@ -179,6 +173,14 @@
   </repositories>
   <pluginRepositories>
     <pluginRepository>
+      <id>mevenide</id>
+      <name>Mevenide's M2 repo</name>
+      <url>http://mevenide.codehaus.org/m2-repository</url>
+      <!--snapshots>
+          <updatePolicy>always</updatePolicy>
+      </snapshots-->
+    </pluginRepository>
+    <pluginRepository>
       <id>codehaus.snapshots</id>
       <name>Codehaus Snapshots</name>
       <url>http://snapshots.repository.codehaus.org</url>
@@ -199,8 +201,8 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-embedder</artifactId>
-      <version>2.1-20060902</version>
-      <classifier>mevenide</classifier>
+      <version>2.1-20070320</version>
+      <classifier>mevenide-idea</classifier>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
