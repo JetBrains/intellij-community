@@ -575,7 +575,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
-      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
+      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
+      " but was " + parentGroup.getClass());
       return;
     }
     String anchorStr = element.getAttributeValue(ANCHOR_ELEMENT_NAME);
