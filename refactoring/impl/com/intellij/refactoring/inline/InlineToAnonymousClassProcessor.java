@@ -257,14 +257,23 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     final Map<String, FieldInfo> result = new HashMap<String, FieldInfo>();
     PsiCodeBlock body = constructor.getBody();
     assert body != null;
-    for(PsiStatement stmt: body.getStatements()) {
-      MatchingContext context = new MatchingContext();
-      if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
-        PsiAssignmentExpression expression = context.get(ourAssignmentKey);
-        processAssignmentInConstructor(constructor, constructorArguments, result, expression);
+    for(PsiElement child: body.getChildren()) {
+      if (child instanceof PsiStatement) {
+        PsiStatement stmt = (PsiStatement) child;
+        MatchingContext context = new MatchingContext();
+        if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
+          PsiAssignmentExpression expression = context.get(ourAssignmentKey);
+          processAssignmentInConstructor(constructor, constructorArguments, result, expression);
+        }
+        else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
+          initializerBlock.addBefore(stmt.copy(), initializerBlock.getRBrace());
+        }
       }
-      else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
-        initializerBlock.addBefore(stmt.copy(), initializerBlock.getRBrace());
+      else if (child instanceof PsiComment) {
+        if (child.getPrevSibling() instanceof PsiWhiteSpace) {
+          initializerBlock.addBefore(child.getPrevSibling(), initializerBlock.getRBrace());
+        }
+        initializerBlock.addBefore(child, initializerBlock.getRBrace());
       }
     }
     checkFieldWriteUsages(result);
