@@ -35,9 +35,9 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -49,8 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import gnu.trove.THashMap;
 
 /**
  * @author Mike
@@ -96,6 +94,7 @@ public class XmlUtil {
   @NonNls public static final String APACHE_I18N_URI = "http://jakarta.apache.org/taglibs/i18n-1.0";
   @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
+  @NonNls public static final String STRUTS_HTML_URI2 = "http://jakarta.apache.org/struts/tags-html";
 
   @NonNls private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
   @NonNls private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
