@@ -93,6 +93,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>ideauidesigner-maven-plugin</artifactId>
+        <version>1.0-beta-1-SNAPSHOT</version>
         <executions>
            <execution>
               <goals>
