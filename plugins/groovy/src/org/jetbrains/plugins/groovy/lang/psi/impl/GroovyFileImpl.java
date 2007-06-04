@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -42,6 +43,8 @@ import javax.swing.*;
  * @author ilyas
  */
 public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
+  private PsiClass myScriptClass;
+  private boolean myScriptClassInitialized = false;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
@@ -178,6 +181,23 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
         return true;
 
     return false;
+  }
+
+  public PsiClass getScriptClass() {
+    if (!myScriptClassInitialized) {
+      if (getTopStatements().length > 0) {
+        myScriptClass = new GroovyScriptClass(this);
+      }
+
+      myScriptClassInitialized = true;
+    }
+    return myScriptClass;
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    myScriptClass = null;
+    myScriptClassInitialized = false;
   }
 }
 

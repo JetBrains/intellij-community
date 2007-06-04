@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -181,7 +182,7 @@ public class GroovyPositionManager implements PositionManager {
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
 
-    GrTypeDefinition clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
+    PsiClass clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
     if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);

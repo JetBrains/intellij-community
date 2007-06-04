@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -45,4 +46,7 @@ public interface GroovyFile extends PsiFile, GroovyPsiElement {
   void addImportForClass(PsiClass aClass);
 
   boolean isScript();
+
+  @Nullable
+  PsiClass getScriptClass();
 }

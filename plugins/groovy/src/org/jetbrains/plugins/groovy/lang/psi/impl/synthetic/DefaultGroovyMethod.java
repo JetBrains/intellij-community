@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl;
+package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.*;
@@ -22,14 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.GroovyLoader;
 
 /**
  * @author ven
  */
 public class DefaultGroovyMethod extends LightMethod {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.DefaultGroovyMethod");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod");
 
   private PsiMethod myMethod;
   private PsiMethod myModifiedMethod;
