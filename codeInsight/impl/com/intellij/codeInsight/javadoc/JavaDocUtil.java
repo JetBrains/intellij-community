@@ -264,13 +264,15 @@ public class JavaDocUtil {
   }
 
   public static String getShortestClassName(PsiClass aClass, PsiElement context) {
-    String shortName = aClass.getName();
+    @NonNls String shortName = aClass.getName();
+    if(shortName == null){
+      shortName = "null";
+    }
     PsiClass containingClass = aClass.getContainingClass();
     while (containingClass != null) {
       shortName = containingClass.getName() + "." + shortName;
       containingClass = containingClass.getContainingClass();
     }
-    LOG.assertTrue(shortName != null);
 
     String qName = aClass.getQualifiedName();
     if (qName == null) return shortName;
