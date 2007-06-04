@@ -12,6 +12,8 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
+
 /**
  * @author yole
  */
@@ -193,6 +195,15 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because its constructor contains 'return' statements");
   }
 
+  public void testConflictInaccessibleOuterField() throws Exception {
+    InlineToAnonymousClassProcessor processor = prepareProcessor();
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
+    ArrayList<String> conflicts = processor.getConflicts(refUsages);
+    assertEquals(1, conflicts.size());
+    assertEquals("Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>",
+                 conflicts.get(0));
+  }
+
   private void doTestNoInline(final String expectedMessage) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
@@ -214,6 +225,13 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
+    final InlineToAnonymousClassProcessor processor = prepareProcessor();
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
+    String message = processor.getPreprocessUsagesMessage(refUsages);
+    assertEquals(expectedMessage, message);
+  }
+
+  private InlineToAnonymousClassProcessor prepareProcessor() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
@@ -222,10 +240,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertInstanceOf(element, PsiClass.class);
 
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
-    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false);
-    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
-    String message = processor.getPreprocessUsagesMessage(refUsages);
-    assertEquals(expectedMessage, message);
+    return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false);
   }
 
   private void performAction(final boolean inlineThisOnly) {
@@ -235,6 +250,9 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     PsiClass classToInline = (PsiClass) element;
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly);
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
+    ArrayList<String> conflicts = processor.getConflicts(refUsages);
+    assertEquals(0, conflicts.size());
     processor.run();
   }
 }

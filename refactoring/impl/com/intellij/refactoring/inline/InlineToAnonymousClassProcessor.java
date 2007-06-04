@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -84,7 +85,22 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
       return false;
     }
+    ArrayList<String> conflicts = getConflicts(refUsages);
+    if (!conflicts.isEmpty()) {
+      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return false;
+      }
+    }
     return super.preprocessUsages(refUsages);
+  }
+
+  public ArrayList<String> getConflicts(final Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usages = refUsages.get();
+    ArrayList<String> result = new ArrayList<String>();
+    InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, result);
+    return result;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

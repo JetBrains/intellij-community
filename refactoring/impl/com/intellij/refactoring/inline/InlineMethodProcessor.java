@@ -118,20 +118,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final ReferencedElementsCollector collector = new ReferencedElementsCollector();
-    myMethod.accept(collector);
-    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usagesIn);
-
-    final Set<PsiMember> containers = containersToReferenced.keySet();
-    for (PsiMember container : containers) {
-      Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
-      for (PsiMember referenced : referencedInaccessible) {
-        String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
-                                                   ConflictsUtil.getDescription(referenced, true),
-                                                   ConflictsUtil.getDescription(container, true));
-        conflicts.add(ConflictsUtil.capitalize(message));
-      }
-    }
+    addInaccessibleMemberConflicts(myMethod, usagesIn, conflicts);
 
     if (!conflicts.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
@@ -148,6 +135,23 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     prepareSuccessful();
     RefactoringUtil.sortDepthFirstRightLeftOrder(usagesIn);
     return true;
+  }
+
+  public static void addInaccessibleMemberConflicts(final PsiElement element, final UsageInfo[] usages, final ArrayList<String> conflicts) {
+    final ReferencedElementsCollector collector = new ReferencedElementsCollector();
+    element.accept(collector);
+    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages);
+
+    final Set<PsiMember> containers = containersToReferenced.keySet();
+    for (PsiMember container : containers) {
+      Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
+      for (PsiMember referenced : referencedInaccessible) {
+        String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
+                                                   ConflictsUtil.getDescription(referenced, true),
+                                                   ConflictsUtil.getDescription(container, true));
+        conflicts.add(ConflictsUtil.capitalize(message));
+      }
+    }
   }
 
   /**
