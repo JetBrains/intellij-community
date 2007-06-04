@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -157,15 +158,12 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
       case 1:
         return models.get(0);
     }
-    Set<XmlFile> configFiles = new LinkedHashSet<XmlFile>();
-    final ArrayList<T> list = new ArrayList<T>(models.size());
+    final Set<XmlFile> configFiles = new LinkedHashSet<XmlFile>();
+    final LinkedHashSet<T> list = new LinkedHashSet<T>(models.size());
     for (M model: models) {
       final Set<XmlFile> files = model.getConfigFiles();
       for (XmlFile file: files) {
-        final T t = getDom(file);
-        if (t != null) {
-          list.add(t);
-        }
+        ContainerUtil.addIfNotNull(getDom(file), list);
       }
       configFiles.addAll(files);
     }
