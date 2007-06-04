@@ -40,6 +40,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineToAnonymousClassProcessor");
 
   private PsiClass myClass;
+  private final PsiCall myCallToInline;
   private boolean myInlineThisOnly;
 
   private static Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
@@ -48,9 +49,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private static Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
   private static Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
 
-  protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, boolean inlineThisOnly) {
+  protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, final PsiCall callToInline, boolean inlineThisOnly) {
     super(project);
     myClass = psiClass;
+    myCallToInline = callToInline;
     myInlineThisOnly = inlineThisOnly;
   }
 
@@ -60,6 +62,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
+    if (myInlineThisOnly) {
+      return new UsageInfo[] { new UsageInfo(myCallToInline) };
+    }
     final Collection<PsiReference> refCollection = ReferencesSearch.search(myClass).findAll();
     Set<UsageInfo> usages = new HashSet<UsageInfo>();
     for (PsiReference reference : refCollection) {
@@ -89,7 +94,15 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
-      if (element.getParent() instanceof PsiNewExpression) {
+      if (element instanceof PsiNewExpression) {
+        try {
+          replaceNewExpression((PsiNewExpression) element, superType);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+      else if (element.getParent() instanceof PsiNewExpression) {
         try {
           replaceNewExpression((PsiNewExpression) element.getParent(), superType);
         }
@@ -99,7 +112,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
       else {
         PsiImportStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
-        if (statement != null) {
+        if (statement != null && !myInlineThisOnly) {
           elementsToDelete.add(statement);
         }
         else {

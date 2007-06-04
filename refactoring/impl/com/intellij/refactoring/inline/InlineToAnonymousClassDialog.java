@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCall;
 import com.intellij.psi.util.PsiFormatUtil;
 
 /**
@@ -9,10 +10,13 @@ import com.intellij.psi.util.PsiFormatUtil;
  */
 public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
   private PsiClass myClass;
+  private final PsiCall myCallToInline;
 
-  protected InlineToAnonymousClassDialog(Project project, PsiClass psiClass) {
+  protected InlineToAnonymousClassDialog(Project project, PsiClass psiClass, final PsiCall callToInline) {
     super(project, true, psiClass);
     myClass = psiClass;
+    myCallToInline = callToInline;
+    myInvokedOnReference = (myCallToInline != null);
     setTitle("Inline to Anonymous Class");
     init();
   }
@@ -39,6 +43,6 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
   }
 
   protected void doAction() {
-    invokeRefactoring(new InlineToAnonymousClassProcessor(getProject(), myClass, isInlineThisOnly()));
+    invokeRefactoring(new InlineToAnonymousClassProcessor(getProject(), myClass, myCallToInline, isInlineThisOnly()));
   }
 }

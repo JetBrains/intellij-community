@@ -1,5 +1,6 @@
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -9,6 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,14 +19,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InlineToAnonymousClassHandler {
   public static void invoke(final Project project, final Editor editor, final PsiClass psiClass) {
+    PsiCall callToInline = findCallToInline(editor);
+
     String errorMessage = getCannotInlineMessage(psiClass);
     if (errorMessage != null) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), errorMessage, null, project);
       return;
     }
 
-    InlineToAnonymousClassDialog dlg = new InlineToAnonymousClassDialog(project, psiClass);
+    InlineToAnonymousClassDialog dlg = new InlineToAnonymousClassDialog(project, psiClass, callToInline);
     dlg.show();
+  }
+
+  public static PsiCall findCallToInline(final Editor editor) {
+    PsiCall callToInline = null;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor) : null;
+    if (reference != null) {
+      callToInline = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)reference.getElement());
+    }
+    return callToInline;
   }
 
   @Nullable

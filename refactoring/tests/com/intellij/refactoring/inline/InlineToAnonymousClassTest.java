@@ -1,14 +1,15 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -33,95 +34,99 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   public void testSimple() throws Exception {
-    doTest();
+    doTest(false);
   }
   
   public void testChangeToSuperType() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testImplementsInterface() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testClassInitializer() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testConstructor() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testConstructorWithArguments() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testConstructorWithArgumentsInExpression() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testMultipleConstructors() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testMethodUsage() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testConstructorArgumentToField() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testField() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testStaticConstantField() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testWritableInitializedField() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testNullInitializedField() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testInnerClass() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testConstructorToInstanceInitializer() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testNewExpressionContext() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testWritableFieldInitializedWithParameter() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testGenerics() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testGenericsSubstitute() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testQualifyInner() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testQualifiedNew() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testChainedConstructors() throws Exception {
-    doTest();
+    doTest(false);
+  }
+
+  public void testInlineThisOnly() throws Exception {
+    doTest(true);
   }
 
   public void testNoInlineAbstract() throws Exception {
@@ -200,11 +205,11 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertEquals(expectedMessage, message);
   }
 
-  private void doTest() throws Exception {
+  private void doTest(final boolean inlineThisOnly) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
-    performAction(false);
+    performAction(inlineThisOnly);
     checkResultByFile(null, fileName + ".after", true);
   }
 
@@ -217,7 +222,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertInstanceOf(element, PsiClass.class);
 
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
-    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, false);
+    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false);
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
     String message = processor.getPreprocessUsagesMessage(refUsages);
     assertEquals(expectedMessage, message);
@@ -226,9 +231,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   private void performAction(final boolean inlineThisOnly) {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertInstanceOf(element, PsiClass.class);
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
-    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, inlineThisOnly);
+    PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(myEditor);
+    PsiClass classToInline = (PsiClass) element;
+    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly);
     processor.run();
   }
 }

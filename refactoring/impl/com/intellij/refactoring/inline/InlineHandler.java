@@ -6,8 +6,8 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +30,7 @@ public class InlineHandler implements RefactoringActionHandler {
     if (dataContext == null) {
       dataContext = DataManager.getInstance().getDataContext();
     }
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       InlineMethodHandler.invoke(project, editor, (PsiMethod) elements[0]);
     } else if (elements[0] instanceof  PsiField) {
@@ -44,17 +44,23 @@ public class InlineHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof PsiLocalVariable) {
       final PsiReference psiReference = TargetElementUtil.findReference(editor);
       final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
       InlineLocalHandler.invoke(project, editor, (PsiLocalVariable) element, refExpr);
     } else if (element instanceof PsiMethod) {
-      InlineMethodHandler.invoke(project, editor, (PsiMethod) element);
+      PsiMethod method = (PsiMethod)element;
+      if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method) && isInlineClassAvailable()) {
+        InlineToAnonymousClassHandler.invoke(project, editor, method.getContainingClass());
+      }
+      else {
+        InlineMethodHandler.invoke(project, editor, method);
+      }
     } else if (element instanceof PsiField) {
       InlineConstantFieldHandler.invoke(project, editor, (PsiField) element);
     }
-    else if (element instanceof PsiClass && ApplicationManagerEx.getApplicationEx().isInternal()) {
+    else if (element instanceof PsiClass && isInlineClassAvailable()) {
       InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) element);
     }
     else if (PsiUtil.isInJspFile(file)) {
@@ -65,5 +71,9 @@ public class InlineHandler implements RefactoringActionHandler {
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
     }
+  }
+
+  private static boolean isInlineClassAvailable() {
+    return ApplicationManagerEx.getApplicationEx().isInternal();
   }
 }
