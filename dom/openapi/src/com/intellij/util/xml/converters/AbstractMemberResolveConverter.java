@@ -113,4 +113,14 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return fix instanceof LocalQuickFix? new LocalQuickFix[] {(LocalQuickFix)fix} : super.getQuickFixes(context);
   }
 
+  public void handleElementRename(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final String newElementName) {
+    super.handleElementRename(genericValue, context, isPropertyNameUsed()? PropertyUtil.getPropertyName(newElementName) : newElementName);
+  }
+
+  public void bindReference(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final PsiElement newTarget) {
+    if (newTarget instanceof PsiMember) {
+      final String elementName = ((PsiMember)newTarget).getName();
+      genericValue.setStringValue(isPropertyNameUsed() ? PropertyUtil.getPropertyName(elementName) : elementName);
+    }
+  }
 }
