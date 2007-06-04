@@ -37,7 +37,7 @@ public class SurroundExpressionTester extends TestSuite {
     String path;
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfExprToPathsMap.get(surrounder.getClass().getCanonicalName());
-      addTest(new SurroundWithExprTest((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
+      addTest(new SurroundWithTestExpr((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
     }
   }
 

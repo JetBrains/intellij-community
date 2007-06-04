@@ -41,7 +41,7 @@ public class SurroundStatementsTester extends TestSuite {
     String path;
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfStmtToPathsMap.get(surrounder.getClass());
-      addTest(new SurroundWithStmtsTest((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
+      addTest(new SurroundWithTestStmts((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
     }
   }
 
