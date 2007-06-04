@@ -83,7 +83,8 @@ public interface AnnotationHolder {
   Annotation createWarningAnnotation(TextRange range, @Nullable String message);
 
   /**
-    * Creates an info annotation with the specified message over the specified PSI element.
+    * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
+    * message over the specified PSI element.
     *
     * @param elt     the element over which the annotation is created.
     * @param message the info message.
@@ -92,7 +93,8 @@ public interface AnnotationHolder {
    Annotation createInformationAnnotation(PsiElement elt, @Nullable String message);
 
    /**
-    * Creates an info annotation with the specified message over the specified AST node.
+    * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
+    * message over the specified AST node.
     *
     * @param node    the node over which the annotation is created.
     * @param message the info message.
@@ -101,7 +103,8 @@ public interface AnnotationHolder {
    Annotation createInformationAnnotation(ASTNode node, @Nullable String message);
 
    /**
-    * Creates an info annotation with the specified message over the specified text range.
+    * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
+    * message over the specified text range.
     *
     * @param range   the text range over which the annotation is created.
     * @param message the info message.
@@ -111,7 +114,8 @@ public interface AnnotationHolder {
 
 
   /**
-   * Creates an information annotation with the specified message over the specified PSI element.
+   * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
+   * "Next Error/Warning" navigation) with the specified message over the specified PSI element.
    *
    * @param elt     the element over which the annotation is created.
    * @param message the information message.
@@ -120,7 +124,8 @@ public interface AnnotationHolder {
   Annotation createInfoAnnotation(PsiElement elt, @Nullable String message);
 
   /**
-   * Creates an information annotation with the specified message over the specified AST node.
+   * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
+   * "Next Error/Warning" navigation) with the specified message over the specified AST node.
    *
    * @param node    the node over which the annotation is created.
    * @param message the information message.
@@ -129,7 +134,8 @@ public interface AnnotationHolder {
   Annotation createInfoAnnotation(ASTNode node, @Nullable String message);
 
   /**
-   * Creates an information annotation with the specified message over the specified text range.
+   * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
+   * "Next Error/Warning" navigation)with the specified message over the specified text range.
    *
    * @param range   the text range over which the annotation is created.
    * @param message the information message.
