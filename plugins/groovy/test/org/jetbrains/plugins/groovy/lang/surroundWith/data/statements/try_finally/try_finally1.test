@@ -1,0 +1,6 @@
+println "foo"
+-----
+try {
+  println "foo"
+} finally {
+}
