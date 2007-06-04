@@ -1,0 +1,7 @@
+a - b
+-----
+try {
+  a - b
+} catch () {
+} finally {
+}
