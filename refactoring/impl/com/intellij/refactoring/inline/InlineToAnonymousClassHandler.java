@@ -59,11 +59,22 @@ public class InlineToAnonymousClassHandler {
       return RefactoringBundle.message("inline.to.anonymous.no.inheritors");
     }
 
-    final PsiClass[] interfaces = psiClass.getInterfaces();
+    PsiClassType[] classTypes = psiClass.getExtendsListTypes();
+    for(PsiClassType classType: classTypes) {
+      PsiClass superClass = classType.resolve();
+      if (superClass == null) {
+        return "Class cannot be inlined because its superclass cannot be resolved";
+      }
+    }
+
+    final PsiClassType[] interfaces = psiClass.getImplementsListTypes();
     if (interfaces.length > 1) {
       return RefactoringBundle.message("inline.to.anonymous.no.multiple.interfaces");
     }
     if (interfaces.length == 1) {
+      if (interfaces [0].resolve() == null) {
+        return "Class cannot be inlined because an interface implemented by it cannot be resolved";
+      }
       final PsiClass superClass = psiClass.getSuperClass();
       if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         return RefactoringBundle.message("inline.to.anonymous.no.superclass.and.interface");

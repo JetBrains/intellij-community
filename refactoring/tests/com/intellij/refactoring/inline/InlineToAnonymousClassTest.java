@@ -195,6 +195,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because its constructor contains 'return' statements");
   }
 
+  public void testNoInlineUnresolvedSuperclass() throws Exception {
+    doTestNoInline("Class cannot be inlined because its superclass cannot be resolved");
+  }
+
+  public void testNoInlineUnresolvedInterface() throws Exception {
+    doTestNoInline("Class cannot be inlined because an interface implemented by it cannot be resolved");
+  }
+
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
