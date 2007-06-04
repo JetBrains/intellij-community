@@ -128,4 +128,8 @@ public class MockProjectStore implements IProjectStore {
   public String getPresentableUrl() {
     throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
   }
+
+  public boolean reload() {
+    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+  }
 }

@@ -278,7 +278,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     if (file.getFileType() == StdFileTypes.IDEA_MODULE ||
         file.getFileType() == StdFileTypes.IDEA_PROJECT ||
         file.getFileType() == StdFileTypes.IDEA_WORKSPACE) {
-      myProjectManager.saveChangedProjectFile(file);
+      myProjectManager.saveChangedProjectFile(file, myProject);
     }
   }
 

@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
@@ -25,12 +23,17 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   @NonNls private static final String APP_CONFIG_STORAGE_MACRO = "APP_CONFIG";
   @NonNls private static final String OPTIONS_MACRO = "OPTIONS";
   private DefaultsStateStorage myDefaultsStateStorage;
+  @NonNls private static final String ROOT_ELEMENT_NAME = "application";
 
 
   @SuppressWarnings({"UnusedDeclaration"}) //picocontainer
   public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
     myApplication = application;
-    myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application") {
+    myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
+      protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
+        return new XmlElementStorage.StorageData(ROOT_ELEMENT_NAME);
+      }
+
       protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) {
         final String fileName;
 
@@ -53,10 +56,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   public void load() throws IOException {
     myApplication.initComponents();
-  }
-
-  public Collection<String> getUsedMacros() {
-    return Collections.EMPTY_SET;
   }
 
   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {

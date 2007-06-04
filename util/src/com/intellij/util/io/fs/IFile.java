@@ -24,6 +24,7 @@ public interface IFile {
   String getPath();
 
   String getCanonicalPath();
+  String getAbsolutePath();
 
   long length();
 
@@ -34,4 +35,5 @@ public interface IFile {
   IFile[] listFiles();
 
   void mkDir();
+
 }

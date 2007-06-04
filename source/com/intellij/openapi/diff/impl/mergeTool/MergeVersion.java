@@ -7,7 +7,6 @@ import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.util.DocumentUtil;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -77,7 +76,7 @@ public interface MergeVersion {
           if (file != null) {
             final FileType fileType = file.getFileType();
             if (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.IDEA_PROJECT || fileType == StdFileTypes.IDEA_WORKSPACE) {
-              ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file);
+              ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
             }
           }
           

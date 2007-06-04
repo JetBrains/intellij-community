@@ -6,15 +6,22 @@ import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
 class ProjectStateStorageManager extends StateStorageManagerImpl {
   private Project myProject;
+  @NonNls private static final String ROOT_TAG_NAME = "project";
 
   public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {
-    super(macroSubstitutor, "project");
+    super(macroSubstitutor, ROOT_TAG_NAME, project, project.getPicoContainer());
     myProject = project;
+  }
+
+  protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
+    if (storageSpec.equals(ProjectStoreImpl.PROJECT_FILE_STORAGE)) return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
+    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME);
   }
 
   protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) throws

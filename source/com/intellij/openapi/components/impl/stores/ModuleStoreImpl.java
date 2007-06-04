@@ -6,15 +6,14 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,13 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
-  @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls private static final String MODULE_FILE_MACRO = "MODULE_FILE";
 
   private ModuleImpl myModule;
@@ -42,103 +41,105 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     myModule = module;
   }
 
-  @Override
-  protected void writeRootElement(final Element rootElement) {
-    rootElement.setAttributes(Collections.EMPTY_LIST);
-    
-    myModule.myOptions.put(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
-
-    Set<String> options = myModule.myOptions.keySet();
-    for (String option : options) {
-      rootElement.setAttribute(option, myModule.myOptions.get(option));
-    }
-  }
-
   protected XmlElementStorage getMainStorage() {
     final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
     assert storage != null;
     return storage;
   }
 
-  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
-    return new ModuleSaveSession();
-  }
 
-  private class ModuleSaveSession extends BaseSaveSession {
-    public ModuleSaveSession() throws StateStorage.StateStorageException {
-    }
-
-    public SaveSession save() throws IOException {
-      final ProjectConversionHelper conversionHelper = getConversionHelper();
-      if (conversionHelper != null) {
-        try {
-          final Element root = getMainStorage().getRootElement();
-          if (root != null) {
-            conversionHelper.convertModuleRootToOldFormat(root);
-          }
-        }
-        catch (StateStorage.StateStorageException e) {
-        }
-      }
-
-      super.save();
-
-      if (conversionHelper != null) {
-        try {
-          final Element root = getMainStorage().getRootElement();
-          if (root != null) {
-            conversionHelper.convertModuleRootToNewFormat(root, myModule.getName());
-          }
-        }
-        catch (StateStorage.StateStorageException e) {
-        }
-      }
-      return this;
-    }
-  }
 
   @Override
-  public void load() throws IOException {
+  public void load() throws IOException, StateStorage.StateStorageException {
     super.load();
 
-    try {
-      final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-      assert stateStorage instanceof FileBasedStorage;
-      FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
+    final ModuleStoreImpl.ModuleFileData storageData = getMainStorageData();
+    final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
+    final ModuleType moduleType = moduleTypeId == null ? ModuleType.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
+    myModule.setModuleType(moduleType);
+  }
 
-      Document doc = fileBasedStorage.getDocument();
-      final Element element = doc.getRootElement();
 
-      final ProjectConversionHelper conversionHelper = getConversionHelper();
-      if (conversionHelper != null) {
-        conversionHelper.convertModuleRootToNewFormat(element, myModule.getName());
-      }
+  public ModuleFileData getMainStorageData() throws StateStorage.StateStorageException {
+    return (ModuleFileData)super.getMainStorageData();
+  }
 
-      final List attributes = element.getAttributes();
-      for (Object attribute : attributes) {
-        Attribute attr = (Attribute)attribute;
-        final String optionName = attr.getName();
-        final String optionValue = attr.getValue();
-        myModule.setOption(optionName, optionValue);
+  static class ModuleFileData extends BaseStorageData {
+    private final Map<String, String> myOptions;
+    private final Module myModule;
 
-        if (optionName.equals(RELATIVE_PATHS_OPTION) && Boolean.parseBoolean(optionValue)) {
-          setSavePathsRelative(true);
-        }
-      }
-
-      final String moduleTypeId = myModule.getOptionValue(ModuleImpl.ELEMENT_TYPE);
-      final ModuleType moduleType = moduleTypeId == null ? ModuleType.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
-      myModule.setModuleType(moduleType);
+    public ModuleFileData(final String rootElementName, Module module) {
+      super(rootElementName);
+      myModule = module;
+      myOptions = new TreeMap<String, String>();
     }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-      throw new IOException(e.getMessage());
+
+    protected ModuleFileData(final ModuleFileData storageData) {
+      super(storageData);
+
+      myOptions = new TreeMap<String, String>(storageData.myOptions);
+      myModule = storageData.myModule;
+    }
+
+    protected void load(@NotNull final Element rootElement) throws IOException {
+      super.load(rootElement);
+
+      final List attributes = rootElement.getAttributes();
+      for (Object attribute : attributes) {
+        final Attribute attr = (Attribute)attribute;
+        myOptions.put(attr.getName(), attr.getValue());
+      }
+    }
+
+    @NotNull
+    protected Element save() {
+      final Element root = super.save();
+
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
+      if (conversionHelper != null) {
+        conversionHelper.convertModuleRootToOldFormat(root);
+      }
+
+      myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
+      Set<String> options = myOptions.keySet();
+      for (String option : options) {
+        root.setAttribute(option, myOptions.get(option));
+      }
+
+      //need be last for compat reasons
+      root.removeAttribute(VERSION_OPTION);
+      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
+
+      return root;
+    }
+
+    public XmlElementStorage.StorageData clone() {
+      return new ModuleFileData(this);
+    }
+
+    protected int computeHash() {
+      return super.computeHash()*31 + myOptions.hashCode();
+    }
+
+    public void setOption(final String optionName, final String optionValue) {
+      clearHash();
+      myOptions.put(optionName, optionValue);
+    }
+
+    public void clearOption(final String optionName) {
+      clearHash();
+      myOptions.remove(optionName);
+    }
+
+    public String getOptionValue(final String optionName) {
+      return myOptions.get(optionName);
     }
   }
 
+
   @Nullable
-  private ProjectConversionHelper getConversionHelper() {
-    return (ProjectConversionHelper)myModule.getProject().getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
+  private static ProjectConversionHelper getConversionHelper(Module module) {
+    return (ProjectConversionHelper)module.getProject().getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
   public void setModuleFilePath(final String filePath) {
@@ -149,8 +150,9 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
         LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       }
     });
-    getStateStorageManager().clearStateStorage(DEFAULT_STATE_STORAGE);
-    getStateStorageManager().addMacro(MODULE_FILE_MACRO, path);
+    final StateStorageManager storageManager = getStateStorageManager();
+    storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
+    storageManager.addMacro(MODULE_FILE_MACRO, path);
   }
 
   @Nullable
@@ -174,23 +176,43 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     return storage.getFileName();
   }
 
+  public void setOption(final String optionName, final String optionValue) {
+    try {
+      getMainStorageData().setOption(optionName,  optionValue);
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+    }
+  }
+
+  public void clearOption(final String optionName) {
+    try {
+      getMainStorageData().clearOption(optionName);
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+    }
+  }
+
+  public String getOptionValue(final String optionName) {
+    try {
+      return getMainStorageData().getOptionValue(optionName);
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   @Override
   protected boolean optimizeTestLoading() {
     return ((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
-  // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),
-  // we have to update both storages whenever the value of the option changes
-  public void setSavePathsRelative(boolean value) {
-    super.setSavePathsRelative(value);
-    myModule.setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
-  }
-
   public synchronized void initStore() {
   }
 
-
   protected StateStorageManager createStateStorageManager() {
-    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor());
+    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);
   }
 }

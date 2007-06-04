@@ -19,4 +19,10 @@ public interface IModuleStore extends IComponentStore {
   String getModuleFileName();
 
   void setSavePathsRelative(final boolean b);
+
+  void setOption(final String optionName, final String optionValue);
+
+  void clearOption(final String optionName);
+
+  String getOptionValue(final String optionName);
 }

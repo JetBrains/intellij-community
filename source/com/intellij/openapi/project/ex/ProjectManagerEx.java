@@ -20,6 +20,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
+  @Nullable
   public abstract Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException;
 
   public abstract boolean openProject(Project project);
@@ -28,7 +29,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract boolean canClose(Project project);
 
-  public abstract void saveChangedProjectFile(VirtualFile file);
+  public abstract void saveChangedProjectFile(VirtualFile file, final Project project);
 
   public abstract boolean isFileSavedToBeReloaded(VirtualFile file);
 

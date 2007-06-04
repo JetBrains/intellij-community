@@ -23,7 +23,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
   private Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
   private List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
-  private MySaveSession mySession;
+  private SaveSessionImpl mySession;
 
 
   protected abstract StateStorageManager getStateStorageManager();
@@ -83,8 +83,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
-    return new MySaveSession();
+  protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
+    return new SaveSessionImpl();
   }
 
   public void finishSave(final SaveSession saveSession) {
@@ -310,10 +310,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  protected class MySaveSession implements SaveSession {
-    private StateStorageManager.SaveSession mySaveSession;
+  protected class SaveSessionImpl implements SaveSession {
+    protected StateStorageManager.SaveSession mySaveSession;
 
-    public MySaveSession() {
+    public SaveSessionImpl() {
       ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     }
 

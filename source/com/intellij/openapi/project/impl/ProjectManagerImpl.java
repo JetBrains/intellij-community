@@ -2,13 +2,15 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
+import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -24,12 +26,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -59,14 +62,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private Project myCurrentTestProject = null;
 
-  /**
-   * More then 0 while openProject is being executed: [openProject..runStartupActivities...runPostStartupActivitites].
-   * This flag is required by SaveAndSynchHandler. We do not save
-   * anything while project is being opened.
-   */
-  private int myCountOfProjectsBeingOpen;
-
-  private boolean myIsInRefresh;
   private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
@@ -84,7 +79,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     addProjectManagerListener(
       new ProjectManagerListener() {
 
-        public void projectOpened(Project project) {
+        public void projectOpened(final Project project) {
+          MessageBus messageBus = project.getMessageBus();
+          MessageBusConnection connection = messageBus.connect(project);
+          connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+            public void storageFileChanged(final VirtualFileEvent event) {
+              saveChangedProjectFile(event.getFile(), project);
+            }
+          });
+
+
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             listener.projectOpened(project);
@@ -167,17 +171,27 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       LOG.info(e);
       Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
     }
+    catch (StateStorage.StateStorageException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+    }
 
     project.loadProjectComponents();
     return project;
   }
 
+  @Nullable
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
-    return loadProject(filePath, false);
+    try {
+      return loadProject(filePath, false);
+    }
+    catch (StateStorage.StateStorageException e) {
+      throw new IOException(e.getMessage());
+    }
   }
 
   @Nullable
-  private Project loadProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException {
+  private Project loadProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
 
     ProjectConversionHelper conversionHelper = null;
@@ -242,6 +256,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       catch (IOException e) {
         LOG.error(e);
       }
+      catch (StateStorage.StateStorageException e) {
+        LOG.error(e);
+      }
     }
     return myDefaultProject;
   }
@@ -265,18 +282,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
 
 
-    myCountOfProjectsBeingOpen++;
     myOpenProjects.add(project);
     fireProjectOpened(project);
 
+    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
+        startupManager.runStartupActivities();
       }
     }, ProjectBundle.message("project.load.progress"), false, project);
-    ((StartupManagerImpl)StartupManager.getInstance(project)).runPostStartupActivities();
+    startupManager.runPostStartupActivities();
 
-    myCountOfProjectsBeingOpen--;
     return true;
   }
   public boolean openProjectNoFire(final Project project) {
@@ -284,18 +301,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
 
 
-    myCountOfProjectsBeingOpen++;
     myOpenProjects.add(project);
     //fireProjectOpened(project);
 
+    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
+        startupManager.runStartupActivities();
       }
     }, ProjectBundle.message("project.load.progress"), false, project);
-    ((StartupManagerImpl)StartupManager.getInstance(project)).runPostStartupActivities();
+    startupManager.runPostStartupActivities();
 
-    myCountOfProjectsBeingOpen--;
     return true;
   }
 
@@ -305,30 +322,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Nullable
   public Project loadAndOpenProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException {
-    Project project = loadProject(filePath, convert);
-    if (project == null || !openProject(project)) {
-      return null;
+    try {
+      Project project = loadProject(filePath, convert);
+      if (project == null || !openProject(project)) {
+        return null;
+      }
+      return project;
     }
-    return project;
+    catch (StateStorage.StateStorageException e) {
+      throw new IOException(e.getMessage());
+    }
   }
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {
     virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
       public void beforeRefreshStart(boolean asynchonous) {
-        myIsInRefresh = true;
       }
 
       public void afterRefreshFinish(boolean asynchonous) {
-        myIsInRefresh = false;
         askToReloadProjectIfConfigFilesChangedExternally();
-      }
-    });
-
-    virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
-      public void contentsChanged(VirtualFileEvent event) {
-        if (event.isFromRefresh() && myIsInRefresh) { // external change
-          saveChangedProjectFile(event.getFile());
-        }
       }
     });
   }
@@ -341,46 +353,57 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           List<Project> projectsToReload = new ArrayList<Project>();
 
           for (Project project : projects) {
-            if (project.isDisposed()) continue;  //already disposed
-            List<VirtualFile> causes = myChangedProjectFiles.get(project);
-            Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
-            for (VirtualFile cause : causes) {
-              if (!cause.isValid()) liveCauses.remove(cause);
+            if (shouldReloadProject(project)) {
+              projectsToReload.add(project);
             }
+          }
 
-            if (!liveCauses.isEmpty()) {
-              String message;
-              if (liveCauses.size() == 1) {
-                message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
-              }
-              else {
-                StringBuilder filesBuilder = new StringBuilder();
-                boolean first = true;
-                for (VirtualFile cause : liveCauses) {
-                  if (!first) filesBuilder.append("\n");
-                  first = false;
-                  filesBuilder.append(cause.getPresentableUrl());
-                }
-                message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
-              }
-
-              if (Messages.showYesNoDialog(project,
-                                           message,
-                                           ProjectBundle.message("project.reload.external.change.title"),
-                                           Messages.getQuestionIcon()) == 0) {
-                projectsToReload.add(project);
-              }
-            }
-
-            for (final Project projectToReload : projectsToReload) {
-              reloadProject(projectToReload);
-            }
+          for (final Project projectToReload : projectsToReload) {
+            reloadProject(projectToReload);
           }
 
           myChangedProjectFiles.clear();
         }
       }
     }, ModalityState.NON_MODAL);
+  }
+
+  private boolean shouldReloadProject(final Project project) {
+    if (project.isDisposed()) return false;
+    List<VirtualFile> causes = myChangedProjectFiles.get(project);
+    Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
+    for (VirtualFile cause : causes) {
+      if (!cause.isValid()) liveCauses.remove(cause);
+    }
+
+    if (liveCauses.isEmpty()) return false;
+
+
+    if (((ProjectImpl)project).getStateStore().reload()) return false;
+
+    String message;
+    if (liveCauses.size() == 1) {
+      message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
+    }
+    else {
+      StringBuilder filesBuilder = new StringBuilder();
+      boolean first = true;
+      for (VirtualFile cause : liveCauses) {
+        if (!first) filesBuilder.append("\n");
+        first = false;
+        filesBuilder.append(cause.getPresentableUrl());
+      }
+      message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
+    }
+
+    if (Messages.showYesNoDialog(project,
+                                 message,
+                                 ProjectBundle.message("project.reload.external.change.title"),
+                                 Messages.getQuestionIcon()) != 0) {
+      return false;
+    }
+
+    return true;
   }
 
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
@@ -407,17 +430,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myCurrentTestProject;
   }
 
-  public void saveChangedProjectFile(final VirtualFile file) {
-    final Project[] projects = getOpenProjects();
-    for (Project project : projects) {
-      final List<VirtualFile> storageFiles = ((ProjectImpl)project).getStateStore().getAllStorageFiles(true);
-      for (VirtualFile storageFile : storageFiles) {
-        if (storageFile.equals(file)) {
-          copyToTemp(file);
-          registerProjectToReload(project, file);
-        }
-      }
-    }
+  public void saveChangedProjectFile(final VirtualFile file, final Project project) {
+    copyToTemp(file);
+    registerProjectToReload(project, file);
   }
 
 
@@ -473,14 +488,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final Project[] project = new Project[]{p};
 
     ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Application application = ApplicationManager.getApplication();
+
+    application.invokeLater(new Runnable() {
       public void run() {
         LOG.info("Reloading project.");
-        final String path = ((ProjectImpl)project[0]).getStateStore().getProjectFilePath();
-        final List<VirtualFile> original = ((ProjectImpl)project[0]).getStateStore().getAllStorageFiles(true);
+        ProjectImpl projectImpl = (ProjectImpl)project[0];
+        IProjectStore projectStore = projectImpl.getStateStore();
+        final String path = projectStore.getProjectFilePath();
+        final List<VirtualFile> original = projectStore.getAllStorageFiles(true);
 
         if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          application.runWriteAction(new Runnable() {
             public void run() {
               for (final VirtualFile aOriginal : original) {
                 restoreCopy(aOriginal);
@@ -513,7 +532,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     fireProjectClosing(project);
 
-    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
+    final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
+    shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
       project.save();
@@ -525,7 +545,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       if (!application.isUnitTestMode()) application.saveSettings();
     }
     finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+      shutDownTracker.unregisterStopperThread(Thread.currentThread());
     }
 
     return true;

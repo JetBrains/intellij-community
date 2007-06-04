@@ -1,6 +1,8 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,6 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 public interface StateStorage {
+  Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.TO_PARENT);
+
   @Nullable
   <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
   boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException;
@@ -47,5 +51,9 @@ public interface StateStorage {
     public StateStorageException(final Throwable cause) {
       super(cause);
     }
+  }
+
+  interface Listener {
+    void storageFileChanged(final VirtualFileEvent event);
   }
 }

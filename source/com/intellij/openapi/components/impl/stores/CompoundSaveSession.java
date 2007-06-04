@@ -54,4 +54,8 @@ public class CompoundSaveSession {
       stateStorage.finishSave(saveSession);
     }
   }
+
+  public StateStorage.SaveSession getSaveSession(final StateStorage storage) {
+    return mySaveSessions.get(storage);
+  }
 }

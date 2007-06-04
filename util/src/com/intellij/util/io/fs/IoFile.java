@@ -64,6 +64,10 @@ class IoFile implements IFile {
     }
   }
 
+  public String getAbsolutePath() {
+    return myFile.getAbsolutePath();
+  }
+
   public long length() {
     return myFile.length();
   }

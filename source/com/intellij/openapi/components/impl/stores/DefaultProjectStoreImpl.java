@@ -51,7 +51,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     final Document document = _d;
 
-    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor()) {
+    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), getComponentManager(), "defaultProject") {
       @Nullable
       protected Document loadDocument() throws StateStorage.StateStorageException {
         return document;
@@ -61,13 +61,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return Collections.emptyList();
       }
 
-      @Nullable
-      Element getRootElement() throws StateStorageException {
-        if (myElement == null) return null;
-        return super.getRootElement();
-      }
-
-      protected SaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
+      protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
         return new DefaultSaveSession(externalizationSession);
       }
 
@@ -138,7 +132,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
-  public void load() throws IOException {
+  public void load() throws IOException, StateStorage.StateStorageException {
     if (myElement == null) return;
     super.load();
   }
@@ -177,6 +171,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     public Set<String> getUsedMacros() throws StateStorage.StateStorageException {
       return Collections.EMPTY_SET;
+    }
+
+    public StateStorage.SaveSession getSaveSession(final String storage) {
+      return saveSession;
     }
   }
 }

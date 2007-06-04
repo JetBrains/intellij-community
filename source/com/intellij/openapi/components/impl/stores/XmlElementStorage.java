@@ -1,10 +1,11 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
@@ -15,9 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.util.*;
 
-abstract class XmlElementStorage implements StateStorage {
+abstract class XmlElementStorage implements StateStorage, Disposable {
   @NonNls private static final Set<String> OBSOLETE_COMPONENT_NAMES = new HashSet<String>(Arrays.asList(
     "Palette"
   ));
@@ -28,12 +30,18 @@ abstract class XmlElementStorage implements StateStorage {
   @NonNls private static final String NAME = ATTR_NAME;
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  private Document myDocument;
+  private @NotNull final String myRootElementName;
   private Set<String> myUsedMacros;
   private Object mySession;
+  private StorageData myLoadedData;
 
-  protected XmlElementStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+  protected XmlElementStorage(
+    @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
+    @NotNull Disposable parentDisposable,
+    @NotNull String rootElementName) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
+    myRootElementName = rootElementName;
+    Disposer.register(parentDisposable, this);
   }
 
   @Nullable
@@ -41,37 +49,19 @@ abstract class XmlElementStorage implements StateStorage {
 
   @Nullable
   private synchronized Element getState(final String componentName) throws StateStorage.StateStorageException {
-    final Element rootElement = getRootElement();
-    if (rootElement == null) return null;
+    final StorageData storageData = getStorageData();
+    final Element state = storageData.getState(componentName);
 
-    final Element[] elements = JDOMUtil.getElements(rootElement);
-    for (Element element : elements) {
-      if (isComponentTag(componentName, element)) {
-        element.removeAttribute(NAME);
-        element.getParent().removeContent(element);
-        return element;
-      }
+    if (state != null) {
+      storageData.removeState(componentName);
     }
 
-    return null;
-  }
-
-  private static boolean isComponentTag(final String componentName, final Element element) {
-    return element.getName().equals(COMPONENT) && Comparing.equal(element.getAttributeValue(NAME), componentName);
+    return state;
   }
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
-    final Element rootElement = getRootElement();
-    if (rootElement == null) return false;
-
-    final Element[] elements = JDOMUtil.getElements(rootElement);
-    for (Element element : elements) {
-      if (isComponentTag(componentName, element)) {
-        return true;
-      }
-    }
-
-    return false;
+    final StorageData storageData = getStorageData();
+    return storageData.getState(componentName) != null;
   }
 
   @Nullable
@@ -80,87 +70,45 @@ abstract class XmlElementStorage implements StateStorage {
     return DefaultStateSerializer.deserializeState(element, stateClass, mergeInto);
   }
 
+  @NotNull
+  protected StorageData getStorageData() throws StateStorageException {
+    if (myLoadedData != null) return myLoadedData;
 
-   protected void sort() throws StateStorage.StateStorageException {
-    final Element node = getRootElement();
-    if (node == null) return;
+    myLoadedData = createStorageData();
 
-    final Element[] elements = JDOMUtil.getElements(node);
+    final Document document = loadDocument();
 
-    for (Element element : elements) {
-      element.detach();
-    }
-
-    Arrays.sort(elements, new Comparator<Element>() {
-      public int compare(Element e1, Element e2) {
-        int r = e1.getName().toLowerCase().compareTo(e2.getName().toLowerCase());
-        if (r == 0) {
-          final String name1 = e1.getAttributeValue(ATTR_NAME);
-          final String name2 = e2.getAttributeValue(ATTR_NAME);
-          if (name1 != null && name2 != null) {
-            r = name1.compareTo(name2);
-          }
-        }
-        return r;
-      }
-    });
-
-
-    for (Element e : elements) {
-      node.addContent(e);
-    }
-  }
-
-  @Nullable
-  Element getRootElement() throws StateStorage.StateStorageException {
-    final Document document = getDocument();
-    return document != null ? document.getRootElement() : null;
-  }
-
-  public final Document getDocument() throws StateStorage.StateStorageException {
-    if (myDocument == null) {
-      myDocument = loadDocument();
-
-      assert myDocument != null;
+    if (document != null) {
+      final Element rootElement = document.getRootElement();
 
       if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.expandPaths(myDocument.getRootElement());
+        myPathMacroSubstitutor.expandPaths(rootElement);
       }
 
-      final Element[] elements = JDOMUtil.getElements(myDocument.getRootElement());
-      for (Element element : elements) {
-        if (element.getName().equals(COMPONENT) && element.getAttributes().size() == 1 && element.getAttribute(ATTR_NAME) != null && element.getChildren().isEmpty()) {
-          element.getParent().removeContent(element);
-          continue;
-        }
-
-        for (String componentName : OBSOLETE_COMPONENT_NAMES) {
-          if (isComponentTag(componentName, element)) {
-            element.getParent().removeContent(element);
-          }
-        }
+      try {
+        myLoadedData.load(rootElement);
+      }
+      catch (IOException e) {
+        throw new StateStorageException(e);
       }
     }
 
-    return myDocument;
+    return myLoadedData;
+  }
+
+  protected StorageData createStorageData() {
+    return new StorageData(myRootElementName);
   }
 
   public void setDefaultState(final Element element) {
-    myDocument = new Document(element);
-  }
-
-  protected Document getDocumentToSave() throws StateStorageException {
-    final Document document = (Document)getDocument().clone();
-    if (myPathMacroSubstitutor != null) {
-      myPathMacroSubstitutor.reset();
-      myPathMacroSubstitutor.collapsePaths(document.getRootElement());
-      myUsedMacros = new HashSet<String>(myPathMacroSubstitutor.getUsedMacros());
+    assert myLoadedData == null;
+    myLoadedData = new StorageData(myRootElementName);
+    try {
+      myLoadedData.load(element);
     }
-    else {
-      myUsedMacros = new HashSet<String>();
+    catch (IOException e) {
+      throw new IllegalArgumentException(e);
     }
-
-    return document;
   }
 
   public Set<String> getUsedMacros() {
@@ -170,7 +118,9 @@ abstract class XmlElementStorage implements StateStorage {
   @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
-    final ExternalizationSession session = new MyExternalizationSession();
+    assert myLoadedData != null;
+
+    final ExternalizationSession session = new MyExternalizationSession(myLoadedData.clone());
 
     mySession = session;
     return session;
@@ -185,7 +135,7 @@ abstract class XmlElementStorage implements StateStorage {
     return saveSession;
   }
 
-  protected abstract SaveSession createSaveSession(final MyExternalizationSession externalizationSession);
+  protected abstract MySaveSession createSaveSession(final MyExternalizationSession externalizationSession);
 
   public void finishSave(final SaveSession saveSession) {
     assert mySession == saveSession;
@@ -193,7 +143,11 @@ abstract class XmlElementStorage implements StateStorage {
   }
 
   protected class MyExternalizationSession implements ExternalizationSession {
-    private Set<Element> mySavedElements = new HashSet<Element>();
+    private StorageData myStorageData;
+
+    public MyExternalizationSession(final StorageData storageData) {
+      myStorageData = storageData;
+    }
 
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
       assert mySession == this;
@@ -212,41 +166,16 @@ abstract class XmlElementStorage implements StateStorage {
     private synchronized void setState(final String componentName, final Element element) throws StateStorageException {
       if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) return;
 
-      final Element rootElement = getRootElement();
-      if (rootElement == null) return;
-
-      Element newComponentElement = new Element(COMPONENT);
-      newComponentElement.setAttribute(NAME, componentName);
-
-      final Element[] childElements = JDOMUtil.getElements(element);
-      for (Element childElement : childElements) {
-        childElement.detach();
-        newComponentElement.addContent(childElement);
-      }
-
-      final List attributes = element.getAttributes();
-      for (Object attribute : attributes) {
-        Attribute attr = (Attribute)attribute;
-        newComponentElement.setAttribute(attr.getName(), attr.getValue());
-      }
-
-      final Element[] elements = JDOMUtil.getElements(rootElement);
-      for (Element e : elements) {
-        if (isComponentTag(componentName, e)) {
-          e.detach();
-        }
-      }
-
-      mySavedElements.add(newComponentElement);
-      rootElement.addContent(newComponentElement);
+      myStorageData.setState(componentName, element);
     }
   }
 
   protected abstract class MySaveSession implements SaveSession {
-    private Set<Element> mySavedElements;
+    StorageData myStorageData;
+    private Document myDocumentToSave;
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
-      mySavedElements = externalizationSession.mySavedElements;
+      myStorageData = externalizationSession.myStorageData;
     }
 
     public final boolean needsSave() throws StateStorageException {
@@ -260,26 +189,163 @@ abstract class XmlElementStorage implements StateStorage {
     public final void save() throws StateStorageException {
       assert mySession == this;
 
-      try {
-        if (!needsSave()) return;
-        doSave();
-      }
-      finally {
-        for (Element savedElement : mySavedElements) {
-          savedElement.detach();
-        }
-        mySavedElements.clear();
-      }
+      if (!_needsSave()) return;
+      doSave();
     }
 
     public Set<String> getUsedMacros() throws StateStorageException {
       assert mySession == this;
 
       if (myUsedMacros == null) {
-        getDocumentToSave();
+        if (myPathMacroSubstitutor != null) {
+          myPathMacroSubstitutor.reset();
+          final Map<String, Element> states = myStorageData.myComponentStates;
+
+          for (Element e : states.values()) {
+            myPathMacroSubstitutor.collapsePaths((Element)e.clone());
+          }
+
+          myUsedMacros = new HashSet<String>(myPathMacroSubstitutor.getUsedMacros());
+        }
+        else {
+          myUsedMacros = new HashSet<String>();
+        }
       }
 
       return myUsedMacros;
     }
+
+    protected Document getDocumentToSave() throws StateStorageException {
+      if (myDocumentToSave != null) return myDocumentToSave;
+
+      final Element element = myStorageData.save();
+      myDocumentToSave = new Document(element);
+
+      if (myPathMacroSubstitutor != null) {
+        myPathMacroSubstitutor.reset();
+        myPathMacroSubstitutor.collapsePaths(element);
+      }
+
+      return myDocumentToSave;
+    }
+
+    public StorageData getData() {
+      return myStorageData;
+    }
+  }
+
+  public void dispose() {
+  }
+
+  protected static class StorageData {
+    private final Map<String, Element> myComponentStates;
+    protected final String myRootElementName;
+    private Integer myHash;
+
+    public StorageData(final String rootElementName) {
+      myComponentStates = new TreeMap<String, Element>();
+      myRootElementName = rootElementName;
+    }
+
+    protected StorageData(StorageData storageData) {
+      myRootElementName = storageData.myRootElementName;
+      myComponentStates = new TreeMap<String, Element>(storageData.myComponentStates);
+    }
+
+    protected void load(@NotNull Element rootElement) throws IOException {
+      final Element[] elements = JDOMUtil.getElements(rootElement);
+      for (Element element : elements) {
+        if (element.getName().equals(COMPONENT)) {
+          final String name = element.getAttributeValue(NAME);
+
+          if (name == null) {
+            LOG.error("Broken file");
+            continue;
+          }
+
+          if (OBSOLETE_COMPONENT_NAMES.contains(name)) continue;
+
+          element.detach();
+
+          if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
+            element.removeAttribute(NAME);
+            myComponentStates.put(name, element);
+          }
+        }
+      }
+    }
+
+    @NotNull
+    protected Element save() {
+      Element rootElement = new Element(myRootElementName);
+
+      for (String componentName : myComponentStates.keySet()) {
+        final Element element = myComponentStates.get(componentName);
+
+        element.setName(COMPONENT);
+
+        //componentName should be first!
+
+        
+        final List attributes = new ArrayList(element.getAttributes());
+        for (Object attribute : attributes) {
+          Attribute attr = (Attribute)attribute;
+          element.removeAttribute(attr);
+        }
+
+        element.setAttribute(NAME, componentName);
+
+        for (Object attribute : attributes) {
+          Attribute attr = (Attribute)attribute;
+          element.setAttribute(attr.getName(), attr.getValue());
+        }
+
+        rootElement.addContent((Element)element.clone());
+      }
+
+      return rootElement;
+    }
+
+    @Nullable
+    public Element getState(final String name) {
+      return myComponentStates.get(name);
+    }
+
+    public void removeState(final String componentName) {
+      myComponentStates.remove(componentName);
+      clearHash();
+    }
+
+    public void setState(final String componentName, final Element element) {
+      myComponentStates.put(componentName, element);
+      clearHash();
+    }
+
+    public StorageData clone() {
+      return new StorageData(this);
+    }
+
+    public final int getHash() {
+      if (myHash == null) {
+        myHash = computeHash();
+      }
+      return myHash.intValue();
+    }
+
+    protected int computeHash() {
+      int result = 0;
+
+      for (String name : myComponentStates.keySet()) {
+        result += 31*result + name.hashCode();
+        result += 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
+      }
+
+      return result;
+    }
+
+    protected void clearHash() {
+      myHash = null;
+    }
+
   }
 }

@@ -12,10 +12,16 @@ import org.jetbrains.annotations.NotNull;
 public class Topic<L> {
   private final String myDisplayName;
   private final Class<L> myListenerClass;
+  private final BroadcastDirection myBroadcastDirection;
 
   public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+    this(displayName, listenerClass, BroadcastDirection.TO_CHILDREN);
+  }
+
+  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, final BroadcastDirection broadcastDirection) {
     myDisplayName = displayName;
     myListenerClass = listenerClass;
+    myBroadcastDirection = broadcastDirection;
   }
 
   @NotNull
@@ -35,5 +41,15 @@ public class Topic<L> {
 
   public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<L>(displayName, listenerClass);
+  }
+
+  public BroadcastDirection getBroadcastDirection() {
+    return myBroadcastDirection;
+  }
+
+  public enum BroadcastDirection {
+    TO_CHILDREN,
+    NONE,
+    TO_PARENT
   }
 }

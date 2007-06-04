@@ -1,23 +1,33 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
 import java.util.*;
 
-abstract class StateStorageManagerImpl implements StateStorageManager {
+abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
   private Map<String, String> myMacros = new HashMap<String, String>();
   private Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
   private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private String myRootTagName;
   private Object mySession;
+  private PicoContainer myPicoContainer;
 
-  public StateStorageManagerImpl(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String rootTagName) {
+  public StateStorageManagerImpl(
+    @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
+    final String rootTagName,
+    Disposable parentDisposable,
+    PicoContainer picoContainer) {
+    myPicoContainer = picoContainer;
     myRootTagName = rootTagName;
     myPathMacroSubstitutor = pathMacroSubstitutor;
+    Disposer.register(parentDisposable, this);
   }
 
   public synchronized void addMacro(String macro, String expansion) {
@@ -27,6 +37,11 @@ abstract class StateStorageManagerImpl implements StateStorageManager {
   @Nullable
   public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorage.StateStorageException {
     final String key = getStorageSpecId(storageSpec);
+    return getStateStorage(storageSpec, key);
+  }
+
+  @Nullable
+  private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorage.StateStorageException {
     if (myStorages.get(key) == null) {
       final StateStorage stateStorage = createStateStorage(storageSpec);
       if (stateStorage == null) return null;
@@ -103,21 +118,29 @@ abstract class StateStorageManagerImpl implements StateStorageManager {
       throw new StateStorage.StateStorageException(e);
     }
 
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter);
+    throw new UnsupportedOperationException();
+    //return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this);
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String file) {
-    String expandedFile = expandMacroses(file);
+  private StateStorage createFileStateStorage(@NotNull final String fileSpec) {
+    String expandedFile = expandMacroses(fileSpec);
     if (expandedFile == null) {
-      myStorages.put(file, null);
+      myStorages.put(fileSpec, null);
       return null;
     }
 
-    assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + file;
+    assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + fileSpec;
 
-    return new FileBasedStorage(myPathMacroSubstitutor, expandedFile, myRootTagName);
+    return new FileBasedStorage(myPathMacroSubstitutor, expandedFile, myRootTagName, this, myPicoContainer) {
+      protected StorageData createStorageData() {
+        return StateStorageManagerImpl.this.createStorageData(fileSpec);
+      }
+    };
   }
+
+
+  protected abstract XmlElementStorage.StorageData createStorageData(String storageSpec);
 
   @Nullable
   private String expandMacroses(final String file) {
@@ -231,9 +254,18 @@ abstract class StateStorageManagerImpl implements StateStorageManager {
       return myCompoundSaveSession.getUsedMacros();
     }
 
+    public StateStorage.SaveSession getSaveSession(final String storage) {
+      final StateStorage stateStorage = myStorages.get(storage);
+      assert stateStorage != null;
+      return myCompoundSaveSession.getSaveSession(stateStorage);
+    }
+
     public void finishSave() {
       assert mySession == this;
       myCompoundSaveSession.finishSave();
     }
+  }
+
+  public void dispose() {
   }
 }

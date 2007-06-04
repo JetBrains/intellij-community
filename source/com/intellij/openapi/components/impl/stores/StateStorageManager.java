@@ -44,5 +44,7 @@ public interface StateStorageManager {
     void save() throws StateStorage.StateStorageException;
 
     Set<String> getUsedMacros() throws StateStorage.StateStorageException;
+
+    StateStorage.SaveSession getSaveSession(final String storage);
   }
 }

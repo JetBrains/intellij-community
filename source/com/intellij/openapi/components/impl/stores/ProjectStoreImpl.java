@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -22,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,8 +31,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Attribute;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -59,63 +57,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String NAME_ATTR = "name";
   @NonNls public static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
   @NonNls public static final String ELEMENT_MACRO = "macro";
-  private static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
-  private static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
+  static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
+  static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
-  private Set<String> myTrackingSet = new TreeSet<String>();
   private StorageScheme myScheme = StorageScheme.DEFAULT;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public ProjectStoreImpl(final ProjectEx project) {
     super(project);
     myProject = project;
-  }
-
-  private void writeMacros(final Collection<String> usedMacros) throws StateStorage.StateStorageException {
-    final StateStorage defaultStateStorage = getStateStorageManager().getFileStateStorage(ProjectStoreImpl.DEFAULT_STATE_STORAGE);
-    final Element element = ((XmlElementStorage)defaultStateStorage).getRootElement();
-
-    if (element != null) {
-      final PathMacros pathMacros = PathMacros.getInstance();
-
-      for (Iterator<String> i = usedMacros.iterator(); i.hasNext();) {
-        String macro = i.next();
-
-        final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
-        for (String systemMacroName : systemMacroNames) {
-          if (macro.equals(systemMacroName) || macro.indexOf("$" + systemMacroName + "$") >= 0) {
-            i.remove();
-          }
-        }
-      }
-
-      element.removeChildren(USED_MACROS_ELEMENT_NAME);
-
-      if (!usedMacros.isEmpty()) {
-
-        Element usedMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
-
-        for (String usedMacro : usedMacros) {
-          Element macroElement = new Element(ELEMENT_MACRO);
-
-          macroElement.setAttribute(NAME_ATTR, usedMacro);
-
-          usedMacrosElement.addContent(macroElement);
-        }
-
-        element.addContent(usedMacrosElement);
-      }
-    }
-  }
-
-  private void writeWsVersion() throws StateStorage.StateStorageException {
-    final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
-
-    if (wsStorage == null) return;
-    final Element rootElement = wsStorage.getRootElement();
-    if (rootElement == null) return;
-
-    writeRootElement(rootElement);
   }
 
   private static String[] readUsedMacros(Element root) {
@@ -137,13 +87,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   public boolean checkVersion() {
     int version = getOriginalVersion();
+    final ApplicationNamesInfo appNamesInfo = ApplicationNamesInfo.getInstance();
     if (version >= 0 && version < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
       String name = projectFile.getNameWithoutExtension();
 
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             appNamesInfo.getProductName(),
                                              name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
 
@@ -193,7 +144,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     if (version > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName());
+        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
 
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
     }
@@ -212,20 +163,22 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       final IFile dir_store =
         iFile.isDirectory() ? iFile.getChild(DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(DIRECTORY_STORE_FOLDER);
 
+      final StateStorageManager stateStorageManager = getStateStorageManager();
       if (dir_store.exists()) {
         myScheme = StorageScheme.DIRECTORY_BASED;
-        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, dir_store.getChild("misc.xml").getPath());
-        getStateStorageManager().addMacro(WS_FILE_MACRO, dir_store.getChild("workspace.xml").getPath());
-        getStateStorageManager().addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
+
+        stateStorageManager.addMacro(PROJECT_FILE_MACRO, dir_store.getChild("misc.xml").getPath());
+        stateStorageManager.addMacro(WS_FILE_MACRO, dir_store.getChild("workspace.xml").getPath());
+        stateStorageManager.addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
       }
       else {
         myScheme = StorageScheme.DEFAULT;
-        getStateStorageManager().addMacro(PROJECT_FILE_MACRO, filePath);
+        stateStorageManager.addMacro(PROJECT_FILE_MACRO, filePath);
 
         if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
           String workspacePath =
             filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
-          getStateStorageManager().addMacro(WS_FILE_MACRO, workspacePath);
+          stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
         }
       }
     }
@@ -290,74 +243,26 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return projectFile != null ? projectFile.getPresentableUrl() : null;
   }
 
+  public boolean reload() {
+    System.out.println("***** reloading: " + myProject);
+    return false;
+  }
 
-  public void loadProject() throws IOException, JDOMException, InvalidDataException {
-    final boolean macrosOk = checkMacros(getDefinedMacros());
-    if (!macrosOk) {
-      throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
-    }
 
+  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     load();
     myProject.init();
   }
 
-  public void load() throws IOException {
-    super.load();
-    try {
-      final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-      if (stateStorage instanceof XmlElementStorage) {
-        XmlElementStorage xmlElementStorage = (XmlElementStorage)stateStorage;
-        Document doc = xmlElementStorage.getDocument();
-        if (doc != null) {
-          final Element element = doc.getRootElement();
-          final List attributes = element.getAttributes();
-          for (Object attribute : attributes) {
-            Attribute attr = (Attribute)attribute;
-            final String optionName = attr.getName();
-            final @NonNls String optionValue = attr.getValue();
-
-            if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
-              setSavePathsRelative(true);
-            }
-          }
-        }
-      }
-
-      ProjectConversionHelper conversionHelper = getConversionHelper();
-      if (conversionHelper != null) {
-        final StateStorage workspaceStorage = getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
-        if (workspaceStorage instanceof XmlElementStorage) {
-          final XmlElementStorage xmlElementStorage = (XmlElementStorage)workspaceStorage;
-          final Element root = xmlElementStorage.getRootElement();
-          if (root != null) {
-            conversionHelper.convertWorkspaceRootToNewFormat(root);
-          }
-        }
-      }
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.info(e);
-      throw new IOException(e.getMessage());
-    }
-  }
-
   @Nullable
-  private ProjectConversionHelper getConversionHelper() {
-    return (ProjectConversionHelper)myProject.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
+  private static ProjectConversionHelper getConversionHelper(Project project) {
+    return (ProjectConversionHelper)project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
-  private boolean checkMacros(Set<String> definedMacros) throws IOException, JDOMException {
-    String projectFilePath = getProjectFilePath();
-
-    final IFile iFile = FileSystem.FILE_SYSTEM.createFile(projectFilePath);
-
-    if (!iFile.exists()) return true;
-
-    Document document = JDOMUtil.loadDocument(iFile);
-    Element root = document.getRootElement();
+  private static boolean checkMacros(final Project project, Element root) throws IOException {
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
 
-    usedMacros.removeAll(definedMacros);
+    usedMacros.removeAll(getDefinedMacros());
 
     // try to lookup values in System properties
     @NonNls final String pathMacroSystemPrefix = "path.macro.";
@@ -379,7 +284,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     // there are undefined macros, need to define them before loading components
-    return ProjectManagerImpl.showMacrosConfigurationDialog(myProject, usedMacros);
+    return ProjectManagerImpl.showMacrosConfigurationDialog(project, usedMacros);
   }
 
   private static Set<String> getDefinedMacros() {
@@ -440,11 +345,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return storage.getFilePath();
   }
 
-  public Set<String> getMacroTrackingSet() {
-    return myTrackingSet;
-  }
-
-
   protected XmlElementStorage getMainStorage() {
     final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
     assert storage != null;
@@ -470,11 +370,115 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
 
-  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
+  static class  ProjectStorageData extends BaseStorageData {
+    public ProjectStorageData(final String rootElementName) {
+      super(rootElementName);
+    }
+
+    protected ProjectStorageData(ProjectStorageData storageData) {
+      super(storageData);
+    }
+
+    protected void load(@NotNull final Element rootElement) throws IOException {
+      super.load(rootElement);
+    }
+
+    @NotNull
+    protected Element save() {
+      return super.save();
+    }
+
+    public XmlElementStorage.StorageData clone() {
+      return new ProjectStorageData(this);
+    }
+  }
+
+  static class IprStorageData extends ProjectStorageData {
+    private final Set<String> myUsedMacros;
+    private final Project myProject;
+
+    public IprStorageData(final String rootElementName, Project project) {
+      super(rootElementName);
+      myProject = project;
+      myUsedMacros = new TreeSet<String>();
+    }
+
+    public IprStorageData(final IprStorageData storageData) {
+      super(storageData);
+      myUsedMacros = new TreeSet<String>(storageData.myUsedMacros);
+      myProject = storageData.myProject;
+    }
+
+    protected void load(@NotNull final Element rootElement) throws IOException {
+      final boolean macrosOk = checkMacros(myProject, rootElement);
+      if (!macrosOk) {
+        throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
+      }
+
+      super.load(rootElement);
+    }
+
+    @NotNull
+    protected Element save() {
+      final Element root = super.save();
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
+
+      if (conversionHelper != null) {
+        conversionHelper.convertWorkspaceRootToOldFormat(root);
+      }
+
+      final PathMacros pathMacros = PathMacros.getInstance();
+      final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
+
+      for (Iterator<String> i = myUsedMacros.iterator(); i.hasNext();) {
+        String macro = i.next();
+
+        for (String systemMacroName : systemMacroNames) {
+          if (macro.equals(systemMacroName) || macro.indexOf("$" + systemMacroName + "$") >= 0) {
+            i.remove();
+          }
+        }
+      }
+
+      root.removeChildren(USED_MACROS_ELEMENT_NAME);
+
+      if (!myUsedMacros.isEmpty()) {
+        Element usedMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
+
+        for (String usedMacro : myUsedMacros) {
+          Element macroElement = new Element(ELEMENT_MACRO);
+
+          macroElement.setAttribute(NAME_ATTR, usedMacro);
+
+          usedMacrosElement.addContent(macroElement);
+        }
+
+        root.addContent(usedMacrosElement);
+      }
+
+      return root;
+    }
+
+    public XmlElementStorage.StorageData clone() {
+      return new IprStorageData(this);
+    }
+
+    protected int computeHash() {
+      return super.computeHash()*31 + myUsedMacros.hashCode();
+    }
+
+    protected void setUsedMacros(Collection<String> m) {
+      myUsedMacros.clear();
+      myUsedMacros.addAll(m);
+      clearHash();
+    }
+  }
+
+  protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
     return new ProjectSaveSession();
   }
 
-  private class ProjectSaveSession extends BaseSaveSession {
+  private class ProjectSaveSession extends SaveSessionImpl {
     List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
 
     public ProjectSaveSession() throws StateStorage.StateStorageException {
@@ -520,47 +524,23 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         throw new SaveCancelledException();
       }
 
-      final ProjectConversionHelper conversionHelper = getConversionHelper();
-      final XmlElementStorage wsStorage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
-      if (conversionHelper != null && wsStorage != null) {
-        try {
-          final Element root = wsStorage.getRootElement();
-          if (root != null) {
-            conversionHelper.convertWorkspaceRootToOldFormat(root);
-          }
-        }
-        catch (StateStorage.StateStorageException e) {
-        }
+      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        moduleSaveSession.save();
       }
 
-      try {
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-          moduleSaveSession.save();
-        }
+      super.save();
 
-        super.save();
-      }
-      finally {
-        if (conversionHelper != null && wsStorage != null) {
-          try {
-            final Element root = wsStorage.getDocument().getRootElement();
-            if (root != null) {
-              conversionHelper.convertWorkspaceRootToNewFormat(root);
-            }
-          }
-          catch (StateStorage.StateStorageException e) {
-          }
-        }
-      }
-      
       return this;
     }
 
     protected void commit() throws StateStorage.StateStorageException {
       super.commit();
 
-      writeMacros(getUsedMacros());
-      writeWsVersion();
+      //todo: make it clearer
+      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)mySaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+      final IprStorageData storageData = (IprStorageData)session.getData();
+
+      storageData.setUsedMacros(getUsedMacros());
     }
 
     public void finishSave() {

@@ -1,18 +1,26 @@
 package com.intellij.openapi.components.impl.stores;
 
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,16 +32,37 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myFilePath;
   private final IFile myFile;
   protected final String myRootElementName;
-  private Integer myUpToDateTreeHash;
+  private Integer myUpToDateHash;
 
-  public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
-    super(pathMacroManager);
+  public FileBasedStorage(
+    @Nullable TrackingPathMacroSubstitutor pathMacroManager,
+    final String filePath,
+    String rootElementName,
+    Disposable parentDisposable,
+    PicoContainer picoContainer) {
+    super(pathMacroManager, parentDisposable, rootElementName);
+
     myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = FILE_SYSTEM.createFile(myFilePath);
+
+    VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
+
+    final String path = myFile.getAbsolutePath();
+    final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+
+    MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
+
+    final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+
+    virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+      public void contentsChanged(final VirtualFileEvent event) {
+        listener.storageFileChanged(event);
+      }
+    }, true, this);
   }
 
-  protected SaveSession createSaveSession(final XmlElementStorage.MyExternalizationSession externalizationSession) {
+  protected MySaveSession createSaveSession(final XmlElementStorage.MyExternalizationSession externalizationSession) {
     return new FileSaveSession(externalizationSession);
   }
 
@@ -43,19 +72,18 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected boolean _needsSave() throws StateStorageException {
-      sort();
+      final int hash = myStorageData.getHash();
 
-      final Document document = getDocument();
-      if (myUpToDateTreeHash != null && JDOMUtil.getTreeHash(document) == myUpToDateTreeHash.intValue()) return false;
+      if (myUpToDateHash != null && hash == myUpToDateHash.intValue()) return false;
 
-      myUpToDateTreeHash = null;
+      myUpToDateHash = null;
       try {
         if (!myFile.exists()) return true;
 
         final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
         if (Arrays.equals(myFile.loadBytes(), text)) {
-          myUpToDateTreeHash = JDOMUtil.getTreeHash(document);
+          myUpToDateHash = hash;
           return false;
         }
 
@@ -68,7 +96,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected void doSave() throws StateStorageException {
-      myUpToDateTreeHash = JDOMUtil.getTreeHash(getDocument());
+      myUpToDateHash = myStorageData.getHash();
 
       final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
@@ -96,7 +124,7 @@ public class FileBasedStorage extends XmlElementStorage {
   protected Document loadDocument() throws StateStorage.StateStorageException {
     try {
       if (!myFile.exists() || myFile.length() == 0) {
-        return new Document(new Element(myRootElementName));
+        return null;
       }
       else {
         return JDOMUtil.loadDocument(myFile);

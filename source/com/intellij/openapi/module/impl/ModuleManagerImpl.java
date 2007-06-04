@@ -203,6 +203,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
             }
+            catch (StateStorage.StateStorageException e) {
+              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+            }
           }
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
             String message;
@@ -651,13 +654,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       catch (JDOMException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
+      catch (StateStorage.StateStorageException e) {
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
+      }
     }
 
     private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
                                                               JDOMException,
-                                                              IOException,
-                                                              InvalidDataException
-                                                               {
+                                                              IOException, InvalidDataException, StateStorage.StateStorageException {
       final File moduleFile = new File(filePath);
       try {
         filePath = FileUtil.resolveShortWindowsName(filePath);

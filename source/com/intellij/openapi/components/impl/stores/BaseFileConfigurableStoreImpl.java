@@ -10,18 +10,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
 
   private int myOriginalVersion = -1;
-  private boolean mySavePathsRelative;
   final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
   @NonNls protected static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls protected static final String VERSION_OPTION = "version";
@@ -44,32 +43,51 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
+  protected static class BaseStorageData extends XmlElementStorage.StorageData {
+    private boolean mySavePathsRelative;
+    protected int myVersion;
 
-  protected MySaveSession createSaveSession() throws StateStorage.StateStorageException {
-    return new BaseSaveSession();
-  }
 
-  protected class BaseSaveSession extends MySaveSession {
-    public BaseSaveSession() throws StateStorage.StateStorageException {
+    public BaseStorageData(final String rootElementName) {
+      super(rootElementName);
     }
 
-    protected void commit() throws StateStorage.StateStorageException {
-      super.commit();
+    protected BaseStorageData(BaseStorageData storageData) {
+      super(storageData);
 
-      final XmlElementStorage mainStorage = getMainStorage();
-
-      final Element rootElement = mainStorage.getRootElement();
-      if (rootElement == null) return;
-
-      writeRootElement(rootElement);
+      mySavePathsRelative = storageData.mySavePathsRelative;
+      myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
     }
-  }
 
-  protected void writeRootElement(final Element rootElement) {
-    rootElement.setAttributes(Collections.EMPTY_LIST);
+    protected void load(@NotNull final Element rootElement) throws IOException {
+      super.load(rootElement);
 
-    rootElement.setAttribute(RELATIVE_PATHS_OPTION, Boolean.toString(isSavePathsRelative()));
-    rootElement.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
+      final String rel = rootElement.getAttributeValue(RELATIVE_PATHS_OPTION);
+      if (rel != null) mySavePathsRelative = Boolean.parseBoolean(rel);
+    }
+
+    @NotNull
+    protected Element save() {
+      final Element root = super.save();
+
+      root.setAttribute(RELATIVE_PATHS_OPTION, String.valueOf(mySavePathsRelative));
+      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
+
+      return root;
+    }
+
+    public XmlElementStorage.StorageData clone() {
+      return new BaseStorageData(this);
+    }
+
+    protected int computeHash() {
+      int result = super.computeHash();
+
+      if (mySavePathsRelative) result = result*31 + 1;
+      result = result*31 + myVersion;
+
+      return result;
+    }
   }
 
   protected abstract XmlElementStorage getMainStorage();
@@ -137,15 +155,31 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
 
-  public void load() throws IOException {
+  public void load() throws IOException, StateStorage.StateStorageException {
+    getMainStorageData(); //load it
   }
 
   public boolean isSavePathsRelative() {
-    return mySavePathsRelative;
+    try {
+      return getMainStorageData().mySavePathsRelative;
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   public void setSavePathsRelative(boolean b) {
-    mySavePathsRelative = b;
+    try {
+      getMainStorageData().mySavePathsRelative = b;
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+    }
+  }
+
+  public BaseStorageData getMainStorageData() throws StateStorage.StateStorageException {
+    return (BaseStorageData) getMainStorage().getStorageData();
   }
 
   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {

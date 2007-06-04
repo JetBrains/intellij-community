@@ -1,5 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,12 +36,14 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
+  boolean reload();
+
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED
   }
 
   //------ This methods should be got rid of
-  void loadProject() throws IOException, JDOMException, InvalidDataException;
+  void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException;
 
   @Nullable
   VirtualFile getProjectFile();

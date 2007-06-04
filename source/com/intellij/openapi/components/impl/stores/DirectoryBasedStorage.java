@@ -1,11 +1,13 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,7 +25,8 @@ import java.io.IOException;
 import java.util.*;
 
 //todo: support missing plugins
-public class DirectoryBasedStorage implements StateStorage {
+//todo: support storage data
+public class DirectoryBasedStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryBasedStorage");
 
   private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
@@ -31,14 +34,15 @@ public class DirectoryBasedStorage implements StateStorage {
   private StateSplitter mySplitter;
 
   private Map<String, Map<IFile, Element>> myStates = null;
-  private Set<String> myUsedMacros;
   private Object mySession;
 
-  public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String dir, final StateSplitter splitter) {
+  public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String dir, final StateSplitter splitter,
+                               Disposable parentDisposable) {
     assert dir.indexOf("$") < 0;
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = FILE_SYSTEM.createFile(dir);
     mySplitter = splitter;
+    Disposer.register(parentDisposable, this);
   }
 
   @Nullable
@@ -102,7 +106,7 @@ public class DirectoryBasedStorage implements StateStorage {
     }
   }
 
-  public void setState(Object component, final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
+  public void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
     if (myStates == null) myStates = new HashMap<String, Map<IFile, Element>>();
     try {
       final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
@@ -246,7 +250,7 @@ public class DirectoryBasedStorage implements StateStorage {
     final ExternalizationSession session = new ExternalizationSession() {
       public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
         assert mySession == this;
-        DirectoryBasedStorage.this.setState(component, componentName, state, storageSpec);
+        DirectoryBasedStorage.this.setState(componentName, state, storageSpec);
       }
     };
 
@@ -281,4 +285,6 @@ public class DirectoryBasedStorage implements StateStorage {
     mySession = null;
   }
 
+  public void dispose() {
+  }
 }

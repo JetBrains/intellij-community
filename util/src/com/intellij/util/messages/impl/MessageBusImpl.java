@@ -125,8 +125,16 @@ public class MessageBusImpl implements MessageBus {
       }
     }
 
-    for (MessageBusImpl childBus : myChildBusses) {
-      childBus.postMessage(message);
+    Topic.BroadcastDirection direction = topic.getBroadcastDirection();
+
+    if (direction == Topic.BroadcastDirection.TO_CHILDREN) {
+      for (MessageBusImpl childBus : myChildBusses) {
+        childBus.postMessage(message);
+      }
+    }
+
+    if (direction == Topic.BroadcastDirection.TO_PARENT && myParentBus != null) {
+      myParentBus.postMessage(message);
     }
   }
 

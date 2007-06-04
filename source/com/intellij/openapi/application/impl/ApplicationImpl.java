@@ -12,6 +12,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
@@ -293,7 +294,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void load(String path) throws IOException, InvalidDataException {
     getStateStore().setConfigPath(path);
-    getStateStore().load();
+    try {
+      getStateStore().load();
+    }
+    catch (StateStorage.StateStorageException e) {
+      throw new IOException(e.getMessage());
+    }
   }
 
 

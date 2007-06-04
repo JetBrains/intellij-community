@@ -49,7 +49,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleType myModuleType = null;
   private MyVirtualFileListener myVirtualFileListener;
   private boolean isModuleAdded;
-  public Map<String, String> myOptions = new TreeMap<String, String>();
 
   private GlobalSearchScope myModuleScope = null;
 
@@ -234,15 +233,15 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    myOptions.put(optionName, optionValue);
+    getStateStore().setOption(optionName, optionValue);
   }
 
   public void clearOption(@NotNull String optionName) {
-    myOptions.remove(optionName);
+    getStateStore().clearOption(optionName);
   }
 
   public String getOptionValue(@NotNull String optionName) {
-    return myOptions.get(optionName);
+    return getStateStore().getOptionValue(optionName);
   }
 
   @NotNull

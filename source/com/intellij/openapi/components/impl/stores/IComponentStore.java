@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface IComponentStore {
   void initComponent(Object component);
-  void load() throws IOException;
+  void load() throws IOException, StateStorage.StateStorageException;
 
 
   List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures);
