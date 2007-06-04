@@ -214,7 +214,7 @@ public class ChangeListTest extends LocalVcsTestCase {
 
     applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs5, cs2, cs1), getChangesFor("file"));
+    assertEquals(list(cs5, cs4, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -227,7 +227,7 @@ public class ChangeListTest extends LocalVcsTestCase {
 
     applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs1), getChangesFor("file"));
+    assertEquals(list(cs5, cs3, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -238,7 +238,7 @@ public class ChangeListTest extends LocalVcsTestCase {
 
     applyAndAddChange(cs1, cs2, cs3);
 
-    assertEquals(list(cs1), getChangesFor("dir"));
+    assertEquals(list(cs3, cs1), getChangesFor("dir"));
   }
 
   @Test
@@ -251,8 +251,8 @@ public class ChangeListTest extends LocalVcsTestCase {
 
     applyAndAddChange(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs5, cs2, cs1), getChangesFor("dir"));
-    assertEquals(list(cs2), getChangesFor("dir/file"));
+    assertEquals(list(cs5, cs4, cs2, cs1), getChangesFor("dir"));
+    assertEquals(list(cs5, cs2), getChangesFor("dir/file"));
   }
 
   @Test
@@ -264,7 +264,7 @@ public class ChangeListTest extends LocalVcsTestCase {
 
     applyAndAddChange(cs1, cs2, cs3, cs4);
 
-    assertEquals(list(cs1), getChangesFor("file"));
+    assertEquals(list(cs4, cs1), getChangesFor("file"));
   }
 
   @Test

@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -52,7 +53,12 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    myState.create(e.getFile());
+    if (e.getRequestor() instanceof Entry) {
+      myState.restore(e.getFile(), (Entry)e.getRequestor());
+    }
+    else {
+      myState.create(e.getFile());
+    }
   }
 
   @Override

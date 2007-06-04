@@ -1,11 +1,14 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   TestFileFilter filter = new TestFileFilter();
@@ -119,8 +122,54 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   }
 
   @Test
+  public void testRestoringFileAfterDeletion() {
+    vcs.createFile("f", cf("one"), -1);
+    vcs.changeFileContent("f", cf("two"), -1);
+    Entry e = vcs.getEntry("f");
+    vcs.delete("f");
+
+    fireCreated(new TestVirtualFile("f", "two_restored", -1), e);
+
+    List<Revision> rr = vcs.getRevisionsFor("f");
+    assertEquals(3, rr.size());
+    assertEquals(c("two_restored"), rr.get(0).getEntry().getContent());
+    assertEquals(c("two"), rr.get(1).getEntry().getContent());
+    assertEquals(c("one"), rr.get(2).getEntry().getContent());
+  }
+
+  @Test
+  public void testRestoringDirectoryAfterDeletion() {
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/f", cf("one"), -1);
+    vcs.changeFileContent("dir/f", cf("two"), -1);
+    Entry dir = vcs.getEntry("dir");
+    Entry f = vcs.getEntry("dir/f");
+    vcs.delete("dir");
+
+    fireCreated(new TestVirtualFile("dir"), dir);
+    fireCreated(new TestVirtualFile("dir/f", "two_restored", -1), f);
+
+    vcs.changeFileContent("dir/f", cf("three"), -1);
+
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(6, rr.size());
+    assertEquals(c("three"), rr.get(0).getEntry().findChild("f").getContent());
+    assertEquals(c("two_restored"), rr.get(1).getEntry().findChild("f").getContent());
+    assertNull(rr.get(2).getEntry().findChild("f"));
+    assertEquals(c("two"), rr.get(3).getEntry().findChild("f").getContent());
+    assertEquals(c("one"), rr.get(4).getEntry().findChild("f").getContent());
+    assertNull(rr.get(5).getEntry().findChild("f"));
+  }
+
+  @Test
+  public void testDoesNotRestoreIfEventNotWithEntryRequestor() {
+    fireCreated(new TestVirtualFile("f", "", -1), new Object());
+    assertTrue(vcs.hasEntry("f"));
+  }
+
+  @Test
   public void testDoNothingOnAnotherPropertyChanges() throws Exception {
-    // we just shouldn't throw any exception here to meake test pass
+    // shouldn't throw any exception here to make test pass
     VirtualFile f = new TestVirtualFile(null, null, -1);
     firePropertyChanged(f, "another property", null);
   }

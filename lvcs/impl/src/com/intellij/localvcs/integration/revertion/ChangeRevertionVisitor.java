@@ -83,11 +83,11 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   private void revertDeletion(Entry e) throws IOException {
     VirtualFile parent = myGateway.findVirtualFile(e.getParent().getPath());
     if (e.isDirectory()) {
-      parent.createChildDirectory(null, e.getName());
+      parent.createChildDirectory(e, e.getName());
       for (Entry child : e.getChildren()) revertDeletion(child);
     }
     else {
-      VirtualFile f = parent.createChildData(null, e.getName());
+      VirtualFile f = parent.createChildData(e, e.getName());
       f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
     }
   }

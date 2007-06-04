@@ -107,7 +107,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
 
     f = root.findChild("f.java");
     assertNotNull(f);
-    assertEquals(1, getVcsRevisionsFor(f).size());
+    assertEquals(2, getVcsRevisionsFor(f).size());
   }
 
   public void testRevertMovementAfterDeletion() throws Exception {

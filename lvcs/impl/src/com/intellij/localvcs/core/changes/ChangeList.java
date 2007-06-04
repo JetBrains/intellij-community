@@ -78,7 +78,6 @@ public class ChangeList {
           if (cc instanceof DeleteChange) {
             DeleteChange ccc = (DeleteChange)cc;
             if (idPath.startsWith(ccc.getAffectedIdPaths()[0])) {
-              result.remove(result.size() - 1); // remove next creation
               exists = true;
             }
           }

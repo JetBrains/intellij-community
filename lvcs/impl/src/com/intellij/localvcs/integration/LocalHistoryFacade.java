@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -77,6 +78,15 @@ public class LocalHistoryFacade {
     }
     else {
       myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp());
+    }
+  }
+
+  public void restore(VirtualFile f, Entry e) {
+    if (f.isDirectory()) {
+      myVcs.restoreDirectory(e.getId(), f.getPath());
+    }
+    else {
+      myVcs.restoreFile(e.getId(), f.getPath(), contentFactoryFor(f), f.getTimeStamp());
     }
   }
 

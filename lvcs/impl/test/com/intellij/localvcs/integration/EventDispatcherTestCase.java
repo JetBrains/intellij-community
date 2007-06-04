@@ -35,6 +35,10 @@ public class EventDispatcherTestCase extends LocalVcsTestCase {
     d.fileCreated(new VirtualFileEvent(null, f, null, null));
   }
 
+  protected void fireCreated(VirtualFile f, Object requestor) {
+    d.fileCreated(new VirtualFileEvent(requestor, f, null, null));
+  }
+
   protected void fireContentChanged(VirtualFile f) {
     d.contentsChanged(new VirtualFileEvent(null, f, null, null));
   }

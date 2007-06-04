@@ -155,14 +155,15 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     vcs.changeFileContent("f", cf("two"), -1);
     int id = vcs.getEntry("f").getId();
     vcs.delete("f");
-    vcs.restoreFile(id, "f", cf("two"), -1);
+    vcs.restoreFile(id, "f", cf("two_restored"), -1);
     vcs.changeFileContent("f", cf("three"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("f");
-    assertEquals(3, rr.size());
+    assertEquals(4, rr.size());
     assertEquals(c("three"), rr.get(0).getEntry().getContent());
-    assertEquals(c("two"), rr.get(1).getEntry().getContent());
-    assertEquals(c("one"), rr.get(2).getEntry().getContent());
+    assertEquals(c("two_restored"), rr.get(1).getEntry().getContent());
+    assertEquals(c("two"), rr.get(2).getEntry().getContent());
+    assertEquals(c("one"), rr.get(3).getEntry().getContent());
   }
 
   @Test
@@ -173,7 +174,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     vcs.restoreDirectory(id, "dir");
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
-    assertEquals(1, rr.size());
+    assertEquals(2, rr.size());
   }
 
   @Test
@@ -194,7 +195,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     assertEquals(1, rr.get(1).getEntry().getChildren().size());
     assertEquals(0, rr.get(2).getEntry().getChildren().size());
 
-    assertEquals(1, vcs.getRevisionsFor("dir/f").size());
+    assertEquals(2, vcs.getRevisionsFor("dir/f").size());
   }
 
   @Test
