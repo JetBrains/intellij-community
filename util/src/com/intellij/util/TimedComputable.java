@@ -31,7 +31,7 @@ public abstract class TimedComputable<T>  extends Timed<T> {
     super.dispose();
   }
 
-  protected boolean isLocked() {
+  protected synchronized boolean isLocked() {
     return myAcquireCount != 0;
   }
 

@@ -45,7 +45,7 @@ abstract class Timed<T> implements Disposable {
     myPolled = false;
   }
 
-  protected boolean isLocked() {
+  protected synchronized boolean isLocked() {
     return false;
   }
 
