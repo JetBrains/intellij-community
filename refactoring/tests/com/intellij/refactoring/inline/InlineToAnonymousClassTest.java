@@ -13,7 +13,6 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 
 /**
  * @author yole
@@ -105,6 +104,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   public void testWritableFieldInitializedWithParameter() throws Exception {
+    doTest(false);
+  }
+
+  public void testFieldInitializedWithVar() throws Exception {
     doTest(false);
   }
 
