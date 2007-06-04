@@ -750,6 +750,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(BadExceptionDeclaredInspection.class);
         m_inspectionClasses.add(BadExceptionThrownInspection.class);
         m_inspectionClasses.add(CatchGenericClassInspection.class);
+        m_inspectionClasses.add(CaughtExceptionImmediatelyRethrownInspection.class);
         m_inspectionClasses.add(CheckedExceptionClassInspection.class);
         m_inspectionClasses.add(ContinueOrBreakFromFinallyBlockInspection.class);
         m_inspectionClasses.add(EmptyCatchBlockInspection.class);
