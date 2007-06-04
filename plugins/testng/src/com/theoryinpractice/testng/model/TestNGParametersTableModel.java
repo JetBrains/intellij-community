@@ -6,12 +6,12 @@
  */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
 
 public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
 {
@@ -19,7 +19,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
     private ArrayList<Map.Entry> parameterList;
 
     public TestNGParametersTableModel() {
-        super(new ColumnInfo[] {
+        super(
                 new ColumnInfo("Name")
                 {
                     public Object valueOf(Object object) {
@@ -34,7 +34,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
                         return entry.getValue();
                     }
                 }
-        });
+        );
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {

@@ -297,13 +297,17 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         propertiesTableModel.addParameter();
+        int index = propertiesTableModel.getRowCount() - 1;
+        propertiesTableView.setRowSelectionInterval(index, index);
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        int idx = propertiesTableView.getSelectedRow() - 1;
         for (int row : propertiesTableView.getSelectedRows()) {
           propertiesTableModel.removeProperty(row);
         }
+        if (idx > - 1) propertiesTableView.setRowSelectionInterval(idx, idx);
       }
     });
   }
