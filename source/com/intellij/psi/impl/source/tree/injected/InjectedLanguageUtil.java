@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -289,8 +290,19 @@ public class InjectedLanguageUtil {
     PsiFile injectedFile = findInjectedPsiAt(file, offset);
     if (injectedFile == null) return editor;
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
-
-    return EditorDelegate.create((DocumentRange)document, (EditorImpl)editor, injectedFile);
+    DocumentRange documentRange = (DocumentRange)document;
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+      RangeMarker hostRange = documentRange.getTextRange();
+      if (end-start == hostRange.getEndOffset() - hostRange.getStartOffset()
+          || !new TextRange(hostRange.getStartOffset(), hostRange.getEndOffset()).contains(new TextRange(start, end))) {
+        // selection spreads out the injected editor range
+        return editor;
+      }
+    }
+    return EditorDelegate.create(documentRange, (EditorImpl)editor, injectedFile);
   }
 
   public static PsiFile findInjectedPsiAt(PsiFile host, int offset) {

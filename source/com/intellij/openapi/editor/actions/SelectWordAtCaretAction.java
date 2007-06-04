@@ -22,6 +22,7 @@ import java.util.List;
 public class SelectWordAtCaretAction extends EditorAction {
   public SelectWordAtCaretAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorActionHandler {
@@ -42,7 +43,7 @@ public class SelectWordAtCaretAction extends EditorAction {
 
       SelectWordUtil.addWordSelection(camel, text, caretOffset, ranges);
 
-      if (ranges.size() == 0) return;
+      if (ranges.isEmpty()) return;
 
       int startWordOffset = Math.max(0, ranges.get(0).getStartOffset());
       int endWordOffset = Math.min(ranges.get(0).getEndOffset(), document.getTextLength());

@@ -1,6 +1,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -353,12 +354,17 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     if (dataId.equals(DataConstants.EDITOR)) {
       return myEditor;
     }
-    else if (dataId.equals(DataConstants.PSI_FILE)) {
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
+      return InjectedLanguageUtil.getEditorForInjectedLanguage(getEditor(), getFile());
+    }
+    if (dataId.equals(DataConstants.PSI_FILE)) {
       return myFile;
     }
-    else {
-      return super.getData(dataId);
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
+      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(getEditor(), getFile());
+      return editor instanceof EditorDelegate ? ((EditorDelegate)editor).getInjectedFile() : getFile();
     }
+    return super.getData(dataId);
   }
 
   /**
@@ -379,7 +385,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     return myVFile;
   }
 
-  protected void bringRealEditorBack() {
+  protected static void bringRealEditorBack() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DocumentEx document = ((DocumentRange)myEditor.getDocument()).getDelegate();
     myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
