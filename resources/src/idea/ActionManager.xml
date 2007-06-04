@@ -1512,5 +1512,10 @@
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
+
+    <group id="FileChooser">
+      <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
+    </group>
+
   </actions>
 </component>

@@ -176,7 +176,12 @@ public class LinkLabel extends JLabel {
 
   private void setActive(boolean isActive) {
     myIsLinkActive = isActive;
+    onSetActive(myIsLinkActive);
     repaint();
+  }
+
+  protected void onSetActive(boolean active) {
+
   }
 
   private int getTextBaseLine() {
@@ -216,8 +221,12 @@ public class LinkLabel extends JLabel {
     if (myHoveringIcon != null) {
       setIcon(myHoveringIcon);
     }
-    setStatusBarText(getToolTipText());
+    setStatusBarText(getStatusBarText());
     repaint();
+  }
+
+  protected String getStatusBarText() {
+    return getToolTipText();
   }
 
   private void disableUnderline() {

@@ -1,7 +1,9 @@
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SynchronizeAction;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -13,28 +15,32 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TitlePanel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.io.File;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog{
   private final FileChooserDescriptor myChooserDescriptor;
@@ -45,6 +51,22 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private JPanel myNorthPanel;
+
+  private static boolean ourTextFieldShown = false;
+  private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
+
+  private JTextField myPathTextField;
+  private JComponent myPathTextFieldWrapper;
+
+  private MergingUpdateQueue myTextUpdate;
+
+  private WorkerThread myFileLocator = new WorkerThread("fileChooserFileLocator", 200);
+
+  private boolean myPathIsUpdating;
+  private boolean myTreeIsUpdating;
+
+  public static DataKey<FileChooserDialogImpl> KEY = DataKey.create("FileChooserDialog");
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -141,13 +163,56 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected JComponent createCenterPanel() {
     JPanel panel = new MyPanel();
 
+    myTextUpdate = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
+    Disposer.register(myDisposable, myTextUpdate);
+    new UiNotifyConnector(panel, myTextUpdate);
+
+    myFileLocator.start();
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        myFileLocator.dispose(true);
+      }
+    });
+
     panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
     createTree();
 
     final DefaultActionGroup group = createActionGroup();
     ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    panel.add(toolBar.getComponent(), BorderLayout.NORTH);
+
+    final JPanel toolbarPanel = new JPanel(new BorderLayout());
+    toolbarPanel.add(toolBar.getComponent(), BorderLayout.CENTER);
+
+    myTextFieldAction = new TextFieldAction();
+    toolbarPanel.add(myTextFieldAction, BorderLayout.EAST);
+
+    myPathTextFieldWrapper = new JPanel(new BorderLayout());
+    myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+    myPathTextField = new JTextField();
+    myPathTextFieldWrapper.add(myPathTextField, BorderLayout.CENTER);
+
+    myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
+      public void insertUpdate(final DocumentEvent e) {
+        updateTreeFromPath();
+      }
+
+      public void removeUpdate(final DocumentEvent e) {
+        updateTreeFromPath();
+      }
+
+      public void changedUpdate(final DocumentEvent e) {
+        updateTreeFromPath();
+      }
+    });
+
+    myNorthPanel = new JPanel(new BorderLayout());
+    myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
+
+
+    updateTextFieldShowing();
+
+    panel.add(myNorthPanel, BorderLayout.NORTH);
 
     registerMouseListener(group);
 
@@ -156,11 +221,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(new Dimension(400, 400));
 
+
     return panel;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myFileSystemTree.getTree();
+    return ourTextFieldShown ? myPathTextField : myFileSystemTree.getTree();
   }
 
   public final void dispose() {
@@ -216,6 +282,13 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     tree.addTreeSelectionListener(new FileTreeSelectionListener());
     tree.addTreeExpansionListener(new FileTreeExpansionListener());
     setOKActionEnabled(false);
+
+    myFileSystemTree.addListener(new FileSystemTree.Listener() {
+      public void selectionChanged(final List<VirtualFile> selection) {
+        updatePathFromTree(selection, false);
+      }
+    }, myDisposable);
+
     return tree;
   }
 
@@ -341,15 +414,176 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private final class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
-      super(new BorderLayout());
+      super(new BorderLayout(0, 0));
     }
 
     public Object getData(String dataId) {
       if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
         return getSelectedFiles();
+      } else if (KEY.getName().equals(dataId)) {
+        return FileChooserDialogImpl.this;
       }
       return null;
     }
+  }
+
+  public void toggleShowTextField() {
+    ourTextFieldShown =! ourTextFieldShown;
+    updateTextFieldShowing();
+  }
+
+  private void updateTextFieldShowing() {
+    myTextFieldAction.update();
+    myNorthPanel.remove(myPathTextFieldWrapper);
+    if (!myChooserDescriptor.isChooseMultiple()) {
+      if (ourTextFieldShown) {
+        if (myFileSystemTree.getSelectedFile() != null) {
+          final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
+          selection.add(myFileSystemTree.getSelectedFile());
+          updatePathFromTree(selection, true);
+        }
+        myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.CENTER);
+      } else {
+        updateOkAction(true);
+      }
+      myPathTextField.requestFocus();
+    } else {
+      myFileSystemTree.getTree().requestFocus();
+    }
+
+    myNorthPanel.revalidate();
+    myNorthPanel.repaint();
+  }
+
+  private void updateOkAction(boolean enabled) {
+    if (enabled) {
+      getOKAction().setEnabled(true);
+      setErrorText(null);
+    } else {
+      getOKAction().setEnabled(false);
+      setErrorText("Specified file cannot be found");
+    }
+  }
+
+  private class TextFieldAction extends LinkLabel implements LinkListener {
+    public TextFieldAction() {
+      super("", null);
+      setListener(this, null);
+      update();
+    }
+
+    protected void onSetActive(final boolean active) {
+      final String tooltip = AnAction
+        .createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"), ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
+      setToolTipText(tooltip);
+    }
+
+    protected String getStatusBarText() {
+      return ActionsBundle.message("action.FileChooser.TogglePathShowing.text");
+    }
+
+    public void update() {
+      if (myChooserDescriptor.isChooseMultiple()) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+        setText(ourTextFieldShown ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
+      }
+    }
+
+    public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
+      toggleShowTextField();
+    }
+  }
+
+  private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
+    if (!ourTextFieldShown) return;
+    if (myTreeIsUpdating) return;
+
+    final String text = selection.size() == 0 ? "" : selection.get(0).getPresentableUrl();
+    final Update update = new Update("pathFromTree") {
+      public void run() {
+        myPathIsUpdating = true;
+        myPathTextField.setText(text);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myPathTextField.selectAll();
+            myPathIsUpdating = false;
+            updateOkAction(true);
+          }
+        });
+      }
+    };
+    if (now) {
+      update.run();
+    } else {
+      myTextUpdate.queue(update);
+    }
+  }
+
+  private void updateTreeFromPath() {
+    if (!ourTextFieldShown) return;
+    if (myPathIsUpdating) return;
+
+    myTextUpdate.queue(new Update("treeFromPath.1") {
+      public void run() {
+        final String text = getTextFieldText();
+        if (text == null) return;
+
+        getOKAction().setEnabled(false);
+
+        myFileLocator.addTaskFirst(new Runnable() {
+          public void run() {
+            File toFind = new File(text);
+            if (text.length() == 0) {
+              final File[] roots = File.listRoots();
+              if (roots.length > 0) {
+                toFind = roots[0];
+              }
+            }
+
+            final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toFind);
+            myTextUpdate.queue(new Update("treeFromPath.2") {
+              public void run() {
+                selectInTree(vFile, text);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  private void selectInTree(final VirtualFile vFile, String fromText) {
+    if (vFile != null && vFile.isValid()) {
+      if (fromText.equalsIgnoreCase(getTextFieldText())) {
+        myTreeIsUpdating = true;
+        if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
+          myFileSystemTree.select(vFile, new Runnable() {
+            public void run() {
+              myTreeIsUpdating = false;
+              updateOkAction(true);
+            }
+          });
+        } else {
+          myTreeIsUpdating = false;
+          updateOkAction(true);
+        }
+      }
+    } else {
+      reportFileNotFound();
+    }
+  }
+
+  private void reportFileNotFound() {
+    myTreeIsUpdating = false;
+    updateOkAction(false);
+  }
+
+  private String getTextFieldText() {
+    final String text = myPathTextField.getText();
+    if (text == null) return null;
+    return text.trim();
   }
 
 }

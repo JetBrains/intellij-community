@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.FileContentUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
@@ -32,12 +33,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -48,6 +52,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final Project myProject;
   private final ArrayList<Runnable> myOkActions = new ArrayList<Runnable>(2);
   private final FileChooserDescriptor myDescriptor;
+
+  private List<Listener> myListeners = new ArrayList<Listener>();
 
   public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null);
@@ -70,6 +76,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
         if (onInitialized != null) {
           onInitialized.run();
         }
+      }
+    });
+
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(final TreeSelectionEvent e) {
+        processSelectionChange(e);
       }
     });
 
@@ -382,5 +394,43 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     }
     return false;
+  }
+
+  public void addListener(final Listener listener, final Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
+
+  private void fireSelection(List<VirtualFile> selection) {
+    for (Listener each : myListeners) {
+      each.selectionChanged(selection);
+    }
+  }
+
+  private void processSelectionChange(final TreeSelectionEvent e) {
+    if (myListeners.size() == 0) return;
+    List<VirtualFile> selection = new ArrayList<VirtualFile>();
+
+    final TreePath[] paths = myTree.getSelectionPaths();
+    if (paths != null) {
+      for (TreePath each : paths) {
+        final Object last = each.getLastPathComponent();
+        if (last instanceof DefaultMutableTreeNode) {
+          final Object object = ((DefaultMutableTreeNode)last).getUserObject();
+          if (object instanceof FileNodeDescriptor) {
+            final FileElement element = ((FileNodeDescriptor)object).getElement();
+            if (element != null) {
+              selection.add(element.getFile());
+            }
+          }
+        }
+      }
+    }
+
+    fireSelection(selection);
   }
 }

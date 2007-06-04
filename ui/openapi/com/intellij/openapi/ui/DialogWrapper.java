@@ -20,13 +20,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -94,6 +98,7 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
+  private DialogWrapper.ErrorText myErrorText;
 
 
   /**
@@ -556,6 +561,8 @@ public abstract class DialogWrapper {
   }
 
   protected void init() {
+    myErrorText = new ErrorText();
+
     JComponent titlePane = createTitlePane();
     JComponent contentPane = createContentPane();
     if (titlePane != null) {
@@ -581,9 +588,15 @@ public abstract class DialogWrapper {
       contentPane.add(centerPanel, BorderLayout.CENTER);
     }
     JComponent southPanel = createSouthPanel();
+
+    final NonOpaquePanel southWrapper = new NonOpaquePanel(new BorderLayout());
+    southWrapper.add(myErrorText, BorderLayout.CENTER);
+
     if (southPanel != null) {
-      contentPane.add(southPanel, BorderLayout.SOUTH);
+      southWrapper.add(southPanel, BorderLayout.SOUTH);
     }
+
+    contentPane.add(southWrapper, BorderLayout.SOUTH);
 
     new MnemonicHelper().register(contentPane);
   }
@@ -886,6 +899,45 @@ public abstract class DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       doHelpAction();
+    }
+  }
+
+  protected final void setErrorText(@Nullable String text) {
+    myErrorText.setError(text);
+  }
+
+  private class ErrorText extends JPanel {
+
+    private JLabel myLabel = new JLabel();
+
+    private Dimension myPrefSize;
+
+    public ErrorText() {
+      setLayout(new BorderLayout());
+      setBorder(null);
+      UIUtil.removeQuaquaVisualMarginsIn(this);
+      add(myLabel, BorderLayout.CENTER);
+    }
+
+    public void setError(String text) {
+      if (text == null) {
+        myLabel.setText("");
+        myLabel.setIcon(null);
+        setBorder(null);
+      } else {
+        myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
+        myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
+        myLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
+        if (myPrefSize == null) {
+          myPrefSize = myLabel.getPreferredSize();
+        }
+      }
+      revalidate();
+      repaint();
+    }
+
+    public Dimension getPreferredSize() {
+      return myPrefSize == null ? super.getPreferredSize() : myPrefSize;
     }
   }
 

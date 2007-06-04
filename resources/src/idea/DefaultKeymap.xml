@@ -4,6 +4,9 @@
     <action id="ShowNavBar">
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
+    <action id="FileChooser.TogglePathShowing">
+      <keyboard-shortcut first-keystroke="control P"/>
+    </action>
     <action id="GuiDesigner.ExpandSelection">
       <keyboard-shortcut first-keystroke="control W"/>
     </action>
@@ -874,6 +877,9 @@
   <!-- ############################################################################## -->
 
   <keymap name="Mac OS X" parent="$default" version="1" disable-mnemonics="true">
+    <action id="FileChooser.TogglePathShowing">
+      <keyboard-shortcut first-keystroke="meta P"/>
+    </action>
     <action id="Debugger.PreviousContent">
       <keyboard-shortcut first-keystroke="control alt shift LEFT" />
     </action>
@@ -1830,6 +1836,9 @@
   </keymap>
 
   <keymap version="1" name="Eclipse" disable-mnemonics="false" parent="$default">
+    <action id="FileChooser.TogglePathShowing">
+      <keyboard-shortcut first-keystroke="control P"/>
+    </action>
     <action id="$Redo">
       <keyboard-shortcut first-keystroke="control Y" />
     </action>
