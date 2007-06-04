@@ -134,7 +134,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
-  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {
     return PsiImplUtil.replaceExpression(this, newExpr);
   }
 

@@ -30,9 +30,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Arrays;
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -85,9 +90,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
   }
 
-  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
-    return PsiImplUtil.replaceExpression(this, newExpr);
-  }
 
   public void subtreeChanged() {
     mySyntheticItParameter = null;
@@ -103,4 +105,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     }
     return mySyntheticItParameter;
   }
+
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {
+    return PsiImplUtil.replaceExpression(this, newExpr);
+  }
+
+
 }

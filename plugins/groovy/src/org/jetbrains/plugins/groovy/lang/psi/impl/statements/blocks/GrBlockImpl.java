@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
@@ -35,9 +36,9 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     super(node);
   }
 
-  public boolean mayUseNewLinesAsSeparators(){
+  public boolean mayUseNewLinesAsSeparators() {
     PsiElement parent = this;
-    while (parent != null){
+    while (parent != null) {
       if (parent instanceof GrString) {
         GrString grString = (GrString) parent;
         return !grString.isPlainString();
@@ -51,13 +52,20 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return findChildrenByClass(GrStatement.class);
   }
 
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+
     if (element.getNode() == null ||
         !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(getProject());
     ASTNode elemNode = element.getNode();
     getNode().addChild(elemNode, anchor.getNode());
+    if (mayUseNewLinesAsSeparators()) {
+      getNode().addChild(factory.createNewLine().getNode() ,anchor.getNode());
+    } else {
+      getNode().addChild(factory.createSemicolon().getNode() ,anchor.getNode());
+    }
     return elemNode.getPsi();
   }
 

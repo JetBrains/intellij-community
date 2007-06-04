@@ -28,7 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @autor: ilyas
@@ -68,6 +70,11 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = getBody().getNode();
+    if (oldBodyNode.getTreePrev() != null &&
+        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+      ASTNode whiteNode = GroovyElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
+      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
+    }
     this.getNode().replaceChild(oldBodyNode, newBody.getNode());
     ASTNode newNode = newBody.getNode();
     if (!(newNode.getPsi() instanceof GrCondition)) {

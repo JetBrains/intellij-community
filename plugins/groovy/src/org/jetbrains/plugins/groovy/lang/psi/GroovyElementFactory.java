@@ -55,7 +55,7 @@ public abstract class GroovyElementFactory {
 
   public abstract PsiElement createSemicolon();
 
-  public abstract GrArgumentList createArgumentList(GrExpression ... expressions);
+  public abstract GrArgumentList createExpressionArgumentList(GrExpression ... expressions);
 
   public abstract GrOpenBlock createOpenBlockFromStatements(GrStatement... statements);
 

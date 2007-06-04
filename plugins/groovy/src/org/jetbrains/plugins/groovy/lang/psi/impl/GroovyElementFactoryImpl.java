@@ -150,11 +150,14 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return dummyFile.getFirstChild();
   }
 
-  public GrArgumentList createArgumentList(GrExpression... expressions) {
+  public GrArgumentList createExpressionArgumentList(GrExpression... expressions) {
     StringBuffer text = new StringBuffer();
     text.append("ven (");
     for (GrExpression expression : expressions) {
-      text.append(expression.getText());
+      text.append(expression.getText()).append(", ");
+    }
+    if (expressions.length > 0) {
+      text.delete(text.length()-2, text.length());
     }
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());

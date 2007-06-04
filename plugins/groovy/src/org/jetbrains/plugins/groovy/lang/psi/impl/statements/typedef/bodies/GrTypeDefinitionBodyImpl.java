@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author: Dmitry.Krasilschikov, ilyas
  * @date: 04.05.2007
  */
 public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements GrTypeDefinitionBody {
@@ -30,6 +31,10 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
 
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
+  }
+
+  public PsiElement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public GrField[] getFields() {

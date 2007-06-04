@@ -19,11 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @autor: ilyas
@@ -73,6 +75,11 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = getThenBranch().getNode();
+    if (oldBodyNode.getTreePrev() != null &&
+        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+      ASTNode whiteNode = GroovyElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
+      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
+    }
     this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
     ASTNode newNode = newBranch.getNode();
     if (!(newNode.getPsi() instanceof GrCondition)) {
@@ -87,6 +94,11 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = getElseBranch().getNode();
+    if (oldBodyNode.getTreePrev() != null &&
+        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+      ASTNode whiteNode = GroovyElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
+      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
+    }
     this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
     ASTNode newNode = newBranch.getNode();
     if (!(newNode.getPsi() instanceof GrCondition)) {

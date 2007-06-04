@@ -11,6 +11,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringSettings;
 
 import javax.swing.*;
 
@@ -21,6 +22,9 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.HashMap;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GroovyIntroduceVariableSettings {
 
@@ -105,6 +109,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myCbReplaceAllOccurences.setMnemonic(KeyEvent.VK_A);
     myCbIsFinal.setMnemonic(KeyEvent.VK_F);
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
+    myNameSelector.setFocusCycleRoot(true);
+    myNameSelector.setFocusTraversalPolicyProvider(true);
 
     // Type specification
     if (myType == null) {
@@ -128,14 +134,27 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       myCbReplaceAllOccurences.setSelected(false);
       myCbReplaceAllOccurences.setEnabled(false);
     }
+
+
   }
 
   public JComponent getPreferredFocusedComponent() {
     return myNameSelector;
   }
 
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doOKAction() {
+    // todo implement validator!
+    super.doOKAction();
+  }
+
+
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
   }
+
 
 }

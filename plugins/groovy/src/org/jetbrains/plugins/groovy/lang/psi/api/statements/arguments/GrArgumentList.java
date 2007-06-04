@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ilyas
@@ -25,4 +26,6 @@ public interface GrArgumentList extends GroovyPsiElement {
   GrNamedArgument[] getNamedArguments();
 
   GrExpression[] getExpressionArguments();
+
+  GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException;
 }

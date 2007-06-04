@@ -29,8 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -78,17 +82,47 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
     return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
   }
 
-  public GrClosableBlock getClosureArgument() {
-    return findChildByClass(GrClosableBlock.class);
+  public GrClosableBlock[] getClosureArguments() {
+    return findChildrenByClass(GrClosableBlock.class);
   }
 
   public GrExpression getInvokedExpression() {
     return findChildByClass(GrExpression.class);
   }
 
-  // TODO implement me!
-  public GrArgumentList replaceArgumenList(GrArgumentList argList) throws IncorrectOperationException {
-    return null;
-  }
+  public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException{
 
+    if (closure.getNode() == null ||
+        newExpr.getNode() == null){
+      throw new IncorrectOperationException();
+    }
+
+    ASTNode parentNode = this.getParent().getNode();
+    if (!(newExpr instanceof GrClosableBlock)) {
+      ArrayList<GrExpression> allArgs = new ArrayList<GrExpression>();
+      // Collecting all arguments
+      allArgs.addAll(Arrays.asList(getExpressionArguments()));
+      ArrayList<GrExpression> closureArgs = new ArrayList<GrExpression>();
+      for (GrExpression closArg : getClosureArguments()) {
+        if (closArg.equals(closure)) break;
+        closureArgs.add(closArg);
+      }
+      allArgs.addAll(closureArgs);
+      allArgs.add(newExpr);
+
+      // New argument list
+      GrArgumentList newArgList = GroovyElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
+      while (closure.getNode().getTreePrev() != null &&
+          !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
+        parentNode.removeChild(closure.getNode().getTreePrev());
+      }
+      parentNode.removeChild(closure.getNode());
+      getArgumentList().replaceWithArgumentList(newArgList);
+      GrExpression[] arguments = getArgumentList().getExpressionArguments();
+      assert arguments.length > 0;
+      return arguments[arguments.length - 1];
+    } else {
+      return closure.replaceWithExpression(newExpr);
+    }
+  }
 }

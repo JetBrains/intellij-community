@@ -16,11 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -41,5 +49,20 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   public GrExpression[] getExpressionArguments() {
     return findChildrenByClass(GrExpression.class);
+  }
+
+  public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {
+    if (this.getParent() == null ||
+        this.getParent().getNode() == null ||
+        newArgList.getNode() == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode parentNode = this.getParent().getNode();
+    ASTNode newNode = newArgList.getNode();
+    parentNode.replaceChild(this.getNode(), newNode);
+    if (!(newNode.getPsi() instanceof GrArgumentList)) {
+      throw new IncorrectOperationException();
+    }
+    return ((GrArgumentList) newNode.getPsi());
   }
 }

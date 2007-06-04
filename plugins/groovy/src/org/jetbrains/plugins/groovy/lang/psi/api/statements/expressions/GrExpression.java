@@ -27,5 +27,5 @@ public interface GrExpression extends GrStatement, GrCondition {
   GrExpression[] EMPTY_ARRAY = new GrExpression[0];
   PsiType getType();
 
-  GrExpression replaceWithExpresssion(GrExpression expression) throws IncorrectOperationException;
+  GrExpression replaceWithExpression(GrExpression expression) throws IncorrectOperationException;
 }

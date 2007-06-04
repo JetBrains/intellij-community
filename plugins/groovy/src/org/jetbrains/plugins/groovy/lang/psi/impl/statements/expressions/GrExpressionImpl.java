@@ -20,7 +20,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
     super(node);
   }
 
-  public GrExpression replaceWithExpresssion(@NotNull GrExpression newExpr) throws IncorrectOperationException {
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {
     return PsiImplUtil.replaceExpression(this, newExpr);
   }
 

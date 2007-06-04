@@ -19,11 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @autor: ilyas
@@ -59,7 +61,12 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = getBody().getNode();
-    this.getNode().replaceChild(oldBodyNode, newBody.getNode());
+    if (oldBodyNode.getTreePrev() != null &&
+        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+      ASTNode whiteNode = GroovyElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
+      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
+    }
+    getNode().replaceChild(oldBodyNode, newBody.getNode());
     ASTNode newNode = newBody.getNode();
     if (!(newNode.getPsi() instanceof GrCondition)) {
       throw new IncorrectOperationException();

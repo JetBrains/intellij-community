@@ -1,9 +1,12 @@
+/*
+ * Copyright (c) 2007, Your Corporation. All Rights Reserved.
+ */
+
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
 
@@ -20,7 +23,7 @@ public class PsiImplUtil {
     // Remove unnecessary parentheses
     if (oldExpr.getParent() instanceof GrParenthesizedExpr &&
         newExpr instanceof GrReferenceExpression){
-      return ((GrExpression) oldExpr.getParent()).replaceWithExpresssion(newExpr);
+      return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr);
     }
     ASTNode parentNode = oldExpr.getParent().getNode();
     ASTNode newNode = newExpr.getNode();
