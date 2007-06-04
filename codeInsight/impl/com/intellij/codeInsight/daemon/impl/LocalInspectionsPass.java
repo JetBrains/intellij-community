@@ -382,7 +382,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   public static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<PsiElement> result = new THashSet<PsiElement>();
+    final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (Language language : viewProvider.getPrimaryLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightUtil.shouldInspect(psiRoot)) {
