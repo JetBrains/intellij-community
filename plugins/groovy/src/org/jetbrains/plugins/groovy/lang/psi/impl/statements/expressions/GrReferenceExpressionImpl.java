@@ -201,6 +201,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
             }
           }
         }
+      } else if (qualifierType instanceof PsiArrayType) {
+        processClassQualifierType(refExpr, processor, ((PsiArrayType) qualifierType).getComponentType());
       }
     }
 
@@ -391,6 +393,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           }
         }
       }
+    } else if (qualifierType instanceof PsiArrayType) {
+      getVaiantsFromQualifierType(processor, ((PsiArrayType) qualifierType).getComponentType(), getProject());
     }
   }
 
