@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMainMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -28,6 +29,13 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("method1/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
     assertTrue(resolveResult.getElement() instanceof GrMethod);
+    assertTrue(resolveResult.isValidResult());
+  }
+
+  public void testScriptMain() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMain/A.java");
+    JavaResolveResult resolveResult = ref.advancedResolve(false);
+    assertTrue(resolveResult.getElement() instanceof GroovyScriptMainMethod);
     assertTrue(resolveResult.isValidResult());
   }
 
