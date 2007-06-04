@@ -17,6 +17,16 @@ import java.util.*;
 public class ModelMergerUtil {
 
   @Nullable
+  public static <T> T getFirstImplementation(final T t) {
+    T cur = t;
+    while (cur instanceof MergedObject) {
+      final List<T> implementations = ((MergedObject<T>)t).getImplementations();
+      cur = implementations.isEmpty()? null : implementations.get(0);
+    }
+    return cur;
+  }
+
+  @Nullable
   public static <T, V> V getImplementation(final Class<V> clazz, final Collection<T> elements) {
     for (final T element : elements) {
       final V implementation = getImplementation(element, clazz);

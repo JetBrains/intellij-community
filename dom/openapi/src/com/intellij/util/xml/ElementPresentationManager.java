@@ -128,6 +128,8 @@ public abstract class ElementPresentationManager {
   }
 
   public static String getTypeNameForObject(Object o) {
+    final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
+    o = firstImpl != null ? firstImpl : o;
     final Class<? extends Object> aClass = o.getClass();
     String s = _getTypeName(aClass);
     if (s != null) {
@@ -220,6 +222,8 @@ public abstract class ElementPresentationManager {
 
   @NotNull
   public static Icon[] getIcons(Object o) {
+    final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
+    o = firstImpl != null ? firstImpl : o;
     List<Icon> result = new ArrayList<Icon>();
     for (final Function<Object, Icon> function : ourIconProviders) {
       final Icon icon = function.fun(o);
