@@ -99,7 +99,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   public ArrayList<String> getConflicts(final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
     ArrayList<String> result = new ArrayList<String>();
-    InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, result);
+    ReferencedElementsCollector collector = new ReferencedElementsCollector() {
+      protected void checkAddMember(final PsiMember member) {
+        if (member.getContainingClass() != myClass) {
+          super.checkAddMember(member);
+        }
+      }
+    };
+    InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);
     return result;
   }
 

@@ -118,7 +118,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    addInaccessibleMemberConflicts(myMethod, usagesIn, conflicts);
+    addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
 
     if (!conflicts.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
@@ -137,8 +137,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  public static void addInaccessibleMemberConflicts(final PsiElement element, final UsageInfo[] usages, final ArrayList<String> conflicts) {
-    final ReferencedElementsCollector collector = new ReferencedElementsCollector();
+  public static void addInaccessibleMemberConflicts(final PsiElement element,
+                                                    final UsageInfo[] usages,
+                                                    final ReferencedElementsCollector collector,
+                                                    final ArrayList<String> conflicts) {
     element.accept(collector);
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages);
 

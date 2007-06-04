@@ -17,7 +17,11 @@ class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
   public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     final PsiElement psiElement = reference.resolve();
     if (psiElement instanceof PsiMember) {
-      myReferencedMembers.add((PsiMember)psiElement);
+      checkAddMember((PsiMember)psiElement);
     }
+  }
+
+  protected void checkAddMember(final PsiMember member) {
+    myReferencedMembers.add(member);
   }
 }
