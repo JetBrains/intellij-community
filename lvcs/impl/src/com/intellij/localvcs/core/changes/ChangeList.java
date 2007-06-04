@@ -13,7 +13,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class ChangeList {
-  // todo hold changes in reverse order
   private List<Change> myChanges = new ArrayList<Change>();
 
   public ChangeList() {
@@ -66,40 +65,76 @@ public class ChangeList {
   }
 
   public List<Change> getChangesFor(Entry r, String path) {
-    Entry rootCopy = r.copy();
-    Entry e = rootCopy.getEntry(path);
+    final Entry rootCopy = r.copy();
+    final Entry[] e = new Entry[]{rootCopy.getEntry(path)};
 
-    List<Change> result = new ArrayList<Change>();
-    IdPath idPath = e.getIdPath();
-    boolean exists = true;
-    for (Change c : Reversed.list(myChanges)) {
-      for (Change cc : Reversed.list(c.getChanges())) {
-        if (!exists) {
-          if (cc instanceof DeleteChange) {
-            DeleteChange ccc = (DeleteChange)cc;
-            if (idPath.startsWith(ccc.getAffectedIdPaths()[0])) {
-              exists = true;
+    final List<Change> result = new ArrayList<Change>();
+    final IdPath[] idPath = new IdPath[]{e[0].getIdPath()};
+    final boolean[] exists = new boolean[]{true};
+
+    for (final Change cs : Reversed.list(myChanges)) {
+      try {
+        cs.accept(new ChangeVisitor() {
+          private Change myChangeToAdd;
+
+          @Override
+          public void visit(ChangeSet c) {
+            myChangeToAdd = c;
+          }
+
+          @Override
+          public void visit(PutLabelChange c) {
+            myChangeToAdd = c;
+            visit((Change)c);
+          }
+
+          @Override
+          public void visit(Change c) {
+            if (!exists[0]) {
+              c.revertOn(rootCopy);
+            }
+            else {
+              if (c.affects(idPath[0])) result.add(cs);
+              c.revertOn(rootCopy);
+              idPath[0] = e[0].getIdPath();
             }
           }
-          cc.revertOn(rootCopy);
-          if (exists) e = rootCopy.getEntry(idPath);
-        }
-        else {
-          if (cc.affects(idPath)) result.add(c);
-          if (cc instanceof CreateEntryChange) {
-            CreateEntryChange ccc = (CreateEntryChange)cc;
-            if (ccc.getAffectedIdPaths()[0].equals(idPath)) {
-              exists = false;
+
+          @Override
+          public void visit(CreateEntryChange c) {
+            if (exists[0]) {
+              if (c.affects(idPath[0])) result.add(myChangeToAdd);
+              if (c.getAffectedIdPaths()[0].equals(idPath[0])) {
+                exists[0] = false;
+              }
             }
-            cc.revertOn(rootCopy);
+            c.revertOn(rootCopy);
           }
-          else {
-            cc.revertOn(rootCopy);
-            idPath = e.getIdPath();
+
+          @Override
+          public void visit(DeleteChange c) {
+            if (!exists[0]) {
+              if (idPath[0].startsWith(c.getAffectedIdPaths()[0])) {
+                exists[0] = true;
+              }
+              c.revertOn(rootCopy);
+              if (exists[0]) e[0] = rootCopy.getEntry(idPath[0]);
+            }
+            else {
+              if (c.affects(idPath[0])) result.add(myChangeToAdd);
+              c.revertOn(rootCopy);
+              idPath[0] = e[0].getIdPath();
+            }
           }
-        }
+        });
+      }
+      catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+      catch (ChangeVisitor.StopVisitingException ex) {
       }
     }
+
     return new ArrayList<Change>(new LinkedHashSet<Change>(result));
   }
 

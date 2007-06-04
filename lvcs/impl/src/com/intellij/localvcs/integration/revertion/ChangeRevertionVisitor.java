@@ -19,16 +19,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(CreateFileChange c) throws IOException {
-    revertCreation(c);
-  }
-
-  @Override
-  public void visit(CreateDirectoryChange c) throws IOException {
-    revertCreation(c);
-  }
-
-  private void revertCreation(StructuralChange c) throws IOException {
+  public void visit(CreateEntryChange c) throws IOException {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 

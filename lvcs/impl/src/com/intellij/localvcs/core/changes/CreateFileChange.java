@@ -32,9 +32,4 @@ public class CreateFileChange extends CreateEntryChange {
 
     return addEntry(r, parentPath, e);
   }
-
-  @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
-    v.visit(this);
-  }
 }

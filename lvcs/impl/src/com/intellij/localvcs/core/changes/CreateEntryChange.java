@@ -34,4 +34,9 @@ public abstract class CreateEntryChange extends StructuralChange {
   public boolean isCreationalFor(Entry e) {
     return e.getId() == myAffectedIdPath.getId();
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+    v.visit(this);
+  }
 }

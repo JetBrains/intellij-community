@@ -11,7 +11,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("changeSet createDir changeSet createFile ");
+    assertVisitorLog("changeSet createEntry changeSet createEntry ");
   }
 
   @Test
@@ -21,7 +21,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
-    assertVisitorLog("changeSet createDir createFile ");
+    assertVisitorLog("changeSet createEntry createEntry ");
   }
 
   @Test
@@ -30,7 +30,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("createDir createFile ");
+    assertVisitorLog("createEntry createEntry ");
   }
 
   @Test
@@ -42,7 +42,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.rename("dir", "newDir");
 
-    assertVisitorLog("rename changeSet createDir changeSet createFile ");
+    assertVisitorLog("rename changeSet createEntry changeSet createEntry ");
   }
 
   @Test
@@ -61,7 +61,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     };
 
     vcs.accept(visitor);
-    assertEquals("changeSet createDir ", visitor.getLog());
+    assertEquals("changeSet createEntry ", visitor.getLog());
   }
 
   private void assertVisitorLog(final String expected) throws Exception {
@@ -74,18 +74,13 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     private String log = "";
 
     @Override
-    public void visit(final ChangeSet c) throws StopVisitingException {
+    public void visit(ChangeSet c) throws StopVisitingException {
       log += "changeSet ";
     }
 
     @Override
-    public void visit(CreateFileChange c) {
-      log += "createFile ";
-    }
-
-    @Override
-    public void visit(CreateDirectoryChange c) {
-      log += "createDir ";
+    public void visit(CreateEntryChange c) {
+      log += "createEntry ";
     }
 
     @Override

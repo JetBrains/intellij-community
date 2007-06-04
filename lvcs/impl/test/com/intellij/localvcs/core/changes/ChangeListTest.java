@@ -256,6 +256,30 @@ public class ChangeListTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testChangesForFileIfThereWereSomeDeletedFilesBeforeItsCreation() {
+    Change cs1 = cs(new CreateFileChange(1, "f1", null, -1));
+    Change cs2 = cs(new DeleteChange("f1"));
+    Change cs3 = cs(new CreateFileChange(2, "f2", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3);
+
+    assertEquals(list(cs3), getChangesFor("f2"));
+  }
+
+  @Test
+  public void testIncludingLabelsChanges() {
+    Change cs1 = cs(new CreateFileChange(1, "f1", null, -1));
+    Change cs2 = cs(new CreateFileChange(2, "f2", null, -1));
+    Change cs3 = new PutEntryLabelChange(-1, "f1", "label", false);
+    Change cs4 = new PutLabelChange(-1, "label", false);
+
+    applyAndAddChange(cs1, cs2, cs3, cs4);
+
+    assertEquals(list(cs4, cs3, cs1), getChangesFor("f1"));
+    assertEquals(list(cs4, cs2), getChangesFor("f2"));
+  }
+
+  @Test
   public void testDoesNotIncludeChangesMadeBetweenDeletionAndRestore() {
     Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
     Change cs2 = cs(new DeleteChange("file"));

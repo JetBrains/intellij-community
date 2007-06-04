@@ -78,4 +78,9 @@ public class PutLabelChange extends Change {
   public boolean isMark() {
     return myIsMark;
   }
+
+  @Override
+  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+    v.visit(this);
+  }
 }

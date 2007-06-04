@@ -4,16 +4,21 @@ import java.io.IOException;
 
 public abstract class ChangeVisitor {
   public void visit(ChangeSet c) throws IOException, StopVisitingException {
+    visit((Change)c);
+  }
+
+  public void visit(PutLabelChange c) throws IOException, StopVisitingException {
+    visit((Change)c);
   }
 
   public void visit(StructuralChange c) throws IOException, StopVisitingException {
+    visit((Change)c);
   }
 
-  public void visit(CreateFileChange c) throws IOException, StopVisitingException {
-    visit((StructuralChange)c);
+  public void visit(Change c) throws IOException, StopVisitingException {
   }
 
-  public void visit(CreateDirectoryChange c) throws IOException, StopVisitingException {
+  public void visit(CreateEntryChange c) throws IOException, StopVisitingException {
     visit((StructuralChange)c);
   }
 

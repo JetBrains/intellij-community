@@ -35,9 +35,4 @@ public class CreateDirectoryChange extends CreateEntryChange {
     DirectoryEntry e = new DirectoryEntry(myId, name);
     return addEntry(r, parentPath, e);
   }
-
-  @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
-    v.visit(this);
-  }
 }
