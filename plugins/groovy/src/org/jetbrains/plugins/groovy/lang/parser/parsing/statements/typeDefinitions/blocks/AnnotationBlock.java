@@ -48,10 +48,14 @@ public class AnnotationBlock implements GroovyElementTypes {
       sep = Separators.parse(builder);
     }
 
-    ParserUtils.waitNextRCurly(builder);
-
-    if (!ParserUtils.getToken(builder, mRCURLY)) {
+    if (builder.getTokenType() != mRCURLY) {
       builder.error(GroovyBundle.message("rcurly.expected"));
+    }
+
+    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
+      AnnotationMember.parse(builder/*, className*/);
+
+      builder.advanceLexer();
     }
 
     abMarker.done(ANNOTATION_BLOCK);

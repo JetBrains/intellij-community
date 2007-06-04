@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.graph.builder.GraphBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.AnnotationBlock;
@@ -36,12 +37,14 @@ public class AnnotationDefinition implements GroovyElementTypes {
     }
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
+      builder.error(GraphBundle.message("annotation.definition.qualified.name.expected"));
       return WRONGWAY;
     }
 
     if (WRONGWAY.equals(AnnotationBlock.parse(builder))) {
-      return WRONGWAY;
+      return ANNOTATION_BLOCK;
     }
-    return ANNOTATION_BLOCK;
+
+    return ANNOTATION_DEFINITION;
   }
 }

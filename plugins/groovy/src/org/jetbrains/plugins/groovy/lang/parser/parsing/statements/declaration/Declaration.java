@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -37,8 +36,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Declaration implements GroovyElementTypes {
-
   public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
+    return parse(builder, isInClass, false);
+  }
+
+  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
     PsiBuilder.Marker declmMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
@@ -49,6 +51,10 @@ public class Declaration implements GroovyElementTypes {
 
       if (WRONGWAY.equals(TypeSpec.parse(builder, false))) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
+
+        if (isInAnnotation) {
+          builder.error(GroovyBundle.message("type.expected"));
+        }
 
         GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
 
@@ -66,6 +72,10 @@ public class Declaration implements GroovyElementTypes {
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
+
+          if (isInAnnotation) {
+            builder.error(GroovyBundle.message("type.expected"));
+          }
 
           GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
 

@@ -16,15 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.CaretModel;

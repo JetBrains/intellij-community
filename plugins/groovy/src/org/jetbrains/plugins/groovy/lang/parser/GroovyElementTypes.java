@@ -142,7 +142,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition");
 
   //types
-//  GroovyElementType TYPE_ELEMENT = new GroovyElementType("type usage");
+  //  GroovyElementType TYPE_ELEMENT = new GroovyElementType("type usage");
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
@@ -153,11 +153,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
 
   //fields
-//  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
-//  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
-  //  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
-  //  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
-  GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation");
+  GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation member");
+  GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
   //methods
   GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
@@ -166,8 +163,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //bodies
   //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
-//  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
-  GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");  
+  //  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
+  GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
 
   //throws
   GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
@@ -236,11 +233,11 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
-          OPEN_BLOCK,
-          CLASS_BLOCK,
-          INTERFACE_BLOCK,
-          ANNOTATION_BLOCK,
-          ENUM_BLOCK,
-          CASE_BLOCK/*,
+      OPEN_BLOCK,
+      CLASS_BLOCK,
+      INTERFACE_BLOCK,
+      ANNOTATION_BLOCK,
+      ENUM_BLOCK,
+      CASE_BLOCK/*,
           CONSTRUCTOR_BODY*/);
 }

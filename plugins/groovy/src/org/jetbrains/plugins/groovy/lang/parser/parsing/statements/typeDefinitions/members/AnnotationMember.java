@@ -18,10 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.VariableDefinitions;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -32,33 +30,25 @@ public class AnnotationMember implements GroovyElementTypes {
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
-    if (TypeDeclarationStart.parse(builder)) {
-      typeDeclStartMarker.rollbackTo();
+    GroovyElementType typeDef = TypeDefinition.parse(builder);
 
-      GroovyElementType typeDef = TypeDefinition.parse(builder);
-      if (WRONGWAY.equals(typeDef)) {
-        return WRONGWAY;
-      }
+    if (!WRONGWAY.equals(typeDef)) {
+      typeDeclStartMarker.drop();
       return typeDef;
+    } else {
+      typeDeclStartMarker.rollbackTo();
     }
-    typeDeclStartMarker.rollbackTo();
 
-
-    PsiBuilder.Marker varDefMarker = builder.mark();
+    PsiBuilder.Marker declMarker = builder.mark();
 
     //typized var definition
-    //todo: check for upper case type specification 
-    if (WRONGWAY.equals(TypeSpec.parse(builder))) {
-      varDefMarker.rollbackTo();
-      return WRONGWAY;
+    GroovyElementType declaration = Declaration.parse(builder, true, true);
+    if (!WRONGWAY.equals(declaration)) {
+      declMarker.drop();
+      return declaration;
+    } else {
+      declMarker.rollbackTo();
     }
-
-    GroovyElementType varDef = VariableDefinitions.parse(builder, true);
-    if (!WRONGWAY.equals(varDef)) {
-      varDefMarker.done(varDef);
-      return varDef;
-    }
-    varDefMarker.rollbackTo();
 
     return WRONGWAY;
   }

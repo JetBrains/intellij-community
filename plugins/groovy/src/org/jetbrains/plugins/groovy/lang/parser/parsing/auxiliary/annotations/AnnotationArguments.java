@@ -55,7 +55,7 @@ public class AnnotationArguments implements GroovyElementTypes {
   * annotationMemberValueInitializer ::=  conditionalExpression |	annotation
   */
 
-  private static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
+  public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     if (builder.getTokenType() == mAT) {
       return !WRONGWAY.equals(Annotation.parse(builder));
     }
