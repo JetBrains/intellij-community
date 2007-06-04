@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 
 /**
  * User: Dmitry.Krasilschikov

@@ -5,11 +5,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -25,9 +25,20 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
 
     GrWhileStatement grWhileStatement = (GrWhileStatement) element;
     GrCondition grStatement = grWhileStatement.getBody();
+
     int endOffset = grStatement.getTextRange().getEndOffset();
 
-    grStatement.getParent().getNode().removeChild(grStatement.getNode());
+    if (grStatement instanceof GrStatement) {
+      endOffset = grStatement.getTextRange().getEndOffset();
+      grStatement.getParent().getNode().removeChild(grStatement.getNode());
+
+    } else if (grStatement instanceof GrOpenBlock) {
+      GrStatement grStatementInBody = ((GrOpenBlock) grStatement).getStatements()[0];
+      endOffset = grStatementInBody.getTextRange().getEndOffset();
+
+      grStatementInBody.getParent().getNode().removeChild(grStatementInBody.getNode());
+    }
+
     return new TextRange(endOffset, endOffset);
   }
 

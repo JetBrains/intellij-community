@@ -1,18 +1,17 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
 
-import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -30,9 +29,9 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 //    return isStatements(elements);
 //  }
 
- public boolean isStatements(@NotNull PsiElement[] elements) {
+  public boolean isStatements(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (! (element instanceof GrStatement)) {
+      if (!(element instanceof GrStatement)) {
         return false;
       }
     }
@@ -41,7 +40,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     if (elements.length == 0) return false;
-    if (elements.length == 1) return elements[0] instanceof GrStatement && !(elements[0] instanceof GrExpression);
+    if (elements.length == 1) return elements[0] instanceof GrStatement;
     return isStatements(elements);
   }
 

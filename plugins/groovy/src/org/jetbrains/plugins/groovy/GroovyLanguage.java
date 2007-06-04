@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +39,12 @@ import org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder;
 import org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher;
 import org.jetbrains.plugins.groovy.highlighter.GroovyCommenter;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
-import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovySurroundDescriptor;
-import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider;
-import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
+import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
 
 /**
  * All main properties for Groovy language
@@ -105,7 +105,7 @@ public class GroovyLanguage extends Language {
 
   @NotNull
   public SurroundDescriptor[] getSurroundDescriptors() {
-    return new SurroundDescriptor[]{new GroovySurroundDescriptor()};
+    return new SurroundDescriptor[]{new GroovyStmtsSurroundDescriptor()};
   }
 
   @Nullable

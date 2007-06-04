@@ -1,11 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -13,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public class GroovySurrounderByParametrizedClosure extends GroovyManyStatementsSurrounder {
   public String getTemplateDescription() {
-    return "{it -> ... }";
+    return "{param -> ... }";
   }
 
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
@@ -23,11 +22,12 @@ public class GroovySurrounderByParametrizedClosure extends GroovyManyStatementsS
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrClosableBlock;
 
-    int endOffset = element.getTextRange().getEndOffset();
-    return new TextRange(endOffset, endOffset);
-  }
+    GrClosableBlock closableBlock = (GrClosableBlock) element;
+    GrParameterList it = closableBlock.getParameterList();
+    int endOffset = it.getTextRange().getStartOffset();
 
-  protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrStatement;
+    it.getParent().getNode().removeChild(it.getNode());
+
+    return new TextRange(endOffset, endOffset);
   }
 }

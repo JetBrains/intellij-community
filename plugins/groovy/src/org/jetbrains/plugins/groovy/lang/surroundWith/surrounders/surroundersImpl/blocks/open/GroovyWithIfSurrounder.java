@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +44,17 @@ public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
     return "if () {...}";
   }
 
-//  public boolean isApplicable(@NotNull PsiElement[] elements) {
-//    if (elements.length == 0) return false;
-//    if (elements.length == 1) return elements[0] instanceof GrStatement && ! (elements[0] instanceof GrExpression);
-//    return isStatements(elements);
-//  }
+  public boolean isApplicable(@NotNull PsiElement[] elements) {
+    if (elements.length == 0) return false;
+    if (elements.length == 1 && elements[0] instanceof GrStatement) {
+      if (elements[0] instanceof GrExpression) {
+        PsiType type = ((GrExpression) elements[0]).getType();
+        if (type == null) return true;
+        return !((PsiPrimitiveType) PsiType.BOOLEAN).getBoxedTypeName().equals(type.getCanonicalText());
+      }
+
+      return true;
+    }
+    return isStatements(elements);
+  }
 }
