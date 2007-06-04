@@ -497,6 +497,15 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
             pomPluginNodes.add(new PluginNode(this, pluginDocument));
           }
         }
+        // add the site plugin with all its goals
+        addAdditionalPlugin("org.apache.maven.plugins", "maven-site-plugin", null);
+      }
+    }
+
+    private void addAdditionalPlugin(String groupId, String artifactId, String version) {
+      PluginDocument pluginDocument = getRepository().loadPlugin(groupId, artifactId, version);
+      if (pluginDocument != null) {
+          pomPluginNodes.add(new PluginNode(this, pluginDocument));
       }
     }
 
