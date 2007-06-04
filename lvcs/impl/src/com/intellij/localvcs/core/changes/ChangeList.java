@@ -65,77 +65,16 @@ public class ChangeList {
   }
 
   public List<Change> getChangesFor(Entry r, String path) {
-    final Entry rootCopy = r.copy();
-    final Entry[] e = new Entry[]{rootCopy.getEntry(path)};
-
-    final List<Change> result = new ArrayList<Change>();
-    final IdPath[] idPath = new IdPath[]{e[0].getIdPath()};
-    final boolean[] exists = new boolean[]{true};
-
-    for (final Change cs : Reversed.list(myChanges)) {
-      try {
-        cs.accept(new ChangeVisitor() {
-          private Change myChangeToAdd;
-
-          @Override
-          public void visit(ChangeSet c) {
-            myChangeToAdd = c;
-          }
-
-          @Override
-          public void visit(PutLabelChange c) {
-            myChangeToAdd = c;
-            visit((Change)c);
-          }
-
-          @Override
-          public void visit(Change c) {
-            if (!exists[0]) {
-              c.revertOn(rootCopy);
-            }
-            else {
-              if (c.affects(idPath[0])) result.add(cs);
-              c.revertOn(rootCopy);
-              idPath[0] = e[0].getIdPath();
-            }
-          }
-
-          @Override
-          public void visit(CreateEntryChange c) {
-            if (exists[0]) {
-              if (c.affects(idPath[0])) result.add(myChangeToAdd);
-              if (c.getAffectedIdPaths()[0].equals(idPath[0])) {
-                exists[0] = false;
-              }
-            }
-            c.revertOn(rootCopy);
-          }
-
-          @Override
-          public void visit(DeleteChange c) {
-            if (!exists[0]) {
-              if (idPath[0].startsWith(c.getAffectedIdPaths()[0])) {
-                exists[0] = true;
-              }
-              c.revertOn(rootCopy);
-              if (exists[0]) e[0] = rootCopy.getEntry(idPath[0]);
-            }
-            else {
-              if (c.affects(idPath[0])) result.add(myChangeToAdd);
-              c.revertOn(rootCopy);
-              idPath[0] = e[0].getIdPath();
-            }
-          }
-        });
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-      catch (ChangeVisitor.StopVisitingException ex) {
-      }
+    ChangeCollectingVisitor v = new ChangeCollectingVisitor(r, path);
+    try {
+      accept(v);
     }
-
-    return new ArrayList<Change>(new LinkedHashSet<Change>(result));
+    catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+    catch (ChangeVisitor.StopVisitingException ex) {
+    }
+    return v.getResult();
   }
 
   public void addChange(Change c) {
@@ -189,5 +128,75 @@ public class ChangeList {
 
   protected long getIntervalBetweenActivities() {
     return 12 * 60 * 60 * 1000;
+  }
+
+  private static class ChangeCollectingVisitor extends ChangeVisitor {
+    private List<Change> myResult = new ArrayList<Change>();
+    private Entry myRootCopy;
+    private Change myChangeToAdd;
+    private Entry myEntry;
+    private IdPath myIdPath;
+    private boolean myExists = true;
+
+    public ChangeCollectingVisitor(Entry r, String path) {
+      myRootCopy = r.copy();
+      myEntry = myRootCopy.getEntry(path);
+      myIdPath = myEntry.getIdPath();
+    }
+
+    public List<Change> getResult() {
+      return new ArrayList<Change>(new LinkedHashSet<Change>(myResult));
+    }
+
+    @Override
+    public void visit(ChangeSet c) {
+      myChangeToAdd = c;
+    }
+
+    @Override
+    public void visit(PutLabelChange c) {
+      myChangeToAdd = c;
+      visit((Change)c);
+    }
+
+    @Override
+    public void visit(Change c) {
+      if (skippedDueToNonexistence(c)) return;
+      addIfAffectsAndRevert(c);
+
+      myIdPath = myEntry.getIdPath();
+    }
+
+    @Override
+    public void visit(CreateEntryChange c) {
+      if (skippedDueToNonexistence(c)) return;
+      addIfAffectsAndRevert(c);
+
+      if (c.isCreationalFor(myIdPath)) myExists = false;
+    }
+
+    @Override
+    public void visit(DeleteChange c) {
+      if (skippedDueToNonexistence(c)) {
+        if (c.isDeletionOf(myIdPath)) myExists = true;
+        if (myExists) myEntry = myRootCopy.getEntry(myIdPath);
+        return;
+      }
+
+      addIfAffectsAndRevert(c);
+      myIdPath = myEntry.getIdPath();
+    }
+
+    private void addIfAffectsAndRevert(Change c) {
+      if (c.affects(myIdPath)) myResult.add(myChangeToAdd);
+      c.revertOn(myRootCopy);
+    }
+
+    private boolean skippedDueToNonexistence(Change c) {
+      if (myExists) return false;
+
+      c.revertOn(myRootCopy);
+      return true;
+    }
   }
 }

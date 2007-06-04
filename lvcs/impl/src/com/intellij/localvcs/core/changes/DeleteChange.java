@@ -56,6 +56,10 @@ public class DeleteChange extends StructuralChange {
     return r.getEntry(myAffectedIdPath.getParent());
   }
 
+  public boolean isDeletionOf(IdPath p) {
+    return p.startsWith(myAffectedIdPath);
+  }
+
   @Override
   public List<Content> getContentsToPurge() {
     List<Content> result = new ArrayList<Content>();

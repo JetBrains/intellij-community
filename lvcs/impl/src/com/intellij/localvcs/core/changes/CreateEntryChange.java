@@ -32,7 +32,11 @@ public abstract class CreateEntryChange extends StructuralChange {
 
   @Override
   public boolean isCreationalFor(Entry e) {
-    return e.getId() == myAffectedIdPath.getId();
+    return isCreationalFor(e.getIdPath());
+  }
+
+  public boolean isCreationalFor(IdPath p) {
+    return p.getId() == myAffectedIdPath.getId();
   }
 
   @Override
