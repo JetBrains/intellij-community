@@ -111,20 +111,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiNewExpression) {
-        try {
-          replaceNewExpression((PsiNewExpression) element, superType);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        replaceNewOrType((PsiNewExpression)element, superType);
       }
       else if (element.getParent() instanceof PsiNewExpression) {
-        try {
-          replaceNewExpression((PsiNewExpression) element.getParent(), superType);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        replaceNewOrType((PsiNewExpression) element.getParent(), superType);
       }
       else {
         PsiImportStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
@@ -134,16 +124,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         else {
           PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
           if (typeElement != null) {
-            PsiClassType psiType = (PsiClassType) typeElement.getType();
-            PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
-            PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
-            assert classResolveResult.getElement() == myClass;
-            try {
-              typeElement.replace(factory.createTypeElement(substType));
-            }
-            catch(IncorrectOperationException e) {
-              LOG.error(e);
-            }
+            replaceWithSuperType(typeElement, superType);
           }
         }
       }
@@ -166,6 +147,35 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       catch(IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+  }
+
+  private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
+    try {
+      if (psiNewExpression.getArrayDimensions().length == 0) {
+        replaceNewExpression(psiNewExpression, superType);
+      }
+      else {
+        PsiJavaCodeReferenceElement element = myClass.getManager().getElementFactory().createClassReferenceElement(superType.resolve());
+        psiNewExpression.getClassReference().replace(element);        
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void replaceWithSuperType(final PsiTypeElement typeElement, final PsiClassType superType) {
+    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiClassType psiType = (PsiClassType) typeElement.getType();
+    PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
+    PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
+    assert classResolveResult.getElement() == myClass;
+    try {
+      typeElement.replace(factory.createTypeElement(substType));
+    }
+    catch(IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
@@ -549,9 +559,6 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
       if (parentElement instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
-        if (newExpression.getArrayDimensions().length > 0) {
-          return "Class cannot be inlined because it is used in an array instance creation expression";
-        }
         final PsiMethod[] constructors = myClass.getConstructors();
         if (constructors.length == 0) {
           PsiExpressionList newArgumentList = newExpression.getArgumentList();

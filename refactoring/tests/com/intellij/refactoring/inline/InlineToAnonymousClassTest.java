@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -131,6 +132,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testArrayType() throws Exception {
+    doTest(false);
+  }
+
+  public void testArrayTypeWithGenerics() throws Exception {
+    doTest(false);
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
@@ -201,10 +210,6 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   public void testNoInlineUnresolvedInterface() throws Exception {
     doTestNoInline("Class cannot be inlined because an interface implemented by it cannot be resolved");
-  }
-
-  public void testNoInlineArrayType() throws Exception {
-    doTestPreprocessUsages("Class cannot be inlined because it is used in an array instance creation expression");
   }
 
   public void testConflictInaccessibleOuterField() throws Exception {
