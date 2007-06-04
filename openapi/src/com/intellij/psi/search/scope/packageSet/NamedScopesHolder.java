@@ -52,7 +52,8 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   public synchronized void removeScopeListener(ScopeListener scopeListener) {
     myScopeListeners.remove(scopeListener);
   }
-  private synchronized void fireScopeListeners() {
+
+  public synchronized void fireScopeListeners() {
     if (myScopeListeners != null) {
       for (ScopeListener listener : myScopeListeners) {
         listener.scopesChanged();
