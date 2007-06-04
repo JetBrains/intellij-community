@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.core.util;
 
+import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,5 +59,32 @@ public class MavenEnv {
 
   public static List<String> getStandardGoalsList() {
     return Arrays.asList(standardGoals);
+  }
+
+  @NotNull
+  public static MavenEmbedder createEmbedder(@NotNull final String userSettings, ClassLoader classLoader) throws MavenEmbedderException {
+
+    Configuration configuration = new DefaultConfiguration();
+
+    configuration
+      .setUserSettingsFile(new File(userSettings))
+      .setGlobalSettingsFile(new File(getDefaultSettingsFile()))
+      .setClassLoader(classLoader);
+
+    ConfigurationValidationResult validationResult = MavenEmbedder.validateConfiguration(configuration);
+
+    if (!validationResult.isValid()) {
+      throw new MavenEmbedderException(toString(validationResult));
+    }
+
+    return new MavenEmbedder(configuration);
+  }
+
+  @NonNls
+  private static String toString(final ConfigurationValidationResult validationResult) {
+    return (validationResult.isGlobalSettingsFilePresent() ? "" : "Global settings file missing ") +
+           (validationResult.isGlobalSettingsFileParses() ? "" : "Global settings file malformed ") +
+           (validationResult.isUserSettingsFilePresent() ? "" : "User settings file missing ") +
+           (validationResult.isUserSettingsFileParses() ? "" : "User settings file malformed");
   }
 }
