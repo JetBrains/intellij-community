@@ -88,6 +88,15 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             if (type2 == null) {
                 return;
             }
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            final PsiType parameterType1 =
+                    parameters[parameters.length - 1].getType();
+            final PsiType parameterType2 = 
+                    parameters[parameters.length - 2].getType();
+            if (!parameterType1.equals(parameterType2)) {
+                return;
+            }
             if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
                 return;
             }
