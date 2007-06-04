@@ -199,6 +199,28 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRevisionsForFileThatWasCreatedAndDeletedInOneChangeSet() {
+    vcs.createFile("f", null, -1);
+    int id = vcs.getEntry("f").getId();
+    vcs.delete("f");
+
+    vcs.beginChangeSet();
+    vcs.restoreFile(id, "f", null, -1);
+    vcs.delete("f");
+    vcs.endChangeSet(null);
+
+    vcs.restoreFile(id, "f", null, -1);
+
+    vcs.beginChangeSet();
+    vcs.delete("f");
+    vcs.restoreFile(id, "f", null, -1);
+    vcs.endChangeSet(null);
+
+    List<Revision> rr = vcs.getRevisionsFor("f");
+    assertEquals(3, rr.size());
+  }
+
+  @Test
   public void testRevisionsForFileCreatenInPlaceOfRenamedOne() {
     vcs.createFile("file1", cf("content1"), -1);
     vcs.rename("file1", "file2");

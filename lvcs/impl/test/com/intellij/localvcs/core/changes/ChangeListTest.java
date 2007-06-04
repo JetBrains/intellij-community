@@ -267,6 +267,18 @@ public class ChangeListTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testDoesNotIncludeChangeSetIfFileWasRestoredAndDeletedInOneChangeSet() {
+    Change cs1 = cs(new CreateFileChange(1, "f", null, -1));
+    Change cs2 = cs(new DeleteChange("f"));
+    Change cs3 = cs(new CreateFileChange(1, "f", null, -1), new DeleteChange("f"));
+    Change cs4 = cs(new CreateFileChange(1, "f", null, -1));
+
+    applyAndAddChange(cs1, cs2, cs3, cs4);
+
+    assertEquals(list(cs4, cs1), getChangesFor("f"));
+  }
+
+  @Test
   public void testIncludingLabelsChanges() {
     Change cs1 = cs(new CreateFileChange(1, "f1", null, -1));
     Change cs2 = cs(new CreateFileChange(2, "f2", null, -1));

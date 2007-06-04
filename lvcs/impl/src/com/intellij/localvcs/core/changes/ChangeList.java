@@ -137,6 +137,7 @@ public class ChangeList {
     private Entry myEntry;
     private IdPath myIdPath;
     private boolean myExists = true;
+    private boolean myDoNotAddAnythingAlseFromCurrentChangeSet = false;
 
     public ChangeCollectingVisitor(Entry r, String path) {
       myRootCopy = r.copy();
@@ -150,6 +151,7 @@ public class ChangeList {
 
     @Override
     public void visit(ChangeSet c) {
+      myDoNotAddAnythingAlseFromCurrentChangeSet = false;
       myChangeToAdd = c;
     }
 
@@ -171,7 +173,6 @@ public class ChangeList {
     public void visit(CreateEntryChange c) {
       if (skippedDueToNonexistence(c)) return;
       addIfAffectsAndRevert(c);
-
       if (c.isCreationalFor(myIdPath)) myExists = false;
     }
 
@@ -179,6 +180,7 @@ public class ChangeList {
     public void visit(DeleteChange c) {
       if (skippedDueToNonexistence(c)) {
         if (c.isDeletionOf(myIdPath)) myExists = true;
+        myDoNotAddAnythingAlseFromCurrentChangeSet = true;
         if (myExists) myEntry = myRootCopy.getEntry(myIdPath);
         return;
       }
@@ -188,7 +190,9 @@ public class ChangeList {
     }
 
     private void addIfAffectsAndRevert(Change c) {
-      if (c.affects(myIdPath)) myResult.add(myChangeToAdd);
+      if (!myDoNotAddAnythingAlseFromCurrentChangeSet && c.affects(myIdPath)) {
+        myResult.add(myChangeToAdd);
+      }
       c.revertOn(myRootCopy);
     }
 
