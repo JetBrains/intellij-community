@@ -2,11 +2,21 @@ package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -15,10 +25,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
+import org.testng.Assert;
 import org.testng.TestNG;
 import org.testng.annotations.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +42,7 @@ import java.util.regex.Pattern;
 public class TestNGUtil implements TestFramework
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+    public static final String TESTNG_GROUP_NAME = "TestNG";
 
     private static final String TEST_ANNOTATION_FQN = Test.class.getName();
     private static final String[] CONFIG_ANNOTATIONS_FQN = {
@@ -58,23 +72,8 @@ public class TestNGUtil implements TestFramework
             "testng.after-suite",
             "testng.after-test"
     };
-
-    public static PsiClass findPsiClass(String className, Module module, Project project, boolean global) {
-        GlobalSearchScope scope;
-        if (module != null)
-            scope = global ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.moduleWithDependenciesScope(module);
-        else scope = global ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-        return PsiManager.getInstance(project).findClass(className, scope);
-    }
-
-    public static PsiPackage getContainingPackage(PsiClass psiclass) {
-        return psiclass.getContainingFile().getContainingDirectory().getPackage();
-    }
-
-    public static boolean testNGExists(GlobalSearchScope globalsearchscope, Project project) {
-        PsiClass found = PsiManager.getInstance(project).findClass(TestNG.class.getName(), globalsearchscope);
-        return found != null;
-    }
+  static final List junitAnnotions =
+      Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
 
     public static boolean hasConfig(PsiModifierListOwner element) {
         PsiMethod[] methods;
@@ -372,5 +371,64 @@ public class TestNGUtil implements TestFramework
 
   public boolean isTestKlass(PsiClass psiClass) {
     return hasTest(psiClass);
+  }
+
+  public static void checkTestNGInClasspath(PsiElement psiElement) {
+    final Project project = psiElement.getProject();
+    final PsiManager manager = PsiManager.getInstance(project);
+    if (manager.findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        Messages.showInfoMessage(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.");
+      }
+      final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      final Library.ModifiableModel libraryModel = model.getModuleLibraryTable().createLibrary().getModifiableModel();
+      String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
+      VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
+      libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
+      libraryModel.commit();
+      model.commit();
+    }
+  }
+
+  public static boolean containsJunitAnnotions(PsiClass psiClass) {
+    if (psiClass != null) {
+      for (PsiMethod method : psiClass.getMethods()) {
+        if (containsJunitAnnotions(method)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean containsJunitAnnotions(PsiMethod method) {
+    if (method != null) {
+      PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
+      for (PsiAnnotation annotation : annotations) {
+        if (junitAnnotions.contains(annotation.getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean inheritsJUnitTestCase(PsiClass psiClass) {
+    PsiClass current = psiClass;
+    while (current != null) {
+      PsiClass[] supers = current.getSupers();
+      if (supers.length > 0) {
+        PsiClass parent = supers[0];
+        if ("junit.framework.TestCase".equals(parent.getQualifiedName())) return true;
+        current = parent;
+        //handle typo where class extends itself
+        if (current == psiClass) return false;
+      }
+      else {
+        current = null;
+      }
+    }
+    return false;
   }
 }
