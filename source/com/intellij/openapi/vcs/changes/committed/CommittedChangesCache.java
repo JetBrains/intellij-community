@@ -59,6 +59,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private ScheduledFuture myFuture;
   private Map<CommittedChangeList, Change[]> myCachedIncomingChangeLists;
   private List<CommittedChangeList> myNewIncomingChanges = new ArrayList<CommittedChangeList>();
+  private ProjectLevelVcsManager myVcsManager;
 
   public static final Change[] ALL_CHANGES = new Change[0];
 
@@ -110,10 +111,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private Project myProject;
 
-  public CommittedChangesCache(final Project project, final MessageBus bus) {
+  public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myBus = bus;
     myTaskQueue = new BackgroundTaskQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
+    myVcsManager = vcsManager;
   }
 
   public MessageBus getMessageBus() {
@@ -131,7 +133,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   @Nullable
   public CommittedChangesProvider getProviderForProject() {
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
     List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
     for(AbstractVcs vcs: vcss) {
       if (vcs.getCommittedChangesProvider() != null) {
@@ -148,7 +150,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public boolean isMaxCountSupportedForProject() {
-    for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
+    for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
         final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
@@ -171,7 +173,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       private final List<VcsException> myExceptions = new ArrayList<VcsException>();
 
       public void run(final ProgressIndicator indicator) {
-        final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+        final VirtualFile[] files = myVcsManager.getAllVersionedRoots();
         for(VirtualFile file: files) {
           try {
             myResult.addAll(getChanges(settings, file, maxCount, cacheOnly));
@@ -202,7 +204,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount,
                                               final boolean cacheOnly)
     throws VcsException {
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+    final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     assert vcs != null;
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
     if (provider == null) {
@@ -284,11 +286,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     Collection<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
     final VirtualFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
-        return ProjectLevelVcsManager.getInstance(myProject).getAllVersionedRoots();
+        return myVcsManager.getAllVersionedRoots();
       }
     });
     for(VirtualFile file: files) {
-      final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       assert vcs != null;
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
