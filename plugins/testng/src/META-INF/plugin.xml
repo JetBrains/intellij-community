@@ -1,36 +1,39 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
-  <name>TestNG-J</name>
-  <description>TestNG Integration</description>
-  <version>1.1.1</version>
-  <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
-  <idea-version since-build="6791"/>
-  <extensions xmlns="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGDeadCodeExtension"/>
-    <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationProducer"/>
-    <testFramework implementation = "com.theoryinpractice.testng.util.TestNGUtil"/>
-  </extensions>
+    <name>TestNG-J</name>
+    <description>TestNG Integration</description>
+    <version>1.1.1</version>
+    <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
+    <idea-version since-build="6791"/>
+    <extensions xmlns="com.intellij">
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+        <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGDeadCodeExtension"/>
+        <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationProducer"/>
+        <testFramework implementation="com.theoryinpractice.testng.util.TestNGUtil"/>
+    </extensions>
 
 
-  <application-components>
-    <component>
-      <implementation-class>com.theoryinpractice.testng.configuration.TestNGConfigurationType</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.theoryinpractice.testng.TestNGReferenceProvider</implementation-class>
-    </component>
-  </project-components>
-  <change-notes>
-    <![CDATA[
+    <application-components>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.configuration.TestNGConfigurationType
+            </implementation-class>
+            <option name="workspace" value="true"/>
+        </component>
+    </application-components>
+    <project-components>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.TestNGReferenceProvider</implementation-class>
+        </component>
+    </project-components>
+    <change-notes>
+        <![CDATA[
             <li>TESTNG-151 Final passing test result is not properly hidden
             <li>Fix method popup if test has class level @Test annotation
             <li>Added auto-completion for method names in dependsOnMethods
             <li>Added auto-completion for group names in dependsOnGroups
             <li>Fix for NPE on annotations without an annotation name (@ only).
+            <li>Added TestNG 5.6 jars
+            <li>Added inspection descriptions
         ]]>
-  </change-notes>
+    </change-notes>
 </idea-plugin>

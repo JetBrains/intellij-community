@@ -89,11 +89,16 @@
                 <include name="plugin.xml"/>
             </zipfileset>
         </jar>
+        <jar jarfile="${bin.dir}/jars/resources_en.jar">
+            <zipfileset dir="${src.dir}">
+                <include name="**/*.html"/>
+            </zipfileset>
+        </jar>
         <zip destfile="${dst.dir}/${ant.project.name}.zip" compress="true">
             <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/lib">
                 <include name="testng-jdk15.jar"/>
             </zipfileset>
-            <zipfileset dir="${bin.dir}/jars" prefix="${ant.project.name}/lib" includes="${ant.project.name}.jar"/>
+            <zipfileset dir="${bin.dir}/jars" prefix="${ant.project.name}/lib" includes="*.jar"/>
             <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/lib-jdk14">
                 <include name="testng-jdk14.jar"/>
             </zipfileset>
