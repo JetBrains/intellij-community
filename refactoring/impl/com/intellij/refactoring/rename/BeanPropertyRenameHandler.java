@@ -13,8 +13,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.openapi.impl.RenameRefactoringImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +40,25 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   }
 
+  public static void doRename(final BeanProperty myProperty, final String newName, final boolean searchInComments) {
+    final PsiElement psiElement = myProperty.getPsiElement();
+    final RenameRefactoring rename = new RenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
+
+    final PsiMethod setter = myProperty.getSetter();
+    if (setter != null) {
+      final String setterName = PropertyUtil.suggestSetterName(newName);
+      rename.addElement(setter, setterName);
+    }
+
+    final PsiMethod getter = myProperty.getGetter();
+    if (getter != null) {
+      final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType());
+      rename.addElement(getter, getterName);
+    }
+
+    rename.run();
+  }
+
   @Nullable
   protected abstract BeanProperty getProperty(DataContext context);
 
@@ -54,22 +73,10 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
     protected void doAction() {
       final String newName = getNewName();
-      final RenameRefactoring rename = RefactoringFactory.getInstance(getProject()).createRename(myProperty.getPsiElement(), newName);
-
-      final PsiMethod setter = myProperty.getSetter();
-      if (setter != null) {
-        final String setterName = PropertyUtil.suggestSetterName(newName);
-        rename.addElement(setter, setterName);
-      }
-
-      final PsiMethod getter = myProperty.getGetter();
-      if (getter != null) {
-        final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType());
-        rename.addElement(getter, getterName);
-      }
-
-      rename.run();
+      final boolean searchInComments = isSearchInComments();
+      doRename(myProperty, newName, searchInComments);
       close(DialogWrapper.OK_EXIT_CODE);
     }
+
   }
 }
