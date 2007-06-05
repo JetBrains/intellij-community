@@ -17,9 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
-import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
-import com.theoryinpractice.testng.inspection.DependsOnMethodInspection;
-import com.theoryinpractice.testng.inspection.JUnitConvertTool;
+import com.theoryinpractice.testng.inspection.*;
 import com.theoryinpractice.testng.model.TestData;
 
 import javax.swing.*;
@@ -44,11 +42,13 @@ public class TestNGConfigurationType implements LocatableConfigurationType, Insp
     }
 
     public Class[] getInspectionClasses() {
-        return new Class[] {
-                JUnitConvertTool.class,
-                DependsOnMethodInspection.class,
-                DependsOnGroupsInspection.class
-        };
+      return new Class[]{JUnitConvertTool.class,
+        ConvertOldAnnotationInspection.class, 
+        ConvertJavadocInspection.class,
+        ConvertAnnotationInspection.class,
+        DependsOnMethodInspection.class,
+        DependsOnGroupsInspection.class
+      };
     }
 
     public static TestNGConfigurationType getInstance() {
