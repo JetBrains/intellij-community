@@ -255,7 +255,7 @@ public class GroovyPositionManager implements PositionManager {
       }
     });
 
-    if (result == null) throw new NoDataException();
+    if (result == null || result.isEmpty()) throw new NoDataException();
     return result;
   }
 
