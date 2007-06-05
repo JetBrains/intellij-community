@@ -1,6 +1,7 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.ExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -69,8 +70,9 @@ public class TestNGConfigurationModel
     public void apply(Module module, TestNGConfiguration config) {
         boolean isGenerated = config.isGeneratedName();
         apply(config.getPersistantData(), module);
-        if (isGenerated)
+        if (isGenerated && !ExecutionUtil.isNewName(config.getName())) {
             config.setGeneratedName();
+        }
     }
 
     private void apply(TestData data, Module module) {
