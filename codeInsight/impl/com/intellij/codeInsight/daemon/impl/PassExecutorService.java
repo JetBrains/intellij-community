@@ -277,6 +277,10 @@ public abstract class PassExecutorService {
                 LOG.error(e);
                 throw e;
               }
+              catch(Error e) {
+                LOG.error(e);
+                throw e;
+              }
             }
           });
         }
