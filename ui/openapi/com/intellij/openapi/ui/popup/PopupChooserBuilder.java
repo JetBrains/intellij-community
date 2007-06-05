@@ -18,6 +18,7 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -48,6 +49,7 @@ public class PopupChooserBuilder {
   private boolean myForceResizable = false;
   private boolean myForceMovable = false;
   private String myDimensionServiceKey = null;
+  private Computable<Boolean> myCancelCallback;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = new MyListWrapper(list);
@@ -109,6 +111,11 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setCancelCalllback(Computable<Boolean> callback) {
+    myCancelCallback = callback;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -163,6 +170,7 @@ public class PopupChooserBuilder {
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
       .setTitle(myForceMovable ? myTitle : null)
+      .setCancelCallback(myCancelCallback)
       .createPopup();
     return myPopup;
   }
