@@ -55,6 +55,7 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
   protected void select(final PsiElement element, boolean requestFocus) {
     Runnable runnable = new Runnable() {
       public void run() {
+        ChangesViewContentManager.getInstance(myProject).selectContent("Local");
         ChangesViewManager.getInstance(myProject).selectFile(element.getContainingFile().getVirtualFile());
       }
     };
