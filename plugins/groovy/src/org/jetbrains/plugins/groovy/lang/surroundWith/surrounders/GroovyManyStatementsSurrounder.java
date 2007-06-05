@@ -77,7 +77,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
       if (i == 0) {
         parentNode.replaceChild(element1.getNode(), newStmt.getNode());
       } else {
-        assert element1.getParent() == element.getParent();
+        assert parentNode == element.getParent().getNode();
         parentNode.removeChild(element.getNode());
       }
     }
