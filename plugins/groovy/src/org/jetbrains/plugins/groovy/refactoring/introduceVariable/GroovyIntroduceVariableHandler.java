@@ -88,7 +88,8 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, highlighters);
     WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 

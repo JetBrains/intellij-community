@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -76,7 +78,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       text.append(type.getPresentableText()).append(" ");
     }
     text.append(identifier);
-    text.append("=").append(initializer.getText());
+    GrExpression expr;
+    if (initializer instanceof GrApplicationExpression) {
+      expr = createMethodCallByAppCall(((GrApplicationExpression) initializer));
+    }  else {
+      expr = initializer;
+    }
+    text.append("=").append(expr.getText());
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFile) file).getTopStatements()[0]);
   }
@@ -175,6 +183,22 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement);
     return ((GrOpenBlock) ((GrWhileStatement) file.getChildren()[0]).getBody());
+  }
+
+  public GrMethodCall createMethodCallByAppCall(GrApplicationExpression callExpr) {
+    StringBuffer text = new StringBuffer();
+    text.append(callExpr.getFunExpression().getText());
+    text.append("(");
+    for (GrExpression expr: callExpr.getArguments()) {
+      text.append(GroovyRefactoringUtil.getUnparenthesizedExpr(expr).getText()).append(", ");
+    }
+    if (callExpr.getArguments().length > 0) {
+      text.delete(text.length()-2, text.length());
+    }
+    text.append(")");
+    PsiFile file = createGroovyFile(text.toString());
+    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCall);
+    return ((GrMethodCall) file.getChildren()[0]);
   }
 
   public GrImportStatement createImportStatementFromText(String qName) {
