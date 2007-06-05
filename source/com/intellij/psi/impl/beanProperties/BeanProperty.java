@@ -5,6 +5,7 @@
 package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class BeanProperty {
+
+  private static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
 
   private final PsiMethod myMethod;
 
@@ -82,7 +85,7 @@ public class BeanProperty {
 
   @Nullable
   public Icon getIcon(int flags) {
-    return null;
+    return ICON;
   }
 
   private class BeanPropertyElement extends FakePsiElement implements PsiMetaBaseOwner, PsiPresentableMetaData {

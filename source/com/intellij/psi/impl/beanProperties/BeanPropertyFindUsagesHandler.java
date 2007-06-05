@@ -26,7 +26,8 @@ public class BeanPropertyFindUsagesHandler extends FindUsagesHandler {
 
   @NotNull
   public PsiElement[] getPrimaryElements() {
-    final ArrayList<PsiElement> elements = new ArrayList<PsiElement>(2);
+    final ArrayList<PsiElement> elements = new ArrayList<PsiElement>(3);
+    elements.add(myProperty.getPsiElement());
     final PsiMethod getter = myProperty.getGetter();
     if (getter != null) {
       elements.add(getter);
