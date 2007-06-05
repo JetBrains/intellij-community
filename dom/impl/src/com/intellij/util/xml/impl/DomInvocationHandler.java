@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
@@ -348,6 +349,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public void accept(final DomElementVisitor visitor) {
+    ProgressManager.getInstance().checkCanceled();
     myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
   }
 
