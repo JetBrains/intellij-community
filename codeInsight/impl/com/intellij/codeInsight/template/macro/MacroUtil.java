@@ -149,10 +149,7 @@ public class MacroUtil {
           final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
           if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;
         }
-        if(!(pe instanceof PsiField) || PsiUtil.isAccessible((PsiField)pe, place, null)) {
-          return super.execute(pe, substitutor);
-        }
-        return true;
+        return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, place, null) || super.execute(pe, substitutor);
       }
     };
     PsiScopesUtil.treeWalkUp(varproc, place, null);

@@ -17,7 +17,7 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
     return CodeInsightBundle.message("macro.array.variable");
   }
 
-  protected PsiVariable[] getVariables(Expression[] params, final ExpressionContext context) {
+  protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     Project project = context.getProject();
