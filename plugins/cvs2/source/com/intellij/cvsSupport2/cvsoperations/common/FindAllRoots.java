@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.util.*;
@@ -22,7 +23,7 @@ import java.util.*;
 
 public class FindAllRoots {
   private final CvsEntriesManager myManager = CvsEntriesManager.getInstance();
-  private int myProcessedFiels;
+  private int myProcessedFiles;
   private int mySuitableFiles;
   private Collection<File> myRepositories = new HashSet<File>();
 
@@ -37,21 +38,24 @@ public class FindAllRoots {
 
   public Collection<VirtualFile> executeOn(final FilePath[] roots) {
     final Collection<FilePath> rootsWithoutIntersections = getRootsWithoutIntersections(roots);
-    setText(com.intellij.CvsBundle.message("progress.text.searching.for.cvs.root"));
+    setText(CvsBundle.message("progress.text.searching.for.cvs.root"));
     myManager.lockSynchronizationActions();
     mySuitableFiles = calcVirtualFilesUnderCvsIn(rootsWithoutIntersections) * 2;
-    myProcessedFiels = 0;
+    myProcessedFiles = 0;
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          for (Iterator each = rootsWithoutIntersections.iterator(); each.hasNext();) {
-            FilePath file = (FilePath)each.next();
+          for (final FilePath file : rootsWithoutIntersections) {
             VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
               myResult.add(virtualFile);
               process(virtualFile);
-            } else {
-              myResult.add(file.getVirtualFileParent());
+            }
+            else {
+              VirtualFile virtualFileParent = file.getVirtualFileParent();
+              if (virtualFileParent != null) {
+                myResult.add(virtualFileParent);
+              }
             }
           }
         }
@@ -66,8 +70,7 @@ public class FindAllRoots {
 
   private int calcVirtualFilesUnderCvsIn(Collection<FilePath> rootsWithoutIntersections) {
     int result = 0;
-    for (Iterator iterator = rootsWithoutIntersections.iterator(); iterator.hasNext();) {
-      FilePath cvsFileWrapper = (FilePath)iterator.next();
+    for (final FilePath cvsFileWrapper : rootsWithoutIntersections) {
       if (!cvsFileWrapper.isDirectory()) {
         result += 1;
       }
@@ -86,15 +89,14 @@ public class FindAllRoots {
     result += 1;
     VirtualFile[] children = file.getChildren();
     if (children == null) return result;
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (child.getName() == CvsUtil.CVS) continue;
       result += calcVirtualFilesUnderCvsIn(child);
     }
     return result;
   }
 
-  private Collection<FilePath> getRootsWithoutIntersections(FilePath[] roots) {
+  private static Collection<FilePath> getRootsWithoutIntersections(FilePath[] roots) {
     ArrayList<FilePath> result = new ArrayList<FilePath>();
     List<FilePath> list = Arrays.asList(roots);
     Collections.sort(list, new Comparator<FilePath>() {
@@ -134,7 +136,7 @@ public class FindAllRoots {
   private void process(VirtualFile root) {
     if (!myProjectRootManager.getFileIndex().isInContent(root)) return;
     setText2(CvsVfsUtil.getPresentablePathFor(root));
-    myProcessedFiels++;
+    myProcessedFiles++;
     setFraction();
     VirtualFile[] children = root.getChildren();
     if (children == null) return;
@@ -142,8 +144,7 @@ public class FindAllRoots {
     if (!parentEnv.isValid()) return;
     myManager.cacheCvsAdminInfoIn(root);
     myRepositories.add(CvsVfsUtil.getFileFor(root));
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (!child.isDirectory()) continue;
       if (!myProjectRootManager.getFileIndex().isInContent(child)) continue;
       CvsEnvironment childEnv = myManager.getCvsConnectionSettingsFor(child);
@@ -157,7 +158,7 @@ public class FindAllRoots {
 
   private void setFraction() {
     if (myProgress == null) return;
-    myProgress.setFraction((double)myProcessedFiels / (double)mySuitableFiles);
+    myProgress.setFraction((double)myProcessedFiles / (double)mySuitableFiles);
     ProgressManager.getInstance().checkCanceled();
   }
 

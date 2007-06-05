@@ -75,10 +75,6 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
     }
   }
 
-  public Collection<VirtualFile> getRoots() {
-    return myRoots;
-  }
-
   public void registerCorruptedProjectOrModuleFile(MergedWithConflictProjectOrModuleFile mergedWithConflictProjectOrModuleFile) {
     myCorruptedFiles.add(mergedWithConflictProjectOrModuleFile);
   }
