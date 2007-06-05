@@ -30,6 +30,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
 
+  
   private Module myModule;
   private FacetTypeRegistry myFacetTypeRegistry;
   private FacetManagerModel myModel = new FacetManagerModel();
