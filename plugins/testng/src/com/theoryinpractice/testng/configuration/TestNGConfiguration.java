@@ -137,21 +137,27 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
 
     public void setClassConfiguration(PsiClass psiclass) {
-        setModule(data.setMainClass(psiclass));
-        data.TEST_OBJECT = TestType.CLASS.getType();
-        setGeneratedName();
+      final Module module = data.setMainClass(psiclass);
+      if (getConfigurationModule().getModule() == null) {
+        setModule(module);
+      }
+      data.TEST_OBJECT = TestType.CLASS.getType();
+      setGeneratedName();
     }
 
     public void setPackageConfiguration(Module module, PsiPackage pkg) {
-        data.setPackage(pkg);
-        setModule(module);
-        data.TEST_OBJECT = TestType.PACKAGE.getType();
-        setGeneratedName();
+      data.setPackage(pkg);
+      setModule(module);
+      data.TEST_OBJECT = TestType.PACKAGE.getType();
+      setGeneratedName();
     }
 
     public void setMethodConfiguration(Location<PsiMethod> location) {
-        setModule(data.setTestMethod(location));
-        setGeneratedName();
+      final Module module = data.setTestMethod(location);
+      if (getConfigurationModule().getModule() == null) {
+        setModule(module);
+      }
+      setGeneratedName();
     }
 
     public void setGeneratedName() {
