@@ -15,16 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.TailType;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 
 import java.util.Arrays;
 
@@ -46,20 +51,25 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //closure creation
       CaretModel caretModel = editor.getCaretModel();
       int offset = startOffset + method.getName().length();
-      if (parameters.length == 0 || parameters.length > 1) {
+      if (parameters.length == 0) {
         if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
           document.insertString(offset, "()");
         }
-        if (parameters.length > 0) {
-          caretModel.moveToOffset(offset + 1);
-        } else {
-          caretModel.moveToOffset(offset + 2);
-        }
+        caretModel.moveToOffset(offset + 2);
       } else {
-        PsiType paramType = parameters[0].getType();
-        if (paramType.getCanonicalText().equals("groovy.lang.Closure")) {
+        if (parameters.length == 1 && parameters[0].getType().getCanonicalText().equals("groovy.lang.Closure")) {
           document.insertString(offset, " {}");
           caretModel.moveToOffset(offset + 2);
+        } else {
+          PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
+          docManager.commitDocument(document);
+          PsiFile psiFile = docManager.getPsiFile(document);
+          if (isExpressionStatement(psiFile, startOffset)) {
+            document.insertString(offset, " ");
+          } else {
+            document.insertString(offset, "()");
+          }
+          caretModel.moveToOffset(offset + 1);
         }
       }
       return;
@@ -68,6 +78,18 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     addTailType(item);
     super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
 
+  }
+
+  private boolean isExpressionStatement(PsiFile psiFile, int offset) {
+    PsiElement elementAt = psiFile.findElementAt(offset);
+    if (elementAt == null) return false;
+    GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
+    if (expr == null) return false;
+    PsiElement parent = expr.getParent();
+    return !(parent instanceof GrExpression) && //todo make psi method for this
+        !(parent instanceof GrArgumentList) &&
+        !(parent instanceof GrNamedArgument) &&
+        !(parent instanceof GrCommandArgumentList);
   }
 
   private void handleOverwrite(final int offset, final Document document) {
