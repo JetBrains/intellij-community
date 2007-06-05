@@ -232,6 +232,13 @@ public class JavacOutputParser extends OutputParser {
         }
       });
     }
+    else if (JavacResourcesReader.MSG_IGNORED.equals(category)) {
+      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
+          // ignored
+        }
+      });
+    }
   }
 
 

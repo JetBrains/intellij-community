@@ -77,6 +77,22 @@ public class JavacResourcesReader {
     dumpPatterns();
   }
 
+  // for debug purposes
+  /*
+  public static void printPatterns() {
+    final ResourceBundle messagesBundle = getMessagesBundle();
+    if (messagesBundle == null) {
+      System.out.println("No bundles found");
+      return;
+    }
+    final Enumeration keys = messagesBundle.getKeys();
+    while (keys.hasMoreElements()) {
+      final Object key = keys.nextElement();
+      System.out.println(key + "->" + messagesBundle.getObject((String)key));
+    }
+  }
+  */
+  
   public static boolean dumpPatterns() {
     final ResourceBundle messagesBundle = getMessagesBundle();
     if (messagesBundle == null) {
