@@ -73,6 +73,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       final PackageElement packageElement = (PackageElement)element;
       return Arrays.asList(packageElement.getPackage().getDirectories()).contains(directory);
     }
+    if (element instanceof VirtualFile) {
+      VirtualFile vFile = (VirtualFile) element;
+      return directory.getVirtualFile() == vFile;
+    }
     return false;
   }
 

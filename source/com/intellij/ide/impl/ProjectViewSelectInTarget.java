@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
@@ -55,7 +55,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   public void select(PsiElement element, final boolean requestFocus) {
     while (true) {
-      if (element instanceof PsiFile) {
+      if (element instanceof PsiFileSystemItem) {
         break;
       }
       if (isTopLevelClass(element)) {

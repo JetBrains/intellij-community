@@ -6,6 +6,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
@@ -69,13 +70,20 @@ abstract class SelectInContextImpl implements SelectInContext {
 
     if (selectInContext == null) {
       Navigatable descriptor = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-      if (!(descriptor instanceof OpenFileDescriptor)) {
-        return null;
+      if (descriptor instanceof OpenFileDescriptor) {
+        final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
+        if (file.isValid()) {
+          Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+          selectInContext = OpenFileDescriptorContext.create(project, file);
+        }
       }
-      final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
-      if (file != null && file.isValid()) {
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-        selectInContext = OpenFileDescriptorContext.create(project, file);
+    }
+
+    if (selectInContext == null) {
+      VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+      Project project = DataKeys.PROJECT.getData(dataContext);
+      if (virtualFile != null && project != null) {
+        return new VirtualFileSelectInContext(project, virtualFile);
       }
     }
 
@@ -211,5 +219,35 @@ abstract class SelectInContextImpl implements SelectInContext {
       myElementToSelect = elementToSelect;
     }
    }
+
+  private static class VirtualFileSelectInContext implements SelectInContext {
+    private Project myProject;
+    private VirtualFile myVirtualFile;
+
+    public VirtualFileSelectInContext(final Project project, final VirtualFile virtualFile) {
+      myProject = project;
+      myVirtualFile = virtualFile;
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myProject;
+    }
+
+    @NotNull
+    public VirtualFile getVirtualFile() {
+      return myVirtualFile;
+    }
+
+    @Nullable
+    public Object getSelectorInFile() {
+      return myVirtualFile;
+    }
+
+    @Nullable
+    public FileEditorProvider getFileEditorProvider() {
+      return null;
+    }
+  }
 }
 

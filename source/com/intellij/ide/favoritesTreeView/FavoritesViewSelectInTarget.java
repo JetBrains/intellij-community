@@ -5,7 +5,7 @@ import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 
 /**
  * User: anna
@@ -20,7 +20,7 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
     return SelectInManager.FAVORITES;
   }
 
-  protected boolean canSelect(final PsiFile file) {
+  protected boolean canSelect(final PsiFileSystemItem file) {
     return findSuitableFavoritesList(file.getVirtualFile(), myProject, null) != null;
   }
 

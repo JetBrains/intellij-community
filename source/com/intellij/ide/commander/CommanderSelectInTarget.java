@@ -7,10 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
 public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
@@ -22,7 +19,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
     return SelectInManager.COMMANDER;
   }
 
-  protected boolean canSelect(final PsiFile file) {
+  protected boolean canSelect(final PsiFileSystemItem file) {
     return file.getManager().isInProject(file);
   }
 

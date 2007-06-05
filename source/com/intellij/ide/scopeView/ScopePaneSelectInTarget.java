@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -26,7 +27,9 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     return SelectInManager.SCOPE;
   }
 
-  public boolean canSelect(PsiFile file) {
+  public boolean canSelect(PsiFileSystemItem fileSystemItem) {
+    if (!(fileSystemItem instanceof PsiFile)) return false;
+    PsiFile file = (PsiFile) fileSystemItem;
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
     NamedScope[] allScopes = scopesHolder.getScopes();
     allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes(), NamedScope.class);

@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -718,6 +720,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     projectView.changeView(ProjectViewPane.ID);
     projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
     ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
+  }
+
+  public FileStatus getFileStatus() {
+    return myFile != null ? FileStatusManager.getInstance(getProject()).getStatus(myFile) : FileStatus.NOT_CHANGED;
   }
 }
 

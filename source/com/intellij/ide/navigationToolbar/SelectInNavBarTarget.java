@@ -25,7 +25,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -54,7 +54,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
     return StandardTargetWeights.NAV_BAR;
   }
 
-  protected boolean canSelect(PsiFile file) {
+  protected boolean canSelect(PsiFileSystemItem file) {
     return UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }
 

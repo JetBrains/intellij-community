@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtil;
 
 public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
@@ -19,7 +19,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
     return SelectInManager.PACKAGES;
   }
 
-  public boolean canSelect(PsiFile file) {
+  public boolean canSelect(PsiFileSystemItem file) {
     final VirtualFile vFile = PsiUtil.getVirtualFile(file);
 
     return canSelect(vFile);

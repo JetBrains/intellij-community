@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,12 +40,14 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
     return StandardTargetWeights.CHANGES_VIEW;
   }
 
-  protected boolean canSelect(PsiFile file) {
+  protected boolean canSelect(PsiFileSystemItem file) {
+    FileStatus fileStatus = file.getFileStatus();
     return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length != 0 &&
-           !file.getFileStatus().equals(FileStatus.NOT_CHANGED);
+           !fileStatus.equals(FileStatus.NOT_CHANGED);
   }
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
+    selectVirtualFile(virtualFile, true);
   }
 
   protected boolean canWorkWithCustomObjects() {
@@ -53,10 +55,15 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
   }
 
   protected void select(final PsiElement element, boolean requestFocus) {
+    final VirtualFile vFile = element.getContainingFile().getVirtualFile();
+    selectVirtualFile(vFile, requestFocus);
+  }
+
+  private void selectVirtualFile(final VirtualFile vFile, final boolean requestFocus) {
     Runnable runnable = new Runnable() {
       public void run() {
         ChangesViewContentManager.getInstance(myProject).selectContent("Local");
-        ChangesViewManager.getInstance(myProject).selectFile(element.getContainingFile().getVirtualFile());
+        ChangesViewManager.getInstance(myProject).selectFile(vFile);
       }
     };
     if (requestFocus) {

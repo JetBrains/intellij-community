@@ -6,10 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -22,19 +19,23 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   public abstract String toString();
 
-  protected abstract boolean canSelect(PsiFile file);
+  protected abstract boolean canSelect(PsiFileSystemItem file);
 
   public final boolean canSelect(SelectInContext context) {
-    final Document document = FileDocumentManager.getInstance().getDocument(context.getVirtualFile());
-    final PsiFile psiFile;
+    VirtualFile virtualFile = context.getVirtualFile();
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final PsiFileSystemItem psiFile;
     if (document != null) {
       psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     }
     else if (context.getSelectorInFile() instanceof PsiFile) {
       psiFile = (PsiFile)context.getSelectorInFile();
     }
+    else if (virtualFile.isDirectory()) {
+      psiFile = PsiManager.getInstance(myProject).findDirectory(virtualFile);
+    }
     else {
-      psiFile = PsiManager.getInstance(myProject).findFile(context.getVirtualFile());
+      psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
     }
     return psiFile != null && canSelect(psiFile) || canWorkWithCustomObjects();
   }
