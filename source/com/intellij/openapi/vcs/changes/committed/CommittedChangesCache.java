@@ -1,8 +1,8 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -19,7 +21,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -355,7 +356,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     //noinspection unchecked
     List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
-    cacheFile.writeChanges(changes); // this sorts changes in chronological order
+    writeChangesInReadAction(cacheFile, changes); // this sorts changes in chronological order
     if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
@@ -369,25 +370,45 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
-    if (cacheFile.getProvider().refreshCacheByNumber()) {
+    if (provider.refreshCacheByNumber()) {
       final long number = cacheFile.getLastCachedChangelist();
-      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since #" + number);
+      LOG.info("Refreshing cache for " + location + " since #" + number);
       defaultSettings.CHANGE_AFTER = Long.toString(number);
       defaultSettings.USE_CHANGE_AFTER_FILTER = true;
     }
     else {
       final Date date = cacheFile.getLastCachedDate();
-      LOG.info("Refreshing cache for " + cacheFile.getLocation() + " since " + date);
+      LOG.info("Refreshing cache for " + location + " since " + date);
       defaultSettings.setDateAfter(date);
       defaultSettings.USE_DATE_AFTER_FILTER = true;
     }
-    List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
+    final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
     LOG.info("Loaded " + newChanges.size() + " new changelists");
-    newChanges = cacheFile.writeChanges(newChanges);    // skip duplicates
-    if (newChanges.size() > 0) {
-      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, newChanges);
+    final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
+    if (savedChanges.size() > 0) {
+      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, savedChanges);
     }
-    return newChanges;
+    return savedChanges;
+  }
+
+  private List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile, final List<CommittedChangeList> newChanges)
+    throws IOException {
+    final Ref<IOException> ref = new Ref<IOException>();
+    final List<CommittedChangeList> savedChanges = ApplicationManager.getApplication().runReadAction(new Computable<List<CommittedChangeList>>() {
+      public List<CommittedChangeList> compute() {
+        try {
+          return cacheFile.writeChanges(newChanges);    // skip duplicates;
+        }
+        catch (IOException e) {
+          ref.set(e);
+          return null;
+        }
+      }
+    });
+    if (!ref.isNull()) {
+      throw ref.get();
+    }
+    return savedChanges;
   }
 
   private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
