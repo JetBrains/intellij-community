@@ -68,6 +68,7 @@ public class JUnitConvertTool extends LocalInspectionTool {
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
+      if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
       try {
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiElementFactory factory = manager.getElementFactory();
@@ -85,9 +86,7 @@ public class JUnitConvertTool extends LocalInspectionTool {
               if (TestNGUtil.containsJunitAnnotions(method)) {
                 convertJunitAnnotions(factory, method);
               }
-              else {
-                addMethodAnnotations(factory, method);
-              }
+              addMethodAnnotations(factory, method);
             }
           }
 
@@ -164,7 +163,6 @@ public class JUnitConvertTool extends LocalInspectionTool {
                 inserted = methodCallStatement.replace(factory.createStatementFromText(call, methodCall.getParent()));
               }
               if (inserted != null) {
-                TestNGUtil.checkTestNGInClasspath(psiClass);
                 CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
               }
             }
@@ -210,7 +208,6 @@ public class JUnitConvertTool extends LocalInspectionTool {
           newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
         }
         if (newAnnotation != null) {
-          TestNGUtil.checkTestNGInClasspath(newAnnotation);
           CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(annotation.replace(newAnnotation));
         }
       }
@@ -320,7 +317,6 @@ public class JUnitConvertTool extends LocalInspectionTool {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
       }
       if (annotation != null) {
-        TestNGUtil.checkTestNGInClasspath(annotation);
         CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(method.getModifierList().addAfter(annotation, null));
       }
     }

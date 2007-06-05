@@ -1,7 +1,7 @@
 import org.testng.annotations.Test;
 import org.testng.Assert;
 
-public class Testt<caret> {
+public class <caret>Testt {
   @Test
   public void test() {
       Assert.assertEquals("description", "2", "1");

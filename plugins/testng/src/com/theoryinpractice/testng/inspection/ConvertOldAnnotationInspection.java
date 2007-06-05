@@ -76,6 +76,7 @@ public class ConvertOldAnnotationInspection extends LocalInspectionTool {
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiAnnotation annotation = (PsiAnnotation)descriptor.getPsiElement();
+      if (!TestNGUtil.checkTestNGInClasspath(annotation)) return;
       final PsiModifierList modifierList = PsiTreeUtil.getParentOfType(annotation, PsiModifierList.class);
       LOG.assertTrue(modifierList != null);
       try {
@@ -110,7 +111,6 @@ public class ConvertOldAnnotationInspection extends LocalInspectionTool {
         newAnnotationBuffer.append(newAnnotation).append('(').append(')');
         final PsiElementFactory factory = annotation.getManager().getElementFactory();
         final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);
-        TestNGUtil.checkTestNGInClasspath(newPsiAnnotation);
         CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
       }
     }

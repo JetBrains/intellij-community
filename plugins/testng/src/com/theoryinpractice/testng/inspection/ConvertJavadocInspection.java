@@ -73,9 +73,9 @@ public class ConvertJavadocInspection extends LocalInspectionTool {
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
+      if (!TestNGUtil.checkTestNGInClasspath(tag)) return;
       final PsiMethod method = PsiTreeUtil.getParentOfType(tag, PsiMethod.class);
       LOG.assertTrue(method != null);
-      TestNGUtil.checkTestNGInClasspath(tag);
       @NonNls String annotationName = StringUtil.capitalize(tag.getName().substring(TESTNG_PREFIX.length()));
       int dash = annotationName.indexOf('-');
       if (dash > -1) {

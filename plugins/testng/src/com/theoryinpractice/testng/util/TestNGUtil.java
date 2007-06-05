@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -373,12 +374,15 @@ public class TestNGUtil implements TestFramework
     return hasTest(psiClass);
   }
 
-  public static void checkTestNGInClasspath(PsiElement psiElement) {
+  public static boolean checkTestNGInClasspath(PsiElement psiElement) {
     final Project project = psiElement.getProject();
     final PsiManager manager = PsiManager.getInstance(project);
     if (manager.findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        Messages.showInfoMessage(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.");
+        if (Messages.showOkCancelDialog(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.", Messages.getWarningIcon()) !=
+            DialogWrapper.OK_EXIT_CODE) {
+          return false;
+        }
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -389,6 +393,7 @@ public class TestNGUtil implements TestFramework
       libraryModel.commit();
       model.commit();
     }
+    return true;
   }
 
   public static boolean containsJunitAnnotions(PsiClass psiClass) {

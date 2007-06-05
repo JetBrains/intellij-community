@@ -21,12 +21,12 @@ public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest{
     return JUnitConvertTool.QUICKFIX_NAME;
   }
 
-  @Test (invocationCount = 10)
+  @Test
   public void test1() throws Throwable {
     doTest("Class");
   }
 
-  @Test (invocationCount = 10)
+  @Test
   public void test2() throws Throwable {
     doTest("Fail");
   }
