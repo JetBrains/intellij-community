@@ -321,6 +321,10 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @Nullable
   public PsiPrimitiveType createPrimitiveType(@NotNull String text) {
+    return getPrimitiveType(text);
+  }
+
+  public static PsiPrimitiveType getPrimitiveType(final String text) {
     return ourPrimitiveTypesMap.get(text);
   }
 
