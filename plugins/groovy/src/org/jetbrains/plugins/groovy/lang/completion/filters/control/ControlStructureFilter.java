@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -62,23 +64,13 @@ public class ControlStructureFilter implements ElementFilter {
 
         PsiElement superParent = parent.getParent();
 
-        if ((superParent instanceof GrOpenBlock ||
+        if (superParent instanceof GrOpenBlock ||
             superParent instanceof GrClosableBlock ||
-            superParent instanceof GrCaseBlock)) {
+            superParent instanceof GrCaseBlock ||
+            superParent instanceof GrIfStatement ||
+            superParent instanceof GrForStatement ||
+            superParent instanceof GrWhileStatement) {
           return true;
-        }
-
-        if (superParent instanceof GrWhileStatement) {
-          PsiElement elem = parent.getPrevSibling();
-          while (elem != null &&
-              !GroovyElementTypes.mRPAREN.equals(elem.getNode().getElementType())) {
-            elem = elem.getPrevSibling();
-          }
-          if (elem != null) {
-            return true;
-          } else {
-            return false;
-          }
         }
       }
 

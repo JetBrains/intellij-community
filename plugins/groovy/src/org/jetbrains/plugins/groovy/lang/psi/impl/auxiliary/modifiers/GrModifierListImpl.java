@@ -50,9 +50,9 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   @NotNull
-  public GroovyPsiElement[] getModifiers() {
+  public PsiElement[] getModifiers() {
     List<PsiElement> modifiers = new ArrayList<PsiElement>();
-    PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, GroovyPsiElement.class);
+    PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
     GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
     PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);
 
@@ -65,7 +65,7 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     if (defKeyword != null)
       modifiers.add(defKeyword);
 
-    return modifiers.toArray(new GroovyPsiElement[0]);
+    return modifiers.toArray(new PsiElement[0]);
   }
 
   public boolean hasModifierProperty(@NotNull @NonNls String name) {

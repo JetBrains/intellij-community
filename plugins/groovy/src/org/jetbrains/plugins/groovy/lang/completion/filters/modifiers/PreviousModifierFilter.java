@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
@@ -28,6 +30,7 @@ public class PreviousModifierFilter implements ElementFilter {
         "native", "threadsafe", "volatile", "strictfp", "synchronized"};
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement) element;
+
       for (String modifier : modifiers) {
         if (modifier.equals(psiElement.getText().trim())) {
           return true;
