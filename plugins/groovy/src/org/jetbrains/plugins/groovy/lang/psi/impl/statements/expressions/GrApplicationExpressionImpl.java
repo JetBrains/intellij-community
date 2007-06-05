@@ -16,12 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 
 /**
  * @author ilyas
@@ -49,6 +52,15 @@ public class GrApplicationExpressionImpl extends GrExpressionImpl implements GrA
   }
 
   public PsiType getType() {
-    return null; //todo: implement
+    GrExpression invoked = getFunExpression();
+    if (invoked instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
+      if (resolved instanceof PsiMethod) {
+        PsiType type = ((PsiMethod) resolved).getReturnType();
+        return TypesUtil.boxPrimitiveType(type, getManager(), getResolveScope());
+      }
+    }
+
+    return null;
   }
 }
