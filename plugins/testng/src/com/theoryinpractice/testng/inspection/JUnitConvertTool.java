@@ -41,15 +41,12 @@ public class JUnitConvertTool extends LocalInspectionTool {
     return "JUnitTestNG";
   }
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotions(psiClass)) {
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(psiClass, "TestCase can be converted to TestNG",
+      final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return new ProblemDescriptor[]{descriptor};
@@ -70,7 +67,7 @@ public class JUnitConvertTool extends LocalInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiClass psiClass = (PsiClass)descriptor.getPsiElement();
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       try {
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiElementFactory factory = manager.getElementFactory();
