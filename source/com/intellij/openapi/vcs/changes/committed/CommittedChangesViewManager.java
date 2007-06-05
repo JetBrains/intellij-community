@@ -25,10 +25,6 @@ import javax.swing.*;
 import java.util.List;
 
 public class CommittedChangesViewManager implements ChangesViewContentProvider {
-  public static CommittedChangesViewManager getInstance(Project project) {
-    return project.getComponent(CommittedChangesViewManager.class);
-  }
-
   private ProjectLevelVcsManager myVcsManager;
   private MessageBus myBus;
   private MessageBusConnection myConnection;
@@ -73,7 +69,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     public void directoryMappingChanged() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          updateChangesContent();
+          if (!myProject.isDisposed()) {
+            updateChangesContent();
+          }
         }
       });
     }
@@ -83,7 +81,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myComponent != null) {
+          if (myComponent != null && !myProject.isDisposed()) {
             myComponent.refreshChanges(true);
           }
         }
