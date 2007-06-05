@@ -538,9 +538,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       //todo: make it clearer
       final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)mySaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
-      final IprStorageData storageData = (IprStorageData)session.getData();
+      final XmlElementStorage.StorageData data = session.getData();
 
-      storageData.setUsedMacros(getUsedMacros());
+      if (data instanceof IprStorageData) {
+        final IprStorageData storageData = (IprStorageData)data;
+
+        storageData.setUsedMacros(getUsedMacros());
+      }
     }
 
     public void finishSave() {

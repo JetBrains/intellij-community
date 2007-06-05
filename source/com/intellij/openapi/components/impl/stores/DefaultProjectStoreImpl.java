@@ -1,9 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +19,7 @@ import java.util.Set;
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private @Nullable Element myElement;
   private ProjectManagerImpl myProjectManager;
-  @NonNls private static final String PROJECT = "project";
+  @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
   public DefaultProjectStoreImpl(final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(project);
@@ -47,11 +44,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       _d = new Document(myElement);
     }
 
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getComponentManager());
+    final ComponentManager componentManager = getComponentManager();
+    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(componentManager);
 
     final Document document = _d;
 
-    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), getComponentManager(), "defaultProject") {
+    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
+                                                            ROOT_TAG_NAME) {
       @Nullable
       protected Document loadDocument() throws StateStorage.StateStorageException {
         return document;
@@ -63,6 +62,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
         return new DefaultSaveSession(externalizationSession);
+      }
+
+      protected StorageData createStorageData() {
+        return new BaseStorageData(ROOT_TAG_NAME);
       }
 
       class DefaultSaveSession extends MySaveSession {

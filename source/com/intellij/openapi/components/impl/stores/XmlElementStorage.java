@@ -101,8 +101,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   public void setDefaultState(final Element element) {
-    assert myLoadedData == null;
-    myLoadedData = new StorageData(myRootElementName);
+    myLoadedData = createStorageData();
     try {
       myLoadedData.load(element);
     }
