@@ -36,7 +36,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     super(node);
   }
 
-  public boolean mayUseNewLinesAsSeparators() {
+  private boolean mayUseNewLinesAsSeparators() {
     PsiElement parent = this;
     while (parent != null) {
       if (parent instanceof GrString) {

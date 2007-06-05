@@ -28,6 +28,4 @@ public interface GrCodeBlock extends GroovyPsiElement {
   GrStatement[] getStatements();
 
   PsiElement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException;
-
-  boolean mayUseNewLinesAsSeparators();
 }
