@@ -22,6 +22,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -101,6 +102,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return location.lineNumber(myStratumId);
   }
 
+  @NotNull
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException {
     checkSourcePositionFileType(classPosition);
 
@@ -128,6 +130,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     }
   }
 
+  @NotNull
   public List<Location> locationsOfLine(final ReferenceType type, final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
     return locations != null ? locations : Collections.<Location>emptyList();

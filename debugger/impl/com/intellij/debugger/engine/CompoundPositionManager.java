@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +46,7 @@ public class CompoundPositionManager implements PositionManager{
     return null;
   }
 
+  @NotNull
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
@@ -56,6 +58,7 @@ public class CompoundPositionManager implements PositionManager{
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {

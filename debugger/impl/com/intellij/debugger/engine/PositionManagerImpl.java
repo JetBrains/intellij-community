@@ -17,6 +17,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class PositionManagerImpl implements PositionManager {
     return myDebugProcess;
   }
 
+  @NotNull
   public List<Location> locationsOfLine(ReferenceType type,
                                         SourcePosition position) {
     try {
@@ -52,10 +54,10 @@ public class PositionManagerImpl implements PositionManager {
         return locs;
       }
     }
-    catch (AbsentInformationException e) {
+    catch (AbsentInformationException ignored) {
     }
 
-    return new ArrayList<Location>();
+    return Collections.emptyList();
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
@@ -196,6 +198,7 @@ public class PositionManagerImpl implements PositionManager {
     return null;
   }
 
+  @NotNull
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>> () {
       public List<ReferenceType> compute() {
