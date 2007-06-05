@@ -113,6 +113,7 @@ public class MockPsiManager extends PsiManagerEx {
     final PsiClass existing = findClass(qName);
     if (existing != null) myClasses.remove(existing);
     myClasses.add(psiClass);
+    getResolveCache().clearCache();
     return addToPackage(qName, psiClass);
 
   }
@@ -146,6 +147,7 @@ public class MockPsiManager extends PsiManagerEx {
 
   public <T extends PsiPackage> T addPackage(T psiPackage) {
     myPackages.add(psiPackage);
+    getResolveCache().clearCache();
     return psiPackage;
   }
 
