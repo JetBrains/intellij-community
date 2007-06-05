@@ -226,7 +226,7 @@ import java.util.Map;
   protected static Module createMainModule() {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("");
+        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml");
       }
     });
   }
