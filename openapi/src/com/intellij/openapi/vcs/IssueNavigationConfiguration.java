@@ -22,6 +22,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,7 +42,8 @@ import java.util.regex.Pattern;
     }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
-  @NonNls private static Pattern ourHtmlPattern = Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
+  @NonNls private static Pattern ourHtmlPattern =
+    Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
 
   public static IssueNavigationConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, IssueNavigationConfiguration.class);
@@ -65,7 +67,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static class LinkMatch {
+  public static class LinkMatch implements Comparable {
     private TextRange myRange;
     private String myTargetUrl;
 
@@ -81,14 +83,23 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
     public String getTargetUrl() {
       return myTargetUrl;
     }
+
+    public int compareTo(Object o) {
+      if (!(o instanceof LinkMatch)) {
+        return 0;
+      }
+      LinkMatch rhs = (LinkMatch) o;
+      return myRange.getStartOffset() - rhs.getRange().getStartOffset();
+    }
   }
 
   public List<LinkMatch> findIssueLinks(String text) {
     final List<LinkMatch> result = new ArrayList<LinkMatch>();
     for(IssueNavigationLink link: myLinks) {
-      Matcher m = link.getIssuePattern().matcher(text);
+      Pattern issuePattern = link.getIssuePattern();
+      Matcher m = issuePattern.matcher(text);
       while(m.find()) {
-        String replacement = link.getIssuePattern().matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
+        String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
         addMatch(result, new TextRange(m.start(), m.end()), replacement);
       }
     }
@@ -96,6 +107,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
     while(m.find()) {
       addMatch(result, new TextRange(m.start(), m.end()), m.group());
     }
+    Collections.sort(result);
     return result;
   }
 
