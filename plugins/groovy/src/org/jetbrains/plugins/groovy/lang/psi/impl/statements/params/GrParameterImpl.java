@@ -16,16 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
@@ -52,6 +52,26 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
         return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+      } else {
+        PsiType iterType = iteratedExpression.getType();
+        if (iterType instanceof PsiArrayType) return ((PsiArrayType) iterType).getComponentType();
+        if (iterType instanceof PsiClassType) {
+          PsiClassType.ClassResolveResult result = ((PsiClassType) iterType).resolveGenerics();
+          PsiClass clazz = result.getElement();
+          if (clazz != null) {
+            PsiManagerEx manager = getManager();
+            PsiClass collectionClass = manager.findClass("java.util.Collection", getResolveScope());
+            if (collectionClass != null && collectionClass.getTypeParameters().length == 1) {
+              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, clazz, result.getSubstitutor());
+              if (substitutor != null) {
+                PsiType substed = substitutor.substitute(collectionClass.getTypeParameters()[0]);
+                if (substed != null) {
+                  return substed;
+                }
+              }
+            }
+          }
+        }
       }
     }
     return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
