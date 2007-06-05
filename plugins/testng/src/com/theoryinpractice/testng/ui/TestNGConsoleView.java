@@ -21,15 +21,19 @@ import com.intellij.openapi.util.Disposer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class TestNGConsoleView implements ConsoleView
 {
+    @NonNls private static Pattern COMPARISION_PATTERN = Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
     private ConsoleView console;
     private TestNGResults testNGResults;
     private final List<Printable> allOutput = new ArrayList<Printable>();
@@ -76,7 +80,7 @@ public class TestNGConsoleView implements ConsoleView
                     //trim useless crud from stacktrace
                   exceptionMark = allOutput.size() - mark;
                   String trimmed = trimStackTrace(stackTrace);
-                  List<Printable> printables = getPrintables(result, trimmed, ConsoleViewContentType.ERROR_OUTPUT);
+                  List<Printable> printables = getPrintables(result, trimmed);
                   synchronized (allOutput) {
                         allOutput.addAll(printables);
                     }
@@ -137,22 +141,14 @@ public class TestNGConsoleView implements ConsoleView
         consoleProperties = null;
     }
 
-    private List<Printable> getPrintables(final TestResultMessage result, String s, ConsoleViewContentType type) {
+    private List<Printable> getPrintables(final TestResultMessage result, String s) {
         List<Printable> printables = new ArrayList<Printable>();
         //figure out if we have a diff we need to hyperlink
-        //TODO replace this with a saner regexp
-        String assertText = "java.lang.AssertionError: expected:<";
-        if (s.startsWith(assertText)) {
-            printables.add(new Chunk("java.lang.AssertionError:", type));
-            String end = "> but was:<";
-            int actualStart = s.indexOf(end, assertText.length());
-            String expected = s.substring(assertText.length(), actualStart);
-            int actualEnd = s.indexOf("org.testng.Assert", actualStart + end.length());
-            actualEnd = s.lastIndexOf('>', actualEnd);
-            int stackTraceEnd = s.lastIndexOf("org.testng.Assert.");
-            stackTraceEnd = s.indexOf('\n', stackTraceEnd) + 1;
+        final Matcher matcher = COMPARISION_PATTERN.matcher(s);
+        if (matcher.matches()) {
+            printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
             //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-            TestNGDiffHyperLink link = new TestNGDiffHyperLink(expected, s.substring(actualStart + end.length(), actualEnd), null, consoleProperties) {
+            TestNGDiffHyperLink link = new TestNGDiffHyperLink(matcher.group(2), matcher.group(3), null, consoleProperties) {
               protected String getTitle() {
                 //TODO should do some more farting about to find the equality assertion that failed and show that as title
                 return result.getTestClass() + '#' + result.getMethod() + "() failed";
@@ -160,9 +156,9 @@ public class TestNGConsoleView implements ConsoleView
             };
             //same as junit diff view
             printables.add(link);
-            printables.add(new Chunk(trimStackTrace(s.substring(stackTraceEnd)), type));
+            printables.add(new Chunk(trimStackTrace(s.substring(matcher.end(3) + 1)), ConsoleViewContentType.ERROR_OUTPUT));
         } else {
-            printables.add(new Chunk(s, type));
+            printables.add(new Chunk(s, ConsoleViewContentType.ERROR_OUTPUT));
         }
         return printables;
     }

@@ -21,4 +21,10 @@ public class ConvertAnnotationInspectionTest extends BaseTestNGInspectionsTest {
   public void test1() throws Throwable {
     doTest("1");
   }
+
+  @Test
+  public void test2() throws Throwable {
+    doTest("2");
+  }
+
 }
