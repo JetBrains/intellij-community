@@ -73,8 +73,8 @@
       <fileset dir="${project.dir}/META-INF"/>
     </copy>
 
-    <copy todir="${production.dest.groovy}/resources">
-      <fileset dir="${project.dir}"/>
+    <copy todir="${production.dest.groovy}">
+      <fileset dir="${project.dir}/resources"/>
     </copy>
 
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/GroovyBundle.properties"
