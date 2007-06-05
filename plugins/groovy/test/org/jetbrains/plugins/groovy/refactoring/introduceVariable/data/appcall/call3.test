@@ -1,0 +1,12 @@
+foo 1,2,3
+foo 1,2,3
+<begin>foo 1,2,3<end>
+foo 1,2,3
+foo 1,2,3
+-----
+foo 1,2,3
+foo 1,2,3
+def preved = foo(1, 2, 3)
+preved<caret>
+foo 1,2,3
+foo 1,2,3
