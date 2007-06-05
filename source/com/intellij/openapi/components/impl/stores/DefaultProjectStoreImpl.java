@@ -78,9 +78,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         }
 
         protected void doSave() throws StateStorageException {
-          if (myElement != null) {
-            myProjectManager.setDefaultProjectRootElement((Element)myElement.clone());
-          }
+          myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
       }
     };
