@@ -50,7 +50,7 @@ public class CvsInfo {
     myCvsEntriesManager = cvsEntriesManager;
   }
 
-  public CvsConnectionSettings getConnectionSettings() {
+  public synchronized CvsConnectionSettings getConnectionSettings() {
     checkIsLoaded();
     return myConnectionSettings;
   }
@@ -98,7 +98,7 @@ public class CvsInfo {
     }
   }
 
-  public IgnoredFilesInfo getIgnoreFilter() {
+  public synchronized IgnoredFilesInfo getIgnoreFilter() {
     checkFilterIsLoaded();
     return myIgnoreFilter;
   }
@@ -134,7 +134,7 @@ public class CvsInfo {
     }
   }
 
-  public Collection<Entry> getEntries() {
+  public synchronized Collection<Entry> getEntries() {
     return getCvsEntries().getEntries();
   }
 
@@ -153,15 +153,15 @@ public class CvsInfo {
   }
 
 
-  public void clearFilter() {
+  public synchronized void clearFilter() {
     myIgnoreFilter = null;
   }
 
-  public boolean isLoaded() {
+  public synchronized boolean isLoaded() {
     return myIsLoaded;
   }
 
-  public Entry setEntryAndReturnReplacedEntry(Entry entry) {
+  public synchronized Entry setEntryAndReturnReplacedEntry(Entry entry) {
     Entry previousEntry = getEntryNamed(entry.getFileName());
     appendEntry(entry);
     return previousEntry;
@@ -171,7 +171,7 @@ public class CvsInfo {
     getCvsEntries().addEntry(newEntry);
   }
 
-  public void removeEntryNamed(String fileName) {
+  public synchronized void removeEntryNamed(String fileName) {
     removeEntry(fileName);
   }
 
@@ -179,20 +179,20 @@ public class CvsInfo {
     getCvsEntries().removeEntry(fileName);
   }
 
-  public VirtualFile getKey() {
+  public synchronized VirtualFile getKey() {
     return myParent;
   }
 
-  public Entry getEntryNamed(String name) {
+  public synchronized Entry getEntryNamed(String name) {
     return getCvsEntries().getEntry(name);
   }
 
-  public String getRepository() {
+  public synchronized String getRepository() {
     checkIsLoaded();
     return myRepository;
   }
 
-  public String getStickyTag() {
+  public synchronized String getStickyTag() {
     checkStickyTagIsLoaded();
     return myStickyTag;
   }
@@ -204,11 +204,11 @@ public class CvsInfo {
     }
   }
 
-  public void cacheAll() {
+  public synchronized void cacheAll() {
     checkIsLoaded();
   }
 
-  public void clearAll() {
+  public synchronized void clearAll() {
     myEntries = null;
     myRepository = null;
     myStickyTagIsLoaded = false;
@@ -216,7 +216,7 @@ public class CvsInfo {
     myIsLoaded = false;
   }
 
-  public void clearStickyInformation() {
+  public synchronized void clearStickyInformation() {
     myStickyTagIsLoaded = false;
   }
 
@@ -268,6 +268,7 @@ public class CvsInfo {
     }
   }
 
+  @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod"})
   private static class DummyCvsInfo extends CvsInfo {
     public DummyCvsInfo() {
       super(null, null);
