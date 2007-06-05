@@ -74,7 +74,7 @@
     </copy>
 
     <copy todir="${production.dest.groovy}/resources">
-      <fileset dir="${project.dir}/resources"/>
+      <fileset dir="${project.dir}"/>
     </copy>
 
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/GroovyBundle.properties"
