@@ -195,7 +195,7 @@
       <jvmarg value="-ea"/>
       <jvmarg value="-Xdebug"/>
       <jvmarg value="-Djava.compiler=NONE"/>
-      <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5006"/>
+      <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006"/>
 
       <jvmarg value="-Didea.config.path=${output}/config"/>
       <jvmarg value="-Didea.system.path=${output}/system"/>
