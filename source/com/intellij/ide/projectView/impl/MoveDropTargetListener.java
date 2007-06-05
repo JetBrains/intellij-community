@@ -95,7 +95,11 @@ class MoveDropTargetListener implements DropTargetListener {
   @Nullable
   private TreeNode[] getSourceNodes(final Transferable transferable) {
     try {
-      return ((AbstractProjectViewPSIPane.TransferableWrapper)transferable.getTransferData(dataFlavor)).getTreeNodes();
+      Object transferData = transferable.getTransferData(dataFlavor);
+      if (transferData instanceof AbstractProjectViewPSIPane.TransferableWrapper) {
+        return ((AbstractProjectViewPSIPane.TransferableWrapper)transferData).getTreeNodes();
+      }
+      return null;
     }
     catch (UnsupportedFlavorException e) {
       return null;
