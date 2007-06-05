@@ -52,7 +52,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return findChildrenByClass(GrStatement.class);
   }
 
-  public PsiElement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
 
     if (element.getNode() == null ||
         !this.equals(anchor.getParent())) {
@@ -66,11 +66,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     } else {
       getNode().addChild(factory.createSemicolon().getNode() ,anchor.getNode());
     }
-    return elemNode.getPsi();
-  }
-
-  public GrStatement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new UnsupportedOperationException(getClass().getName());
+    return (GrStatement) elemNode.getPsi();
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
