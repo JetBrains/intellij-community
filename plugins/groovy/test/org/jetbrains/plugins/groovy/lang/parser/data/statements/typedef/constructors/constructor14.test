@@ -1,0 +1,109 @@
+class ComparableFoo {
+  long value
+
+  public ComparableFoo(long theValue) {
+    this.value = theValue
+  }
+
+  def greaterThan(anotherFoo) {
+    return (this.value - anotherFoo.value)
+  }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('ComparableFoo')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(long)('long')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('value')
+      PsiElement(new line)('\n\n  ')
+      Constructor
+        Modifiers
+          PsiElement(public)('public')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('ComparableFoo')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            Built in type
+              PsiElement(long)('long')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('theValue')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Assignment expression
+            Reference expression
+              'this' reference expression
+                PsiElement(this)('this')
+              PsiElement(.)('.')
+              PsiElement(identifier)('value')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Reference expression
+              PsiElement(identifier)('theValue')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('greaterThan')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Parameter modifiers
+              <empty list>
+            PsiElement(identifier)('anotherFoo')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          RETURN statement
+            PsiElement(return)('return')
+            PsiWhiteSpace(' ')
+            Parenthesized expression
+              PsiElement(()('(')
+              Additive expression
+                Reference expression
+                  'this' reference expression
+                    PsiElement(this)('this')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('value')
+                PsiWhiteSpace(' ')
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                Reference expression
+                  Reference expression
+                    PsiElement(identifier)('anotherFoo')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('value')
+              PsiElement())(')')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

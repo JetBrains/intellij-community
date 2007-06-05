@@ -59,26 +59,15 @@ public class ConstructorBody implements GroovyElementTypes {
       return CONSTRUCTOR_BODY_ERROR;
     }
 
-//    cbMarker.done(CONSTRUCTOR_BODY);
-//    return CONSTRUCTOR_BODY;
-
     cbMarker.done(OPEN_BLOCK);
     return OPEN_BLOCK;
 
-//    ParserUtils.waitNextRCurly(builder);
-//
-//    if (!ParserUtils.getToken(builder, mRCURLY)) {
-//      builder.error(GroovyBundle.message("rcurly.expected"));
-//    }
-//
-//    cbMarker.done(METHOD_BODY);
-//    return METHOD_BODY;
   }
 
   private static boolean parseExplicitConstructor(PsiBuilder builder) {
     TypeArguments.parse(builder);
 
-    if (ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER)) {
+    if ((ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER)) && ParserUtils.lookAhead(builder, mLPAREN)) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLPAREN);
       ArgumentList.parse(builder, mRPAREN);
