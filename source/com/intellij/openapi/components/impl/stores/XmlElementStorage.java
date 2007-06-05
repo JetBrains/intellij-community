@@ -117,13 +117,17 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @NotNull
   public ExternalizationSession startExternalization() {
-    assert mySession == null;
-    assert myLoadedData != null;
+    try {
+      assert mySession == null;
 
-    final ExternalizationSession session = new MyExternalizationSession(myLoadedData.clone());
+      final ExternalizationSession session = new MyExternalizationSession(getStorageData().clone());
 
-    mySession = session;
-    return session;
+      mySession = session;
+      return session;
+    }
+    catch (StateStorageException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

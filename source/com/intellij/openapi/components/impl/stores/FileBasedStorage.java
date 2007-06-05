@@ -47,19 +47,21 @@ public class FileBasedStorage extends XmlElementStorage {
     myFile = FILE_SYSTEM.createFile(myFilePath);
 
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
-
-    final String path = myFile.getAbsolutePath();
-    final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
-
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
 
-    final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
 
-    virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
-      public void contentsChanged(final VirtualFileEvent event) {
-        listener.storageFileChanged(event);
-      }
-    }, true, this);
+    if (virtualFileTracker != null && messageBus != null) {
+      final String path = myFile.getAbsolutePath();
+      final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+
+
+      final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+      virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+        public void contentsChanged(final VirtualFileEvent event) {
+          listener.storageFileChanged(event);
+        }
+      }, true, this);
+    }
   }
 
   protected MySaveSession createSaveSession(final XmlElementStorage.MyExternalizationSession externalizationSession) {
