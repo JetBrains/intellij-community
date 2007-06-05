@@ -372,11 +372,17 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
+    int maxCount = 0;
     if (provider.refreshCacheByNumber()) {
       final long number = cacheFile.getLastCachedChangelist();
       LOG.info("Refreshing cache for " + location + " since #" + number);
-      defaultSettings.CHANGE_AFTER = Long.toString(number);
-      defaultSettings.USE_CHANGE_AFTER_FILTER = true;
+      if (number >= 0) {
+        defaultSettings.CHANGE_AFTER = Long.toString(number);
+        defaultSettings.USE_CHANGE_AFTER_FILTER = true;
+      }
+      else {
+        maxCount = myState.getInitialCount();
+      }
     }
     else {
       final Date date = cacheFile.getLastCachedDate();
@@ -384,7 +390,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       defaultSettings.setDateAfter(date);
       defaultSettings.USE_DATE_AFTER_FILTER = true;
     }
-    final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, 0);
+    final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, maxCount);
     LOG.info("Loaded " + newChanges.size() + " new changelists");
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
