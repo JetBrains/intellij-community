@@ -235,7 +235,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     }
 
     public void handleEvent(final Event event, final Object associated) {
-      if (event == Event.SET_CURRENT_FILE_CONTEXT && !myResults.isEmpty()) {
+      if ((event == Event.SET_CURRENT_FILE_CONTEXT || event == Event.SET_DECLARATION_HOLDER) && !myResults.isEmpty()) {
         setFound();
       }
       super.handleEvent(event, associated);
