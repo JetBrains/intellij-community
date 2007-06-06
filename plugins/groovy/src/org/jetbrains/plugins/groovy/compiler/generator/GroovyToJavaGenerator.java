@@ -408,7 +408,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     if (element == null) {
       type = "java.lang.Object";
     } else {
-      type = element.getType().getCanonicalText();
+      type = computeTypeText(element.getType());
     }
 
     text.append(type);
@@ -447,7 +447,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     if (element == null) {
       type = "java.lang.Object";
     } else {
-      type = element.getType().getCanonicalText();
+      type = computeTypeText(element.getType());
     }
 
     text.append("void ");
