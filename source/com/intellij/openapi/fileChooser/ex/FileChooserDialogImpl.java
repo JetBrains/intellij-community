@@ -11,21 +11,16 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.*;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TitlePanel;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.LabeledIcon;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.concurrency.WorkerThread;
@@ -38,22 +33,18 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.*;
-import javax.swing.text.BadLocationException;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.util.*;
 import java.util.List;
 
-public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog{
+public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
 
@@ -67,21 +58,16 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private static boolean ourTextFieldShown = false;
   private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
 
-  private JTextField myPathTextField;
+  private FileTextField myPathTextField;
+
   private JComponent myPathTextFieldWrapper;
 
-  private MergingUpdateQueue myTextUpdate;
-
+  private MergingUpdateQueue myUiUpdater;
   private WorkerThread myFileLocator = new WorkerThread("fileChooserFileLocator", 200);
 
-  private boolean myPathIsUpdating;
   private boolean myTreeIsUpdating;
 
   public static DataKey<FileChooserDialogImpl> KEY = DataKey.create("FileChooserDialog");
-
-  private List<File> myCurrentCompletion;
-  private JBPopup myCurrentPopup;
-  private JList myList;
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -178,9 +164,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected JComponent createCenterPanel() {
     JPanel panel = new MyPanel();
 
-    myTextUpdate = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
-    Disposer.register(myDisposable, myTextUpdate);
-    new UiNotifyConnector(panel, myTextUpdate);
+    myUiUpdater = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
+    Disposer.register(myDisposable, myUiUpdater);
+    new UiNotifyConnector(panel, myUiUpdater);
 
     myFileLocator.start();
     Disposer.register(myDisposable, new Disposable() {
@@ -204,34 +190,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new JTextField();
-    myPathTextFieldWrapper.add(myPathTextField, BorderLayout.CENTER);
-
-    myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(final DocumentEvent e) {
-        updateTreeFromPath();
+    myPathTextField = new FileTextField.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater, myFileLocator) {
+      protected void onTextChanged(final String newValue) {
+        updateTreeFromPath(newValue);
       }
-
-      public void removeUpdate(final DocumentEvent e) {
-        updateTreeFromPath();
-      }
-
-      public void changedUpdate(final DocumentEvent e) {
-        updateTreeFromPath();
-      }
-    });
-
-    myPathTextField.addKeyListener(new KeyAdapter() {
-      public void keyPressed(final KeyEvent e) {
-        processListNavigation(e);
-      }
-    });
-
-    myPathTextField.addFocusListener(new FocusAdapter() {
-      public void focusLost(final FocusEvent e) {
-        closePopup();
-      }
-    });
+    };
+    myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
 
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
@@ -254,7 +218,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   public JComponent getPreferredFocusedComponent() {
-    return ourTextFieldShown ? myPathTextField : myFileSystemTree.getTree();
+    return ourTextFieldShown ? myPathTextField.getField() : myFileSystemTree.getTree();
   }
 
   public final void dispose() {
@@ -273,8 +237,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     if (ourTextFieldShown) {
-      final String text = getTextFieldText();
-      if (text == null || !getFileFrom(text).exists()) {
+      final String text = myPathTextField.getTextFieldText();
+      if (text == null || myPathTextField.getFile() == null || !myPathTextField.getFile().exists()) {
         setErrorText("Specified path cannot be found");
         return;
       }
@@ -483,7 +447,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       } else {
         setErrorText(null);
       }
-      myPathTextField.requestFocus();
+      myPathTextField.getField().requestFocus();
     } else {
       myFileSystemTree.getTree().requestFocus();
     }
@@ -525,290 +489,42 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
-    if (!ourTextFieldShown) return;
-    if (myTreeIsUpdating) return;
+    if (!ourTextFieldShown || myTreeIsUpdating) return;
 
-    final String text = selection.size() == 0 ? "" : selection.get(0).getPresentableUrl();
-    final Update update = new Update("pathFromTree") {
+    myPathTextField.setText(selection.size() == 0 ? "" : selection.get(0).getPresentableUrl(), now, new Runnable() {
       public void run() {
-        myPathIsUpdating = true;
-        myPathTextField.setText(text);
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            myPathTextField.selectAll();
-            myPathIsUpdating = false;
-            setErrorText(null);
-          }
-        });
+        myPathTextField.getField().selectAll();
+        setErrorText(null);
       }
-    };
-    if (now) {
-      update.run();
-    } else {
-      myTextUpdate.queue(update);
-    }
+    });
   }
 
-  private void updateTreeFromPath() {
+  private void updateTreeFromPath(final String text) {
     if (!ourTextFieldShown) return;
-    if (myPathIsUpdating) return;
+    if (myPathTextField.isPathUpdating()) return;
+    if (text == null) return;
 
-    myTextUpdate.queue(new Update("treeFromPath.1") {
+    myUiUpdater.queue(new Update("treeFromPath.1") {
       public void run() {
-        final String text = getTextFieldText();
-        if (text == null) return;
-
         myFileLocator.addTaskFirst(new Runnable() {
           public void run() {
-            File toFind = getFileFrom(text);
+            final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
+            if (toFind == null || !toFind.exists()) return;
 
-            final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toFind);
-            myTextUpdate.queue(new Update("treeFromPath.2") {
+            myUiUpdater.queue(new Update("treeFromPath.2") {
               public void run() {
-                selectInTree(vFile, text);
+                selectInTree(toFind.getFile(), text);
               }
             });
-
-            suggestCompletion();
           }
         });
       }
     });
-  }
-
-  private static File getFileFrom(final String text) {
-    File toFind = new File(text);
-    if (text.length() == 0) {
-      final File[] roots = File.listRoots();
-      if (roots.length > 0) {
-        toFind = roots[0];
-      }
-    }
-    return toFind;
-  }
-
-  private void suggestCompletion() {
-    final List<File> toComplete = getCompletion(getTextFieldText(), new FileFilter() {
-      public boolean accept(final File pathname) {
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(pathname);
-        return myChooserDescriptor.isFileVisible(vFile, myFileSystemTree.areHiddensShown());
-      }
-    });
-
-    myTextUpdate.queue(new Update("completion") {
-      public void run() {
-        if (myList == null) {
-          myList = new JList();
-          myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-          myList.setCellRenderer(new ColoredListCellRenderer() {
-            protected void customizeCellRenderer(final JList list,
-                                                 final Object value, final int index, final boolean selected, final boolean hasFocus) {
-              clear();
-              append(((File)value).getName(), new SimpleTextAttributes(list.getFont().getStyle(), list.getForeground()));
-            }
-          });
-        }
-
-
-        if (myCurrentPopup != null) {
-          if (toComplete.equals(myCurrentCompletion)) {
-            myCurrentPopup.setLocation(getLocationForCaret());
-            return;
-          } else {
-            closePopup();
-          }
-        }
-
-        myCurrentCompletion = toComplete;
-
-        if (myCurrentCompletion.size() == 0) return;
-
-        final Object selected = myList.getSelectedIndex() < myList.getModel().getSize() ? myList.getSelectedValue() : null;
-        myList.setModel(new AbstractListModel() {
-          public int getSize() {
-            return myCurrentCompletion.size();
-          }
-
-          public Object getElementAt(final int index) {
-            return myCurrentCompletion.get(index);
-          }
-        });
-        if (selected != null) {
-          myList.setSelectedValue(selected, true);
-        }
-        final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
-        myCurrentPopup = builder.setRequestFocus(false).setResizable(false).setCancelCalllback(new Computable<Boolean>() {
-          public Boolean compute() {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                myPathTextField.requestFocus();
-              }
-            });
-            return Boolean.TRUE;
-          }
-        }).createPopup();
-        myCurrentPopup.showInScreenCoordinates(myPathTextField, getLocationForCaret());
-      }
-    });
-  }
-
-  private boolean isPopupShowing() {
-    return myCurrentPopup != null && myList != null && myList.isShowing();
-  }
-
-  private void closePopup() {
-    if (myCurrentPopup != null) {
-      myCurrentPopup.cancel();
-      myCurrentPopup = null;
-    }
-    myCurrentCompletion = null;
-  }
-
-  private void processChosenFromCompletion(final File file) {
-    if (file == null) return;
-    myPathTextField.setText(file.getAbsolutePath());
-  }
-
-  private void processListNavigation(final KeyEvent e) {
-    if (togglePopup(e)) return;
-
-    if (!isPopupShowing()) return;
-
-    final Object action = getAction(e, myList);
-
-    if ("selectNextRow".equals(action)) {
-      ListScrollingUtil.moveDown(myList, e.getModifiersEx());
-    } else if ("selectPreviousRow".equals(action)) {
-      ListScrollingUtil.moveUp(myList, e.getModifiersEx());
-    } else if ("scrollDown".equals(action)) {
-      ListScrollingUtil.movePageDown(myList);
-    } else if ("scrollUp".equals(action)) {
-      ListScrollingUtil.movePageUp(myList);
-    } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-      myCurrentPopup.cancel();
-      e.consume();
-      processChosenFromCompletion((File)myList.getSelectedValue());
-    }
-  }
-
-  private boolean togglePopup(KeyEvent e) {
-    if (!ourTextFieldShown) return false;
-
-    final KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers());
-    final Object action = ((InputMap)UIManager.get("ComboBox.ancestorInputMap")).get(stroke);
-    if ("selectNext".equals(action)) {
-      if (!isPopupShowing()) {
-        suggestCompletion();
-      }
-      return true;
-    } else if ("selectPrevious".equals(action)) {
-      if (isPopupShowing()) {
-        closePopup();
-      }
-      return true;
-    } else if ("togglePopup".equals(action)) {
-      if (isPopupShowing()) {
-        closePopup();
-      } else {
-        suggestCompletion();
-      }
-      return true;
-    } else {
-      if (!isPopupShowing()) {
-        final Keymap active = KeymapManager.getInstance().getActiveKeymap();
-        final String[] ids = active.getActionIds(stroke);
-        if (ids.length > 0 && "CodeCompletion".equals(ids[0])) {
-          suggestCompletion();        
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private Object getAction(final KeyEvent e, final JComponent comp) {
-    final KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers());
-    final Object action = comp.getInputMap().get(stroke);
-    return action;
-  }
-
-  private Point getLocationForCaret() {
-    Point point = null;
-
-    try {
-      final Rectangle rec = myPathTextField.modelToView(myPathTextField.getCaretPosition());
-      point = new Point((int)rec.getMaxX(), (int)rec.getMaxY());
-    }
-    catch (BadLocationException e) {
-      return myPathTextField.getCaret().getMagicCaretPosition();
-    }
-
-    SwingUtilities.convertPointToScreen(point, myPathTextField);
-
-    return point;
-  }
-
-  static List<File> getCompletion(String typed, final FileFilter filter) {
-    List<File> result = new ArrayList<File>();
-
-    File current = getCurrentParent(typed);
-
-    if (current == null) return result;
-    if (typed == null || typed.length() == 0) return result;
-
-    final String typedText = new File(typed).getPath();
-    final String parentText = current.getAbsolutePath();
-
-    if (!typedText.startsWith(parentText)) return result;
-
-    String prefix = typedText.substring(parentText.length());
-    if (prefix.startsWith(File.separator)) {
-      prefix = prefix.substring(File.separator.length());
-    } else if (typed.endsWith(File.separator)) {
-      prefix = "";      
-    } 
-
-    final String effectivePrefix = prefix;
-    final File[] files = current.listFiles(new FileFilter() {
-      public boolean accept(final File pathname) {
-        if (filter != null && !filter.accept(pathname)) return false;
-        return pathname.getName().toUpperCase().startsWith(effectivePrefix.toUpperCase());
-      }
-    });
-
-    if (files == null) return result;
-
-    for (File each : files) {
-      result.add(each);
-    }
-
-    return result;
-  }
-
-  private static File getCurrentParent(final String typed) {
-    if (typed == null) return null;
-    File lastFound = new File(typed);
-    if (lastFound.exists()) return lastFound;
-
-    final String[] splits = new File(typed).getAbsolutePath().split(File.separator);
-    StringBuffer fullPath = new StringBuffer();
-    for (int i = 0; i < splits.length; i++) {
-      String each = splits[i];
-      fullPath.append(getFileFrom(each).getName());
-      if (i < splits.length - 1) {
-        fullPath.append(File.separator);
-      }
-      final File file = getFileFrom(fullPath.toString());
-      if (!file.exists()) return lastFound;
-      lastFound = file;
-    }
-
-    return lastFound;
   }
 
   private void selectInTree(final VirtualFile vFile, String fromText) {
     if (vFile != null && vFile.isValid()) {
-      if (fromText.equalsIgnoreCase(getTextFieldText())) {
+      if (fromText.equalsIgnoreCase(myPathTextField.getTextFieldText())) {
         myTreeIsUpdating = true;
         if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
           myFileSystemTree.select(vFile, new Runnable() {
@@ -831,13 +547,5 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTreeIsUpdating = false;
     setErrorText(null);
   }
-
-  private String getTextFieldText() {
-    final String text = myPathTextField.getText();
-    if (text == null) return null;
-    return text.trim();
-  }
-
-
 
 }

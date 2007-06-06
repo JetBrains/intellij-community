@@ -15,13 +15,13 @@
 */
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedList;
 
-import com.intellij.openapi.application.ApplicationManager;
-
-public class WorkerThread implements Runnable {
+public class WorkerThread implements Runnable, Disposable {
   private LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
   private boolean myDisposed = false;
@@ -55,6 +55,10 @@ public class WorkerThread implements Runnable {
       myTasks.notifyAll();
       return true;
     }
+  }
+
+  public void dispose() {
+    dispose(true);
   }
 
   public void dispose(boolean cancelTasks){
