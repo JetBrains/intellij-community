@@ -30,12 +30,12 @@ public class CommandArguments implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = ExpressionStatement.argParse(builder);
+    GroovyElementType result = commandArgParse(builder);
     if (!result.equals(WRONGWAY)) {
       while (builder.getTokenType() == mCOMMA && !result.equals(WRONGWAY)) {
         ParserUtils.getToken(builder, mCOMMA);
         ParserUtils.getToken(builder, mNLS);
-        result = ExpressionStatement.argParse(builder);
+        result = commandArgParse(builder);
         if (result.equals(WRONGWAY)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
@@ -48,4 +48,20 @@ public class CommandArguments implements GroovyElementTypes {
     return result;
   }
 
+  private static GroovyElementType commandArgParse(PsiBuilder builder){
+    PsiBuilder.Marker commandMarker = builder.mark();
+    if (ArgumentList.argumentLabelStartCheck(builder)){
+      ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
+      GroovyElementType result = ExpressionStatement.argParse(builder);
+      if (result.equals(WRONGWAY)){
+        commandMarker.error(GroovyBundle.message("expression.expected"));
+      } else {
+        commandMarker.done(COMMAND_ARGUMENT);
+      }
+      return COMMAND_ARGUMENT;
+    } else {
+      commandMarker.drop();
+      return ExpressionStatement.parse(builder);
+    }
+  }
 }
