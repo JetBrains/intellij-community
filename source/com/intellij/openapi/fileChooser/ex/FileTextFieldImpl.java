@@ -49,6 +49,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private String myCompletionBase;
 
   private int myCurrentCompletionsPos = 1;
+  private String myFileSpitRegExp;
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter) {
     this(finder, filter, null, null);
@@ -74,6 +75,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     myFinder = finder;
     myFilter = filter;
+
+    myFileSpitRegExp = myFinder.getSeparator().replaceAll("\\\\", "\\\\\\\\");
 
     myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
       public void insertUpdate(final DocumentEvent e) {
@@ -219,7 +222,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final String typedText = myFinder.normalize(typed);
     final String parentText = current.getAbsolutePath();
 
-    if (!typedText.startsWith(parentText)) return result;
+    if (!typedText.toUpperCase().startsWith(parentText.toUpperCase())) return result;
 
     String prefix = typedText.substring(parentText.length());
     if (prefix.startsWith(myFinder.getSeparator())) {
@@ -250,7 +253,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     LookupFile lastFound = myFinder.find(typed);
     if (lastFound != null && lastFound.exists()) return lastFound;
 
-    final String[] splits = myFinder.normalize(typed).split(myFinder.getSeparator());
+    final String[] splits = myFinder.normalize(typed).split(myFileSpitRegExp);
     StringBuffer fullPath = new StringBuffer();
     for (int i = 0; i < splits.length; i++) {
       String each = splits[i];
@@ -313,14 +316,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if ("selectNext".equals(action)) {
       if (!isPopupShowing()) {
         suggestCompletion();
+        return true;
+      } else {
+        return false;
       }
-      return true;
-    }
-    else if ("selectPrevious".equals(action)) {
-      if (isPopupShowing()) {
-        closePopup();
-      }
-      return true;
     }
     else if ("togglePopup".equals(action)) {
       if (isPopupShowing()) {
