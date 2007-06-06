@@ -532,8 +532,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
         PsiType type = grParameter.getType();
         String initValueToText;
 
-        if (typesToInitialValues.containsKey(computeTypeText(type)))
-          initValueToText = typesToInitialValues.get(type.getCanonicalText());
+        String typeText = computeTypeText(type);
+        if (typesToInitialValues.containsKey(typeText))
+          initValueToText = typesToInitialValues.get(typeText);
         else
           initValueToText = "null";
 
