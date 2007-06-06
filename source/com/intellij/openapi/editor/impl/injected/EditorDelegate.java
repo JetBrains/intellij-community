@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,9 +55,7 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   public static Editor create(@NotNull final DocumentRange documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     for (EditorDelegate editorDelegate : allEditors) {
       if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor) {
-        if (editorDelegate.getInjectedFile() != injectedFile) {
-          editorDelegate.myInjectedFile = injectedFile;
-        }
+        editorDelegate.myInjectedFile = injectedFile;
         if (editorDelegate.isValid()) {
           return editorDelegate;
         }
@@ -83,6 +82,8 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
       EditorDelegate editorDelegate = iterator.next();
       if (!editorDelegate.isValid() || textRangeIntersectsWith(editorDelegate)) {
         editorDelegate.disposeModel();
+
+        InjectedLanguageUtil.clearCaches(editorDelegate.getInjectedFile(), editorDelegate.getDocument());
         iterator.remove();
       }
     }

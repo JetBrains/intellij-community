@@ -88,7 +88,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
     PsiFile file = child.getContainingFile();
     if (file == null) {
-      ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markAllFilesDirty();
+      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
       return;
     }
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
@@ -115,7 +115,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     // change in e.g. sciptlet may lead to error in any other place
     Language language = file.getLanguage();
     if (language == StdLanguages.JSPX || language == StdLanguages.JSP) {
-      ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markAllFilesDirty();
+      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
       return;
     }
 
@@ -123,7 +123,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     PsiElement parent = child;
     while (true) {
       if (parent instanceof PsiFile || parent instanceof PsiDirectory) {
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markAllFilesDirty();
+        myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
         return;
       }
       PsiElement pparent = parent.getParent();
@@ -142,14 +142,14 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
           }
         }
 
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markFileScopeDirty(document, dirtyScope);
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, dirtyScope);
         return;
       }
 
       if (parent instanceof PsiCodeBlock && pparent instanceof PsiMethod && !((PsiMethod)pparent).isConstructor() &&
           pparent.getParent()instanceof PsiClass && !(pparent.getParent()instanceof PsiAnonymousClass)) {
         // do not use this optimization for constructors and class initializers - to update non-initialized fields
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markFileScopeDirty(document, pparent);
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, pparent);
         return;
       }
       parent = pparent;

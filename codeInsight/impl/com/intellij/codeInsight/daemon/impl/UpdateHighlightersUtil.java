@@ -30,9 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class UpdateHighlightersUtil {
 
@@ -67,137 +65,156 @@ public class UpdateHighlightersUtil {
                                              int endOffset,
                                              Collection<HighlightInfo> highlights,
                                              int group) {
-    setAndGetHighlightersToEditor(project, document, startOffset, endOffset, highlights, group);
+    setAndGetHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
-  public static HighlightInfo[] setAndGetHighlightersToEditor(Project project,
-                                             Document document,
-                                             int startOffset,
-                                             int endOffset,
-                                             Collection<HighlightInfo> highlights,
-                                             int group) {
+  public static HighlightInfo[] setAndGetHighlightersToEditor(final Project project, final Document document, final Map<TextRange, Collection<HighlightInfo>> infos,
+                                                              final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //serialized implicitly by the dispatch thread
-
+                              
     cleanFileLevelHighlights(project, document, group);
 
-    HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
+    List<TextRange> ranges = new ArrayList<TextRange>(infos.keySet());
+    Collections.sort(ranges, new Comparator<TextRange>() {
+      public int compare(final TextRange o1, final TextRange o2) {
+        return o1.getStartOffset() - o2.getStartOffset();
+      }
+    });
+    //merge enclosing
+    TextRange prev = ranges.get(0);
+    for (int i = 1; i < ranges.size(); i++) {
+      TextRange range = ranges.get(i);
+      if (prev.contains(range)) {
+        TextRange removed = ranges.remove(i);
+        infos.get(prev).addAll(infos.get(removed));
+        i--;
+      }
+    }
 
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     if (oldHighlights != null) {
       for (HighlightInfo info : oldHighlights) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() ||
-                           info.group == group && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() <= endOffset;
-
+                           info.group == group && Collections.binarySearch(ranges, new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()), new Comparator<TextRange>() {
+                             public int compare(final TextRange o1, final TextRange o2) {
+                               if (o1.contains(o2) || o2.contains(o1)) return 0;
+                               return o1.getStartOffset() - o2.getStartOffset();
+                             }
+                           }) >= 0;
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
         }
         else {
-          array.add(info);
+          result.add(info);
         }
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Removed segment highlighters:" + (oldHighlights.length - array.size()));
+        LOG.debug("Removed segment highlighters:" + (oldHighlights.length - result.size()));
       }
     }
 
-    for (HighlightInfo info : highlights) {
-      int infoEndOffset = info.endOffset;
-      int infoStartOffset = info.startOffset;
+    for (TextRange range : ranges) {
+      Collection<HighlightInfo> highlights = infos.get(range);
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
 
-      if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
-      HighlightSeverity severity = info.getSeverity();
-      int layer;
-      if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
-        layer = HighlighterLayer.ADDITIONAL_SYNTAX;
-      }
-      else if (severity == HighlightSeverity.WARNING) {
-        layer = HighlighterLayer.WARNING;
-      }
-      else {
-        layer = HighlighterLayer.ERROR;
-      }
+      for (HighlightInfo info : highlights) {
+        int infoEndOffset = info.endOffset;
+        int infoStartOffset = info.startOffset;
 
-      final int docLength = document.getTextLength();
-      if (infoEndOffset > docLength) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Invalid HighlightInfo created: (" + infoStartOffset + ":" + infoEndOffset + ")" + info.description);
+        if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
+        HighlightSeverity severity = info.getSeverity();
+        int layer;
+        if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
+          layer = HighlighterLayer.ADDITIONAL_SYNTAX;
+        }
+        else if (severity == HighlightSeverity.WARNING) {
+          layer = HighlighterLayer.WARNING;
+        }
+        else {
+          layer = HighlighterLayer.ERROR;
         }
 
-        infoEndOffset = docLength;
-      }
+        final int docLength = document.getTextLength();
+        if (infoEndOffset > docLength) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Invalid HighlightInfo created: (" + infoStartOffset + ":" + infoEndOffset + ")" + info.description);
+          }
 
-      if (info.isFileLevelAnnotation) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile != null) {
-          if (psiFile.getViewProvider().isPhysical()) {
-            VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
-            final FileEditorManager manager = FileEditorManager.getInstance(project);
-            for (FileEditor fileEditor : manager.getEditors(vFile)) {
-              if (fileEditor instanceof TextEditor) {
-                FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
-                                                                                        project, psiFile, ((TextEditor)fileEditor).getEditor());
-                manager.showEditorAnnotation(fileEditor, component);
-                List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-                if (fileLevelInfos == null) {
-                  fileLevelInfos = new ArrayList<HighlightInfo>();
-                  fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+          infoEndOffset = docLength;
+        }
+
+        if (info.isFileLevelAnnotation) {
+          final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+          if (psiFile != null) {
+            if (psiFile.getViewProvider().isPhysical()) {
+              VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+              final FileEditorManager manager = FileEditorManager.getInstance(project);
+              for (FileEditor fileEditor : manager.getEditors(vFile)) {
+                if (fileEditor instanceof TextEditor) {
+                  FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
+                                                                                          project, psiFile, ((TextEditor)fileEditor).getEditor());
+                  manager.showEditorAnnotation(fileEditor, component);
+                  List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+                  if (fileLevelInfos == null) {
+                    fileLevelInfos = new ArrayList<HighlightInfo>();
+                    fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+                  }
+                  info.fileLevelComponent = component;
+                  info.group = group;
+                  fileLevelInfos.add(info);
                 }
-                info.fileLevelComponent = component;
-                info.group = group;
-                fileLevelInfos.add(info);
               }
+
+              continue;
             }
-
-            continue;
           }
         }
-      }
 
-      RangeHighlighterEx highlighter = (RangeHighlighterEx)document.getMarkupModel(project).addRangeHighlighter(
-        infoStartOffset,
-        infoEndOffset,
-        layer,
-        info.getTextAttributes(),
-        HighlighterTargetArea.EXACT_RANGE);
+        RangeHighlighterEx highlighter = (RangeHighlighterEx)document.getMarkupModel(project).addRangeHighlighter(
+          infoStartOffset,
+          infoEndOffset,
+          layer,
+          info.getTextAttributes(),
+          HighlighterTargetArea.EXACT_RANGE);
 
-      //highlighter.setUserObject(info); // debug purposes only!
-      info.highlighter = highlighter;
-      highlighter.setAfterEndOfLine(info.isAfterEndOfLine);
-      info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
-      info.group = group;
+        //highlighter.setUserObject(info); // debug purposes only!
+        info.highlighter = highlighter;
+        highlighter.setAfterEndOfLine(info.isAfterEndOfLine);
+        info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
+        info.group = group;
 
-      highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor());
-      highlighter.setErrorStripeTooltip(info);
-      highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
+        highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor());
+        highlighter.setErrorStripeTooltip(info);
+        highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
 
-      HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
-      ranges2markers.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
-      if (info.quickFixActionRanges != null) {
-        info.quickFixActionMarkers = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>();
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          TextRange range = pair.second;
-          RangeMarker marker = ranges2markers.get(range);
-          if (marker == null) {
-            marker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
-            ranges2markers.put(range, marker);
+        HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
+        ranges2markers.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
+        if (info.quickFixActionRanges != null) {
+          info.quickFixActionMarkers = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>();
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            TextRange textRange = pair.second;
+            RangeMarker marker = ranges2markers.get(textRange);
+            if (marker == null) {
+              marker = document.createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+              ranges2markers.put(textRange, marker);
+            }
+            info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
           }
-          info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
         }
-      }
-      info.fixMarker = ranges2markers.get(new TextRange(info.fixStartOffset, info.fixEndOffset));
-      if (info.fixMarker == null) {
-        info.fixMarker = document.createRangeMarker(info.fixStartOffset, info.fixEndOffset);
-      }
+        info.fixMarker = ranges2markers.get(new TextRange(info.fixStartOffset, info.fixEndOffset));
+        if (info.fixMarker == null) {
+          info.fixMarker = document.createRangeMarker(info.fixStartOffset, info.fixEndOffset);
+        }
 
-      array.add(info);
+        result.add(info);
+      }
     }
 
-    HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
+    HighlightInfo[] newHighlights = result.toArray(new HighlightInfo[result.size()]);
     DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Added segment highlighters:" + highlights.size());
-    }
     clearWhiteSpaceOptimizationFlag(document);
     return newHighlights;
   }
@@ -293,69 +310,70 @@ public class UpdateHighlightersUtil {
     }
     int offset = e.getOffset();
     Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-    if (editors.length > 0) {
-      Editor editor = editors[0]; // use any editor - just to fetch SelectInEditorManager
-      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(Math.max(0, offset - 1));
+    if (editors.length == 0) {
+      return;
+    }
+    Editor editor = editors[0]; // use any editor - just to fetch SelectInEditorManager
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(Math.max(0, offset - 1));
+    if (iterator.atEnd()) return;
+    int start = iterator.getStart();
+    while (iterator.getEnd() < e.getOffset() + e.getNewLength()) {
+      iterator.advance();
       if (iterator.atEnd()) return;
-      int start = iterator.getStart();
-      while (iterator.getEnd() < e.getOffset() + e.getNewLength()) {
-        iterator.advance();
-        if (iterator.atEnd()) return;
-      }
-      int end = iterator.getEnd();
+    }
+    int end = iterator.getEnd();
 
-      List<HighlightInfo> array = new ArrayList<HighlightInfo>(highlights.length);
-      boolean changes = false;
-      for (HighlightInfo info : highlights) {
-        RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = false;
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>(highlights.length);
+    boolean changes = false;
+    for (HighlightInfo info : highlights) {
+      RangeHighlighter highlighter = info.highlighter;
+      boolean toRemove = false;
 
-        if (info.needUpdateOnTyping()) {
-          int highlighterStart = highlighter.getStartOffset();
-          int highlighterEnd = highlighter.getEndOffset();
-          if (info.isAfterEndOfLine) {
-            if (highlighterStart < document.getTextLength()) {
-              highlighterStart += 1;
-            }
-            if (highlighterEnd < document.getTextLength()) {
-              highlighterEnd += 1;
-            }
+      if (info.needUpdateOnTyping()) {
+        int highlighterStart = highlighter.getStartOffset();
+        int highlighterEnd = highlighter.getEndOffset();
+        if (info.isAfterEndOfLine) {
+          if (highlighterStart < document.getTextLength()) {
+            highlighterStart += 1;
           }
+          if (highlighterEnd < document.getTextLength()) {
+            highlighterEnd += 1;
+          }
+        }
 
-          if (!highlighter.isValid()) {
+        if (!highlighter.isValid()) {
+          toRemove = true;
+        }
+        else if (start < highlighterEnd && highlighterStart < end) {
+          LOG.assertTrue(0 <= highlighterStart);
+          LOG.assertTrue(highlighterStart < document.getTextLength());
+          HighlighterIterator iterator1 = ((EditorEx)editor).getHighlighter().createIterator(highlighterStart);
+          int start1 = iterator1.getStart();
+          while (iterator1.getEnd() < highlighterEnd) {
+            iterator1.advance();
+          }
+          int end1 = iterator1.getEnd();
+          CharSequence chars = document.getCharsSequence();
+          String token = chars.subSequence(start1, end1).toString();
+          if (start1 != highlighterStart || end1 != highlighterEnd || !token.equals(info.text)) {
             toRemove = true;
+            disableWhiteSpaceOptimization(document);
           }
-          else if (start < highlighterEnd && highlighterStart < end) {
-            LOG.assertTrue(0 <= highlighterStart);
-            LOG.assertTrue(highlighterStart < document.getTextLength());
-            HighlighterIterator iterator1 = ((EditorEx)editor).getHighlighter().createIterator(highlighterStart);
-            int start1 = iterator1.getStart();
-            while (iterator1.getEnd() < highlighterEnd) {
-              iterator1.advance();
-            }
-            int end1 = iterator1.getEnd();
-            CharSequence chars = document.getCharsSequence();
-            String token = chars.subSequence(start1, end1).toString();
-            if (start1 != highlighterStart || end1 != highlighterEnd || !token.equals(info.text)) {
-              toRemove = true;
-              disableWhiteSpaceOptimization(document);
-            }
-          }
-        }
-
-        if (toRemove) {
-          document.getMarkupModel(project).removeHighlighter(highlighter);
-          changes = true;
-        }
-        else {
-          array.add(info);
         }
       }
 
-      if (changes) {
-        HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
-        DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
+      if (toRemove) {
+        document.getMarkupModel(project).removeHighlighter(highlighter);
+        changes = true;
       }
+      else {
+        array.add(info);
+      }
+    }
+
+    if (changes) {
+      HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
+      DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
     }
   }
 

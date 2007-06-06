@@ -42,9 +42,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author cdr
@@ -83,10 +81,6 @@ public class InjectedLanguageUtil {
                                                                                       LiteralTextEscaper<T> textEscaper,
                                                                                       @NotNull String prefix,
                                                                                       @NotNull String suffix) {
-    TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
-    DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow,prefix,suffix);
-    VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, documentRange.getText());
-
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return null;
     PsiFile hostFile = host.getContainingFile();
@@ -105,7 +99,11 @@ public class InjectedLanguageUtil {
       if (!result) return null;
     }
     outChars.append(suffix);
-    virtualFile.setContent(null, outChars, false);
+
+    TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
+    DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow,prefix,suffix);
+    VirtualFileDelegate virtualFile = InjectedManager.getInstance().createVirtualFile(language, hostVirtualFile, documentRange, outChars, host.getProject());
+
     DocumentImpl decodedDocument = new DocumentImpl(outChars);
     FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
@@ -180,8 +178,9 @@ public class InjectedLanguageUtil {
     return tokens;
   }
 
+
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
-    public MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileDelegate virtualFile) {
+    private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileDelegate virtualFile) {
       super(PsiManager.getInstance(project), virtualFile);
     }
 
@@ -413,10 +412,23 @@ public class InjectedLanguageUtil {
            };
   }
 
-  private static final Key<List<DocumentRange>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
-  public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
+  @NotNull
+  public static List<DocumentRange> getCachedInjectedDocuments(Document hostDocument) {
     List<DocumentRange> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
-    if (injected == null) return;
+    if (injected == null) {
+      injected = new ArrayList<DocumentRange>();
+      hostDocument.putUserData(INJECTED_DOCS_KEY, injected);
+    }
+
+    return injected;
+  }
+
+  private static final Key<List<DocumentRange>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
+  private static final Key<Project> INJECTED_PROJ = Key.create("INJECTED_PROJ");
+  public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
+    List<DocumentRange> injected = getCachedInjectedDocuments(hostDocument);
+    if (injected.isEmpty()) return;
+
     List<DocumentRange> oldInjected = new ArrayList<DocumentRange>(injected);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile hostPsiFile = documentManager.getPsiFile(hostDocument);
@@ -445,13 +457,15 @@ public class InjectedLanguageUtil {
     PsiDocumentManagerImpl.checkConsistency(hostPsiFile, hostDocument);
   }
 
+  public static void clearCaches(PsiFile injected, DocumentRange documentRange) {
+    injected.putUserData(ResolveUtil.INJECTED_IN_ELEMENT,null);
+    ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(injected.getVirtualFile(), null);
+    documentRange.getDelegate().putUserData(INJECTED_DOCS_KEY, null);
+  }
+
   private static PsiFile registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
     DocumentEx hostDocument = documentRange.getDelegate();
-    List<DocumentRange> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
-
-    if (injected == null) {
-      injected = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_DOCS_KEY, new ArrayList<DocumentRange>());
-    }
+    List<DocumentRange> injected = getCachedInjectedDocuments(hostDocument);
 
     RangeMarker rangeMarker = documentRange.getTextRange();
     TextRange textRange = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
@@ -462,7 +476,7 @@ public class InjectedLanguageUtil {
       if (oldFile == null) {
         injected.remove(i);
         continue;
-      }
+      }       
       assert oldFile.getViewProvider() instanceof MyFileViewProvider : oldFile.getViewProvider();
       RangeMarker oldRangeMarker = oldDocument.getTextRange();
       TextRange oldTextRange = new TextRange(oldRangeMarker.getStartOffset(), oldRangeMarker.getEndOffset());
@@ -471,6 +485,10 @@ public class InjectedLanguageUtil {
       assert injectedNode != null;
       assert oldFileNode != null;
       if (oldTextRange.intersects(textRange)) {
+        if (oldFile.getFileType() != injectedPsi.getFileType()) {
+          injected.remove(i);
+          continue;
+        }
         oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
         if (!injectedNode.getText().equals(oldFileNode.getText())) {
           // replace psi
@@ -495,6 +513,7 @@ public class InjectedLanguageUtil {
       }
     }
     injected.add(documentRange);
+    hostDocument.putUserData(INJECTED_PROJ, injectedPsi.getProject());
     return injectedPsi;
   }
 
@@ -516,7 +535,7 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
-  public static PsiFile getContainingInjectedFile(PsiElement element) {
+  private static PsiFile getContainingInjectedFile(PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
     PsiElement host = psiFile.getContext();

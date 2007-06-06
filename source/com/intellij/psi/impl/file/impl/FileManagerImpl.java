@@ -73,8 +73,8 @@ public class FileManagerImpl implements FileManager {
   private final FileDocumentManager myFileDocumentManager;
   private MessageBusConnection myConnection;
 
-  private static final @NonNls String JAVA_EXTENSION = ".java";
-  private static final @NonNls String CLASS_EXTENSION = ".class";
+  @NonNls private static final String JAVA_EXTENSION = ".java";
+  @NonNls private static final String CLASS_EXTENSION = ".class";
   @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public FileManagerImpl(PsiManagerImpl manager,
@@ -124,7 +124,12 @@ public class FileManagerImpl implements FileManager {
   }
 
   public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider fileViewProvider) {
-    myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
+    if (fileViewProvider == null) {
+      myVFileToViewProviderMap.remove(virtualFile);
+    }
+    else {
+      myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
+    }
   }
 
   private FileViewProvider createFileViewProvider(final VirtualFile file) {

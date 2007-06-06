@@ -18,11 +18,11 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
 import com.intellij.psi.tree.TokenSet;
@@ -278,30 +278,28 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file) {
-    return doFindTodoItems(file);
+    return doFindTodoItems(file, new TextRange(0, file.getTextLength()));
   }
 
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
-    return doFindTodoItems(file);
+    return doFindTodoItems(file, new TextRange(startOffset, endOffset));
   }
 
-  private static TodoItem[] doFindTodoItems(final PsiFile file) {
+  private static TodoItem[] doFindTodoItems(final PsiFile file, final TextRange textRange) {
     final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
 
-    TodoItem[] items = new TodoItem[occurrences.size()];
-    int index = 0;
+    List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
     for(IndexPatternOccurrence occurrence: occurrences) {
-      items [index++] = new TodoItemImpl(occurrence.getFile(),
-                                         occurrence.getTextRange().getStartOffset(),
-                                         occurrence.getTextRange().getEndOffset(),
-                                         mapPattern(occurrence.getPattern()));
+      if (!textRange.contains(occurrence.getTextRange())) continue;
+      items.add(new TodoItemImpl(occurrence.getFile(), occurrence.getTextRange().getStartOffset(), occurrence.getTextRange().getEndOffset(),
+                                 mapPattern(occurrence.getPattern())));
     }
 
-    return items;
+    return items.toArray(new TodoItem[items.size()]);
   }
 
   private static TodoPattern mapPattern(final IndexPattern pattern) {

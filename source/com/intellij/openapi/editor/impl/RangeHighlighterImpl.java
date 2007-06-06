@@ -139,7 +139,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     fireChanged();
   }
 
-  public void setEditorFilter(MarkupEditorFilter filter) {
+  public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
     myFilter = filter;
   }
 

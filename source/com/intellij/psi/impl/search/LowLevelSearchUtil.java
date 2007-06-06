@@ -52,81 +52,80 @@ public class LowLevelSearchUtil {
     final ASTNode scopeNode = scope.getNode();
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
-      if (i >= 0) {
-        if (CachesBasedRefSearcher.DEBUG) {
-          System.out.println(">>>>>>>>>>>>>>>>>>> found word:" + i + " in " + scope + "," + scope.getContainingFile().getName());
-        }
-        if (scopeNode != null) {
-          LeafElement leafNode = (LeafElement)scopeNode.findLeafElementAt(i);
-          if (leafNode == null) return true;
-          int start = i - leafNode.getStartOffset() + scopeStartOffset;
-          LOG.assertTrue(start >= 0);
-          boolean contains = leafNode.getTextLength() - start >= patternLength;
-          if (CachesBasedRefSearcher.DEBUG) {
-            System.out.println(">>>>>>>>>>>>>>>>  contains:" + contains + " in " + scope + "," + scope.getContainingFile().getName());
-          }
-          if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
-          Boolean result = processInjectedFile(leafNode.getPsi(), processor, searcher);
-          if (result != null && !result.booleanValue()) return false;
-          boolean injectedFound = result != null;
-          TreeElement prev = leafNode;
-          CompositeElement run = leafNode.getTreeParent();
-          while (run != null) {
-            start += prev.getStartOffsetInParent();
-            contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains && !processor.execute(run.getPsi(), start)) return false;
-            if (!injectedFound) {
-              result = processInjectedFile(run.getPsi(), processor, searcher);
-              if (result != null && !result.booleanValue()) return false;
-              injectedFound = result != null;
-            }
-            prev = run;
-            if (run == scopeNode) break;
-            run = run.getTreeParent();
-          }
-          assert run == scopeNode : "Malbuilt PSI: scopeNode="+scopeNode+"; leafNode="+leafNode+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafNode.getPsi(), false);
-        }
-        else {
-          PsiElement leafElement;
-          if (scope instanceof PsiFile) {
-            leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
-          }
-          else {
-            leafElement = scope.findElementAt(i);
-          }
-          if (leafElement == null) return true;
-          int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
-          if (start < 0) {
-            LOG.assertTrue(start >= 0, "i=" + i + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement.toString() + " " +
-                                       leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
-          }
-          boolean contains = leafElement.getTextLength() - start >= patternLength;
-          if (contains && !processor.execute(leafElement, start)) return false;
-          Boolean result = processInjectedFile(leafElement, processor, searcher);
-          if (result != null && !result.booleanValue()) return false;
-          boolean injectedFound = result != null;
-          PsiElement prev = leafElement;
-          PsiElement run = leafElement.getParent();
-          while (run != null) {
-            start += prev.getStartOffsetInParent();
-            contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains && !processor.execute(run, start)) return false;
-            if (!injectedFound) {
-              result = processInjectedFile(run, processor, searcher);
-              if (result != null && !result.booleanValue()) return false;
-              injectedFound = result != null;
-            }
-            prev = run;
-            if (run == scope) break;
-            run = run.getParent();
-          }
-          assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+leafElement+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafElement, false);
-        }
-
-        startOffset = i + 1;
-      } else {
+      if (i < 0) {
         return true;
       }
+      if (CachesBasedRefSearcher.DEBUG) {
+        System.out.println(">>>>>>>>>>>>>>>>>>> found word:" + i + " in " + scope + "," + scope.getContainingFile().getName());
+      }
+      if (scopeNode != null) {
+        LeafElement leafNode = (LeafElement)scopeNode.findLeafElementAt(i);
+        if (leafNode == null) return true;
+        int start = i - leafNode.getStartOffset() + scopeStartOffset;
+        LOG.assertTrue(start >= 0);
+        boolean contains = leafNode.getTextLength() - start >= patternLength;
+        if (CachesBasedRefSearcher.DEBUG) {
+          System.out.println(">>>>>>>>>>>>>>>>  contains:" + contains + " in " + scope + "," + scope.getContainingFile().getName());
+        }
+        if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
+        Boolean result = processInjectedFile(leafNode.getPsi(), processor, searcher);
+        if (result != null && !result.booleanValue()) return false;
+        boolean injectedFound = result != null;
+        TreeElement prev = leafNode;
+        CompositeElement run = leafNode.getTreeParent();
+        while (run != null) {
+          start += prev.getStartOffsetInParent();
+          contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+          if (contains && !processor.execute(run.getPsi(), start)) return false;
+          if (!injectedFound) {
+            result = processInjectedFile(run.getPsi(), processor, searcher);
+            if (result != null && !result.booleanValue()) return false;
+            injectedFound = result != null;
+          }
+          prev = run;
+          if (run == scopeNode) break;
+          run = run.getTreeParent();
+        }
+        assert run == scopeNode : "Malbuilt PSI: scopeNode="+scopeNode+"; leafNode="+leafNode+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafNode.getPsi(), false);
+      }
+      else {
+        PsiElement leafElement;
+        if (scope instanceof PsiFile) {
+          leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
+        }
+        else {
+          leafElement = scope.findElementAt(i);
+        }
+        if (leafElement == null) return true;
+        int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
+        if (start < 0) {
+          LOG.assertTrue(start >= 0, "i=" + i + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement.toString() + " " +
+                                     leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
+        }
+        boolean contains = leafElement.getTextLength() - start >= patternLength;
+        if (contains && !processor.execute(leafElement, start)) return false;
+        Boolean result = processInjectedFile(leafElement, processor, searcher);
+        if (result != null && !result.booleanValue()) return false;
+        boolean injectedFound = result != null;
+        PsiElement prev = leafElement;
+        PsiElement run = leafElement.getParent();
+        while (run != null) {
+          start += prev.getStartOffsetInParent();
+          contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+          if (contains && !processor.execute(run, start)) return false;
+          if (!injectedFound) {
+            result = processInjectedFile(run, processor, searcher);
+            if (result != null && !result.booleanValue()) return false;
+            injectedFound = result != null;
+          }
+          prev = run;
+          if (run == scope) break;
+          run = run.getParent();
+        }
+        assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+leafElement+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafElement, false);
+      }
+
+      startOffset = i + 1;
     }
     while (startOffset < endOffset);
 

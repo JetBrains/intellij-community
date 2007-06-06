@@ -12,7 +12,7 @@ public class VirtualFileDelegate extends LightVirtualFile {
   private final VirtualFile myDelegate;
   private final DocumentRange myDocumentRange;
 
-  public VirtualFileDelegate(@NotNull VirtualFile delegate, DocumentRange window, Language language, String text) {
+  public VirtualFileDelegate(@NotNull VirtualFile delegate, @NotNull DocumentRange window, @NotNull Language language, @NotNull String text) {
     super(delegate.getName(), language, text);
     setCharset(delegate.getCharset());
     myDelegate = delegate;
@@ -25,5 +25,20 @@ public class VirtualFileDelegate extends LightVirtualFile {
 
   public DocumentRange getDocumentRange() {
     return myDocumentRange;
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    VirtualFileDelegate that = (VirtualFileDelegate)o;
+
+    if (myDelegate != that.myDelegate) return false;
+    if (getContent().equals(that.getContent())) return false;
+    return myDocumentRange.equalsTo(that.myDocumentRange);
+  }
+
+  public int hashCode() {
+    return getContent().hashCode();
   }
 }

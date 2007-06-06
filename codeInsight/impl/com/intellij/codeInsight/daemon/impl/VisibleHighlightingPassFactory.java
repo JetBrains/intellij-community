@@ -83,6 +83,6 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
       endOffset = visibleEnd;
     }
 
-    return new TextRange(startOffset, endOffset);
+    return startOffset < endOffset ? new TextRange(startOffset, endOffset) : null;
   }
 }

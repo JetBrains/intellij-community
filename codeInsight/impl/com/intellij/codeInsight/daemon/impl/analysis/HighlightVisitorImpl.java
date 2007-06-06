@@ -4,26 +4,16 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -31,11 +21,9 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -46,7 +34,6 @@ import com.intellij.psi.xml.XmlText;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -115,8 +102,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitElement(PsiElement element) {
-    boolean hasAnnotators = highlightInjectedPsi(element);
     List<Annotator> annotators = element.getLanguage().getAnnotators();
+    boolean hasAnnotators = !annotators.isEmpty();
 
     if (!annotators.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
@@ -129,103 +116,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     if (hasAnnotators) {
       convertAnnotationsToHighlightInfos();
-    }
-  }
-
-  private boolean highlightInjectedPsi(final PsiElement element) {
-    if (!(element instanceof PsiLanguageInjectionHost)) return false;
-    PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
-    List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
-    if (injected == null) return false;
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
-    for (Pair<PsiElement, TextRange> pair : injected) {
-      PsiElement injectedPsi = pair.getFirst();
-      final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
-      assert documentRange != null;
-      assert documentRange.getText().equals(injectedPsi.getText());
-
-      Language injectedLanguage = injectedPsi.getLanguage();
-      VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-      final List<Annotator> annotators = injectedLanguage.getAnnotators();
-
-      final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
-        public boolean add(final Annotation annotation) {
-          return true; // we are going to hand off the annotation to the myAnnotationHolder anyway
-        }
-
-        protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-          TextRange editable = documentRange.intersectWithEditable(range);
-          boolean shouldHighlight = editable != null;
-          if (editable == null) editable = new TextRange(0,0);
-          TextRange patched = new TextRange(documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()));
-          Annotation annotation = super.createAnnotation(patched, severity, message);
-          if (shouldHighlight) { //do not highlight generated header/footer
-            myAnnotationHolder.add(annotation);
-          }
-          return annotation;
-        }
-      };
-      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < annotators.size(); i++) {
-            Annotator annotator = annotators.get(i);
-            annotator.annotate(element, fixingOffsetsHolder);
-          }
-        }
-
-        public void visitErrorElement(PsiErrorElement element) {
-          HighlightInfo info = createErrorElementInfo(element);
-          TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
-          if (editable==null) return; //do not highlight generated header/footer
-          Annotation annotation = fixingOffsetsHolder.createErrorAnnotation(editable, info.description);
-          annotation.setTooltip(info.toolTip);
-        }
-      };
-
-      injectedPsi.accept(visitor);
-
-      highlightSyntax(injectedLanguage, virtualFile, injectedPsi, myAnnotationHolder, injectionHost);
-    }
-    return true;
-  }
-
-  private static void highlightSyntax(final Language injectedLanguage, final VirtualFile virtualFile, final PsiElement injectedPsi, final AnnotationHolderImpl annotationHolder,
-                                      final PsiLanguageInjectionHost injectionHost) {
-    List<Pair<IElementType, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens((PsiFile)injectedPsi);
-    if (tokens == null) return;
-
-    SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(injectedPsi.getProject(), virtualFile);
-
-    for (Pair<IElementType, TextRange> token : tokens) {
-      IElementType tokenType = token.getFirst();
-      TextRange textRange = token.getSecond();
-      TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
-      if (keys.length == 0) continue;
-      if (textRange.getLength() == 0) continue;
-
-      Annotation annotation = annotationHolder.createInfoAnnotation(textRange.shiftRight(injectionHost.getTextRange().getStartOffset()), null);
-      if (annotation == null) continue; // maybe out of highlightable range
-      // force attribute colors to override host' ones
-
-      if (keys.length == 0) {
-        annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
-      }
-      else {
-        EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-        TextAttributes attributes = globalScheme.getAttributes(keys[0]);
-        final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
-        if (attributes.isEmpty() || attributes.equals(defaultAttrs)) {
-          annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
-        }
-        else {
-          Color back = attributes.getBackgroundColor() == null ? globalScheme.getDefaultBackground() : attributes.getBackgroundColor();
-          Color fore = attributes.getForegroundColor() == null ? globalScheme.getDefaultForeground() : attributes.getForegroundColor();
-          TextAttributes forced = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-          annotation.setEnforcedTextAttributes(forced);
-        }
-      }
     }
   }
 
@@ -393,7 +283,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myHolder.add(info);
   }
 
-  private static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
+  public static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
     TextRange range = element.getTextRange();
     if (range.getLength() > 0) {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());

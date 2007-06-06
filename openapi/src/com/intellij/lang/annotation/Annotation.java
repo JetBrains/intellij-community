@@ -46,6 +46,12 @@ public final class Annotation {
   private TextAttributesKey myEnforcedAttributesKey;
   private TextAttributes myEnforcedAttributes;
 
+  private List<QuickFixInfo> myQuickFixes = null;
+  private Boolean myNeedsUpdateOnTyping = null;
+  private String myTooltip;
+  private boolean myAfterEndOfLine = false;
+  private boolean myIsFileLevelAnnotation = false;
+  private GutterIconRenderer myGutterIconRenderer;
 
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
@@ -60,12 +66,6 @@ public final class Annotation {
       this.displayName = displayName;
     }
   }
-  private List<QuickFixInfo> myQuickFixes = null;
-  private Boolean myNeedsUpdateOnTyping = null;
-  private String myTooltip;
-  private boolean myAfterEndOfLine = false;
-  private boolean myIsFileLevelAnnotation = false;
-  private GutterIconRenderer myGutterIconRenderer;
 
   /**
    * Creates an instance of the annotation.
@@ -332,5 +332,13 @@ public final class Annotation {
    */
   public void setGutterIconRenderer(@Nullable final GutterIconRenderer gutterIconRenderer) {
     myGutterIconRenderer = gutterIconRenderer;
+  }
+
+  public String toString() {
+    return "Annotation(" +
+           "message='" + myMessage + "'" +
+           ", severity='" + mySeverity + "'" +
+           ", toolTip='" + myTooltip + "'" +
+           ")";
   }
 }

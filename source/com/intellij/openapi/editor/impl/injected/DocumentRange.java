@@ -309,4 +309,14 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   public TextRange intersectWithEditable(TextRange rangeToEdit) {
     return new TextRange(myPrefix.length(), getTextLength() - mySuffix.length()).intersection(rangeToEdit);
   }
+
+  public boolean equalsTo(DocumentRange documentRange) {
+    return getDelegate() == documentRange.getDelegate()
+      && myHostRange.getStartOffset() == documentRange.myHostRange.getStartOffset()
+      && myHostRange.getEndOffset() == documentRange.myHostRange.getEndOffset()
+      && myPrefix.equals(documentRange.myPrefix)
+      && mySuffix.equals(documentRange.mySuffix)
+      ;
+  }
+
 }
