@@ -49,12 +49,12 @@ public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implemen
   @Nullable
   public GrConstructorInvocation getConstructorInvocation() {
     GrOpenBlock body = getBlock();
-    assert body != null;
+    if (body == null) return null;
 
-    GrStatement[] grStatements = body.getStatements();
+    GrStatement[] statements = body.getStatements();
 
-    if (grStatements != null && grStatements.length > 0 && grStatements[0] instanceof GrConstructorInvocation) {
-      return (GrConstructorInvocation) grStatements[0];
+    if (statements != null && statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
+      return (GrConstructorInvocation) statements[0];
     }
 
     return null;

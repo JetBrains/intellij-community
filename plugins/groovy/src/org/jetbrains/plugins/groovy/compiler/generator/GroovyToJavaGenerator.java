@@ -428,9 +428,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     text.append("}");
   }
 
-  private void writeGetterAndSetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
-    writeGetter(text, grVariableDeclaration);
-    writeSetter(text, grVariableDeclaration);
+  private void writeGetterAndSetter(final StringBuffer text, final GrVariableDeclaration variableDeclaration) {
+    ApplicationManager.getApplication().runReadAction(new Runnable () {
+      public void run() {
+        writeGetter(text, variableDeclaration);
+        writeSetter(text, variableDeclaration);
+      }
+    });
   }
 
   private void writeGetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {

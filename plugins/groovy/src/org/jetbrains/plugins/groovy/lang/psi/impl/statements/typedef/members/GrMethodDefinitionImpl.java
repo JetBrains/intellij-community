@@ -73,6 +73,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return "Method";
   }
 
+  @Nullable
   public GrOpenBlock getBlock() {
     return this.findChildByClass(GrOpenBlock.class);
   }
