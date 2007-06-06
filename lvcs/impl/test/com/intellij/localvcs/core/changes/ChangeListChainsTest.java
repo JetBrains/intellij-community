@@ -1,14 +1,8 @@
 package com.intellij.localvcs.core.changes;
 
-import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
-public class ChangeListChainsTest extends LocalVcsTestCase {
-  Entry r = new RootEntry();
-  ChangeList l = new ChangeList();
-
+public class ChangeListChainsTest extends ChangeListTestCase {
   @Test
   public void testBasicChain() {
     Change c1 = new CreateFileChange(1, "f", null, -1);
@@ -16,7 +10,7 @@ public class ChangeListChainsTest extends LocalVcsTestCase {
 
     applyAndAdd(c1, c2);
 
-    assertTrue(l.isInTheChain(c1, c2));
+    assertTrue(cl.isInTheChain(c1, c2));
   }
 
   @Test
@@ -26,7 +20,7 @@ public class ChangeListChainsTest extends LocalVcsTestCase {
 
     applyAndAdd(c1, c2);
 
-    assertFalse(l.isInTheChain(c1, c2));
+    assertFalse(cl.isInTheChain(c1, c2));
   }
 
   @Test
@@ -37,9 +31,9 @@ public class ChangeListChainsTest extends LocalVcsTestCase {
 
     applyAndAdd(c1, c2, c3);
 
-    assertTrue(l.isInTheChain(c1, c2));
-    assertTrue(l.isInTheChain(c1, c2));
-    assertFalse(l.isInTheChain(c2, c3));
+    assertTrue(cl.isInTheChain(c1, c2));
+    assertTrue(cl.isInTheChain(c1, c2));
+    assertFalse(cl.isInTheChain(c2, c3));
   }
 
   @Test
@@ -50,24 +44,17 @@ public class ChangeListChainsTest extends LocalVcsTestCase {
 
     applyAndAdd(c1, c2, c3);
 
-    assertTrue(l.isInTheChain(c1, c3));
-    assertFalse(l.isInTheChain(c2, c3));
+    assertTrue(cl.isInTheChain(c1, c3));
+    assertFalse(cl.isInTheChain(c2, c3));
 
     Change c4 = new MoveChange("dir1/f", "dir2");
     applyAndAdd(c4);
 
-    assertTrue(l.isInTheChain(c1, c4));
-    assertTrue(l.isInTheChain(c2, c3));
-    assertTrue(l.isInTheChain(c2, c4));
+    assertTrue(cl.isInTheChain(c1, c4));
+    assertTrue(cl.isInTheChain(c2, c3));
+    assertTrue(cl.isInTheChain(c2, c4));
 
     Change c5 = new MoveChange("dir2", "dir1");
     applyAndAdd(c5);
-  }
-
-  private void applyAndAdd(Change... cc) {
-    for (Change c : cc) {
-      c.applyTo(r);
-      l.addChange(c);
-    }
   }
 }

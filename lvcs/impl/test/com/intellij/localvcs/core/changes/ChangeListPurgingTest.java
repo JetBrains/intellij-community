@@ -1,28 +1,22 @@
 package com.intellij.localvcs.core.changes;
 
-import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.storage.Content;
-import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
-public class ChangeListPurgingTest extends LocalVcsTestCase {
-  int myIntervalBetweenActivities = 0;
-
-  private Entry r = new RootEntry();
-  private ChangeList cl = new ChangeList() {
-    @Override
-    protected long getIntervalBetweenActivities() {
-      return myIntervalBetweenActivities;
-    }
-  };
+public class ChangeListPurgingTest extends ChangeListTestCase {
+  int myIntervalBetweenActivities = 2;
 
   @Before
   public void setUp() {
-    myIntervalBetweenActivities = 2;
+    cl = new ChangeList() {
+      @Override
+      protected long getIntervalBetweenActivities() {
+        return myIntervalBetweenActivities;
+      }
+    };
   }
 
   @Test
@@ -83,9 +77,9 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testChangesAfterPurge() {
-    applyAndAddChange(cs(1, new CreateFileChange(1, "file", null, -1)));
-    applyAndAddChange(cs(2, new ChangeFileContentChange("file", null, -1)));
-    applyAndAddChange(cs(3, new ChangeFileContentChange("file", null, -1)));
+    applyAndAdd(cs(1, new CreateFileChange(1, "file", null, -1)));
+    applyAndAdd(cs(2, new ChangeFileContentChange("file", null, -1)));
+    applyAndAdd(cs(3, new ChangeFileContentChange("file", null, -1)));
 
     assertEquals(3, cl.getChangesFor(r, "file").size());
 
@@ -98,14 +92,14 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
   public void testReturningContentsToPurge() {
     createFile(r, 1, "f", c("one"), -1);
 
-    applyAndAddChange(cs(1, new ChangeFileContentChange("f", c("two"), -1)));
-    applyAndAddChange(cs(2, new ChangeFileContentChange("f", c("three"), -1)));
+    applyAndAdd(cs(1, new ChangeFileContentChange("f", c("two"), -1)));
+    applyAndAdd(cs(2, new ChangeFileContentChange("f", c("three"), -1)));
 
     ChangeFileContentChange c1 = new ChangeFileContentChange("f", c("four"), -1);
     ChangeFileContentChange c2 = new ChangeFileContentChange("f", c("five"), -1);
-    applyAndAddChange(cs(3, c1, c2));
+    applyAndAdd(cs(3, c1, c2));
 
-    applyAndAddChange(cs(4, new ChangeFileContentChange("f", c("six"), -1)));
+    applyAndAdd(cs(4, new ChangeFileContentChange("f", c("six"), -1)));
 
     List<Content> contents = cl.purgeObsolete(1);
 
@@ -129,10 +123,5 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
       Change c = cl.getChanges().get(i);
       assertEquals(t, c.getTimestamp());
     }
-  }
-
-  private void applyAndAddChange(Change c) {
-    c.applyTo(r);
-    cl.addChange(c);
   }
 }

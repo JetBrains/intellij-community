@@ -37,6 +37,9 @@ public class ActionsTest extends IntegrationTestCase {
   }
 
   public void testActionInsideCommand() throws Exception {
+    // This is very important test. Mostly all actions are performed
+    // inside surrounding command. Therefore we have to correctly
+    // handle such situation.
     final VirtualFile f = root.createChildData(null, "f.java");
     f.setBinaryContent(new byte[]{0});
     setDocumentTextFor(f, new byte[]{1});
@@ -60,6 +63,7 @@ public class ActionsTest extends IntegrationTestCase {
   }
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
+    // see testActionInsideCommand comment
     final VirtualFile f = root.createChildData(null, "f.java");
 
     CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
