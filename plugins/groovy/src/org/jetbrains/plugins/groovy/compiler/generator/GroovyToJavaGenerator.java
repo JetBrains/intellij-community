@@ -375,7 +375,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
 
         isRunMethodWrote = "run".equals(((GrMethod) statement).getNameIdentifierGroovy().getText()) &&
             ((GrMethod) statement).getReturnTypeElementGroovy() != null &&
-            "java.lang.Object".equals(((GrMethod) statement).getReturnTypeElementGroovy().getType().getCanonicalText());
+            "java.lang.Object".equals(computeTypeText(((GrMethod) statement).getReturnTypeElementGroovy().getType()));
 
       }
       if (statement instanceof GrVariableDeclaration) {
