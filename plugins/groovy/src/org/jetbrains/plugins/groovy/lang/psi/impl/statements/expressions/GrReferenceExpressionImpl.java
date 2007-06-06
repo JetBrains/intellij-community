@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -222,6 +223,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           }
         } else {
           processClassQualifierType(refExpr, processor, qualifierType);
+          if (qualifier instanceof GrReferenceExpression) {
+            PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
+            if (resolved instanceof PsiClass) { //omitted .class
+              PsiClass javaLangClass = getJavaLangObject(resolved, refExpr.getResolveScope());
+              if (javaLangClass != null) {
+                javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+              }
+            }
+          }
         }
       }
     }
@@ -431,8 +441,22 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       } else {
         getVaiantsFromQualifierType(processor, qualifierType, project);
+        if (qualifier instanceof GrReferenceExpression) {
+          PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
+          if (resolved instanceof PsiClass) { ////omitted .class
+            GlobalSearchScope scope = getResolveScope();
+            PsiClass javaLangClass = getJavaLangObject(resolved, scope);
+            if (javaLangClass != null) {
+              javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+            }
+          }
+        }
       }
     }
+  }
+
+  private static PsiClass getJavaLangObject(PsiElement resolved, GlobalSearchScope scope) {
+    return resolved.getManager().findClass("java.lang.Class", scope);
   }
 
   private void getVaiantsFromQualifierType(ResolverProcessor processor, PsiType qualifierType, Project project) {

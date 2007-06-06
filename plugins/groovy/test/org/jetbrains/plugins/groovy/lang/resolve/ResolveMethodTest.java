@@ -149,4 +149,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
     assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
   }
+
+  public void testLangClass() throws Exception {
+    PsiReference ref = configureByFile("langClass/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals("java.lang.Class", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  }
 }
