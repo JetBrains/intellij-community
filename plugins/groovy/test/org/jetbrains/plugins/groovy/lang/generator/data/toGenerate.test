@@ -1,0 +1,7 @@
+class s {
+}
+-----
+public class s extends groovy.lang.GroovyObjectSupport {
+
+}
+---

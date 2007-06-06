@@ -1,0 +1,15 @@
+class s {
+}
+
+println "foo"
+-----
+public class toGenerate1 extends groovy.lang.Script {
+  public java.lang.Object run() {
+    return null;
+  }
+}
+---
+public class s extends groovy.lang.GroovyObjectSupport {
+
+}
+---

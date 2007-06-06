@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -10,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -84,17 +84,25 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   public GenerationItem[] getGenerationItems(CompileContext context) {
     myContext = context;
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+//    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+//    try {
+//      SwingUtilities.invokeAndWait(new Runnable() {
+//        public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            VirtualFileManager.getInstance().refresh(false);
-          }
-        });
+        VirtualFileManager.getInstance().refresh(false);
       }
-    }, ModalityState.NON_MODAL);
+    });
+//        }
+//      });
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    } catch (InvocationTargetException e) {
+//      e.printStackTrace();
+//    }
+//    }, ModalityState.NON_MODAL);
 
-    VirtualFile[] files = context.getCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
+    VirtualFile[] files = getGroovyFilesToGenerate(context);
 
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
@@ -116,7 +124,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
         virtualFile = myPsiFile.getVirtualFile();
         assert virtualFile != null;
-        generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", context.getModuleByFile(virtualFile), new TimestampValidityState(file.getTimeStamp())));
+        generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", getModuleByFile(context, virtualFile), new TimestampValidityState(file.getTimeStamp())));
       }
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
@@ -126,15 +134,24 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
-        item = new GenerationItemImpl(prefix + typeDefinition.getNameIdentifierGroovy().getText() + "." + "java", context.getModuleByFile(file), new TimestampValidityState(file.getTimeStamp()));
+        item = new GenerationItemImpl(prefix + typeDefinition.getNameIdentifierGroovy().getText() + "." + "java", getModuleByFile(context, file), new TimestampValidityState(file.getTimeStamp()));
         generationItems.add(item);
       }
     }
     return generationItems.toArray(new GenerationItem[generationItems.size()]);
   }
 
-  public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {
+  protected Module getModuleByFile(CompileContext context, VirtualFile file) {
+    return context.getModuleByFile(file);
+  }
+
+  protected VirtualFile[] getGroovyFilesToGenerate(CompileContext context) {
     VirtualFile[] files = context.getCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
+    return files;
+  }
+
+  public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {
+    VirtualFile[] files = getGroovyFilesToGenerate(context);
 
     List<GenerationItem> generatedItems = new ArrayList<GenerationItem>();
     Map<String, GenerationItem> myPathsToItemsMap = new HashMap<String, GenerationItem>();
@@ -146,10 +163,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     for (VirtualFile groovyFile : files) {
       //generate java classes form groovy source files
-      VirtualFile itemFile = VirtualFileManager.getInstance().findFileByUrl(groovyFile.getUrl());
-      assert itemFile != null;
+//      VirtualFile itemFile = VirtualFileManager.getInstance().findFileByUrl(groovyFile.getUrl());
+//      assert itemFile != null;
 
-      List<String> generatedJavaFilesRelPaths = generateItems(itemFile, outputRootDirectory);
+//      List<String> generatedJavaFilesRelPaths = generateItems(itemFile, outputRootDirectory);
+      List<String> generatedJavaFilesRelPaths = generateItems(groovyFile, outputRootDirectory);
       for (String relPath : generatedJavaFilesRelPaths) {
         GenerationItem generationItem = myPathsToItemsMap.get(relPath);
         if (generationItem != null)
@@ -161,7 +179,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private GroovyFile findPsiFile(final VirtualFile virtualFile) {
-    final Project project = VfsUtil.guessProjectForFile(virtualFile);
+    final Project project = getProject(virtualFile);
     assert project != null;
     final GroovyFile[] myFindPsiFile = new GroovyFile[1];
 
@@ -175,10 +193,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return myFindPsiFile[0];
   }
 
+  protected Project getProject(VirtualFile virtualFile) {
+    return VfsUtil.guessProjectForFile(virtualFile);
+  }
+
   //virtualFile -> PsiFile
   private List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
     assert myContext != null;
-    myContext.getProgressIndicator().setText(item.getPath());
+    ProgressIndicator indicator = getProcessIndicator();
+    if (indicator != null) indicator.setText(item.getPath());
 
     GroovyFile myPsiFile = findPsiFile(item);
 
@@ -186,6 +209,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     assert generatedJavaFilesRelPaths != null;
 
     return generatedJavaFilesRelPaths;
+  }
+
+  protected ProgressIndicator getProcessIndicator() {
+    return myContext.getProgressIndicator();
   }
 
   private List<String> generate(final GroovyFile myPsiFile, VirtualFile outputRootDirectory) {
@@ -313,11 +340,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       boolean wasAddedModifiers = writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS);
       if (!wasAddedModifiers) {
-        text.append("public");
+        text.append("public ");
       }
     }
 
-    text.append(" ");
+    if (isScript) {
+      text.append("public ");
+    }
+
+//    text.append(" ");
 
     if (isInteraface) text.append("interface");
     else text.append("class");
@@ -355,7 +386,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append(" ");
           i++;
         }
-        text.append(" ");
       }
     }
 
@@ -387,11 +417,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     if (isScript && !isRunMethodWrote) writeRunMethod(text);
 
-    text.append("}");
+    text.append("\n}");
   }
 
   private void writeGetterAndSetter(final StringBuffer text, final GrVariableDeclaration variableDeclaration) {
-    ApplicationManager.getApplication().runReadAction(new Runnable () {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         writeGetter(text, variableDeclaration);
         writeSetter(text, variableDeclaration);
@@ -419,17 +449,16 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       text.append("()");
       text.append(" ");
-      text.append("{");
+      text.append("{\n");
 
       String returnType = typesToInitialValues.get(type);
 
       if (returnType == null) returnType = "null";
 
-
       text.append("return ");
       text.append(returnType);
       text.append(";");
-      text.append("}");
+      text.append("\n}");
       text.append("\n");
     }
   }
@@ -459,9 +488,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("new").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
       text.append(")");
       text.append(" ");
-      text.append("{");
+      text.append("{\n");
       text.append("return;");
-      text.append("}");
+      text.append("\n}");
 
       text.append(";");
       text.append("\n");
@@ -469,17 +498,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeRunMethod(StringBuffer text) {
-    text.append("public Object run() {\n" +
-        "           return null;\n" +
-        "        }");
+    text.append("  public java.lang.Object run() {\n" +
+        "    return null;\n" +
+        "  }");
   }
 
   private void writeConstructor(StringBuffer text, GrMethod constructor) {
     GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
 
     writeMethodModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
-
-    text.append(" ");
 
     /************* name **********/
     //append constructor name
@@ -508,14 +535,16 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       i++;
     }
     text.append(")");
+    text.append(" ");
 
     /************* body **********/
-    text.append("{");
+    text.append("{\n");
     PsiParameterList list = constructor.getParameterList();
     PsiParameter[] parameters = list.getParameters();
 
     GrConstructorInvocation grConstructorInvocation = constrDefinition.getConstructorInvocation();
     if (grConstructorInvocation != null && grConstructorInvocation.isSuperCall()) {
+      text.append("  ");
       text.append("super");
       text.append("(");
 
@@ -540,7 +569,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(")");
       text.append(";");
     }
-    text.append("}");
+    text.append("\n}");
   }
 
   private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
@@ -588,6 +617,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
     //append qualified type name
+    text.append("  ");
     text.append(qualifiedTypeName);
     text.append(" ");
 
@@ -617,11 +647,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       i++;
     }
     text.append(")");
+    text.append(" ");
 
     if (!isIntefraceMethod) {
       /************* body **********/
       text.append("{");
-      text.append("return ");
+      text.append(" return ");
 
       if (typesToInitialValues.containsKey(qualifiedTypeName))
         text.append(typesToInitialValues.get(qualifiedTypeName));
@@ -630,7 +661,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       text.append(";");
 
-      text.append("}");
+      text.append("\n}");
     } else {
       text.append(";");
     }
@@ -702,7 +733,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (type instanceof PsiArrayType) {
       return computeInner(((PsiArrayType) type).getComponentType()) + "[]";
     }
-    
+
     String canonicalText = type.getCanonicalText();
     return canonicalText != null ? canonicalText : type.getPresentableText();
   }
