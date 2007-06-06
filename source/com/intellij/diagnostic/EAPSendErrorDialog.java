@@ -1,18 +1,12 @@
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.TextAreaUndoProvider;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.text.Keymap;
-import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -57,8 +51,6 @@ public class EAPSendErrorDialog extends DialogWrapper {
 
   private boolean myShouldSend = false;
 
-  private UndoManager undoManager = new UndoManager ();
-
   public boolean isShouldSend() {
     return myShouldSend;
   }
@@ -100,45 +92,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
     loadInfo();
 
 
-    myErrorDescriptionTextArea.getDocument().addUndoableEditListener(new UndoableEditListener () {
-      public void undoableEditHappened(UndoableEditEvent e) {
-        undoManager.addEdit(e.getEdit());
-      }
-    });
-    Keymap keymap = myErrorDescriptionTextArea.getKeymap();
-    Shortcut [] undoShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("$Undo");
-    Shortcut [] redoShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("$Redo");
-
-    //noinspection HardCodedStringLiteral
-    Action undoAction = new AbstractAction ("Undo") {
-      public void actionPerformed(ActionEvent e) {
-        if (undoManager.canUndo())
-          undoManager.undo();
-      }
-    };
-
-    //noinspection HardCodedStringLiteral
-    Action redoAction = new AbstractAction ("Redo") {
-      public void actionPerformed(ActionEvent e) {
-        if (undoManager.canRedo())
-          undoManager.redo();
-      }
-    };
-
-    for (Shortcut undoShortcut : undoShortcuts) {
-      if (undoShortcut instanceof KeyboardShortcut) {
-        keymap.addActionForKeyStroke(((KeyboardShortcut)undoShortcut).getFirstKeyStroke(), undoAction);
-      }
-    }
-
-    for (Shortcut redoShortcut : redoShortcuts) {
-      if (redoShortcut instanceof KeyboardShortcut) {
-        keymap.addActionForKeyStroke(((KeyboardShortcut)redoShortcut).getFirstKeyStroke(), redoAction);
-      }
-    }
-
-    myErrorDescriptionTextArea.setKeymap(keymap);
-
+    new TextAreaUndoProvider(myErrorDescriptionTextArea);
     super.init ();
   }
 
