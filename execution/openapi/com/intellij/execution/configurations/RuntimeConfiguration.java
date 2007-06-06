@@ -24,6 +24,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
@@ -34,6 +35,7 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
     return null;
   }
 
+  @Nullable
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     return null;
   }
