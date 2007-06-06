@@ -1,32 +1,33 @@
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.*;
-import javax.swing.text.Keymap;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.Keymap;
 import javax.swing.undo.UndoManager;
 import java.awt.event.ActionEvent;
 
 /**
  * @author yole
  */
-public class TextAreaUndoProvider {
-  private JTextArea myTextArea;
+public class TextComponentUndoProvider {
+  private JTextComponent myTextComponent;
   private UndoManager myUndoManager = new UndoManager();
 
-  public TextAreaUndoProvider(final JTextArea textArea) {
-    myTextArea = textArea;
+  public TextComponentUndoProvider(final JTextComponent textComponent) {
+    myTextComponent = textComponent;
 
-    myTextArea.getDocument().addUndoableEditListener(new UndoableEditListener() {
+    myTextComponent.getDocument().addUndoableEditListener(new UndoableEditListener() {
       public void undoableEditHappened(UndoableEditEvent e) {
         myUndoManager.addEdit(e.getEdit());
       }
     });
-    Keymap keymap = myTextArea.getKeymap();
+    Keymap keymap = myTextComponent.getKeymap();
     com.intellij.openapi.keymap.Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] undoShortcuts = activeKeymap.getShortcuts("$Undo");
     Shortcut[] redoShortcuts = activeKeymap.getShortcuts("$Redo");
@@ -59,6 +60,6 @@ public class TextAreaUndoProvider {
       }
     }
 
-    myTextArea.setKeymap(keymap);
+    myTextComponent.setKeymap(keymap);
   }
 }

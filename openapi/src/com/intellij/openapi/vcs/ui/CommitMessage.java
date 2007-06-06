@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TextComponentUndoProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ public class CommitMessage extends JPanel{
     add(scrollPane, BorderLayout.CENTER);
     JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommentArea);
     add(separator, BorderLayout.NORTH);
+    new TextComponentUndoProvider(myCommentArea);
   }
 
   @Nullable

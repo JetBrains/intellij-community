@@ -3,7 +3,7 @@ package com.intellij.diagnostic;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.TextAreaUndoProvider;
+import com.intellij.ui.TextComponentUndoProvider;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
@@ -92,7 +92,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
     loadInfo();
 
 
-    new TextAreaUndoProvider(myErrorDescriptionTextArea);
+    new TextComponentUndoProvider(myErrorDescriptionTextArea);
     super.init ();
   }
 
