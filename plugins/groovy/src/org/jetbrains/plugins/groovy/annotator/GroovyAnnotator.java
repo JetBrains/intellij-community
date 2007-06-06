@@ -131,6 +131,8 @@ public class GroovyAnnotator implements Annotator {
         }
       }
     } else {
+      if (isAssignmentLHS(refExpr)) return;
+
       if (refExpr.getQualifierExpression() == null) {
         PsiModifierListOwner method = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class); //todo for static fields as well
         if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -144,6 +146,11 @@ public class GroovyAnnotator implements Annotator {
         }
       }
     }
+  }
+
+  private boolean isAssignmentLHS(GrReferenceExpression refExpr) {
+    return refExpr.getParent() instanceof GrAssignmentExpression &&
+        refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
