@@ -30,7 +30,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FileTextField implements FileLookup, Disposable {
+public abstract class FileTextFieldImpl implements FileLookup, Disposable {
 
   private JTextField myPathTextField;
 
@@ -48,10 +48,10 @@ public abstract class FileTextField implements FileLookup, Disposable {
 
   private int myCurrentCompletionsPos = 1;
 
-  public FileTextField(Finder finder, LookupFilter filter) {
+  public FileTextFieldImpl(Finder finder, LookupFilter filter) {
     this(finder, filter, null, null);
   }
-  public FileTextField(Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
+  public FileTextFieldImpl(Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
     myPathTextField = new JTextField();
 
     if (uiUpdater == null) {
@@ -399,7 +399,7 @@ public abstract class FileTextField implements FileLookup, Disposable {
     return pos < text.length() ? text.substring(0, pos) : text;
   }
 
-  public static class Vfs extends FileTextField {
+  public static class Vfs extends FileTextFieldImpl {
 
 
     public Vfs(final LookupFilter filter) {

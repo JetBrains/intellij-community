@@ -58,7 +58,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private static boolean ourTextFieldShown = false;
   private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
 
-  private FileTextField myPathTextField;
+  private FileTextFieldImpl myPathTextField;
 
   private JComponent myPathTextFieldWrapper;
 
@@ -190,7 +190,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new FileTextField.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater, myFileLocator) {
+    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater, myFileLocator) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
