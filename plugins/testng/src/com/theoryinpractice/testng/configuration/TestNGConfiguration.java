@@ -215,15 +215,15 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
   @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
-        if (data.TEST_OBJECT == TestType.CLASS.getType() || data.TEST_OBJECT == TestType.METHOD.getType()) {
+        if (data.TEST_OBJECT.equals(TestType.CLASS.getType()) || data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
             PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
             if (psiClass == null)
                 throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
-        } else if (data.TEST_OBJECT == TestType.PACKAGE.getType()) {
+        } else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
             PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(data.getPackageName());
             if (psiPackage == null)
                 throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
-        } else if (data.TEST_OBJECT == TestType.SUITE.getType()) {
+        } else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
           try {
             new Parser(data.getSuiteName()).parse(); //try to parse suite.xml
           }
