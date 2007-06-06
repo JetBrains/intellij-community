@@ -8,17 +8,11 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.FacetEditorValidator;
-import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.UserActivityListener;
-import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,18 +20,15 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConfigurable {
   private FacetEditorTab[] myEditorTabs;
-  private JLabel myWarningLabel;
-  private final FacetValidatorsManagerImpl myValidatorsManager;
+  private FacetErrorPanel myErrorPanel;
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
@@ -45,10 +36,9 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
-    myValidatorsManager = new FacetValidatorsManagerImpl();
-    myWarningLabel = new JLabel();
-    myWarningLabel.setVisible(false);
-    myEditorTabs = configuration.createEditorTabs(context, myValidatorsManager);
+    myErrorPanel = new FacetErrorPanel();
+    myErrorPanel.hide();
+    myEditorTabs = configuration.createEditorTabs(context, myErrorPanel.getValidatorsManager());
     for (Configurable configurable : myEditorTabs) {
       add(configurable);
     }
@@ -56,7 +46,7 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
 
   public void reset() {
     super.reset();
-    myValidatorsManager.validate();
+    myErrorPanel.getValidatorsManager().validate();
   }
 
   public JComponent getComponent() {
@@ -93,8 +83,7 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
     }
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, editorComponent);
-    myWarningLabel.setIcon(Messages.getWarningIcon());
-    panel.add(BorderLayout.SOUTH, myWarningLabel);
+    panel.add(BorderLayout.SOUTH, myErrorPanel.getComponent());
 
     return panel;
   }
@@ -116,7 +105,7 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   }
 
   public void disposeUIResources() {
-    myWarningLabel = null;
+    myErrorPanel.disposeUIResources();
     super.disposeUIResources();
   }
 
@@ -140,36 +129,5 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
 
   public FacetEditorContext getContext() {
     return myContext;
-  }
-
-  private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
-    private List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
-
-    public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {
-      myValidators.add(validator);
-      final UserActivityWatcher watcher = new UserActivityWatcher();
-      for (JComponent component : componentsToWatch) {
-        watcher.register(component);
-      }
-      watcher.addUserActivityListener(new UserActivityListener() {
-        public void stateChanged() {
-          //todo[nik] run only one validator
-          validate();
-        }
-      });
-    }
-
-    public void validate() {
-      try {
-        for (FacetEditorValidator validator : myValidators) {
-          validator.check();
-        }
-        myWarningLabel.setVisible(false);
-      }
-      catch (ConfigurationException e) {
-        myWarningLabel.setText(e.getMessage());
-        myWarningLabel.setVisible(true);
-      }
-    }
   }
 }

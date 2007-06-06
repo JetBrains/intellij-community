@@ -6,13 +6,11 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.impl.ui.libraries.FacetLibrariesConfigurationImpl;
 import com.intellij.facet.impl.ui.libraries.FacetLibrariesEditorImpl;
+import com.intellij.facet.impl.ui.libraries.FacetLibrariesValidatorImpl;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorsFactory;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.facet.ui.libraries.FacetLibrariesConfiguration;
-import com.intellij.facet.ui.libraries.FacetLibrariesEditor;
-import com.intellij.facet.ui.libraries.FacetLibrariesEditorDescription;
-import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.*;
 
 /**
  * @author nik
@@ -22,6 +20,12 @@ public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
                                                     final FacetLibrariesConfiguration configuration,
                                                     FacetLibrariesEditorDescription editorDescription, final LibraryInfo[] libraryInfos) {
     return new FacetLibrariesEditorImpl(editorContext, validatorsManager, configuration, editorDescription, libraryInfos);
+  }
+
+  public FacetLibrariesValidator createLibrariesValidator(final LibraryInfo[] libraries, final FacetLibrariesValidatorDescription description,
+                                                          final FacetEditorContext context,
+                                                          final FacetValidatorsManager validatorsManager) {
+    return new FacetLibrariesValidatorImpl(libraries, description, context, validatorsManager);
   }
 
   public FacetLibrariesConfiguration createLibrariesConfiguration() {

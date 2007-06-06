@@ -44,6 +44,7 @@ import java.util.List;
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ModulesConfigurator");
   private final Project myProject;
+  private final ProjectRootConfigurable myProjectRootConfigurable;
 
   private boolean myModified = false;
 
@@ -68,6 +69,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public ModulesConfigurator(Project project, ProjectRootConfigurable configurable) {
     myProject = project;
+    myProjectRootConfigurable = configurable;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
     myFacetsConfigurator = createFacetsConfigurator();
@@ -251,7 +253,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(new NotNullFunction<Module, ModuleConfigurationState>() {
+    return new ProjectFacetsConfigurator(myProjectRootConfigurable, new NotNullFunction<Module, ModuleConfigurationState>() {
       @NotNull
       public ModuleConfigurationState fun(final Module module) {
         return getModuleEditor(module).createModuleConfigurationState();

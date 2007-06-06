@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -154,6 +155,7 @@ public class LibraryDownloader {
       files.add(new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
+          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(toFile);
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
       }.execute().getResultObject());

@@ -4,16 +4,9 @@
 
 package com.intellij.facet.ui;
 
-import com.intellij.openapi.options.ConfigurationException;
-
-import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
  * @author nik
  */
 public abstract class FacetEditorValidator {
-  public abstract void check() throws ConfigurationException;
+  public abstract ValidationResult check();
 }

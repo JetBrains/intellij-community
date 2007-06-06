@@ -17,17 +17,8 @@
 
 package com.intellij.facet.ui;
 
-import com.intellij.facet.ui.libraries.FacetLibrariesConfiguration;
-import com.intellij.facet.ui.libraries.FacetLibrariesEditor;
-import com.intellij.facet.ui.libraries.FacetLibrariesEditorDescription;
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetManager;
+import com.intellij.facet.ui.libraries.*;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -45,15 +36,9 @@ public abstract class FacetEditorsFactory {
 
   public abstract FacetLibrariesConfiguration createLibrariesConfiguration();
 
-  @Nullable
-  public static <F extends Facet, C extends FacetConfiguration> F findCurrentFacet(final C configuration, final FacetEditorContext editorContext, final FacetType<F, C> facetType) {
-    final Module module = editorContext.getModule();
-    if (module == null) return null;
-    for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-      if (facet.getConfiguration() == configuration && facet.getTypeId().equals(facetType.getId())) {
-        return (F)facet;
-      }
-    }
-    return null;
-  }
+
+  public abstract FacetLibrariesValidator createLibrariesValidator(LibraryInfo[] libraries, FacetLibrariesValidatorDescription description,
+                                                                   FacetEditorContext context,
+                                                                   final FacetValidatorsManager validatorsManager);
+
 }

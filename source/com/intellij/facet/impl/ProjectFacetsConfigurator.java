@@ -5,19 +5,27 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
+import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +44,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
   private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
+  private final ProjectRootConfigurable myProjectRootConfigurable;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
 
-  public ProjectFacetsConfigurator(NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+  public ProjectFacetsConfigurator(final ProjectRootConfigurable projectRootConfigurable, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+    myProjectRootConfigurable = projectRootConfigurable;
     myModuleStateProvider = moduleStateProvider;
   }
 
@@ -104,8 +114,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
       final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
-      final ProjectConfigurableContext context = new ProjectConfigurableContext(facet, isNewFacet(facet), parentContext, state,
-                                                                                getSharedModuleData(facet.getModule()));
+      final ProjectConfigurableContext context = new MyProjectConfigurableContext(facet, parentContext, state);
       editor = new FacetEditor(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
@@ -226,5 +235,24 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   @Nullable
   public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
     return getFacetModel(module).findFacet(type, name);
+  }
+
+  private class MyProjectConfigurableContext extends ProjectConfigurableContext {
+    public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+      super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
+            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()));
+    }
+
+    public Library createProjectLibrary(final String baseName, final VirtualFile[] roots) {
+      LibraryTableModifiableModelProvider provider = myProjectRootConfigurable.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL, false);
+      LibraryTable.ModifiableModel model = provider.getModifiableModel();
+      Library library = model.createLibrary(getUniqueLibraryName(baseName, model));
+      LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
+      for (VirtualFile root : roots) {
+        libraryEditor.addRoot(root, OrderRootType.CLASSES);
+      }
+      return library;
+    }
+
   }
 }
