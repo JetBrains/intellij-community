@@ -55,6 +55,8 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   private ConfigurationBean myConfigurationBean;
+  private boolean myCredentialsLoaded = false;
+  private boolean myCredentialsModified = false;
 
   public static SvnApplicationSettings getInstance() {
     return ServiceManager.getService(SvnApplicationSettings.class);
@@ -65,13 +67,14 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   public ConfigurationBean getState() {
-    writeCredentials();
+    if (myCredentialsModified) {
+      writeCredentials();
+    }
     return myConfigurationBean;
   }
 
   public void loadState(ConfigurationBean object) {
     myConfigurationBean = object;
-    readCredentials();
   }
 
   public void svnActivated() {
@@ -92,7 +95,9 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
       SVNGanymedSession.shutdown();
     }
   }
+
   private void readCredentials() {
+    myCredentialsLoaded = true;
     File file = getCredentialsFile();
     if (!file.exists() || !file.canRead() || !file.isFile()) {
       return;
@@ -150,29 +155,27 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   private void writeCredentials() {
+    myCredentialsModified = false;
     if (myAuthenticationInfo == null) {
         return;
     }
     Document document = new Document();
     Element authElement = new Element("kinds");
-    for (Iterator<String> groups = myAuthenticationInfo.keySet().iterator(); groups.hasNext();) {
-        String kind = groups.next();
-        Element groupElement = new Element(kind);
-        Map<String, Map<String, String>> groupsMap = myAuthenticationInfo.get(kind);
+    for (String kind : myAuthenticationInfo.keySet()) {
+      Element groupElement = new Element(kind);
+      Map<String, Map<String, String>> groupsMap = myAuthenticationInfo.get(kind);
 
-        for (Iterator<String> realms = groupsMap.keySet().iterator(); realms.hasNext();) {
-          String realm = realms.next();
-          Element realmElement = new Element("realm");
-          realmElement.setAttribute("name", SVNBase64.byteArrayToBase64(realm.getBytes()));
-          Map<String, String> info = groupsMap.get(realm);
-          for (Iterator<String> keys = info.keySet().iterator(); keys.hasNext();) {
-              String key = keys.next();
-              String value = info.get(key);
-              realmElement.setAttribute(key, value);
-          }
-          groupElement.addContent(realmElement);
+      for (String realm : groupsMap.keySet()) {
+        Element realmElement = new Element("realm");
+        realmElement.setAttribute("name", SVNBase64.byteArrayToBase64(realm.getBytes()));
+        Map<String, String> info = groupsMap.get(realm);
+        for (String key : info.keySet()) {
+          String value = info.get(key);
+          realmElement.setAttribute(key, value);
         }
-        authElement.addContent(groupElement);
+        groupElement.addContent(realmElement);
+      }
+      authElement.addContent(groupElement);
     }
     document.setRootElement(new Element("svn4idea"));
     document.getRootElement().addContent(authElement);
@@ -187,16 +190,19 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   public Map<String, String> getAuthenticationInfo(String realm, String kind) {
-    synchronized(this) {
-        if (myAuthenticationInfo != null) {
-            Map<String, Map<String, String>> group = myAuthenticationInfo.get(kind);
-            if (group != null) {
-                Map<String, String> info = group.get(realm);
-                if (info != null) {
-                  return decodeData(info);
-                }
-            }
+    synchronized (this) {
+      if (!myCredentialsLoaded) {
+        readCredentials();
+      }
+      if (myAuthenticationInfo != null) {
+        Map<String, Map<String, String>> group = myAuthenticationInfo.get(kind);
+        if (group != null) {
+          Map<String, String> info = group.get(realm);
+          if (info != null) {
+            return decodeData(info);
+          }
         }
+      }
     }
     return null;
   }
@@ -206,6 +212,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
         if (info == null) {
             return;
         }
+        myCredentialsModified = true;
         realm = realm == null ? "default" : realm;
         if (myAuthenticationInfo == null) {
             myAuthenticationInfo = new HashMap<String, Map<String, Map<String, String>>>();
@@ -221,6 +228,9 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
 
   public void clearAuthenticationInfo() {
       synchronized(this) {
+        if (!myCredentialsLoaded) {
+          readCredentials();
+        }
         if (myAuthenticationInfo == null) {
             return;
         }
