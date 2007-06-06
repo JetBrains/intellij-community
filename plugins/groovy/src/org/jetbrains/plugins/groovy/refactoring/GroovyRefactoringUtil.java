@@ -15,33 +15,31 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiNameHelperImpl;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.Language;
-import com.intellij.util.ReflectionCache;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Comparator;
+import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -162,7 +160,11 @@ public abstract class GroovyRefactoringUtil {
   // todo add type hierarchy
   public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
     HashMap<String, PsiType> map = new HashMap<String, PsiType>();
-    map.put(type.getPresentableText(), type);
+    if (!PsiTypesUtil.unboxIfPossible(type.getCanonicalText()).contains(".")){
+    map.put(PsiTypesUtil.unboxIfPossible(type.getCanonicalText()), type);
+    } else {
+      map.put(type.getPresentableText(), type);
+    }
     return map;
   }
 
@@ -176,7 +178,7 @@ public abstract class GroovyRefactoringUtil {
 
   public static PsiNameHelper getNameHelper(Project project) {
     PsiManager manager = PsiManager.getInstance(project);
-    return new PsiNameHelperImpl(manager);
+    return new GroovyPsiNameHelperImpl(manager);
   }
 
 }

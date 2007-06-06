@@ -163,8 +163,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
     myNameComboBox.setEditor(comboEditor);
     myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
-    // todo remove me!
-    comboEditor.setItem("preved");
+    // todo implement name contributor
+//    comboEditor.setItem("preved");
 
     myNameComboBox.setEditable(true);
     myNameComboBox.setMaximumRowCount(8);
@@ -216,7 +216,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(text));
+    setOKActionEnabled(GroovyRefactoringUtil.getNameHelper(myProject).isIdentifier(text));
   }
 
   private void fireNameDataChanged() {
