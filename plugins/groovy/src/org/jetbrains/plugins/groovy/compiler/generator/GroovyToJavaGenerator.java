@@ -693,10 +693,18 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
   private String computeTypeText(final PsiType type) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
-        String canonicalText = type.getCanonicalText();
-        return canonicalText != null ? canonicalText : type.getPresentableText();
+        return computeInner(type);
       }
     });
+  }
+
+  private String computeInner(PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return computeInner(((PsiArrayType) type).getComponentType()) + "[]";
+    }
+    
+    String canonicalText = type.getCanonicalText();
+    return canonicalText != null ? canonicalText : type.getPresentableText();
   }
 
   private void createGeneratedFile(StringBuffer text, String outputDir, String prefix, String generatedItemPath, GroovyFile myGroovyFile) {
