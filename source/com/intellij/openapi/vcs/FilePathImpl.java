@@ -233,17 +233,32 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  private static Constructor<File> ourFileStringConstructor;
+  private static boolean ourFileStringConstructorInitialized;
+
   public static FilePath createNonLocal(String path, final boolean directory) {
     path = path.replace('/', File.separatorChar);
     // avoid filename normalization (IDEADEV-10458)
-    File file;
+    if (!ourFileStringConstructorInitialized) {
+      ourFileStringConstructorInitialized = true;
+      try {
+        ourFileStringConstructor = File.class.getDeclaredConstructor(String.class, int.class);
+        ourFileStringConstructor.setAccessible(true);
+      }
+      catch(Exception ex) {
+        ourFileStringConstructor = null;
+      }
+    }
+    File file = null;
     try {
-      final Constructor<File> constructor = File.class.getDeclaredConstructor(String.class, int.class);
-      constructor.setAccessible(true);
-      file = constructor.newInstance(path, 1);
+      if (ourFileStringConstructor != null) {
+        file = ourFileStringConstructor.newInstance(path, 1);
+      }
     }
     catch(Exception ex) {
       // reflection call failed, try regular call
+    }
+    if (file == null) {
       file = new File(path);
     }
     FilePathImpl result = new FilePathImpl(file, directory);

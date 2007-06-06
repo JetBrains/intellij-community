@@ -271,11 +271,7 @@ public class PeerFactoryImpl extends PeerFactory {
       }
 
       public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return FilePathImpl.createNonLocal(path, isDirectory);
-          }
-        });
+        return FilePathImpl.createNonLocal(path, isDirectory);
       }
 
       public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
