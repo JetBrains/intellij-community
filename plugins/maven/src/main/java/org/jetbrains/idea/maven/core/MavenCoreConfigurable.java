@@ -21,13 +21,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.ComboBoxUtil;
+import org.jetbrains.idea.maven.core.util.MavenEnv;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
@@ -45,6 +50,12 @@ public class MavenCoreConfigurable implements Configurable {
   private LabeledComponent<TextFieldWithBrowseButton> mavenHomeComponent;
   private LabeledComponent<TextFieldWithBrowseButton> localRepositoryComponent;
   private LabeledComponent<TextFieldWithBrowseButton> mavenSettingsFileComponent;
+  private JCheckBox mavenHomeOverrideCheckBox;
+  private JCheckBox mavenSettingsFileOverrideCheckBox;
+  private JCheckBox localRepositoryOverrideCheckBox;
+  Overrider mavenHomeOverrider;
+  Overrider mavenSettingsFileOverrider;
+  Overrider localRepositoryOverrider;
   private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelChecksumPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
@@ -61,13 +72,33 @@ public class MavenCoreConfigurable implements Configurable {
     fillComboboxPluginUpdatePolicy();
 
     mavenHomeComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.home.directory"), "", null,
-                                                       new FileChooserDescriptor(false, true, false, false, false, false));
+                                                              new FileChooserDescriptor(false, true, false, false, false, false));
+    mavenHomeOverrider = new Overrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new Overrider.DefaultFileProvider() {
+      @Nullable
+      protected File getFile() {
+        return MavenEnv.resolveMavenHomeDirectory("");
+      }
+    });
 
     mavenSettingsFileComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.settings.file"), "", null,
-                                                       new FileChooserDescriptor(true, false, false, false, false, false));
+                                                                      new FileChooserDescriptor(true, false, false, false, false, false));
+    mavenSettingsFileOverrider =
+      new Overrider(mavenSettingsFileComponent, mavenSettingsFileOverrideCheckBox, new Overrider.DefaultFileProvider() {
+        @Nullable
+        protected File getFile() {
+          return MavenEnv.resolveUserSettingsFile("");
+        }
+      });
 
     localRepositoryComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.local.repository"), "", null,
-                                                     new FileChooserDescriptor(false, true, false, false, false, false));
+                                                                    new FileChooserDescriptor(false, true, false, false, false, false));
+    localRepositoryOverrider =
+      new Overrider(localRepositoryComponent, localRepositoryOverrideCheckBox, new Overrider.DefaultFileProvider() {
+        @Nullable
+        protected File getFile() {
+          return MavenEnv.resolveLocalRepository(mavenHomeOverrider.getText(), mavenSettingsFileOverrider.getText(), "");
+        }
+      });
   }
 
   private void fillComboboxFailureBehavior() {
@@ -79,8 +110,7 @@ public class MavenCoreConfigurable implements Configurable {
   }
 
   private void fillComboboxPluginUpdatePolicy() {
-    ComboBoxUtil.addToModel(comboboxModelPluginUpdatePolicy,
-                            new Object[][]{{"true", "Check For Updates"}, {"false", "Supress Checking"}});
+    ComboBoxUtil.addToModel(comboboxModelPluginUpdatePolicy, new Object[][]{{"true", "Check For Updates"}, {"false", "Supress Checking"}});
 
     comboboxPluginUpdatePolicy.setModel(comboboxModelPluginUpdatePolicy);
   }
@@ -125,9 +155,11 @@ public class MavenCoreConfigurable implements Configurable {
 
   private void setData(MavenCoreState data) {
     data.setWorkOffline(checkboxWorkOffline.isSelected());
-    data.setMavenHome(mavenHomeComponent.getComponent().getText().trim());
-    data.setMavenSettingsFile(mavenSettingsFileComponent.getComponent().getText().trim());
-    data.setLocalRepository(localRepositoryComponent.getComponent().getText());
+
+    data.setMavenHome(mavenHomeOverrider.getText());
+    data.setMavenSettingsFile(mavenSettingsFileOverrider.getText());
+    data.setLocalRepository(localRepositoryOverrider.getText());
+
     data.setProduceExceptionErrorMessages(checkboxProduceExceptionErrorMessages.isSelected());
     data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(checkboxNonRecursive.isSelected());
@@ -140,9 +172,11 @@ public class MavenCoreConfigurable implements Configurable {
 
   private void getData(MavenCoreState data) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
-    mavenHomeComponent.getComponent().setText(data.getMavenHome());
-    mavenSettingsFileComponent.getComponent().setText(data.getMavenSettingsFile());
-    localRepositoryComponent.getComponent().setText(data.getLocalRepository());
+
+    mavenHomeOverrider.setText(data.getMavenHome());
+    mavenSettingsFileOverrider.setText(data.getMavenSettingsFile());
+    localRepositoryOverrider.setText(data.getLocalRepository());
+
     checkboxProduceExceptionErrorMessages.setSelected(data.isProduceExceptionErrorMessages());
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxNonRecursive.setSelected(data.isNonRecursive());
@@ -170,5 +204,65 @@ public class MavenCoreConfigurable implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return null;
+  }
+
+  public static class Overrider {
+    interface DefaultTextProvider {
+      String getText();
+    }
+
+    static abstract class DefaultFileProvider implements DefaultTextProvider {
+
+      public String getText() {
+        final File file = getFile();
+        return file != null ? file.getPath() : "";
+      }
+
+      @Nullable
+      abstract protected File getFile();
+    }
+
+    private final TextFieldWithBrowseButton component;
+    private final JCheckBox checkBox;
+    private final DefaultTextProvider defaultTextProvider;
+
+    private String overrideText;
+
+    public Overrider(final LabeledComponent<TextFieldWithBrowseButton> component,
+                     final JCheckBox checkBox,
+                     DefaultTextProvider defaultTextProvider) {
+      this.component = component.getComponent();
+      this.checkBox = checkBox;
+      this.defaultTextProvider = defaultTextProvider;
+      checkBox.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          update();
+        }
+      });
+    }
+
+    private void update() {
+      final boolean override = checkBox.isSelected();
+
+      component.getTextField().setEditable(override);
+      component.getButton().setEnabled(override);
+      if (override) {
+        component.setText(overrideText);
+      }
+      else {
+        overrideText = component.getText();
+        component.setText(defaultTextProvider.getText());
+      }
+    }
+
+    public void setText(String text) {
+      overrideText = text;
+      checkBox.setSelected(!StringUtil.isEmptyOrSpaces(text));
+      update();
+    }
+
+    public String getText() {
+      return checkBox.isSelected() ? component.getText().trim() : "";
+    }
   }
 }
