@@ -398,12 +398,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     });
   }
 
-  private void writeGetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
-    GrModifierListImpl list = (GrModifierListImpl) grVariableDeclaration.getModifierList();
+  private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+    GrModifierListImpl list = (GrModifierListImpl) variableDeclaration.getModifierList();
 
     writeMethodModifiers(text, list, JAVA_MODIFIERS);
 
-    GrTypeElement element = grVariableDeclaration.getTypeElementGroovy();
+    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
     if (element == null) {
       type = "java.lang.Object";
@@ -411,13 +411,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
       type = computeTypeText(element.getType());
     }
 
-    text.append(type);
-    text.append(" ");
 
-    GrVariable[] grVariables = grVariableDeclaration.getVariables();
-
-    for (GrVariable grVariable : grVariables) {
-      text.append("get").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
+    for (GrVariable variable : variableDeclaration.getVariables()) {
+      text.append(type);
+      text.append(" ");
+      text.append("get").append(StringUtil.capitalize(variable.getNameIdentifierGroovy().getText()));
 
       text.append("()");
       text.append(" ");
@@ -436,13 +434,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     }
   }
 
-  private void writeSetter(StringBuffer text, GrVariableDeclaration grVariableDeclaration) {
-    GrModifierListImpl modifierList = (GrModifierListImpl) grVariableDeclaration.getModifierList();
+  private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+    GrModifierListImpl modifierList = (GrModifierListImpl) variableDeclaration.getModifierList();
     if (modifierList.hasVariableModifierProperty(PsiModifier.FINAL)) return;
 
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
-    GrTypeElement element = grVariableDeclaration.getTypeElementGroovy();
+    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
     if (element == null) {
       type = "java.lang.Object";
@@ -450,11 +448,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
       type = computeTypeText(element.getType());
     }
 
-    text.append("void ");
 
-    GrVariable[] grVariables = grVariableDeclaration.getVariables();
-
-    for (GrVariable grVariable : grVariables) {
+    for (GrVariable grVariable : variableDeclaration.getVariables()) {
+      text.append("void ");
       text.append("set").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
 
       text.append("(");
