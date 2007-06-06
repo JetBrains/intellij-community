@@ -77,6 +77,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
   );
 
   public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
+      kANY,
       kVOID,
       kBOOLEAN,
       kBYTE,

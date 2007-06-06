@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 
 /**
  * @author ven
@@ -65,6 +66,8 @@ public class GroovyAnnotator implements Annotator {
       checkVariable(holder, (GrVariable) element);
     } else if (element instanceof GrAssignmentExpression) {
       checkAssignmentExpression((GrAssignmentExpression)element, holder);
+    } else if (element instanceof GrTraditionalForClauseImpl) {
+      forbidTraditionalForClause(((GrTraditionalForClauseImpl) element), holder);
     }
   }
 
@@ -81,6 +84,10 @@ public class GroovyAnnotator implements Annotator {
         }
       }
     }
+  }
+
+  private void forbidTraditionalForClause(GrTraditionalForClauseImpl clause, AnnotationHolder holder){
+    holder.createErrorAnnotation(clause, "\"Traditional\" for-loop clause is not implemented in Groovy yet");
   }
 
   private void checkVariable(AnnotationHolder holder, GrVariable variable) {

@@ -171,6 +171,7 @@ public interface GroovyTokenTypes {
   IElementType kBOOLEAN = new GroovyElementType("boolean");
   IElementType kBYTE = new GroovyElementType("byte");
   IElementType kCHAR = new GroovyElementType("char");
+  IElementType kANY = new GroovyElementType("any");
   IElementType kSHORT = new GroovyElementType("short");
   IElementType kINT = new GroovyElementType("int");
   IElementType kFLOAT = new GroovyElementType("float");
@@ -216,15 +217,21 @@ public interface GroovyTokenTypes {
   TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
   TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL);
 
+  TokenSet KEYWORDS = TokenSet.create(kPACKAGE, kANY, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS,
+      kSUPER, kVOID, kBOOLEAN, kBYTE, kCHAR, kSHORT, kINT, kFLOAT, kLONG, kDOUBLE, kAS, kPRIVATE, kPUBLIC,
+      kPROTECTED, kTRANSIENT, kNATIVE, kSYNCHRONIZED, kVOLATILE, kDEFAULT, kTHROWS, kIMPLEMENTS, kTHIS, kIF,
+      kELSE, kWHILE, kWITH, kSWITCH, kFOR, kIN, kRETURN, kBREAK, kCONTINUE, kTHROW, kASSERT, kCASE, kTRY,
+      kFINALLY, kCATCH, kINSTANCEOF, kNEW, kTRUE, kFALSE, kNULL);
+
   TokenSet ASSIGN_OP_SET = TokenSet.create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN,
       mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
 
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 
   TokenSet DOTS = TokenSet.create(
-          mSPREAD_DOT,
-          mOPTIONAL_DOT,
-          mMEMBER_POINTER,
-          mDOT
+      mSPREAD_DOT,
+      mOPTIONAL_DOT,
+      mMEMBER_POINTER,
+      mDOT
   );
 }

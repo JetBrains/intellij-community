@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,13 +76,18 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       text.append("final ");
     }
     if (type != null) {
-      text.append(type.getPresentableText()).append(" ");
+      if (!PsiTypesUtil.unboxIfPossible(type.getCanonicalText()).contains(".")) {
+        text.append(PsiTypesUtil.unboxIfPossible(type.getCanonicalText())).append(" ");
+      } else {
+        text.append(type.getPresentableText()).append(" ");
+      }
+
     }
     text.append(identifier);
     GrExpression expr;
     if (initializer instanceof GrApplicationExpression) {
       expr = createMethodCallByAppCall(((GrApplicationExpression) initializer));
-    }  else {
+    } else {
       expr = initializer;
     }
     text.append("=").append(expr.getText());
@@ -147,13 +153,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public PsiElement createNewLine() {
-        PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         "\n");
     return dummyFile.getFirstChild();
   }
 
   public PsiElement createSemicolon() {
-        PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         ";");
     return dummyFile.getFirstChild();
   }
@@ -165,7 +171,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       text.append(expression.getText()).append(", ");
     }
     if (expressions.length > 0) {
-      text.delete(text.length()-2, text.length());
+      text.delete(text.length() - 2, text.length());
     }
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());
@@ -189,11 +195,11 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     StringBuffer text = new StringBuffer();
     text.append(callExpr.getFunExpression().getText());
     text.append("(");
-    for (GrExpression expr: callExpr.getArguments()) {
+    for (GrExpression expr : callExpr.getArguments()) {
       text.append(GroovyRefactoringUtil.getUnparenthesizedExpr(expr).getText()).append(", ");
     }
     if (callExpr.getArguments().length > 0) {
-      text.delete(text.length()-2, text.length());
+      text.delete(text.length() - 2, text.length());
     }
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());

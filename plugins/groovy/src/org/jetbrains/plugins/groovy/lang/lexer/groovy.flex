@@ -633,6 +633,7 @@ mGSTRING_LITERAL = \"\"
 "boolean"                                 {  return( kBOOLEAN );  }
 "byte"                                    {  return( kBYTE );  }
 "char"                                    {  return( kCHAR );  }
+"any"                                     {  return( kANY );  }
 "short"                                   {  return( kSHORT );  }
 "int"                                     {  return( kINT );  }
 "float"                                   {  return( kFLOAT );  }

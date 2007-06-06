@@ -73,7 +73,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Expression statements
   GroovyElementType LABELED_STATEMENT = new GroovyElementType("Labeled statement");
   GroovyElementType CALL_EXPRESSION = new GroovyElementType("Expression statement");
-  GroovyElementType COMMAND_ARGUMENTS = new GroovyElementType("Command arguments");
+  GroovyElementType COMMAND_ARGUMENT = new GroovyElementType("Command arguments");
+  GroovyElementType COMMAND_ARGUMENTS = new GroovyElementType("Command argument");
   GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("Assignment expression");
   GroovyElementType LOGICAL_OR_EXPRESSION = new GroovyElementType("Logical OR expression");
