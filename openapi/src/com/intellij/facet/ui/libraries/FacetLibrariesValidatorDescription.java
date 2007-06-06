@@ -32,6 +32,10 @@ public class FacetLibrariesValidatorDescription {
     myDefaultLibraryName = defaultLibraryName;
   }
 
+  public void setDefaultLibraryName(final String defaultLibraryName) {
+    myDefaultLibraryName = defaultLibraryName;
+  }
+
   @NonNls
   public String getDefaultLibraryName() {
     return myDefaultLibraryName;
