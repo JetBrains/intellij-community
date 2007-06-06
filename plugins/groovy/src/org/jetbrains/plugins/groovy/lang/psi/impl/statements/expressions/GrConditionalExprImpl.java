@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
@@ -60,6 +60,18 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
   }
 
   public PsiType getType() {
+    GrExpression thenBranch = getThenBranch();
+    GrExpression elseBranch = getElseBranch();
+    if (thenBranch == null) {
+      if (elseBranch != null) return elseBranch.getType();
+    } else {
+      if (elseBranch == null) return thenBranch.getType();
+      PsiType thenType = thenBranch.getType();
+      PsiType elseType = elseBranch.getType();
+      if (thenType == null || elseType == null) return elseType;
+      if (elseType.equals(thenType)) return thenType;
+      return GenericsUtil.getLeastUpperBound(thenType, elseType, getManager());
+    }
     return null;
   }
 }
