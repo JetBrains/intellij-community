@@ -80,10 +80,9 @@ public class TypesUtil {
     } else {
       if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
       rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
+      lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
     }
 
-    lType = TypeConversionUtil.erasure(lType);
-    rType = TypeConversionUtil.erasure(rType);
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
