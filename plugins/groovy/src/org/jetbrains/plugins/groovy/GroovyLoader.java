@@ -89,7 +89,10 @@ public class GroovyLoader implements ApplicationComponent {
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
         CompilerManager compilerManager = CompilerManager.getInstance(project);
-        compilerManager.addCompiler(new GroovyToJavaGenerator());
+        GroovyToJavaGenerator generator = new GroovyToJavaGenerator();
+        compilerManager.addCompiler(generator);
+        compilerManager.addCompilationStatusListener(generator);
+
         compilerManager.addCompiler(new GroovyCompilerProcess());
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 

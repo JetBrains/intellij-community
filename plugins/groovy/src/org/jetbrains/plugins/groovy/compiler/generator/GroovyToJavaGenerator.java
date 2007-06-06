@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
-import com.intellij.compiler.impl.TreeBasedPathsSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -31,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
+import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import java.util.Map;
  * @author: Dmitry.Krasilschikov
  * @date: 03.05.2007
  */
-public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
+public class GroovyToJavaGenerator implements SourceGeneratingCompiler, CompilationStatusListener {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
 
   static {
@@ -756,19 +755,25 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     return TimestampValidityState.load(is);
   }
 
+  CharTrie myTrie = new CharTrie();
+
+  public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    myTrie.clear();
+  }
+
   class GenerationItemImpl implements GenerationItem {
-    final String myPath;
     ValidityState myState;
     final Module myModule;
+    public int myHashCode;
 
-    public GenerationItemImpl(String myPath, Module myModule, ValidityState myState) {
-      this.myModule = myModule;
-      this.myState = myState;
-      this.myPath = myPath;
+    public GenerationItemImpl(String path, Module module, ValidityState state) {
+      myModule = module;
+      myState = state;
+      myHashCode = myTrie.getHashCode(path);
     }
 
     public String getPath() {
-      return myPath;
+      return myTrie.getString(myHashCode);
     }
 
     public ValidityState getValidityState() {
