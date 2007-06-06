@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -43,8 +45,12 @@ import javax.swing.*;
  * @author ilyas
  */
 public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
+
   private PsiClass myScriptClass;
   private boolean myScriptClassInitialized = false;
+  private static final String SYNTHETIC_PARAMETER_NAME = "args";
+  private GrParameter mySyntheticArgsParameter = null;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
@@ -88,9 +94,24 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return findChildrenByClass(GrImportStatement.class);
   }
 
+  private GrParameter getSyntheticArgsParameter() {
+    if (mySyntheticArgsParameter == null) {
+      try {
+        mySyntheticArgsParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]");
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+    return mySyntheticArgsParameter;
+  }
+
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    for (final GrTopLevelDefintion defintion : getTopLevelDefinitions()) {
-      if (!ResolveUtil.processElement(processor, defintion)) return false;
+    for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
+      if (!ResolveUtil.processElement(processor, definition)) return false;
+    }
+
+    if (isScript()) {
+      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
     }
 
     PsiManager manager = getManager();
@@ -198,6 +219,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     super.clearCaches();
     myScriptClass = null;
     myScriptClassInitialized = false;
+    mySyntheticArgsParameter = null;
   }
 }
 
