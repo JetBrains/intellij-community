@@ -23,11 +23,19 @@ import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> {
   public TextFieldWithBrowseButton(){
-    this(null);
+    this((JTextField)null);
+  }
+
+  public TextFieldWithBrowseButton(JTextField field){
+    this(field, null);
+  }
+
+  public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
+    super(field, browseActionListener);
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
-    super(new JTextField(), browseActionListener);
+    this(new JTextField(), browseActionListener);
   }
 
   public void addBrowseFolderListener(String title, String description, Project project, FileChooserDescriptor fileChooserDescriptor) {

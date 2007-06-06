@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
@@ -27,4 +28,7 @@ public abstract class FileChooserFactory {
 
   public abstract FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project);
   public abstract FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent);
+
+  public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent);
+  public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent);
 }

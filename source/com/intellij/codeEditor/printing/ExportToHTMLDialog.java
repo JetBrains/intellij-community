@@ -1,13 +1,14 @@
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.OptionGroup;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -54,7 +55,8 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myCbIncludeSubpackages = new JCheckBox(CodeEditorBundle.message("export.to.html.include.subdirectories.checkbox"));
     optionGroup.add(myCbIncludeSubpackages, true);
 
-    myTargetDirectoryField = new TextFieldWithBrowseButton();
+    FileTextField field = FileChooserFactory.getInstance().createFileTextField(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myDisposable);
+    myTargetDirectoryField = new TextFieldWithBrowseButton(field.getField());
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent = assignLabel(myTargetDirectoryField, myProject);
 
     optionGroup.add(labeledComponent);

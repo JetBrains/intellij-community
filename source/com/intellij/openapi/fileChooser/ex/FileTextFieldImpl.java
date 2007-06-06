@@ -1,7 +1,9 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -30,7 +32,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FileTextFieldImpl implements FileLookup, Disposable {
+public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
   private JTextField myPathTextField;
 
@@ -64,8 +66,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable {
 
     if (worker == null) {
       myWorker = new WorkerThread("FileTextField.FileLocator", 200);
+      myWorker.start();
       Disposer.register(this, myWorker);
-
     } else {
       myWorker = worker;
     }
@@ -416,6 +418,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable {
 
     public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater, final WorkerThread worker) {
       super(new LocalFsFinder(), filter, uiUpdater, worker);
+    }
+
+    public VirtualFile getSelectedFile() {
+      LookupFile lookupFile = getFile();
+      return lookupFile != null ? ((LocalFsFinder.VfsFile)lookupFile).getFile() : null;
     }
   }
 }
