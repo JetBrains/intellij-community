@@ -20,6 +20,7 @@ package com.intellij.facet.ui;
 import com.intellij.facet.ui.libraries.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -38,7 +39,8 @@ public abstract class FacetEditorsFactory {
   public abstract FacetLibrariesConfiguration createLibrariesConfiguration();
 
 
-  public abstract FacetLibrariesValidator createLibrariesValidator(LibraryInfo[] libraries, FacetLibrariesValidatorDescription description,
+  public abstract FacetLibrariesValidator createLibrariesValidator(@NotNull LibraryInfo[] libraries, 
+                                                                   FacetLibrariesValidatorDescription description,
                                                                    FacetEditorContext context,
                                                                    final FacetValidatorsManager validatorsManager);
 
