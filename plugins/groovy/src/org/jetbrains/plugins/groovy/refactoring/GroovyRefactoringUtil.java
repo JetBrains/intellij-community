@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.Language;
 import com.intellij.util.ReflectionCache;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -170,6 +172,11 @@ public abstract class GroovyRefactoringUtil {
       operand = ((GrParenthesizedExpr) operand).getOperand();
     }
     return operand;
+  }
+
+  public static PsiNameHelper getNameHelper(Project project) {
+    PsiManager manager = PsiManager.getInstance(project);
+    return new PsiNameHelperImpl(manager);
   }
 
 }

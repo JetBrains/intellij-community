@@ -15,27 +15,34 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
-
-import javax.swing.*;
-
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.util.ArrayUtil;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.StringComboboxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableSettings;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.HashMap;
+import javax.swing.*;
+import javax.swing.event.EventListenerList;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
+import java.util.EventListener;
+import java.util.HashMap;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GroovyIntroduceVariableSettings {
 
@@ -46,11 +53,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   private final boolean myDeclareFinalIfAll;
   private final IntroduceVariableHandler.Validator myValidator;
   private HashMap<String, PsiType> myTypeMap = null;
+  private EventListenerList myListenerList = new EventListenerList();
 
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
 
   private JPanel contentPane;
-  private JComboBox myNameSelector;
+  private ComboBox myNameComboBox;
   private JCheckBox myCbIsFinal;
   private JCheckBox myCbReplaceAllOccurences;
   private JCheckBox myCbTypeSpec;
@@ -71,12 +79,14 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myOccurrencesCount = occurrencesCount;
     myDeclareFinalIfAll = declareFinalIfAll;
     myValidator = validator;
+    setUpNameComboBox();
 
     setModal(true);
     getRootPane().setDefaultButton(buttonOK);
     setTitle(REFACTORING_NAME);
     init();
     setUpDialog();
+    updateOkStatus();
   }
 
   @Nullable
@@ -90,12 +100,11 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
   @Nullable
   public String getEnteredName() {
-    // todo add validator!
-    if (myNameSelector.getSelectedItem() instanceof String &&
-        ((String) myNameSelector.getSelectedItem()).length() > 0) {
-      return (String) myNameSelector.getSelectedItem();
+    if (myNameComboBox.getEditor().getItem() instanceof String &&
+        ((String) myNameComboBox.getEditor().getItem()).length() > 0) {
+      return (String) myNameComboBox.getEditor().getItem();
     } else {
-      return "preved";
+      return null;
     }
   }
 
@@ -120,8 +129,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myCbReplaceAllOccurences.setMnemonic(KeyEvent.VK_A);
     myCbIsFinal.setMnemonic(KeyEvent.VK_F);
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
-    myNameSelector.setFocusCycleRoot(true);
-    myNameSelector.setFocusTraversalPolicyProvider(true);
+    myNameComboBox.setFocusCycleRoot(true);
+    myNameComboBox.setFocusTraversalPolicyProvider(true);
 
     // Type specification
     if (myType == null) {
@@ -146,11 +155,43 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       myCbReplaceAllOccurences.setEnabled(false);
     }
 
+  }
 
+  private void setUpNameComboBox() {
+
+    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
+
+    myNameComboBox.setEditor(comboEditor);
+    myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
+    // todo remove me!
+    comboEditor.setItem("preved");
+
+    myNameComboBox.setEditable(true);
+    myNameComboBox.setMaximumRowCount(8);
+
+    myListenerList.add(DataChangedListener.class, new DataChangedListener());
+
+    myNameComboBox.addItemListener(
+        new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            fireNameDataChanged();
+          }
+        }
+    );
+
+    ((EditorTextField) myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      public void documentChanged(DocumentEvent event) {
+        fireNameDataChanged();
+      }
+    }
+    );
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameSelector;
+    return myNameComboBox;
   }
 
   protected Action[] createActions() {
@@ -167,5 +208,24 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
   }
 
+  class DataChangedListener implements EventListener {
+    void dataChanged() {
+      updateOkStatus();
+    }
+  }
+
+  private void updateOkStatus() {
+    String text = getEnteredName();
+    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(text));
+  }
+
+  private void fireNameDataChanged() {
+    Object[] list = myListenerList.getListenerList();
+    for (Object aList : list) {
+      if (aList instanceof DataChangedListener) {
+        ((DataChangedListener) aList).dataChanged();
+      }
+    }
+  }
 
 }
