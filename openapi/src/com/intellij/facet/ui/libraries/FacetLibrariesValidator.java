@@ -14,6 +14,8 @@ public abstract class FacetLibrariesValidator extends FacetEditorValidator {
 
   public abstract void setRequiredLibraries(LibraryInfo[] requiredLibraries);
 
+  public abstract FacetLibrariesValidatorDescription getDescription();
+
   public abstract void onFacetInitialized(Facet facet);
 
 }

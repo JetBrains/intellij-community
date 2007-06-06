@@ -64,6 +64,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     onChange();
   }
 
+  public FacetLibrariesValidatorDescription getDescription() {
+    return myDescription;
+  }
+
   public ValidationResult check() {
     if (myRequiredLibraries == null) {
       return ValidationResult.OK;
