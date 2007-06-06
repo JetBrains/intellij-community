@@ -23,7 +23,7 @@ import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> {
   public TextFieldWithBrowseButton(){
-    this((JTextField)null);
+    this((ActionListener)null);
   }
 
   public TextFieldWithBrowseButton(JTextField field){
