@@ -15,8 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HighlightInfoComposite extends HighlightInfo {
-  private static final @NonNls String HTML_HEADER = "<html><body>";
-  private static final @NonNls String HTML_FOOTER = "</body></html>";
+  private static final @NonNls String HTML_HEADER = "<html>";
+  private static final @NonNls String BODY_HEADER = "<body>";
+  private static final @NonNls String HTML_FOOTER = "</html>";
+  private static final @NonNls String BODY_FOOTER = "</body>";
   private static final @NonNls String LINE_BREAK = "\n<hr size=1 noshade>";
 
   public HighlightInfoComposite(List<HighlightInfo> infos) {
@@ -77,7 +79,9 @@ public class HighlightInfoComposite extends HighlightInfo {
             result.append(LINE_BREAK);
           }
           toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+          toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
           toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+          toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
           result.append(toolTip);
         }
       }

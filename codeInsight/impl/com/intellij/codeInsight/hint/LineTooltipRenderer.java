@@ -116,10 +116,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
   private static JEditorPane initPane(@NonNls String text) {
     final Font font = UIUtil.getLabelFont();
-    if (!text.startsWith("<html>")) {
-      text = "<html><body>" + text + "</body></html>";
-    }
-    text = text.replace("<html>", "<html><head><style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style></head>");
+    text = "<html><head><style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style></head><body>" + getHtmlBody(text) + "</body></html>";
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
     pane.setBorder(
@@ -180,6 +177,11 @@ public class LineTooltipRenderer implements TooltipRenderer {
   private static String getHtmlBody(@NonNls String text) {
     if (!text.startsWith("<html>")) {
       return text.replaceAll("\n","<br>");
+    }
+    final int bodyIdx = text.indexOf("<body>");
+    final int closedBodyIdx = text.indexOf("</body>");
+    if (bodyIdx != -1 && closedBodyIdx != -1) {
+      return text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
     }
     text = StringUtil.trimStart(text, "<html>").trim();
     text = StringUtil.trimEnd(text, "</html>").trim();
