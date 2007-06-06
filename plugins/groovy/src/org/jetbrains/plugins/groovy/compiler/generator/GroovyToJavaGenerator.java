@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.compiler.impl.TreeBasedPathsSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -401,8 +403,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
   private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration) {
     GrModifierListImpl list = (GrModifierListImpl) variableDeclaration.getModifierList();
 
-    writeMethodModifiers(text, list, JAVA_MODIFIERS);
-
     GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
     if (element == null) {
@@ -413,6 +413,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
 
 
     for (GrVariable variable : variableDeclaration.getVariables()) {
+      writeMethodModifiers(text, list, JAVA_MODIFIERS);
       text.append(type);
       text.append(" ");
       text.append("get").append(StringUtil.capitalize(variable.getNameIdentifierGroovy().getText()));
@@ -438,8 +439,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
     GrModifierListImpl modifierList = (GrModifierListImpl) variableDeclaration.getModifierList();
     if (modifierList.hasVariableModifierProperty(PsiModifier.FINAL)) return;
 
-    writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
-
     GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
     if (element == null) {
@@ -450,6 +449,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler {
 
 
     for (GrVariable grVariable : variableDeclaration.getVariables()) {
+      writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
+
       text.append("void ");
       text.append("set").append(StringUtil.capitalize(grVariable.getNameIdentifierGroovy().getText()));
 
