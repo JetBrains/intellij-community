@@ -1,0 +1,31 @@
+foo a: , b: 2, "c": 3
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    Command arguments
+      PsiErrorElement:Expression expected
+        Argument label
+          PsiElement(identifier)('a')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Command argument
+        Argument label
+          PsiElement(identifier)('b')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Command argument
+        Argument label
+          PsiElement(Gstring)('"c"')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
