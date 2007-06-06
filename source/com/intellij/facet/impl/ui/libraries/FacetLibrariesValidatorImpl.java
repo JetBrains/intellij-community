@@ -5,6 +5,7 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
@@ -19,7 +20,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -129,13 +132,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private Library createLibrary(final VirtualFile[] roots) {
-    final Library library = myContext.createProjectLibrary(myDescription.getDefaultLibraryName(), roots);
-    final Library.ModifiableModel model = library.getModifiableModel();
-    for (VirtualFile root : roots) {
-      model.addRoot(root, OrderRootType.CLASSES);
-    }
-    model.commit();
-    return library;
+    return myContext.createProjectLibrary(myDescription.getDefaultLibraryName(), roots);
   }
 
   public void onFacetInitialized(Facet facet) {
@@ -157,7 +154,8 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     if (!myAddedRoots.isEmpty()) {
       VirtualFile[] roots = myAddedRoots.toArray(new VirtualFile[myAddedRoots.size()]);
-      Library library = createLibrary(roots);
+      LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
+      Library library = FacetEditorContextBase.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, libraryTable);
       model.addLibraryEntry(library);
       addedLibraries.add(library);
     }
