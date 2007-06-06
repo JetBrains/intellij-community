@@ -6,6 +6,7 @@
       <class name="com.theoryinpractice.testng.inspections.ConvertJavadocInspectionTest"/>
       <class name="com.theoryinpractice.testng.inspections.ConvertJUnitInspectionTest"/>
       <class name="com.theoryinpractice.testng.inspections.ConvertOldAnnotationInspectionTest"/>
+      <class name="com.theoryinpractice.testng.configuration.ConfigurationsTest"/>
     </classes>
   </test>
 </suite>
