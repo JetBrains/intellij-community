@@ -17,12 +17,9 @@ import com.intellij.psi.util.PsiUtil;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
   private final boolean isDown;
-  private final Mover[] myMovers;
 
   public MoveStatementHandler(boolean down) {
     isDown = down;
-    // order is important
-    myMovers = new Mover[]{new StatementMover(down), new DeclarationMover(down), new XmlMover(down), new LineMover(down)};
   }
 
   public void executeWriteAction(Editor editor, DataContext dataContext) {
@@ -70,7 +67,9 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 
   private Mover getSuitableMover(final Editor editor, final PsiFile file) {
-    for (final Mover mover : myMovers) {
+    // order is important
+    Mover[] movers = new Mover[]{new StatementMover(isDown), new DeclarationMover(isDown), new XmlMover(isDown), new LineMover(isDown)};
+    for (final Mover mover : movers) {
       final boolean available = mover.checkAvailable(editor, file);
       if (available) return mover;
     }
