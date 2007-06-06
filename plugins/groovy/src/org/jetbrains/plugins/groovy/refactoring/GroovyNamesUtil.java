@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.CompositeLexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiNameHelperImpl;
@@ -25,40 +26,31 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 /**
  * @author ilyas
  */
-public class GroovyPsiNameHelperImpl extends PsiNameHelperImpl {
-
-  private final PsiManager myManager;
-  private final Lexer myLexer;
-
+public class GroovyNamesUtil {
   private static final Object LOCK = new Object();
 
-  public GroovyPsiNameHelperImpl(PsiManager manager) {
-    super(manager);
-    myManager = manager;
-    myLexer = new GroovyLexer();
-  }
-
-
-  public boolean isIdentifier(String text) {
+  public static boolean isIdentifier(String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (text == null) return false;
 
     synchronized (LOCK) {
-      myLexer.start(text, 0, text.length(), 0);
-      if (myLexer.getTokenType() != GroovyTokenTypes.mIDENT) return false;
-      myLexer.advance();
-      return myLexer.getTokenType() == null;
+      Lexer lexer = new GroovyLexer();
+      lexer.start(text, 0, text.length(), 0);
+      if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) return false;
+      lexer.advance();
+      return lexer.getTokenType() == null;
     }
   }
 
-  public boolean isKeyword(String text) {
+  public static boolean isKeyword(String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     synchronized (LOCK) {
-      myLexer.start(text,0,text.length(),0);
-      if (myLexer.getTokenType() == null || !GroovyTokenTypes.KEYWORDS.contains(myLexer.getTokenType())) return false;
-      myLexer.advance();
-      return myLexer.getTokenType() == null;
+      Lexer lexer = new GroovyLexer();
+      lexer.start(text,0,text.length(),0);
+      if (lexer.getTokenType() == null || !GroovyTokenTypes.KEYWORDS.contains(lexer.getTokenType())) return false;
+      lexer.advance();
+      return lexer.getTokenType() == null;
     }
   }
 

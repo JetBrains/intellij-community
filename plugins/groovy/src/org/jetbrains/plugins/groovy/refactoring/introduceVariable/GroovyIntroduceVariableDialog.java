@@ -34,6 +34,7 @@ import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
@@ -216,7 +217,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(GroovyRefactoringUtil.getNameHelper(myProject).isIdentifier(text));
+    setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
   }
 
   private void fireNameDataChanged() {

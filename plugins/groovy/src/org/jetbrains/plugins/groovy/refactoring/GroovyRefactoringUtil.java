@@ -175,10 +175,4 @@ public abstract class GroovyRefactoringUtil {
     }
     return operand;
   }
-
-  public static PsiNameHelper getNameHelper(Project project) {
-    PsiManager manager = PsiManager.getInstance(project);
-    return new GroovyPsiNameHelperImpl(manager);
-  }
-
 }
