@@ -82,6 +82,8 @@ public class TypesUtil {
       rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
     }
 
+    lType = TypeConversionUtil.erasure(lType);
+    rType = TypeConversionUtil.erasure(rType);
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
