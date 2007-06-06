@@ -7,12 +7,10 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -22,14 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
 import java.util.Collection;
@@ -46,6 +44,41 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
     public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
     public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
+    private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+        public void setName(final String qualifiedName) {
+          final boolean generatedName = isGeneratedName();
+          data.PACKAGE_NAME = qualifiedName;
+          if (generatedName) setGeneratedName();
+        }
+
+        @Nullable
+        public PsiPackage getPsiElement() {
+          final String qualifiedName = data.getPackageName();
+          return qualifiedName != null ? PsiManager.getInstance(getProject()).findPackage(qualifiedName) : null;
+        }
+
+        public void setPsiElement(final PsiPackage psiPackage) {
+          setName(psiPackage.getQualifiedName());
+        }
+    };
+
+     private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+        public void setName(final String qualifiedName) {
+          final boolean generatedName = isGeneratedName();
+          data.MAIN_CLASS_NAME = qualifiedName;
+          if (generatedName) setGeneratedName();
+        }
+
+        @Nullable
+        public PsiClass getPsiElement() {
+          final String qualifiedName = data.getMainClassName();
+          return qualifiedName != null ? PsiManager.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project)) : null;
+        }
+
+        public void setPsiElement(final PsiClass psiClass) {
+          setName(psiClass.getQualifiedName());
+        }
+    };
 
     public TestNGConfiguration(String s, Project project, ConfigurationFactory factory) {
         this(s, project, new TestData(), factory);
@@ -243,4 +276,34 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
     }
 
+    @Nullable
+    public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
+      if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
+        if (!(element instanceof PsiPackage)) return null;
+        return RefactoringListeners.getListener((PsiPackage)element, myPackage);
+      } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
+        if (!(element instanceof PsiClass)) return null;
+        return RefactoringListeners.getClassOrPackageListener(element, myClass);
+      } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+        if (!(element instanceof PsiMethod)) {
+          return RefactoringListeners.getClassOrPackageListener(element, myClass);
+        }
+        return new RefactoringElementListener() {
+          public void elementMoved(final PsiElement newElement) {
+            setMethod((PsiMethod)newElement);
+          }
+
+          public void elementRenamed(final PsiElement newElement) {
+            setMethod((PsiMethod)newElement);
+          }
+
+          private void setMethod(final PsiMethod psiMethod) {
+            final boolean generatedName = isGeneratedName();
+            data.setTestMethod(PsiLocation.fromPsiElement(psiMethod));
+            if (generatedName) setGeneratedName();
+          }
+        };
+      }
+      return null;
+    }
 }
