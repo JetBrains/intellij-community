@@ -61,7 +61,7 @@ public class CommandArguments implements GroovyElementTypes {
       return COMMAND_ARGUMENT;
     } else {
       commandMarker.drop();
-      return ExpressionStatement.parse(builder);
+      return ExpressionStatement.argParse(builder);
     }
   }
 }
