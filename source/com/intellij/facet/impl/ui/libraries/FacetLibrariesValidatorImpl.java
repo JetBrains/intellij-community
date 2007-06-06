@@ -6,7 +6,6 @@ package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
-import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
@@ -40,7 +39,7 @@ import java.util.List;
  * @author nik
  */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
-  private FacetEditorContext myContext;
+  private LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
   private final FacetLibrariesValidatorDescription myDescription;
@@ -48,7 +47,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private List<Library> myAddedLibraries;
 
   public FacetLibrariesValidatorImpl(LibraryInfo[] requiredLibraries, FacetLibrariesValidatorDescription description,
-                                     final FacetEditorContext context, FacetValidatorsManager validatorsManager) {
+                                     final LibrariesValidatorContext context, FacetValidatorsManager validatorsManager) {
     myContext = context;
     myValidatorsManager = validatorsManager;
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
@@ -121,7 +120,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     else {
       Library library = new WriteAction<Library>() {
         protected void run(final Result<Library> result) {
-          result.setResult(createLibrary(files, project));
+          result.setResult(createLibrary(files));
         }
       }.execute().getResultObject();
       rootModel.addLibraryEntry(library);
@@ -129,7 +128,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     onChange();
   }
 
-  private Library createLibrary(final VirtualFile[] roots, final Project project) {
+  private Library createLibrary(final VirtualFile[] roots) {
     final Library library = myContext.createProjectLibrary(myDescription.getDefaultLibraryName(), roots);
     final Library.ModifiableModel model = library.getModifiableModel();
     for (VirtualFile root : roots) {
@@ -140,7 +139,14 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   public void onFacetInitialized(Facet facet) {
-    Module module = facet.getModule();
+    List<Library> addedLibraries = setupLibraries(facet.getModule());
+
+    for (Library addedLibrary : addedLibraries) {
+      myDescription.onLibraryAdded(facet, addedLibrary);
+    }
+  }
+
+  public List<Library> setupLibraries(final Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
 
     List<Library> addedLibraries = new ArrayList<Library>();
@@ -151,7 +157,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     if (!myAddedRoots.isEmpty()) {
       VirtualFile[] roots = myAddedRoots.toArray(new VirtualFile[myAddedRoots.size()]);
-      Library library = createLibrary(roots, module.getProject());
+      Library library = createLibrary(roots);
       model.addLibraryEntry(library);
       addedLibraries.add(library);
     }
@@ -162,10 +168,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     else {
       model.dispose();
     }
-
-    for (Library addedLibrary : addedLibraries) {
-      myDescription.onLibraryAdded(facet, addedLibrary);
-    }
+    return addedLibraries;
   }
 
   private void downloadJars(LibraryInfo[] missingLibraries, JComponent place) {

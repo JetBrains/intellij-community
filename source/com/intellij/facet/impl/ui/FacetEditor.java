@@ -37,7 +37,6 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
     myErrorPanel = new FacetErrorPanel();
-    myErrorPanel.hide();
     myEditorTabs = configuration.createEditorTabs(context, myErrorPanel.getValidatorsManager());
     for (Configurable configurable : myEditorTabs) {
       add(configurable);

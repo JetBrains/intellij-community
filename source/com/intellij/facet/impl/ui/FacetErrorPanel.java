@@ -29,6 +29,8 @@ public class FacetErrorPanel {
   private FacetConfigurationQuickFix myCurrentQuickFix;
   private JLabel myWarningLabel;
   private final FacetValidatorsManagerImpl myValidatorsManager;
+  private boolean myNoErrors = true;
+  private List<Runnable> myListeners = new ArrayList<Runnable>();
 
   public FacetErrorPanel() {
     myValidatorsManager = new FacetValidatorsManagerImpl();
@@ -44,12 +46,25 @@ public class FacetErrorPanel {
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(BorderLayout.EAST, myButtonPanel);
     myMainPanel.add(BorderLayout.CENTER, myWarningLabel);
+    setNoErrors();
   }
 
-  public void hide() {
+  public void addListener(Runnable listener) {
+    myListeners.add(listener);
+  }
+
+  private void changeValidity(final boolean noErrors) {
+    myNoErrors = noErrors;
+    for (Runnable listener : myListeners) {
+      listener.run();
+    }
+  }
+
+  private void setNoErrors() {
     myMainPanel.setVisible(false);
     myWarningLabel.setVisible(false);
     myQuickFixButton.setVisible(false);
+    changeValidity(true);
   }
 
   public void disposeUIResources() {
@@ -58,6 +73,10 @@ public class FacetErrorPanel {
 
   public JComponent getComponent() {
     return myMainPanel;
+  }
+
+  public boolean isOk() {
+    return myNoErrors;
   }
 
   public FacetValidatorsManager getValidatorsManager() {
@@ -90,11 +109,12 @@ public class FacetErrorPanel {
           myWarningLabel.setVisible(true);
           myCurrentQuickFix = validationResult.getQuickFix();
           myQuickFixButton.setVisible(myCurrentQuickFix != null);
+          changeValidity(false);
           return;
         }
       }
       myCurrentQuickFix = null;
-      hide();
+      setNoErrors();
     }
   }
 }

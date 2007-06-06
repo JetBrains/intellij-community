@@ -19,6 +19,7 @@ package com.intellij.facet.ui;
 
 import com.intellij.facet.ui.libraries.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 
 /**
  * @author nik
@@ -41,4 +42,6 @@ public abstract class FacetEditorsFactory {
                                                                    FacetEditorContext context,
                                                                    final FacetValidatorsManager validatorsManager);
 
+  public abstract LibrariesValidationComponent createLibrariesValidationComponent(LibraryInfo[] libraryInfos, Module module, 
+                                                                         String defaultLibraryName);
 }
