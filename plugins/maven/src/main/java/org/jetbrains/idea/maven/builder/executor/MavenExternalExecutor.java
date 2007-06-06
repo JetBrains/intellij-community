@@ -59,6 +59,8 @@ public class MavenExternalExecutor extends MavenExecutor implements Runnable {
 
   public void run() {
 
+    displayProgress();
+
     List<String> executionCommand;
     try {
       executionCommand = MavenExternalParameters.createCommand(myParameters, myBuilderState, myMavenCoreState);
@@ -79,8 +81,6 @@ public class MavenExternalExecutor extends MavenExecutor implements Runnable {
       consoleOutput.message(MavenBuildLogger.LEVEL_ERROR, BuilderBundle.message("external.statup.failed"), e);
       return;
     }
-
-    displayProgress();
 
     start();
     readProcessOutput();

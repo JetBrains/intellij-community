@@ -52,7 +52,7 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
   private void resolveModuleNames(final MavenProjectModel mavenProjectModel) {
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        final MavenId projectId = new MavenId(node.getArtifact());
+        final MavenId projectId = node.getId();
         final String name = node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(projectId);
 
         projectIdToModuleName.put(projectId, name);

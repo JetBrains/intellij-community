@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportWizardStep;
@@ -64,7 +65,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   }
 
   public boolean validate() {
-    return myImportContext.createMavenProjectModel(myRootPathComponent.getPath());
+    return myImportContext.setRootDirectory(myRootPathComponent.getPath());
   }
 
   public void updateStep() {
@@ -77,10 +78,13 @@ class MavenImportRootStep extends ProjectImportWizardStep {
       else if (myWizardContext.getProjectFileDirectory() != null) {
         path = myWizardContext.getProjectFileDirectory();
       }
-      else if (myImportContext.getUpdatedProject() != null) {
-        final VirtualFile baseDir = myImportContext.getUpdatedProject().getBaseDir();
-        if (baseDir != null) {
-          path = baseDir.getPath();
+      else {
+        final Project updatedProject = myImportContext.getUpdatedProject();
+        if (updatedProject != null) {
+          final VirtualFile baseDir = updatedProject.getBaseDir();
+          if (baseDir != null) {
+            path = baseDir.getPath();
+          }
         }
       }
       if (path != null) {

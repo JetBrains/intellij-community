@@ -18,7 +18,7 @@ public class SynchronizeWithMavenAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     if (project != null) {
-      new MavenImportProcessor(project, null).synchronize(true);
+      new MavenImportProcessor(project).synchronize(true);
     }
   }
 }

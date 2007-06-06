@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.core;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +14,7 @@ import java.io.File;
 public class MavenCoreState implements Cloneable {
 
   private boolean workOffline = false;
+  @NotNull private String mavenHome = "";
   @NotNull private String mavenSettingsFile = "";
   @NotNull private String localRepository = "";
   private boolean produceExceptionErrorMessages = false;
@@ -89,18 +89,9 @@ public class MavenCoreState implements Cloneable {
     return localRepository;
   }
 
-  @NotNull
-  public String getEffectiveLocalRepository() {
-    if (!StringUtil.isEmpty(localRepository)) {
-      return localRepository;
-    }
-
-    String localRepositoryFromSettings = MavenEnv.getRepositoryFromSettings(new File(getEffectiveMavenSettingsFile()));
-    if (!StringUtil.isEmpty(localRepositoryFromSettings)) {
-      return localRepositoryFromSettings;
-    }
-
-    return MavenEnv.getDefaultLocalRepository();
+  @Nullable
+  public File getEffectiveLocalRepository() {
+    return MavenEnv.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
   }
 
   public void setLocalRepository(final @Nullable String localRepository) {
@@ -110,18 +101,17 @@ public class MavenCoreState implements Cloneable {
   }
 
   @NotNull
-  public String getMavenSettingsFile() {
-    return mavenSettingsFile;
+  public String getMavenHome() {
+    return mavenHome;
+  }
+
+  public void setMavenHome(@NotNull final String mavenHome) {
+    this.mavenHome = mavenHome;
   }
 
   @NotNull
-  public String getEffectiveMavenSettingsFile() {
-    if (StringUtil.isEmptyOrSpaces(mavenSettingsFile)) {
-      return MavenEnv.getDefaultSettingsFile();
-    }
-    else {
-      return mavenSettingsFile;
-    }
+  public String getMavenSettingsFile() {
+    return mavenSettingsFile;
   }
 
   public void setMavenSettingsFile(@Nullable String mavenSettingsFile) {
@@ -169,6 +159,7 @@ public class MavenCoreState implements Cloneable {
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
     if (!localRepository.equals(that.localRepository)) return false;
+    if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
 
     return true;
@@ -177,6 +168,7 @@ public class MavenCoreState implements Cloneable {
   public int hashCode() {
     int result;
     result = (workOffline ? 1 : 0);
+    result = 31 * result + mavenHome.hashCode();
     result = 31 * result + mavenSettingsFile.hashCode();
     result = 31 * result + localRepository.hashCode();
     result = 31 * result + (produceExceptionErrorMessages ? 1 : 0);

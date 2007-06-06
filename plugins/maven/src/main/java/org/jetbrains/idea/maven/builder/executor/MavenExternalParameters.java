@@ -24,9 +24,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
 import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.util.MavenEnv;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +54,7 @@ class MavenExternalParameters {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static List<String> createCommand(MavenExecutor.Parameters buildParameters,
                                            MavenBuilderState builderState,
                                            MavenCoreState mavenCoreState) throws MavenConfigErrorException {
@@ -63,11 +66,11 @@ class MavenExternalParameters {
 
     addParameters(cmdList, StringUtil.notNullize(System.getenv("MAVEN_OPTS")));
 
-    final String mavenHome = resolveMavenHome(builderState.getMavenHome());
+    final String mavenHome = resolveMavenHome(mavenCoreState.getMavenHome());
 
     addOption(cmdList, "classpath", getMavenClasspathEntries(mavenHome));
 
-    addProperty(cmdList, "classworlds.conf", getMavenConfFile(mavenHome).getPath());
+    addProperty(cmdList, "classworlds.conf", MavenEnv.getMavenConfFile(new File(mavenHome)).getPath());
     addProperty(cmdList, "maven.home", mavenHome);
 
     cmdList.add("org.codehaus.classworlds.Launcher");
@@ -91,6 +94,7 @@ class MavenExternalParameters {
     return cmdList;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getJavaExecutable(String jdkName) {
     for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(jdkName)) {
@@ -123,36 +127,35 @@ class MavenExternalParameters {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void addProperty(List<String> cmdList, @NonNls String key, @NonNls String value) {
     cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
-  private static String resolveMavenHome(String mavenHome) throws MavenConfigErrorException {
-    if (StringUtil.isEmptyOrSpaces(mavenHome)) {
-      mavenHome = System.getenv("M2_HOME");
-      if (StringUtil.isEmptyOrSpaces(mavenHome)) {
-        throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.not.found"));
-      }
+  private static String resolveMavenHome(@NotNull String mavenHome) throws MavenConfigErrorException {
+    final File file = MavenEnv.resolveMavenHomeDirectory(mavenHome);
+
+    if (file == null) {
+      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.no.default"));
     }
 
-    File mavenHomeAsFile = new File(mavenHome);
-    File mavenConf = getMavenConfFile(mavenHome);
-    if (!mavenConf.exists()) {
-      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.invalid", mavenHome, mavenConf.getPath()));
+    if (!file.exists()) {
+      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.does.not.exist", mavenHome));
+    }
+
+    if (!MavenEnv.isValidMavenHome(file)) {
+      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.invalid", file.getPath()));
     }
 
     try {
-      return mavenHomeAsFile.getCanonicalPath();
+      return file.getCanonicalPath();
     }
     catch (IOException e) {
       throw new MavenConfigErrorException(e);
     }
   }
 
-  private static File getMavenConfFile(String mavenHomeAsFile) {
-    return new File(new File(mavenHomeAsFile, "bin"), "m2.conf");
-  }
-
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getMavenClasspathEntries(String mavenHome) {
     File mavenHomeBootAsFile = new File(new File(mavenHome, "core"), "boot");
     // if the dir "core/boot" does not exist we are using a Maven version > 2.0.5
@@ -197,14 +200,11 @@ class MavenExternalParameters {
 
     cmdList.add("--" + mavenCoreState.getFailureBehavior());
 
-    Boolean pluginUpdatePolicy = mavenCoreState.getPluginUpdatePolicy();
-    if (pluginUpdatePolicy != null) {
-      if (pluginUpdatePolicy) {
-        cmdList.add("--check-plugin-updates");
-      }
-      else {
-        cmdList.add("--no-plugin-updates");
-      }
+    if (mavenCoreState.getPluginUpdatePolicy()) {
+      cmdList.add("--check-plugin-updates");
+    }
+    else {
+      cmdList.add("--no-plugin-updates");
     }
 
     if (mavenCoreState.getChecksumPolicy().length() != 0) {

@@ -42,6 +42,7 @@ public class MavenCoreConfigurable implements Configurable {
   private JComboBox comboboxPluginUpdatePolicy;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxNonRecursive;
+  private LabeledComponent<TextFieldWithBrowseButton> mavenHomeComponent;
   private LabeledComponent<TextFieldWithBrowseButton> localRepositoryComponent;
   private LabeledComponent<TextFieldWithBrowseButton> mavenSettingsFileComponent;
   private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
@@ -58,6 +59,9 @@ public class MavenCoreConfigurable implements Configurable {
     fillComboboxChecksumPolicy();
     fillComboboxFailureBehavior();
     fillComboboxPluginUpdatePolicy();
+
+    mavenHomeComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.home.directory"), "", null,
+                                                       new FileChooserDescriptor(false, true, false, false, false, false));
 
     mavenSettingsFileComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.settings.file"), "", null,
                                                        new FileChooserDescriptor(true, false, false, false, false, false));
@@ -121,6 +125,7 @@ public class MavenCoreConfigurable implements Configurable {
 
   private void setData(MavenCoreState data) {
     data.setWorkOffline(checkboxWorkOffline.isSelected());
+    data.setMavenHome(mavenHomeComponent.getComponent().getText().trim());
     data.setMavenSettingsFile(mavenSettingsFileComponent.getComponent().getText().trim());
     data.setLocalRepository(localRepositoryComponent.getComponent().getText());
     data.setProduceExceptionErrorMessages(checkboxProduceExceptionErrorMessages.isSelected());
@@ -135,6 +140,7 @@ public class MavenCoreConfigurable implements Configurable {
 
   private void getData(MavenCoreState data) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
+    mavenHomeComponent.getComponent().setText(data.getMavenHome());
     mavenSettingsFileComponent.getComponent().setText(data.getMavenSettingsFile());
     localRepositoryComponent.getComponent().setText(data.getLocalRepository());
     checkboxProduceExceptionErrorMessages.setSelected(data.isProduceExceptionErrorMessages());

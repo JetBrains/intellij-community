@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Tree;
 
 import java.util.*;
@@ -211,6 +212,10 @@ public class MavenProjectModel {
       return mavenProject.getArtifact();
     }
 
+    public MavenId getId () {
+      return new MavenId(getArtifact());
+    }
+    
     public boolean isIncluded() {
       return included;
     }

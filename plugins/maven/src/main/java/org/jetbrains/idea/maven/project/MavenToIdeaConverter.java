@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -22,12 +23,14 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 public class MavenToIdeaConverter {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenToIdeaConverter");
+
   @NonNls public static final String JAR_TYPE = "jar";
   @NonNls public static final String JAVADOC_CLASSIFIER = "javadoc";
   @NonNls public static final String SOURCES_CLASSIFIER = "sources";
 
-  public static void convert(final MavenProjectModel projectModel,
-                             final ModifiableModuleModel modifiableModel,
+  public static void convert(final ModifiableModuleModel modifiableModel,
+                             final MavenProjectModel projectModel,
                              final MavenToIdeaMapping mapping,
                              final MavenImporterPreferences preferences,
                              final boolean markSynthetic) {
@@ -36,6 +39,10 @@ public class MavenToIdeaConverter {
 
     for (MavenProjectModel.Node project : sortProjectsByDependencies(projectModel)) {
       mavenToIdeaConverter.convert(project);
+    }
+
+    if (preferences.isCreateModuleGroups()) {
+      createModuleGroups(modifiableModel, projectModel, mapping);
     }
 
     for (Module module : mapping.getExistingModules()) {
@@ -51,7 +58,7 @@ public class MavenToIdeaConverter {
 
   private static List<MavenProjectModel.Node> sortProjectsByDependencies(final MavenProjectModel projectModel) {
     final List<MavenProjectModel.Node> projects = new ArrayList<MavenProjectModel.Node>();
-    projectModel.visit( new MavenProjectModel.MavenProjectVisitorPlain() {
+    projectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(final MavenProjectModel.Node node) {
         projects.add(node);
       }
@@ -69,12 +76,36 @@ public class MavenToIdeaConverter {
     return projects;
   }
 
+  private static void createModuleGroups(final ModifiableModuleModel modifiableModel,
+                                         final MavenProjectModel projectModel,
+                                         final MavenToIdeaMapping mapping) {
+    final Stack<String> groups = new Stack<String>();
+    projectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+      public void visit(final MavenProjectModel.Node node) {
+        final String name = mapping.getModuleName(node.getId());
+        LOG.assertTrue (name != null);
+
+        if (!node.mavenModules.isEmpty()) {
+          groups.push(ProjectBundle.message("module.group.name", name));
+        }
+
+        final Module module = modifiableModel.findModuleByName(name);
+        LOG.assertTrue (module != null);
+        modifiableModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
+      }
+
+      public void leave(MavenProjectModel.Node node) {
+        if (!node.mavenModules.isEmpty()) {
+          groups.pop();
+        }
+      }
+    });
+  }
+
   final private ModifiableModuleModel modifiableModuleModel;
   final private MavenToIdeaMapping mavenToIdeaMapping;
   final private MavenImporterPreferences preferences;
   final private boolean markSynthetic;
-
-  final private Stack<String> groups = new Stack<String>();
 
   private MavenToIdeaConverter(ModifiableModuleModel model,
                                final MavenToIdeaMapping mavenToIdeaMapping,
@@ -97,18 +128,6 @@ public class MavenToIdeaConverter {
     createFacets(module, node);
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
-
-    if (preferences.isCreateModuleGroups() && !node.mavenModules.isEmpty()) {
-      groups.push(ProjectBundle.message("module.group.name", module.getName()));
-    }
-
-    modifiableModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
-  }
-
-  public void leave(MavenProjectModel.Node node) {
-    if (preferences.isCreateModuleGroups() && !node.mavenModules.isEmpty()) {
-      groups.pop();
-    }
   }
 
   void convertRootModel(Module module, MavenProjectModel.Node node) {
@@ -129,9 +148,9 @@ public class MavenToIdeaConverter {
 
   private void createFacets(final Module module, final MavenProjectModel.Node node) {
     final String packaging = node.getMavenProject().getPackaging();
-    if ( !packaging.equals("jar")){
+    if (!packaging.equals("jar")) {
       for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
-        if(converter.isApplicable(packaging)) {
+        if (converter.isApplicable(packaging)) {
           converter.convert(module, node, mavenToIdeaMapping);
         }
       }
