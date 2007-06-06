@@ -47,6 +47,6 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrExpression && PsiType.BOOLEAN.equals(((GrExpression) element).getType());
+    return element instanceof GrExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
   }
 }
