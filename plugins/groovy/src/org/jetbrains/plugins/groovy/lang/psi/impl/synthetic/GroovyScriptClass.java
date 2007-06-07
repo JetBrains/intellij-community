@@ -30,11 +30,15 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   private final String myName;
   private GroovyFile myFile;
   private PsiMethod myMainMethod;
+  private PsiMethod myRunMethod;
+  private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
+  private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
 
   public GroovyScriptClass(GroovyFile file) {
     super(file.getManager());
     myFile = file;
-    myMainMethod = new GroovyScriptMainMethod(this);
+    myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
+    myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
     String name = myFile.getName();
     assert name != null;
     int i = name.indexOf('.');
@@ -140,7 +144,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return new PsiMethod[] {myMainMethod};
+    return new PsiMethod[] {myMainMethod, myRunMethod};
   }
 
   @NotNull
@@ -281,7 +285,10 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    return ResolveUtil.processElement(processor, myMainMethod);
+    for (PsiMethod method : getMethods()) {
+      if (!ResolveUtil.processElement(processor, method)) return false;
+    }
+    return true;
   }
 
   //default implementations of methods from NavigationItem

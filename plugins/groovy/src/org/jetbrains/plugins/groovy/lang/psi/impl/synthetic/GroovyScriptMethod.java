@@ -19,17 +19,17 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMainMethod");
+public class GroovyScriptMethod extends LightElement implements PsiMethod {
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMethod");
   public PsiMethod myCodeBehindMethod;
   private GroovyScriptClass myScriptClass;
 
-  public GroovyScriptMainMethod(GroovyScriptClass scriptClass) {
+  public GroovyScriptMethod(GroovyScriptClass scriptClass, String codeBehindText) {
     super(scriptClass.getManager());
     myScriptClass = scriptClass;
     PsiElementFactory factory = scriptClass.getManager().getElementFactory();
     try {
-      myCodeBehindMethod = factory.createMethodFromText("public static final void main(java.lang.String[] args) {}", null);
+      myCodeBehindMethod = factory.createMethodFromText(codeBehindText, null);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -37,7 +37,7 @@ public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
 
   @Nullable
   public PsiType getReturnType() {
-    return PsiType.VOID;
+    return myCodeBehindMethod.getReturnType();
   }
 
   @Nullable
@@ -123,7 +123,7 @@ public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
 
   @NotNull
   public String getName() {
-    return "main";
+    return myCodeBehindMethod.getName();
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -136,7 +136,7 @@ public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
   }
 
   public PsiClass getContainingClass() {
-    return null;
+    return myScriptClass;
   }
 
   @NonNls
@@ -160,7 +160,7 @@ public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
   }
 
   public String toString() {
-    return "GroovyScriptMainMethod";
+    return "GroovyScriptMethod";
   }
   @Nullable
   public PsiDocComment getDocComment() {
@@ -182,6 +182,6 @@ public class GroovyScriptMainMethod extends LightElement implements PsiMethod {
 
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
-    return new PsiTypeParameter[0];
+    return PsiTypeParameter.EMPTY_ARRAY;
   }
 }
