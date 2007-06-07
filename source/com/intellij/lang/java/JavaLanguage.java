@@ -46,10 +46,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaLanguage extends Language {
   private final FormattingModelBuilder myFormattingModelBuilder;
 
-  private final static SurroundDescriptor[] SURROUND_DESCRIPTORS = new SurroundDescriptor[] {
-    new JavaExpressionSurroundDescriptor(),
-    new JavaStatementsSurroundDescriptor()
-  };
+  private SurroundDescriptor[] mySurroundDescriptors;
 
   public JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
@@ -111,7 +108,13 @@ public class JavaLanguage extends Language {
 
   @NotNull
   public SurroundDescriptor[] getSurroundDescriptors() {
-    return SURROUND_DESCRIPTORS;
+    if (mySurroundDescriptors == null) {
+      mySurroundDescriptors = new SurroundDescriptor[] {
+        new JavaExpressionSurroundDescriptor(),
+        new JavaStatementsSurroundDescriptor()
+      };
+    }
+    return mySurroundDescriptors;
   }
 
   @Nullable
