@@ -434,6 +434,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     public void run() {
       //noinspection InfiniteLoopStatement
       while (true) {
+        if (ApplicationManager.getApplication().isDisposed()) break;
+        
         storeRefreshStatusToFiles();
         try {
           sleep(PERIOD);
