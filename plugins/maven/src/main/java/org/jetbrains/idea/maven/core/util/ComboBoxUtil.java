@@ -32,6 +32,16 @@ public class ComboBoxUtil {
     }
   }
 
+  public static void initModel(DefaultComboBoxModel model, Object[][] array) {
+    model.removeAllElements();
+    addToModel(model, array);
+  }
+
+  public static void setModel(JComboBox comboBox, DefaultComboBoxModel model, Object[][] array) {
+    initModel(model, array);
+    comboBox.setModel(model);
+  }
+
   public static void select(DefaultComboBoxModel model, String value) {
     for (int i = 0; i < model.getSize(); i++) {
       Item comboBoxUtil = (Item)model.getElementAt(i);
