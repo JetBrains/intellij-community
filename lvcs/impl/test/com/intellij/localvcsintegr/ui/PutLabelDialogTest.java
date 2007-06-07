@@ -1,6 +1,7 @@
-package com.intellij.localvcsintegr;
+package com.intellij.localvcsintegr.ui;
 
 import com.intellij.localvcs.integration.ui.views.PutLabelDialog;
+import com.intellij.localvcsintegr.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
