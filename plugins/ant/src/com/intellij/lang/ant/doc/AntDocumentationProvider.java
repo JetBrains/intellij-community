@@ -68,6 +68,9 @@ public class AntDocumentationProvider implements DocumentationProvider {
   private static String generateDocForElement(final AntElement antElement) {
     if (antElement instanceof AntFilesProvider) {
       final List<File> list = ((AntFilesProvider)antElement).getFiles();
+      if (list.size() == 0) {
+        return null;
+      }
       final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
         final XmlElement srcElement = antElement.getSourceElement();
