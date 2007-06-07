@@ -270,7 +270,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
     }
 
-    if (object instanceof String) {
+    if (object instanceof String && element != null) {
       return findEntityDeclWithName((String)object, element);
     }
     return null;
